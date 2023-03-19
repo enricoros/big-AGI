@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Sandpack } from '@codesandbox/sandpack-react';
 
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
@@ -13,7 +14,9 @@ import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
+import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import { Avatar, Box, Button, IconButton, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
@@ -82,10 +85,41 @@ const copyToClipboard = (text: string) => {
 
 /// Renderers for the different types of message blocks
 
+type SandpackConfig = { template: 'vanilla-ts' | 'vanilla', files: Record<string, string> };
+
+function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme: Theme }): JSX.Element | null {
+  let config: SandpackConfig;
+  switch (codeBlock.language) {
+    case 'typescript':
+    case 'javascript':
+      config = {
+        template: 'vanilla-ts',
+        files: { '/index.ts': codeBlock.code },
+      };
+      break;
+    case 'html':
+      config = {
+        template: 'vanilla',
+        files: { '/index.html': codeBlock.code },
+      };
+      break;
+    default:
+      return null;
+  }
+  return (
+    <Sandpack {...config} theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+              options={{ showConsole: true, showConsoleButton: true, showTabs: false, showNavigator: false }} />
+  );
+}
+
 function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+  const [showSandpack, setShowSandpack] = React.useState(false);
 
   const handleCopyToClipboard = () =>
     copyToClipboard(codeBlock.code);
+
+  const handleToggleSandpack = () =>
+    setShowSandpack(!showSandpack);
 
   return <Box component='code' sx={{
     position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
@@ -95,7 +129,11 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
     <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
       <ContentCopyIcon />
     </IconButton>
+    <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
+      {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+    </IconButton>
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+    {showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
   </Box>;
 }
 
