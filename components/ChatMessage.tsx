@@ -1,0 +1,259 @@
+import * as React from 'react';
+
+import ClearIcon from '@mui/icons-material/Clear';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
+import { Avatar, Box, Button, IconButton, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { SxProps, Theme } from '@mui/joy/styles/types';
+
+
+// One message in the chat
+
+export interface UiMessage {
+  uid: string;
+  sender: 'You' | 'Bot' | string;
+  role: 'assistant' | 'system' | 'user';
+  text: string;
+  avatar: string | React.ElementType | null;
+}
+
+
+/// Utilities to split the message into blocks of text and code
+
+type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
+type CodeMessageBlock = { type: 'code'; content: string; code: string; language: string; };
+
+const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
+  const codeBlockRegex = /`{3,}(\w+)?\n([\s\S]*?)(`{3,}|$)/g;
+  const result: MessageBlock[] = [];
+
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    const language = match[1] || 'typescript';
+    const codeBlock = match[2].trim();
+
+    result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    result.push({ type: 'code', content: codeBlock, code: codeBlock, language });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    result.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+
+  return result;
+};
+
+const copyToClipboard = (text: string) => {
+  if (typeof navigator !== 'undefined')
+    navigator.clipboard.writeText(text)
+      .then(() => console.log('Message copied to clipboard'))
+      .catch((err) => console.error('Failed to copy message: ', err));
+};
+
+
+/// Renderers for the different types of message blocks
+
+function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+
+  const handleCopyToClipboard = () =>
+    copyToClipboard(codeBlock.code);
+
+  return <Box component='code' sx={{
+    position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
+    display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
+    '&:hover > button': { opacity: 1 },
+  }}>
+    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      zIndex: 10,
+      p: 0.5,
+      opacity: 0,
+      transition: 'opacity 0.3s',
+    }}>
+      <ContentCopyIcon />
+    </IconButton>
+    <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+  </Box>;
+}
+
+
+/**
+ * ChatMessage component is a customizable chat message UI component that supports
+ * different roles (user, assistant, and system), text editing, syntax highlighting,
+ * and code execution using Sandpack for TypeScript, JavaScript, and HTML code blocks.
+ * The component also provides options for copying code to clipboard and expanding
+ * or collapsing long user messages.
+ *
+ * @param {UiMessage} props.uiMessage - The UI message object containing message data.
+ * @param {Function} props.onDelete - The function to call when the delete button is clicked.
+ * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
+ */
+export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void }) {
+  const theme = useTheme();
+  const message = props.uiMessage;
+
+  // viewing
+  const [forceExpanded, setForceExpanded] = React.useState(false);
+
+  // editing
+  const [isHovering, setIsHovering] = React.useState(false);
+  const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editedText, setEditedText] = React.useState(message.text);
+
+
+  const closeMenu = () => setMenuAnchor(null);
+
+  const handleMenuCopy = () => {
+    copyToClipboard(message.text);
+    closeMenu();
+  };
+
+  const handleMenuEdit = () => {
+    if (!isEditing)
+      setEditedText(message.text);
+    setIsEditing(!isEditing);
+    closeMenu();
+  };
+
+  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    setEditedText(e.target.value);
+
+  const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      setIsEditing(false);
+      props.onEdit(editedText);
+    }
+  };
+
+
+  const handleExpand = () => setForceExpanded(true);
+
+
+  // theming
+  let background = theme.vars.palette.background.body;
+  let textBackground: string | undefined = undefined;
+  if (message.role === 'system') {
+    background = theme.vars.palette.background.body;
+    textBackground = theme.vars.palette.primary.plainHoverBg;
+  } else if (message.sender === 'You') {
+    background = theme.vars.palette.primary.plainHoverBg;
+  } else if (message.role === 'assistant') {
+    background = theme.vars.palette.background.body;
+  }
+
+  // text box css
+  const chatFontCss = {
+    my: 'auto',
+    fontFamily: message.role === 'assistant' ? theme.fontFamily.code : undefined,
+    fontSize: message.role === 'assistant' ? '14px' : '16px',
+    lineHeight: 1.75,
+  };
+
+  // user message truncation
+  let collapsedText = message.text;
+  let isCollapsed = false;
+  if (!forceExpanded && message.role === 'user') {
+    const lines = message.text.split('\n');
+    if (lines.length > 10) {
+      collapsedText = lines.slice(0, 10).join('\n');
+      isCollapsed = true;
+    }
+  }
+
+
+  return (
+    <ListItem sx={{
+      display: 'flex', flexDirection: message.sender === 'You' ? 'row-reverse' : 'row', alignItems: 'flex-start',
+      px: 1, py: 2,
+      background,
+      borderBottom: '1px solid',
+      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
+    }}>
+
+      {/* Author */}
+
+      <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
+             onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
+             onClick={event => setMenuAnchor(event.currentTarget)}>
+
+        {isHovering ? (
+          <IconButton variant='soft' color='warning'>
+            <MoreVertIcon />
+          </IconButton>
+        ) : (
+          typeof message.avatar === 'string'
+            ? <Avatar alt={message.sender} src={message.avatar} />
+            : (message.avatar != null)
+              ? <message.avatar sx={{ width: 40, height: 40 }} />
+              : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
+        )}
+
+        {message.role !== 'user' && (
+          <Typography level='body2' color='neutral'>
+            {message.role.replace('assistant', 'gpt-4')}
+          </Typography>
+        )}
+
+        {/* message operations menu (floating) */}
+        {!!menuAnchor && (
+          <Menu open anchorEl={menuAnchor} onClose={closeMenu} sx={{ minWidth: 160 }}>
+            <MenuItem onClick={handleMenuCopy}>
+              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+              Copy
+            </MenuItem>
+            <MenuItem onClick={handleMenuEdit}>
+              <ListItemDecorator><EditIcon /></ListItemDecorator>
+              {isEditing ? 'Discard' : 'Edit'}
+            </MenuItem>
+            <MenuItem onClick={props.onDelete}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+            </MenuItem>
+          </Menu>
+        )}
+
+      </Stack>
+
+
+      {/* Edit / Blocks */}
+
+      {isEditing ? (
+
+        <Textarea variant='solid' color='warning' autoFocus minRows={1}
+                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed}
+                  sx={{ ...chatFontCss, flexGrow: 1 }} />
+
+      ) : (
+
+        <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
+          {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
+            part.type === 'code' ? (
+              <ChatMessageCodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
+            ) : (
+              <Typography key={index} level='body1' component='span'
+                          sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
+                {part.content}
+              </Typography>
+            ),
+          )}
+          {isCollapsed && (
+            <Button variant='plain' onClick={handleExpand}>
+              ... expand ...
+            </Button>
+          )}
+        </Box>
+
+      )}
+
+    </ListItem>
+  );
+}
