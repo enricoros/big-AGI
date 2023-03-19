@@ -2,13 +2,13 @@ import * as React from 'react';
 
 import { Box, Container, IconButton, List, Option, Select, Sheet, Stack, Typography, useColorScheme, useTheme } from '@mui/joy';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import Face6Icon from '@mui/icons-material/Face6';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
-
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
+import { loadOpenAIApiKey, Settings } from '../components/Settings';
 
 
 /// Purpose configuration
@@ -71,6 +71,7 @@ export default function Conversation() {
   const [selectedSystemPurpose, setSelectedSystemPurpose] = React.useState<SystemPurpose>('Developer');
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
   const [disableCompose, setDisableCompose] = React.useState(false);
+  const [settingsShown, setSettingsShown] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -100,7 +101,7 @@ export default function Conversation() {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages }),
+      body: JSON.stringify({ apiKey: loadOpenAIApiKey(), messages: messages }),
     });
 
     if (response.body) {
@@ -156,29 +157,33 @@ export default function Conversation() {
         minHeight: '100vh',
       }}>
 
-        {/* Toolbar */}
+        {/* Application Bar */}
         <Sheet variant='solid' invertedColors sx={{
           position: 'sticky', top: 0, zIndex: 20, p: 1,
           background: theme.vars.palette.primary.solidHoverBg,
           display: 'flex', flexDirection: 'row',
         }}>
-          {!listEmpty && (
-            <IconButton variant='plain' color='neutral' disabled={disableCompose} onClick={handleListClear}>
-              <DeleteOutlineOutlinedIcon />
-            </IconButton>
-          )}
+          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+            <DarkModeIcon />
+          </IconButton>
 
-          <Typography level='body2' sx={{
+          {/*{!isEmpty && (*/}
+          {/*  <IconButton variant='plain' color='neutral' disabled={isDisabledCompose} onClick={onClearConversation}>*/}
+          {/*    <DeleteOutlineOutlinedIcon />*/}
+          {/*  </IconButton>*/}
+          {/*)}*/}
+
+          <Typography sx={{
             textAlign: 'center',
             fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
             my: 'auto',
             flexGrow: 1,
-          }}>
+          }} onDoubleClick={handleListClear}>
             GPT-4
           </Typography>
 
-          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
-            <DarkModeIcon />
+          <IconButton variant='plain' color='neutral' onClick={() => setSettingsShown(true)}>
+            <SettingsOutlinedIcon />
           </IconButton>
         </Sheet>
 
@@ -229,6 +234,10 @@ export default function Conversation() {
         </Box>
 
       </Stack>
+
+      {/* Settings Modal */}
+      <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
+
     </Container>
   );
 }

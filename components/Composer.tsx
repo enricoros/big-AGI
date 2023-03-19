@@ -7,7 +7,7 @@ import PanToolIcon from '@mui/icons-material/PanTool';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 
-/// Log of sent messages in localStorage
+/// localStorage (your browser) : Log of sent messages
 
 const LOCALSTORAGE_KEY_COMPOSER_HISTORY = 'app-composer-history';
 
