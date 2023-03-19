@@ -7,6 +7,7 @@ designed to be easy to use, customize, and extend. We encourage you to contribut
 [![Official Website](https://img.shields.io/badge/Demo-%23096bde?style=for-the-badge&logo=vercel&label=try)](https://nextjs-chatgpt-app-enricoros.vercel.app)
 
 Click to fork and run on Vercel, or check out the demo (bring your own API keys).
+
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY&envDescription=API%20Keys%20needed%20in%20your%20deployment)
 
 ## Features & Roadmap ✨
