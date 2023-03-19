@@ -1,5 +1,14 @@
 import * as React from 'react';
 
+import Prism from 'prismjs';
+import 'prismjs/themes/prism.css';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-java';
+
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
@@ -36,8 +45,23 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
     const language = match[1] || 'typescript';
     const codeBlock = match[2].trim();
 
+    // Load the specified language if it's not loaded yet
+    // NOTE: this is commented out because it inflates the size of the bundle by 200k
+    // if (!Prism.languages[language]) {
+    //   try {
+    //     require(`prismjs/components/prism-${language}`);
+    //   } catch (e) {
+    //     console.warn(`Prism language '${language}' not found, falling back to 'typescript'`);
+    //   }
+    // }
+
+    const highlightedCode = Prism.highlight(
+      codeBlock,
+      Prism.languages[language] || Prism.languages.typescript,
+      language,
+    );
     result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
-    result.push({ type: 'code', content: codeBlock, code: codeBlock, language });
+    result.push({ type: 'code', content: highlightedCode, code: codeBlock, language });
     lastIndex = match.index + match[0].length;
   }
 
@@ -68,15 +92,7 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
     display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
     '&:hover > button': { opacity: 1 },
   }}>
-    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      zIndex: 10,
-      p: 0.5,
-      opacity: 0,
-      transition: 'opacity 0.3s',
-    }}>
+    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
       <ContentCopyIcon />
     </IconButton>
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
