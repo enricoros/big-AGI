@@ -201,7 +201,10 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
   } else if (message.sender === 'You') {
     background = theme.vars.palette.primary.plainHoverBg;
   } else if (message.role === 'assistant') {
-    background = theme.vars.palette.background.body;
+    if (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: ')) {
+      background = theme.vars.palette.danger.softBg;
+    } else
+      background = theme.vars.palette.background.body;
   }
 
   // text box css
