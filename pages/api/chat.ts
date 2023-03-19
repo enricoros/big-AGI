@@ -5,7 +5,8 @@ import { UiMessage } from '../../components/ChatMessage';
 
 
 if (!process.env.OPENAI_API_KEY)
-  throw new Error('Please provide OPENAI_API_KEY in this deployment environment.');
+  console.warn('OPENAI_API_KEY has not been provided in this deployment environment. ' +
+    'Will use the optional keys incoming from the client, which is not recommended.');
 
 
 export type OpenAIChatInput = Omit<OpenAIStreamPayload, 'stream' | 'n'>
@@ -42,7 +43,7 @@ interface ChatGPTChunkedResponse {
 }
 
 
-export async function OpenAIStream(payload: OpenAIChatInput): Promise<ReadableStream> {
+export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -55,7 +56,7 @@ export async function OpenAIStream(payload: OpenAIChatInput): Promise<ReadableSt
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     method: 'POST',
     body: JSON.stringify(streamPayload),
@@ -103,7 +104,8 @@ export async function OpenAIStream(payload: OpenAIChatInput): Promise<ReadableSt
   });
 }
 
-export interface ApiInput {
+export interface ChatApiInput {
+  apiKey?: string;
   messages: UiMessage[];
   model?: string;
   temperature?: number;
@@ -114,13 +116,13 @@ export interface ApiInput {
 export default async function handler(req: NextRequest) {
 
   // read inputs
-  const { messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ApiInput = await req.json();
+  const { apiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
   const chatGptInputMessages: ChatGPTMessage[] = messages.map(({ role, text }) => ({
     role: role,
     content: text,
   }));
 
-  const stream: ReadableStream = await OpenAIStream({
+  const stream: ReadableStream = await OpenAIStream(apiKey || process.env.OPENAI_API_KEY || '', {
     model,
     messages: chatGptInputMessages,
     temperature,

@@ -22,8 +22,9 @@ Click to fork and run on Vercel. Bring your own OpenAI API key.
     - [x] Drag and drop files to add them to the prompt 📁
       <p><img src="docs/screenshot_drop_target.png" width='300'></p>
 - [x] Dark mode 🌙
-- [ ] User-provided API keys
+- [x] User-provided API keys
 - [ ] Developer-oriented features
+- [ ] Stop generation
 - [ ] Voice input
 - [ ] Mobile app (PWA)
 - [ ] Add your idea in the issues!
@@ -57,8 +58,11 @@ This project is licensed under the MIT License.
 
 ---
 
+[![GitHub issues](https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
 [![GitHub stars](https://img.shields.io/github/stars/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
 [![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/blob/main/LICENSE)
+[![Twitter Follow](https://img.shields.io/twitter/follow/enricoros?style=social)](https://twitter.com/enricoros)
 
 Made with 💙
