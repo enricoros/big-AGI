@@ -1,116 +1,234 @@
-import Head from 'next/head';
-import Image from 'next/image';
-import { Inter } from 'next/font/google';
+import * as React from 'react';
 
-const inter = Inter({ subsets: ['latin'] });
+import { Box, Container, IconButton, List, Option, Select, Sheet, Stack, Typography, useColorScheme, useTheme } from '@mui/joy';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import Face6Icon from '@mui/icons-material/Face6';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
-export default function Home() {
+import { ChatMessage, UiMessage } from '../components/ChatMessage';
+import { Composer } from '../components/Composer';
+
+
+/// Purpose configuration
+
+type SystemPurpose = 'Generic' | 'Developer' | 'Executive' | 'Scientist';
+
+const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
+  Developer: {
+    systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant',
+    description: <>Helps you code</>,
+  },
+  Executive: {
+    systemMessage: 'You are an executive assistant. Your communication style is concise, brief, formal',
+    description: 'Helps you write business emails',
+  },
+  Generic: {
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    description: 'Helps you think',
+  },
+  Scientist: {
+    systemMessage: 'You are a scientist\'s assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness',
+    description: 'Helps you write scientific papers',
+  },
+};
+
+
+/// UI Messages configuration
+
+const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 'sender' | 'avatar'> } = {
+  system: {
+    role: 'system',
+    sender: 'Bot',
+    avatar: SmartToyTwoToneIcon, //'https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png',
+  },
+  user: {
+    role: 'user',
+    sender: 'You',
+    avatar: Face6Icon, //https://mui.com/static/images/avatar/2.jpg',
+  },
+  assistant: {
+    role: 'assistant',
+    sender: 'Bot',
+    avatar: SmartToyOutlinedIcon, // 'https://www.svgrepo.com/show/306500/openai.svg',
+  },
+};
+
+const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
+  uid: Math.random().toString(36).substring(2, 15),
+  text: text,
+  ...MessageDefaults[role],
+});
+
+
+/// Chat ///
+
+export default function Conversation() {
+  const theme = useTheme();
+  const { mode: colorMode, setMode: setColorMode } = useColorScheme();
+
+  const [selectedSystemPurpose, setSelectedSystemPurpose] = React.useState<SystemPurpose>('Developer');
+  const [messages, setMessages] = React.useState<UiMessage[]>([]);
+  const [disableCompose, setDisableCompose] = React.useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+
+  const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
+
+
+  const handleListClear = () => setMessages([]);
+
+  const handleListDelete = (uid: string) =>
+    setMessages(list => list.filter(message => message.uid !== uid));
+
+  const handleListEdit = (uid: string, newText: string) =>
+    setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
+
+
+  const handlePurposeChange = (role: string | null) => {
+    if (role)
+      setSelectedSystemPurpose(role as SystemPurpose);
+  };
+
+
+  const getBotMessageStreaming = async (messages: UiMessage[]) => {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messages }),
+    });
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      const newBotMessage: UiMessage = createUiMessage('assistant', '');
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const messageText = decoder.decode(value);
+        newBotMessage.text += messageText;
+
+        setMessages(list => {
+          // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
+          const message = list.find(message => message.uid === newBotMessage.uid);
+          return !message ? [...list, newBotMessage] : [...list];
+        });
+      }
+    }
+  };
+
+  const handleComposerSendMessage: (text: string) => void = (text) => {
+
+    // seed the conversation with a 'system' message
+    const conversation = [...messages];
+    if (!conversation.length)
+      conversation.push(createUiMessage('system', PurposeData[selectedSystemPurpose].systemMessage));
+
+    // add the user message
+    conversation.push(createUiMessage('user', text));
+
+    // update the list of messages
+    setMessages(conversation);
+    messagesEndRef.current?.scrollIntoView();
+
+    // disable the composer while the bot is replying
+    setDisableCompose(true);
+    getBotMessageStreaming(conversation)
+      .then(() => setDisableCompose(false));
+  };
+
+
+  const listEmpty = !messages.length;
+
   return (
-    <>
-      <Head>
-        <title>Create Next App</title>
-        <meta name='description' content='Generated by create next app' />
-        <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <link rel='icon' href='/favicon.ico' />
-      </Head>
-      <main>
-        <div>
-          <p>
-            Get started by editing&nbsp;
-            <code>pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href='https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              By{' '}
-              <Image
-                src='/vercel.svg'
-                alt='Vercel Logo'
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
+    <Container maxWidth='xl' disableGutters sx={{
+      boxShadow: theme.vars.shadow.lg,
+    }}>
+      <Stack direction='column' sx={{
+        minHeight: '100vh',
+      }}>
 
-        <div>
-          <Image
-            src='/next.svg'
-            alt='Next.js Logo'
-            width={180}
-            height={37}
-            priority
-          />
-          <div>
-            <Image
-              src='/thirteen.svg'
-              alt='13'
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
+        {/* Toolbar */}
+        <Sheet variant='solid' invertedColors sx={{
+          position: 'sticky', top: 0, zIndex: 20, p: 1,
+          background: theme.vars.palette.primary.solidHoverBg,
+          display: 'flex', flexDirection: 'row',
+        }}>
+          {!listEmpty && (
+            <IconButton variant='plain' color='neutral' disabled={disableCompose} onClick={handleListClear}>
+              <DeleteOutlineOutlinedIcon />
+            </IconButton>
+          )}
 
-        <div>
-          <a
-            href='https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
+          <Typography level='body2' sx={{
+            textAlign: 'center',
+            fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
+            my: 'auto',
+            flexGrow: 1,
+          }}>
+            GPT-4
+          </Typography>
 
-          <a
-            href='https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
+          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+            <DarkModeIcon />
+          </IconButton>
+        </Sheet>
 
-          <a
-            href='https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
+        {/* Chat */}
+        <Box sx={{
+          flexGrow: 1,
+          background: theme.vars.palette.background.level1,
+        }}>
+          {listEmpty ? (
+            <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+              <Box>
+                <Typography level='body3' color='neutral'>
+                  AI purpose
+                </Typography>
+                <Select value={selectedSystemPurpose} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
+                  <Option value='Developer'>Developer</Option>
+                  <Option value='Scientist'>Scientist</Option>
+                  <Option value='Executive'>Executive</Option>
+                  <Option value='Generic'>ChatGPT4</Option>
+                </Select>
+                <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
+                  {PurposeData[selectedSystemPurpose].description}
+                </Typography>
+              </Box>
+            </Stack>
+          ) : (
+            <>
+              <List sx={{ p: 0 }}>
+                {messages.map((message, index) =>
+                  <ChatMessage key={index} uiMessage={message}
+                               onDelete={() => handleListDelete(message.uid)}
+                               onEdit={newText => handleListEdit(message.uid, newText)} />)}
+                <div ref={messagesEndRef}></div>
+              </List>
+            </>
+          )}
+        </Box>
 
-          <a
-            href='https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-    </>
+        {/* Compose */}
+        <Box sx={{
+          position: 'sticky', bottom: 0, zIndex: 10,
+          background: theme.vars.palette.background.body,
+          borderTop: '1px solid',
+          borderTopColor: theme.vars.palette.divider,
+          p: { xs: 1, md: 2 },
+        }}>
+          <Composer isDeveloper={selectedSystemPurpose === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
+        </Box>
+
+      </Stack>
+    </Container>
   );
 }
