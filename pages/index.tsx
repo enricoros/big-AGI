@@ -9,7 +9,7 @@ import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
-import { isValidOpenAIApiKey, loadOpenAIApiKey, Settings } from '../components/Settings';
+import { isValidOpenAIApiKey, loadOpenAIApiKey, loadGptModel, Settings } from '../components/Settings';
 
 
 /// Purpose configuration
@@ -59,6 +59,7 @@ const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 's
 const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   uid: Math.random().toString(36).substring(2, 15),
   text: text,
+  model: loadGptModel(),
   ...MessageDefaults[role],
 });
 
@@ -107,7 +108,7 @@ export default function Conversation() {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: loadOpenAIApiKey(), messages: messages }),
+      body: JSON.stringify({ apiKey: loadOpenAIApiKey(), model: loadGptModel(), messages: messages }),
     });
 
     if (response.body) {
