@@ -1,38 +1,63 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Next.js ChatGPT 🤖💬
 
-## Getting Started
+Welcome to `nextjs-chatgpt-app`! 🎉🚀 Responsive chat application powered by OpenAI's GPT-4, with chat streaming, code
+highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
+designed to be easy to use, customize, and extend. We encourage you to contribute and help improve this project! 😊
 
-First, run the development server:
+#### Try it out! 🎮
 
-```bash
+Click to fork and run on Vercel. Bring your own OpenAI API key.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY&envDescription=API%20Keys%20needed%20in%20your%20deployment)
+
+## Why this? 💡
+
+Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
+
+<img src="docs/screenshot_web_highlighting.png" alt="Screenshot" width="500" />
+<img src="docs/screenshot_mobile_clean.png" alt="Screenshot" width="222" />
+
+## Features & Roadmap ✨
+
+- [x] Chat with OpenAI's GPT-4 🧠
+- [x] System presets (Developer, Scientist, Executive, and ChatGPT) 🎭
+- [x] Real-time streaming of AI responses ⚡
+- [ ] Cool stuff
+    - [x] Syntax highlighting for multiple languages 🌈
+    - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
+- [x] Drag and drop files to add them to the prompt 📁
+- [x] Dark mode 🌙
+- [ ] User-provided API keys
+- [ ] Developer-oriented features
+- [ ] Voice input
+- [ ] Mobile app (PWA)
+- [ ] Add your idea in the issues!
+
+## Developing 🚀
+
+Simply clone the repository, install the dependencies, and run the development server:
+
+```
+git clone https://github.com/enricoros/nextjs-chatgpt-app.git
+cd nextjs-chatgpt-app
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Now the app should be running on `http://localhost:3000`.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Contributing 🙌
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+The source code is Very Simple™ 😀. We'd love to have you contribute to this project! Feel free to fork the repository,
+make changes, and submit a pull request. If you have any questions or need help, feel free to reach out to us.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+This project is licensed under the MIT License.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+[![GitHub stars](https://img.shields.io/github/stars/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
+[![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/blob/main/LICENSE)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Made with 💙
