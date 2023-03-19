@@ -10,28 +10,29 @@ Click to fork and run on Vercel. Bring your own OpenAI API key.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY&envDescription=API%20Keys%20needed%20in%20your%20deployment)
 
-## Why this? 💡
-
-Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
-
-<img src="docs/screenshot_web_highlighting.png" alt="Screenshot" width="500" />
-<img src="docs/screenshot_mobile_clean.png" alt="Screenshot" width="222" />
-
 ## Features & Roadmap ✨
 
 - [x] Chat with OpenAI's GPT-4 🧠
 - [x] System presets (Developer, Scientist, Executive, and ChatGPT) 🎭
+  <p><img src="docs/screenshot_feature_system.png" width='200'></p>
 - [x] Real-time streaming of AI responses ⚡
 - [ ] Cool stuff
     - [x] Syntax highlighting for multiple languages 🌈
     - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
-- [x] Drag and drop files to add them to the prompt 📁
+    - [x] Drag and drop files to add them to the prompt 📁
+      <p><img src="docs/screenshot_drop_target.png" width='300'></p>
 - [x] Dark mode 🌙
 - [ ] User-provided API keys
 - [ ] Developer-oriented features
 - [ ] Voice input
 - [ ] Mobile app (PWA)
 - [ ] Add your idea in the issues!
+
+## Why this? 💡
+
+Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
+
+![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
 
 ## Developing 🚀
 
