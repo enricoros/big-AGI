@@ -13,8 +13,12 @@ export const loadOpenAIApiKey = (): string => {
 
 const storeOpenAIApiKey = (apiKey: string) => {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(LOCALSTORAGE_KEY_OPENAI_API_KEY, apiKey);
+  if (apiKey) localStorage.setItem(LOCALSTORAGE_KEY_OPENAI_API_KEY, apiKey);
+  else localStorage.removeItem(LOCALSTORAGE_KEY_OPENAI_API_KEY);
 };
+
+export const isValidOpenAIApiKey = (apiKey?: string) =>
+  apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 
 /**
@@ -38,8 +42,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
     onClose();
   };
 
-  // const hasKey = apiKey?.length > 0;
-  const isOpenAIKeyValid = apiKey.startsWith('sk-') && apiKey.length > 40;
+  const isValidKey = isValidOpenAIApiKey(apiKey);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -53,10 +56,10 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
             Enter OpenAI API Key (required)
           </Typography>
 
-          <Input variant='outlined' placeholder={'sk-...'} error={!isOpenAIKeyValid}
-                 onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
+          <Input variant='outlined' placeholder={'sk-...'} error={!isValidKey}
+                 value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
 
-          <Button variant='solid' color={isOpenAIKeyValid ? 'primary' : 'neutral'} sx={{ mt: 2 }} onClick={handleSaveClicked}>
+          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 2 }} onClick={handleSaveClicked}>
             Save
           </Button>
 

@@ -65,6 +65,20 @@ export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Pr
   return new ReadableStream({
     async start(controller) {
 
+      // handle errors here, to return them as custom text on the stream
+      if (!res.ok) {
+        let errorPayload: object = {};
+        try {
+          errorPayload = await res.json();
+        } catch (e) {
+          // ignore
+        }
+        // return custom text
+        controller.enqueue(encoder.encode(`OpenAI API error: ${res.status} ${res.statusText} ${JSON.stringify(errorPayload)}`));
+        controller.close();
+        return;
+      }
+
       // stream response (SSE) from OpenAI may be fragmented into multiple chunks
       // this ensures we properly read chunks and invoke an event for each SSE event stream
       const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
@@ -116,13 +130,18 @@ export interface ChatApiInput {
 export default async function handler(req: NextRequest) {
 
   // read inputs
-  const { apiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
+  const { apiKey: userApiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
   const chatGptInputMessages: ChatGPTMessage[] = messages.map(({ role, text }) => ({
     role: role,
     content: text,
   }));
 
-  const stream: ReadableStream = await OpenAIStream(apiKey || process.env.OPENAI_API_KEY || '', {
+  // select key
+  const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
+  if (!apiKey)
+    return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
+
+  const stream: ReadableStream = await OpenAIStream(apiKey, {
     model,
     messages: chatGptInputMessages,
     temperature,

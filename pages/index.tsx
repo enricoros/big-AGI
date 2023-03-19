@@ -6,9 +6,10 @@ import Face6Icon from '@mui/icons-material/Face6';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
+
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
-import { loadOpenAIApiKey, Settings } from '../components/Settings';
+import { isValidOpenAIApiKey, loadOpenAIApiKey, Settings } from '../components/Settings';
 
 
 /// Purpose configuration
@@ -78,6 +79,11 @@ export default function Conversation() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  React.useEffect(() => {
+    // show the settings at startup if the API key is not present
+    if (!isValidOpenAIApiKey(loadOpenAIApiKey()))
+      setSettingsShown(true);
+  }, []);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
