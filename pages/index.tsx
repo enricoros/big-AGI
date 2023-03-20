@@ -14,9 +14,17 @@ import { isValidOpenAIApiKey, loadGptModel, loadOpenAIApiKey, Settings } from '.
 
 /// Purpose configuration
 
-type SystemPurpose = 'Generic' | 'Developer' | 'Executive' | 'Scientist' | 'Custom';
+type SystemPurpose = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
+  Catalyst: {
+    systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
+    description: 'The growth hacker with marketing superpowers 🚀',
+  },
+  Custom: {
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    description: 'User-defined purpose',
+  },
   Developer: {
     systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant',
     description: <>Helps you code</>,
@@ -32,10 +40,6 @@ const PurposeData: { [key in SystemPurpose]: { systemMessage: string; descriptio
   Scientist: {
     systemMessage: 'You are a scientist\'s assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness',
     description: 'Helps you write scientific papers',
-  },
-  Custom: {
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
-    description: 'User-defined purpose',
   },
 };
 
@@ -102,15 +106,15 @@ export default function Conversation() {
     setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
 
 
-  const handlePurposeChange = (role: string | null) => {
-    if (!role) return;
+  const handlePurposeChange = (purpose: SystemPurpose | null) => {
+    if (!purpose) return;
 
-    if (role === 'Custom') {
+    if (purpose === 'Custom') {
       const systemMessage = prompt('Enter your custom AI purpose', PurposeData['Custom'].systemMessage);
       PurposeData['Custom'].systemMessage = systemMessage || '';
     }
 
-    setSelectedSystemPurpose(role as SystemPurpose);
+    setSelectedSystemPurpose(purpose);
   };
 
 
@@ -169,6 +173,8 @@ export default function Conversation() {
 
   const listEmpty = !messages.length;
 
+  const Emoji = (props: any) => null;
+
   return (
     <Container maxWidth='xl' disableGutters sx={{
       boxShadow: theme.vars.shadow.lg,
@@ -219,11 +225,12 @@ export default function Conversation() {
                   AI purpose
                 </Typography>
                 <Select value={selectedSystemPurpose} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
-                  <Option value='Developer'>Developer</Option>
-                  <Option value='Scientist'>Scientist</Option>
-                  <Option value='Executive'>Executive</Option>
-                  <Option value='Generic'>ChatGPT4</Option>
-                  <Option value='Custom'>Custom ✏️</Option>
+                  <Option value='Developer'><Emoji>👩‍💻</Emoji> Developer</Option>
+                  <Option value='Scientist'><Emoji>🔬</Emoji> Scientist</Option>
+                  <Option value='Executive'><Emoji>👔</Emoji> Executive</Option>
+                  <Option value='Catalyst'><Emoji>🚀</Emoji> Catalyst</Option>
+                  <Option value='Generic'><Emoji>🧠</Emoji> ChatGPT4</Option>
+                  <Option value='Custom'><Emoji>✨</Emoji> Custom</Option>
                 </Select>
                 <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
                   {PurposeData[selectedSystemPurpose].description}
