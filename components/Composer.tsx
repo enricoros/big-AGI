@@ -5,7 +5,7 @@ import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import TelegramIcon from '@mui/icons-material/Telegram';
-
+import MicIcon from '@mui/icons-material/Mic';
 
 /// localStorage (your browser) : Log of sent messages
 
@@ -42,6 +42,39 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
   return expanded;
 };
 
+/// Voice Input
+interface ISpeechRecognition {
+  new (): ISpeechRecognition;
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onerror: (event: any) => void;
+  onresult: (event: any) => void;
+  start: () => void;
+}
+
+let isSpeechEnabled = false;
+let recognition: ISpeechRecognition;
+if (typeof window !== 'undefined') {
+  let Speech = ((window as any).SpeechRecognition ||
+              (window as any).webkitSpeechRecognition ||
+              (window as any).mozSpeechRecognition ||
+              (window as any).msSpeechRecognition
+              ) as ISpeechRecognition;
+
+  if(typeof Speech !== 'undefined') {
+    isSpeechEnabled = true;
+    recognition = new Speech();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onerror = (event) => {
+      console.error('Error occurred during speech recognition:', event.error);
+    };
+  }
+}
+
 
 /**
  * A React component for composing and sending messages in a chat-like interface.
@@ -60,6 +93,16 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
 
+  if(isSpeechEnabled) {
+    recognition.onresult = (event) => {
+      const speechResult = event.results[event.results.length - 1][0].transcript;
+      setComposeText(composeText + speechResult);
+    };
+  } else {
+    // TODO: show popup
+    console.log('Speech Recognition not supported');
+  }
+
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
     if (text.length) {
@@ -75,6 +118,11 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
         handleSendClicked();
       e.preventDefault();
     }
+  };
+
+  const handleMicClicked = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    if(!isSpeechEnabled) return;
+    recognition.start();
   };
 
   const eatDragEvent = (e: React.DragEvent) => {
@@ -151,6 +199,16 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
                   onDragEnter={handleMessageDragEnter}
                   value={composeText} onChange={(e) => setComposeText(e.target.value)}
                   sx={{ fontSize: '16px', lineHeight: 1.75 }} />
+
+        <Button
+          onClick={handleMicClicked}
+          sx={{
+            position: 'absolute',
+            top: 0, right: 0,
+            margin: '10px'
+            }}>
+          <MicIcon />
+        </Button>
 
         {/* drop target overlay (display: none by default) */}
         <Card color='primary' invertedColors variant='soft'
