@@ -1,9 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 
-import { Button, Card, Grid, ListDivider, Menu, MenuItem, Stack, Textarea, Typography } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PanToolIcon from '@mui/icons-material/PanTool';
+import PostAddIcon from '@mui/icons-material/PostAdd';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 
@@ -59,6 +60,8 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
   const [composeText, setComposeText] = React.useState('');
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -76,6 +79,7 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
       e.preventDefault();
     }
   };
+
 
   const eatDragEvent = (e: React.DragEvent) => {
     e.preventDefault();
@@ -112,13 +116,37 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
       return;
     }
 
+    // detect failure of dropping from VSCode
+    if (e.dataTransfer.types.indexOf('codeeditors') >= 0) {
+      setComposeText(text + '\nPasting from VSCode is not supported! Fixme. Anyone?');
+      return;
+    }
+
     // paste Text
     const droppedText = e.dataTransfer.getData('text');
     if (droppedText) {
       text = expandPromptTemplate(PromptTemplates.PasteText, { clipboard: droppedText })(text);
       setComposeText(text);
+      return;
     }
+
+    // NOTE for VSCode - a Drag & Drop does not transfer the File object
+    // https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
+    console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
+
+
+  const handleAttachmentChanged = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    let text = composeText;
+    for (let i = 0; i < files.length; i++)
+      text = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: files[i].name, fileText: await files[i].text() })(text);
+    setComposeText(text);
+  };
+
+  const handleOpenAttachmentPicker = () => attachmentFileInputRef.current?.click();
+
 
   const pasteFromClipboard = async () => {
     const clipboardContent = (await navigator.clipboard.readText() || '').trim();
@@ -133,57 +161,93 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
     hideHistory();
   };
 
+
   const showHistory = (event: React.MouseEvent<HTMLAnchorElement>) => setHistoryAnchor(event.currentTarget);
 
   const hideHistory = () => setHistoryAnchor(null);
 
+
   const textPlaceholder: string = 'Type a message...'; // 'Enter your message...\n  <enter> send\n  <shift>+<enter> new line\n  ``` code';*/
+  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+  const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
 
-      <Grid xs={12} sm={9} sx={{ position: 'relative' }}>
+      {/* Compose & VButtons */}
+      <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
-        {/* Message edit box */}
-        <Textarea variant='soft' autoFocus placeholder={textPlaceholder}
-                  minRows={5} maxRows={16}
-                  onKeyDown={handleKeyPress}
-                  onDragEnter={handleMessageDragEnter}
-                  value={composeText} onChange={(e) => setComposeText(e.target.value)}
-                  sx={{ fontSize: '16px', lineHeight: 1.75 }} />
+        {/* Vertical Buttons Bar */}
+        <Box>
 
-        {/* drop target overlay (display: none by default) */}
-        <Card color='primary' invertedColors variant='soft'
-              sx={{
-                display: isDragging ? 'flex' : 'none',
-                position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                alignItems: 'center', justifyContent: 'space-evenly',
-                border: '2px dashed',
-                zIndex: 10,
-              }}
-              onDragLeave={handleOverlayDragLeave}
-              onDragOver={handleOverlayDragOver}
-              onDrop={handleOverlayDrop}
-        >
-          <PanToolIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />
-          <Typography level='body2' sx={{ pointerEvents: 'none' }}>
-            I will hold on to this for you
-          </Typography>
-        </Card>
+          <IconButton variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} sx={{ ...hideOnDesktop }}>
+            <PostAddIcon />
+          </IconButton>
+          <Tooltip title={<>Attach {isDeveloper ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
+            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} startDecorator={<PostAddIcon />}
+                    sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
+              Attach
+            </Button>
+          </Tooltip>
 
-      </Grid>
+          <Box sx={{ mt: { xs: 1, md: 2 } }} />
 
-      <Grid xs={12} sm={3}>
-        <Stack spacing={2}>
-
-          <Button fullWidth variant='solid' color='primary' disabled={disableSend} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
-            Chat
+          <IconButton variant='plain' color='neutral' onClick={pasteFromClipboard} sx={{ ...hideOnDesktop }}>
+            <ContentPasteGoIcon />
+          </IconButton>
+          <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
+            {isDeveloper ? 'Paste code' : 'Paste'}
           </Button>
 
-          <Stack direction='row' spacing={1} sx={{ display: { xs: 'none', sm: 'flex' }, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between' }}>
-            <Button variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard}>
-              {isDeveloper ? 'Code' : 'Paste'}
+          <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleAttachmentChanged} />
+
+        </Box>
+
+        {/* Message edit box, with Drop overlay */}
+        <Box sx={{ flexGrow: 1, position: 'relative' }}>
+
+          <Textarea variant='soft' autoFocus placeholder={textPlaceholder}
+                    minRows={5} maxRows={12}
+                    onKeyDown={handleKeyPress}
+                    onDragEnter={handleMessageDragEnter}
+                    value={composeText} onChange={(e) => setComposeText(e.target.value)}
+                    sx={{ fontSize: '16px', lineHeight: 1.75 }} />
+
+          <Card color='primary' invertedColors variant='soft'
+                sx={{
+                  display: isDragging ? 'flex' : 'none',
+                  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+                  alignItems: 'center', justifyContent: 'space-evenly',
+                  border: '2px dashed',
+                  zIndex: 10,
+                }}
+                onDragLeave={handleOverlayDragLeave}
+                onDragOver={handleOverlayDragOver}
+                onDrop={handleOverlayDrop}>
+            <PanToolIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />
+            <Typography level='body2' sx={{ pointerEvents: 'none' }}>
+              I will hold on to this for you
+            </Typography>
+          </Card>
+
+        </Box>
+
+      </Stack></Grid>
+
+      {/* Other Buttons */}
+      <Grid xs={12} md={3}>
+        <Stack spacing={2}>
+
+          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+              <KeyboardArrowUpIcon />
+            </IconButton>
+            <Button fullWidth variant='solid' color='primary' disabled={disableSend} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
+              Chat
             </Button>
+          </Box>
+
+          <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
             <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
               History
             </Button>
