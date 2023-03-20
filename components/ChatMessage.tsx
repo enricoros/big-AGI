@@ -15,9 +15,10 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import ReplayIcon from '@mui/icons-material/Replay';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Avatar, Box, Button, IconButton, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
 
@@ -156,7 +157,7 @@ function prettyModel(model: string): string {
  * @param {Function} props.onDelete - The function to call when the delete button is clicked.
  * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
  */
-export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void }) {
+export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
   const message = props.uiMessage;
 
@@ -172,15 +173,23 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
 
   const closeMenu = () => setMenuAnchor(null);
 
-  const handleMenuCopy = () => {
+  const handleMenuCopy = (e: React.MouseEvent) => {
     copyToClipboard(message.text);
+    e.preventDefault();
     closeMenu();
   };
 
-  const handleMenuEdit = () => {
+  const handleMenuEdit = (e: React.MouseEvent) => {
     if (!isEditing)
       setEditedText(message.text);
     setIsEditing(!isEditing);
+    e.preventDefault();
+    closeMenu();
+  };
+
+  const handleMenuRunAgain = (e: React.MouseEvent) => {
+    props.onRunAgain();
+    e.preventDefault();
     closeMenu();
   };
 
@@ -250,7 +259,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
              onClick={event => setMenuAnchor(event.currentTarget)}>
 
         {isHovering ? (
-          <IconButton variant='soft' color='warning'>
+          <IconButton variant='soft' color='primary'>
             <MoreVertIcon />
           </IconButton>
         ) : (
@@ -270,7 +279,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
 
         {/* message operations menu (floating) */}
         {!!menuAnchor && (
-          <Menu open anchorEl={menuAnchor} onClose={closeMenu} sx={{ minWidth: 160 }}>
+          <Menu open anchorEl={menuAnchor} onClose={closeMenu} sx={{ minWidth: 200 }}>
             <MenuItem onClick={handleMenuCopy}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
               Copy
@@ -278,6 +287,11 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
             <MenuItem onClick={handleMenuEdit}>
               <ListItemDecorator><EditIcon /></ListItemDecorator>
               {isEditing ? 'Discard' : 'Edit'}
+            </MenuItem>
+            <ListDivider />
+            <MenuItem onClick={handleMenuRunAgain}>
+              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
+              Restart
             </MenuItem>
             <MenuItem onClick={props.onDelete}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
@@ -293,7 +307,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
 
       {isEditing ? (
 
-        <Textarea variant='solid' color='warning' autoFocus minRows={1}
+        <Textarea variant='soft' color='primary' autoFocus minRows={1}
                   value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed}
                   sx={{ ...chatFontCss, flexGrow: 1 }} />
 
