@@ -9,7 +9,7 @@ import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
-import { isValidOpenAIApiKey, loadOpenAIApiKey, loadGptModel, Settings } from '../components/Settings';
+import { isValidOpenAIApiKey, loadGptModel, loadOpenAIApiKey, Settings } from '../components/Settings';
 
 
 /// Purpose configuration
@@ -147,8 +147,11 @@ export default function Conversation() {
 
     // seed the conversation with a 'system' message
     const conversation = [...messages];
-    if (!conversation.length)
-      conversation.push(createUiMessage('system', PurposeData[selectedSystemPurpose].systemMessage));
+    if (!conversation.length) {
+      let systemMessage = PurposeData[selectedSystemPurpose].systemMessage;
+      systemMessage = systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+      conversation.push(createUiMessage('system', systemMessage));
+    }
 
     // add the user message
     conversation.push(createUiMessage('user', text));
@@ -220,7 +223,7 @@ export default function Conversation() {
                   <Option value='Scientist'>Scientist</Option>
                   <Option value='Executive'>Executive</Option>
                   <Option value='Generic'>ChatGPT4</Option>
-                  <Option value='Custom'>Custom</Option>
+                  <Option value='Custom'>Custom ✏️</Option>
                 </Select>
                 <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
                   {PurposeData[selectedSystemPurpose].description}
