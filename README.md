@@ -23,6 +23,8 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
       <p><img src="docs/screenshot_drop_target.png" width='300'></p>
 - [x] Dark mode 🌙
 - [x] User-provided API keys
+- [x] 🎉 NEW Support for GPT 3.5 Turbo - @koganei
+- [x] 🎉 NEW Custom system purpose - @typpo
 - [ ] Developer-oriented features
 - [ ] Stop generation
 - [ ] Voice input
@@ -36,6 +38,12 @@ Because the official Chat is ___slower than the API___, and the Playground UI __
 ![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
 
 ## Developing 🚀
+
+Tech Stack 🛠️
+
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 Simply clone the repository, install the dependencies, and run the development server:
 
