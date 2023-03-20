@@ -9,14 +9,22 @@ import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
-import { isValidOpenAIApiKey, loadOpenAIApiKey, loadGptModel, Settings } from '../components/Settings';
+import { isValidOpenAIApiKey, loadGptModel, loadOpenAIApiKey, Settings } from '../components/Settings';
 
 
 /// Purpose configuration
 
-type SystemPurpose = 'Generic' | 'Developer' | 'Executive' | 'Scientist';
+type SystemPurpose = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
+  Catalyst: {
+    systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
+    description: 'The growth hacker with marketing superpowers 🚀',
+  },
+  Custom: {
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    description: 'User-defined purpose',
+  },
   Developer: {
     systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant',
     description: <>Helps you code</>,
@@ -59,7 +67,7 @@ const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 's
 const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   uid: Math.random().toString(36).substring(2, 15),
   text: text,
-  model: loadGptModel(),
+  model: '',
   ...MessageDefaults[role],
 });
 
@@ -97,10 +105,28 @@ export default function Conversation() {
   const handleListEdit = (uid: string, newText: string) =>
     setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
 
+  const handleListRunAgain = (uid: string) => {
+    // take all messages until we get to uid, then remove the rest
+    const uidPosition = messages.findIndex(message => message.uid === uid);
+    if (uidPosition === -1) return;
+    const conversation = messages.slice(0, uidPosition + 1);
+    setMessages(conversation);
 
-  const handlePurposeChange = (role: string | null) => {
-    if (role)
-      setSelectedSystemPurpose(role as SystemPurpose);
+    // disable the composer while the bot is replying
+    setDisableCompose(true);
+    getBotMessageStreaming(conversation)
+      .then(() => setDisableCompose(false));
+  };
+
+  const handlePurposeChange = (purpose: SystemPurpose | null) => {
+    if (!purpose) return;
+
+    if (purpose === 'Custom') {
+      const systemMessage = prompt('Enter your custom AI purpose', PurposeData['Custom'].systemMessage);
+      PurposeData['Custom'].systemMessage = systemMessage || '';
+    }
+
+    setSelectedSystemPurpose(purpose);
   };
 
 
@@ -124,6 +150,22 @@ export default function Conversation() {
         const messageText = decoder.decode(value);
         newBotMessage.text += messageText;
 
+        // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
+        if (!newBotMessage.model && newBotMessage.text.startsWith('{')) {
+          const endOfJson = newBotMessage.text.indexOf('}');
+          if (endOfJson > 0) {
+            const json = newBotMessage.text.substring(0, endOfJson + 1);
+            try {
+              const parsed = JSON.parse(json);
+              newBotMessage.model = parsed.model;
+              newBotMessage.text = newBotMessage.text.substring(endOfJson + 1);
+            } catch (e) {
+              // error parsing JSON, ignore
+              console.log('Error parsing JSON: ' + e);
+            }
+          }
+        }
+
         setMessages(list => {
           // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
           const message = list.find(message => message.uid === newBotMessage.uid);
@@ -137,15 +179,17 @@ export default function Conversation() {
 
     // seed the conversation with a 'system' message
     const conversation = [...messages];
-    if (!conversation.length)
-      conversation.push(createUiMessage('system', PurposeData[selectedSystemPurpose].systemMessage));
+    if (!conversation.length) {
+      let systemMessage = PurposeData[selectedSystemPurpose].systemMessage;
+      systemMessage = systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+      conversation.push(createUiMessage('system', systemMessage));
+    }
 
     // add the user message
     conversation.push(createUiMessage('user', text));
 
     // update the list of messages
     setMessages(conversation);
-    messagesEndRef.current?.scrollIntoView();
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
@@ -155,6 +199,8 @@ export default function Conversation() {
 
 
   const listEmpty = !messages.length;
+
+  const Emoji = (props: any) => null;
 
   return (
     <Container maxWidth='xl' disableGutters sx={{
@@ -206,10 +252,12 @@ export default function Conversation() {
                   AI purpose
                 </Typography>
                 <Select value={selectedSystemPurpose} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
-                  <Option value='Developer'>Developer</Option>
-                  <Option value='Scientist'>Scientist</Option>
-                  <Option value='Executive'>Executive</Option>
-                  <Option value='Generic'>ChatGPT4</Option>
+                  <Option value='Developer'><Emoji>👩‍💻</Emoji> Developer</Option>
+                  <Option value='Scientist'><Emoji>🔬</Emoji> Scientist</Option>
+                  <Option value='Executive'><Emoji>👔</Emoji> Executive</Option>
+                  <Option value='Catalyst'><Emoji>🚀</Emoji> Catalyst</Option>
+                  <Option value='Generic'><Emoji>🧠</Emoji> ChatGPT4</Option>
+                  <Option value='Custom'><Emoji>✨</Emoji> Custom</Option>
                 </Select>
                 <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
                   {PurposeData[selectedSystemPurpose].description}
@@ -220,9 +268,10 @@ export default function Conversation() {
             <>
               <List sx={{ p: 0 }}>
                 {messages.map((message, index) =>
-                  <ChatMessage key={index} uiMessage={message}
+                  <ChatMessage key={'msg-' + message.uid} uiMessage={message}
                                onDelete={() => handleListDelete(message.uid)}
-                               onEdit={newText => handleListEdit(message.uid, newText)} />)}
+                               onEdit={newText => handleListEdit(message.uid, newText)}
+                               onRunAgain={() => handleListRunAgain(message.uid)} />)}
                 <div ref={messagesEndRef}></div>
               </List>
             </>

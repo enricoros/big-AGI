@@ -9,11 +9,16 @@ if (!process.env.OPENAI_API_KEY)
     'Will use the optional keys incoming from the client, which is not recommended.');
 
 
-export type OpenAIChatInput = Omit<OpenAIStreamPayload, 'stream' | 'n'>
+// definition for OpenAI wire types
 
-interface OpenAIStreamPayload {
-  model: 'gpt-4' | string;
-  messages: ChatGPTMessage[];
+interface ChatMessage {
+  role: 'assistant' | 'system' | 'user';
+  content: string;
+}
+
+interface ChatCompletionsRequest {
+  model: string;
+  messages: ChatMessage[];
   temperature?: number;
   top_p?: number;
   frequency_penalty?: number;
@@ -23,31 +28,24 @@ interface OpenAIStreamPayload {
   n: number;
 }
 
-export type ChatGPTAgent = 'user' | 'system' | 'assistant';
-
-interface ChatGPTMessage {
-  role: ChatGPTAgent;
-  content: string;
-}
-
-interface ChatGPTChunkedResponse {
+interface ChatCompletionsResponseChunked {
   id: string; // unique id of this chunk
   object: 'chat.completion.chunk';
   created: number; // unix timestamp in seconds
   model: string; // can differ from the ask, e.g. 'gpt-4-0314'
   choices: {
-    delta: Partial<ChatGPTMessage>;
+    delta: Partial<ChatMessage>;
     index: number; // always 0s for n=1
     finish_reason: 'stop' | 'length' | null;
   }[];
 }
 
 
-export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Promise<ReadableStream> {
+async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest, 'stream' | 'n'>): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const streamPayload: OpenAIStreamPayload = {
+  const streamingPayload: ChatCompletionsRequest = {
     ...payload,
     stream: true,
     n: 1,
@@ -59,7 +57,7 @@ export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Pr
       Authorization: `Bearer ${apiKey}`,
     },
     method: 'POST',
-    body: JSON.stringify(streamPayload),
+    body: JSON.stringify(streamingPayload),
   });
 
   return new ReadableStream({
@@ -79,6 +77,9 @@ export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Pr
         return;
       }
 
+      // the first packet will have the model name
+      let sentFirstPacket = false;
+
       // stream response (SSE) from OpenAI may be fragmented into multiple chunks
       // this ensures we properly read chunks and invoke an event for each SSE event stream
       const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
@@ -93,11 +94,20 @@ export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Pr
         }
 
         try {
-          const json: ChatGPTChunkedResponse = JSON.parse(event.data);
+          const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
 
           // ignore any 'role' delta update
           if (json.choices[0].delta?.role)
             return;
+
+          // stringify and send the first packet as a JSON object
+          if (!sentFirstPacket) {
+            sentFirstPacket = true;
+            const firstPacket: ChatApiOutputStart = {
+              model: json.model,
+            };
+            controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
+          }
 
           // transmit the text stream
           const text = json.choices[0].delta?.content || '';
@@ -118,6 +128,9 @@ export async function OpenAIStream(apiKey: string, payload: OpenAIChatInput): Pr
   });
 }
 
+
+// Next.js API route
+
 export interface ChatApiInput {
   apiKey?: string;
   messages: UiMessage[];
@@ -126,12 +139,20 @@ export interface ChatApiInput {
   max_tokens?: number;
 }
 
+/**
+ * The client will be sent a stream of words. As an extra (an totally optional) 'data channel' we send a
+ * string'ified JSON object with the few initial variables. We hope in the future to adopt a better
+ * solution (e.g. websockets, but that will exclude deployment in Edge Functions).
+ */
+export interface ChatApiOutputStart {
+  model: string;
+}
 
 export default async function handler(req: NextRequest) {
 
   // read inputs
   const { apiKey: userApiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
-  const chatGptInputMessages: ChatGPTMessage[] = messages.map(({ role, text }) => ({
+  const chatGptInputMessages: ChatMessage[] = messages.map(({ role, text }) => ({
     role: role,
     content: text,
   }));

@@ -13,9 +13,9 @@ export const loadOpenAIApiKey = (): string => {
   return localStorage.getItem(LOCALSTORAGE_KEY_OPENAI_API_KEY) || '';
 };
 
-export const loadGptModel = (): string => {
-  if (typeof localStorage === 'undefined') return '';
-  return localStorage.getItem(LOCALSTORAGE_KEY_GPT_MODEL) || '';
+export const loadGptModel = (fallback: string = 'gpt-4'): string => {
+  if (typeof localStorage === 'undefined') return fallback;
+  return localStorage.getItem(LOCALSTORAGE_KEY_GPT_MODEL) || fallback;
 };
 
 const storeOpenAIApiKey = (apiKey: string) => {
@@ -42,13 +42,13 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function Settings({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  const [apiKey, setApiKey] = React.useState(loadOpenAIApiKey());
-  const [gptModel, setGptModel] = React.useState('gpt-4');
+  const [apiKey, setApiKey] = React.useState<string>(loadOpenAIApiKey());
+  const [gptModel, setGptModel] = React.useState<string>(loadGptModel());
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
     setApiKey((e.target as HTMLInputElement).value);
 
-  const handleGptModelChange = (e: React.FocusEvent|React.MouseEvent|React.KeyboardEvent|null, value: string|null) =>
+  const handleGptModelChange = (e: React.FocusEvent | React.MouseEvent | React.KeyboardEvent | null, value: string | null) =>
     setGptModel(value ? value : 'gpt-4');
 
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
@@ -68,7 +68,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
         <ModalClose />
         <Typography level='h5'>Settings</Typography>
 
-        <Box sx={{ mt: 2, minWidth: 300 }}>
+        <Box sx={{ mt: 3, minWidth: 300 }}>
 
           <Typography sx={{ mb: 1 }}>
             Enter OpenAI API Key (required)
@@ -77,7 +77,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
           <Input variant='outlined' placeholder={'sk-...'} error={!isValidKey}
                  value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
 
-          <Typography sx={{ mb: 1 }}>
+          <Typography sx={{ mt: 3, mb: 1 }}>
             Select Model
           </Typography>
 
@@ -87,10 +87,10 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
             onChange={handleGptModelChange}
           >
             <Option value={'gpt-4'}>GPT-4</Option>
-            <Option value={'gpt-3.5-turbo'}>GPT3.5 Turbo</Option>
+            <Option value={'gpt-3.5-turbo'}>GPT-3.5 Turbo</Option>
           </Select>
 
-          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 2 }} onClick={handleSaveClicked}>
+          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={handleSaveClicked}>
             Save
           </Button>
 
