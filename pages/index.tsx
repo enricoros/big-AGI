@@ -105,6 +105,18 @@ export default function Conversation() {
   const handleListEdit = (uid: string, newText: string) =>
     setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
 
+  const handleListRunAgain = (uid: string) => {
+    // take all messages until we get to uid, then remove the rest
+    const uidPosition = messages.findIndex(message => message.uid === uid);
+    if (uidPosition === -1) return;
+    const conversation = messages.slice(0, uidPosition + 1);
+    setMessages(conversation);
+
+    // disable the composer while the bot is replying
+    setDisableCompose(true);
+    getBotMessageStreaming(conversation)
+      .then(() => setDisableCompose(false));
+  };
 
   const handlePurposeChange = (purpose: SystemPurpose | null) => {
     if (!purpose) return;
@@ -178,7 +190,6 @@ export default function Conversation() {
 
     // update the list of messages
     setMessages(conversation);
-    messagesEndRef.current?.scrollIntoView();
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
@@ -257,9 +268,10 @@ export default function Conversation() {
             <>
               <List sx={{ p: 0 }}>
                 {messages.map((message, index) =>
-                  <ChatMessage key={index} uiMessage={message}
+                  <ChatMessage key={'msg-' + message.uid} uiMessage={message}
                                onDelete={() => handleListDelete(message.uid)}
-                               onEdit={newText => handleListEdit(message.uid, newText)} />)}
+                               onEdit={newText => handleListEdit(message.uid, newText)}
+                               onRunAgain={() => handleListRunAgain(message.uid)} />)}
                 <div ref={messagesEndRef}></div>
               </List>
             </>
