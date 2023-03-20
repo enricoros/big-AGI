@@ -194,8 +194,8 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
 
       {/* History menu with all the line items (only if shown) */}
       {!!historyAnchor && (
-        <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory}>
-          <MenuItem color='neutral' selected>Recent User Messages</MenuItem>
+        <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory} sx={{ minWidth: 320 }}>
+          <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
           <ListDivider />
           {loadMessagesFromHistory().map((text, index) => (
             <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(text)}>
