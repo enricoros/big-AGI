@@ -14,7 +14,7 @@ import { isValidOpenAIApiKey, loadOpenAIApiKey, loadGptModel, Settings } from '.
 
 /// Purpose configuration
 
-type SystemPurpose = 'Generic' | 'Developer' | 'Executive' | 'Scientist';
+type SystemPurpose = 'Generic' | 'Developer' | 'Executive' | 'Scientist' | 'Custom';
 
 const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
   Developer: {
@@ -32,6 +32,10 @@ const PurposeData: { [key in SystemPurpose]: { systemMessage: string; descriptio
   Scientist: {
     systemMessage: 'You are a scientist\'s assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness',
     description: 'Helps you write scientific papers',
+  },
+  Custom: {
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    description: 'User-defined purpose',
   },
 };
 
@@ -99,8 +103,14 @@ export default function Conversation() {
 
 
   const handlePurposeChange = (role: string | null) => {
-    if (role)
-      setSelectedSystemPurpose(role as SystemPurpose);
+    if (!role) return;
+
+    if (role === 'Custom') {
+      const systemMessage = prompt('Enter your custom AI purpose', PurposeData['Custom'].systemMessage);
+      PurposeData['Custom'].systemMessage = systemMessage || '';
+    }
+
+    setSelectedSystemPurpose(role as SystemPurpose);
   };
 
 
@@ -210,6 +220,7 @@ export default function Conversation() {
                   <Option value='Scientist'>Scientist</Option>
                   <Option value='Executive'>Executive</Option>
                   <Option value='Generic'>ChatGPT4</Option>
+                  <Option value='Custom'>Custom</Option>
                 </Select>
                 <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
                   {PurposeData[selectedSystemPurpose].description}
