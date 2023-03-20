@@ -28,6 +28,7 @@ export interface UiMessage {
   sender: 'You' | 'Bot' | string;
   role: 'assistant' | 'system' | 'user';
   text: string;
+  model: string;
   avatar: string | React.ElementType | null;
 }
 
@@ -256,7 +257,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
 
         {message.role !== 'user' && (
           <Typography level='body2' color='neutral'>
-            {message.role.replace('assistant', 'gpt-4')}
+            {message.role.replace('assistant', message.model)}
           </Typography>
         )}
 
