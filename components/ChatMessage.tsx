@@ -17,7 +17,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Avatar, Box, Button, IconButton, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, Button, IconButton, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
 
@@ -28,7 +28,7 @@ export interface UiMessage {
   sender: 'You' | 'Bot' | string;
   role: 'assistant' | 'system' | 'user';
   text: string;
-  model: string;
+  model: string; // optional for 'assistant' roles (not user messages)
   avatar: string | React.ElementType | null;
 }
 
@@ -136,6 +136,12 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
     {showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
   </Box>;
+}
+
+function prettyModel(model: string): string {
+  if (model.startsWith('gpt-4')) return 'gpt-4';
+  if (model.startsWith('gpt-3.5-turbo')) return '3.5-turbo';
+  return model;
 }
 
 
@@ -255,10 +261,11 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
               : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
         )}
 
-        {message.role !== 'user' && (
-          <Typography level='body2' color='neutral'>
-            {message.role.replace('assistant', message.model)}
-          </Typography>
+        {message.role === 'system' && (<Typography level='body2' color='neutral'>system</Typography>)}
+        {message.role === 'assistant' && (
+          <Tooltip title={message.model} variant='solid'>
+            <Typography level='body2' color='neutral'>{prettyModel(message.model)}</Typography>
+          </Tooltip>
         )}
 
         {/* message operations menu (floating) */}

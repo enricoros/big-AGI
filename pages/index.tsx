@@ -67,7 +67,7 @@ const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 's
 const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   uid: Math.random().toString(36).substring(2, 15),
   text: text,
-  model: loadGptModel(),
+  model: '',
   ...MessageDefaults[role],
 });
 
@@ -137,6 +137,22 @@ export default function Conversation() {
 
         const messageText = decoder.decode(value);
         newBotMessage.text += messageText;
+
+        // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
+        if (!newBotMessage.model && newBotMessage.text.startsWith('{')) {
+          const endOfJson = newBotMessage.text.indexOf('}');
+          if (endOfJson > 0) {
+            const json = newBotMessage.text.substring(0, endOfJson + 1);
+            try {
+              const parsed = JSON.parse(json);
+              newBotMessage.model = parsed.model;
+              newBotMessage.text = newBotMessage.text.substring(endOfJson + 1);
+            } catch (e) {
+              // error parsing JSON, ignore
+              console.log('Error parsing JSON: ' + e);
+            }
+          }
+        }
 
         setMessages(list => {
           // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
