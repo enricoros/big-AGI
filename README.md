@@ -1,5 +1,8 @@
 # Next.js ChatGPT 🤖💬
 
+🚨 **Attention! We're adding cool new features to the app!** 🚨
+(bare-bones was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
+
 Welcome to `nextjs-chatgpt-app`! 🎉🚀 Responsive chat application powered by OpenAI's GPT-4, with chat streaming, code
 highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
 designed to be easy to use, customize, and extend. We encourage you to contribute and help improve this project! 😊
@@ -23,9 +26,9 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
       <p><img src="docs/screenshot_drop_target.png" width='300'></p>
 - [x] Dark mode 🌙
 - [x] User-provided API keys
-- [x] 🎉 NEW Support for GPT 3.5 Turbo - @koganei
-- [x] 🎉 NEW Custom system purpose - @typpo
-- [x] 🎉 NEW Voice input - @koganei
+- [x] 🎉 **NEW** Support for GPT 3.5 Turbo 💨 - @koganei
+- [x] 🎉 **NEW** Custom system purpose 🎭 - @typpo
+- [x] 🎉 **NEW** Voice input 🎙️ - @koganei
 - [ ] Developer-oriented features
 - [ ] Stop generation
 - [ ] Mobile app (PWA)

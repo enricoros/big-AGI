@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
+import { Link } from './Link';
+
 
 /// localStorage (your browser) : API Key
 
@@ -71,7 +73,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
         <Box sx={{ mt: 3, minWidth: 300 }}>
 
           <Typography sx={{ mb: 1 }}>
-            Enter OpenAI API Key (required)
+            Enter <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> (required)
           </Typography>
 
           <Input variant='outlined' placeholder={'sk-...'} error={!isValidKey}
