@@ -8,7 +8,8 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import MicIcon from '@mui/icons-material/Mic';
 
-import { recognition, isSpeechEnabled, isRecordingSpeech } from '../utilities/speechRecognition';
+import { useSpeechRecognition } from '../utilities/speechRecognition';
+
 
 /// localStorage (your browser) : Log of sent messages
 
@@ -60,18 +61,10 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 export function Composer({ isDeveloper, disableSend, sendMessage }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; }) {
   // state
   const [composeText, setComposeText] = React.useState('');
-  const [isRecordingSpeech, setRecordingSpeech] = React.useState(false);
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
-
-  if(isSpeechEnabled) {
-    recognition.onresult = (event) => {
-      const speechResult = event.results[event.results.length - 1][0].transcript;
-      setComposeText(composeText + speechResult);
-    };
-  }
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -90,14 +83,15 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
     }
   };
 
-  const handleMicClicked = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    if(!isSpeechEnabled) return;
-    setRecordingSpeech(true)
-    recognition.start();
-    recognition.onaudioend = () => {
-      setRecordingSpeech(false);
-    };
-  };
+
+  const onSpeechResultCallback = React.useCallback((transcript: string) => {
+    setComposeText(current => current + ' ' + transcript);
+  }, []);
+
+  const { isSpeechEnabled, isRecordingSpeech, startRecording } = useSpeechRecognition(onSpeechResultCallback);
+
+  const handleMicClicked = () => startRecording();
+
 
   const eatDragEvent = (e: React.DragEvent) => {
     e.preventDefault();
@@ -229,7 +223,11 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
                     onKeyDown={handleKeyPress}
                     onDragEnter={handleMessageDragEnter}
                     value={composeText} onChange={(e) => setComposeText(e.target.value)}
-                    sx={{ fontSize: '16px', lineHeight: 1.75 }} />
+                    sx={{
+                      fontSize: '16px',
+                      lineHeight: 1.75,
+                      pr: isSpeechEnabled ? { xs: 4, md: 5 } : 0, // accounts for the microphone icon when supported
+                    }} />
 
           <Card color='primary' invertedColors variant='soft'
                 sx={{
@@ -248,16 +246,19 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
             </Typography>
           </Card>
 
-          <Button
-          onClick={handleMicClicked}
-          color={isRecordingSpeech ? 'warning' : 'primary'}
-          sx={{
-            position: 'absolute',
-            top: 0, right: 0,
-            margin: '10px'
-            }}>
-          <MicIcon />
-        </Button>
+          {isSpeechEnabled && (
+            <IconButton
+              onClick={handleMicClicked}
+              color={isRecordingSpeech ? 'warning' : 'primary'}
+              variant={isRecordingSpeech ? 'solid' : 'plain'}
+              sx={{
+                position: 'absolute',
+                top: 0, right: 0,
+                margin: 1, // 8px
+              }}>
+              <MicIcon />
+            </IconButton>
+          )}
         </Box>
 
       </Stack></Grid>
