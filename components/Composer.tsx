@@ -6,7 +6,9 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import MicIcon from '@mui/icons-material/Mic';
 
+import { recognition, isSpeechEnabled, isRecordingSpeech } from '../utilities/speechRecognition';
 
 /// localStorage (your browser) : Log of sent messages
 
@@ -58,10 +60,18 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 export function Composer({ isDeveloper, disableSend, sendMessage }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; }) {
   // state
   const [composeText, setComposeText] = React.useState('');
+  const [isRecordingSpeech, setRecordingSpeech] = React.useState(false);
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
+
+  if(isSpeechEnabled) {
+    recognition.onresult = (event) => {
+      const speechResult = event.results[event.results.length - 1][0].transcript;
+      setComposeText(composeText + speechResult);
+    };
+  }
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -80,6 +90,14 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
     }
   };
 
+  const handleMicClicked = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    if(!isSpeechEnabled) return;
+    setRecordingSpeech(true)
+    recognition.start();
+    recognition.onaudioend = () => {
+      setRecordingSpeech(false);
+    };
+  };
 
   const eatDragEvent = (e: React.DragEvent) => {
     e.preventDefault();
@@ -230,6 +248,16 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
             </Typography>
           </Card>
 
+          <Button
+          onClick={handleMicClicked}
+          color={isRecordingSpeech ? 'warning' : 'primary'}
+          sx={{
+            position: 'absolute',
+            top: 0, right: 0,
+            margin: '10px'
+            }}>
+          <MicIcon />
+        </Button>
         </Box>
 
       </Stack></Grid>

@@ -25,9 +25,9 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
 - [x] User-provided API keys
 - [x] 🎉 NEW Support for GPT 3.5 Turbo - @koganei
 - [x] 🎉 NEW Custom system purpose - @typpo
+- [x] Voice input
 - [ ] Developer-oriented features
 - [ ] Stop generation
-- [ ] Voice input
 - [ ] Mobile app (PWA)
 - [ ] Add your idea in the issues!
 
