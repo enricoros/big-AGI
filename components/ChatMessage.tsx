@@ -18,8 +18,10 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
+
+import { Link } from './Link';
 
 
 // One message in the chat
@@ -208,6 +210,27 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
   const handleExpand = () => setForceExpanded(true);
 
 
+  // soft error handling
+  let errorMessage: JSX.Element | null = null;
+  const isAssistantError = message.role === 'assistant' && (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: '));
+  if (isAssistantError) {
+    if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
+      // TODO: retry at the api/chat level a few times instead of showing this error
+      errorMessage = <>
+        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon,
+        or give it another go by selecting <b>Run again</b> from the message menu.
+      </>;
+    } else if (message.text.includes('"model_not_found"')) {
+      // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
+      errorMessage = <>
+        Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
+        icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
+        access</Link> to the desired model.
+      </>;
+    }
+  }
+
+
   // theming
   let background = theme.vars.palette.background.body;
   let textBackground: string | undefined = undefined;
@@ -217,10 +240,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
   } else if (message.sender === 'You') {
     background = theme.vars.palette.primary.plainHoverBg;
   } else if (message.role === 'assistant') {
-    if (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: ')) {
-      background = theme.vars.palette.danger.softBg;
-    } else
-      background = theme.vars.palette.background.body;
+    background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
   }
 
   // text box css
@@ -291,7 +311,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
             <ListDivider />
             <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator><ReplayIcon /></ListItemDecorator>
-              Restart
+              Run Again
             </MenuItem>
             <MenuItem onClick={props.onDelete}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
@@ -323,6 +343,13 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
                 {part.content}
               </Typography>
             ),
+          )}
+          {errorMessage && (
+            <Alert variant='soft' color='warning' sx={{ mt: 1 }}>
+              <Typography>
+                {errorMessage}
+              </Typography>
+            </Alert>
           )}
           {isCollapsed && (
             <Button variant='plain' onClick={handleExpand}>
