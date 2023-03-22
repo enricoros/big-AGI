@@ -133,8 +133,8 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
 export interface ChatApiInput {
   apiKey?: string;
+  model: string;
   messages: UiMessage[];
-  model?: string;
   temperature?: number;
   max_tokens?: number;
 }
@@ -151,7 +151,7 @@ export interface ChatApiOutputStart {
 export default async function handler(req: NextRequest) {
 
   // read inputs
-  const { apiKey: userApiKey, messages, model = 'gpt-4', temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
+  const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
   const chatGptInputMessages: ChatMessage[] = messages.map(({ role, text }) => ({
     role: role,
     content: text,
