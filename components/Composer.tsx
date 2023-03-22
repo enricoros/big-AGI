@@ -3,32 +3,14 @@ import React from 'react';
 import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import TelegramIcon from '@mui/icons-material/Telegram';
-import MicIcon from '@mui/icons-material/Mic';
 
+import { useComposerStore } from '../utilities/store';
 import { useSpeechRecognition } from '../utilities/speechRecognition';
-
-
-/// localStorage (your browser) : Log of sent messages
-
-const LOCALSTORAGE_KEY_COMPOSER_HISTORY = 'app-composer-history';
-
-const loadMessagesFromHistory = (): string[] => {
-  if (typeof localStorage === 'undefined') return [];
-  const storedData = localStorage.getItem(LOCALSTORAGE_KEY_COMPOSER_HISTORY);
-  return storedData ? JSON.parse(storedData) : [];
-};
-
-const appendMessageToHistory = (composeText: string, maxMessages: number = 20) => {
-  if (typeof localStorage === 'undefined') return;
-  // prepend message to list, removing duplicates (effectually 'bubbling to the top')
-  const optimizedText = composeText.trim();
-  const composedMessages = loadMessagesFromHistory().filter(m => m.trim() !== optimizedText);
-  composedMessages.unshift(composeText);
-  localStorage.setItem(LOCALSTORAGE_KEY_COMPOSER_HISTORY, JSON.stringify(composedMessages.slice(0, maxMessages)));
-};
+import { NoSSR } from './NoSSR';
 
 
 /// Text template helpers
@@ -61,6 +43,7 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 export function Composer({ isDeveloper, disableSend, sendMessage }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; }) {
   // state
   const [composeText, setComposeText] = React.useState('');
+  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }));
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -268,18 +251,26 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
         <Stack spacing={2}>
 
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-            <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
-              <KeyboardArrowUpIcon />
-            </IconButton>
+            <NoSSR>
+              {history.length > 0 && (
+                <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+                  <KeyboardArrowUpIcon />
+                </IconButton>
+              )}
+            </NoSSR>
             <Button fullWidth variant='solid' color='primary' disabled={disableSend} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
               Chat
             </Button>
           </Box>
 
           <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-            <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
-              History
-            </Button>
+            <NoSSR>
+              {history.length > 0 && (
+                <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
+                  History
+                </Button>
+              )}
+            </NoSSR>
           </Stack>
 
         </Stack>
@@ -290,9 +281,10 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
         <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory} sx={{ minWidth: 320 }}>
           <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
           <ListDivider />
-          {loadMessagesFromHistory().map((text, index) => (
-            <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(text)}>
-              {text.length > 60 ? text.slice(0, 58) + '...' : text}
+          {history.map((item, index) => (
+            <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(item.text)}>
+              {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>{item.count}</Typography>}
+              {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
             </MenuItem>
           ))}
           {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
