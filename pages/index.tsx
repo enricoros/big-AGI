@@ -13,7 +13,6 @@ import { Composer } from '../components/Composer';
 import { NoSSR } from '../components/NoSSR';
 import { useSettingsStore } from '../utilities/store';
 
-
 /// Purpose configuration
 
 export type SystemPurpose = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
@@ -77,6 +76,7 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
 /// Chat ///
 
 export default function Conversation() {
+
   const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
@@ -85,6 +85,8 @@ export default function Conversation() {
     systemPurpose: state.systemPurpose,
     setSystemPurpose: state.setSystemPurpose,
   }));
+  const [controller, setController] = React.useState<AbortController | null>(null);
+
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
   const [disableCompose, setDisableCompose] = React.useState(false);
   const [settingsShown, setSettingsShown] = React.useState(false);
@@ -118,9 +120,13 @@ export default function Conversation() {
     const conversation = messages.slice(0, uidPosition + 1);
     setMessages(conversation);
 
+    // Create a new AbortController instance for each request
+    const controller = new AbortController();
+    setController(controller);
+
     // disable the composer while the bot is replying
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
+    getBotMessageStreaming(conversation, controller.signal)
       .then(() => setDisableCompose(false));
   };
 
@@ -135,53 +141,76 @@ export default function Conversation() {
     setSystemPurpose(purpose);
   };
 
+  // Create a function to handle stop generation
+  const handleStopGeneration = () => {
+    if (controller) {
+      controller.abort();
+    }
+  };
 
-  const getBotMessageStreaming = async (messages: UiMessage[]) => {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: loadOpenAIApiKey(), model: chatModel, messages: messages }),
-    });
+  const getBotMessageStreaming = async (messages: UiMessage[], signal: AbortSignal) => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ apiKey: loadOpenAIApiKey(), model: chatModel, messages: messages }),
+        signal,
+      });
 
-    if (response.body) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
+      if (response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
 
-      const newBotMessage: UiMessage = createUiMessage('assistant', '');
+        const newBotMessage: UiMessage = createUiMessage('assistant', '');
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { value, done } = await reader.read();
 
-        const messageText = decoder.decode(value);
-        newBotMessage.text += messageText;
+          if (done) break;
 
-        // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
-        if (!newBotMessage.model && newBotMessage.text.startsWith('{')) {
-          const endOfJson = newBotMessage.text.indexOf('}');
-          if (endOfJson > 0) {
-            const json = newBotMessage.text.substring(0, endOfJson + 1);
-            try {
-              const parsed = JSON.parse(json);
-              newBotMessage.model = parsed.model;
-              newBotMessage.text = newBotMessage.text.substring(endOfJson + 1);
-            } catch (e) {
-              // error parsing JSON, ignore
-              console.log('Error parsing JSON: ' + e);
+          const messageText = decoder.decode(value);
+          newBotMessage.text += messageText;
+
+          // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
+          if (!newBotMessage.model && newBotMessage.text.startsWith('{')) {
+            const endOfJson = newBotMessage.text.indexOf('}');
+            if (endOfJson > 0) {
+              const json = newBotMessage.text.substring(0, endOfJson + 1);
+              try {
+                const parsed = JSON.parse(json);
+                newBotMessage.model = parsed.model;
+                newBotMessage.text = newBotMessage.text.substring(endOfJson + 1);
+              } catch (e) {
+                // error parsing JSON, ignore
+                console.log('Error parsing JSON: ' + e);
+              }
             }
           }
-        }
 
-        setMessages(list => {
-          // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
-          const message = list.find(message => message.uid === newBotMessage.uid);
-          return !message ? [...list, newBotMessage] : [...list];
-        });
+          setMessages(list => {
+            // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
+            const message = list.find(message => message.uid === newBotMessage.uid);
+            return !message ? [...list, newBotMessage] : [...list];
+          });
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Fetch request aborted in index.tsx');
+        // Handle the AbortError here
+        setDisableCompose(false);
+      } else {
+        console.error('Fetch request failed:', error);
       }
     }
   };
 
   const handleComposerSendMessage: (text: string) => void = (text) => {
+    // Create a new AbortController instance for each request
+    const controller = new AbortController();
+    setController(controller);
 
     // seed the conversation with a 'system' message
     const conversation = [...messages];
@@ -199,8 +228,10 @@ export default function Conversation() {
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    getBotMessageStreaming(conversation, controller.signal)
+      .then(() => {
+        setDisableCompose(false);
+      });
   };
 
 
@@ -297,7 +328,7 @@ export default function Conversation() {
           p: { xs: 1, md: 2 },
         }}>
           <NoSSR>
-            <Composer isDeveloper={systemPurpose === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
+            <Composer isDeveloper={systemPurpose === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} stopGeneration={handleStopGeneration} />
           </NoSSR>
         </Box>
 

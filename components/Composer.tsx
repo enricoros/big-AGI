@@ -7,6 +7,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import StopIcon from '@mui/icons-material/Stop';
 
 import { useComposerStore } from '../utilities/store';
 import { useSpeechRecognition } from '../utilities/speechRecognition';
@@ -39,8 +40,9 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
  * @param {boolean} isDeveloper - Flag to indicate if the user is a developer.
  * @param {boolean} disableSend - Flag to disable the send button.
  * @param {(text: string) => void} sendMessage - Function to send the composed message.
+ * @param {() => void} stopGeneration - Function to stop message generation
  */
-export function Composer({ isDeveloper, disableSend, sendMessage }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; }) {
+export function Composer({ isDeveloper, disableSend, sendMessage, stopGeneration }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; }) {
   // state
   const [composeText, setComposeText] = React.useState('');
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }));
@@ -57,6 +59,12 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
       appendMessageToHistory(text);
     }
   };
+
+  // Create a function to handle stop generation
+  const handleStopGeneration = () => {
+    stopGeneration();
+  };
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -248,7 +256,7 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
 
       {/* Other Buttons */}
       <Grid xs={12} md={3}>
-        <Stack spacing={2}>
+        <Stack spacing={1}>
 
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             <NoSSR>
@@ -260,6 +268,12 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
             </NoSSR>
             <Button fullWidth variant='solid' color='primary' disabled={disableSend} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
               Chat
+            </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            <Button fullWidth variant='solid' color='primary' disabled={!disableSend} onClick={handleStopGeneration} endDecorator={<StopIcon />}>
+              Stop Generation
             </Button>
           </Box>
 
