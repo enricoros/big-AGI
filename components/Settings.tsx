@@ -24,21 +24,6 @@ export const ChatGptModelData: { [key in GptChatModel]: { description: string | 
 };
 
 
-/// localStorage (your browser) : API Key
-
-const LOCALSTORAGE_KEY_OPENAI_API_KEY = 'app-settings-openai-api-key';
-
-export const loadOpenAIApiKey = (): string => {
-  if (typeof localStorage === 'undefined') return '';
-  return localStorage.getItem(LOCALSTORAGE_KEY_OPENAI_API_KEY) || '';
-};
-
-const storeOpenAIApiKey = (apiKey: string) => {
-  if (typeof localStorage === 'undefined') return;
-  if (apiKey) localStorage.setItem(LOCALSTORAGE_KEY_OPENAI_API_KEY, apiKey);
-  else localStorage.removeItem(LOCALSTORAGE_KEY_OPENAI_API_KEY);
-};
-
 export const isValidOpenAIApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
@@ -51,8 +36,10 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function Settings({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  const [apiKey, setApiKey] = React.useState<string>(loadOpenAIApiKey());
-  const { chatModel, setChatModel } = useSettingsStore(state => ({ chatModel: state.chatModel, setChatModel: state.setChatModel }), shallow);
+  const { apiKey, setApiKey, chatModel, setChatModel } = useSettingsStore(state => ({
+    apiKey: state.apiKey, setApiKey: state.setApiKey,
+    chatModel: state.chatModel, setChatModel: state.setChatModel,
+  }), shallow);
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
     setApiKey((e.target as HTMLInputElement).value);
@@ -61,12 +48,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
     setChatModel((value || 'gpt-4') as GptChatModel);
 
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
-    (e.key === 'Enter') && handleSaveClicked();
-
-  const handleSaveClicked = () => {
-    storeOpenAIApiKey(apiKey);
-    onClose();
-  };
+    (e.key === 'Enter') && onClose();
 
   const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
   const isValidKey = isValidOpenAIApiKey(apiKey);
@@ -114,8 +96,8 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
             )}
           </NoSSR>
 
-          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={handleSaveClicked}>
-            Save
+          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={onClose}>
+            Close
           </Button>
 
         </Box>

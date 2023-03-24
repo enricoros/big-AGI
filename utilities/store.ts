@@ -8,8 +8,8 @@ import { SystemPurpose } from '../pages';
 /// Settings Store
 
 interface SettingsState {
-  // apiKey: string;
-  // setApiKey: (apiKey: string) => void;
+  apiKey: string;
+  setApiKey: (apiKey: string) => void;
 
   chatModel: GptChatModel;
   setChatModel: (chatModel: GptChatModel) => void;
@@ -18,13 +18,18 @@ interface SettingsState {
   setSystemPurpose: (purpose: SystemPurpose) => void;
 }
 
+const importFormerLocalStorageApiKey = (): string => {
+  if (typeof localStorage === 'undefined') return '';
+  return localStorage.getItem('app-settings-openai-api-key') || '';
+};
+
 export const useSettingsStore = create<SettingsState>()(
   persist((set) => ({
-      // apiKey: '',
+      apiKey: importFormerLocalStorageApiKey(),
       chatModel: 'gpt-4',
       systemPurpose: 'Developer',
 
-      // setApiKey: (apiKey: string) => set({ apiKey }),
+      setApiKey: (apiKey: string) => set({ apiKey }),
       setChatModel: (chatModel: GptChatModel) => set({ chatModel }),
       setSystemPurpose: (purpose: SystemPurpose) => set({ systemPurpose: purpose }),
     }),
@@ -36,14 +41,13 @@ export const useSettingsStore = create<SettingsState>()(
 
 /// Composer Store
 
-export interface HistoryItem {
-  date: number,
-  text: string,
-  count: number,
-}
-
 interface ComposerState {
-  history: HistoryItem[];
+  history: {
+    date: number,
+    text: string,
+    count: number,
+  }[];
+
   appendMessageToHistory: (text: string) => void;
 }
 
