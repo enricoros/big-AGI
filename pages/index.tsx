@@ -8,7 +8,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ChatApiInput } from './api/chat';
-import { ChatGptModelData, isValidOpenAIApiKey, loadOpenAIApiKey, Settings } from '../components/Settings';
+import { ChatGptModelData, isValidOpenAIApiKey, Settings } from '../components/Settings';
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
 import { NoSSR } from '../components/NoSSR';
@@ -81,10 +81,10 @@ export default function Conversation() {
   const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { chatModel, systemPurpose, setSystemPurpose } = useSettingsStore(state => ({
+  const { apiKey, chatModel, systemPurpose, setSystemPurpose } = useSettingsStore(state => ({
+    apiKey: state.apiKey,
     chatModel: state.chatModel,
-    systemPurpose: state.systemPurpose,
-    setSystemPurpose: state.setSystemPurpose,
+    systemPurpose: state.systemPurpose, setSystemPurpose: state.setSystemPurpose,
   }));
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
   const [disableCompose, setDisableCompose] = React.useState(false);
@@ -97,9 +97,9 @@ export default function Conversation() {
 
   React.useEffect(() => {
     // show the settings at startup if the API key is not present
-    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(loadOpenAIApiKey()))
+    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
       setSettingsShown(true);
-  }, []);
+  }, [apiKey]);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
@@ -139,7 +139,7 @@ export default function Conversation() {
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
     const payload: ChatApiInput = {
-      apiKey: loadOpenAIApiKey(),
+      apiKey: apiKey,
       model: chatModel,
       messages: messages.map(({ role, text }) => ({
         role: role,
@@ -229,7 +229,7 @@ export default function Conversation() {
         {/* Application Bar */}
         <Sheet variant='solid' invertedColors sx={{
           position: 'sticky', top: 0, zIndex: 20, p: 1,
-          background: process.env.NODE_ENV === "development"
+          background: process.env.NODE_ENV === 'development'
             ? theme.vars.palette.danger.solidHoverBg
             : theme.vars.palette.primary.solidHoverBg,
           display: 'flex', flexDirection: 'row',
