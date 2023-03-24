@@ -96,7 +96,7 @@ export default function Conversation() {
 
   React.useEffect(() => {
     // show the settings at startup if the API key is not present
-    if (!isValidOpenAIApiKey(loadOpenAIApiKey()))
+    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(loadOpenAIApiKey()))
       setSettingsShown(true);
   }, []);
 
