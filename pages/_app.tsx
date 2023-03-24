@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Head from 'next/head';
 import createCache from '@emotion/cache';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import { AppProps } from 'next/app';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider, extendTheme } from '@mui/joy';
@@ -69,6 +70,7 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Component {...pageProps} />
+        <VercelAnalytics />
       </CssVarsProvider>
     </CacheProvider>
   );
