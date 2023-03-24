@@ -214,7 +214,7 @@ export default function Conversation() {
   };
 
 
-  const listEmpty = !messages.length;
+  const noMessages = !messages.length;
 
   const Emoji = (props: any) => null;
 
@@ -229,7 +229,9 @@ export default function Conversation() {
         {/* Application Bar */}
         <Sheet variant='solid' invertedColors sx={{
           position: 'sticky', top: 0, zIndex: 20, p: 1,
-          background: theme.vars.palette.primary.solidHoverBg,
+          background: process.env.NODE_ENV === "development"
+            ? theme.vars.palette.danger.solidHoverBg
+            : theme.vars.palette.primary.solidHoverBg,
           display: 'flex', flexDirection: 'row',
         }}>
           <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
@@ -263,7 +265,7 @@ export default function Conversation() {
           flexGrow: 1,
           background: theme.vars.palette.background.level1,
         }}>
-          {listEmpty ? (
+          {noMessages ? (
             <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
               <Box>
                 <Typography level='body3' color='neutral'>
