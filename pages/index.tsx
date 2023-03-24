@@ -7,6 +7,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
+import { ChatApiInput } from './api/chat';
 import { ChatGptModelData, isValidOpenAIApiKey, loadOpenAIApiKey, Settings } from '../components/Settings';
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
@@ -137,10 +138,19 @@ export default function Conversation() {
 
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
+    const payload: ChatApiInput = {
+      apiKey: loadOpenAIApiKey(),
+      model: chatModel,
+      messages: messages.map(({ role, text }) => ({
+        role: role,
+        content: text,
+      })),
+    };
+
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: loadOpenAIApiKey(), model: chatModel, messages: messages }),
+      body: JSON.stringify(payload),
     });
 
     if (response.body) {
