@@ -3,25 +3,9 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
+import { GptChatModelId, GptChatModels, useSettingsStore } from '../utilities/store';
 import { Link } from './Link';
-import { useSettingsStore } from '../utilities/store';
 import { NoSSR } from './NoSSR';
-
-
-/// ChatGptModel configuration
-
-export type GptChatModel = 'gpt-4' | 'gpt-3.5-turbo';
-
-export const ChatGptModelData: { [key in GptChatModel]: { description: string | JSX.Element, title: string } } = {
-  'gpt-4': {
-    description: 'Most insightful, larger problems, but slow, expensive, and may be unavailable',
-    title: 'GPT-4',
-  },
-  'gpt-3.5-turbo': {
-    description: 'A good balance between speed and insight',
-    title: '3.5-Turbo',
-  },
-};
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
@@ -36,16 +20,16 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function Settings({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  const { apiKey, setApiKey, chatModel, setChatModel } = useSettingsStore(state => ({
+  const { apiKey, setApiKey, chatModelId, setChatModelId } = useSettingsStore(state => ({
     apiKey: state.apiKey, setApiKey: state.setApiKey,
-    chatModel: state.chatModel, setChatModel: state.setChatModel,
+    chatModelId: state.chatModelId, setChatModelId: state.setChatModelId,
   }), shallow);
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
     setApiKey((e.target as HTMLInputElement).value);
 
   const handleGptModelChange = (e: React.FocusEvent | React.MouseEvent | React.KeyboardEvent | null, value: string | null) =>
-    setChatModel((value || 'gpt-4') as GptChatModel);
+    setChatModelId((value || 'gpt-4') as GptChatModelId);
 
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
     (e.key === 'Enter') && onClose();
@@ -81,7 +65,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
           <NoSSR>
             <Select
               variant='outlined'
-              value={chatModel}
+              value={chatModelId}
               onChange={handleGptModelChange}
             >
               <Option value={'gpt-4'}>GPT-4</Option>
@@ -89,9 +73,9 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
               {/*<Option value={'gpt-4-32k'}>GPT-4-32k (not out yet)</Option>*/}
             </Select>
 
-            {(chatModel in ChatGptModelData) && (
+            {(chatModelId in GptChatModels) && (
               <Typography level='body2' sx={{ mt: 1, mb: 1 }}>
-                {ChatGptModelData[chatModel].description}
+                {GptChatModels[chatModelId].description}
               </Typography>
             )}
           </NoSSR>
