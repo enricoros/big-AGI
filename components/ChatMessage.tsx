@@ -16,7 +16,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
-import ReplayIcon from '@mui/icons-material/Replay';
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
@@ -361,11 +361,11 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
               {isEditing ? 'Discard' : 'Edit'}
             </MenuItem>
             <ListDivider />
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
-              Run Again
+            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user'}>
+              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
+              Run again
             </MenuItem>
-            <MenuItem onClick={props.onDelete}>
+            <MenuItem onClick={props.onDelete} disabled={message.role === 'system'}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
               Delete
             </MenuItem>
