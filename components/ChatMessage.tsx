@@ -4,11 +4,12 @@ import { Sandpack, SandpackFiles } from '@codesandbox/sandpack-react';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-typescript';
 
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -42,8 +43,24 @@ type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
 type CodeMessageBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 
 const inferLanguage = (markdownLanguage: string, code: string): string | null => {
-  if (markdownLanguage && !markdownLanguage.includes('.'))
-    return markdownLanguage;
+  // we have an hint
+  if (markdownLanguage) {
+    // no dot: it's a syntax-highlight language
+    if (!markdownLanguage.includes('.'))
+      return markdownLanguage;
+
+    // dot: there's probably an extension
+    const extension = markdownLanguage.split('.').pop();
+    if (extension) {
+      const languageMap: { [key: string]: string } = {
+        cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
+        md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
+      };
+      const language = languageMap[extension];
+      if (language)
+        return language;
+    }
+  }
 
   // based on how the code starts, return the language
   if (code.startsWith('<DOCTYPE html') || code.startsWith('<!DOCTYPE')) return 'html';
