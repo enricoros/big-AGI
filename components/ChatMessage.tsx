@@ -269,6 +269,16 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
         icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
+    } else if (message.text.includes('"context_length_exceeded"')) {
+      // TODO: propose to summarize or split the input?
+      const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
+      const match = pattern.exec(message.text);
+      const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
+      errorMessage = <>
+        This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}{usedText}.
+        Please consider removing some earlier messages from the conversation, start a new conversation,
+        choose a model with larger context, or submit a shorter new message.
+      </>;
     }
   }
 
