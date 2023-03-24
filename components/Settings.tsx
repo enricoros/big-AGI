@@ -40,7 +40,7 @@ const storeOpenAIApiKey = (apiKey: string) => {
 };
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
-  apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
+  !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 
 /**
@@ -68,6 +68,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
     onClose();
   };
 
+  const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
   const isValidKey = isValidOpenAIApiKey(apiKey);
 
   return (
@@ -79,11 +80,17 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
         <Box sx={{ mt: 3, minWidth: 300 }}>
 
           <Typography sx={{ mb: 1 }}>
-            Enter <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> (required)
+            Enter <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required)' : '(not required)'}
           </Typography>
 
-          <Input variant='outlined' placeholder={'sk-...'} error={!isValidKey}
+          <Input variant='outlined' placeholder={'sk-...'} error={needsApiKey && !isValidKey}
                  value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
+
+          {!needsApiKey && (
+            <Typography level='body2' sx={{ mt: 1, mb: 1 }}>
+              This box lets you override the default API key
+            </Typography>
+          )}
 
           <Typography sx={{ mt: 3, mb: 1 }}>
             Select Model
