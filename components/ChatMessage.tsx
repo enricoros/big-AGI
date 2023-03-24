@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Sandpack } from '@codesandbox/sandpack-react';
+import { Sandpack, SandpackFiles } from '@codesandbox/sandpack-react';
 
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
@@ -39,7 +39,22 @@ export interface UiMessage {
 /// Utilities to split the message into blocks of text and code
 
 type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
-type CodeMessageBlock = { type: 'code'; content: string; code: string; language: string; };
+type CodeMessageBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
+
+const inferLanguage = (markdownLanguage: string, code: string): string | null => {
+  if (markdownLanguage && !markdownLanguage.includes('.'))
+    return markdownLanguage;
+
+  // based on how the code starts, return the language
+  if (code.startsWith('<DOCTYPE html') || code.startsWith('<!DOCTYPE')) return 'html';
+  if (code.startsWith('<')) return 'xml';
+  if (code.startsWith('from ')) return 'python';
+  if (code.startsWith('import ') || code.startsWith('export ')) return 'typescript'; // or python
+  if (code.startsWith('interface ') || code.startsWith('function ')) return 'typescript'; // ambiguous
+  if (code.startsWith('package ')) return 'java';
+  if (code.startsWith('using ')) return 'csharp';
+  return null;
+};
 
 const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
   const codeBlockRegex = /`{3,}(\w+)?\n([\s\S]*?)(`{3,}|$)/g;
@@ -49,8 +64,9 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
   let match;
 
   while ((match = codeBlockRegex.exec(text)) !== null) {
-    const language = match[1] || 'typescript';
-    const codeBlock = match[2].trim();
+    const markdownLanguage = (match[1] || '').trim();
+    const code = match[2].trim();
+    const blockEnd: string = match[3];
 
     // Load the specified language if it's not loaded yet
     // NOTE: this is commented out because it inflates the size of the bundle by 200k
@@ -62,13 +78,16 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
     //   }
     // }
 
+    const codeLanguage = inferLanguage(markdownLanguage, code);
+    const highlightLanguage = codeLanguage || 'typescript';
     const highlightedCode = Prism.highlight(
-      codeBlock,
-      Prism.languages[language] || Prism.languages.typescript,
-      language,
+      code,
+      Prism.languages[highlightLanguage] || Prism.languages.typescript,
+      highlightLanguage,
     );
+
     result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
-    result.push({ type: 'code', content: highlightedCode, code: codeBlock, language });
+    result.push({ type: 'code', content: highlightedCode, language: codeLanguage, complete: blockEnd.startsWith('```'), code });
     lastIndex = match.index + match[0].length;
   }
 
@@ -89,22 +108,24 @@ const copyToClipboard = (text: string) => {
 
 /// Renderers for the different types of message blocks
 
-type SandpackConfig = { template: 'vanilla-ts' | 'vanilla', files: Record<string, string> };
+type SandpackConfig = { files: SandpackFiles, template: 'vanilla-ts' | 'vanilla' };
+
+const runnableLanguages = ['html', 'javascript', 'typescript'];
 
 function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme: Theme }): JSX.Element | null {
   let config: SandpackConfig;
   switch (codeBlock.language) {
-    case 'typescript':
-    case 'javascript':
-      config = {
-        template: 'vanilla-ts',
-        files: { '/index.ts': codeBlock.code },
-      };
-      break;
     case 'html':
       config = {
         template: 'vanilla',
-        files: { '/index.html': codeBlock.code },
+        files: { '/index.html': codeBlock.code, '/index.js': '' },
+      };
+      break;
+    case 'javascript':
+    case 'typescript':
+      config = {
+        template: 'vanilla-ts',
+        files: { '/index.ts': codeBlock.code },
       };
       break;
     default:
@@ -112,7 +133,7 @@ function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme
   }
   return (
     <Sandpack {...config} theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-              options={{ showConsole: true, showConsoleButton: true, showTabs: false, showNavigator: false }} />
+              options={{ showConsole: true, showConsoleButton: true, showTabs: true, showNavigator: false }} />
   );
 }
 
@@ -125,6 +146,8 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
   const handleToggleSandpack = () =>
     setShowSandpack(!showSandpack);
 
+  const showRunIcon = codeBlock.complete && !!codeBlock.language && runnableLanguages.includes(codeBlock.language);
+
   return <Box component='code' sx={{
     position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
     display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
@@ -133,11 +156,13 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
     <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
       <ContentCopyIcon />
     </IconButton>
-    <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-      {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
-    </IconButton>
+    {showRunIcon && (
+      <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
+        {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+      </IconButton>
+    )}
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
-    {showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
+    {showRunIcon && showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
   </Box>;
 }
 

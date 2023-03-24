@@ -283,7 +283,7 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
           <ListDivider />
           {history.map((item, index) => (
             <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(item.text)}>
-              {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>{item.count}</Typography>}
+              {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
               {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
             </MenuItem>
           ))}
