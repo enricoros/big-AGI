@@ -10,7 +10,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { useComposerStore } from '../utilities/store';
 import { useSpeechRecognition } from '../utilities/speechRecognition';
-import { NoSSR } from './NoSSR';
+import { NoSSR } from './util/NoSSR';
 
 
 /// Text template helpers

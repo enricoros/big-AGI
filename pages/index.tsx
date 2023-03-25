@@ -8,10 +8,10 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ChatApiInput } from './api/chat';
-import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
 import { GptChatModels, SystemPurposeId, SystemPurposes, useSettingsStore } from '../utilities/store';
-import { NoSSR } from '../components/NoSSR';
+import { Message, UiMessage } from '../components/Message';
+import { NoSSR } from '../components/util/NoSSR';
 import { isValidOpenAIApiKey, Settings } from '../components/Settings';
 
 
@@ -255,10 +255,10 @@ export default function Conversation() {
             <>
               <List sx={{ p: 0 }}>
                 {messages.map(message =>
-                  <ChatMessage key={'msg-' + message.uid} uiMessage={message}
-                               onDelete={() => handleListDelete(message.uid)}
-                               onEdit={newText => handleListEdit(message.uid, newText)}
-                               onRunAgain={() => handleListRunAgain(message.uid)} />)}
+                  <Message key={'msg-' + message.uid} uiMessage={message}
+                           onDelete={() => handleListDelete(message.uid)}
+                           onEdit={newText => handleListEdit(message.uid, newText)}
+                           onRunAgain={() => handleListRunAgain(message.uid)} />)}
                 <div ref={messagesEndRef}></div>
               </List>
             </>
