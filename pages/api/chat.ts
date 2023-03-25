@@ -164,7 +164,7 @@ export default async function handler(req: NextRequest) {
   });
 
   return new Response(stream);
-};
+}
 
 //noinspection JSUnusedGlobalSymbols
 export const config = {

@@ -17,13 +17,13 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
 
 - [x] Chat with OpenAI's GPT-4 🧠
 - [x] System presets (Developer, Scientist, Executive, and ChatGPT) 🎭
-  <p><img src="docs/screenshot_feature_system.png" width='200'></p>
+  <p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
 - [x] Real-time streaming of AI responses ⚡
 - [ ] Cool stuff
     - [x] Syntax highlighting for multiple languages 🌈
     - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
     - [x] Drag and drop files to add them to the prompt 📁
-      <p><img src="docs/screenshot_drop_target.png" width='300'></p>
+      <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
 - [x] Dark mode 🌙
 - [x] User-provided API keys
 - [x] 🎉 **NEW** Support for GPT 3.5 Turbo 💨 - @koganei
