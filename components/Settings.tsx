@@ -4,8 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
 import { GptChatModelId, GptChatModels, useSettingsStore } from '../utilities/store';
-import { Link } from './Link';
-import { NoSSR } from './NoSSR';
+import { Link } from './util/Link';
+import { NoSSR } from './util/NoSSR';
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>

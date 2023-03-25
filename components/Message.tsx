@@ -22,7 +22,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
-import { Link } from './Link';
+import { Link } from './util/Link';
 
 
 // One message in the chat
@@ -154,7 +154,7 @@ function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme
   );
 }
 
-function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
   const [showSandpack, setShowSandpack] = React.useState(false);
 
   const handleCopyToClipboard = () =>
@@ -183,15 +183,47 @@ function ChatMessageCodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessage
   </Box>;
 }
 
-function prettyModel(model: string): string {
+function prettyBaseModel(model: string): string {
   if (model.startsWith('gpt-4')) return 'gpt-4';
   if (model.startsWith('gpt-3.5-turbo')) return '3.5-turbo';
   return model;
 }
 
+function explainErrorInMessage(message: UiMessage) {
+  let errorMessage: JSX.Element | null = null;
+  const isAssistantError = message.role === 'assistant' && (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: '));
+  if (isAssistantError) {
+    if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
+      // TODO: retry at the api/chat level a few times instead of showing this error
+      errorMessage = <>
+        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon,
+        or give it another go by selecting <b>Run again</b> from the message menu.
+      </>;
+    } else if (message.text.includes('"model_not_found"')) {
+      // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
+      errorMessage = <>
+        Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
+        icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
+        access</Link> to the desired model.
+      </>;
+    } else if (message.text.includes('"context_length_exceeded"')) {
+      // TODO: propose to summarize or split the input?
+      const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
+      const match = pattern.exec(message.text);
+      const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
+      errorMessage = <>
+        This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}{usedText}.
+        Please consider removing some earlier messages from the conversation, start a new conversation,
+        choose a model with larger context, or submit a shorter new message.
+      </>;
+    }
+  }
+  return { errorMessage, isAssistantError };
+}
+
 
 /**
- * ChatMessage component is a customizable chat message UI component that supports
+ * The Message component is a customizable chat message UI component that supports
  * different roles (user, assistant, and system), text editing, syntax highlighting,
  * and code execution using Sandpack for TypeScript, JavaScript, and HTML code blocks.
  * The component also provides options for copying code to clipboard and expanding
@@ -201,7 +233,7 @@ function prettyModel(model: string): string {
  * @param {Function} props.onDelete - The function to call when the delete button is clicked.
  * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
  */
-export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
   const message = props.uiMessage;
 
@@ -253,34 +285,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
 
 
   // soft error handling
-  let errorMessage: JSX.Element | null = null;
-  const isAssistantError = message.role === 'assistant' && (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: '));
-  if (isAssistantError) {
-    if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
-      // TODO: retry at the api/chat level a few times instead of showing this error
-      errorMessage = <>
-        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon,
-        or give it another go by selecting <b>Run again</b> from the message menu.
-      </>;
-    } else if (message.text.includes('"model_not_found"')) {
-      // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
-      errorMessage = <>
-        Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
-        icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-        access</Link> to the desired model.
-      </>;
-    } else if (message.text.includes('"context_length_exceeded"')) {
-      // TODO: propose to summarize or split the input?
-      const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
-      const match = pattern.exec(message.text);
-      const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
-      errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}{usedText}.
-        Please consider removing some earlier messages from the conversation, start a new conversation,
-        choose a model with larger context, or submit a shorter new message.
-      </>;
-    }
-  }
+  const { isAssistantError, errorMessage } = explainErrorInMessage(message);
 
 
   // theming
@@ -342,10 +347,12 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
               : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
         )}
 
-        {message.role === 'system' && (<Typography level='body2' color='neutral'>system</Typography>)}
+        {message.role === 'system' && (
+          <Typography level='body2' color='neutral'>system</Typography>
+        )}
         {message.role === 'assistant' && (
           <Tooltip title={message.model} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyModel(message.model)}</Typography>
+            <Typography level='body2' color='neutral'>{prettyBaseModel(message.model)}</Typography>
           </Tooltip>
         )}
 
@@ -388,7 +395,7 @@ export function ChatMessage(props: { uiMessage: UiMessage, onDelete: () => void,
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
           {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
             part.type === 'code' ? (
-              <ChatMessageCodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
+              <CodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
             ) : (
               <Typography key={index} level='body1' component='span'
                           sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>

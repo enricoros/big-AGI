@@ -9,7 +9,7 @@ if (!process.env.OPENAI_API_KEY)
 
 // definition for OpenAI wire types
 
-export interface ChatMessage {
+interface ChatMessage {
   role: 'assistant' | 'system' | 'user';
   content: string;
 }
