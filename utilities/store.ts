@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 
 export type GptChatModelId = 'gpt-4' | 'gpt-3.5-turbo';
 
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist | ScottsNotes';
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist' | 'ScottsNotes';
 
 interface SettingsState {
   apiKey: string;
