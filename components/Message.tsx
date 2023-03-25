@@ -19,11 +19,26 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  IconButton,
+  ListDivider,
+  ListItem,
+  ListItemDecorator,
+  Menu,
+  MenuItem,
+  Stack,
+  Textarea,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
 import { Link } from './util/Link';
-
 
 // One message in the chat
 
@@ -36,29 +51,36 @@ export interface UiMessage {
   avatar: string | React.ElementType | null;
 }
 
-
 /// Utilities to split the message into blocks of text and code
 
-type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
-type CodeMessageBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
+type MessageBlock = { type: 'text'; content: string } | CodeMessageBlock;
+type CodeMessageBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string };
 
 const inferLanguage = (markdownLanguage: string, code: string): string | null => {
   // we have an hint
   if (markdownLanguage) {
     // no dot: it's a syntax-highlight language
-    if (!markdownLanguage.includes('.'))
-      return markdownLanguage;
+    if (!markdownLanguage.includes('.')) return markdownLanguage;
 
     // dot: there's probably an extension
     const extension = markdownLanguage.split('.').pop();
     if (extension) {
       const languageMap: { [key: string]: string } = {
-        cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
-        md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
+        cs: 'csharp',
+        html: 'html',
+        java: 'java',
+        js: 'javascript',
+        json: 'json',
+        jsx: 'javascript',
+        md: 'markdown',
+        py: 'python',
+        sh: 'bash',
+        ts: 'typescript',
+        tsx: 'typescript',
+        xml: 'xml',
       };
       const language = languageMap[extension];
-      if (language)
-        return language;
+      if (language) return language;
     }
   }
 
@@ -97,11 +119,7 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
 
     const codeLanguage = inferLanguage(markdownLanguage, code);
     const highlightLanguage = codeLanguage || 'typescript';
-    const highlightedCode = Prism.highlight(
-      code,
-      Prism.languages[highlightLanguage] || Prism.languages.typescript,
-      highlightLanguage,
-    );
+    const highlightedCode = Prism.highlight(code, Prism.languages[highlightLanguage] || Prism.languages.typescript, highlightLanguage);
 
     result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     result.push({ type: 'code', content: highlightedCode, language: codeLanguage, complete: blockEnd.startsWith('```'), code });
@@ -117,19 +135,19 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
 
 const copyToClipboard = (text: string) => {
   if (typeof navigator !== 'undefined')
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => console.log('Message copied to clipboard'))
       .catch((err) => console.error('Failed to copy message: ', err));
 };
 
-
 /// Renderers for the different types of message blocks
 
-type SandpackConfig = { files: SandpackFiles, template: 'vanilla-ts' | 'vanilla' };
+type SandpackConfig = { files: SandpackFiles; template: 'vanilla-ts' | 'vanilla' };
 
 const runnableLanguages = ['html', 'javascript', 'typescript'];
 
-function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme: Theme }): JSX.Element | null {
+function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock; theme: Theme }): JSX.Element | null {
   let config: SandpackConfig;
   switch (codeBlock.language) {
     case 'html':
@@ -149,38 +167,59 @@ function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme
       return null;
   }
   return (
-    <Sandpack {...config} theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-              options={{ showConsole: true, showConsoleButton: true, showTabs: true, showNavigator: false }} />
+    <Sandpack
+      {...config}
+      theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+      options={{ showConsole: true, showConsoleButton: true, showTabs: true, showNavigator: false }}
+    />
   );
 }
 
-function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock; theme: Theme; sx?: SxProps }) {
   const [showSandpack, setShowSandpack] = React.useState(false);
 
-  const handleCopyToClipboard = () =>
-    copyToClipboard(codeBlock.code);
+  const handleCopyToClipboard = () => copyToClipboard(codeBlock.code);
 
-  const handleToggleSandpack = () =>
-    setShowSandpack(!showSandpack);
+  const handleToggleSandpack = () => setShowSandpack(!showSandpack);
 
   const showRunIcon = codeBlock.complete && !!codeBlock.language && runnableLanguages.includes(codeBlock.language);
 
-  return <Box component='code' sx={{
-    position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
-    display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
-    '&:hover > button': { opacity: 1 },
-  }}>
-    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-      <ContentCopyIcon />
-    </IconButton>
-    {showRunIcon && (
-      <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-        {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+  return (
+    <Box
+      component="code"
+      sx={{
+        position: 'relative',
+        ...(sx || {}),
+        mx: 0,
+        p: 1.5,
+        display: 'block',
+        fontWeight: 500,
+        background: theme.vars.palette.background.level1,
+        '&:hover > button': { opacity: 1 },
+      }}
+    >
+      <IconButton
+        variant="plain"
+        color="primary"
+        onClick={handleCopyToClipboard}
+        sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}
+      >
+        <ContentCopyIcon />
       </IconButton>
-    )}
-    <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
-    {showRunIcon && showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
-  </Box>;
+      {showRunIcon && (
+        <IconButton
+          variant="plain"
+          color="primary"
+          onClick={handleToggleSandpack}
+          sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}
+        >
+          {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+        </IconButton>
+      )}
+      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+      {showRunIcon && showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
+    </Box>
+  );
 }
 
 function prettyBaseModel(model: string): string {
@@ -195,32 +234,40 @@ function explainErrorInMessage(message: UiMessage) {
   if (isAssistantError) {
     if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
       // TODO: retry at the api/chat level a few times instead of showing this error
-      errorMessage = <>
-        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon,
-        or give it another go by selecting <b>Run again</b> from the message menu.
-      </>;
+      errorMessage = (
+        <>
+          The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon, or give it another go by selecting{' '}
+          <b>Run again</b> from the message menu.
+        </>
+      );
     } else if (message.text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
-      errorMessage = <>
-        Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
-        icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-        access</Link> to the desired model.
-      </>;
+      errorMessage = (
+        <>
+          Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings icon and
+          simultaneously{' '}
+          <Link noLinkStyle href="https://openai.com/waitlist/gpt-4-api" target="_blank">
+            request access
+          </Link>{' '}
+          to the desired model.
+        </>
+      );
     } else if (message.text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
       const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
       const match = pattern.exec(message.text);
       const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
-      errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}{usedText}.
-        Please consider removing some earlier messages from the conversation, start a new conversation,
-        choose a model with larger context, or submit a shorter new message.
-      </>;
+      errorMessage = (
+        <>
+          This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}
+          {usedText}. Please consider removing some earlier messages from the conversation, start a new conversation, choose a model with larger context, or
+          submit a shorter new message.
+        </>
+      );
     }
   }
   return { errorMessage, isAssistantError };
 }
-
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -233,7 +280,7 @@ function explainErrorInMessage(message: UiMessage) {
  * @param {Function} props.onDelete - The function to call when the delete button is clicked.
  * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
  */
-export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function Message(props: { uiMessage: UiMessage; onDelete: () => void; onEdit: (text: string) => void; onRunAgain: () => void }) {
   const theme = useTheme();
   const message = props.uiMessage;
 
@@ -246,7 +293,6 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedText, setEditedText] = React.useState(message.text);
 
-
   const closeMenu = () => setMenuAnchor(null);
 
   const handleMenuCopy = (e: React.MouseEvent) => {
@@ -256,8 +302,7 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(message.text);
+    if (!isEditing) setEditedText(message.text);
     setIsEditing(!isEditing);
     e.preventDefault();
     closeMenu();
@@ -269,8 +314,7 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
     closeMenu();
   };
 
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
+  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setEditedText(e.target.value);
 
   const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -280,13 +324,10 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
     }
   };
 
-
   const handleExpand = () => setForceExpanded(true);
-
 
   // soft error handling
   const { isAssistantError, errorMessage } = explainErrorInMessage(message);
-
 
   // theming
   let background = theme.vars.palette.background.body;
@@ -297,7 +338,7 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
   } else if (message.sender === 'You') {
     background = theme.vars.palette.primary.plainHoverBg;
   } else if (message.role === 'assistant') {
-    background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
+    background = isAssistantError && !errorMessage ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
   }
 
   // text box css
@@ -319,40 +360,49 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
     }
   }
 
-
   return (
-    <ListItem sx={{
-      display: 'flex', flexDirection: message.sender === 'You' ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      px: 1, py: 2,
-      background,
-      borderBottom: '1px solid',
-      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
-    }}>
-
+    <ListItem
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        px: 1,
+        py: 2,
+        background,
+        borderBottom: '1px solid',
+        borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
+      }}
+    >
       {/* Author */}
 
-      <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
-             onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-             onClick={event => setMenuAnchor(event.currentTarget)}>
-
+      <Stack
+        sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onClick={(event) => setMenuAnchor(event.currentTarget)}
+      >
         {isHovering ? (
-          <IconButton variant='soft' color='primary'>
+          <IconButton variant="soft" color="primary">
             <MoreVertIcon />
           </IconButton>
+        ) : typeof message.avatar === 'string' ? (
+          <Avatar alt={message.sender} src={message.avatar} />
+        ) : message.avatar != null ? (
+          <message.avatar sx={{ width: 40, height: 40 }} />
         ) : (
-          typeof message.avatar === 'string'
-            ? <Avatar alt={message.sender} src={message.avatar} />
-            : (message.avatar != null)
-              ? <message.avatar sx={{ width: 40, height: 40 }} />
-              : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
+          <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
         )}
 
         {message.role === 'system' && (
-          <Typography level='body2' color='neutral'>system</Typography>
+          <Typography level="body2" color="neutral">
+            system
+          </Typography>
         )}
         {message.role === 'assistant' && (
-          <Tooltip title={message.model} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyBaseModel(message.model)}</Typography>
+          <Tooltip title={message.model} variant="solid">
+            <Typography level="body2" color="neutral">
+              {prettyBaseModel(message.model)}
+            </Typography>
           </Tooltip>
         )}
 
@@ -360,65 +410,70 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
         {!!menuAnchor && (
           <Menu open anchorEl={menuAnchor} onClose={closeMenu} sx={{ minWidth: 200 }}>
             <MenuItem onClick={handleMenuCopy}>
-              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+              <ListItemDecorator>
+                <ContentCopyIcon />
+              </ListItemDecorator>
               Copy
             </MenuItem>
             <MenuItem onClick={handleMenuEdit}>
-              <ListItemDecorator><EditIcon /></ListItemDecorator>
+              <ListItemDecorator>
+                <EditIcon />
+              </ListItemDecorator>
               {isEditing ? 'Discard' : 'Edit'}
             </MenuItem>
             <ListDivider />
             <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user'}>
-              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
+              <ListItemDecorator>
+                <FastForwardIcon />
+              </ListItemDecorator>
               Run again
             </MenuItem>
             <MenuItem onClick={props.onDelete} disabled={message.role === 'system'}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              <ListItemDecorator>
+                <ClearIcon />
+              </ListItemDecorator>
               Delete
             </MenuItem>
           </Menu>
         )}
-
       </Stack>
-
 
       {/* Edit / Blocks */}
 
       {isEditing ? (
-
-        <Textarea variant='soft' color='primary' autoFocus minRows={1}
-                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed}
-                  sx={{ ...chatFontCss, flexGrow: 1 }} />
-
+        <Textarea
+          variant="soft"
+          color="primary"
+          autoFocus
+          minRows={1}
+          value={editedText}
+          onChange={handleEditTextChanged}
+          onKeyDown={handleEditKeyPressed}
+          sx={{ ...chatFontCss, flexGrow: 1 }}
+        />
       ) : (
-
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
           {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
             part.type === 'code' ? (
               <CodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
             ) : (
-              <Typography key={index} level='body1' component='span'
-                          sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
+              <Typography key={index} level="body1" component="span" sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
                 {part.content}
               </Typography>
             ),
           )}
           {errorMessage && (
-            <Alert variant='soft' color='warning' sx={{ mt: 1 }}>
-              <Typography>
-                {errorMessage}
-              </Typography>
+            <Alert variant="soft" color="warning" sx={{ mt: 1 }}>
+              <Typography>{errorMessage}</Typography>
             </Alert>
           )}
           {isCollapsed && (
-            <Button variant='plain' onClick={handleExpand}>
+            <Button variant="plain" onClick={handleExpand}>
               ... expand ...
             </Button>
           )}
         </Box>
-
       )}
-
     </ListItem>
   );
 }

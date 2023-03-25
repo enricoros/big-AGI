@@ -14,7 +14,6 @@ import { Message, UiMessage } from '../components/Message';
 import { NoSSR } from '../components/util/NoSSR';
 import { isValidOpenAIApiKey, Settings } from '../components/Settings';
 
-
 /// UI Messages configuration
 
 const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 'sender' | 'avatar'> } = {
@@ -42,17 +41,17 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   ...MessageDefaults[role],
 });
 
-
 /// Chat ///
 
 export default function Conversation() {
   const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { apiKey, chatModelId, systemPurposeId, setSystemPurpose } = useSettingsStore(state => ({
+  const { apiKey, chatModelId, systemPurposeId, setSystemPurpose } = useSettingsStore((state) => ({
     apiKey: state.apiKey,
     chatModelId: state.chatModelId,
-    systemPurposeId: state.systemPurposeId, setSystemPurpose: state.setSystemPurposeId,
+    systemPurposeId: state.systemPurposeId,
+    setSystemPurpose: state.setSystemPurposeId,
   }));
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
   const [disableCompose, setDisableCompose] = React.useState(false);
@@ -65,32 +64,28 @@ export default function Conversation() {
 
   React.useEffect(() => {
     // show the settings at startup if the API key is not present
-    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
-      setSettingsShown(true);
+    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey)) setSettingsShown(true);
   }, [apiKey]);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
-
   const handleListClear = () => setMessages([]);
 
-  const handleListDelete = (uid: string) =>
-    setMessages(list => list.filter(message => message.uid !== uid));
+  const handleListDelete = (uid: string) => setMessages((list) => list.filter((message) => message.uid !== uid));
 
   const handleListEdit = (uid: string, newText: string) =>
-    setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
+    setMessages((list) => list.map((message) => (message.uid === uid ? { ...message, text: newText } : message)));
 
   const handleListRunAgain = (uid: string) => {
     // take all messages until we get to uid, then remove the rest
-    const uidPosition = messages.findIndex(message => message.uid === uid);
+    const uidPosition = messages.findIndex((message) => message.uid === uid);
     if (uidPosition === -1) return;
     const conversation = messages.slice(0, uidPosition + 1);
     setMessages(conversation);
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    getBotMessageStreaming(conversation).then(() => setDisableCompose(false));
   };
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
@@ -103,7 +98,6 @@ export default function Conversation() {
 
     setSystemPurpose(purpose);
   };
-
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
     const payload: ChatApiInput = {
@@ -150,9 +144,9 @@ export default function Conversation() {
           }
         }
 
-        setMessages(list => {
+        setMessages((list) => {
           // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
-          const message = list.find(message => message.uid === newBotMessage.uid);
+          const message = list.find((message) => message.uid === newBotMessage.uid);
           return !message ? [...list, newBotMessage] : [...list];
         });
       }
@@ -160,12 +154,10 @@ export default function Conversation() {
   };
 
   const handleComposerSendMessage: (text: string) => void = (text) => {
-
     // seed the conversation with a 'system' message
     const conversation = [...messages];
     if (!conversation.length) {
-      const systemMessage = SystemPurposes[systemPurposeId].systemMessage
-        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+      const systemMessage = SystemPurposes[systemPurposeId].systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
       conversation.push(createUiMessage('system', systemMessage));
     }
 
@@ -177,30 +169,40 @@ export default function Conversation() {
 
     // disable the composer while the bot is replying
     setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    getBotMessageStreaming(conversation).then(() => setDisableCompose(false));
   };
-
 
   const noMessages = !messages.length;
 
   return (
-    <Container maxWidth='xl' disableGutters sx={{
-      boxShadow: theme.vars.shadow.lg,
-    }}>
-      <Stack direction='column' sx={{
-        minHeight: '100vh',
-      }}>
-
+    <Container
+      maxWidth="xl"
+      disableGutters
+      sx={{
+        boxShadow: theme.vars.shadow.lg,
+      }}
+    >
+      <Stack
+        direction="column"
+        sx={{
+          minHeight: '100vh',
+        }}
+      >
         {/* Application Bar */}
-        <Sheet variant='solid' invertedColors sx={{
-          position: 'sticky', top: 0, zIndex: 20, p: 1,
-          background: process.env.NODE_ENV === 'development'
-            ? theme.vars.palette.danger.solidHoverBg
-            : theme.vars.palette.primary.solidHoverBg,
-          display: 'flex', flexDirection: 'row',
-        }}>
-          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+        <Sheet
+          variant="solid"
+          invertedColors
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            p: 1,
+            background: process.env.NODE_ENV === 'development' ? theme.vars.palette.danger.solidHoverBg : theme.vars.palette.primary.solidHoverBg,
+            display: 'flex',
+            flexDirection: 'row',
+          }}
+        >
+          <IconButton variant="plain" color="neutral" onClick={handleDarkModeToggle}>
             <DarkModeIcon />
           </IconButton>
 
@@ -210,42 +212,49 @@ export default function Conversation() {
           {/*  </IconButton>*/}
           {/*)}*/}
 
-          <Typography sx={{
-            textAlign: 'center',
-            fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
-            my: 'auto',
-            flexGrow: 1,
-          }} onDoubleClick={handleListClear}>
+          <Typography
+            sx={{
+              textAlign: 'center',
+              fontFamily: theme.vars.fontFamily.code,
+              fontSize: '1rem',
+              lineHeight: 1.75,
+              my: 'auto',
+              flexGrow: 1,
+            }}
+            onDoubleClick={handleListClear}
+          >
             <NoSSR>
               {GptChatModels[chatModelId]?.title || 'Select Model'} <span style={{ opacity: 0.5 }}> ·</span> {SystemPurposes[systemPurposeId].title}
             </NoSSR>
           </Typography>
 
-          <IconButton variant='plain' color='neutral' onClick={() => setSettingsShown(true)}>
+          <IconButton variant="plain" color="neutral" onClick={() => setSettingsShown(true)}>
             <SettingsOutlinedIcon />
           </IconButton>
         </Sheet>
 
         {/* Chat */}
-        <Box sx={{
-          flexGrow: 1,
-          background: theme.vars.palette.background.level1,
-        }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            background: theme.vars.palette.background.level1,
+          }}
+        >
           {noMessages ? (
-            <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+            <Stack direction="column" sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
               <Box>
-                <Typography level='body3' color='neutral'>
+                <Typography level="body3" color="neutral">
                   AI purpose
                 </Typography>
                 <NoSSR>
                   <Select value={systemPurposeId} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
-                    {Object.keys(SystemPurposes).map(spId => (
+                    {Object.keys(SystemPurposes).map((spId) => (
                       <Option key={spId} value={spId}>
                         {SystemPurposes[spId as SystemPurposeId]?.title}
                       </Option>
                     ))}
                   </Select>
-                  <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
+                  <Typography level="body2" sx={{ mt: 2, minWidth: 260 }}>
                     {SystemPurposes[systemPurposeId].description}
                   </Typography>
                 </NoSSR>
@@ -254,11 +263,15 @@ export default function Conversation() {
           ) : (
             <>
               <List sx={{ p: 0 }}>
-                {messages.map(message =>
-                  <Message key={'msg-' + message.uid} uiMessage={message}
-                           onDelete={() => handleListDelete(message.uid)}
-                           onEdit={newText => handleListEdit(message.uid, newText)}
-                           onRunAgain={() => handleListRunAgain(message.uid)} />)}
+                {messages.map((message) => (
+                  <Message
+                    key={'msg-' + message.uid}
+                    uiMessage={message}
+                    onDelete={() => handleListDelete(message.uid)}
+                    onEdit={(newText) => handleListEdit(message.uid, newText)}
+                    onRunAgain={() => handleListRunAgain(message.uid)}
+                  />
+                ))}
                 <div ref={messagesEndRef}></div>
               </List>
             </>
@@ -266,23 +279,25 @@ export default function Conversation() {
         </Box>
 
         {/* Compose */}
-        <Box sx={{
-          position: 'sticky', bottom: 0, zIndex: 10,
-          background: theme.vars.palette.background.body,
-          borderTop: '1px solid',
-          borderTopColor: theme.vars.palette.divider,
-          p: { xs: 1, md: 2 },
-        }}>
+        <Box
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+            background: theme.vars.palette.background.body,
+            borderTop: '1px solid',
+            borderTopColor: theme.vars.palette.divider,
+            p: { xs: 1, md: 2 },
+          }}
+        >
           <NoSSR>
             <Composer isDeveloper={systemPurposeId === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
           </NoSSR>
         </Box>
-
       </Stack>
 
       {/* Settings Modal */}
       <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
-
     </Container>
   );
 }
