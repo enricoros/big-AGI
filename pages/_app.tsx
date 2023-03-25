@@ -69,7 +69,7 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
       <CssVarsProvider defaultMode='light' theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <Component {...pageProps} />
+        <Component {...pageProps} debug={false} />
         <VercelAnalytics />
       </CssVarsProvider>
     </CacheProvider>
