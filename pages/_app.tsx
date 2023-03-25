@@ -24,7 +24,7 @@ const jetBrainsMono = JetBrains_Mono({
   fallback: ['monospace'],
 });
 
-export const theme = extendTheme({
+const theme = extendTheme({
   fontFamily: {
     body: inter.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
