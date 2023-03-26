@@ -233,7 +233,7 @@ function explainErrorInMessage(message: UiMessage) {
  * @param {Function} props.onDelete - The function to call when the delete button is clicked.
  * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
  */
-export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
   const message = props.uiMessage;
 
@@ -264,9 +264,11 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
   };
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
-    props.onRunAgain();
-    e.preventDefault();
-    closeMenu();
+    if (!props.composerBusy) {
+      props.onRunAgain();
+      e.preventDefault();
+      closeMenu();
+    }
   };
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -368,7 +370,7 @@ export function Message(props: { uiMessage: UiMessage, onDelete: () => void, onE
               {isEditing ? 'Discard' : 'Edit'}
             </MenuItem>
             <ListDivider />
-            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user'}>
+            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.composerBusy}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
               Run again
             </MenuItem>
