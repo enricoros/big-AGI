@@ -9,9 +9,9 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { useComposerStore } from '../utilities/store';
-import { useSpeechRecognition } from '../utilities/speechRecognition';
 import { NoSSR } from './util/NoSSR';
+import { useComposerStore } from '../utilities/store';
+import { useSpeechRecognition } from '../utilities/useSpeechRecognition';
 
 
 /// Text template helpers

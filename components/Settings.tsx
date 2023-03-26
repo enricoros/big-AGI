@@ -3,9 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
-import { GptChatModelId, GptChatModels, useSettingsStore } from '../utilities/store';
+import { ChatModelId, ChatModels } from '../utilities/data';
 import { Link } from './util/Link';
 import { NoSSR } from './util/NoSSR';
+import { useSettingsStore } from '../utilities/store';
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
@@ -29,7 +30,7 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
     setApiKey((e.target as HTMLInputElement).value);
 
   const handleGptModelChange = (e: React.FocusEvent | React.MouseEvent | React.KeyboardEvent | null, value: string | null) =>
-    setChatModelId((value || 'gpt-4') as GptChatModelId);
+    setChatModelId((value || 'gpt-4') as ChatModelId);
 
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
     (e.key === 'Enter') && onClose();
@@ -73,9 +74,9 @@ export function Settings({ open, onClose }: { open: boolean, onClose: () => void
               {/*<Option value={'gpt-4-32k'}>GPT-4-32k (not out yet)</Option>*/}
             </Select>
 
-            {(chatModelId in GptChatModels) && (
+            {(chatModelId in ChatModels) && (
               <Typography level='body2' sx={{ mt: 1, mb: 1 }}>
-                {GptChatModels[chatModelId].description}
+                {ChatModels[chatModelId].description}
               </Typography>
             )}
           </NoSSR>
