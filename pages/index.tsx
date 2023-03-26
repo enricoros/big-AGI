@@ -8,11 +8,12 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ApiChatInput } from './api/chat';
+import { ChatModels, SystemPurposeId, SystemPurposes } from '../utilities/data';
 import { Composer } from '../components/Composer';
-import { GptChatModels, SystemPurposeId, SystemPurposes, useSettingsStore } from '../utilities/store';
 import { Message, UiMessage } from '../components/Message';
 import { NoSSR } from '../components/util/NoSSR';
 import { isValidOpenAIApiKey, Settings } from '../components/Settings';
+import { useSettingsStore } from '../utilities/store';
 
 
 /// UI Messages configuration
@@ -234,7 +235,7 @@ export default function Conversation() {
             flexGrow: 1,
           }} onDoubleClick={handleListClear}>
             <NoSSR>
-              {GptChatModels[chatModelId]?.title || 'Select Model'} <span style={{ opacity: 0.5 }}> ·</span> {SystemPurposes[systemPurposeId].title}
+              {ChatModels[chatModelId]?.title || 'Select Model'} <span style={{ opacity: 0.5 }}> ·</span> {SystemPurposes[systemPurposeId].title}
             </NoSSR>
           </Typography>
 
