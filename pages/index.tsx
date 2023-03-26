@@ -46,6 +46,7 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
 /// Chat ///
 
 export default function Conversation() {
+
   const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
@@ -55,7 +56,7 @@ export default function Conversation() {
     systemPurposeId: state.systemPurposeId, setSystemPurpose: state.setSystemPurposeId,
   }));
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
-  const [disableCompose, setDisableCompose] = React.useState(false);
+  const [abortController, setAbortController] = React.useState<AbortController | null>(null);
   const [settingsShown, setSettingsShown] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -87,10 +88,8 @@ export default function Conversation() {
     const conversation = messages.slice(0, uidPosition + 1);
     setMessages(conversation);
 
-    // disable the composer while the bot is replying
-    setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    // noinspection JSIgnoredPromiseFromCall
+    getBotMessageStreaming(conversation);
   };
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
@@ -104,8 +103,13 @@ export default function Conversation() {
     setSystemPurpose(purpose);
   };
 
+  const handleStopGeneration = () => abortController?.abort();
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
+    // when an abort controller is set, the UI switches to the "stop" mode
+    const controller = new AbortController();
+    setAbortController(controller);
+
     const payload: ApiChatInput = {
       apiKey: apiKey,
       model: chatModelId,
@@ -115,48 +119,65 @@ export default function Conversation() {
       })),
     };
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
 
-    if (response.body) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-      const newBotMessage: UiMessage = createUiMessage('assistant', '');
+      if (response.body) {
+        const message: UiMessage = createUiMessage('assistant', '');
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
 
-        const messageText = decoder.decode(value);
-        newBotMessage.text += messageText;
+        // loop forever until the read is done, or the abort controller is triggered
+        while (true) {
+          const { value, done } = await reader.read();
 
-        // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
-        if (!newBotMessage.model && newBotMessage.text.startsWith('{')) {
-          const endOfJson = newBotMessage.text.indexOf('}');
-          if (endOfJson > 0) {
-            const json = newBotMessage.text.substring(0, endOfJson + 1);
-            try {
-              const parsed = JSON.parse(json);
-              newBotMessage.model = parsed.model;
-              newBotMessage.text = newBotMessage.text.substring(endOfJson + 1);
-            } catch (e) {
-              // error parsing JSON, ignore
-              console.log('Error parsing JSON: ' + e);
+          if (done) break;
+
+          const messageText = decoder.decode(value);
+          message.text += messageText;
+
+          // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
+          if (!message.model && message.text.startsWith('{')) {
+            const endOfJson = message.text.indexOf('}');
+            if (endOfJson > 0) {
+              const json = message.text.substring(0, endOfJson + 1);
+              try {
+                const parsed = JSON.parse(json);
+                message.model = parsed.model;
+                message.text = message.text.substring(endOfJson + 1);
+              } catch (e) {
+                // error parsing JSON, ignore
+                console.log('Error parsing JSON: ' + e);
+              }
             }
           }
-        }
 
-        setMessages(list => {
-          // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
-          const message = list.find(message => message.uid === newBotMessage.uid);
-          return !message ? [...list, newBotMessage] : [...list];
-        });
+          setMessages(list => {
+            // if missing, add the message at the end of the list, otherwise set a new list anyway, to trigger a re-render
+            const existing = list.find(m => m.uid === message.uid);
+            return existing ? [...list] : [...list, message];
+          });
+        }
+      }
+
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        // expected, the user clicked the "stop" button
+      } else {
+        // TODO: show an error to the UI
+        console.error('Fetch request error:', error);
       }
     }
+
+    // and we're done with this message/api call
+    setAbortController(null);
   };
 
   const handleComposerSendMessage: (text: string) => void = (text) => {
@@ -171,14 +192,10 @@ export default function Conversation() {
 
     // add the user message
     conversation.push(createUiMessage('user', text));
-
-    // update the list of messages
     setMessages(conversation);
 
-    // disable the composer while the bot is replying
-    setDisableCompose(true);
-    getBotMessageStreaming(conversation)
-      .then(() => setDisableCompose(false));
+    // noinspection JSIgnoredPromiseFromCall
+    getBotMessageStreaming(conversation);
   };
 
 
@@ -255,7 +272,7 @@ export default function Conversation() {
             <>
               <List sx={{ p: 0 }}>
                 {messages.map(message =>
-                  <Message key={'msg-' + message.uid} uiMessage={message}
+                  <Message key={'msg-' + message.uid} uiMessage={message} composerBusy={!!abortController}
                            onDelete={() => handleListDelete(message.uid)}
                            onEdit={newText => handleListEdit(message.uid, newText)}
                            onRunAgain={() => handleListRunAgain(message.uid)} />)}
@@ -274,7 +291,7 @@ export default function Conversation() {
           p: { xs: 1, md: 2 },
         }}>
           <NoSSR>
-            <Composer isDeveloper={systemPurposeId === 'Developer'} disableSend={disableCompose} sendMessage={handleComposerSendMessage} />
+            <Composer isDeveloper={systemPurposeId === 'Developer'} disableSend={!!abortController} sendMessage={handleComposerSendMessage} stopGeneration={handleStopGeneration} />
           </NoSSR>
         </Box>
 
