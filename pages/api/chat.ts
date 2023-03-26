@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
 
@@ -9,41 +10,45 @@ if (!process.env.OPENAI_API_KEY)
 
 // definition for OpenAI wire types
 
-interface ChatMessage {
-  role: 'assistant' | 'system' | 'user';
-  content: string;
+namespace OpenAIAPI {
+
+  export interface ChatMessage {
+    role: 'assistant' | 'system' | 'user';
+    content: string;
+  }
+
+  export interface ChatCompletionsRequest {
+    model: string;
+    messages: ChatMessage[];
+    temperature?: number;
+    top_p?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    max_tokens?: number;
+    stream: boolean;
+    n: number;
+  }
+
+  export interface ChatCompletionsResponseChunked {
+    id: string; // unique id of this chunk
+    object: 'chat.completion.chunk';
+    created: number; // unix timestamp in seconds
+    model: string; // can differ from the ask, e.g. 'gpt-4-0314'
+    choices: {
+      delta: Partial<ChatMessage>;
+      index: number; // always 0s for n=1
+      finish_reason: 'stop' | 'length' | null;
+    }[];
+  }
+
 }
 
-interface ChatCompletionsRequest {
-  model: string;
-  messages: ChatMessage[];
-  temperature?: number;
-  top_p?: number;
-  frequency_penalty?: number;
-  presence_penalty?: number;
-  max_tokens?: number;
-  stream: boolean;
-  n: number;
-}
 
-interface ChatCompletionsResponseChunked {
-  id: string; // unique id of this chunk
-  object: 'chat.completion.chunk';
-  created: number; // unix timestamp in seconds
-  model: string; // can differ from the ask, e.g. 'gpt-4-0314'
-  choices: {
-    delta: Partial<ChatMessage>;
-    index: number; // always 0s for n=1
-    finish_reason: 'stop' | 'length' | null;
-  }[];
-}
-
-
-async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest, 'stream' | 'n'>): Promise<ReadableStream> {
+async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.ChatCompletionsRequest, 'stream' | 'n'>): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const streamingPayload: ChatCompletionsRequest = {
+  const streamingPayload: OpenAIAPI.ChatCompletionsRequest = {
     ...payload,
     stream: true,
     n: 1,
@@ -92,7 +97,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
         }
 
         try {
-          const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
+          const json: OpenAIAPI.ChatCompletionsResponseChunked = JSON.parse(event.data);
 
           // ignore any 'role' delta update
           if (json.choices[0].delta?.role)
@@ -101,7 +106,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           // stringify and send the first packet as a JSON object
           if (!sentFirstPacket) {
             sentFirstPacket = true;
-            const firstPacket: ChatApiOutputStart = {
+            const firstPacket: ApiChatFirstOutput = {
               model: json.model,
             };
             controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
@@ -129,10 +134,10 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
 // Next.js API route
 
-export interface ChatApiInput {
+export interface ApiChatInput {
   apiKey?: string;
   model: string;
-  messages: ChatMessage[];
+  messages: OpenAIAPI.ChatMessage[];
   temperature?: number;
   max_tokens?: number;
 }
@@ -142,16 +147,13 @@ export interface ChatApiInput {
  * string'ified JSON object with the few initial variables. We hope in the future to adopt a better
  * solution (e.g. websockets, but that will exclude deployment in Edge Functions).
  */
-export interface ChatApiOutputStart {
+export interface ApiChatFirstOutput {
   model: string;
 }
 
-export default async function handler(req: NextRequest) {
+export default async function handler(req: NextRequest): Promise<Response> {
 
-  // read inputs
-  const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
-
-  // select key
+  const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
@@ -163,7 +165,7 @@ export default async function handler(req: NextRequest) {
     max_tokens,
   });
 
-  return new Response(stream);
+  return new NextResponse(stream);
 }
 
 //noinspection JSUnusedGlobalSymbols
