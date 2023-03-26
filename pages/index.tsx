@@ -7,7 +7,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
-import { ChatApiInput } from './api/chat';
+import { ApiChatInput } from './api/chat';
 import { Composer } from '../components/Composer';
 import { GptChatModels, SystemPurposeId, SystemPurposes, useSettingsStore } from '../utilities/store';
 import { Message, UiMessage } from '../components/Message';
@@ -106,7 +106,7 @@ export default function Conversation() {
 
 
   const getBotMessageStreaming = async (messages: UiMessage[]) => {
-    const payload: ChatApiInput = {
+    const payload: ApiChatInput = {
       apiKey: apiKey,
       model: chatModelId,
       messages: messages.map(({ role, text }) => ({
