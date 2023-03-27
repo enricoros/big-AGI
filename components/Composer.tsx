@@ -10,8 +10,8 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { NoSSR } from './util/NoSSR';
-import { useComposerStore } from '../lib/store';
-import { useSpeechRecognition } from '../lib/use-speech-recognition';
+import { useComposerStore } from '@/lib/store';
+import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
 
 /// Text template helpers
