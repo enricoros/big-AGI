@@ -3,10 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
 
-import { ChatModelId, ChatModels } from '../utilities/data';
+import { ChatModelId, ChatModels } from '../lib/data';
 import { Link } from './util/Link';
 import { NoSSR } from './util/NoSSR';
-import { useSettingsStore } from '../utilities/store';
+import { useSettingsStore } from '../lib/store';
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
