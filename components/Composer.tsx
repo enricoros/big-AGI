@@ -10,7 +10,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { NoSSR } from './util/NoSSR';
-import { useComposerStore } from '@/lib/store';
+import { useComposerStore, useSettingsStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
 
@@ -37,34 +37,33 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
  * Note: Useful bash trick to generate code from a list of files:
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
  *
- * @param {boolean} isDeveloper - Flag to indicate if the user is a developer.
- * @param {boolean} disableSend - Flag to disable the send button.
- * @param {(text: string) => void} sendMessage - Function to send the composed message.
- * @param {() => void} stopGeneration - Function to stop message generation
+ * @param {boolean} props.disableSend - Flag to disable the send button.
+ * @param {(text: string) => void} props.sendMessage - Function to send the message
+ * @param {() => void} props.stopGeneration - Function to stop response generation
  */
-export function Composer({ isDeveloper, disableSend, sendMessage, stopGeneration }: { isDeveloper: boolean; disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; }) {
+export function Composer(props: { disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; }) {
   // state
   const [composeText, setComposeText] = React.useState('');
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }));
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
-
+  const isDeveloper = useSettingsStore(state => state.systemPurposeId) === 'Developer';
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
     if (text.length) {
       setComposeText('');
-      sendMessage(text);
+      props.sendMessage(text);
       appendMessageToHistory(text);
     }
   };
 
-  const handleStopClicked = () => stopGeneration();
+  const handleStopClicked = () => props.stopGeneration();
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      if (!disableSend)
+      if (!props.disableSend)
         handleSendClicked();
       e.preventDefault();
     }
@@ -262,10 +261,10 @@ export function Composer({ isDeveloper, disableSend, sendMessage, stopGeneration
                 </IconButton>
               )}
             </NoSSR>
-            <Button fullWidth variant={disableSend ? 'soft' : 'solid'} color='primary'
-                    onClick={disableSend ? handleStopClicked : handleSendClicked}
-                    endDecorator={disableSend ? <StopOutlinedIcon /> : <TelegramIcon />}>
-              {disableSend ? 'Stop' : 'Chat'}
+            <Button fullWidth variant={props.disableSend ? 'soft' : 'solid'} color='primary'
+                    onClick={props.disableSend ? handleStopClicked : handleSendClicked}
+                    endDecorator={props.disableSend ? <StopOutlinedIcon /> : <TelegramIcon />}>
+              {props.disableSend ? 'Stop' : 'Chat'}
             </Button>
           </Box>
 

@@ -260,14 +260,14 @@ export default function Conversation() {
           p: { xs: 1, md: 2 },
         }}>
           <NoSSR>
-            <Composer isDeveloper={systemPurposeId === 'Developer'} disableSend={!!abortController} sendMessage={handleComposerSendMessage} stopGeneration={handleStopGeneration} />
+            <Composer disableSend={!!abortController} sendMessage={handleComposerSendMessage} stopGeneration={handleStopGeneration} />
           </NoSSR>
         </Box>
 
-        {/* Settings Modal */}
-        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
-
       </Stack>
+
+      {/* Settings Modal */}
+      <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 
     </Container>
   );
