@@ -12,7 +12,7 @@ import { ChatModels, SystemPurposeId, SystemPurposes } from '../lib/data';
 import { Composer } from '../components/Composer';
 import { Message, UiMessage } from '../components/Message';
 import { NoSSR } from '../components/util/NoSSR';
-import { isValidOpenAIApiKey, Settings } from '../components/Settings';
+import { isValidOpenAIApiKey, SettingsModal } from '../components/SettingsModal';
 import { useSettingsStore } from '../lib/store';
 
 
@@ -299,7 +299,7 @@ export default function Conversation() {
       </Stack>
 
       {/* Settings Modal */}
-      <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
+      <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 
     </Container>
   );
