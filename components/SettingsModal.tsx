@@ -20,7 +20,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {boolean} open Whether the Settings modal is open
  * @param {() => void} onClose Call this to close the dialog from outside
  */
-export function Settings({ open, onClose }: { open: boolean, onClose: () => void; }) {
+export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
   const { apiKey, setApiKey, chatModelId, setChatModelId } = useSettingsStore(state => ({
     apiKey: state.apiKey, setApiKey: state.setApiKey,
     chatModelId: state.chatModelId, setChatModelId: state.setChatModelId,
