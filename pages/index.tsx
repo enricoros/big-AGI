@@ -1,17 +1,16 @@
 import * as React from 'react';
 
-import { Box, Container, IconButton, List, Option, Select, Sheet, Stack, Typography, useColorScheme, useTheme } from '@mui/joy';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
+import { Box, Container, List, Option, Select, Stack, Typography, useTheme } from '@mui/joy';
 import Face6Icon from '@mui/icons-material/Face6';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ApiChatInput } from './api/chat';
-import { ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
+import { ApplicationBar } from '@/components/ApplicationBar';
 import { Composer } from '@/components/Composer';
 import { Message, UiMessage } from '@/components/Message';
 import { NoSSR } from '@/components/util/NoSSR';
+import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
 
@@ -49,7 +48,6 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
 export default function Conversation() {
 
   const theme = useTheme();
-  const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
   const { apiKey, chatModelId, systemPurposeId, setSystemPurpose } = useSettingsStore(state => ({
     apiKey: state.apiKey,
@@ -70,9 +68,6 @@ export default function Conversation() {
     if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
       setSettingsShown(true);
   }, [apiKey]);
-
-  const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
-
 
   const handleListClear = () => setMessages([]);
 
@@ -211,38 +206,12 @@ export default function Conversation() {
       }}>
 
         {/* Application Bar */}
-        <Sheet variant='solid' invertedColors sx={{
-          position: 'sticky', top: 0, zIndex: 20, p: 1,
+        <ApplicationBar onDoubleClick={handleListClear} onSettingsClick={() => setSettingsShown(true)} sx={{
+          position: 'sticky', top: 0, zIndex: 20,
           background: process.env.NODE_ENV === 'development'
             ? theme.vars.palette.danger.solidHoverBg
             : theme.vars.palette.primary.solidHoverBg,
-          display: 'flex', flexDirection: 'row',
-        }}>
-          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
-            <DarkModeIcon />
-          </IconButton>
-
-          {/*{!isEmpty && (*/}
-          {/*  <IconButton variant='plain' color='neutral' disabled={isDisabledCompose} onClick={onClearConversation}>*/}
-          {/*    <DeleteOutlineOutlinedIcon />*/}
-          {/*  </IconButton>*/}
-          {/*)}*/}
-
-          <Typography sx={{
-            textAlign: 'center',
-            fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
-            my: 'auto',
-            flexGrow: 1,
-          }} onDoubleClick={handleListClear}>
-            <NoSSR>
-              {ChatModels[chatModelId]?.title || 'Select Model'} <span style={{ opacity: 0.5 }}> ·</span> {SystemPurposes[systemPurposeId].title}
-            </NoSSR>
-          </Typography>
-
-          <IconButton variant='plain' color='neutral' onClick={() => setSettingsShown(true)}>
-            <SettingsOutlinedIcon />
-          </IconButton>
-        </Sheet>
+        }} />
 
         {/* Chat */}
         <Box sx={{
@@ -283,12 +252,11 @@ export default function Conversation() {
           )}
         </Box>
 
-        {/* Compose */}
+        {/* Composer */}
         <Box sx={{
           position: 'sticky', bottom: 0, zIndex: 10,
           background: theme.vars.palette.background.body,
-          borderTop: '1px solid',
-          borderTopColor: theme.vars.palette.divider,
+          borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },
         }}>
           <NoSSR>
@@ -296,10 +264,10 @@ export default function Conversation() {
           </NoSSR>
         </Box>
 
-      </Stack>
+        {/* Settings Modal */}
+        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 
-      {/* Settings Modal */}
-      <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
+      </Stack>
 
     </Container>
   );
