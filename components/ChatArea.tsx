@@ -1,21 +1,24 @@
 import * as React from 'react';
+
+import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import { Box, List, Option, Select, Stack, Typography, useTheme } from '@mui/joy';
-import { ApplicationBar } from '@/components/ApplicationBar';
-import { NoSSR } from '@/components/util/NoSSR';
-import { SystemPurposeId, SystemPurposes } from '@/lib/data';
-import { Message, UiMessage } from '@/components/Message';
-import { Composer } from '@/components/Composer';
-import { ApiChatInput } from '../pages/api/chat';
-import { useSettingsStore } from '@/lib/store';
 import Face6Icon from '@mui/icons-material/Face6';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
+import { ApiChatInput } from '../pages/api/chat';
+import { ApplicationBar } from '@/components/ApplicationBar';
+import { Composer } from '@/components/Composer';
+import { Conversation } from '@/components/Conversation';
+import { NoSSR } from '@/components/util/NoSSR';
+import { SystemPurposes } from '@/lib/data';
+import { UiMessage } from '@/components/Message';
+import { useSettingsStore } from '@/lib/store';
+
 
 /// UI Messages configuration
 
-const MessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 'sender' | 'avatar'> } = {
+const UIMessageDefaults: { [key in UiMessage['role']]: Pick<UiMessage, 'role' | 'sender' | 'avatar'> } = {
   system: {
     role: 'system',
     sender: 'Bot',
@@ -37,58 +40,22 @@ const createUiMessage = (role: UiMessage['role'], text: string): UiMessage => ({
   uid: Math.random().toString(36).substring(2, 15),
   text: text,
   model: '',
-  ...MessageDefaults[role],
+  ...UIMessageDefaults[role],
 });
 
 
 export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const theme = useTheme();
-  const { apiKey, chatModelId, systemPurposeId, setSystemPurpose } = useSettingsStore(state => ({
-    apiKey: state.apiKey,
-    chatModelId: state.chatModelId,
-    systemPurposeId: state.systemPurposeId, setSystemPurpose: state.setSystemPurposeId,
+
+  const { apiKey, chatModelId, systemPurposeId } = useSettingsStore(state => ({
+    apiKey: state.apiKey, chatModelId: state.chatModelId, systemPurposeId: state.systemPurposeId,
   }));
   const [messages, setMessages] = React.useState<UiMessage[]>([]);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
-  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
-  React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
-  const handleListClear = () => setMessages([]);
-
-  const handleListDelete = (uid: string) =>
-    setMessages(list => list.filter(message => message.uid !== uid));
-
-  const handleListEdit = (uid: string, newText: string) =>
-    setMessages(list => list.map(message => (message.uid === uid ? { ...message, text: newText } : message)));
-
-  const handleListRunAgain = (uid: string) => {
-    // take all messages until we get to uid, then remove the rest
-    const uidPosition = messages.findIndex(message => message.uid === uid);
-    if (uidPosition === -1) return;
-    const conversation = messages.slice(0, uidPosition + 1);
-    setMessages(conversation);
-
-    // noinspection JSIgnoredPromiseFromCall
-    getBotMessageStreaming(conversation);
-  };
-
-  const handlePurposeChange = (purpose: SystemPurposeId | null) => {
-    if (!purpose) return;
-
-    if (purpose === 'Custom') {
-      const systemMessage = prompt('Enter your custom AI purpose', SystemPurposes['Custom'].systemMessage);
-      SystemPurposes['Custom'].systemMessage = systemMessage || '';
-    }
-
-    setSystemPurpose(purpose);
-  };
-
-  const handleStopGeneration = () => abortController?.abort();
-
-  const getBotMessageStreaming = async (messages: UiMessage[]) => {
+  /** Main function to send a message to the assistant and receive a response */
+  const streamAssistantResponseMessage = async (history: UiMessage[]) => {
     // when an abort controller is set, the UI switches to the "stop" mode
     const controller = new AbortController();
     setAbortController(controller);
@@ -96,7 +63,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
     const payload: ApiChatInput = {
       apiKey: apiKey,
       model: chatModelId,
-      messages: messages.map(({ role, text }) => ({
+      messages: history.map(({ role, text }) => ({
         role: role,
         content: text,
       })),
@@ -163,26 +130,41 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
     setAbortController(null);
   };
 
-  const handleComposerSendMessage: (text: string) => void = (text) => {
+  const handleConversationClear = () =>
+    setMessages([]);
 
-    // seed the conversation with a 'system' message
-    const conversation = [...messages];
-    if (!conversation.length) {
-      const systemMessage = SystemPurposes[systemPurposeId].systemMessage
-        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-      conversation.push(createUiMessage('system', systemMessage));
-    }
+  const handleMessageDelete = (uid: string) =>
+    setMessages(list => list.filter(m => m.uid !== uid));
 
-    // add the user message
-    conversation.push(createUiMessage('user', text));
-    setMessages(conversation);
+  const handleMessageEdit = (uid: string, newText: string) =>
+    setMessages(list => list.map(m => (m.uid === uid ? { ...m, text: newText } : m)));
+
+  const handleMessageRunAgain = (uid: string) => {
+    const history = messages.slice(0, messages.findIndex(m => m.uid === uid) + 1);
+    setMessages(history);
 
     // noinspection JSIgnoredPromiseFromCall
-    getBotMessageStreaming(conversation);
+    streamAssistantResponseMessage(history);
   };
 
+  const handleSendMessage = (userMessage: string) => {
+    // prepend 'system' message if missing
+    const history = [...messages];
+    if (!history.length) {
+      const systemMessage = SystemPurposes[systemPurposeId].systemMessage
+        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+      history.push(createUiMessage('system', systemMessage));
+    }
 
-  const noMessages = !messages.length;
+    history.push(createUiMessage('user', userMessage));
+    setMessages(history);
+
+    // noinspection JSIgnoredPromiseFromCall
+    streamAssistantResponseMessage(history);
+  };
+
+  const handleStopGeneration = () => abortController?.abort();
+
 
   return (
     <Stack direction='column' sx={{
@@ -191,51 +173,24 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
     }}>
 
       {/* Application Bar */}
-      <ApplicationBar onDoubleClick={handleListClear} onSettingsClick={props.onShowSettings} sx={{
-        position: 'sticky', top: 0, zIndex: 20,
-        background: process.env.NODE_ENV === 'development'
-          ? theme.vars.palette.danger.solidHoverBg
-          : theme.vars.palette.primary.solidHoverBg,
-      }} />
+      <ApplicationBar
+        onDoubleClick={handleConversationClear} onSettingsClick={props.onShowSettings}
+        sx={{
+          position: 'sticky', top: 0, zIndex: 20,
+          background: process.env.NODE_ENV === 'development'
+            ? theme.vars.palette.danger.solidHoverBg
+            : theme.vars.palette.primary.solidHoverBg,
+        }} />
 
       {/* Conversation */}
-      <Box sx={{
-        flexGrow: 1,
-        background: theme.vars.palette.background.level1,
-      }}>
-        {noMessages ? (
-          <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
-            <Box>
-              <Typography level='body3' color='neutral'>
-                AI purpose
-              </Typography>
-              <NoSSR>
-                <Select value={systemPurposeId} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
-                  {Object.keys(SystemPurposes).map(spId => (
-                    <Option key={spId} value={spId}>
-                      {SystemPurposes[spId as SystemPurposeId]?.title}
-                    </Option>
-                  ))}
-                </Select>
-                <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
-                  {SystemPurposes[systemPurposeId].description}
-                </Typography>
-              </NoSSR>
-            </Box>
-          </Stack>
-        ) : (
-          <>
-            <List sx={{ p: 0 }}>
-              {messages.map(message =>
-                <Message key={'msg-' + message.uid} uiMessage={message} composerBusy={!!abortController}
-                         onDelete={() => handleListDelete(message.uid)}
-                         onEdit={newText => handleListEdit(message.uid, newText)}
-                         onRunAgain={() => handleListRunAgain(message.uid)} />)}
-              <div ref={messagesEndRef}></div>
-            </List>
-          </>
-        )}
-      </Box>
+      <Conversation
+        messages={messages}
+        composerBusy={!!abortController}
+        onMessageDelete={handleMessageDelete} onMessageEdit={handleMessageEdit} onMessageRunAgain={handleMessageRunAgain}
+        sx={{
+          flexGrow: 1,
+          background: theme.vars.palette.background.level1,
+        }} />
 
       {/* Composer */}
       <Box sx={{
@@ -245,7 +200,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         p: { xs: 1, md: 2 },
       }}>
         <NoSSR>
-          <Composer disableSend={!!abortController} sendMessage={handleComposerSendMessage} stopGeneration={handleStopGeneration} />
+          <Composer disableSend={!!abortController} sendMessage={handleSendMessage} stopGeneration={handleStopGeneration} />
         </NoSSR>
       </Box>
 
