@@ -8,12 +8,12 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 
 import { ApiChatInput } from './api/chat';
-import { ChatModels, SystemPurposeId, SystemPurposes } from '../lib/data';
-import { Composer } from '../components/Composer';
-import { Message, UiMessage } from '../components/Message';
-import { NoSSR } from '../components/util/NoSSR';
-import { isValidOpenAIApiKey, SettingsModal } from '../components/SettingsModal';
-import { useSettingsStore } from '../lib/store';
+import { ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
+import { Composer } from '@/components/Composer';
+import { Message, UiMessage } from '@/components/Message';
+import { NoSSR } from '@/components/util/NoSSR';
+import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
+import { useSettingsStore } from '@/lib/store';
 
 
 /// UI Messages configuration
