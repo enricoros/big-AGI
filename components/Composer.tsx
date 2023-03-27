@@ -134,7 +134,9 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   };
 
 
-  const handleAttachmentChanged = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOpenFilePicker = () => attachmentFileInputRef.current?.click();
+
+  const handleLoadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     let text = composeText;
@@ -142,8 +144,6 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
       text = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: files[i].name, fileText: await files[i].text() })(text);
     setComposeText(text);
   };
-
-  const handleOpenAttachmentPicker = () => attachmentFileInputRef.current?.click();
 
 
   const pasteFromClipboard = async () => {
@@ -172,17 +172,17 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
 
-      {/* Compose & VButtons */}
+      {/* Compose & V-Buttons */}
       <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
         {/* Vertical Buttons Bar */}
-        <Box>
+        <Stack>
 
-          <IconButton variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} sx={{ ...hideOnDesktop }}>
+          <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
             <PostAddIcon />
           </IconButton>
           <Tooltip title={<>Attach {isDeveloper ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
-            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} startDecorator={<PostAddIcon />}
+            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<PostAddIcon />}
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
               Attach
             </Button>
@@ -197,35 +197,37 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
             {isDeveloper ? 'Paste code' : 'Paste'}
           </Button>
 
-          <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleAttachmentChanged} />
+          <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
 
-        </Box>
+        </Stack>
 
         {/* Message edit box, with Drop overlay */}
         <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
-          <Textarea variant='soft' autoFocus placeholder={textPlaceholder}
-                    minRows={5} maxRows={12}
-                    onKeyDown={handleKeyPress}
-                    onDragEnter={handleMessageDragEnter}
-                    value={composeText} onChange={(e) => setComposeText(e.target.value)}
-                    sx={{
-                      fontSize: '16px',
-                      lineHeight: 1.75,
-                      pr: isSpeechEnabled ? { xs: 4, md: 5 } : 0, // accounts for the microphone icon when supported
-                    }} />
+          <Textarea
+            variant='soft' autoFocus placeholder={textPlaceholder}
+            minRows={5} maxRows={12}
+            onKeyDown={handleKeyPress}
+            onDragEnter={handleMessageDragEnter}
+            value={composeText} onChange={(e) => setComposeText(e.target.value)}
+            sx={{
+              fontSize: '16px',
+              lineHeight: 1.75,
+              pr: isSpeechEnabled ? { xs: 4, md: 5 } : 0, // accounts for the microphone icon when supported
+            }} />
 
-          <Card color='primary' invertedColors variant='soft'
-                sx={{
-                  display: isDragging ? 'flex' : 'none',
-                  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                  alignItems: 'center', justifyContent: 'space-evenly',
-                  border: '2px dashed',
-                  zIndex: 10,
-                }}
-                onDragLeave={handleOverlayDragLeave}
-                onDragOver={handleOverlayDragOver}
-                onDrop={handleOverlayDrop}>
+          <Card
+            color='primary' invertedColors variant='soft'
+            sx={{
+              display: isDragging ? 'flex' : 'none',
+              position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+              alignItems: 'center', justifyContent: 'space-evenly',
+              border: '2px dashed',
+              zIndex: 10,
+            }}
+            onDragLeave={handleOverlayDragLeave}
+            onDragOver={handleOverlayDragOver}
+            onDrop={handleOverlayDrop}>
             <PanToolIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />
             <Typography level='body2' sx={{ pointerEvents: 'none' }}>
               I will hold on to this for you
@@ -249,11 +251,13 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
 
       </Stack></Grid>
 
-      {/* Other Buttons */}
+      {/* Send pane */}
       <Grid xs={12} md={3}>
         <Stack spacing={2}>
 
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+
+            {/* [mobile-only] History arrow */}
             <NoSSR>
               {history.length > 0 && (
                 <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
@@ -261,6 +265,8 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
                 </IconButton>
               )}
             </NoSSR>
+
+            {/* Send / Stop */}
             <Button fullWidth variant={props.disableSend ? 'soft' : 'solid'} color='primary'
                     onClick={props.disableSend ? handleStopClicked : handleSendClicked}
                     endDecorator={props.disableSend ? <StopOutlinedIcon /> : <TelegramIcon />}>
@@ -268,6 +274,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
             </Button>
           </Box>
 
+          {/* [desktop-only] row with History button */}
           <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
             <NoSSR>
               {history.length > 0 && (
