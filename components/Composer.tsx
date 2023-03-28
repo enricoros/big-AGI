@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';

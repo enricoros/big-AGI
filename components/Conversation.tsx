@@ -33,7 +33,7 @@ function PurposeSelect() {
         <Select
           value={systemPurposeId}
           onChange={(e, v) => handlePurposeChange(v)}
-          sx={{ minWidth: '40vw' }}
+          sx={{ minWidth: '20vw' }}
         >
           {Object.keys(SystemPurposes).map(spId => (
             <Option key={spId} value={spId}>
@@ -41,7 +41,7 @@ function PurposeSelect() {
             </Option>
           ))}
         </Select>
-        <Typography level='body2' sx={{ mt: 2, minWidth: 260 }}>
+        <Typography level='body2' sx={{ mt: 1, minWidth: 260 }}>
           {SystemPurposes[systemPurposeId].description}
         </Typography>
       </Box>
