@@ -2,10 +2,11 @@ import * as React from 'react';
 import { Box, List, Option, Select, Stack, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { Message, UiMessage } from '@/components/Message';
+import { DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats';
+import { Message } from '@/components/Message';
+import { NoSSR } from '@/components/util/NoSSR';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
-import { NoSSR } from '@/components/util/NoSSR';
 
 
 function PurposeSelect() {
@@ -54,33 +55,49 @@ function PurposeSelect() {
  * A list of Messages - not fancy at the moment
  */
 export function Conversation(props: {
-  messages: UiMessage[], composerBusy: boolean, sx?: SxProps, onMessageDelete: (uid: string) => void,
-  onMessageEdit: (uid: string, newText: string) => void, onMessageRunAgain: (uid: string) => void
+  disableSend: boolean, sx?: SxProps,
+  runAssistant: (conversationId: string, history: DMessage[]) => void
 }) {
 
+  const { id: activeConversationId, messages } = useActiveConversation();
+  const { editMessage, removeMessage } = useChatStore(state => ({ editMessage: state.editMessage, removeMessage: state.removeMessage }));
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+
 
   // when messages change, scroll to bottom (aka: at every new token)
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [props.messages]);
+  }, [messages]);
+
 
   // when there are no messages, show the purpose selector
-  if (!props.messages.length) return (
+  if (!messages.length) return (
     <Box sx={props.sx || {}}>
       <NoSSR><PurposeSelect /></NoSSR>
     </Box>
   );
 
+
+  const handleMessageDelete = (messageId: string) =>
+    removeMessage(activeConversationId, messageId);
+
+  const handleMessageEdit = (messageId: string, newText: string) =>
+    editMessage(activeConversationId, messageId, { text: newText });
+
+  const handleMessageRunAgain = (messageId: string) => {
+    const history = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+    props.runAssistant(activeConversationId, history);
+  };
+
   return (
     <Box sx={props.sx || {}}>
       <List sx={{ p: 0 }}>
 
-        {props.messages.map(message =>
-          <Message key={'msg-' + message.uid} uiMessage={message} composerBusy={props.composerBusy}
-                   onDelete={() => props.onMessageDelete(message.uid)}
-                   onEdit={newText => props.onMessageEdit(message.uid, newText)}
-                   onRunAgain={() => props.onMessageRunAgain(message.uid)} />)}
+        {messages.map(message =>
+          <Message key={'msg-' + message.id} dMessage={message} disableSend={props.disableSend}
+                   onDelete={() => handleMessageDelete(message.id)}
+                   onEdit={newText => handleMessageEdit(message.id, newText)}
+                   onRunAgain={() => handleMessageRunAgain(message.id)} />)}
 
         <div ref={messagesEndRef}></div>
       </List>

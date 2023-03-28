@@ -14,27 +14,18 @@ import 'prismjs/components/prism-typescript';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
+import Face6Icon from '@mui/icons-material/Face6';
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
-import FastForwardIcon from '@mui/icons-material/FastForward';
-import SportsMartialArtsOutlinedIcon from '@mui/icons-material/SportsMartialArtsOutlined';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps, Theme } from '@mui/joy/styles/types';
 
+import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
-
-
-// One message in the chat
-
-export interface UiMessage {
-  uid: string;
-  sender: 'You' | 'Bot' | string;
-  role: 'assistant' | 'system' | 'user';
-  text: string;
-  model: string; // optional for 'assistant' roles (not user messages)
-  avatar: string | React.ElementType | null;
-}
 
 
 /// Utilities to split the message into blocks of text and code
@@ -183,13 +174,14 @@ function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, them
   </Box>;
 }
 
-function prettyBaseModel(model: string): string {
+function prettyBaseModel(model: string | undefined): string {
+  if (!model) return '';
   if (model.startsWith('gpt-4')) return 'gpt-4';
   if (model.startsWith('gpt-3.5-turbo')) return '3.5-turbo';
   return model;
 }
 
-function explainErrorInMessage(message: UiMessage) {
+function explainErrorInMessage(message: DMessage) {
   let errorMessage: JSX.Element | null = null;
   const isAssistantError = message.role === 'assistant' && (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: '));
   if (isAssistantError) {
@@ -202,7 +194,7 @@ function explainErrorInMessage(message: UiMessage) {
     } else if (message.text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = <>
-        Your API key appears to be unauthorized for {message.model || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
+        Your API key appears to be unauthorized for {message.modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
         icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
@@ -212,7 +204,7 @@ function explainErrorInMessage(message: UiMessage) {
       const match = pattern.exec(message.text);
       const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
       errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {message.model || 'this model'}{usedText}.
+        This thread <b>surpasses the maximum size</b> allowed for {message.modelName || 'this model'}{usedText}.
         Please consider removing some earlier messages from the conversation, start a new conversation,
         choose a model with larger context, or submit a shorter new message.
       </>;
@@ -229,13 +221,10 @@ function explainErrorInMessage(message: UiMessage) {
  * The component also provides options for copying code to clipboard and expanding
  * or collapsing long user messages.
  *
- * @param {UiMessage} props.uiMessage - The UI message object containing message data.
- * @param {Function} props.onDelete - The function to call when the delete button is clicked.
- * @param {Function} props.onEdit - The function to call when the edit button is clicked and the edited text is submitted.
  */
-export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function Message(props: { dMessage: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
-  const message = props.uiMessage;
+  const message = props.dMessage;
 
   // viewing
   const [forceExpanded, setForceExpanded] = React.useState(false);
@@ -264,7 +253,7 @@ export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, on
   };
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
-    if (!props.composerBusy) {
+    if (!props.disableSend) {
       props.onRunAgain();
       e.preventDefault();
       closeMenu();
@@ -301,6 +290,21 @@ export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, on
   } else if (message.role === 'assistant') {
     background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
   }
+
+  // avatar
+  const avatarEl: JSX.Element = React.useMemo(
+    () => {
+      if (typeof message.avatar === 'string' && message.avatar)
+        return <Avatar alt={message.sender} src={message.avatar} />;
+      else if (message.role === 'system')
+        return <SmartToyTwoToneIcon sx={{ width: 40, height: 40 }} />;   // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
+      else if (message.role === 'assistant')
+        return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />;  // https://mui.com/static/images/avatar/2.jpg
+      else if (message.role === 'user')
+        return <Face6Icon sx={{ width: 40, height: 40 }} />;             // https://www.svgrepo.com/show/306500/openai.svg
+      return <Avatar alt={message.sender} />;
+    }, [message.avatar, message.role, message.sender],
+  );
 
   // text box css
   const chatFontCss = {
@@ -341,20 +345,14 @@ export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, on
           <IconButton variant='soft' color='primary'>
             <MoreVertIcon />
           </IconButton>
-        ) : (
-          typeof message.avatar === 'string'
-            ? <Avatar alt={message.sender} src={message.avatar} />
-            : (message.avatar != null)
-              ? <message.avatar sx={{ width: 40, height: 40 }} />
-              : <SportsMartialArtsOutlinedIcon sx={{ width: 40, height: 40 }} />
-        )}
+        ) : avatarEl}
 
         {message.role === 'system' && (
           <Typography level='body2' color='neutral'>system</Typography>
         )}
         {message.role === 'assistant' && (
-          <Tooltip title={message.model} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyBaseModel(message.model)}</Typography>
+          <Tooltip title={message.modelName || 'unk-model'} variant='solid'>
+            <Typography level='body2' color='neutral'>{prettyBaseModel(message.modelName)}</Typography>
           </Tooltip>
         )}
 
@@ -370,7 +368,7 @@ export function Message(props: { uiMessage: UiMessage, composerBusy: boolean, on
               {isEditing ? 'Discard' : 'Edit'}
             </MenuItem>
             <ListDivider />
-            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.composerBusy}>
+            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.disableSend}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
               Run again
             </MenuItem>

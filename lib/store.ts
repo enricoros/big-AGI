@@ -6,7 +6,7 @@ import { ChatModelId, SystemPurposeId } from './data';
 
 /// Settings Store
 
-interface SettingsState {
+interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
 
@@ -17,7 +17,7 @@ interface SettingsState {
   setSystemPurposeId: (purpose: SystemPurposeId) => void;
 }
 
-export const useSettingsStore = create<SettingsState>()(
+export const useSettingsStore = create<SettingsStore>()(
   persist((set) => ({
       apiKey: (function() {
         // backwards compatibility from the former localStorage key
@@ -39,7 +39,7 @@ export const useSettingsStore = create<SettingsState>()(
 
 /// Composer Store
 
-interface ComposerState {
+interface ComposerStore {
   history: {
     date: number,
     text: string,
@@ -49,7 +49,7 @@ interface ComposerState {
   appendMessageToHistory: (text: string) => void;
 }
 
-export const useComposerStore = create<ComposerState>()(
+export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
       history: [],
 
