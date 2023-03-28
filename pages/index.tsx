@@ -21,8 +21,12 @@ export default function Home() {
 
   return (
     <Container maxWidth='xl' disableGutters sx={{
-      boxShadow: theme.vars.shadow.lg,
+      boxShadow: { xs: 'none', xl: theme.vars.shadow.lg },
     }}>
+
+      {/*`Sidebar`: A component to display the list of conversations and allow users to switch between them.*/}
+      {/*- `ConversationList`: A component to display the list of conversations.*/}
+      {/*- `ConversationListItem`: A component to display a single conversation with its details (e.g., name, last message, etc.).*/}
 
       <ChatArea onShowSettings={() => setSettingsShown(true)} />
 
