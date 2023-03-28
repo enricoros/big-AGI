@@ -16,7 +16,7 @@ export interface MyAppProps extends AppProps {
 }
 
 export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
-  return (
+  return <>
     <CacheProvider value={emotionCache}>
       <Head>
         <meta name='viewport' content='initial-scale=1, width=device-width' />
@@ -25,8 +25,8 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Component {...pageProps} />
-        <VercelAnalytics debug={false} />
       </CssVarsProvider>
     </CacheProvider>
-  );
+    <VercelAnalytics debug={false} />
+  </>;
 }
