@@ -163,7 +163,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   const hideHistory = () => setHistoryAnchor(null);
 
 
-  const textPlaceholder: string = 'Type a message or drop a file...'; // 'Enter your message...\n  <enter> send\n  <shift>+<enter> new line\n  ``` code';*/
+  const textPlaceholder: string = `Type ${props.isDeveloperMode ? 'your message and drop source files' : 'a message, or drop text files'}...`;
   const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
