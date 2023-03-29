@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Container, useTheme } from '@mui/joy';
 
 import { ChatArea } from '@/components/ChatArea';
+import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
 
@@ -11,6 +12,7 @@ export default function Home() {
   const theme = useTheme();
 
   const apiKey = useSettingsStore(state => state.apiKey);
+  const wideMode = useSettingsStore(state => state.wideMode);
   const [settingsShown, setSettingsShown] = React.useState(false);
 
   React.useEffect(() => {
@@ -20,18 +22,22 @@ export default function Home() {
   }, [apiKey]);
 
   return (
-    <Container maxWidth='xl' disableGutters sx={{
-      boxShadow: { xs: 'none', xl: theme.vars.shadow.lg },
-    }}>
+    /**
+     * Note the global NoSSR wrapper
+     *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
+     */
+    <NoSSR>
 
-      {/*`Sidebar`: A component to display the list of conversations and allow users to switch between them.*/}
-      {/*- `ConversationList`: A component to display the list of conversations.*/}
-      {/*- `ConversationListItem`: A component to display a single conversation with its details (e.g., name, last message, etc.).*/}
+      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
+        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
+      }}>
 
-      <ChatArea onShowSettings={() => setSettingsShown(true)} />
+        <ChatArea onShowSettings={() => setSettingsShown(true)} />
 
-      <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
+        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 
-    </Container>
+      </Container>
+
+    </NoSSR>
   );
 }
