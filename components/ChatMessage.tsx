@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { Sandpack, SandpackFiles } from '@codesandbox/sandpack-react';
 
 import Prism from 'prismjs';
@@ -11,6 +12,8 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
+import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { SxProps, Theme } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
@@ -21,26 +24,25 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
-import { SxProps, Theme } from '@mui/joy/styles/types';
 
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
 
 
-/// Utilities to split the message into blocks of text and code
+/// Utilities to parse messages into blocks of text and code
 
-type MessageBlock = { type: 'text'; content: string; } | CodeMessageBlock;
-type CodeMessageBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
+type Block = TextBlock | CodeBlock;
+type TextBlock = { type: 'text'; content: string; };
+type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 
-const inferLanguage = (markdownLanguage: string, code: string): string | null => {
+const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
   // we have an hint
   if (markdownLanguage) {
-    // no dot: it's a syntax-highlight language
+    // no dot: assume is the syntax-highlight name
     if (!markdownLanguage.includes('.'))
       return markdownLanguage;
 
-    // dot: there's probably an extension
+    // dot: there's probably a file extension
     const extension = markdownLanguage.split('.').pop();
     if (extension) {
       const languageMap: { [key: string]: string } = {
@@ -64,9 +66,12 @@ const inferLanguage = (markdownLanguage: string, code: string): string | null =>
   return null;
 };
 
-const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
+/**
+ * FIXME: expensive function, especially as it's not been used in incremental fashion
+ */
+const parseBlocks = (text: string): Block[] => {
   const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
-  const result: MessageBlock[] = [];
+  const result: Block[] = [];
 
   let lastIndex = 0;
   let match;
@@ -86,7 +91,7 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
     //   }
     // }
 
-    const codeLanguage = inferLanguage(markdownLanguage, code);
+    const codeLanguage = inferCodeLanguage(markdownLanguage, code);
     const highlightLanguage = codeLanguage || 'typescript';
     const highlightedCode = Prism.highlight(
       code,
@@ -106,13 +111,6 @@ const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
   return result;
 };
 
-const copyToClipboard = (text: string) => {
-  if (typeof navigator !== 'undefined')
-    navigator.clipboard.writeText(text)
-      .then(() => console.log('Message copied to clipboard'))
-      .catch((err) => console.error('Failed to copy message: ', err));
-};
-
 
 /// Renderers for the different types of message blocks
 
@@ -120,7 +118,7 @@ type SandpackConfig = { files: SandpackFiles, template: 'vanilla-ts' | 'vanilla'
 
 const runnableLanguages = ['html', 'javascript', 'typescript'];
 
-function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme: Theme }): JSX.Element | null {
+function RunnableCode({ codeBlock, theme }: { codeBlock: CodeBlock, theme: Theme }): JSX.Element | null {
   let config: SandpackConfig;
   switch (codeBlock.language) {
     case 'html':
@@ -145,7 +143,7 @@ function RunnableCode({ codeBlock, theme }: { codeBlock: CodeMessageBlock, theme
   );
 }
 
-function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, theme: Theme, sx?: SxProps }) {
+function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: Theme, sx?: SxProps }) {
   const [showSandpack, setShowSandpack] = React.useState(false);
 
   const handleCopyToClipboard = () =>
@@ -169,9 +167,24 @@ function CodeBlock({ codeBlock, theme, sx }: { codeBlock: CodeMessageBlock, them
         {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
       </IconButton>
     )}
+    {/* this is the highlighted code */}
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
     {showRunIcon && showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
   </Box>;
+}
+
+const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
+  <Typography level='body1' component='span'
+              sx={{ ...(sx || {}), mx: 1.5 }}>
+    {textBlock.content}
+  </Typography>;
+
+
+function copyToClipboard(text: string) {
+  if (typeof navigator !== 'undefined')
+    navigator.clipboard.writeText(text)
+      .then(() => console.log('Message copied to clipboard'))
+      .catch((err) => console.error('Failed to copy message: ', err));
 }
 
 function prettyBaseModel(model: string | undefined): string {
@@ -188,14 +201,14 @@ function explainErrorInMessage(message: DMessage) {
     if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
       // TODO: retry at the api/chat level a few times instead of showing this error
       errorMessage = <>
-        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b> via settings icon,
+        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>,
         or give it another go by selecting <b>Run again</b> from the message menu.
       </>;
     } else if (message.text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = <>
-        Your API key appears to be unauthorized for {message.modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b> via the settings
-        icon and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
+        Your API key appears to be unauthorized for {message.modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
+        and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
     } else if (message.text.includes('"context_length_exceeded"')) {
@@ -207,6 +220,12 @@ function explainErrorInMessage(message: DMessage) {
         This thread <b>surpasses the maximum size</b> allowed for {message.modelName || 'this model'}{usedText}.
         Please consider removing some earlier messages from the conversation, start a new conversation,
         choose a model with larger context, or submit a shorter new message.
+      </>;
+    } else if (message.text.includes('"invalid_api_key"')) {
+      errorMessage = <>
+        The API key appears to not be correct or to have expired.
+        Please <Link noLinkStyle href='https://openai.com/account/api-keys' target='_blank'>check your API key</Link> and
+        update it in the <b>Settings</b> menu.
       </>;
     }
   }
@@ -222,9 +241,9 @@ function explainErrorInMessage(message: DMessage) {
  * or collapsing long user messages.
  *
  */
-export function Message(props: { dMessage: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function ChatMessage(props: { message: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
-  const message = props.dMessage;
+  const message = props.message;
 
   // viewing
   const [forceExpanded, setForceExpanded] = React.useState(false);
@@ -395,15 +414,10 @@ export function Message(props: { dMessage: DMessage, disableSend: boolean, onDel
       ) : (
 
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
-          {parseAndHighlightCodeBlocks(collapsedText).map((part, index) =>
-            part.type === 'code' ? (
-              <CodeBlock key={index} codeBlock={part} theme={theme} sx={chatFontCss} />
-            ) : (
-              <Typography key={index} level='body1' component='span'
-                          sx={{ ...chatFontCss, mx: 1.5, background: textBackground }}>
-                {part.content}
-              </Typography>
-            ),
+          {parseBlocks(collapsedText).map((block, index) =>
+            block.type === 'code'
+              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={chatFontCss} />
+              : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
           )}
           {errorMessage && (
             <Alert variant='soft' color='warning' sx={{ mt: 1 }}>

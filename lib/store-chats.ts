@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { ChatModelId, SystemPurposeId } from '@/lib/data';
 
 
@@ -41,7 +42,7 @@ export interface DMessage {
   text: string;
   sender: 'You' | 'Bot' | string;
   role: 'assistant' | 'system' | 'user';
-  modelName?: string;         // optional for 'assistant' roles (not user messages)
+  modelName?: string;         // optional for 'assistant' roles
   modelTokensCount?: number;  // optional
   avatar: string | null;
   created: number;            // created timestamp

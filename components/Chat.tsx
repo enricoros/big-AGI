@@ -5,8 +5,8 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
 import { ApplicationBar } from '@/components/ApplicationBar';
+import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
-import { Conversation } from '@/components/Conversation';
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
@@ -28,7 +28,7 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
 
 
 /**
- * Main function to send a message to the assistant and receive a response (streaming)
+ * Main function to send the chat to the assistant and receive a response (streaming)
  */
 async function _streamAssistantResponseMessage(
   conversationId: string, history: DMessage[],
@@ -63,21 +63,21 @@ async function _streamAssistantResponseMessage(
       const decoder = new TextDecoder('utf-8');
 
       // loop forever until the read is done, or the abort controller is triggered
-      let messageText = '';
+      let incrementalText = '';
       let parsedFirstPacket = false;
       while (true) {
         const { value, done } = await reader.read();
 
         if (done) break;
 
-        messageText += decoder.decode(value);
+        incrementalText += decoder.decode(value);
 
         // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
-        if (!parsedFirstPacket && messageText.startsWith('{')) {
-          const endOfJson = messageText.indexOf('}');
+        if (!parsedFirstPacket && incrementalText.startsWith('{')) {
+          const endOfJson = incrementalText.indexOf('}');
           if (endOfJson > 0) {
-            const json = messageText.substring(0, endOfJson + 1);
-            messageText = messageText.substring(endOfJson + 1);
+            const json = incrementalText.substring(0, endOfJson + 1);
+            incrementalText = incrementalText.substring(endOfJson + 1);
             try {
               const parsed = JSON.parse(json);
               editMessage(conversationId, _message.id, { modelName: parsed.model });
@@ -89,7 +89,7 @@ async function _streamAssistantResponseMessage(
           }
         }
 
-        editMessage(conversationId, _message.id, { text: messageText });
+        editMessage(conversationId, _message.id, { text: incrementalText });
       }
     }
 
@@ -104,7 +104,7 @@ async function _streamAssistantResponseMessage(
 }
 
 
-export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
+export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   const theme = useTheme();
 
   const { chatModelId, systemPurposeId } = useActiveConfiguration();
@@ -123,7 +123,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
     const apiKey = useSettingsStore.getState().apiKey;
     await _streamAssistantResponseMessage(conversationId, history, apiKey, chatModelId, controller.signal, addMessage, editMessage);
 
-    // and we're done with this message/api call
+    // clear to send, again
     setAbortController(null);
   };
 
@@ -163,7 +163,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
         }} />
 
-      <Conversation
+      <ChatMessageList
         disableSend={!!abortController} runAssistant={runAssistant}
         sx={{
           flexGrow: 1,
