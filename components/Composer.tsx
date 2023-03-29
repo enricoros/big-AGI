@@ -163,7 +163,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   const hideHistory = () => setHistoryAnchor(null);
 
 
-  const textPlaceholder: string = 'Type a message...'; // 'Enter your message...\n  <enter> send\n  <shift>+<enter> new line\n  ``` code';*/
+  const textPlaceholder: string = 'Type a message or drop a file...'; // 'Enter your message...\n  <enter> send\n  <shift>+<enter> new line\n  ``` code';*/
   const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
@@ -199,7 +199,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
 
         </Stack>
 
-        {/* Message edit box, with Drop overlay */}
+        {/* Edit box, with Drop overlay */}
         <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
           <Textarea

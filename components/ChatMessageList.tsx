@@ -1,9 +1,10 @@
 import * as React from 'react';
+
 import { AspectRatio, Box, Button, Grid, List, Stack, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
+import { ChatMessage } from '@/components/ChatMessage';
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
-import { Message } from '@/components/Message';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
 
@@ -71,9 +72,9 @@ function PurposeSelect() {
 
 
 /**
- * A list of Messages - not fancy at the moment
+ * A list of ChatMessages
  */
-export function Conversation(props: {
+export function ChatMessageList(props: {
   disableSend: boolean, sx?: SxProps,
   runAssistant: (conversationId: string, history: DMessage[]) => void
 }) {
@@ -110,12 +111,13 @@ export function Conversation(props: {
     props.runAssistant(activeConversationId, history);
   };
 
+
   return (
     <Box sx={props.sx || {}}>
       <List sx={{ p: 0 }}>
 
         {messages.map(message =>
-          <Message key={'msg-' + message.id} dMessage={message} disableSend={props.disableSend}
+          <ChatMessage key={'msg-' + message.id} message={message} disableSend={props.disableSend}
                    onDelete={() => handleMessageDelete(message.id)}
                    onEdit={newText => handleMessageEdit(message.id, newText)}
                    onRunAgain={() => handleMessageRunAgain(message.id)} />)}

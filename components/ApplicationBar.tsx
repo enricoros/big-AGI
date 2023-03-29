@@ -7,6 +7,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
+import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
@@ -55,7 +56,6 @@ function NicerSelector<TValue extends string>(props: { value: TValue, items: Rec
   );
 }
 
-
 /**
  * A confirmation dialog - pass the question and the positive answer, and get called when it's time to close the dialog, or when the positive action is taken
  */
@@ -82,7 +82,6 @@ function ConfirmationDialog(props: { open: boolean, onClose: () => void, onPosit
     </Modal>
   );
 }
-
 
 /**
  * FIXME - TEMPORARY - placeholder for a proper Pages Drawer
@@ -150,6 +149,9 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 }
 
 
+const foolsMode = new Date().getMonth() === 3 && new Date().getDate() === 1;
+
+
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
@@ -200,7 +202,6 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
     setClearConfirmationId(null);
   };
 
-
   return <>
     {/* Top Bar with 2 icons and Model/Purpose selectors */}
     <Sheet
@@ -212,7 +213,7 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
       }}>
 
       <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
-        <LunchDiningIcon />
+        {foolsMode ? <LunchDiningIcon /> : <MenuIcon />}
       </IconButton>
 
       <Stack direction='row' sx={{ my: 'auto' }}>
