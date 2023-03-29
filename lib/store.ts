@@ -13,6 +13,12 @@ interface SettingsStore {
 
   freeScroll: boolean;
   setFreeScroll: (freeScroll: boolean) => void;
+
+  modelTemperature: number;
+  setModelTemperature: (modelTemperature: number) => void;
+
+  modelMaxTokens: number;
+  setModelMaxTokens: (modelMaxTokens: number) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -29,6 +35,12 @@ export const useSettingsStore = create<SettingsStore>()(
 
       freeScroll: false,
       setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),
+
+      modelTemperature: 0.5,
+      setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),
+
+      modelMaxTokens: 2048,
+      setModelMaxTokens: (modelMaxTokens: number) => set({ modelMaxTokens }),
     }),
     {
       name: 'app-settings',
