@@ -28,7 +28,7 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   },
   Catalyst: {
     title: 'Catalyst',
-    description: 'The growth hacker with marketing superpowers 🚀',
+    description: 'Growth hacker with marketing superpowers 🚀',
     systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
     symbol: '🚀',
   },

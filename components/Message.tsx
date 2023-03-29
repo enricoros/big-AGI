@@ -309,7 +309,7 @@ export function Message(props: { dMessage: DMessage, disableSend: boolean, onDel
   // text box css
   const chatFontCss = {
     my: 'auto',
-    fontFamily: message.role === 'assistant' ? theme.fontFamily.code : undefined,
+    fontFamily: message.role === 'assistant' ? theme.fontFamily.code : theme.fontFamily.body,
     fontSize: message.role === 'assistant' ? '14px' : '16px',
     lineHeight: 1.75,
   };
