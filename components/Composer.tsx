@@ -9,7 +9,6 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { NoSSR } from './util/NoSSR';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
@@ -257,13 +256,11 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
 
             {/* [mobile-only] History arrow */}
-            <NoSSR>
-              {history.length > 0 && (
-                <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
-                  <KeyboardArrowUpIcon />
-                </IconButton>
-              )}
-            </NoSSR>
+            {history.length > 0 && (
+              <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+                <KeyboardArrowUpIcon />
+              </IconButton>
+            )}
 
             {/* Send / Stop */}
             <Button fullWidth variant={props.disableSend ? 'soft' : 'solid'} color='primary'
@@ -275,13 +272,11 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
 
           {/* [desktop-only] row with History button */}
           <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-            <NoSSR>
-              {history.length > 0 && (
-                <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
-                  History
-                </Button>
-              )}
-            </NoSSR>
+            {history.length > 0 && (
+              <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
+                History
+              </Button>
+            )}
           </Stack>
 
         </Stack>

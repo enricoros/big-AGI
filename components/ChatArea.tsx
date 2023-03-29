@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Stack, useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
@@ -8,7 +8,6 @@ import { ApplicationBar } from '@/components/ApplicationBar';
 import { Composer } from '@/components/Composer';
 import { Conversation } from '@/components/Conversation';
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
-import { NoSSR } from '@/components/util/NoSSR';
 import { SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
 
@@ -108,7 +107,6 @@ async function _streamAssistantResponseMessage(
 export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const theme = useTheme();
 
-  const apiKey = useSettingsStore(state => state.apiKey);
   const { chatModelId, systemPurposeId } = useActiveConfiguration();
   const { id: activeConversationId, messages } = useActiveConversation();
   const { addMessage, editMessage, replaceMessages } = useChatStore(state => ({ addMessage: state.addMessage, editMessage: state.editMessage, replaceMessages: state.replaceMessages }));
@@ -122,6 +120,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
     const controller = new AbortController();
     setAbortController(controller);
 
+    const apiKey = useSettingsStore.getState().apiKey;
     await _streamAssistantResponseMessage(conversationId, history, apiKey, chatModelId, controller.signal, addMessage, editMessage);
 
     // and we're done with this message/api call
@@ -150,41 +149,39 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const handleConversationClear = () => replaceMessages(activeConversationId, []);
 
   return (
-    <Stack direction='column' sx={{
+    <Box sx={{
       minHeight: '100vh',
       ...(props.sx || {}),
     }}>
 
-      {/* Application Bar */}
       <ApplicationBar
-        onDoubleClick={handleConversationClear} onSettingsClick={props.onShowSettings}
+        onClearConversation={handleConversationClear} onShowSettings={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
           ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
         }} />
 
-      {/* Conversation */}
-      <NoSSR>
-        <Conversation
-          disableSend={!!abortController} runAssistant={runAssistant}
-          sx={{
-            flexGrow: 1,
-            background: theme.vars.palette.background.level1,
-          }} />
-      </NoSSR>
+      <Conversation
+        disableSend={!!abortController} runAssistant={runAssistant}
+        sx={{
+          flexGrow: 1,
+          background: theme.vars.palette.background.level1,
+          overflowY: 'auto',
+        }} />
 
-      {/* Composer */}
-      <Box sx={{
-        position: 'sticky', bottom: 0, zIndex: 10,
-        background: theme.vars.palette.background.body,
-        borderTop: `1px solid ${theme.vars.palette.divider}`,
-        p: { xs: 1, md: 2 },
-      }}>
-        <NoSSR>
-          <Composer disableSend={!!abortController} sendMessage={sendUserMessage} stopGeneration={handleStopGeneration} isDeveloperMode={systemPurposeId === 'Developer'} />
-        </NoSSR>
+      <Box
+        sx={{
+          position: 'sticky', bottom: 0, zIndex: 21,
+          background: theme.vars.palette.background.body,
+          borderTop: `1px solid ${theme.vars.palette.divider}`,
+          p: { xs: 1, md: 2 },
+        }}>
+        <Composer
+          disableSend={!!abortController}
+          sendMessage={sendUserMessage} stopGeneration={handleStopGeneration} isDeveloperMode={systemPurposeId === 'Developer'}
+        />
       </Box>
 
-    </Stack>
+    </Box>
   );
 }

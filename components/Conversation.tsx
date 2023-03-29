@@ -4,7 +4,6 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { Message } from '@/components/Message';
-import { NoSSR } from '@/components/util/NoSSR';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 
 
@@ -71,7 +70,7 @@ export function Conversation(props: {
   // when there are no messages, show the purpose selector
   if (!messages.length) return (
     <Box sx={props.sx || {}}>
-      <NoSSR><PurposeSelect /></NoSSR>
+      <PurposeSelect />
     </Box>
   );
 
