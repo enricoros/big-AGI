@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Container, useTheme } from '@mui/joy';
 
-import { ChatArea } from '@/components/ChatArea';
+import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
@@ -32,7 +32,7 @@ export default function Home() {
         boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
       }}>
 
-        <ChatArea onShowSettings={() => setSettingsShown(true)} />
+        <Chat onShowSettings={() => setSettingsShown(true)} />
 
         <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 

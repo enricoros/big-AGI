@@ -10,16 +10,16 @@ if (!process.env.OPENAI_API_KEY)
 
 // definition for OpenAI wire types
 
-namespace OpenAIAPI {
+namespace OpenAIAPI.Chat {
 
-  export interface ChatMessage {
+  export interface CompletionMessage {
     role: 'assistant' | 'system' | 'user';
     content: string;
   }
 
-  export interface ChatCompletionsRequest {
+  export interface CompletionsRequest {
     model: string;
-    messages: ChatMessage[];
+    messages: CompletionMessage[];
     temperature?: number;
     top_p?: number;
     frequency_penalty?: number;
@@ -29,13 +29,13 @@ namespace OpenAIAPI {
     n: number;
   }
 
-  export interface ChatCompletionsResponseChunked {
+  export interface CompletionsResponseChunked {
     id: string; // unique id of this chunk
     object: 'chat.completion.chunk';
     created: number; // unix timestamp in seconds
     model: string; // can differ from the ask, e.g. 'gpt-4-0314'
     choices: {
-      delta: Partial<ChatMessage>;
+      delta: Partial<CompletionMessage>;
       index: number; // always 0s for n=1
       finish_reason: 'stop' | 'length' | null;
     }[];
@@ -43,11 +43,11 @@ namespace OpenAIAPI {
 
 }
 
-async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.ChatCompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
+async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const streamingPayload: OpenAIAPI.ChatCompletionsRequest = {
+  const streamingPayload: OpenAIAPI.Chat.CompletionsRequest = {
     ...payload,
     stream: true,
     n: 1,
@@ -98,7 +98,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.ChatCompleti
           }
 
           try {
-            const json: OpenAIAPI.ChatCompletionsResponseChunked = JSON.parse(event.data);
+            const json: OpenAIAPI.Chat.CompletionsResponseChunked = JSON.parse(event.data);
 
             // ignore any 'role' delta update
             if (json.choices[0].delta?.role)
@@ -156,7 +156,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.ChatCompleti
 export interface ApiChatInput {
   apiKey?: string;
   model: string;
-  messages: OpenAIAPI.ChatMessage[];
+  messages: OpenAIAPI.Chat.CompletionMessage[];
   temperature?: number;
   max_tokens?: number;
 }
