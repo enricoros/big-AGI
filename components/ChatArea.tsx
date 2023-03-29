@@ -160,9 +160,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         onDoubleClick={handleConversationClear} onSettingsClick={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
-          background: process.env.NODE_ENV === 'development'
-            ? theme.vars.palette.danger.solidHoverBg
-            : theme.vars.palette.primary.solidHoverBg,
+          ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
         }} />
 
       {/* Conversation */}

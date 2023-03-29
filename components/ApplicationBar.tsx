@@ -1,34 +1,73 @@
 import * as React from 'react';
 
-import { IconButton, Sheet, Typography, useColorScheme, useTheme } from '@mui/joy';
+import { IconButton, Option, Select, Sheet, Stack, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { ChatModels, SystemPurposes } from '@/lib/data';
-import { NoSSR } from '@/components/util/NoSSR';
+import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useActiveConfiguration } from '@/lib/store-chats';
+import { NoSSR } from '@/components/util/NoSSR';
+
+
+function NicerSelector<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
+  const theme = useTheme();
+  return (
+    <Select
+      variant='solid' color='neutral' size='md'
+      value={props.value} onChange={props.onChange}
+      indicator={<KeyboardArrowDown />}
+      slotProps={{
+        listbox: {
+          variant: 'plain', color: 'info',
+          disablePortal: false,
+        },
+        indicator: {
+          sx: {
+            opacity: 0.5,
+          },
+        },
+      }}
+      sx={{
+        mx: 0,
+        fontFamily: theme.vars.fontFamily.code,
+        ...(props.sx || {}),
+      }}
+    >
+      {Object.keys(props.items).map((key: string) => (
+        <Option key={key} value={key}>
+          {props.items[key].title}
+        </Option>
+      ))}
+    </Select>
+  );
+}
 
 
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
 export function ApplicationBar(props: { onDoubleClick: () => void, onSettingsClick: () => void, sx?: SxProps }) {
-  const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-
-  const { chatModelId, systemPurposeId } = useActiveConfiguration();
+  const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
-  return (
-    <Sheet variant='solid' invertedColors sx={{
-      p: 1,
-      display: 'flex', flexDirection: 'row',
-      ...(props.sx || {}),
-    }}>
+  const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
 
-      <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+  const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) => value && setSystemPurposeId(value);
+
+  return (
+    <Sheet
+      variant='solid' invertedColors
+      sx={{
+        p: 1,
+        display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
+        ...(props.sx || {}),
+      }}>
+
+      <IconButton variant='plain' onClick={handleDarkModeToggle}>
         <DarkModeIcon />
       </IconButton>
 
@@ -38,22 +77,18 @@ export function ApplicationBar(props: { onDoubleClick: () => void, onSettingsCli
       {/*  </IconButton>*/}
       {/*)}*/}
 
-      <Typography sx={{
-        textAlign: 'center',
-        fontFamily: theme.vars.fontFamily.code, fontSize: '1rem', lineHeight: 1.75,
-        my: 'auto',
-        flexGrow: 1,
-      }} onDoubleClick={props.onDoubleClick}>
-        <NoSSR>
-          {ChatModels[chatModelId]?.title || 'Select Model'}
-          <span style={{ opacity: 0.5 }}> · </span>
-          {SystemPurposes[systemPurposeId].title}
-        </NoSSR>
-      </Typography>
+      <NoSSR><Stack direction='row' sx={{ my: 'auto' }}>
 
-      <IconButton variant='plain' color='neutral' onClick={props.onSettingsClick}>
+        <NicerSelector items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
+
+        <NicerSelector items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+
+      </Stack> </NoSSR>
+
+      <IconButton variant='plain' onClick={props.onSettingsClick}>
         <SettingsOutlinedIcon />
       </IconButton>
+
     </Sheet>
   );
 }

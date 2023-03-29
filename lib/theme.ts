@@ -24,6 +24,38 @@ export const theme = extendTheme({
     body: inter.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: {
+          // 50: '#bfc6d9', // softBg
+          // 100: '#a5b1cf', // plainHoverBg
+          // 200: '#6984c9',
+          // 300: '#4970d1',
+          // 400: '#2157de',
+          // 500: '#0D46D7', // solidBg [Button.solid]
+          // 600: '#1b47b5', // solidHoverBg [IconButton.plain (fg)]
+          // 700: '#264594',
+          // 800: '#2f3f69',
+          // 900: '#2f384d',
+        },
+        neutral: {
+          solidBg: 'var(--joy-palette-neutral-700, #434356)',
+          solidHoverBg: 'var(--joy-palette-neutral-800, #25252D)',
+          // 50: '#F7F7F8',
+          // 100: '#EBEBEF',
+          // 200: '#D8D8DF',
+          // 300: '#B9B9C6',
+          // 400: '#8F8FA3',
+          // 500: '#73738C',
+          // 600: '#5A5A72', // solidBg [Button.solid]
+          // 700: '#434356', // solidHoverBg
+          // 800: '#25252D',
+          // 900: '#131318',
+        },
+      },
+    },
+  },
 });
 
 export const bodyFontClassName = inter.className;
