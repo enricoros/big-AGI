@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, useColorScheme, useTheme } from '@mui/joy';
+import { Box, Button, Divider, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Modal, ModalDialog, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
@@ -52,6 +53,34 @@ function NicerSelector<TValue extends string>(props: { value: TValue, items: Rec
 
 
 /**
+ * A confirmation dialog - pass the question and the positive answer, and get called when it's time to close the dialog, or when the positive action is taken
+ */
+function ConfirmationDialog(props: { open: boolean, onClose: () => void, onPositive: () => void, confirmationText: string, positiveActionText: string }) {
+  return (
+    <Modal open={props.open} onClose={props.onClose}>
+      <ModalDialog variant='outlined' color='neutral'>
+        <Typography component='h2' startDecorator={<WarningRoundedIcon />} sx={{ mb: 1 }}>
+          Confirmation
+        </Typography>
+        <Divider />
+        <Typography level='body1' sx={{ mt: 1 }}>
+          {props.confirmationText}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', pt: 2 }}>
+          <Button variant='plain' color='neutral' onClick={props.onClose}>
+            Cancel
+          </Button>
+          <Button variant='solid' color='danger' onClick={props.onPositive}>
+            {props.positiveActionText}
+          </Button>
+        </Box>
+      </ModalDialog>
+    </Modal>
+  );
+}
+
+
+/**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
 export function ApplicationBar(props: { onClearConversation: () => void, onShowSettings: () => void, sx?: SxProps }) {
@@ -60,6 +89,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
   const { wideMode, setWideMode } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [clearConfirmationOpen, setClearConfirmationOpen] = React.useState(false);
 
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
@@ -81,8 +111,13 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
 
   const handleMenuClearConversation = (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onClearConversation();
+    setClearConfirmationOpen(true);
+  };
+
+  const handleConfirmedClearConversation = () => {
     closeMenu();
+    setClearConfirmationOpen(false);
+    props.onClearConversation();
   };
 
 
@@ -134,7 +169,6 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
           Settings
         </MenuItem>
 
-
         <ListDivider />
 
         <MenuItem onClick={handleMenuClearConversation}>
@@ -142,6 +176,10 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
           Clear conversation
         </MenuItem>
       </Menu>
+
+      <ConfirmationDialog
+        open={clearConfirmationOpen} onClose={() => setClearConfirmationOpen(false)} onPositive={handleConfirmedClearConversation}
+        confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'} />
 
     </Sheet>
   );

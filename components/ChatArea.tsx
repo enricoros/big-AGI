@@ -149,10 +149,12 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const handleConversationClear = () => replaceMessages(activeConversationId, []);
 
   return (
-    <Stack sx={{
-      minHeight: '100vh',
-      ...(props.sx || {}),
-    }}>
+    <Stack
+      sx={{
+        minHeight: '100vh',
+        position: 'relative',
+        ...(props.sx || {}),
+      }}>
 
       <ApplicationBar
         onClearConversation={handleConversationClear} onShowSettings={props.onShowSettings}
@@ -166,7 +168,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level1,
-          overflowY: 'scroll',
+          overflowY: 'hidden',
         }} />
 
       <Box
