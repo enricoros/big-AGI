@@ -10,7 +10,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { NoSSR } from './util/NoSSR';
-import { useComposerStore, useSettingsStore } from '@/lib/store';
+import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
 
@@ -41,14 +41,13 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
  * @param {(text: string) => void} props.sendMessage - Function to send the message
  * @param {() => void} props.stopGeneration - Function to stop response generation
  */
-export function Composer(props: { disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; }) {
+export function Composer(props: { disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; isDeveloperMode: boolean }) {
   // state
   const [composeText, setComposeText] = React.useState('');
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }));
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
-  const isDeveloper = useSettingsStore(state => state.systemPurposeId) === 'Developer';
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -149,7 +148,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   const pasteFromClipboard = async () => {
     const clipboardContent = (await navigator.clipboard.readText() || '').trim();
     if (clipboardContent) {
-      const template = isDeveloper ? PromptTemplates.PasteCode : PromptTemplates.PasteText;
+      const template = props.isDeveloperMode ? PromptTemplates.PasteCode : PromptTemplates.PasteText;
       setComposeText(expandPromptTemplate(template, { clipboard: clipboardContent }));
     }
   };
@@ -181,7 +180,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
           <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
             <PostAddIcon />
           </IconButton>
-          <Tooltip title={<>Attach {isDeveloper ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
+          <Tooltip title={<>Attach {props.isDeveloperMode ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
             <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<PostAddIcon />}
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
               Attach
@@ -194,7 +193,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
             <ContentPasteGoIcon />
           </IconButton>
           <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
-            {isDeveloper ? 'Paste code' : 'Paste'}
+            {props.isDeveloperMode ? 'Paste code' : 'Paste'}
           </Button>
 
           <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />

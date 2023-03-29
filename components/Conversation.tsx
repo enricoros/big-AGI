@@ -2,16 +2,14 @@ import * as React from 'react';
 import { Box, List, Option, Select, Stack, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats';
+import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { Message } from '@/components/Message';
 import { NoSSR } from '@/components/util/NoSSR';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
-import { useSettingsStore } from '@/lib/store';
 
 
 function PurposeSelect() {
-  const systemPurposeId = useSettingsStore(state => state.systemPurposeId);
-  const setSystemPurposeId = useSettingsStore(state => state.setSystemPurposeId);
+  const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
     if (purpose) {

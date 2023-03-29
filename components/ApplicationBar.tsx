@@ -7,7 +7,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { ChatModels, SystemPurposes } from '@/lib/data';
 import { NoSSR } from '@/components/util/NoSSR';
-import { useSettingsStore } from '@/lib/store';
+import { useActiveConfiguration } from '@/lib/store-chats';
 
 
 /**
@@ -17,9 +17,7 @@ export function ApplicationBar(props: { onDoubleClick: () => void, onSettingsCli
   const theme = useTheme();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { chatModelId, systemPurposeId } = useSettingsStore(state => ({
-    chatModelId: state.chatModelId, systemPurposeId: state.systemPurposeId,
-  }));
+  const { chatModelId, systemPurposeId } = useActiveConfiguration();
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
