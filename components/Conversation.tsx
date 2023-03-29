@@ -23,7 +23,7 @@ function PurposeSelect() {
   };
 
   return (
-    <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+    <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <Box>
         <Typography level='body3' color='neutral'>
           AI purpose

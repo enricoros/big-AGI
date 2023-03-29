@@ -284,7 +284,9 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
 
       {/* History menu with all the line items (only if shown) */}
       {!!historyAnchor && (
-        <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory} sx={{ minWidth: 320 }}>
+        <Menu
+          variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320 }}
+          open anchorEl={historyAnchor} onClose={hideHistory}>
           <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
           <ListDivider />
           {history.map((item, index) => (
