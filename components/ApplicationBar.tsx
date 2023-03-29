@@ -59,6 +59,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
   const { wideMode, setWideMode } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
+  const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
 
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
