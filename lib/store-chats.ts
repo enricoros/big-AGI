@@ -243,6 +243,6 @@ export const useActiveConfiguration = () => {
   };
 };
 
-export const useConversationNames = (): { id: string, name: string }[] => useChatStore((state) =>
-  state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name })),
+export const useConversationNames = (): { id: string, name: string, systemPurposeId: SystemPurposeId }[] => useChatStore((state) =>
+  state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
 );

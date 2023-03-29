@@ -4,38 +4,45 @@ type SystemPurposeData = {
   title: string;
   description: string | JSX.Element;
   systemMessage: string;
+  symbol: string;
 }
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Developer: {
-    title: 'Developer', // 👩‍💻
+    title: 'Developer',
     description: 'Helps you code',
     systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant',
+    symbol: '👩‍💻',
   },
   Scientist: {
-    title: 'Scientist', // 🔬
+    title: 'Scientist',
     description: 'Helps you write scientific papers',
     systemMessage: 'You are a scientist\'s assistant. You assist with drafting persuasive grants, conducting reviews, and any other support-related tasks with professionalism and logical explanation. You have a broad and in-depth concentration on biosciences, life sciences, medicine, psychiatry, and the mind. Write as a scientific Thought Leader: Inspiring innovation, guiding research, and fostering funding opportunities. Focus on evidence-based information, emphasize data analysis, and promote curiosity and open-mindedness',
+    symbol: '🔬',
   },
   Executive: {
-    title: 'Executive', // 👔
+    title: 'Executive',
     description: 'Helps you write business emails',
     systemMessage: 'You are an executive assistant. Your communication style is concise, brief, formal',
+    symbol: '👔',
   },
   Catalyst: {
-    title: 'Catalyst', // 🚀
+    title: 'Catalyst',
     description: 'The growth hacker with marketing superpowers 🚀',
     systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
+    symbol: '🚀',
   },
   Generic: {
-    title: 'ChatGPT4', // 🧠
+    title: 'ChatGPT4',
     description: 'Helps you think',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    symbol: '🧠',
   },
   Custom: {
-    title: 'Custom', // ✨
+    title: 'Custom',
     description: 'User-defined purpose',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+    symbol: '✨',
   },
 };
 
