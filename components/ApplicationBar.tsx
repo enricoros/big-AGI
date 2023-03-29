@@ -87,7 +87,7 @@ function ConfirmationDialog(props: { open: boolean, onClose: () => void, onPosit
 /**
  * FIXME - TEMPORARY - placeholder for a proper Pages Drawer
  */
-function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => void }) {
+function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => void, onClearConversation: (e: React.MouseEvent, conversationId: string) => void }) {
   const conversationNames: { id: string; name: string, systemPurposeId: SystemPurposeId }[] = useConversationNames();
   const setActiveConversation = useChatStore((state) => state.setActiveConversationId);
 
@@ -95,7 +95,7 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
     setActiveConversation(conversationId);
 
   return <Menu
-    variant='plain' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 260 }}
+    variant='plain' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 280 }}
     open={!!props.pagesMenuAnchor} anchorEl={props.pagesMenuAnchor} onClose={props.onClose}
     disablePortal={false}>
 
@@ -110,10 +110,17 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
         key={'c-id-' + conversation.id}
         onClick={() => handleConversationClicked(conversation.id)}
       >
-        <ListItemDecorator>{SystemPurposes[conversation.systemPurposeId]?.symbol || ''}</ListItemDecorator>
-        <Typography>
+        <ListItemDecorator>
+          {SystemPurposes[conversation.systemPurposeId]?.symbol || ''}
+        </ListItemDecorator>
+        <Typography sx={{ mr: 2 }}>
           {conversation.name}
         </Typography>
+        <IconButton
+          variant='soft' color='neutral' sx={{ ml: 'auto' }}
+          onClick={e => props.onClearConversation(e, conversation.id)}>
+          <DeleteOutlineIcon />
+        </IconButton>
       </MenuItem>
     ))}
 
@@ -146,16 +153,17 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar(props: { onClearConversation: () => void, onShowSettings: () => void, sx?: SxProps }) {
+export function ApplicationBar(props: { onClearConversation: (id: string) => void, onShowSettings: () => void, sx?: SxProps }) {
   // state
   const [pagesMenuAnchor, setPagesMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [actionsMenuAnchor, setActionsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [clearConfirmationOpen, setClearConfirmationOpen] = React.useState(false);
+  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
   const { wideMode, setWideMode, freeScroll, setFreeScroll } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
 
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
@@ -175,20 +183,21 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
   const handleScrollModeToggle = () => setFreeScroll(!freeScroll);
 
   const handleActionShowSettings = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.stopPropagation();
     props.onShowSettings();
     closeActionsMenu();
   };
 
-  const handleActionClearConversation = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setClearConfirmationOpen(true);
+  const handleActionClearConversation = (e: React.MouseEvent, id: string | null) => {
+    e.stopPropagation();
+    if (id)
+      setClearConfirmationId(id);
   };
 
   const handleConfirmedClearConversation = () => {
-    closeActionsMenu();
-    setClearConfirmationOpen(false);
-    props.onClearConversation();
+    if (clearConfirmationId)
+      props.onClearConversation(clearConfirmationId);
+    setClearConfirmationId(null);
   };
 
 
@@ -220,11 +229,14 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
     </Sheet>
 
     {/* First Menu */}
-    {!!pagesMenuAnchor && <PagesMenu pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
+    {<PagesMenu
+      pagesMenuAnchor={pagesMenuAnchor}
+      onClose={closePagesMenu} onClearConversation={handleActionClearConversation}
+    />}
 
     {/* Second Menu */}
     <Menu
-      variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 260 }}
+      variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
       open={!!actionsMenuAnchor} anchorEl={actionsMenuAnchor} onClose={closeActionsMenu}
       disablePortal={false}>
 
@@ -240,7 +252,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
         <Switch checked={wideMode} onChange={handleWideModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
-      <MenuItem sx={{ display: { xs: 'none', md: 'flex' } }}>
+      <MenuItem>
         <ListItemDecorator><SwapVertIcon /></ListItemDecorator>
         Free scroll
         <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
@@ -253,7 +265,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
 
       <ListDivider />
 
-      <MenuItem onClick={handleActionClearConversation}>
+      <MenuItem onClick={e => handleActionClearConversation(e, activeConversationId)}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
         Clear conversation
       </MenuItem>
@@ -261,7 +273,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
 
     {/* Confirmation Dialog */}
     <ConfirmationDialog
-      open={clearConfirmationOpen} onClose={() => setClearConfirmationOpen(false)} onPositive={handleConfirmedClearConversation}
+      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'} />
 
   </>;
