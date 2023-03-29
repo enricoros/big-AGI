@@ -8,7 +8,6 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useActiveConfiguration } from '@/lib/store-chats';
-import { NoSSR } from '@/components/util/NoSSR';
 
 
 function NicerSelector<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
@@ -48,7 +47,7 @@ function NicerSelector<TValue extends string>(props: { value: TValue, items: Rec
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar(props: { onDoubleClick: () => void, onSettingsClick: () => void, sx?: SxProps }) {
+export function ApplicationBar(props: { onClearConversation: () => void, onShowSettings: () => void, sx?: SxProps }) {
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
@@ -71,23 +70,23 @@ export function ApplicationBar(props: { onDoubleClick: () => void, onSettingsCli
         <DarkModeIcon />
       </IconButton>
 
-      {/*{!isEmpty && (*/}
-      {/*  <IconButton variant='plain' color='neutral' disabled={isDisabledCompose} onClick={onClearConversation}>*/}
-      {/*    <DeleteOutlineOutlinedIcon />*/}
-      {/*  </IconButton>*/}
-      {/*)}*/}
-
-      <NoSSR><Stack direction='row' sx={{ my: 'auto' }}>
+      <Stack direction='row' sx={{ my: 'auto' }}>
 
         <NicerSelector items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
 
         <NicerSelector items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
 
-      </Stack> </NoSSR>
+      </Stack>
 
-      <IconButton variant='plain' onClick={props.onSettingsClick}>
+      <IconButton variant='plain' onClick={props.onShowSettings}>
         <SettingsOutlinedIcon />
       </IconButton>
+
+      {/*{!isEmpty && (*/}
+      {/*  <IconButton variant='plain' color='neutral' disabled={isDisabledCompose} onClick={onClearConversation}>*/}
+      {/*    <DeleteOutlineOutlinedIcon />*/}
+      {/*  </IconButton>*/}
+      {/*)}*/}
 
     </Sheet>
   );
