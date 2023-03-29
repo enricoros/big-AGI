@@ -5,6 +5,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { Message } from '@/components/Message';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
+import { useSettingsStore } from '@/lib/store';
 
 
 function PurposeSelect() {
@@ -58,13 +59,15 @@ export function Conversation(props: {
 
   const { id: activeConversationId, messages } = useActiveConversation();
   const { editMessage, removeMessage } = useChatStore(state => ({ editMessage: state.editMessage, removeMessage: state.removeMessage }));
+  const freeScroll = useSettingsStore(state => state.freeScroll);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
 
   // when messages change, scroll to bottom (aka: at every new token)
   React.useEffect(() => {
+    if (freeScroll) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [freeScroll, messages]);
 
 
   // when there are no messages, show the purpose selector
