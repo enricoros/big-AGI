@@ -146,7 +146,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   const handleStopGeneration = () => abortController?.abort();
 
-  const handleConversationClear = () => replaceMessages(activeConversationId, []);
+  const handleConversationClear = (conversationId: string) => replaceMessages(conversationId, []);
 
   return (
     <Stack

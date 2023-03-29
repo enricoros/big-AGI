@@ -40,7 +40,7 @@ function PurposeSelect() {
             </Option>
           ))}
         </Select>
-        <Typography level='body2' sx={{ mt: 1, minWidth: 260 }}>
+        <Typography level='body2' sx={{ mt: 1, minWidth: 280 }}>
           {SystemPurposes[systemPurposeId].description}
         </Typography>
       </Box>

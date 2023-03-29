@@ -359,7 +359,7 @@ export function Message(props: { dMessage: DMessage, disableSend: boolean, onDel
         {/* message operations menu (floating) */}
         {!!menuAnchor && (
           <Menu
-            variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 260 }}
+            variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
             open anchorEl={menuAnchor} onClose={closeMenu}>
             <MenuItem onClick={handleMenuCopy}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
