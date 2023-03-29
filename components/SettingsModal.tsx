@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, Input, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 
-import { ChatModelId, ChatModels } from '@/lib/data';
 import { Link } from './util/Link';
-import { NoSSR } from './util/NoSSR';
 import { useSettingsStore } from '@/lib/store';
 
 
@@ -21,16 +19,12 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  const { apiKey, setApiKey, chatModelId, setChatModelId } = useSettingsStore(state => ({
+  const { apiKey, setApiKey } = useSettingsStore(state => ({
     apiKey: state.apiKey, setApiKey: state.setApiKey,
-    chatModelId: state.chatModelId, setChatModelId: state.setChatModelId,
   }), shallow);
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
     setApiKey((e.target as HTMLInputElement).value);
-
-  const handleGptModelChange = (e: React.FocusEvent | React.MouseEvent | React.KeyboardEvent | null, value: string | null) =>
-    setChatModelId((value || 'gpt-4') as ChatModelId);
 
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
     (e.key === 'Enter') && onClose();
@@ -46,8 +40,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
         <Box sx={{ mt: 3, minWidth: 300 }}>
 
-          <Typography sx={{ mb: 1 }}>
-            Enter <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required)' : '(not required)'}
+          <Typography level='body1' sx={{ mb: 1 }}>
+            Personal <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required)' : '(not required)'}
           </Typography>
 
           <Input variant='outlined' placeholder={'sk-...'} error={needsApiKey && !isValidKey}
@@ -58,28 +52,6 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               This box lets you override the default API key
             </Typography>
           )}
-
-          <Typography sx={{ mt: 3, mb: 1 }}>
-            Select Model
-          </Typography>
-
-          <NoSSR>
-            <Select
-              variant='outlined'
-              value={chatModelId}
-              onChange={handleGptModelChange}
-            >
-              <Option value={'gpt-4'}>GPT-4</Option>
-              <Option value={'gpt-3.5-turbo'}>GPT-3.5 Turbo</Option>
-              {/*<Option value={'gpt-4-32k'}>GPT-4-32k (not out yet)</Option>*/}
-            </Select>
-
-            {(chatModelId in ChatModels) && (
-              <Typography level='body2' sx={{ mt: 1, mb: 1 }}>
-                {ChatModels[chatModelId].description}
-              </Typography>
-            )}
-          </NoSSR>
 
           <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 3 }} onClick={onClose}>
             Close

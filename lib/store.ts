@@ -1,35 +1,28 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { ChatModelId, SystemPurposeId } from './data';
-
 
 /// Settings Store
 
-interface SettingsState {
+interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
 
-  chatModelId: ChatModelId;
-  setChatModelId: (chatModel: ChatModelId) => void;
-
-  systemPurposeId: SystemPurposeId;
-  setSystemPurposeId: (purpose: SystemPurposeId) => void;
+  wideMode: boolean;
+  setWideMode: (wideMode: boolean) => void;
 }
 
-export const useSettingsStore = create<SettingsState>()(
+export const useSettingsStore = create<SettingsStore>()(
   persist((set) => ({
       apiKey: (function() {
         // backwards compatibility from the former localStorage key
         if (typeof localStorage === 'undefined') return '';
         return localStorage.getItem('app-settings-openai-api-key') || '';
       })(),
-      chatModelId: 'gpt-4',
-      systemPurposeId: 'Developer',
-
       setApiKey: (apiKey: string) => set({ apiKey }),
-      setChatModelId: (chatModelId: ChatModelId) => set({ chatModelId }),
-      setSystemPurposeId: (systemPurposeId: SystemPurposeId) => set({ systemPurposeId }),
+
+      wideMode: false,
+      setWideMode: (wideMode: boolean) => set({ wideMode }),
     }),
     {
       name: 'app-settings',
@@ -39,7 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
 
 /// Composer Store
 
-interface ComposerState {
+interface ComposerStore {
   history: {
     date: number,
     text: string,
@@ -49,7 +42,7 @@ interface ComposerState {
   appendMessageToHistory: (text: string) => void;
 }
 
-export const useComposerStore = create<ComposerState>()(
+export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
       history: [],
 
