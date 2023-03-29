@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, List, Option, Select, Stack, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Grid, List, Stack, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/lib/store';
 
 
 function PurposeSelect() {
+  const theme = useTheme();
   const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
@@ -24,26 +25,46 @@ function PurposeSelect() {
   };
 
   return (
-    <Stack direction='column' sx={{ alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <Stack direction='column' sx={{ justifyContent: 'center', alignItems: 'center', mx: 2, minHeight: '60vh' }}>
+
       <Box>
-        <Typography level='body3' color='neutral'>
+
+        <Typography level='body3' color='neutral' sx={{ mb: 2 }}>
           AI purpose
         </Typography>
-        <Select
-          value={systemPurposeId}
-          onChange={(e, v) => handlePurposeChange(v)}
-          sx={{ minWidth: '20vw' }}
-        >
+
+        <Grid container spacing={1}>
           {Object.keys(SystemPurposes).map(spId => (
-            <Option key={spId} value={spId}>
-              {SystemPurposes[spId as SystemPurposeId]?.title}
-            </Option>
+            <Grid key={spId} xs={4} lg={3} xl={2}>
+              <AspectRatio variant='plain' ratio={1} sx={{ minWidth: { xs: 56, lg: 78, xl: 130 } }}>
+                <Button
+                  variant={systemPurposeId === spId ? 'solid' : 'soft'}
+                  color={systemPurposeId === spId ? 'primary' : 'neutral'}
+                  onClick={() => handlePurposeChange(spId as SystemPurposeId)}
+                  sx={{
+                    flexDirection: 'column',
+                    gap: { xs: 2, lg: 3 },
+                    fontFamily: theme.vars.fontFamily.code, fontWeight: 500,
+                  }}
+                >
+                  <div style={{ fontSize: '1.875rem' }}>
+                    {SystemPurposes[spId as SystemPurposeId]?.symbol}
+                  </div>
+                  <div>
+                    {SystemPurposes[spId as SystemPurposeId]?.title}
+                  </div>
+                </Button>
+              </AspectRatio>
+            </Grid>
           ))}
-        </Select>
-        <Typography level='body2' sx={{ mt: 1, minWidth: 280 }}>
+        </Grid>
+
+        <Typography level='body2' sx={{ mt: 2 }}>
           {SystemPurposes[systemPurposeId].description}
         </Typography>
+
       </Box>
+
     </Stack>
   );
 }
