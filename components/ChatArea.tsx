@@ -7,7 +7,7 @@ import { ApiChatInput } from '../pages/api/chat';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { Composer } from '@/components/Composer';
 import { Conversation } from '@/components/Conversation';
-import { DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats';
+import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { NoSSR } from '@/components/util/NoSSR';
 import { SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
@@ -108,9 +108,8 @@ async function _streamAssistantResponseMessage(
 export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const theme = useTheme();
 
-  const { apiKey, chatModelId, systemPurposeId } = useSettingsStore(state => ({
-    apiKey: state.apiKey, chatModelId: state.chatModelId, systemPurposeId: state.systemPurposeId,
-  }));
+  const apiKey = useSettingsStore(state => state.apiKey);
+  const { chatModelId, systemPurposeId } = useActiveConfiguration();
   const { id: activeConversationId, messages } = useActiveConversation();
   const { addMessage, editMessage, replaceMessages } = useChatStore(state => ({ addMessage: state.addMessage, editMessage: state.editMessage, replaceMessages: state.replaceMessages }));
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
@@ -184,7 +183,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         p: { xs: 1, md: 2 },
       }}>
         <NoSSR>
-          <Composer disableSend={!!abortController} sendMessage={sendUserMessage} stopGeneration={handleStopGeneration} />
+          <Composer disableSend={!!abortController} sendMessage={sendUserMessage} stopGeneration={handleStopGeneration} isDeveloperMode={systemPurposeId === 'Developer'} />
         </NoSSR>
       </Box>
 

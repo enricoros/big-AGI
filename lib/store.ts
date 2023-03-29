@@ -1,20 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { ChatModelId, SystemPurposeId } from './data';
-
 
 /// Settings Store
 
 interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
-
-  chatModelId: ChatModelId;
-  setChatModelId: (chatModel: ChatModelId) => void;
-
-  systemPurposeId: SystemPurposeId;
-  setSystemPurposeId: (purpose: SystemPurposeId) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -24,12 +16,7 @@ export const useSettingsStore = create<SettingsStore>()(
         if (typeof localStorage === 'undefined') return '';
         return localStorage.getItem('app-settings-openai-api-key') || '';
       })(),
-      chatModelId: 'gpt-4',
-      systemPurposeId: 'Developer',
-
       setApiKey: (apiKey: string) => set({ apiKey }),
-      setChatModelId: (chatModelId: ChatModelId) => set({ chatModelId }),
-      setSystemPurposeId: (systemPurposeId: SystemPurposeId) => set({ systemPurposeId }),
     }),
     {
       name: 'app-settings',

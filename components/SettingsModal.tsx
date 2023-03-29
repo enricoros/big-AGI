@@ -6,6 +6,7 @@ import { Box, Button, Input, Modal, ModalClose, ModalDialog, Option, Select, Typ
 import { ChatModelId, ChatModels } from '@/lib/data';
 import { Link } from './util/Link';
 import { NoSSR } from './util/NoSSR';
+import { useActiveConfiguration } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store';
 
 
@@ -21,10 +22,10 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  const { apiKey, setApiKey, chatModelId, setChatModelId } = useSettingsStore(state => ({
+  const { apiKey, setApiKey } = useSettingsStore(state => ({
     apiKey: state.apiKey, setApiKey: state.setApiKey,
-    chatModelId: state.chatModelId, setChatModelId: state.setChatModelId,
   }), shallow);
+  const { chatModelId, setChatModelId } = useActiveConfiguration();
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
     setApiKey((e.target as HTMLInputElement).value);
