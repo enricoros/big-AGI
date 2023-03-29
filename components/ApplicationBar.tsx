@@ -9,6 +9,7 @@ import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -153,7 +154,7 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-  const { wideMode, setWideMode } = useSettingsStore();
+  const { wideMode, setWideMode, freeScroll, setFreeScroll } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
 
@@ -170,6 +171,8 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
   const handleWideModeToggle = () => setWideMode(!wideMode);
+
+  const handleScrollModeToggle = () => setFreeScroll(!freeScroll);
 
   const handleActionShowSettings = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -235,6 +238,12 @@ export function ApplicationBar(props: { onClearConversation: () => void, onShowS
         <ListItemDecorator><WidthWideIcon /></ListItemDecorator>
         Wide mode
         <Switch checked={wideMode} onChange={handleWideModeToggle} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+      <MenuItem sx={{ display: { xs: 'none', md: 'flex' } }}>
+        <ListItemDecorator><SwapVertIcon /></ListItemDecorator>
+        Free scroll
+        <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem onClick={handleActionShowSettings}>

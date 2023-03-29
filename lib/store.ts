@@ -10,6 +10,9 @@ interface SettingsStore {
 
   wideMode: boolean;
   setWideMode: (wideMode: boolean) => void;
+
+  freeScroll: boolean;
+  setFreeScroll: (freeScroll: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -23,6 +26,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       wideMode: false,
       setWideMode: (wideMode: boolean) => set({ wideMode }),
+
+      freeScroll: false,
+      setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),
     }),
     {
       name: 'app-settings',
