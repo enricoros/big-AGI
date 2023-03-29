@@ -7,6 +7,9 @@ import { persist } from 'zustand/middleware';
 interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
+
+  wideMode: boolean;
+  setWideMode: (wideMode: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -17,6 +20,9 @@ export const useSettingsStore = create<SettingsStore>()(
         return localStorage.getItem('app-settings-openai-api-key') || '';
       })(),
       setApiKey: (apiKey: string) => set({ apiKey }),
+
+      wideMode: false,
+      setWideMode: (wideMode: boolean) => set({ wideMode }),
     }),
     {
       name: 'app-settings',
