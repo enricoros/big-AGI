@@ -12,6 +12,7 @@ export default function Home() {
   const theme = useTheme();
 
   const apiKey = useSettingsStore(state => state.apiKey);
+  const wideMode = useSettingsStore(state => state.wideMode);
   const [settingsShown, setSettingsShown] = React.useState(false);
 
   React.useEffect(() => {
@@ -27,8 +28,8 @@ export default function Home() {
      */
     <NoSSR>
 
-      <Container maxWidth='xl' disableGutters sx={{
-        boxShadow: { xs: 'none', xl: theme.vars.shadow.lg },
+      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
+        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
       }}>
 
         <ChatArea onShowSettings={() => setSettingsShown(true)} />
