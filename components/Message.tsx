@@ -65,7 +65,7 @@ const inferLanguage = (markdownLanguage: string, code: string): string | null =>
 };
 
 const parseAndHighlightCodeBlocks = (text: string): MessageBlock[] => {
-  const codeBlockRegex = /`{3,}([\w\\.]+)?\n([\s\S]*?)(`{3,}|$)/g;
+  const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: MessageBlock[] = [];
 
   let lastIndex = 0;
