@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, useTheme } from '@mui/joy';
+import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
@@ -149,7 +149,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
   const handleConversationClear = () => replaceMessages(activeConversationId, []);
 
   return (
-    <Box sx={{
+    <Stack sx={{
       minHeight: '100vh',
       ...(props.sx || {}),
     }}>
@@ -166,7 +166,7 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level1,
-          overflowY: 'auto',
+          overflowY: 'scroll',
         }} />
 
       <Box
@@ -182,6 +182,6 @@ export function ChatArea(props: { onShowSettings: () => void, sx?: SxProps }) {
         />
       </Box>
 
-    </Box>
+    </Stack>
   );
 }
