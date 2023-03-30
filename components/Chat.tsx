@@ -115,46 +115,34 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
 
-  const runAssistant = async (conversationId: string, history: DMessage[]) => {
-    replaceMessages(conversationId, history);
+  const runAssistant = async (conversationId: string, replaceHistory: DMessage[]) => {
+    // update the purpose of the system message (if not manually edited), and create if needed
+    {
+      const systemMessageIndex = replaceHistory.findIndex(m => m.role === 'system');
+      const systemMessage: DMessage = systemMessageIndex >= 0 ? replaceHistory.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
+
+      if (!systemMessage.updated)
+        systemMessage.text = SystemPurposes[systemPurposeId].systemMessage
+          .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+
+      replaceHistory.unshift(systemMessage);
+    }
+
+    // use the new history
+    replaceMessages(conversationId, replaceHistory);
 
     // when an abort controller is set, the UI switches to the "stop" mode
     const controller = new AbortController();
     setAbortController(controller);
 
     const { apiKey, modelTemperature, modelMaxTokens } = useSettingsStore.getState();
-    await _streamAssistantResponseMessage(conversationId, history, apiKey, chatModelId, modelTemperature, modelMaxTokens, controller.signal, addMessage, editMessage);
+    await _streamAssistantResponseMessage(conversationId, replaceHistory, apiKey, chatModelId, modelTemperature, modelMaxTokens, controller.signal, addMessage, editMessage);
 
     // clear to send, again
     setAbortController(null);
   };
 
-
-  const sendUserMessage = async (userText: string) => {
-    const history = [...messages];
-
-    // current system purpose text
-    const systemPurpose = SystemPurposes[systemPurposeId].systemMessage
-      .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-
-    // bring the system message (message.role === 'system'), if any, at the front
-    const systemMessageIndex = history.findIndex(m => m.role === 'system');
-    if (systemMessageIndex >= 0) {
-      const systemMessage = history.splice(systemMessageIndex, 1)[0];
-      // if not edited by the user, replace the purpose
-      if (systemMessage.updated === null)
-        systemMessage.text = systemPurpose;
-      history.unshift(systemMessage);
-    } else {
-      // add a system message, if none is present
-      history.unshift(createDMessage('system', systemPurpose));
-    }
-
-    history.push(createDMessage('user', userText));
-
-    await runAssistant(activeConversationId, history);
-  };
-
+  const sendUserMessage = async (userText: string) => await runAssistant(activeConversationId, [...messages, createDMessage('user', userText)]);
 
   const handleStopGeneration = () => abortController?.abort();
 
