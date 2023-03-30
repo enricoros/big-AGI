@@ -22,7 +22,7 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
 - [x] Privacy: User-owned API keys & LocalStorage 🛡️
 - [ ] Cool stuff
     - [x] Syntax highlighting for multiple languages 🌈
-    - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
+    - [ ] (Removed post 2efa6de1) ~~Code execution for TypeScript, JavaScript, and HTML~~ 🖥️
     - [x] Drag and drop files to add them to the prompt 📁
       <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
 - [x] Dark mode 🌙

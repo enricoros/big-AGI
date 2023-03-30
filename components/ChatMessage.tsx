@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { Sandpack, SandpackFiles } from '@codesandbox/sandpack-react';
-
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
@@ -20,11 +18,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
-
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
@@ -118,45 +113,9 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 /// Renderers for the different types of message blocks
 
-type SandpackConfig = { files: SandpackFiles, template: 'vanilla-ts' | 'vanilla' };
-
-const runnableLanguages = ['html', 'javascript', 'typescript'];
-
-function RunnableCode({ codeBlock, theme }: { codeBlock: CodeBlock, theme: Theme }): JSX.Element | null {
-  let config: SandpackConfig;
-  switch (codeBlock.language) {
-    case 'html':
-      config = {
-        template: 'vanilla',
-        files: { '/index.html': codeBlock.code, '/index.js': '' },
-      };
-      break;
-    case 'javascript':
-    case 'typescript':
-      config = {
-        template: 'vanilla-ts',
-        files: { '/index.ts': codeBlock.code },
-      };
-      break;
-    default:
-      return null;
-  }
-  return (
-    <Sandpack {...config} theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-              options={{ showConsole: true, showConsoleButton: true, showTabs: true, showNavigator: false }} />
-  );
-}
-
 function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: Theme, sx?: SxProps }) {
-  const [showSandpack, setShowSandpack] = React.useState(false);
-
   const handleCopyToClipboard = () =>
     copyToClipboard(codeBlock.code);
-
-  const handleToggleSandpack = () =>
-    setShowSandpack(!showSandpack);
-
-  const showRunIcon = codeBlock.complete && !!codeBlock.language && runnableLanguages.includes(codeBlock.language);
 
   return <Box component='code' sx={{
     position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
@@ -168,16 +127,7 @@ function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: The
         <ContentCopyIcon />
       </IconButton>
     </Tooltip>
-    {showRunIcon && (
-      <Tooltip title='Try it out' variant='solid'>
-        <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-          {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
-        </IconButton>
-      </Tooltip>
-    )}
-    {/* this is the highlighted code */}
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
-    {showRunIcon && showSandpack && <RunnableCode codeBlock={codeBlock} theme={theme} />}
   </Box>;
 }
 
