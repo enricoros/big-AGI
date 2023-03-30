@@ -162,13 +162,17 @@ function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: The
     display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
     '&:hover > button': { opacity: 1 },
   }}>
-    <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-      <ContentCopyIcon />
-    </IconButton>
-    {showRunIcon && (
-      <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
-        {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+    <Tooltip title='Copy Code' variant='solid'>
+      <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
+        <ContentCopyIcon />
       </IconButton>
+    </Tooltip>
+    {showRunIcon && (
+      <Tooltip title='Try it out' variant='solid'>
+        <IconButton variant='plain' color='primary' onClick={handleToggleSandpack} sx={{ position: 'absolute', top: 0, right: 50, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
+          {showSandpack ? <StopOutlinedIcon /> : <PlayArrowOutlinedIcon />}
+        </IconButton>
+      </Tooltip>
     )}
     {/* this is the highlighted code */}
     <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
@@ -380,14 +384,16 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      px: 1, py: 2,
+      gap: 1, px: { xs: 1, md: 2 }, py: 2,
       background,
       borderBottom: '1px solid',
       borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
+      position: 'relative',
+      '&:hover > button': { opacity: 1 },
     }}>
 
       {/* Author */}
-      <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
+      <Stack sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
              onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
              onClick={event => setMenuAnchor(event.currentTarget)}>
 
@@ -395,11 +401,10 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           <IconButton variant='soft' color='primary'>
             <MoreVertIcon />
           </IconButton>
-        ) : avatarEl}
+        ) : (
+          avatarEl
+        )}
 
-        {/*{fromSystem && (*/}
-        {/*  <Typography level='body2' color='neutral'>system</Typography>*/}
-        {/*)}*/}
         {fromAssistant && (
           <Tooltip title={messageModelName || 'unk-model'} variant='solid'>
             <Typography level='body2' color='neutral'>{prettyBaseModel(messageModelName)}</Typography>
@@ -430,10 +435,25 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
       ) : (
 
-        <Textarea variant='soft' color='primary' autoFocus minRows={1}
+        <Textarea variant='soft' color='warning' autoFocus minRows={1}
                   value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
                   sx={{ ...chatFontCss, flexGrow: 1 }} />
 
+      )}
+
+
+      {/* Copy message */}
+      {!fromSystem && !isEditing && (
+        <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant='solid'>
+          <IconButton
+            variant='plain' color='primary' onClick={handleMenuCopy}
+            sx={{
+              position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
+              opacity: 0, transition: 'opacity 0.3s',
+            }}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
       )}
 
 
@@ -449,6 +469,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           <MenuItem onClick={handleMenuEdit}>
             <ListItemDecorator><EditIcon /></ListItemDecorator>
             {isEditing ? 'Discard' : 'Edit'}
+            {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
           <ListDivider />
           <MenuItem onClick={handleMenuRunAgain} disabled={!fromUser || props.disableSend}>
