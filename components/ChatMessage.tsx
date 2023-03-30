@@ -411,7 +411,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         {fromAssistant && (
           <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
             <Typography level='body2' sx={messageTyping
-              ? { animation: `${cssRainbowColorKeyframes} 20s linear infinite`, fontWeight: 600 }
+              ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 }
               : { fontWeight: 500 }
             }>
               {prettyBaseModel(messageModelId)}
