@@ -133,11 +133,21 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   const sendUserMessage = async (userText: string) => {
     const history = [...messages];
 
-    // prepend 'system' message if missing
-    if (!history.length) {
-      const systemPurpose = SystemPurposes[systemPurposeId].systemMessage
-        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-      history.push(createDMessage('system', systemPurpose));
+    // current system purpose text
+    const systemPurpose = SystemPurposes[systemPurposeId].systemMessage
+      .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+
+    // bring the system message (message.role === 'system'), if any, at the front
+    const systemMessageIndex = history.findIndex(m => m.role === 'system');
+    if (systemMessageIndex >= 0) {
+      const systemMessage = history.splice(systemMessageIndex, 1)[0];
+      // if not edited by the user, replace the purpose
+      if (systemMessage.updated === null)
+        systemMessage.text = systemPurpose;
+      history.unshift(systemMessage);
+    } else {
+      // add a system message, if none is present
+      history.unshift(createDMessage('system', systemPurpose));
     }
 
     history.push(createDMessage('user', userText));
