@@ -21,8 +21,8 @@ import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
 import { DMessage } from '@/lib/store-chats';
@@ -197,34 +197,34 @@ function prettyBaseModel(model: string | undefined): string {
   return model;
 }
 
-function explainErrorInMessage(message: DMessage) {
+function explainErrorInMessage(text: string, isAssistant: boolean, modelName?: string) {
   let errorMessage: JSX.Element | null = null;
-  const isAssistantError = message.role === 'assistant' && (message.text.startsWith('Error: ') || message.text.startsWith('OpenAI API error: '));
+  const isAssistantError = isAssistant && (text.startsWith('Error: ') || text.startsWith('OpenAI API error: '));
   if (isAssistantError) {
-    if (message.text.startsWith('OpenAI API error: 429 Too Many Requests')) {
+    if (text.startsWith('OpenAI API error: 429 Too Many Requests')) {
       // TODO: retry at the api/chat level a few times instead of showing this error
       errorMessage = <>
         The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>,
         or give it another go by selecting <b>Run again</b> from the message menu.
       </>;
-    } else if (message.text.includes('"model_not_found"')) {
+    } else if (text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = <>
-        Your API key appears to be unauthorized for {message.modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
+        Your API key appears to be unauthorized for {modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
         and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
-    } else if (message.text.includes('"context_length_exceeded"')) {
+    } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
       const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
-      const match = pattern.exec(message.text);
+      const match = pattern.exec(text);
       const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
       errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {message.modelName || 'this model'}{usedText}.
+        This thread <b>surpasses the maximum size</b> allowed for {modelName || 'this model'}{usedText}.
         Please consider removing some earlier messages from the conversation, start a new conversation,
         choose a model with larger context, or submit a shorter new message.
       </>;
-    } else if (message.text.includes('"invalid_api_key"')) {
+    } else if (text.includes('"invalid_api_key"')) {
       errorMessage = <>
         The API key appears to not be correct or to have expired.
         Please <Link noLinkStyle href='https://openai.com/account/api-keys' target='_blank'>check your API key</Link> and
@@ -246,7 +246,18 @@ function explainErrorInMessage(message: DMessage) {
  */
 export function ChatMessage(props: { message: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const theme = useTheme();
-  const message = props.message;
+  const {
+    text: messageText,
+    role: messageRole,
+    sender: messageSender,
+    avatar: messageAvatar,
+    modelName: messageModelName,
+    updated: messageUpdated,
+  } = props.message;
+  const fromAssistant = messageRole === 'assistant';
+  const fromSystem = messageRole === 'system';
+  const fromUser = messageRole === 'user';
+  const wasEdited = !!messageUpdated;
 
   // viewing
   const [forceExpanded, setForceExpanded] = React.useState(false);
@@ -255,32 +266,33 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState(message.text);
+  const [editedText, setEditedText] = React.useState('');
 
 
-  const closeMenu = () => setMenuAnchor(null);
+  const closeOperationsMenu = () => setMenuAnchor(null);
 
   const handleMenuCopy = (e: React.MouseEvent) => {
-    copyToClipboard(message.text);
+    copyToClipboard(messageText);
     e.preventDefault();
-    closeMenu();
+    closeOperationsMenu();
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
     if (!isEditing)
-      setEditedText(message.text);
+      setEditedText(messageText);
     setIsEditing(!isEditing);
     e.preventDefault();
-    closeMenu();
+    closeOperationsMenu();
   };
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
     if (!props.disableSend) {
       props.onRunAgain();
       e.preventDefault();
-      closeMenu();
+      closeOperationsMenu();
     }
   };
+
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setEditedText(e.target.value);
@@ -295,7 +307,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
   const handleEditBlur = () => {
     setIsEditing(false);
-    if (editedText !== message.text && editedText?.trim())
+    if (editedText !== messageText && editedText?.trim())
       props.onEdit(editedText);
   };
 
@@ -304,49 +316,57 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
 
   // soft error handling
-  const { isAssistantError, errorMessage } = explainErrorInMessage(message);
+  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelName);
 
 
   // theming
   let background = theme.vars.palette.background.body;
   let textBackground: string | undefined = undefined;
-  if (message.role === 'system') {
-    background = theme.vars.palette.background.body;
-    textBackground = theme.vars.palette.primary.plainHoverBg;
-  } else if (message.sender === 'You') {
-    background = theme.vars.palette.primary.plainHoverBg;
-  } else if (message.role === 'assistant') {
-    background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
+  switch (messageRole) {
+    case 'system':
+      background = theme.vars.palette.background.body;
+      textBackground = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.primary.plainHoverBg;
+      break;
+    case 'user':
+      background = theme.vars.palette.primary.plainHoverBg;
+      if (wasEdited) textBackground = theme.vars.palette.warning.plainHoverBg;
+      break;
+    case 'assistant':
+      background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
+      break;
   }
+
 
   // avatar
   const avatarEl: JSX.Element = React.useMemo(
     () => {
-      if (typeof message.avatar === 'string' && message.avatar)
-        return <Avatar alt={message.sender} src={message.avatar} />;
-      else if (message.role === 'system')
-        return <SmartToyTwoToneIcon sx={{ width: 40, height: 40 }} />;   // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
-      else if (message.role === 'assistant')
-        return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />;  // https://mui.com/static/images/avatar/2.jpg
-      else if (message.role === 'user')
-        return <Face6Icon sx={{ width: 40, height: 40 }} />;             // https://www.svgrepo.com/show/306500/openai.svg
-      return <Avatar alt={message.sender} />;
-    }, [message.avatar, message.role, message.sender],
+      if (typeof messageAvatar === 'string' && messageAvatar)
+        return <Avatar alt={messageSender} src={messageAvatar} />;
+      switch (messageRole) {
+        case 'system':
+          return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
+        case 'assistant':
+          return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
+        case 'user':
+          return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
+      }
+      return <Avatar alt={messageSender} />;
+    }, [messageAvatar, messageRole, messageSender],
   );
 
   // text box css
   const chatFontCss = {
     my: 'auto',
-    fontFamily: message.role === 'assistant' ? theme.fontFamily.code : theme.fontFamily.body,
-    fontSize: message.role === 'assistant' ? '14px' : '16px',
+    fontFamily: fromAssistant ? theme.fontFamily.code : theme.fontFamily.body,
+    fontSize: fromAssistant ? '14px' : '16px',
     lineHeight: 1.75,
   };
 
   // user message truncation
-  let collapsedText = message.text;
+  let collapsedText = messageText;
   let isCollapsed = false;
-  if (!forceExpanded && message.role === 'user') {
-    const lines = message.text.split('\n');
+  if (fromUser && !forceExpanded) {
+    const lines = messageText.split('\n');
     if (lines.length > 10) {
       collapsedText = lines.slice(0, 10).join('\n');
       isCollapsed = true;
@@ -356,7 +376,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
   return (
     <ListItem sx={{
-      display: 'flex', flexDirection: message.sender === 'You' ? 'row-reverse' : 'row', alignItems: 'flex-start',
+      display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
       px: 1, py: 2,
       background,
       borderBottom: '1px solid',
@@ -374,12 +394,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           </IconButton>
         ) : avatarEl}
 
-        {message.role === 'system' && (
-          <Typography level='body2' color='neutral'>system</Typography>
-        )}
-        {message.role === 'assistant' && (
-          <Tooltip title={message.modelName || 'unk-model'} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyBaseModel(message.modelName)}</Typography>
+        {/*{fromSystem && (*/}
+        {/*  <Typography level='body2' color='neutral'>system</Typography>*/}
+        {/*)}*/}
+        {fromAssistant && (
+          <Tooltip title={messageModelName || 'unk-model'} variant='solid'>
+            <Typography level='body2' color='neutral'>{prettyBaseModel(messageModelName)}</Typography>
           </Tooltip>
         )}
 
@@ -411,11 +431,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
       )}
 
+
       {/* Message Operations menu */}
       {!!menuAnchor && (
         <Menu
           variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
-          open anchorEl={menuAnchor} onClose={closeMenu}>
+          open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
           <MenuItem onClick={handleMenuCopy}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
@@ -425,11 +446,11 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
             {isEditing ? 'Discard' : 'Edit'}
           </MenuItem>
           <ListDivider />
-          <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.disableSend}>
+          <MenuItem onClick={handleMenuRunAgain} disabled={!fromUser || props.disableSend}>
             <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
             Run again
           </MenuItem>
-          <MenuItem onClick={props.onDelete} disabled={message.role === 'system'}>
+          <MenuItem onClick={props.onDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
           </MenuItem>
