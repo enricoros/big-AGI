@@ -13,7 +13,7 @@
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.11",
-    "@mui/joy": "^5.0.0-alpha.72",
+    "@mui/joy": "^5.0.0-alpha.73",
     "@vercel/analytics": "^0.1.11",
     "eventsource-parser": "^1.0.0",
     "next": "^13.2.4",
@@ -23,11 +23,11 @@
     "zustand": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^18.15.10",
+    "@types/node": "^18.15.11",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.0.29",
+    "@types/react": "^18.0.31",
     "@types/react-dom": "^18.0.11",
-    "eslint": "^8.36.0",
+    "eslint": "^8.37.0",
     "eslint-config-next": "^13.2.4",
     "typescript": "^5.0.2"
   }
