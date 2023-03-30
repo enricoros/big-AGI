@@ -54,8 +54,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
 
           <Typography level='body1' sx={{ mb: 1 }}>
-            Personal <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required' : '(optional'},
-            check <Link href='https://platform.openai.com/account/usage'>usage</Link>)
+            Personal <Link href='https://platform.openai.com/account/api-keys' target='_blank'>OpenAI API Key</Link> {needsApiKey ? '(required' : '(optional'},
+            check <Link href='https://platform.openai.com/account/usage' target='_blank'>usage</Link>)
           </Typography>
 
           <Input variant='outlined' type='password' placeholder={needsApiKey ? 'required' : 'sk-...'} error={needsApiKey && !isValidKey}
@@ -64,7 +64,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
           <Typography level='body2' sx={{ mt: 1, mb: 1, lineHeight: 1.75 }}>
             {needsApiKey
               ? <><Typography variant='soft'>sk-...</Typography> Create key, then apply to
-                the <Link href='https://openai.com/waitlist/gpt-4-api'>GPT-4 waitlist</Link></>
+                the <Link href='https://openai.com/waitlist/gpt-4-api' target='_blank'>GPT-4 waitlist</Link></>
               : <>if provided, your Key will override the server&apos;s</>}
           </Typography>
 
