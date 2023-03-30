@@ -204,7 +204,7 @@ function prettyBaseModel(model: string | undefined): string {
   return model;
 }
 
-function explainErrorInMessage(text: string, isAssistant: boolean, modelName?: string) {
+function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: string) {
   let errorMessage: JSX.Element | null = null;
   const isAssistantError = isAssistant && (text.startsWith('Error: ') || text.startsWith('OpenAI API error: '));
   if (isAssistantError) {
@@ -217,7 +217,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelName?: s
     } else if (text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = <>
-        Your API key appears to be unauthorized for {modelName || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
+        Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
         and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
@@ -227,7 +227,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelName?: s
       const match = pattern.exec(text);
       const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
       errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {modelName || 'this model'}{usedText}.
+        This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}{usedText}.
         Please consider removing some earlier messages from the conversation, start a new conversation,
         choose a model with larger context, or submit a shorter new message.
       </>;
@@ -255,10 +255,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   const theme = useTheme();
   const {
     text: messageText,
-    role: messageRole,
     sender: messageSender,
     avatar: messageAvatar,
-    modelName: messageModelName,
+    typing: messageTyping,
+    role: messageRole,
+    modelId: messageModelId,
+    // purposeId: messagePurposeId,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
@@ -323,7 +325,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
 
   // soft error handling
-  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelName);
+  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelId);
 
 
   // theming
@@ -406,8 +408,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         )}
 
         {fromAssistant && (
-          <Tooltip title={messageModelName || 'unk-model'} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyBaseModel(messageModelName)}</Typography>
+          <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
+            <Typography level='body2' color='neutral'>{prettyBaseModel(messageModelId)}</Typography>
           </Tooltip>
         )}
 

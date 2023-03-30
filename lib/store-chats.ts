@@ -31,7 +31,6 @@ export interface ConversationsStore {
  * Message, sent or received, by humans or bots
  *
  * Other ideas:
- * - modelTokensCount?: number;
  * - attachments?: {type: string; url: string; thumbnailUrl?: string; size?: number}[];
  * - isPinned?: boolean;
  * - reactions?: {type: string; count: number; users: string[]}[];
@@ -40,13 +39,17 @@ export interface ConversationsStore {
 export interface DMessage {
   id: string;
   text: string;
-  sender: 'You' | 'Bot' | string;
+  sender: 'You' | 'Bot' | string;   // pretty name
+  avatar: string | null;            // null, or image url
+  typing: boolean;
   role: 'assistant' | 'system' | 'user';
-  modelName?: string;         // optional for 'assistant' roles
-  modelTokensCount?: number;  // optional
-  avatar: string | null;
-  created: number;            // created timestamp
-  updated: number | null;     // updated timestamp
+
+  modelId?: string;                 // only assistant - goes beyond known models
+  purposeId?: SystemPurposeId;      // only assistant/system
+  cacheTokensCount?: number;
+
+  created: number;                  // created timestamp
+  updated: number | null;           // updated timestamp
 }
 
 /**
@@ -64,7 +67,7 @@ export interface DConversation {
   chatModelId: ChatModelId;
   userTitle?: string;
   autoTitle?: string;
-  modelTokensCount?: number;
+  cacheTokensCount?: number;
   created: number;            // created timestamp
   updated: number | null;     // updated timestamp
 }
@@ -113,7 +116,7 @@ export const useChatStore = create<ConversationsStore>()(
             ...conversation,
             ...(conversation.id !== conversationId ? {} : {
               messages: [...conversation.messages, message],
-              modelTokensCount: (conversation.modelTokensCount || 0) + (message.modelTokensCount || 0),
+              cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
               updated: Date.now(),
             }),
           })),
@@ -138,7 +141,7 @@ export const useChatStore = create<ConversationsStore>()(
               return {
                 ...conversation,
                 messages: newMessages,
-                modelTokensCount: newMessages.reduce((sum, message) => sum + (message.modelTokensCount || 0), 0),
+                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
                 updated: Date.now(),
               };
             }
@@ -157,7 +160,7 @@ export const useChatStore = create<ConversationsStore>()(
               return {
                 ...conversation,
                 messages: newMessages,
-                modelTokensCount: newMessages.reduce((sum, message) => sum + (message.modelTokensCount || 0), 0),
+                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
                 updated: Date.now(),
               };
             }
@@ -166,14 +169,14 @@ export const useChatStore = create<ConversationsStore>()(
         }));
       },
 
-      replaceMessages: (conversationId: string, messages: DMessage[]) => {
+      replaceMessages: (conversationId: string, newMessages: DMessage[]) => {
         set((state) => ({
           conversations: state.conversations.map((conversation: DConversation): DConversation => {
             if (conversation.id === conversationId) {
               return {
                 ...conversation,
-                messages,
-                modelTokensCount: messages.reduce((sum, message) => sum + (message.modelTokensCount || 0), 0),
+                messages: newMessages,
+                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
                 updated: Date.now(),
               };
             }
@@ -201,7 +204,7 @@ export const useChatStore = create<ConversationsStore>()(
         set((state) => ({
           conversations: state.conversations.map((conversation: DConversation): DConversation => {
             if (conversation.id === conversationId) {
-              // TODO: recalculate modelTokensCount?
+              // TODO: recalculate cacheTokensCount?
               return {
                 ...conversation,
                 chatModelId,
