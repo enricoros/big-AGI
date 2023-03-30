@@ -107,8 +107,8 @@ export function ChatMessageList(props: {
     editMessage(activeConversationId, messageId, { text: newText });
 
   const handleMessageRunAgain = (messageId: string) => {
-    const history = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
-    props.runAssistant(activeConversationId, history);
+    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+    props.runAssistant(activeConversationId, truncatedHistory);
   };
 
 

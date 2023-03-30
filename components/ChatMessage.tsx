@@ -69,7 +69,10 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
 /**
  * FIXME: expensive function, especially as it's not been used in incremental fashion
  */
-const parseBlocks = (text: string): Block[] => {
+const parseBlocks = (forceText: boolean, text: string): Block[] => {
+  if (forceText)
+    return [{ type: 'text', content: text }];
+
   const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
 
@@ -324,12 +327,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   let textBackground: string | undefined = undefined;
   switch (messageRole) {
     case 'system':
-      background = theme.vars.palette.background.body;
-      textBackground = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.primary.plainHoverBg;
+      // background = theme.vars.palette.background.body;
+      // textBackground = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.neutral.plainHoverBg;
+      background = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.neutral.plainHoverBg;
       break;
     case 'user':
       background = theme.vars.palette.primary.plainHoverBg;
-      if (wasEdited) textBackground = theme.vars.palette.warning.plainHoverBg;
       break;
     case 'assistant':
       background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
@@ -411,7 +414,9 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
 
-          {parseBlocks(collapsedText).map((block, index) =>
+          {fromSystem && wasEdited && <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>edited - purpose will be fixed</Typography>}
+
+          {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={chatFontCss} />
               : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
