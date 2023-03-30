@@ -381,7 +381,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
-              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={chatFontCss} />
+              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={{ ...chatFontCss, fontVariantLigatures: 'none'}} />
               : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
           )}
 
