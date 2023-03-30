@@ -173,9 +173,12 @@ function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: The
   </Box>;
 }
 
-const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
-  <Typography level='body1' component='span'
-              sx={{ ...(sx || {}), mx: 1.5 }}>
+const RenderText = ({ textBlock, onDoubleClick, sx }: { textBlock: TextBlock, onDoubleClick: (e: React.MouseEvent) => void, sx?: SxProps }) =>
+  <Typography
+    level='body1' component='span'
+    onDoubleClick={onDoubleClick}
+    sx={{ ...(sx || {}), mx: 1.5 }}
+  >
     {textBlock.content}
   </Typography>;
 
@@ -290,6 +293,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     }
   };
 
+  const handleEditBlur = () => {
+    setIsEditing(false);
+    if (editedText !== message.text && editedText?.trim())
+      props.onEdit(editedText);
+  };
+
 
   const handleExpand = () => setForceExpanded(true);
 
@@ -355,7 +364,6 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     }}>
 
       {/* Author */}
-
       <Stack sx={{ alignItems: 'center', minWidth: 64, textAlign: 'center' }}
              onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
              onClick={event => setMenuAnchor(event.currentTarget)}>
@@ -375,64 +383,57 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           </Tooltip>
         )}
 
-        {/* message operations menu (floating) */}
-        {!!menuAnchor && (
-          <Menu
-            variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
-            open anchorEl={menuAnchor} onClose={closeMenu}>
-            <MenuItem onClick={handleMenuCopy}>
-              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-              Copy
-            </MenuItem>
-            <MenuItem onClick={handleMenuEdit}>
-              <ListItemDecorator><EditIcon /></ListItemDecorator>
-              {isEditing ? 'Discard' : 'Edit'}
-            </MenuItem>
-            <ListDivider />
-            <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.disableSend}>
-              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-              Run again
-            </MenuItem>
-            <MenuItem onClick={props.onDelete} disabled={message.role === 'system'}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
-            </MenuItem>
-          </Menu>
-        )}
-
       </Stack>
 
 
       {/* Edit / Blocks */}
-
-      {isEditing ? (
-
-        <Textarea variant='soft' color='primary' autoFocus minRows={1}
-                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed}
-                  sx={{ ...chatFontCss, flexGrow: 1 }} />
-
-      ) : (
+      {!isEditing ? (
 
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
+
           {parseBlocks(collapsedText).map((block, index) =>
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={chatFontCss} />
-              : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
+              : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
           )}
-          {errorMessage && (
-            <Alert variant='soft' color='warning' sx={{ mt: 1 }}>
-              <Typography>
-                {errorMessage}
-              </Typography>
-            </Alert>
-          )}
-          {isCollapsed && (
-            <Button variant='plain' onClick={handleExpand}>
-              ... expand ...
-            </Button>
-          )}
+
+          {errorMessage && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>}
+
+          {isCollapsed && <Button variant='plain' onClick={handleExpand}>... expand ...</Button>}
+
         </Box>
 
+      ) : (
+
+        <Textarea variant='soft' color='primary' autoFocus minRows={1}
+                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
+                  sx={{ ...chatFontCss, flexGrow: 1 }} />
+
+      )}
+
+      {/* Message Operations menu */}
+      {!!menuAnchor && (
+        <Menu
+          variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
+          open anchorEl={menuAnchor} onClose={closeMenu}>
+          <MenuItem onClick={handleMenuCopy}>
+            <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+            Copy
+          </MenuItem>
+          <MenuItem onClick={handleMenuEdit}>
+            <ListItemDecorator><EditIcon /></ListItemDecorator>
+            {isEditing ? 'Discard' : 'Edit'}
+          </MenuItem>
+          <ListDivider />
+          <MenuItem onClick={handleMenuRunAgain} disabled={message.role !== 'user' || props.disableSend}>
+            <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
+            Run again
+          </MenuItem>
+          <MenuItem onClick={props.onDelete} disabled={message.role === 'system'}>
+            <ListItemDecorator><ClearIcon /></ListItemDecorator>
+            Delete
+          </MenuItem>
+        </Menu>
       )}
 
     </ListItem>
