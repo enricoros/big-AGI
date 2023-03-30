@@ -37,7 +37,11 @@ function PurposeSelect() {
         <Grid container spacing={1}>
           {Object.keys(SystemPurposes).map(spId => (
             <Grid key={spId} xs={4} lg={3} xl={2}>
-              <AspectRatio variant='plain' ratio={1} sx={{ minWidth: { xs: 56, lg: 78, xl: 130 } }}>
+              <AspectRatio variant='plain' ratio={1} sx={{
+                minWidth: { xs: 56, lg: 78, xl: 130 },
+                // borderRadius: 8,
+                // boxShadow: theme.vars.shadow.md,
+              }}>
                 <Button
                   variant={systemPurposeId === spId ? 'solid' : 'soft'}
                   color={systemPurposeId === spId ? 'primary' : 'neutral'}
