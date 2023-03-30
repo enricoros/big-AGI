@@ -27,6 +27,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
+import { cssRainbowColorKeyframes } from '@/lib/theme';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -409,7 +410,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
         {fromAssistant && (
           <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
-            <Typography level='body2' color='neutral'>{prettyBaseModel(messageModelId)}</Typography>
+            <Typography level='body2' sx={messageTyping
+              ? { animation: `${cssRainbowColorKeyframes} 20s linear infinite`, fontWeight: 600 }
+              : { fontWeight: 500 }
+            }>
+              {prettyBaseModel(messageModelId)}
+            </Typography>
           </Tooltip>
         )}
 
