@@ -19,18 +19,19 @@ Click to fork and run on Vercel, or check out the demo (bring your own API keys)
 - [x] System presets (Developer, Scientist, Executive, and ChatGPT) 🎭
   <p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
 - [x] Real-time streaming of AI responses ⚡
+- [x] Privacy: User-owned API keys & LocalStorage 🛡️
 - [ ] Cool stuff
     - [x] Syntax highlighting for multiple languages 🌈
     - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
     - [x] Drag and drop files to add them to the prompt 📁
       <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
 - [x] Dark mode 🌙
-- [x] User-provided API keys
 - [x] 🎉 **NEW** Support for GPT 3.5 Turbo 💨 - @koganei
 - [x] 🎉 **NEW** Custom system purpose 🎭 - @typpo
 - [x] 🎉 **NEW** Voice input 🎙️ - @koganei
+- [x] 🎉 **NEW** Stop generation 🛑 - @fredliubojin
+- [x] 🎉 **NEW** 
 - [ ] Developer-oriented features
-- [ ] Stop generation
 - [ ] Mobile app (PWA)
 - [ ] Add your idea in the issues!
 
