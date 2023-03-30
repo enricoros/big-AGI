@@ -5,7 +5,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -29,7 +29,7 @@ function NicerSelector<TValue extends string>(props: { value: TValue, items: Rec
     <Select
       variant='solid' color='neutral' size='md'
       value={props.value} onChange={props.onChange}
-      indicator={<KeyboardArrowDown />}
+      indicator={<KeyboardArrowDownIcon />}
       slotProps={{
         listbox: {
           variant: 'plain', color: 'neutral',
