@@ -51,6 +51,8 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 
 export type ChatModelId = 'gpt-4' | 'gpt-3.5-turbo';
 
+export const defaultChatModelId: ChatModelId = 'gpt-4';
+
 type ChatModelData = {
   description: string | JSX.Element;
   title: string;

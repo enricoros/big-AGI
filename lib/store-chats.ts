@@ -2,7 +2,7 @@ import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { ChatModelId, SystemPurposeId } from '@/lib/data';
+import { ChatModelId, defaultChatModelId, SystemPurposeId } from '@/lib/data';
 
 
 /// Conversations Store
@@ -72,9 +72,9 @@ export interface DConversation {
 const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
   ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Generic', 'gpt-4')];
+const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Generic', defaultChatModelId)];
 
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', 'gpt-3.5-turbo');
+const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
 
 
 export const useChatStore = create<ConversationsStore>()(
