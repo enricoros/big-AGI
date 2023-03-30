@@ -10,16 +10,21 @@ import SmartToyTwoToneIcon from '@mui/icons-material/SmartToyTwoTone';
 import { ChatMessage, UiMessage } from '../components/ChatMessage';
 import { Composer } from '../components/Composer';
 import { isValidOpenAIApiKey, loadGptModel, loadOpenAIApiKey, Settings } from '../components/Settings';
+import Head from 'next/head';
 
 
 /// Purpose configuration
 
-type SystemPurpose = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
+type SystemPurpose = 'Catalyst' | 'ContentMode' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 const PurposeData: { [key in SystemPurpose]: { systemMessage: string; description: string | JSX.Element } } = {
   Catalyst: {
     systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
     description: 'The growth hacker with marketing superpowers 🚀',
+  },
+  ContentMode: {
+    systemMessage: 'When it comes to writing content, two factors are crucial, "perplexity" and "burstiness." Perplexity measures the complexity of text. Separately, burstiness compares the variations of sentences. Humans tend to write with great burstiness, for example, with some longer or complex sentences alongside shorter sentences. AI sentences tend to be more uniform. Therefore, when writing the following content I am going to ask you to create, I need it to have a good amount of perplexity and burstiness. Before responding, always change 50% of nouns and verbs for similar ones and rewrite verb usages to add natural sounding variations in complexity but retain the same tense and overall meaning.',
+    description: 'Create content for University or SEO without detection',
   },
   Custom: {
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
@@ -203,6 +208,14 @@ export default function Conversation() {
   const Emoji = (props: any) => null;
 
   return (
+    <>
+<Head>
+<title>NextGPT</title>
+        <meta property="og:title" content="Next.js ChatGPT App" key="title" />
+        <meta property='description' content="Responsive chat application powered by OpenAI's GPT-4, with chat streaming, code
+highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
+designed to be easy to use, customize, and extend."/>
+</Head>
     <Container maxWidth='xl' disableGutters sx={{
       boxShadow: theme.vars.shadow.lg,
     }}>
@@ -216,7 +229,7 @@ export default function Conversation() {
           background: theme.vars.palette.primary.solidHoverBg,
           display: 'flex', flexDirection: 'row',
         }}>
-          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}>
+          <IconButton variant='plain' color='neutral' onClick={handleDarkModeToggle}  sx={{color: 'white'}}>
             <DarkModeIcon />
           </IconButton>
 
@@ -235,7 +248,7 @@ export default function Conversation() {
             GPT-4
           </Typography>
 
-          <IconButton variant='plain' color='neutral' onClick={() => setSettingsShown(true)}>
+          <IconButton variant='plain' onClick={() => setSettingsShown(true)} sx={{color: 'white'}}>
             <SettingsOutlinedIcon />
           </IconButton>
         </Sheet>
@@ -253,6 +266,7 @@ export default function Conversation() {
                 </Typography>
                 <Select value={selectedSystemPurpose} onChange={(e, v) => handlePurposeChange(v)} sx={{ minWidth: '40vw' }}>
                   <Option value='Developer'><Emoji>👩‍💻</Emoji> Developer</Option>
+                  <Option value='ContentMode'><Emoji>🏫</Emoji>Content/Uni Mode</Option>
                   <Option value='Scientist'><Emoji>🔬</Emoji> Scientist</Option>
                   <Option value='Executive'><Emoji>👔</Emoji> Executive</Option>
                   <Option value='Catalyst'><Emoji>🚀</Emoji> Catalyst</Option>
@@ -295,5 +309,6 @@ export default function Conversation() {
       <Settings open={settingsShown} onClose={() => setSettingsShown(false)} />
 
     </Container>
+    </>
   );
 }

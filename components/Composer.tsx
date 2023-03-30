@@ -175,44 +175,80 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
     <Grid container spacing={{ xs: 1, md: 2 }}>
 
       {/* Compose & VButtons */}
-      <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
+      <Grid xs={12} md={12}><Stack direction='row' >
 
         {/* Vertical Buttons Bar */}
-        <Box>
+        <Box sx={{ display: 'flex' }}>
 
           <IconButton variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} sx={{ ...hideOnDesktop }}>
             <PostAddIcon />
           </IconButton>
           <Tooltip title={<>Attach {isDeveloper ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
-            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} startDecorator={<PostAddIcon />}
+            <Button variant='plain' color='neutral' onClick={handleOpenAttachmentPicker} 
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
-              Attach
+         <PostAddIcon />
             </Button>
           </Tooltip>
 
-          <Box sx={{ mt: { xs: 1, md: 2 } }} />
+          
 
           <IconButton variant='plain' color='neutral' onClick={pasteFromClipboard} sx={{ ...hideOnDesktop }}>
             <ContentPasteGoIcon />
           </IconButton>
-          <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
-            {isDeveloper ? 'Paste code' : 'Paste'}
+          <Tooltip title={<>Paste text</>} variant='solid' placement='top-start'>
+          <Button variant='plain' color='neutral' onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
+          <ContentPasteGoIcon />
           </Button>
+          </Tooltip>
+         
+    
+      
+            <Tooltip title={<>History</>} variant='solid' placement='top-start'>
+            <Button variant='plain' color='neutral' onClick={showHistory}>
+              <KeyboardArrowUpIcon/>
+            </Button>
+          </Tooltip>
+          <Grid xs={12} md={3}>
+        <Stack >
+
+
+   
+          
+        </Stack>
+      </Grid>
+
+      {/* History menu with all the line items (only if shown) */}
+      {!!historyAnchor && (
+        <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory} sx={{ minWidth: 320 }}>
+          <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
+          <ListDivider />
+          {loadMessagesFromHistory().map((text, index) => (
+            <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(text)}>
+              {text.length > 60 ? text.slice(0, 58) + '...' : text}
+            </MenuItem>
+          ))}
+          {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
+        </Menu>
+      )}
 
           <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleAttachmentChanged} />
 
         </Box>
 
         {/* Message edit box, with Drop overlay */}
-        <Box sx={{ flexGrow: 1, position: 'relative' }}>
+        <Box sx={{ flexGrow: 1, position: 'relative',}}>
 
           <Textarea variant='soft' autoFocus placeholder={textPlaceholder}
-                    minRows={5} maxRows={12}
+          
+                    minRows={1} maxRows={12}
                     onKeyDown={handleKeyPress}
                     onDragEnter={handleMessageDragEnter}
                     value={composeText} onChange={(e) => setComposeText(e.target.value)}
-                    sx={{ fontSize: '16px', lineHeight: 1.75 }} />
-
+                    sx={{ fontSize: '16px', lineHeight: 1.75, paddingRight: '25px' }} />
+    
+    <Button variant='plain' color='primary' disabled={disableSend} onClick={handleSendClicked} sx={{position: 'absolute', bottom: 0, right: 0, height: '100%'}}>
+    <TelegramIcon />
+            </Button>
           <Card color='primary' invertedColors variant='soft'
                 sx={{
                   display: isDragging ? 'flex' : 'none',
@@ -235,40 +271,7 @@ export function Composer({ isDeveloper, disableSend, sendMessage }: { isDevelope
       </Stack></Grid>
 
       {/* Other Buttons */}
-      <Grid xs={12} md={3}>
-        <Stack spacing={2}>
-
-          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-            <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
-              <KeyboardArrowUpIcon />
-            </IconButton>
-            <Button fullWidth variant='solid' color='primary' disabled={disableSend} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
-              Chat
-            </Button>
-          </Box>
-
-          <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-            <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
-              History
-            </Button>
-          </Stack>
-
-        </Stack>
-      </Grid>
-
-      {/* History menu with all the line items (only if shown) */}
-      {!!historyAnchor && (
-        <Menu size='md' anchorEl={historyAnchor} open onClose={hideHistory} sx={{ minWidth: 320 }}>
-          <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
-          <ListDivider />
-          {loadMessagesFromHistory().map((text, index) => (
-            <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(text)}>
-              {text.length > 60 ? text.slice(0, 58) + '...' : text}
-            </MenuItem>
-          ))}
-          {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
-        </Menu>
-      )}
+      
 
     </Grid>
   );
