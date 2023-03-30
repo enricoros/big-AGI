@@ -333,7 +333,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     case 'system':
       // background = theme.vars.palette.background.body;
       // textBackground = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.neutral.plainHoverBg;
-      background = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.neutral.plainHoverBg;
+      background = wasEdited ? theme.vars.palette.warning.plainHoverBg : theme.vars.palette.background.popup;
       break;
     case 'user':
       background = theme.vars.palette.primary.plainHoverBg;
@@ -387,7 +387,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       gap: 1, px: { xs: 1, md: 2 }, py: 2,
       background,
       borderBottom: '1px solid',
-      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.1)`,
+      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
       position: 'relative',
       '&:hover > button': { opacity: 1 },
     }}>
@@ -419,7 +419,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
         <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
 
-          {fromSystem && wasEdited && <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>edited - purpose will be fixed</Typography>}
+          {fromSystem && wasEdited && <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>}
 
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
