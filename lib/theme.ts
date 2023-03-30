@@ -30,6 +30,8 @@ export const theme = extendTheme({
         primary: {
           // 50: '#bfc6d9', // softBg
           // 100: '#a5b1cf', // plainHoverBg
+          // 100: '#f0f4ff', // plainHoverBg
+          100: '#f0f8ff', // aliceblue
           // 200: '#6984c9',
           // 300: '#4970d1',
           // 400: '#2157de',
