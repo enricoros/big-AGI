@@ -10,6 +10,7 @@ import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
@@ -163,7 +164,7 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-  const { wideMode, setWideMode, freeScroll, setFreeScroll } = useSettingsStore();
+  const { freeScroll, setFreeScroll, setShowSystemMessages, setWideMode, showSystemMessages, wideMode } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
   const activeConversationId = useChatStore((state) => state.activeConversationId);
 
@@ -183,6 +184,8 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
   const handleWideModeToggle = () => setWideMode(!wideMode);
 
   const handleScrollModeToggle = () => setFreeScroll(!freeScroll);
+
+  const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
   const handleActionShowSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -251,6 +254,12 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
         <ListItemDecorator><WidthWideIcon /></ListItemDecorator>
         Wide mode
         <Switch checked={wideMode} onChange={handleWideModeToggle} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+      <MenuItem>
+        <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
+        System text
+        <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem>

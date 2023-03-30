@@ -19,6 +19,9 @@ interface SettingsStore {
 
   modelMaxTokens: number;
   setModelMaxTokens: (modelMaxTokens: number) => void;
+
+  showSystemMessages: boolean;
+  setShowSystemMessages: (showSystemMessages: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -41,6 +44,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       modelMaxTokens: 2048,
       setModelMaxTokens: (modelMaxTokens: number) => set({ modelMaxTokens }),
+
+      showSystemMessages: false,
+      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
     }),
     {
       name: 'app-settings',

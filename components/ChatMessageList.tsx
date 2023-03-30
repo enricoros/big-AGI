@@ -82,6 +82,7 @@ export function ChatMessageList(props: {
   const { id: activeConversationId, messages } = useActiveConversation();
   const { editMessage, removeMessage } = useChatStore(state => ({ editMessage: state.editMessage, removeMessage: state.removeMessage }));
   const freeScroll = useSettingsStore(state => state.freeScroll);
+  const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
 
@@ -116,11 +117,13 @@ export function ChatMessageList(props: {
     <Box sx={props.sx || {}}>
       <List sx={{ p: 0 }}>
 
-        {messages.map(message =>
-          <ChatMessage key={'msg-' + message.id} message={message} disableSend={props.disableSend}
-                   onDelete={() => handleMessageDelete(message.id)}
-                   onEdit={newText => handleMessageEdit(message.id, newText)}
-                   onRunAgain={() => handleMessageRunAgain(message.id)} />)}
+        {messages.filter(m => m.role !== 'system' || showSystemMessages).map(message =>
+          <ChatMessage
+            key={'msg-' + message.id} message={message} disableSend={props.disableSend}
+            onDelete={() => handleMessageDelete(message.id)}
+            onEdit={newText => handleMessageEdit(message.id, newText)}
+            onRunAgain={() => handleMessageRunAgain(message.id)} />,
+        )}
 
         <div ref={messagesEndRef}></div>
       </List>
