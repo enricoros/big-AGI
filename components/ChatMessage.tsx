@@ -305,7 +305,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     setEditedText(e.target.value);
 
   const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
       e.preventDefault();
       setIsEditing(false);
       props.onEdit(editedText);

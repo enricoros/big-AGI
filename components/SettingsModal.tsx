@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Grid, Input, Modal, ModalClose, ModalDialog, Slider, Stack, Typography } from '@mui/joy';
+import { Box, Button, Grid, IconButton, Input, Modal, ModalClose, ModalDialog, Slider, Stack, Typography } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import { Link } from './util/Link';
 import { useSettingsStore } from '@/lib/store';
@@ -44,7 +46,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   return (
     <Modal open={open} onClose={onClose}>
-      <ModalDialog sx={{ minWidth: '35vw' }}>
+      <ModalDialog sx={{ minWidth: '30vw' }}>
         <ModalClose />
         <Typography level='h5'>Settings</Typography>
 
@@ -52,35 +54,37 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
 
           <Typography level='body1' sx={{ mb: 1 }}>
-            Personal <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required)' : '(not required)'}
+            Personal <Link href='https://platform.openai.com/account/api-keys'>OpenAI API Key</Link> {needsApiKey ? '(required' : '(optional'},
+            check <Link href='https://platform.openai.com/account/usage'>usage</Link>)
           </Typography>
 
-          <Input variant='outlined' placeholder={'sk-...'} error={needsApiKey && !isValidKey}
+          <Input variant='outlined' type='password' placeholder={needsApiKey ? 'required' : 'sk-...'} error={needsApiKey && !isValidKey}
                  value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown} />
 
-          {!needsApiKey && (
-            <Typography level='body2' sx={{ mt: 1, mb: 1 }}>
-              This box lets you override the default API key
-            </Typography>
-          )}
+          <Typography level='body2' sx={{ mt: 1, mb: 1, lineHeight: 1.75 }}>
+            {needsApiKey
+              ? <><Typography variant='soft'>sk-...</Typography> Create key, then apply to
+                the <Link href='https://openai.com/waitlist/gpt-4-api'>GPT-4 waitlist</Link></>
+              : <>if provided, your Key will override the server&apos;s</>}
+          </Typography>
 
-
-          <Stack direction='row' sx={{ mt: 3, gap: 2, alignItems: 'center' }}>
+          <Stack direction='row' sx={{ mt: 3, mb: 1, gap: 1, alignItems: 'center' }}>
             <Typography>
               Advanced AI settings
             </Typography>
-            <Button variant='plain' color='neutral' onClick={() => setShowAdvanced(!showAdvanced)}>
-              {showAdvanced ? 'hide' : 'show'}
-            </Button>
+            <IconButton size='sm' variant='plain' color='neutral' onClick={() => setShowAdvanced(!showAdvanced)}>
+              {showAdvanced ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
           </Stack>
-          {showAdvanced && (
+
+          {showAdvanced && <>
             <Grid container spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-              <Grid xs={6} md={5} xl={4}>
+              <Grid xs={6} md={5} xl={3}>
                 <Typography level='body2' sx={{ textAlign: 'right', mr: 1 }}>
                   Temperature
                 </Typography>
               </Grid>
-              <Grid xs={6} md={7} xl={8}>
+              <Grid xs={6} md={7} xl={7}>
                 <Slider
                   aria-label='Model Temperature' color='neutral'
                   min={0} max={1} step={0.1} defaultValue={0.5}
@@ -89,13 +93,12 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                   sx={{ py: 1, mt: 1.1 }}
                 />
               </Grid>
-
-              <Grid xs={6} md={5} xl={4}>
+              <Grid xs={6} md={5} xl={3}>
                 <Typography level='body2' sx={{ textAlign: 'right', mr: 1 }}>
                   Max. tokens
                 </Typography>
               </Grid>
-              <Grid xs={6} md={7} xl={8}>
+              <Grid xs={6} md={7} xl={7}>
                 <Slider
                   aria-label='Model Temperature' color='neutral'
                   min={512} max={8192} step={512} defaultValue={2048}
@@ -105,10 +108,10 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                 />
               </Grid>
             </Grid>
-          )}
-          <Typography level='body2' sx={{ mb: 1 }}>
-            No need to change unless you know what they are
-          </Typography>
+            <Typography level='body2' sx={{ mb: 1 }}>
+              Adjust only if you&apos;re familiar with these settings
+            </Typography>
+          </>}
 
           <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} sx={{ mt: 4 }} onClick={onClose}>
             Close

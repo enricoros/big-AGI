@@ -60,7 +60,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
   const handleStopClicked = () => props.stopGeneration();
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
       if (!props.disableSend)
         handleSendClicked();
       e.preventDefault();
@@ -273,7 +273,7 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
           {/* [desktop-only] row with History button */}
           <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
             {history.length > 0 && (
-              <Button variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
+              <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
                 History
               </Button>
             )}
