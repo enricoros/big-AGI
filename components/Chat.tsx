@@ -17,10 +17,9 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
     id: Math.random().toString(36).substring(2, 15), // use uuid4 !!
     text: text,
     sender: role === 'user' ? 'You' : 'Bot',
-    role: role,
-    modelName: '',
-    modelTokensCount: 0,
     avatar: null,
+    typing: false,
+    role: role,
     created: Date.now(),
     updated: null,
   };
@@ -36,6 +35,13 @@ async function _streamAssistantResponseMessage(
   addMessage: (conversationId: string, message: DMessage) => void,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>) => void,
 ) {
+
+  const assistantMessage: DMessage = createDMessage('assistant', '...');
+  assistantMessage.typing = true;
+  assistantMessage.modelId = chatModelId;
+  assistantMessage.purposeId = history[0].purposeId;
+  addMessage(conversationId, assistantMessage);
+  const messageId = assistantMessage.id;
 
   const payload: ApiChatInput = {
     apiKey: apiKey,
@@ -58,9 +64,6 @@ async function _streamAssistantResponseMessage(
     });
 
     if (response.body) {
-      const _message: DMessage = createDMessage('assistant', '');
-      addMessage(conversationId, _message);
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
 
@@ -82,7 +85,7 @@ async function _streamAssistantResponseMessage(
             incrementalText = incrementalText.substring(endOfJson + 1);
             try {
               const parsed = JSON.parse(json);
-              editMessage(conversationId, _message.id, { modelName: parsed.model });
+              editMessage(conversationId, messageId, { modelId: parsed.model });
               parsedFirstPacket = true;
             } catch (e) {
               // error parsing JSON, ignore
@@ -91,7 +94,7 @@ async function _streamAssistantResponseMessage(
           }
         }
 
-        editMessage(conversationId, _message.id, { text: incrementalText });
+        editMessage(conversationId, messageId, { text: incrementalText });
       }
     }
 
@@ -103,6 +106,9 @@ async function _streamAssistantResponseMessage(
       console.error('Fetch request error:', error);
     }
   }
+
+  // finally, stop the typing animation
+  editMessage(conversationId, messageId, { typing: false });
 }
 
 
@@ -121,9 +127,11 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       const systemMessageIndex = replaceHistory.findIndex(m => m.role === 'system');
       const systemMessage: DMessage = systemMessageIndex >= 0 ? replaceHistory.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
 
-      if (!systemMessage.updated)
+      if (!systemMessage.updated) {
+        systemMessage.purposeId = systemPurposeId;
         systemMessage.text = SystemPurposes[systemPurposeId].systemMessage
           .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+      }
 
       replaceHistory.unshift(systemMessage);
     }
