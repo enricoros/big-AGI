@@ -22,7 +22,7 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
-import { cssRainbowColorKeyframes } from '@/lib/theme';
+import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -306,12 +306,23 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         case 'system':
           return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
         case 'assistant':
+          // display a gif avatar when the assistant is typing (fools mode)
+          if (foolsMode && messageTyping)
+            return <Avatar
+              alt={messageSender} variant='plain'
+              src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 8,
+              }}
+            />;
           return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
         case 'user':
           return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
       }
       return <Avatar alt={messageSender} />;
-    }, [messageAvatar, messageRole, messageSender],
+    }, [messageAvatar, messageRole, messageSender, messageTyping],
   );
 
   // text box css
@@ -381,7 +392,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
-              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={{ ...chatFontCss, fontVariantLigatures: 'none'}} />
+              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={{ ...chatFontCss, fontVariantLigatures: 'none' }} />
               : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
           )}
 
