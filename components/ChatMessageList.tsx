@@ -38,7 +38,7 @@ function PurposeSelect() {
           {Object.keys(SystemPurposes).map(spId => (
             <Grid key={spId} xs={4} lg={3} xl={2}>
               <AspectRatio variant='plain' ratio={1} sx={{
-                minWidth: { xs: 56, lg: 78, xl: 130 },
+                minWidth: { xs: 56, lg: 78, xl: 130 }, maxWidth: 130,
                 // borderRadius: 8,
                 // boxShadow: theme.vars.shadow.md,
               }}>
@@ -96,9 +96,12 @@ export function ChatMessageList(props: {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [freeScroll, messages]);
 
+  // hide system messages if the user chooses so
+  const filteredMessages = messages
+    .filter(m => m.role !== 'system' || showSystemMessages);
 
   // when there are no messages, show the purpose selector
-  if (!messages.length) return (
+  if (!filteredMessages.length) return (
     <Box sx={props.sx || {}}>
       <PurposeSelect />
     </Box>
@@ -121,7 +124,7 @@ export function ChatMessageList(props: {
     <Box sx={props.sx || {}}>
       <List sx={{ p: 0 }}>
 
-        {messages.filter(m => m.role !== 'system' || showSystemMessages).map(message =>
+        {filteredMessages.map(message =>
           <ChatMessage
             key={'msg-' + message.id} message={message} disableSend={props.disableSend}
             onDelete={() => handleMessageDelete(message.id)}
