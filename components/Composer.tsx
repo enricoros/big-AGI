@@ -176,6 +176,8 @@ export function Composer(props: { disableSend: boolean; sendMessage: (text: stri
         {/* Vertical Buttons Bar */}
         <Stack>
 
+          {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
+
           <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
             <PostAddIcon />
           </IconButton>

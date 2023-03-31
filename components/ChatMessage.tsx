@@ -351,7 +351,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
              onClick={event => setMenuAnchor(event.currentTarget)}>
 
         {isHovering ? (
-          <IconButton variant='soft' color='primary'>
+          <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
             <MoreVertIcon />
           </IconButton>
         ) : (
