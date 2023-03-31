@@ -21,7 +21,7 @@ export default function Home() {
   // show the Settings Dialog at startup if the API key is required but not set
   React.useEffect(() => {
     if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
-      setSettingsShown(true);
+      setSettingsShown(false);
   }, [apiKey]);
 
 
@@ -32,11 +32,11 @@ export default function Home() {
      */
     <NoSSR>
 
-      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
+      <Container maxWidth={wideMode ? true : 'xl'} disableGutters sx={{
         boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
       }}>
 
-        <Chat onShowSettings={() => setSettingsShown(true)} />
+        <Chat onShowSettings={() => setSettingsShown(false)} />
 
         <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
 

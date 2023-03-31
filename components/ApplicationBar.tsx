@@ -118,13 +118,6 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
       </Typography>
     </ListItem>
 
-    <MenuItem>
-      <ListItemDecorator />
-      <Typography sx={{ opacity: 0.5 }}>
-        Feature <Link href='https://github.com/enricoros/nextjs-chatgpt-app/issues/17' target='_blank'>#17</Link>
-      </Typography>
-    </MenuItem>
-
   </Menu>;
 }
 
@@ -229,20 +222,9 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
       </MenuItem>
 
       <MenuItem>
-        <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
-        System text
-        <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem>
         <ListItemDecorator><SwapVertIcon /></ListItemDecorator>
         Free scroll
         <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem onClick={handleActionShowSettings}>
-        <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
-        Settings
       </MenuItem>
 
       <ListDivider />

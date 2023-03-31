@@ -185,12 +185,6 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
             <PostAddIcon />
           </IconButton>
-          <Tooltip title={<>Attach {props.isDeveloperMode ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
-            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<PostAddIcon />}
-                    sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
-              Attach
-            </Button>
-          </Tooltip>
 
           <Box sx={{ mt: { xs: 1, md: 2 } }} />
 
@@ -198,7 +192,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
             <ContentPasteGoIcon />
           </IconButton>
           <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
-            {props.isDeveloperMode ? 'Paste code' : 'Paste'}
+            {props.isDeveloperMode ? 'Coller' : 'Coller'}
           </Button>
 
           <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
