@@ -1,4 +1,4 @@
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
+export type SystemPurposeId = 'Catalyst' | 'ContentMode' |'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 type SystemPurposeData = {
   title: string;
@@ -13,6 +13,12 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     description: 'Helps you code',
     systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant',
     symbol: '👩‍💻',
+  },
+  ContentMode: {
+    title: 'Content Mode',
+    description: 'Create content for University or SEO without detection',
+    systemMessage: 'When it comes to writing content, two factors are crucial, "perplexity" and "burstiness." Perplexity measures the complexity of text. Separately, burstiness compares the variations of sentences. Humans tend to write with great burstiness, for example, with some longer or complex sentences alongside shorter sentences. AI sentences tend to be more uniform. Therefore, when writing the following content I am going to ask you to create, I need it to have a good amount of perplexity and burstiness. Before responding, always change 50% of nouns and verbs for similar ones and rewrite verb usages to add natural sounding variations in complexity but retain the same tense and overall meaning.',
+  symbol: '🗎'
   },
   Scientist: {
     title: 'Scientist',
