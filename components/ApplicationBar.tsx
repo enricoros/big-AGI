@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Modal, ModalDialog, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
+import { IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -12,7 +12,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import WidthFullIcon from '@mui/icons-material/WidthFull';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -25,7 +24,7 @@ import { useSettingsStore } from '@/lib/store';
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-function NicerSelector<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
+function BeautifulSelect<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
   const theme = useTheme();
   return (
     <Select
@@ -59,41 +58,15 @@ function NicerSelector<TValue extends string>(props: { value: TValue, items: Rec
 }
 
 /**
- * A confirmation dialog - pass the question and the positive answer, and get called when it's time to close the dialog, or when the positive action is taken
- */
-function ConfirmationDialog(props: { open: boolean, onClose: () => void, onPositive: () => void, confirmationText: string, positiveActionText: string }) {
-  return (
-    <Modal open={props.open} onClose={props.onClose}>
-      <ModalDialog variant='outlined' color='neutral'>
-        <Typography component='h2' startDecorator={<WarningRoundedIcon />}>
-          Confirmation
-        </Typography>
-        <Divider sx={{ my: 2 }} />
-        <Typography>
-          {props.confirmationText}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
-          <Button variant='plain' color='neutral' onClick={props.onClose}>
-            Cancel
-          </Button>
-          <Button variant='solid' color='danger' onClick={props.onPositive}>
-            {props.positiveActionText}
-          </Button>
-        </Box>
-      </ModalDialog>
-    </Modal>
-  );
-}
-
-/**
  * FIXME - TEMPORARY - placeholder for a proper Pages Drawer
  */
 function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => void, onClearConversation: (e: React.MouseEvent, conversationId: string) => void }) {
-  const conversationNames: { id: string; name: string, systemPurposeId: SystemPurposeId }[] = useConversationNames();
-  const setActiveConversation = useChatStore((state) => state.setActiveConversationId);
 
-  const handleConversationClicked = (conversationId: string) =>
-    setActiveConversation(conversationId);
+  // external state
+  const setActiveConversation = useChatStore(state => state.setActiveConversationId);
+  const conversationNames: { id: string; name: string, systemPurposeId: SystemPurposeId }[] = useConversationNames();
+
+  const handleConversationClicked = (conversationId: string) => setActiveConversation(conversationId);
 
   return <Menu
     variant='plain' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 280 }}
@@ -111,17 +84,21 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
         key={'c-id-' + conversation.id}
         onClick={() => handleConversationClicked(conversation.id)}
       >
+
         <ListItemDecorator>
           {SystemPurposes[conversation.systemPurposeId]?.symbol || ''}
         </ListItemDecorator>
+
         <Typography sx={{ mr: 2 }}>
           {conversation.name}
         </Typography>
+
         <IconButton
           variant='soft' color='neutral' sx={{ ml: 'auto' }}
           onClick={e => props.onClearConversation(e, conversation.id)}>
           <DeleteOutlineIcon />
         </IconButton>
+
       </MenuItem>
     ))}
 
@@ -157,17 +134,15 @@ const foolsMode = new Date().getMonth() === 3 && new Date().getDate() === 1;
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar(props: { onClearConversation: (id: string) => void, onShowSettings: () => void, sx?: SxProps }) {
+export function ApplicationBar(props: { onClearConversation: (id: string | null) => void, onShowSettings: () => void, sx?: SxProps }) {
   // state
   const [pagesMenuAnchor, setPagesMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [actionsMenuAnchor, setActionsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
   const { freeScroll, setFreeScroll, setShowSystemMessages, setWideMode, showSystemMessages, wideMode } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
-  const activeConversationId = useChatStore((state) => state.activeConversationId);
 
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
@@ -196,17 +171,12 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
 
   const handleActionClearConversation = (e: React.MouseEvent, id: string | null) => {
     e.stopPropagation();
-    if (id)
-      setClearConfirmationId(id);
+    props.onClearConversation(id || null);
   };
 
-  const handleConfirmedClearConversation = () => {
-    if (clearConfirmationId)
-      props.onClearConversation(clearConfirmationId);
-    setClearConfirmationId(null);
-  };
 
   return <>
+
     {/* Top Bar with 2 icons and Model/Purpose selectors */}
     <Sheet
       variant='solid' invertedColors
@@ -222,9 +192,9 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
 
       <Stack direction='row' sx={{ my: 'auto' }}>
 
-        <NicerSelector items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
+        <BeautifulSelect items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
 
-        <NicerSelector items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+        <BeautifulSelect items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
 
       </Stack>
 
@@ -233,13 +203,16 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
       </IconButton>
     </Sheet>
 
-    {/* First Menu */}
+
+    {/* Left menu */}
     {<PagesMenu
       pagesMenuAnchor={pagesMenuAnchor}
-      onClose={closePagesMenu} onClearConversation={handleActionClearConversation}
+      onClose={closePagesMenu}
+      onClearConversation={handleActionClearConversation}
     />}
 
-    {/* Second Menu */}
+
+    {/* Right menu */}
     <Menu
       variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
       open={!!actionsMenuAnchor} anchorEl={actionsMenuAnchor} onClose={closeActionsMenu}
@@ -276,16 +249,11 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
 
       <ListDivider />
 
-      <MenuItem onClick={e => handleActionClearConversation(e, activeConversationId)}>
+      <MenuItem onClick={e => handleActionClearConversation(e, null)}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
         Clear conversation
       </MenuItem>
     </Menu>
-
-    {/* Confirmation Dialog */}
-    <ConfirmationDialog
-      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
-      confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'} />
 
   </>;
 }

@@ -7,7 +7,8 @@ import { ApiChatInput } from '../pages/api/chat';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
-import { DMessage, useActiveConfiguration, useActiveConversation, useChatStore } from '@/lib/store-chats';
+import { ConfirmationDialog } from '@/components/util/ConfirmationDialog';
+import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
 
@@ -34,7 +35,7 @@ async function _streamAssistantResponseMessage(
   apiKey: string | undefined, apiHost: string | undefined,
   chatModelId: string, modelTemperature: number, modelMaxTokens: number, abortSignal: AbortSignal,
   addMessage: (conversationId: string, message: DMessage) => void,
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>) => void,
+  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
 ) {
 
   const assistantMessage: DMessage = createDMessage('assistant', '...');
@@ -87,7 +88,7 @@ async function _streamAssistantResponseMessage(
             incrementalText = incrementalText.substring(endOfJson + 1);
             try {
               const parsed = JSON.parse(json);
-              editMessage(conversationId, messageId, { modelId: parsed.model });
+              editMessage(conversationId, messageId, { modelId: parsed.model }, false);
               parsedFirstPacket = true;
             } catch (e) {
               // error parsing JSON, ignore
@@ -96,7 +97,7 @@ async function _streamAssistantResponseMessage(
           }
         }
 
-        editMessage(conversationId, messageId, { text: incrementalText });
+        editMessage(conversationId, messageId, { text: incrementalText }, false);
       }
     }
 
@@ -110,24 +111,25 @@ async function _streamAssistantResponseMessage(
   }
 
   // finally, stop the typing animation
-  editMessage(conversationId, messageId, { typing: false });
+  editMessage(conversationId, messageId, { typing: false }, false);
 }
 
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
-  const theme = useTheme();
-
-  const { chatModelId, systemPurposeId } = useActiveConfiguration();
-  const { id: activeConversationId, messages } = useActiveConversation();
-  const { addMessage, editMessage, replaceMessages } = useChatStore(state => ({ addMessage: state.addMessage, editMessage: state.editMessage, replaceMessages: state.replaceMessages }));
+  // state
+  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
+  // external state
+  const theme = useTheme();
+  const setMessages = useChatStore(state => state.setMessages);
+  const { conversationId: activeConversationId, chatModelId, systemPurposeId } = useActiveConfiguration();
 
-  const runAssistant = async (conversationId: string, replaceHistory: DMessage[]) => {
+  const runAssistant = async (conversationId: string, history: DMessage[]) => {
     // update the purpose of the system message (if not manually edited), and create if needed
     {
-      const systemMessageIndex = replaceHistory.findIndex(m => m.role === 'system');
-      const systemMessage: DMessage = systemMessageIndex >= 0 ? replaceHistory.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
+      const systemMessageIndex = history.findIndex(m => m.role === 'system');
+      const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
 
       if (!systemMessage.updated) {
         systemMessage.purposeId = systemPurposeId;
@@ -135,30 +137,48 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
       }
 
-      replaceHistory.unshift(systemMessage);
+      history.unshift(systemMessage);
     }
 
     // use the new history
-    replaceMessages(conversationId, replaceHistory);
+    setMessages(conversationId, history);
 
     // when an abort controller is set, the UI switches to the "stop" mode
     const controller = new AbortController();
     setAbortController(controller);
 
     const { apiKey, modelTemperature, modelMaxTokens, modelApiHost } = useSettingsStore.getState();
-    await _streamAssistantResponseMessage(conversationId, replaceHistory, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxTokens, controller.signal, addMessage, editMessage);
+    const { appendMessage, editMessage } = useChatStore.getState();
+    await _streamAssistantResponseMessage(conversationId, history, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxTokens, controller.signal, appendMessage, editMessage);
 
     // clear to send, again
     setAbortController(null);
   };
 
-  const sendUserMessage = async (userText: string) => await runAssistant(activeConversationId, [...messages, createDMessage('user', userText)]);
-
   const handleStopGeneration = () => abortController?.abort();
 
-  const handleConversationClear = (conversationId: string) => replaceMessages(conversationId, []);
+  const handleSendMessage = async (userText: string, conversationId: string | null) => {
+    conversationId = conversationId || activeConversationId;
+    if (conversationId) {
+      const { conversations } = useChatStore.getState();
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (conversation)
+        await runAssistant(conversationId, [...conversation.messages, createDMessage('user', userText)]);
+    }
+  };
+
+  const handleClearConversation = (conversationId: string | null) =>
+    setClearConfirmationId(conversationId || activeConversationId || null);
+
+  const handleConfirmedClearConversation = () => {
+    if (clearConfirmationId)
+      setMessages(clearConfirmationId, []);
+    setClearConfirmationId(null);
+  };
+
 
   return (
+
     <Stack
       sx={{
         minHeight: '100vh',
@@ -167,7 +187,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       }}>
 
       <ApplicationBar
-        onClearConversation={handleConversationClear} onShowSettings={props.onShowSettings}
+        onClearConversation={handleClearConversation} onShowSettings={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
@@ -189,11 +209,18 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           p: { xs: 1, md: 2 },
         }}>
         <Composer
-          disableSend={!!abortController}
-          sendMessage={sendUserMessage} stopGeneration={handleStopGeneration} isDeveloperMode={systemPurposeId === 'Developer'}
+          disableSend={!!abortController} isDeveloperMode={systemPurposeId === 'Developer'}
+          sendMessage={handleSendMessage} stopGeneration={handleStopGeneration}
         />
       </Box>
 
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+        confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+      />
+
     </Stack>
+
   );
 }
