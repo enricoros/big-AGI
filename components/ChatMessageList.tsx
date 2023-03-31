@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { AspectRatio, Box, Button, Grid, List, Stack, Typography, useTheme } from '@mui/joy';
+import { AspectRatio, Box, Button, Grid, List, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
@@ -16,15 +16,13 @@ function PurposeSelect() {
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
     if (purpose) {
-
-      if (purpose === 'Custom') {
-        const systemMessage = prompt('Enter your custom AI purpose', SystemPurposes['Custom'].systemMessage);
-        SystemPurposes['Custom'].systemMessage = systemMessage || '';
-      }
-
       setSystemPurposeId(purpose);
     }
   };
+
+  function handleCustomSystemMessageChange(v: React.ChangeEvent<HTMLTextAreaElement>): void {
+    SystemPurposes['Custom'].systemMessage = v.target.value;
+  }
 
   return (
     <Stack direction='column' sx={{ justifyContent: 'center', alignItems: 'center', mx: 2, minHeight: '60vh' }}>
@@ -68,6 +66,21 @@ function PurposeSelect() {
         <Typography level='body2' sx={{ mt: 2 }}>
           {SystemPurposes[systemPurposeId].description}
         </Typography>
+
+        {systemPurposeId === 'Custom' && (
+          <>
+            <Textarea variant='soft' autoFocus placeholder={"Enter your custom system message here..."}
+            minRows={5} maxRows={12}
+            // onKeyDown={handleKeyPress}
+            // onDragEnter={handleMessageDragEnter}
+            defaultValue={SystemPurposes['Custom'].systemMessage} onChange={(e) => handleCustomSystemMessageChange(e)}
+            sx={{
+              fontSize: '16px',
+              lineHeight: 1.75,
+            }} />
+          </>
+        )}
+
 
       </Box>
 
