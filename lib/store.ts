@@ -20,6 +20,9 @@ interface SettingsStore {
   modelMaxTokens: number;
   setModelMaxTokens: (modelMaxTokens: number) => void;
 
+  modelApiHost: string;
+  setModelApiHost: (modelApiHost: string) => void;
+
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 }
@@ -44,6 +47,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       modelMaxTokens: 2048,
       setModelMaxTokens: (modelMaxTokens: number) => set({ modelMaxTokens }),
+
+      modelApiHost: '',
+      setModelApiHost: (modelApiHost: string) => set({ modelApiHost }),
 
       showSystemMessages: false,
       setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),

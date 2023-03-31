@@ -31,7 +31,8 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
  */
 async function _streamAssistantResponseMessage(
   conversationId: string, history: DMessage[],
-  apiKey: string, chatModelId: string, modelTemperature: number, modelMaxTokens: number, abortSignal: AbortSignal,
+  apiKey: string | undefined, apiHost: string | undefined,
+  chatModelId: string, modelTemperature: number, modelMaxTokens: number, abortSignal: AbortSignal,
   addMessage: (conversationId: string, message: DMessage) => void,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>) => void,
 ) {
@@ -44,7 +45,8 @@ async function _streamAssistantResponseMessage(
   const messageId = assistantMessage.id;
 
   const payload: ApiChatInput = {
-    apiKey: apiKey,
+    ...(apiKey ? { apiKey } : {}),
+    ...(apiHost ? { apiHost } : {}),
     model: chatModelId,
     messages: history.map(({ role, text }) => ({
       role: role,
@@ -143,8 +145,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     const controller = new AbortController();
     setAbortController(controller);
 
-    const { apiKey, modelTemperature, modelMaxTokens } = useSettingsStore.getState();
-    await _streamAssistantResponseMessage(conversationId, replaceHistory, apiKey, chatModelId, modelTemperature, modelMaxTokens, controller.signal, addMessage, editMessage);
+    const { apiKey, modelTemperature, modelMaxTokens, modelApiHost } = useSettingsStore.getState();
+    await _streamAssistantResponseMessage(conversationId, replaceHistory, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxTokens, controller.signal, addMessage, editMessage);
 
     // clear to send, again
     setAbortController(null);
