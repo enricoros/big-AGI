@@ -1,7 +1,6 @@
-import type { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
-
-import { UiMessage } from '../../components/ChatMessage';
 
 
 if (!process.env.OPENAI_API_KEY)
@@ -11,47 +10,51 @@ if (!process.env.OPENAI_API_KEY)
 
 // definition for OpenAI wire types
 
-interface ChatMessage {
-  role: 'assistant' | 'system' | 'user';
-  content: string;
+namespace OpenAIAPI.Chat {
+
+  export interface CompletionMessage {
+    role: 'assistant' | 'system' | 'user';
+    content: string;
+  }
+
+  export interface CompletionsRequest {
+    model: string;
+    messages: CompletionMessage[];
+    temperature?: number;
+    top_p?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    max_tokens?: number;
+    stream: boolean;
+    n: number;
+  }
+
+  export interface CompletionsResponseChunked {
+    id: string; // unique id of this chunk
+    object: 'chat.completion.chunk';
+    created: number; // unix timestamp in seconds
+    model: string; // can differ from the ask, e.g. 'gpt-4-0314'
+    choices: {
+      delta: Partial<CompletionMessage>;
+      index: number; // always 0s for n=1
+      finish_reason: 'stop' | 'length' | null;
+    }[];
+  }
+
 }
 
-interface ChatCompletionsRequest {
-  model: string;
-  messages: ChatMessage[];
-  temperature?: number;
-  top_p?: number;
-  frequency_penalty?: number;
-  presence_penalty?: number;
-  max_tokens?: number;
-  stream: boolean;
-  n: number;
-}
-
-interface ChatCompletionsResponseChunked {
-  id: string; // unique id of this chunk
-  object: 'chat.completion.chunk';
-  created: number; // unix timestamp in seconds
-  model: string; // can differ from the ask, e.g. 'gpt-4-0314'
-  choices: {
-    delta: Partial<ChatMessage>;
-    index: number; // always 0s for n=1
-    finish_reason: 'stop' | 'length' | null;
-  }[];
-}
-
-async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
+async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const streamingPayload: ChatCompletionsRequest = {
+  const streamingPayload: OpenAIAPI.Chat.CompletionsRequest = {
     ...payload,
     stream: true,
     n: 1,
   };
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(`https://${apiHost}/v1/chat/completions`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -95,7 +98,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           }
 
           try {
-            const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
+            const json: OpenAIAPI.Chat.CompletionsResponseChunked = JSON.parse(event.data);
 
             // ignore any 'role' delta update
             if (json.choices[0].delta?.role)
@@ -104,7 +107,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
             // stringify and send the first packet as a JSON object
             if (!sentFirstPacket) {
               sentFirstPacket = true;
-              const firstPacket: ChatApiOutputStart = {
+              const firstPacket: ApiChatFirstOutput = {
                 model: json.model,
               };
               controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
@@ -127,7 +130,9 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
       },
     });
+
   } catch (error: any) {
+
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted');
       return new ReadableStream({
@@ -138,8 +143,14 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
       });
     } else {
       console.error('Fetch request failed:', error);
-      return new ReadableStream(); // Return an empty ReadableStream
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`{"model":"network error"}Network issue: ${error?.cause?.message}`));
+          controller.close();
+        },
+      });
     }
+
   }
 
 }
@@ -147,10 +158,11 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
 // Next.js API route
 
-export interface ChatApiInput {
+export interface ApiChatInput {
   apiKey?: string;
+  apiHost?: string;
   model: string;
-  messages: UiMessage[];
+  messages: OpenAIAPI.Chat.CompletionMessage[];
   temperature?: number;
   max_tokens?: number;
 }
@@ -160,33 +172,29 @@ export interface ChatApiInput {
  * string'ified JSON object with the few initial variables. We hope in the future to adopt a better
  * solution (e.g. websockets, but that will exclude deployment in Edge Functions).
  */
-export interface ChatApiOutputStart {
+export interface ApiChatFirstOutput {
   model: string;
 }
 
-export default async function handler(req: NextRequest, res: NextResponse) {
+export default async function handler(req: NextRequest): Promise<Response> {
 
-  // read inputs
-  const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
-  const chatGptInputMessages: ChatMessage[] = messages.map(({ role, text }) => ({
-    role: role,
-    content: text,
-  }));
-
-  // select key
+  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
+  const apiHost = (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').replaceAll('https://', '');
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
 
   try {
-    const stream: ReadableStream = await OpenAIStream(apiKey, {
+
+    const stream: ReadableStream = await OpenAIStream(apiKey, apiHost, {
       model,
-      messages: chatGptInputMessages,
+      messages,
       temperature,
       max_tokens,
     }, req.signal);
 
-    return new Response(stream);
+    return new NextResponse(stream);
+
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted in handler');
