@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { AppType } from 'next/app';
-import Document, { DocumentContext, DocumentProps, Head, Html, Main, NextScript } from 'next/document';
-
+import { default as Document, DocumentContext, DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
-import { bodyFontClassName, createEmotionCache, MyAppProps } from './_app';
+import { MyAppProps } from './_app';
+import { bodyFontClassName, createEmotionCache } from '@/lib/theme';
 
 
 interface MyDocumentProps extends DocumentProps {

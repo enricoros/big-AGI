@@ -1,38 +1,45 @@
 # Next.js ChatGPT 🤖💬
 
-🚨 **Attention! We're adding cool new features to the app!** 🚨
-(bare-bones was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
-
 Welcome to `nextjs-chatgpt-app`! 🎉🚀 Responsive chat application powered by OpenAI's GPT-4, with chat streaming, code
 highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
 designed to be easy to use, customize, and extend. We encourage you to contribute and help improve this project! 😊
 
 [![Official Website](https://img.shields.io/badge/Demo-%23096bde?style=for-the-badge&logo=vercel&label=try)](https://nextjs-chatgpt-app-enricoros.vercel.app)
 
-Click to fork and run on Vercel, or check out the demo (bring your own API keys).
+Or click fork & run on Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY&envDescription=API%20Keys%20needed%20in%20your%20deployment)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
-## Features & Roadmap ✨
+## Roadmap 🛣️
 
-- [x] Chat with OpenAI's GPT-4 🧠
-- [x] System presets (Developer, Scientist, Executive, and ChatGPT) 🎭
-  <p><img src="docs/screenshot_feature_system.png" width='200'></p>
+🚨 **Apr'23 - Attention! We look for your input!** 🚨
+
+| Roadmap              | RFC 📝                                                    | Status | Description                                                                                                      |
+|:---------------------|-----------------------------------------------------------|:------:|:-----------------------------------------------------------------------------------------------------------------|
+| Editable Purposes 🎭 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | In-app customization of 'Purposes', as many forks are created for that reason.                                   |
+| Templates sharing 🌐 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | Community repository of Purposes/Systems - Vote with 👍 and usage. Where to store? Bring your own key? Moderate? |
+| Reasoning Systems 🧩 | https://github.com/enricoros/nextjs-chatgpt-app/issues/36 |   🤔   | ReAct, DEPS, Reflexion - shall we?                                                                               |
+| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/octo-org/octo-repo/issues/new?labels=RFC&body=Describe+the+idea) ❗               |
+
+## Features ✨
+
+🚨 **We added cool new features to the app!** (bare-bones was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
+
+- [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
+- [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
+- [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
+  <p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
+- [x] **Syntax highlighting** - for multiple languages 🌈
+- [x] **Context** - Drag and drop files to add them to the prompt 📁
+  <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
+- [x] 🎉 **NEW** Stop generation 🛑 (fredliubojin) - Voice input 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
-- [ ] Cool stuff
-    - [x] Syntax highlighting for multiple languages 🌈
-    - [x] Code execution for TypeScript, JavaScript, and HTML code blocks 🖥️
-    - [x] Drag and drop files to add them to the prompt 📁
-      <p><img src="docs/screenshot_drop_target.png" width='300'></p>
-- [x] Dark mode 🌙
-- [x] User-provided API keys
-- [x] 🎉 **NEW** Support for GPT 3.5 Turbo 💨 - @koganei
-- [x] 🎉 **NEW** Custom system purpose 🎭 - @typpo
-- [x] 🎉 **NEW** Voice input 🎙️ - @koganei
-- [ ] Developer-oriented features
-- [ ] Stop generation
-- [ ] Mobile app (PWA)
-- [ ] Add your idea in the issues!
+- [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
+- [x] Dark mode 🌙 - Wide mode ⛶
+- [ ] [~~Code execution for TypeScript, JavaScript, and
+  HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
+- [ ] Add your own feature 🚀
+- [ ] Send a PR 🙌
 
 ## Why this? 💡
 
@@ -69,10 +76,10 @@ This project is licensed under the MIT License.
 
 ---
 
-[![GitHub issues](https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
 [![GitHub stars](https://img.shields.io/github/stars/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
+[![GitHub issues](https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
 [![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/blob/main/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/enricoros?style=social)](https://twitter.com/enricoros)
 
