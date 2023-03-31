@@ -17,6 +17,7 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { Link } from '@/components/util/Link';
+import { foolsMode } from '@/lib/theme';
 import { useActiveConfiguration, useChatStore, useConversationNames } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store';
 
@@ -126,9 +127,6 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 
   </Menu>;
 }
-
-
-const foolsMode = new Date().getMonth() === 3 && new Date().getDate() === 1;
 
 
 /**
