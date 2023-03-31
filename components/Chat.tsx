@@ -19,7 +19,7 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
     text: text,
     sender: role === 'user' ? 'You' : 'Bot',
     avatar: null,
-    typing: false,
+    typing: true,
     role: role,
     created: Date.now(),
     updated: null,
