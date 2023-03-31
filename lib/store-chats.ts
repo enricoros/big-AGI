@@ -1,30 +1,31 @@
-import * as React from 'react';
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 
 import { ChatModelId, defaultChatModelId, SystemPurposeId } from '@/lib/data';
 
 
 /// Conversations Store
 
-export interface ConversationsStore {
+export interface ChatStore {
   conversations: DConversation[];
   activeConversationId: string | null;
 
   // store setters
   addConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
-  resetConversations: () => void;
   setActiveConversationId: (conversationId: string) => void;
 
-  // conversation.others
+  // within a conversation
+  setMessages: (conversationId: string, messages: DMessage[]) => void;
+  appendMessage: (conversationId: string, message: DMessage) => void;
+  deleteMessage: (conversationId: string, messageId: string) => void;
+  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
   setChatModelId: (conversationId: string, chatModelId: ChatModelId) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
-  // conversation.messages
-  addMessage: (conversationId: string, message: DMessage) => void;
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>) => void;
-  removeMessage: (conversationId: string, messageId: string) => void;
-  replaceMessages: (conversationId: string, messages: DMessage[]) => void;
+
+  // utility function
+  _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
 }
 
 /**
@@ -80,173 +81,156 @@ const defaultConversations: DConversation[] = [createConversation('default', 'Co
 const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
 
 
-export const useChatStore = create<ConversationsStore>()(
-  persist((set) => ({
+export const useChatStore = create<ChatStore>()(devtools(
+  persist(
+    (set, get) => ({
       // default state
       conversations: defaultConversations,
       activeConversationId: defaultConversations[0].id,
 
-      addConversation(conversation: DConversation) {
-        set((state) => (
+
+      addConversation: (conversation: DConversation) =>
+        set(state => (
           {
             conversations: [
               conversation,
               ...state.conversations.slice(0, 19),
             ],
           }
-        ));
-      },
+        )),
 
-      deleteConversation: (conversationId: string) => {
-        set((state) => (
+      deleteConversation: (conversationId: string) =>
+        set(state => (
           {
             conversations: state.conversations.filter((conversation: DConversation): boolean => conversation.id !== conversationId),
           }
-        ));
-      },
-
-      resetConversations: () => set({ conversations: defaultConversations }),
+        )),
 
       setActiveConversationId: (conversationId: string) =>
         set({ activeConversationId: conversationId }),
 
-      addMessage: (conversationId: string, message: DMessage) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => ({
-            ...conversation,
-            ...(conversation.id !== conversationId ? {} : {
-              messages: [...conversation.messages, message],
-              cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
-              updated: Date.now(),
-            }),
-          })),
-        }));
-      },
 
-      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => {
-            if (conversation.id === conversationId) {
+      // within a conversation
 
-              const newMessages = conversation.messages.map((message: DMessage): DMessage => {
-                if (message.id === messageId)
-                  return {
-                    ...message,
-                    ...updatedMessage,
-                    updated: Date.now(),
-                  };
-                return message;
-              });
+      setMessages: (conversationId: string, newMessages: DMessage[]) =>
+        get()._editConversation(conversationId,
+          {
+            messages: newMessages,
+            // cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            updated: Date.now(),
+          },
+        ),
 
-              return {
-                ...conversation,
-                messages: newMessages,
-                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-                updated: Date.now(),
-              };
-            }
-            return conversation;
+      appendMessage: (conversationId: string, message: DMessage) =>
+        get()._editConversation(conversationId, conversation => {
+
+          const messages = [...conversation.messages, message];
+
+          return {
+            messages,
+            // DISABLE THE FOLLOWING FOR NOW - as we haven't decided how to handle token counts
+            // cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
+            updated: Date.now(),
+          };
+        }),
+
+      deleteMessage: (conversationId: string, messageId: string) =>
+        get()._editConversation(conversationId, conversation => {
+
+          const messages = conversation.messages.filter(message => message.id !== messageId);
+
+          return {
+            messages,
+            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            updated: Date.now(),
+          };
+        }),
+
+      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) =>
+        get()._editConversation(conversationId, conversation => {
+
+          const messages = conversation.messages.map((message: DMessage): DMessage =>
+            message.id === messageId
+              ? {
+                ...message,
+                ...updatedMessage,
+                ...(touch ? { updated: Date.now() } : {}),
+              }
+              : message);
+
+          return {
+            messages,
+            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            ...(touch ? { updated: Date.now() } : {}),
+          };
+        }),
+
+      setChatModelId: (conversationId: string, chatModelId: ChatModelId) =>
+        get()._editConversation(conversationId,
+          {
+            chatModelId,
           }),
-        }));
-      },
 
-      removeMessage: (conversationId: string, messageId: string) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => {
-            if (conversation.id === conversationId) {
-
-              const newMessages = conversation.messages.filter((message: DMessage): boolean => message.id !== messageId);
-
-              return {
-                ...conversation,
-                messages: newMessages,
-                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-                updated: Date.now(),
-              };
-            }
-            return conversation;
+      setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
+        get()._editConversation(conversationId,
+          {
+            systemPurposeId,
           }),
-        }));
-      },
 
-      replaceMessages: (conversationId: string, newMessages: DMessage[]) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => {
-            if (conversation.id === conversationId) {
-              return {
-                ...conversation,
-                messages: newMessages,
-                cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-                updated: Date.now(),
-              };
-            }
-            return conversation;
-          }),
-        }));
-      },
 
-      setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => {
-            if (conversation.id === conversationId) {
-              return {
+      _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) =>
+        set(state => ({
+          conversations: state.conversations.map((conversation: DConversation): DConversation =>
+            conversation.id === conversationId
+              ? {
                 ...conversation,
-                systemPurposeId,
-                updated: Date.now(),
-              };
-            }
-            return conversation;
-          }),
-        }));
-      },
-
-      setChatModelId: (conversationId: string, chatModelId: ChatModelId) => {
-        set((state) => ({
-          conversations: state.conversations.map((conversation: DConversation): DConversation => {
-            if (conversation.id === conversationId) {
-              // TODO: recalculate cacheTokensCount?
-              return {
-                ...conversation,
-                chatModelId,
-                updated: Date.now(),
-              };
-            }
-            return conversation;
-          }),
-        }));
-      },
+                ...(typeof update === 'function' ? update(conversation) : update),
+              }
+              : conversation),
+        })),
 
     }),
     {
       name: 'app-chats',
     }),
+  {
+    name: 'AppChats',
+    enabled: false,
+  }),
 );
 
 
-export const useActiveConversation = (): DConversation => {
+// WARNING: this will re-render at high frequency (e.g. token received in any message therein)
+//          only use this for UI that renders messages
+export function useActiveConversation(): DConversation {
   const activeConversationId = useChatStore(state => state.activeConversationId);
-  return useChatStore(state => (state.conversations.find((conversation) => conversation.id === activeConversationId) || errorConversation));
-};
+  return useChatStore(state => state.conversations.find(conversation => conversation.id === activeConversationId) || errorConversation);
+}
 
-export const useActiveConfiguration = () => {
-  const activeConversation = useActiveConversation();
-
-  const setSystemPurposeId = React.useCallback((systemPurposeId: SystemPurposeId) => {
-    useChatStore.getState().setSystemPurposeId(activeConversation.id, systemPurposeId);
-  }, [activeConversation.id]);
-
-  const setChatModelId = React.useCallback((chatModelId: ChatModelId) => {
-    useChatStore.getState().setChatModelId(activeConversation.id, chatModelId);
-  }, [activeConversation.id]);
+export function useActiveConfiguration() {
+  const { conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+    const _activeConversationId = state.activeConversationId;
+    const conversation = state.conversations.find(conversation => conversation.id === _activeConversationId) || errorConversation;
+    return {
+      conversationId: conversation.id,
+      chatModelId: conversation.chatModelId,
+      setChatModelId: state.setChatModelId,
+      systemPurposeId: conversation.systemPurposeId,
+      setSystemPurposeId: state.setSystemPurposeId,
+    };
+  }, shallow);
 
   return {
-    systemPurposeId: activeConversation.systemPurposeId,
-    chatModelId: activeConversation.chatModelId,
-    setSystemPurposeId,
-    setChatModelId,
+    conversationId,
+    chatModelId,
+    setChatModelId: (chatModelId: ChatModelId) => setChatModelId(conversationId, chatModelId),
+    systemPurposeId,
+    setSystemPurposeId: (systemPurposeId: SystemPurposeId) => setSystemPurposeId(conversationId, systemPurposeId),
   };
-};
+}
 
-export const useConversationNames = (): { id: string, name: string, systemPurposeId: SystemPurposeId }[] => useChatStore((state) =>
-  state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
-);
+export const useConversationNames = (): { id: string, name: string, systemPurposeId: SystemPurposeId }[] =>
+  useChatStore(
+    state => state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
+    shallow,
+  );

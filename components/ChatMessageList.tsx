@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { AspectRatio, Box, Button, Grid, List, Stack, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -78,16 +79,14 @@ function PurposeSelect() {
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: {
-  disableSend: boolean, sx?: SxProps,
-  runAssistant: (conversationId: string, history: DMessage[]) => void
-}) {
-
-  const { id: activeConversationId, messages } = useActiveConversation();
-  const { editMessage, removeMessage } = useChatStore(state => ({ editMessage: state.editMessage, removeMessage: state.removeMessage }));
-  const freeScroll = useSettingsStore(state => state.freeScroll);
-  const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
+export function ChatMessageList(props: { disableSend: boolean, sx?: SxProps, runAssistant: (conversationId: string, history: DMessage[]) => void }) {
+  // state
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+
+  // external state
+  const { id: activeConversationId, messages } = useActiveConversation();
+  const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
+  const { freeScroll, showSystemMessages } = useSettingsStore(state => ({ freeScroll: state.freeScroll, showSystemMessages: state.showSystemMessages }), shallow);
 
 
   // when messages change, scroll to bottom (aka: at every new token)
@@ -109,10 +108,10 @@ export function ChatMessageList(props: {
 
 
   const handleMessageDelete = (messageId: string) =>
-    removeMessage(activeConversationId, messageId);
+    deleteMessage(activeConversationId, messageId);
 
   const handleMessageEdit = (messageId: string, newText: string) =>
-    editMessage(activeConversationId, messageId, { text: newText });
+    editMessage(activeConversationId, messageId, { text: newText }, true);
 
   const handleMessageRunAgain = (messageId: string) => {
     const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);

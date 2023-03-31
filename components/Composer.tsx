@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -37,22 +38,25 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
  *
  * @param {boolean} props.disableSend - Flag to disable the send button.
- * @param {(text: string) => void} props.sendMessage - Function to send the message
+ * @param {(text: string, conversationId: string | null) => void} props.sendMessage - Function to send the message. conversationId is null for the Active conversation
  * @param {() => void} props.stopGeneration - Function to stop response generation
  */
-export function Composer(props: { disableSend: boolean; sendMessage: (text: string) => void; stopGeneration: () => void; isDeveloperMode: boolean }) {
+export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean; sendMessage: (text: string, conversationId: string | null) => void; stopGeneration: () => void }) {
   // state
   const [composeText, setComposeText] = React.useState('');
-  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }));
-  const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // external state
+  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
     if (text.length) {
       setComposeText('');
-      props.sendMessage(text);
+      props.sendMessage(text, null);
       appendMessageToHistory(text);
     }
   };
