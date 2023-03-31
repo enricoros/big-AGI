@@ -34,9 +34,10 @@ Or click fork & run on Vercel
   <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
 - [x] 🎉 **NEW** Stop generation 🛑 (fredliubojin) - Voice input 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
+- [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
+- [x] Dark mode 🌙 - Wide mode ⛶
 - [ ] [~~Code execution for TypeScript, JavaScript, and
   HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
-- [x] Dark mode 🌙
 - [ ] Add your own feature 🚀
 - [ ] Send a PR 🙌
 
