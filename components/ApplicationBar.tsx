@@ -13,6 +13,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import WidthFullIcon from '@mui/icons-material/WidthFull';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
@@ -246,13 +247,13 @@ export function ApplicationBar(props: { onClearConversation: (id: string) => voi
 
       <MenuItem>
         <ListItemDecorator><DarkModeIcon /></ListItemDecorator>
-        Dark mode
+        Dark
         <Switch checked={colorMode === 'dark'} onChange={handleDarkModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem sx={{ display: { xs: 'none', md: 'flex' } }}>
-        <ListItemDecorator><WidthWideIcon /></ListItemDecorator>
-        Wide mode
+        <ListItemDecorator>{wideMode ? <WidthFullIcon /> : <WidthWideIcon />}</ListItemDecorator>
+        Wide
         <Switch checked={wideMode} onChange={handleWideModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
