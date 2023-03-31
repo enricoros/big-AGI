@@ -43,7 +43,7 @@ namespace OpenAIAPI.Chat {
 
 }
 
-async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
+async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -54,7 +54,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.Chat.Complet
   };
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(`https://${apiHost}/v1/chat/completions`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -143,7 +143,12 @@ async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.Chat.Complet
       });
     } else {
       console.error('Fetch request failed:', error);
-      return new ReadableStream(); // Return an empty ReadableStream
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`{"model":"network error"}Network issue: ${error?.cause?.message}`));
+          controller.close();
+        },
+      });
     }
 
   }
@@ -155,6 +160,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<OpenAIAPI.Chat.Complet
 
 export interface ApiChatInput {
   apiKey?: string;
+  apiHost?: string;
   model: string;
   messages: OpenAIAPI.Chat.CompletionMessage[];
   temperature?: number;
@@ -172,14 +178,15 @@ export interface ApiChatFirstOutput {
 
 export default async function handler(req: NextRequest): Promise<Response> {
 
-  const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
+  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
+  const apiHost = (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').replaceAll('https://', '');
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
 
   try {
 
-    const stream: ReadableStream = await OpenAIStream(apiKey, {
+    const stream: ReadableStream = await OpenAIStream(apiKey, apiHost, {
       model,
       messages,
       temperature,

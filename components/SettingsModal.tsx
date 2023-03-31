@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Grid, IconButton, Input, Modal, ModalClose, ModalDialog, Slider, Stack, Typography } from '@mui/joy';
+import { Box, Button, Grid, IconButton, Input, Modal, ModalClose, ModalDialog, Slider, Stack, Tooltip, Typography } from '@mui/joy';
+import InfoIcon from '@mui/icons-material/Info';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
@@ -25,10 +26,11 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
   // global state
-  const { apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxTokens, setModelMaxTokens } = useSettingsStore(state => ({
+  const { apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxTokens, setModelMaxTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
     apiKey: state.apiKey, setApiKey: state.setApiKey,
     modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
     modelMaxTokens: state.modelMaxTokens, setModelMaxTokens: state.setModelMaxTokens,
+    modelApiHost: state.modelApiHost, setModelApiHost: state.setModelApiHost,
   }), shallow);
 
   const handleApiKeyChange = (e: React.ChangeEvent) =>
@@ -40,6 +42,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxTokens(newValue as number);
+
+  const handleModelApiHostChange = (e: React.ChangeEvent) => setModelApiHost((e.target as HTMLInputElement).value);
 
   const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
   const isValidKey = isValidOpenAIApiKey(apiKey);
@@ -95,7 +99,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               </Grid>
               <Grid xs={6} md={5} xl={3}>
                 <Typography level='body2' sx={{ textAlign: 'right', mr: 1 }}>
-                  Max. tokens
+                  Max tokens
                 </Typography>
               </Grid>
               <Grid xs={6} md={7} xl={7}>
@@ -105,6 +109,20 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                   value={modelMaxTokens} onChange={handleMaxTokensChange}
                   valueLabelDisplay='auto'
                   sx={{ py: 1, mt: 1.1 }}
+                />
+              </Grid>
+              <Grid xs={6} md={5} xl={3}>
+                <Typography level='body2' sx={{ textAlign: 'right', mr: 1 }}>
+                  API host
+                  <Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>
+                    <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />
+                  </Tooltip>
+                </Typography>
+              </Grid>
+              <Grid xs={6} md={7} xl={7}>
+                <Input
+                  variant='plain' placeholder='api.openai.com'
+                  value={modelApiHost} onChange={handleModelApiHostChange}
                 />
               </Grid>
             </Grid>
