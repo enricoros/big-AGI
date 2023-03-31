@@ -209,9 +209,11 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           p: { xs: 1, md: 2 },
         }}>
         <Composer
-          disableSend={!!abortController} isDeveloperMode={systemPurposeId === 'Developer'}
-          sendMessage={handleSendMessage} stopGeneration={handleStopGeneration}
-        />
+  disableSend={!!abortController}
+  isDeveloperMode={typeof systemPurposeId === 'string' && systemPurposeId === 'Developer'}
+  sendMessage={handleSendMessage}
+  stopGeneration={handleStopGeneration}
+/>
       </Box>
 
       {/* Confirmation Dialog */}
