@@ -19,7 +19,7 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
     text: text,
     sender: role === 'user' ? 'You' : 'Bot',
     avatar: null,
-    typing: true,
+    typing: false,
     role: role,
     created: Date.now(),
     updated: null,
@@ -209,11 +209,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           p: { xs: 1, md: 2 },
         }}>
         <Composer
-  disableSend={!!abortController}
-  isDeveloperMode={typeof systemPurposeId === 'string'}
-  sendMessage={handleSendMessage}
-  stopGeneration={handleStopGeneration}
-/>
+          disableSend={!!abortController} isDeveloperMode={systemPurposeId === 'Developer'}
+          sendMessage={handleSendMessage} stopGeneration={handleStopGeneration}
+        />
       </Box>
 
       {/* Confirmation Dialog */}

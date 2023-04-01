@@ -182,10 +182,6 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
 
-          <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
-            <PostAddIcon />
-          </IconButton>
-
           <Box sx={{ mt: { xs: 1, md: 2 } }} />
 
           <IconButton variant='plain' color='neutral' onClick={pasteFromClipboard} sx={{ ...hideOnDesktop }}>
@@ -274,7 +270,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
             {history.length > 0 && (
               <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
-                History
+                Historique
               </Button>
             )}
           </Stack>
@@ -287,7 +283,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
         <Menu
           variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320 }}
           open anchorEl={historyAnchor} onClose={hideHistory}>
-          <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
+          <MenuItem color='neutral' selected>Réutiliser les messages 💬</MenuItem>
           <ListDivider />
           {history.map((item, index) => (
             <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(item.text)}>

@@ -178,7 +178,7 @@ export interface ApiChatFirstOutput {
 
 export default async function handler(req: NextRequest): Promise<Response> {
 
-  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
+  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 3000 } = await req.json() as ApiChatInput;
   const apiHost = (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').replaceAll('https://', '');
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)

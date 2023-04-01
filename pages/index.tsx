@@ -32,7 +32,7 @@ export default function Home() {
      */
     <NoSSR>
 
-      <Container maxWidth={wideMode ? true : 'xl'} disableGutters sx={{
+      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
         boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
       }}>
 

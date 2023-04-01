@@ -2,21 +2,17 @@ import * as React from 'react';
 
 import { IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import WidthFullIcon from '@mui/icons-material/WidthFull';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
-import { Link } from '@/components/util/Link';
 import { foolsMode } from '@/lib/theme';
 import { useActiveConfiguration, useChatStore, useConversationNames } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store';
@@ -102,21 +98,6 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 
       </MenuItem>
     ))}
-
-    <MenuItem disabled={true}>
-      <ListItemDecorator><AddIcon /></ListItemDecorator>
-      <Typography sx={{ opacity: 0.5 }}>
-        New chat (soon)
-        {/* We need stable Chat and Message IDs, and one final review to the data structure of Conversation for future-proofing */}
-      </Typography>
-    </MenuItem>
-
-
-    <ListItem>
-      <Typography level='body2'>
-        Scratchpad
-      </Typography>
-    </ListItem>
 
   </Menu>;
 }

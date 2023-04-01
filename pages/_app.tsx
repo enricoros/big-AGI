@@ -27,6 +27,6 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         <Component {...pageProps} />
       </CssVarsProvider>
     </CacheProvider>
-    <VercelAnalytics debug={true} />
+    <VercelAnalytics debug={false} />
   </>;
 }

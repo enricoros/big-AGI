@@ -20,10 +20,6 @@ function PurposeSelect() {
     }
   };
 
-  function handleCustomSystemMessageChange(v: React.ChangeEvent<HTMLTextAreaElement>): void {
-    SystemPurposes['Custom'].systemMessage = v.target.value;
-  }
-
   return (
     <Stack direction='column' sx={{ justifyContent: 'center', alignItems: 'center', mx: 2, minHeight: '60vh' }}>
 
@@ -38,8 +34,8 @@ function PurposeSelect() {
             <Grid key={spId} xs={4} lg={3} xl={2}>
               <AspectRatio variant='plain' ratio={1} sx={{
                 minWidth: { xs: 56, lg: 78, xl: 130 }, maxWidth: 130,
-                borderRadius: 8,
-                boxShadow: theme.vars.shadow.md,
+                // borderRadius: 8,
+                // boxShadow: theme.vars.shadow.md,
               }}>
                 <Button
                   variant={systemPurposeId === spId ? 'solid' : 'soft'}
@@ -64,22 +60,8 @@ function PurposeSelect() {
         </Grid>
 
         <Typography level='body2' sx={{ mt: 2 }}>
-  {SystemPurposes[systemPurposeId]?.description ?? 'Description not available'}
-</Typography>
-
-        {systemPurposeId === 'Custom' && (
-          <>
-            <Textarea variant='soft' autoFocus placeholder={"Enter your custom system message here..."}
-            minRows={5} maxRows={12}
-            // onKeyDown={handleKeyPress}
-            // onDragEnter={handleMessageDragEnter}
-            defaultValue={SystemPurposes['Custom'].systemMessage} onChange={(e) => handleCustomSystemMessageChange(e)}
-            sx={{
-              fontSize: '16px',
-              lineHeight: 1.75,
-            }} />
-          </>
-        )}
+          {SystemPurposes[systemPurposeId].description}
+        </Typography>
 
 
       </Box>
