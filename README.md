@@ -27,16 +27,16 @@ Or click fork & run on Vercel
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
 - [x] 🎉 **NEW 04.01** Typing Avatars
-  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='600' alt="New Typing Avatars"></a></p>
+  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p>
 - [x] 🎉 **NEW 03.31** Publish & share chats to paste.gg 📥
-  <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='300' alt="Export chats"></a></p>
+  <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='300' alt="Export chats"/></a></p>
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
 - [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"></a></p>
+  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"/></a></p>
 - [x] **Syntax highlighting** - for multiple languages 🌈
 - [x] **Context** - Drag and drop files to add them to the prompt 📁
-  <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"></a></p>
+  <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"/></a></p>
 - [x] **Stop generation** 🛑 (fredliubojin)
 - [x] **Voice input** 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
