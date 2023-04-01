@@ -26,9 +26,9 @@ Or click fork & run on Vercel
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
-- [x] 🎉 **NEW** Typing Avatars
-  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='400' alt="New Typing Avatars"></a></p>
-- [x] 🎉 **NEW** Publish & share chats 📥
+- [x] 🎉 **NEW 04.01** Typing Avatars
+  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='600' alt="New Typing Avatars"></a></p>
+- [x] 🎉 **NEW 03.31** Publish & share chats to paste.gg 📥
   <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='300' alt="Export chats"></a></p>
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
