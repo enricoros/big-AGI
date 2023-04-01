@@ -11,6 +11,7 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationDialog } from '@/components/util/ConfirmationDialog';
 import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { ExportResultDialog } from '@/components/util/ExportResultDialog';
+import { Link } from '@/components/util/Link';
 import { SystemPurposes } from '@/lib/data';
 import { exportConversation } from '@/lib/export-conversation';
 import { useSettingsStore } from '@/lib/store';
@@ -177,9 +178,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   const handleConfirmedExportConversation = async () => {
     if (exportConfirmationId) {
       const conversation = findConversation(exportConfirmationId);
+      setExportConfirmationId(null);
       if (conversation)
         setExportResponse(await exportConversation('paste.gg', conversation));
-      setExportConfirmationId(null);
     }
   };
 
@@ -235,10 +236,11 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       {/* Confirmation for Export */}
       <ConfirmationDialog
         open={!!exportConfirmationId} onClose={() => setExportConfirmationId(null)} onPositive={handleConfirmedExportConversation}
-        confirmationText={
-          'This will post the conversation publicly to \'paste.gg\'. The URL will be unlisted and expiring ' +
-          'in 30 days, but you may not be able to delete it. Are you sure you want to proceed?'
-        } positiveActionText={'Understood, Export to paste.gg'}
+        confirmationText={<>
+          Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
+          It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
+          Are you sure you want to proceed?
+        </>} positiveActionText={'Understood, Export to paste.gg'}
       />
 
       {/* Confirmation for Delete */}

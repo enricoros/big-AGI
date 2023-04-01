@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
+import { Badge, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -259,8 +259,12 @@ export function ApplicationBar({ onClearConversation, onExportConversation, onSh
       <ListDivider />
 
       <MenuItem onClick={handleActionExportChat}>
-        <ListItemDecorator><ExitToAppIcon /></ListItemDecorator>
-        Export to Paste.gg
+        <ListItemDecorator>
+          <Badge size='sm' badgeContent='new' color='primary'>
+            <ExitToAppIcon />
+          </Badge>
+        </ListItemDecorator>
+        Share via paste.gg
       </MenuItem>
 
       <MenuItem onClick={e => handleActionClearConversation(e, null)}>
