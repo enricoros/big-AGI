@@ -33,7 +33,7 @@ was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
 - [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-  <p><a href="docs/screenshot_feature_system.png"><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></a></p>
+  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"></a></p>
 - [x] **Syntax highlighting** - for multiple languages 🌈
 - [x] **Context** - Drag and drop files to add them to the prompt 📁
   <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"></a></p>
