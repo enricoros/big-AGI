@@ -76,9 +76,9 @@ export interface DConversation {
 const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
   ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Developer', defaultChatModelId)];
+const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Canada', defaultChatModelId)];
 
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
+const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Canada', defaultChatModelId);
 
 
 export const useChatStore = create<ChatStore>()(devtools(
