@@ -15,6 +15,7 @@ import { useActiveConfiguration } from '@/lib/store-chats';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
+import { convertPdfFileToMdDirect } from '@/lib/pdf';
 
 /// Text template helpers
 
@@ -145,8 +146,19 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     const files = e.target.files;
     if (!files || files.length === 0) return;
     let text = composeText;
-    for (let i = 0; i < files.length; i++)
-      text = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: files[i].name, fileText: await files[i].text() })(text);
+    for (let i = 0; i < files.length; i++) {
+      const isPdf = files[i].type === 'application/pdf';
+      if (isPdf) {
+        console.log('PDF file detected. Converting to markup.', files[i].name);
+      }
+
+      try {
+        const fileText = isPdf ? await convertPdfFileToMdDirect(files[i]) : await files[i].text();
+        text = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: files[i].name, fileText })(text);
+      } catch (error) {
+        console.error('Error processing file:', error);
+      }
+    }
     setComposeText(text);
   };
 
