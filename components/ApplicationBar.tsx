@@ -5,6 +5,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -132,7 +133,12 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar(props: { onClearConversation: (id: string | null) => void, onShowSettings: () => void, sx?: SxProps }) {
+export function ApplicationBar({ onClearConversation, onExportConversation, onShowSettings, sx }: {
+  onClearConversation: (conversationId: (string | null)) => void;
+  onExportConversation: (conversationId: (string | null)) => void;
+  onShowSettings: () => void;
+  sx?: SxProps
+}) {
   // state
   const [pagesMenuAnchor, setPagesMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [actionsMenuAnchor, setActionsMenuAnchor] = React.useState<HTMLElement | null>(null);
@@ -163,13 +169,18 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
 
   const handleActionShowSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
-    props.onShowSettings();
+    onShowSettings();
     closeActionsMenu();
+  };
+
+  const handleActionExportChat = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onExportConversation(null);
   };
 
   const handleActionClearConversation = (e: React.MouseEvent, id: string | null) => {
     e.stopPropagation();
-    props.onClearConversation(id || null);
+    onClearConversation(id || null);
   };
 
 
@@ -181,7 +192,7 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
       sx={{
         p: 1,
         display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
-        ...(props.sx || {}),
+        ...(sx || {}),
       }}>
 
       <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
@@ -246,6 +257,11 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
       </MenuItem>
 
       <ListDivider />
+
+      <MenuItem onClick={handleActionExportChat}>
+        <ListItemDecorator><ExitToAppIcon /></ListItemDecorator>
+        Export to Paste.gg
+      </MenuItem>
 
       <MenuItem onClick={e => handleActionClearConversation(e, null)}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>

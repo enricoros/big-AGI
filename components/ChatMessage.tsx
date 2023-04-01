@@ -20,9 +20,11 @@ import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
 import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
+import { prettyBaseModel } from '@/lib/export-conversation';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -146,13 +148,6 @@ function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)
       .then(() => console.log('Message copied to clipboard'))
       .catch((err) => console.error('Failed to copy message: ', err));
-}
-
-function prettyBaseModel(model: string | undefined): string {
-  if (!model) return '';
-  if (model.startsWith('gpt-4')) return 'gpt-4';
-  if (model.startsWith('gpt-3.5-turbo')) return '3.5 Turbo';
-  return model;
 }
 
 function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: string) {

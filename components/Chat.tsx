@@ -4,12 +4,15 @@ import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
+import { ApiExportResponse } from '../pages/api/export';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
 import { ConfirmationDialog } from '@/components/util/ConfirmationDialog';
 import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
+import { ExportResultDialog } from '@/components/util/ExportResultDialog';
 import { SystemPurposes } from '@/lib/data';
+import { exportConversation } from '@/lib/export-conversation';
 import { useSettingsStore } from '@/lib/store';
 
 
@@ -118,6 +121,8 @@ async function _streamAssistantResponseMessage(
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
+  const [exportConfirmationId, setExportConfirmationId] = React.useState<string | null>(null);
+  const [exportResponse, setExportResponse] = React.useState<ApiExportResponse | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
   // external state
@@ -157,13 +162,24 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   const handleStopGeneration = () => abortController?.abort();
 
+  const findConversation = (conversationId: string) =>
+    (conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) : null) ?? null;
+
   const handleSendMessage = async (userText: string, conversationId: string | null) => {
-    conversationId = conversationId || activeConversationId;
-    if (conversationId) {
-      const { conversations } = useChatStore.getState();
-      const conversation = conversations.find(c => c.id === conversationId);
+    const conversation = findConversation(conversationId || activeConversationId);
+    if (conversation)
+      await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
+  };
+
+  const handleExportConversation = (conversationId: string | null) =>
+    setExportConfirmationId(conversationId || activeConversationId || null);
+
+  const handleConfirmedExportConversation = async () => {
+    if (exportConfirmationId) {
+      const conversation = findConversation(exportConfirmationId);
       if (conversation)
-        await runAssistant(conversationId, [...conversation.messages, createDMessage('user', userText)]);
+        setExportResponse(await exportConversation('paste.gg', conversation));
+      setExportConfirmationId(null);
     }
   };
 
@@ -171,9 +187,10 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     setClearConfirmationId(conversationId || activeConversationId || null);
 
   const handleConfirmedClearConversation = () => {
-    if (clearConfirmationId)
+    if (clearConfirmationId) {
       setMessages(clearConfirmationId, []);
-    setClearConfirmationId(null);
+      setClearConfirmationId(null);
+    }
   };
 
 
@@ -187,7 +204,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       }}>
 
       <ApplicationBar
-        onClearConversation={handleClearConversation} onShowSettings={props.onShowSettings}
+        onClearConversation={handleClearConversation} onExportConversation={handleExportConversation} onShowSettings={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
@@ -214,11 +231,26 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         />
       </Box>
 
-      {/* Confirmation Dialog */}
+
+      {/* Confirmation for Export */}
+      <ConfirmationDialog
+        open={!!exportConfirmationId} onClose={() => setExportConfirmationId(null)} onPositive={handleConfirmedExportConversation}
+        confirmationText={
+          'This will post the conversation publicly to \'paste.gg\'. The URL will be unlisted and expiring ' +
+          'in 30 days, but you may not be able to delete it. Are you sure you want to proceed?'
+        } positiveActionText={'Understood, Export to paste.gg'}
+      />
+
+      {/* Confirmation for Delete */}
       <ConfirmationDialog
         open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
         confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
       />
+
+      {/* Show the link/key from a chat Export */}
+      {!!exportResponse && (
+        <ExportResultDialog open onClose={() => setExportResponse(null)} response={exportResponse} />
+      )}
 
     </Stack>
 
