@@ -21,6 +21,9 @@ const config = {
   publicKey: 'pk_sb_e96ed700497309964b0f',
 };
 import { useMemberstack } from '@memberstack/react';
+import { useAuth } from '@memberstack/react';
+
+const { userId, status, getToken, isLoggedIn, signOut } = useAuth();
 
 function Dashboard() {
   const memberstack = useMemberstack();
