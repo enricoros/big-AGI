@@ -26,7 +26,7 @@ function PurposeSelect() {
       <Box>
 
         <Typography level='body3' color='neutral' sx={{ mb: 2 }}>
-          Choisissez une options
+          AI purpose
         </Typography>
 
         <Grid container spacing={1}>

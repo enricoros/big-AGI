@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Script from 'next/script'
 
 import { Container, useTheme } from '@mui/joy';
 
@@ -7,19 +8,23 @@ import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
 
+
 export default function Home() {
   // state
   const [settingsShown, setSettingsShown] = React.useState(false);
 
   // external state
   const theme = useTheme();
-  const apiKey = useSettingsStore((state) => state.apiKey);
-  const wideMode = useSettingsStore((state) => state.wideMode);
+  const apiKey = useSettingsStore(state => state.apiKey);
+  const wideMode = useSettingsStore(state => state.wideMode);
+
 
   // show the Settings Dialog at startup if the API key is required but not set
   React.useEffect(() => {
-    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey)) setSettingsShown(false);
+    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
+      setSettingsShown(false);
   }, [apiKey]);
+
 
   return (
     /**
@@ -27,17 +32,21 @@ export default function Home() {
      *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
      */
     <NoSSR>
-      <Container
-        maxWidth={wideMode ? false : 'xl'}
-        disableGutters
-        sx={{
-          boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
-        }}
-      >
+      <>
+      <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
+    </>
+      
+
+      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
+        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
+      }}>
+
         <Chat onShowSettings={() => setSettingsShown(false)} />
 
         <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
+
       </Container>
+
     </NoSSR>
   );
 }

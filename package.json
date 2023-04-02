@@ -1,6 +1,6 @@
 {
-  "name": "subvention_app_beta",
-  "version": "0.0.1",
+  "name": "nextjs-chatgpt-app",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,6 @@
     "@emotion/react": "^11.10.6",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
-    "@memberstack/admin": "^1.2.2",
     "@memberstack/react": "^2.0.1",
     "@mui/icons-material": "^5.11.11",
     "@mui/joy": "^5.0.0-alpha.73",
