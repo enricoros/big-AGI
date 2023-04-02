@@ -27,7 +27,6 @@ export default function Home() {
      *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
      */
     <NoSSR>
-<<<<<<< HEAD
       <Container
         maxWidth={wideMode ? false : 'xl'}
         disableGutters
@@ -35,13 +34,6 @@ export default function Home() {
           boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
         }}
       >
-=======
-
-      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
-        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
-      }}>
-
->>>>>>> parent of ca80960 (update)
         <Chat onShowSettings={() => setSettingsShown(false)} />
 
         <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
