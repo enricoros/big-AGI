@@ -230,7 +230,7 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
           <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
         </MenuItem>
 
-        <div
+        <MenuItem
           onClick={() =>
             openModal({
               type: 'LOGIN',
@@ -243,8 +243,11 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
             })
           }
         >
+          <ListItemDecorator>
+            <DeleteOutlineIcon />
+          </ListItemDecorator>
           Log in
-        </div>
+        </MenuItem>
 
         <ListDivider />
 
