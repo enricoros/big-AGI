@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { encoding_for_model, get_encoding, Tiktoken } from '@dqbd/tiktoken';
 
 import { Badge, Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -11,10 +10,10 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { ChatModelId, defaultChatModelId } from '@/lib/data';
+import { countModelTokens } from '@/lib/token-counters';
+import { useActiveConfiguration } from '@/lib/store-chats';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
-import { useActiveConfiguration } from '@/lib/store-chats';
 
 
 /// Text template helpers
@@ -31,24 +30,6 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
     expanded = expanded.replaceAll(`{{${key}}}`, value);
   return expanded;
 };
-
-
-/// Token counting helpers
-const tokenEncoders: { [model: string]: Tiktoken } = {};
-
-const getTokenCount = (text: string, chatModelId: ChatModelId) => {
-  if (!(chatModelId in tokenEncoders)) {
-    try {
-      tokenEncoders[chatModelId] = encoding_for_model(chatModelId);
-    } catch (e) {
-      tokenEncoders[chatModelId] = get_encoding('cl100k_base');
-    }
-  }
-  return tokenEncoders[chatModelId]?.encode(text)?.length || 0;
-};
-
-// warms up the cache - take the hit now, rather than when typing
-getTokenCount('unused', defaultChatModelId);
 
 
 /**
@@ -194,7 +175,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
   // compute tokens (warning: slow - shall have a toggle)
-  const estimatedTokens = getTokenCount(composeText, chatModelId);
+  const estimatedTokens = countModelTokens(composeText, chatModelId);
 
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
@@ -246,8 +227,8 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
             }} />
 
           <Badge
-            size='sm' variant='solid' max={65535} showZero={false}
-            color={estimatedTokens > 8000 ? 'danger' : estimatedTokens > 4000 ? 'warning' : 'success'}
+            size='md' variant='solid' max={65535} showZero={false}
+            color={estimatedTokens >= (8192 - 2048) ? 'danger' : estimatedTokens >= (4097 - 2048) ? 'warning' : 'primary'}
             badgeContent={estimatedTokens}
             sx={{
               position: 'absolute', bottom: 8, right: 8,
