@@ -1,6 +1,6 @@
 {
-  "name": "nextjs-chatgpt-app",
-  "version": "0.2.0",
+  "name": "beta_subvention_app",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev",

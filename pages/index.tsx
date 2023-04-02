@@ -7,8 +7,6 @@ import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
 
-import { BrowserRouter } from 'react-router-dom';
-
 export default function Home() {
   // state
   const [settingsShown, setSettingsShown] = React.useState(false);
@@ -30,7 +28,6 @@ export default function Home() {
      */
 
     <NoSSR>
-      <BrowserRouter>
         <Container
           maxWidth={wideMode ? false : 'xl'}
           disableGutters
@@ -42,7 +39,6 @@ export default function Home() {
 
           <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
         </Container>
-      </BrowserRouter>
     </NoSSR>
   );
 }

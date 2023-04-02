@@ -23,7 +23,7 @@ function PurposeSelect() {
     <Stack direction="column" sx={{ justifyContent: 'center', alignItems: 'center', mx: 2, minHeight: '60vh' }}>
       <Box>
         <Typography level="body3" color="neutral" sx={{ mb: 2 }}>
-          AI purpose
+          Propositions
         </Typography>
 
         <Grid container spacing={1}>

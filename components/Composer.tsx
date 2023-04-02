@@ -13,8 +13,6 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
-import { Link } from 'react-router-dom';
-
 /// Text template helpers
 
 const PromptTemplates: { [key: string]: string } = {
@@ -191,10 +189,6 @@ export function Composer(props: {
             <Button fullWidth variant="plain" color="neutral" startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
               {props.isDeveloperMode ? 'Coller' : 'Coller'}
             </Button>
-
-            <Link to="/api/auth/login">Login</Link>
-
-            <Link to="/api/auth/logout">Logout</Link>
 
             <input type="file" multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
           </Stack>
