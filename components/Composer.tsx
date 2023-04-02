@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { encoding_for_model, get_encoding, Tiktoken } from '@dqbd/tiktoken';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Badge, Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -10,8 +11,10 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { ChatModelId, defaultChatModelId } from '@/lib/data';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
+import { useActiveConfiguration } from '@/lib/store-chats';
 
 
 /// Text template helpers
@@ -28,6 +31,24 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
     expanded = expanded.replaceAll(`{{${key}}}`, value);
   return expanded;
 };
+
+
+/// Token counting helpers
+const tokenEncoders: { [model: string]: Tiktoken } = {};
+
+const getTokenCount = (text: string, chatModelId: ChatModelId) => {
+  if (!(chatModelId in tokenEncoders)) {
+    try {
+      tokenEncoders[chatModelId] = encoding_for_model(chatModelId);
+    } catch (e) {
+      tokenEncoders[chatModelId] = get_encoding('cl100k_base');
+    }
+  }
+  return tokenEncoders[chatModelId]?.encode(text)?.length || 0;
+};
+
+// warms up the cache - take the hit now, rather than when typing
+getTokenCount('unused', defaultChatModelId);
 
 
 /**
@@ -50,6 +71,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
   // external state
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+  const { chatModelId } = useActiveConfiguration();
 
 
   const handleSendClicked = () => {
@@ -171,6 +193,9 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
+  // compute tokens (warning: slow - shall have a toggle)
+  const estimatedTokens = getTokenCount(composeText, chatModelId);
+
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
 
@@ -219,6 +244,22 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
               lineHeight: 1.75,
               pr: isSpeechEnabled ? { xs: 4, md: 5 } : 0, // accounts for the microphone icon when supported
             }} />
+
+          <Badge
+            size='sm' variant='solid' max={65535} showZero={false}
+            color={estimatedTokens > 8000 ? 'danger' : estimatedTokens > 4000 ? 'warning' : 'success'}
+            badgeContent={estimatedTokens}
+            sx={{
+              position: 'absolute', bottom: 8, right: 8,
+            }}
+            slotProps={{
+              badge: {
+                sx: {
+                  position: 'static', transform: 'none',
+                },
+              },
+            }}
+          />
 
           <Card
             color='primary' invertedColors variant='soft'
