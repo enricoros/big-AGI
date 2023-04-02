@@ -20,23 +20,6 @@ import { MemberstackProvider } from '@memberstack/react';
 const config = {
   publicKey: 'pk_sb_e96ed700497309964b0f',
 };
-import { useMemberstack } from '@memberstack/react';
-import { useAuth } from '@memberstack/react';
-
-const { userId, status, getToken, isLoggedIn, signOut } = useAuth();
-
-function Dashboard() {
-  const memberstack = useMemberstack();
-  const [member, setMember] = React.useState(null);
-
-  React.useEffect(() => {
-    memberstack.getCurrentMember().then(({ data: member }) => setMember(member)).catc;
-  }, []);
-
-  if (!member) return null;
-
-  return <div>Welcome, {member.auth.email}</div>;
-}
 
 export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
   return (
@@ -45,12 +28,8 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         <CacheProvider value={emotionCache}>
           <Head>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
-            <Script
-              data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e"
-              src="https://static.memberstack.com/scripts/v1/memberstack.js"
-              type="text/javascript"
-            />
           </Head>
+          <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
           <CssVarsProvider defaultMode="light" theme={theme}>
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
