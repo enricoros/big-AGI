@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { AspectRatio, Box, Button, Grid, List, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { AspectRatio, Box, Button, Grid, List, Stack, Textarea, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
@@ -11,7 +11,6 @@ import { useSettingsStore } from '@/lib/store';
 
 
 function PurposeSelect() {
-  const theme = useTheme();
   const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
@@ -48,7 +47,7 @@ function PurposeSelect() {
                   sx={{
                     flexDirection: 'column',
                     gap: { xs: 2, lg: 3 },
-                    fontFamily: theme.vars.fontFamily.code, fontWeight: 500,
+                    /*fontFamily: theme.vars.fontFamily.code,*/ fontWeight: 500,
                   }}
                 >
                   <div style={{ fontSize: '1.875rem' }}>

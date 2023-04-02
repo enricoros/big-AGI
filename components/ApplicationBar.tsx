@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Badge, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
+import { Badge, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -27,7 +27,6 @@ import { useSettingsStore } from '@/lib/store';
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
 function BeautifulSelect<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
-  const theme = useTheme();
   return (
     <Select
       variant='solid' color='neutral' size='md'
@@ -46,7 +45,8 @@ function BeautifulSelect<TValue extends string>(props: { value: TValue, items: R
       }}
       sx={{
         mx: 0,
-        fontFamily: theme.vars.fontFamily.code,
+        /*fontFamily: theme.vars.fontFamily.code,*/
+        fontWeight: 500,
         ...(props.sx || {}),
       }}
     >
