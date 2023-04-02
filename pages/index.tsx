@@ -1,52 +1,23 @@
 import * as React from 'react';
-import Script from 'next/script'
+import { useMemberstack } from "@memberstack/react";
 
-import { Container, useTheme } from '@mui/joy';
+const config = { publicKey: "pk_a60a3b251b447d03d202" }
+  function Index() {
+    return (
+      <MemberstackProvider config={config}>
+          <App />
+      </MemberstackProvider>
+    )
+  }
 
-import { Chat } from '@/components/Chat';
-import { NoSSR } from '@/components/util/NoSSR';
-import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
-import { useSettingsStore } from '@/lib/store';
+  function Dashboard() {
+    const memberstack = useMemberstack();
+    const [member, setMember] = React.useState(null);
 
-
-export default function Home() {
-  // state
-  const [settingsShown, setSettingsShown] = React.useState(false);
-
-  // external state
-  const theme = useTheme();
-  const apiKey = useSettingsStore(state => state.apiKey);
-  const wideMode = useSettingsStore(state => state.wideMode);
-
-
-  // show the Settings Dialog at startup if the API key is required but not set
   React.useEffect(() => {
-    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
-      setSettingsShown(false);
-  }, [apiKey]);
-
-
-  return (
-    /**
-     * Note the global NoSSR wrapper
-     *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
-     */
-    <NoSSR>
-      <>
-      <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
-    </>
-      
-
-      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
-        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
-      }}>
-
-        <Chat onShowSettings={() => setSettingsShown(false)} />
-
-        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
-
-      </Container>
-
-    </NoSSR>
-  );
-}
+    memberstack.getCurrentMember().then(({ data: member }) => setMember(member))
+  }, []);
+    
+    if (!member) return null;
+    return <div>Welcome, {member.auth.email}</div>;
+  }
