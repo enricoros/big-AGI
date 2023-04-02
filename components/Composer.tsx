@@ -222,7 +222,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           <Textarea
             variant='soft' autoFocus placeholder={textPlaceholder}
-            minRows={5} maxRows={12}
+            minRows={2} maxRows={12}
             onKeyDown={handleKeyPress}
             onDragEnter={handleMessageDragEnter}
             value={composeText} onChange={(e) => setComposeText(e.target.value)}
