@@ -29,14 +29,12 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
           <Head>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
           </Head>
-          <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
           <CssVarsProvider defaultMode="light" theme={theme}>
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
             <Component {...pageProps} />
           </CssVarsProvider>
         </CacheProvider>
-        <VercelAnalytics debug={false} />
       </MemberstackProvider>
     </>
   );
