@@ -207,6 +207,12 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
             {props.isDeveloperMode ? 'Paste code' : 'Paste'}
           </Button>
 
+          {isSpeechEnabled && <Box sx={{ mt: { xs: 1, md: 2 }, ...hideOnDesktop }}>
+            <IconButton variant={!isRecordingSpeech ? 'plain' : 'solid'} color={!isRecordingSpeech ? 'neutral' : 'warning'} onClick={handleMicClicked}>
+              <MicIcon />
+            </IconButton>
+          </Box>}
+
           <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
 
         </Stack>
@@ -220,10 +226,16 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
             onKeyDown={handleKeyPress}
             onDragEnter={handleMessageDragEnter}
             value={composeText} onChange={(e) => setComposeText(e.target.value)}
+            slotProps={{
+              textarea: {
+                sx: {
+                  ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+                },
+              },
+            }}
             sx={{
               fontSize: '16px',
               lineHeight: 1.75,
-              pr: isSpeechEnabled ? { xs: 4, md: 5 } : 0, // accounts for the microphone icon when supported
             }} />
 
           <Badge
@@ -262,10 +274,10 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           {isSpeechEnabled && (
             <IconButton
+              variant={!isRecordingSpeech ? 'plain' : 'solid'} color={!isRecordingSpeech ? 'primary' : 'warning'}
               onClick={handleMicClicked}
-              color={isRecordingSpeech ? 'warning' : 'primary'}
-              variant={isRecordingSpeech ? 'solid' : 'plain'}
               sx={{
+                ...hideOnMobile,
                 position: 'absolute',
                 top: 0, right: 0,
                 margin: 1, // 8px
