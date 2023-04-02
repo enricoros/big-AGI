@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type SystemPurposeId = 'Canada' | 'Quebec' | 'cinqSubventions' | 'uneSubvention' | 'Developer';
 =======
 export type SystemPurposeId = 'Canada' | 'Quebec' | 'cinqSubventions' | 'uneSubvention'| 'Developer'| 'Custom';
 >>>>>>> parent of a9c8263 (set to ca80960)
+=======
+export type SystemPurposeId = 'Canada' | 'Quebec' | 'cinqSubventions' | 'uneSubvention'| 'Developer';
+>>>>>>> parent of ca80960 (update)
 
 type SystemPurposeData = {
   title: string;
@@ -13,14 +17,14 @@ type SystemPurposeData = {
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Canada: {
-    title: '1 Subvention Canada',
+    title: '1 Subventions Canada',
     description: '',
     systemMessage:
       "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 1 subventions dans lesquelles je peux être potentiellement qualifié au niveau fédéral canadien uniquement.",
     symbol: '🍁',
   },
   Quebec: {
-    title: '1 Subvention Quebec',
+    title: '1 Subventions Quebec',
     description: '',
     systemMessage:
       "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 1 subventions dans lesquelles je peux être potentiellement qualifié au niveau provincial quebecois uniquement.",
@@ -34,13 +38,14 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     symbol: '🚀',
   },
   uneSubvention: {
-    title: '1 Subvention',
+    title: '1 Subventions',
     description: '',
     systemMessage:
       "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 1 subventions dans lesquelles je peux être potentiellement qualifié.",
     symbol: '🚀',
   },
   Developer: {
+<<<<<<< HEAD
 <<<<<<< HEAD
     title: 'Developer',
     description: '',
@@ -59,6 +64,12 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     systemMessage: "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS | LIEN DE LA SUBVENTIONS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 10 subventions possible dans lesquelles je peux être potentiellement qualifié.",
     symbol: '👨‍💻',
 >>>>>>> parent of a9c8263 (set to ca80960)
+=======
+    title: '1 Subventions',
+    description: '',
+    systemMessage: "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 1 subventions dans lesquelles je peux être potentiellement qualifié.",
+    symbol: '🚀',
+>>>>>>> parent of ca80960 (update)
   },
 };
 
