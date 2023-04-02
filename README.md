@@ -53,6 +53,13 @@ Because the official Chat is ___slower than the API___, and the Playground UI __
 
 ![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
 
+## Integrations 🤝
+
+| Integration                          | Description                | Docs                                                   |
+|:-------------------------------------|:---------------------------|:-------------------------------------------------------|
+| [Helicone](https://www.helicone.ai/) | LLM Observability Platform | Settings Menu > Advanced > API Host: 'oai.hconeai.com' |
+| [Paste.gg](https://paste.gg/)        | Paste Sharing              | Chat Menu > Share via paste.gg                         |
+
 ## Developing 🚀
 
 Tech Stack 🛠️
