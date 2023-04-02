@@ -243,9 +243,7 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
             })
           }
         >
-          <ListItemDecorator>
-            <DeleteOutlineIcon />
-          </ListItemDecorator>
+          <ListItemDecorator></ListItemDecorator>
           Log in
         </MenuItem>
 
