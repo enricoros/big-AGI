@@ -290,21 +290,7 @@ export function Composer(props: {
             )}
           </Stack>
 
-          <MenuItem
-            onClick={() =>
-              openModal({
-                type: 'LOGIN',
-                // planId: "pln_...",
-                // priceId: "prc_..."
-              }).then(({ data, type }) => {
-                console.log('data', data);
-                console.log('type: ', type);
-                hideModal();
-              })
-            }
-          >
-            Log in
-          </MenuItem>
+          
         </Stack>
       </Grid>
 
@@ -325,6 +311,21 @@ export function Composer(props: {
               {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
             </MenuItem>
           ))}
+          <MenuItem
+            onClick={() =>
+              openModal({
+                type: 'LOGIN',
+                // planId: "pln_...",
+                // priceId: "prc_..."
+              }).then(({ data, type }) => {
+                console.log('data', data);
+                console.log('type: ', type);
+                hideModal();
+              })
+            }
+          >
+            Log in
+          </MenuItem>
           {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
         </Menu>
       )}

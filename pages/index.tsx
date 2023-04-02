@@ -34,7 +34,7 @@ export default function Home() {
           boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
         }}
       >
-        <Chat onShowSettings={() => setSettingsShown(false)} data-ms-content="members" />
+        <Chat onShowSettings={() => setSettingsShown(false)} />
 
         <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
       </Container>

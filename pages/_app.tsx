@@ -1,13 +1,10 @@
 import * as React from 'react';
 import Head from 'next/head';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import { AppProps } from 'next/app';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 
 import { createEmotionCache, theme } from '@/lib/theme';
-
-import Script from 'next/script';
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
