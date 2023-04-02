@@ -192,16 +192,9 @@ export function Composer(props: {
               {props.isDeveloperMode ? 'Coller' : 'Coller'}
             </Button>
 
-            <Link to="/api/auth/login">
-              <Button fullWidth variant="plain" color="neutral" href={''}>
-                {props.isDeveloperMode ? 'Login' : 'Login'}
-              </Button>
-            </Link>
+            <Link to="/api/auth/login">Login</Link>
 
-            <Button fullWidth variant="plain" color="neutral" href={''}>
-              {props.isDeveloperMode ? 'Logout' : 'Logout'}
-              <Link to="/api/auth/logout"></Link>
-            </Button>
+            <Link to="/api/auth/logout">Logout</Link>
 
             <input type="file" multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
           </Stack>
