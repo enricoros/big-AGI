@@ -21,6 +21,8 @@
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.6",
+    "remark-gfm": "^3.0.1",
     "zustand": "^4.3.6"
   },
   "devDependencies": {

@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
@@ -140,12 +143,13 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
   </Box>;
 }
 
-const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
+const RenderText = ({ textBlock, onDoubleClick, sx }: { textBlock: TextBlock, onDoubleClick: (e: React.MouseEvent) => void, sx?: SxProps }) =>
   <Typography
     level='body1' component='span'
+    onDoubleClick={onDoubleClick}
     sx={{ ...(sx || {}), mx: 1.5 }}
   >
-    {textBlock.content}
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
   </Typography>;
 
 
