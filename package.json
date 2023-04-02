@@ -19,6 +19,7 @@
     "@vercel/analytics": "^0.1.11",
     "eventsource-parser": "^1.0.0",
     "next": "^13.2.4",
+    "next-auth": "^4.21.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

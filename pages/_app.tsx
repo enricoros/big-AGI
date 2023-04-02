@@ -5,7 +5,7 @@ import { AppProps } from 'next/app';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { createEmotionCache, theme } from '@/lib/theme';
-
+import { SessionProvider } from 'next-auth/react';
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -14,9 +14,10 @@ export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
 
-export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
+export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps: { session, ...pageProps } }: MyAppProps) {
   return (
     <>
+      <SessionProvider session={session}>
         <CacheProvider value={emotionCache}>
           <Head>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
@@ -28,6 +29,7 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
           </CssVarsProvider>
         </CacheProvider>
         <VercelAnalytics debug={false} />
+      </SessionProvider>
     </>
   );
 }
