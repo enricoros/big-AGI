@@ -33,6 +33,7 @@
     "@types/react-dom": "^18.0.11",
     "eslint": "^8.37.0",
     "eslint-config-next": "^13.2.4",
+    "supabase": "^1.46.5",
     "typescript": "^5.0.2"
   }
 }

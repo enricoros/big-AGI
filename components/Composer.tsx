@@ -13,8 +13,6 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { useComposerStore } from '@/lib/store';
 import { useSpeechRecognition } from '@/lib/use-speech-recognition';
 
-import Session from 'components/login-btn.jsx';
-
 /// Text template helpers
 
 const PromptTemplates: { [key: string]: string } = {
@@ -191,8 +189,6 @@ export function Composer(props: {
             <Button fullWidth variant="plain" color="neutral" startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard} sx={{ ...hideOnMobile }}>
               {props.isDeveloperMode ? 'Coller' : 'Coller'}
             </Button>
-
-            <Session />
 
             <input type="file" multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
           </Stack>
