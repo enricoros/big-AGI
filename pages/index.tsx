@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Script from 'next/script'
 
 import { Container, useTheme } from '@mui/joy';
 
@@ -7,6 +6,8 @@ import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
 import { useSettingsStore } from '@/lib/store';
+
+
 
 
 export default function Home() {
@@ -32,9 +33,7 @@ export default function Home() {
      *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
      */
     <NoSSR>
-      <>
-      <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
-    </>
+     
       
 
       <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
