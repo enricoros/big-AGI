@@ -175,7 +175,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       errorMessage = <>
         Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
         and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-        access</Link> to the desired model.
+          access</Link> to the desired model.
       </>;
     } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
@@ -369,8 +369,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
       {/* Author */}
       <Stack sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
-             onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-             onClick={event => setMenuAnchor(event.currentTarget)}>
+        onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
+        onClick={event => setMenuAnchor(event.currentTarget)}>
 
         {isHovering ? (
           <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
@@ -404,7 +404,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={{ ...codeFontCss, background: theme.vars.palette.background.level1 }} />
-              : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
+              : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
           )}
 
           {errorMessage && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>}
@@ -416,8 +416,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       ) : (
 
         <Textarea variant='soft' color='warning' autoFocus minRows={1}
-                  value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-                  sx={{ ...blocksFontCss, flexGrow: 1 }} />
+          value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
+          sx={{ ...blocksFontCss, flexGrow: 1 }} />
 
       )}
 
