@@ -435,20 +435,6 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
           </MenuItem>
-          <MenuItem onClick={handleMenuEdit}>
-            <ListItemDecorator><EditIcon /></ListItemDecorator>
-            {isEditing ? 'Discard' : 'Edit'}
-            {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
-          </MenuItem>
-          <ListDivider />
-          <MenuItem onClick={handleMenuRunAgain} disabled={!fromUser || props.disableSend}>
-            <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-            Run again
-          </MenuItem>
-          <MenuItem onClick={props.onDelete} disabled={false /*fromSystem*/}>
-            <ListItemDecorator><ClearIcon /></ListItemDecorator>
-            Delete
-          </MenuItem>
         </Menu>
       )}
 
