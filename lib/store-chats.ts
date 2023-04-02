@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 
 import { ChatModelId, defaultChatModelId, SystemPurposeId } from '@/lib/data';
 
+
 /// Conversations Store
 
 export interface ChatStore {
@@ -39,17 +40,17 @@ export interface ChatStore {
 export interface DMessage {
   id: string;
   text: string;
-  sender: 'You' | 'Bot' | string; // pretty name
-  avatar: string | null; // null, or image url
+  sender: 'You' | 'Bot' | string;   // pretty name
+  avatar: string | null;            // null, or image url
   typing: boolean;
   role: 'assistant' | 'system' | 'user';
 
-  modelId?: string; // only assistant - goes beyond known models
-  purposeId?: SystemPurposeId; // only assistant/system
+  modelId?: string;                 // only assistant - goes beyond known models
+  purposeId?: SystemPurposeId;      // only assistant/system
   cacheTokensCount?: number;
 
-  created: number; // created timestamp
-  updated: number | null; // updated timestamp
+  created: number;                  // created timestamp
+  updated: number | null;           // updated timestamp
 }
 
 /**
@@ -68,141 +69,148 @@ export interface DConversation {
   userTitle?: string;
   autoTitle?: string;
   cacheTokensCount?: number;
-  created: number; // created timestamp
-  updated: number | null; // updated timestamp
+  created: number;            // created timestamp
+  updated: number | null;     // updated timestamp
 }
 
-const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation => ({
-  id,
-  name,
-  messages: [],
-  systemPurposeId,
-  chatModelId,
-  created: Date.now(),
-  updated: Date.now(),
-});
+const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
+  ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Developer', defaultChatModelId)];
+const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Canada', defaultChatModelId)];
 
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
+const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Canada', defaultChatModelId);
 
-export const useChatStore = create<ChatStore>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        // default state
-        conversations: defaultConversations,
-        activeConversationId: defaultConversations[0].id,
 
-        addConversation: (conversation: DConversation) =>
-          set((state) => ({
-            conversations: [conversation, ...state.conversations.slice(0, 19)],
-          })),
+export const useChatStore = create<ChatStore>()(devtools(
+  persist(
+    (set, get) => ({
+      // default state
+      conversations: defaultConversations,
+      activeConversationId: defaultConversations[0].id,
 
-        deleteConversation: (conversationId: string) =>
-          set((state) => ({
+
+      addConversation: (conversation: DConversation) =>
+        set(state => (
+          {
+            conversations: [
+              conversation,
+              ...state.conversations.slice(0, 19),
+            ],
+          }
+        )),
+
+      deleteConversation: (conversationId: string) =>
+        set(state => (
+          {
             conversations: state.conversations.filter((conversation: DConversation): boolean => conversation.id !== conversationId),
-          })),
+          }
+        )),
 
-        setActiveConversationId: (conversationId: string) => set({ activeConversationId: conversationId }),
+      setActiveConversationId: (conversationId: string) =>
+        set({ activeConversationId: conversationId }),
 
-        // within a conversation
 
-        setMessages: (conversationId: string, newMessages: DMessage[]) =>
-          get()._editConversation(conversationId, {
+      // within a conversation
+
+      setMessages: (conversationId: string, newMessages: DMessage[]) =>
+        get()._editConversation(conversationId,
+          {
             messages: newMessages,
             // cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
             updated: Date.now(),
-          }),
+          },
+        ),
 
-        appendMessage: (conversationId: string, message: DMessage) =>
-          get()._editConversation(conversationId, (conversation) => {
-            const messages = [...conversation.messages, message];
+      appendMessage: (conversationId: string, message: DMessage) =>
+        get()._editConversation(conversationId, conversation => {
 
-            return {
-              messages,
-              // DISABLE THE FOLLOWING FOR NOW - as we haven't decided how to handle token counts
-              // cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
-              updated: Date.now(),
-            };
-          }),
+          const messages = [...conversation.messages, message];
 
-        deleteMessage: (conversationId: string, messageId: string) =>
-          get()._editConversation(conversationId, (conversation) => {
-            const messages = conversation.messages.filter((message) => message.id !== messageId);
+          return {
+            messages,
+            // DISABLE THE FOLLOWING FOR NOW - as we haven't decided how to handle token counts
+            // cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
+            updated: Date.now(),
+          };
+        }),
 
-            return {
-              messages,
-              // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-              updated: Date.now(),
-            };
-          }),
+      deleteMessage: (conversationId: string, messageId: string) =>
+        get()._editConversation(conversationId, conversation => {
 
-        editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) =>
-          get()._editConversation(conversationId, (conversation) => {
-            const messages = conversation.messages.map(
-              (message: DMessage): DMessage =>
-                message.id === messageId
-                  ? {
-                      ...message,
-                      ...updatedMessage,
-                      ...(touch ? { updated: Date.now() } : {}),
-                    }
-                  : message,
-            );
+          const messages = conversation.messages.filter(message => message.id !== messageId);
 
-            return {
-              messages,
-              // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-              ...(touch ? { updated: Date.now() } : {}),
-            };
-          }),
+          return {
+            messages,
+            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            updated: Date.now(),
+          };
+        }),
 
-        setChatModelId: (conversationId: string, chatModelId: ChatModelId) =>
-          get()._editConversation(conversationId, {
+      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) =>
+        get()._editConversation(conversationId, conversation => {
+
+          const messages = conversation.messages.map((message: DMessage): DMessage =>
+            message.id === messageId
+              ? {
+                ...message,
+                ...updatedMessage,
+                ...(touch ? { updated: Date.now() } : {}),
+              }
+              : message);
+
+          return {
+            messages,
+            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            ...(touch ? { updated: Date.now() } : {}),
+          };
+        }),
+
+      setChatModelId: (conversationId: string, chatModelId: ChatModelId) =>
+        get()._editConversation(conversationId,
+          {
             chatModelId,
           }),
 
-        setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
-          get()._editConversation(conversationId, {
+      setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
+        get()._editConversation(conversationId,
+          {
             systemPurposeId,
           }),
 
-        _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) =>
-          set((state) => ({
-            conversations: state.conversations.map(
-              (conversation: DConversation): DConversation =>
-                conversation.id === conversationId
-                  ? {
-                      ...conversation,
-                      ...(typeof update === 'function' ? update(conversation) : update),
-                    }
-                  : conversation,
-            ),
-          })),
-      }),
-      {
-        name: 'app-chats',
-      },
-    ),
+
+      _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) =>
+        set(state => ({
+          conversations: state.conversations.map((conversation: DConversation): DConversation =>
+            conversation.id === conversationId
+              ? {
+                ...conversation,
+                ...(typeof update === 'function' ? update(conversation) : update),
+              }
+              : conversation),
+        })),
+
+    }),
     {
-      name: 'AppChats',
-      enabled: false,
-    },
-  ),
+      name: 'app-chats',
+    }),
+  {
+    name: 'AppChats',
+    enabled: false,
+  }),
 );
+
 
 // WARNING: this will re-render at high frequency (e.g. token received in any message therein)
 //          only use this for UI that renders messages
 export function useActiveConversation(): DConversation {
-  const activeConversationId = useChatStore((state) => state.activeConversationId);
-  return useChatStore((state) => state.conversations.find((conversation) => conversation.id === activeConversationId) || errorConversation);
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  return useChatStore(state => state.conversations.find(conversation => conversation.id === activeConversationId) || errorConversation);
 }
 
 export function useActiveConfiguration() {
-  const { conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId } = useChatStore((state) => {
+  const { conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const _activeConversationId = state.activeConversationId;
-    const conversation = state.conversations.find((conversation) => conversation.id === _activeConversationId) || errorConversation;
+    const conversation = state.conversations.find(conversation => conversation.id === _activeConversationId) || errorConversation;
     return {
       conversationId: conversation.id,
       chatModelId: conversation.chatModelId,
@@ -221,8 +229,8 @@ export function useActiveConfiguration() {
   };
 }
 
-export const useConversationNames = (): { id: string; name: string; systemPurposeId: SystemPurposeId }[] =>
+export const useConversationNames = (): { id: string, name: string, systemPurposeId: SystemPurposeId }[] =>
   useChatStore(
-    (state) => state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
+    state => state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
     shallow,
   );

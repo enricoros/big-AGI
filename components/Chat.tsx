@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Stack, useTheme, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
@@ -11,7 +11,6 @@ import { ConfirmationDialog } from '@/components/util/ConfirmationDialog';
 import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { SystemPurposes } from '@/lib/data';
 import { useSettingsStore } from '@/lib/store';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 
 function createDMessage(role: DMessage['role'], text: string): DMessage {
@@ -214,11 +213,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           sendMessage={handleSendMessage} stopGeneration={handleStopGeneration}
         />
       </Box>
-
-      <MenuItem>
-        <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-        Login
-      </MenuItem>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog
