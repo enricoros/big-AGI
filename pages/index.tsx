@@ -28,17 +28,17 @@ export default function Home() {
      */
 
     <NoSSR>
-        <Container
-          maxWidth={wideMode ? false : 'xl'}
-          disableGutters
-          sx={{
-            boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
-          }}
-        >
-          <Chat onShowSettings={() => setSettingsShown(false)} />
+      <Container
+        maxWidth={wideMode ? false : 'xl'}
+        disableGutters
+        sx={{
+          boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
+        }}
+      >
+        <Chat onShowSettings={() => setSettingsShown(false)} />
 
-          <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
-        </Container>
+        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
+      </Container>
     </NoSSR>
   );
 }
