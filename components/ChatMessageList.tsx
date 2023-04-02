@@ -59,7 +59,7 @@ function PurposeSelect() {
         </Grid>
 
         <Typography level="body2" sx={{ mt: 2 }}>
-          {SystemPurposes.description}
+          {SystemPurposes[systemPurposeId].description}
         </Typography>
       </Box>
     </Stack>
