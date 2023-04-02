@@ -12,6 +12,7 @@
     "@emotion/react": "^11.10.6",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
+    "@memberstack/react": "^2.0.1",
     "@mui/icons-material": "^5.11.11",
     "@mui/joy": "^5.0.0-alpha.73",
     "@vercel/analytics": "^0.1.11",

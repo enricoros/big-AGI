@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Script from 'next/script'
 
 import { Container, useTheme } from '@mui/joy';
 
@@ -31,6 +32,10 @@ export default function Home() {
      *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
      */
     <NoSSR>
+      <>
+      <Script data-memberstack-app="app_clcnm9ij300en0tlsa7azbd9e" src="https://static.memberstack.com/scripts/v1/memberstack.js" type="text/javascript" />
+    </>
+      
 
       <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
         boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
