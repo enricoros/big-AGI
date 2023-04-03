@@ -11,7 +11,7 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
 import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
-import { SxProps, Theme } from '@mui/joy/styles/types';
+import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
@@ -20,9 +20,11 @@ import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+
 import { DMessage } from '@/lib/store-chats';
 import { Link } from './util/Link';
-import { cssRainbowColorKeyframes } from '@/lib/theme';
+import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
+import { prettyBaseModel } from '@/lib/export-conversation';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -113,17 +115,24 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 /// Renderers for the different types of message blocks
 
-function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: Theme, sx?: SxProps }) {
-  const handleCopyToClipboard = () =>
+function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
+  const handleCopyToClipboard = (e: React.MouseEvent) => {
+    e.stopPropagation();
     copyToClipboard(codeBlock.code);
+  };
 
   return <Box component='code' sx={{
     position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
-    display: 'block', fontWeight: 500, background: theme.vars.palette.background.level1,
+    display: 'block', fontWeight: 500,
     '&:hover > button': { opacity: 1 },
   }}>
     <Tooltip title='Copy Code' variant='solid'>
-      <IconButton variant='plain' color='primary' onClick={handleCopyToClipboard} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5, opacity: 0, transition: 'opacity 0.3s' }}>
+      <IconButton
+        variant='outlined' color='neutral' onClick={handleCopyToClipboard}
+        sx={{
+          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
+          opacity: 0, transition: 'opacity 0.3s',
+        }}>
         <ContentCopyIcon />
       </IconButton>
     </Tooltip>
@@ -131,10 +140,9 @@ function RenderCode({ codeBlock, theme, sx }: { codeBlock: CodeBlock, theme: The
   </Box>;
 }
 
-const RenderText = ({ textBlock, onDoubleClick, sx }: { textBlock: TextBlock, onDoubleClick: (e: React.MouseEvent) => void, sx?: SxProps }) =>
+const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
   <Typography
     level='body1' component='span'
-    onDoubleClick={onDoubleClick}
     sx={{ ...(sx || {}), mx: 1.5 }}
   >
     {textBlock.content}
@@ -146,13 +154,6 @@ function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)
       .then(() => console.log('Message copied to clipboard'))
       .catch((err) => console.error('Failed to copy message: ', err));
-}
-
-function prettyBaseModel(model: string | undefined): string {
-  if (!model) return '';
-  if (model.startsWith('gpt-4')) return 'gpt-4';
-  if (model.startsWith('gpt-3.5-turbo')) return '3.5 Turbo';
-  return model;
 }
 
 function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: string) {
@@ -306,19 +307,36 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         case 'system':
           return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
         case 'assistant':
+          // display a gif avatar when the assistant is typing (fools mode)
+          if (foolsMode && messageTyping)
+            return <Avatar
+              alt={messageSender} variant='plain'
+              src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 8,
+              }}
+            />;
           return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
         case 'user':
           return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
       }
       return <Avatar alt={messageSender} />;
-    }, [messageAvatar, messageRole, messageSender],
+    }, [messageAvatar, messageRole, messageSender, messageTyping],
   );
 
   // text box css
-  const chatFontCss = {
+  const blocksFontCss = {
     my: 'auto',
-    fontFamily: fromAssistant ? theme.fontFamily.code : theme.fontFamily.body,
-    fontSize: fromAssistant ? '14px' : '16px',
+  };
+  const textFontCss = {
+    lineHeight: 1.75,
+  };
+  const codeFontCss = {
+    fontFamily: theme.fontFamily.code,
+    fontSize: '14px',
+    fontVariantLigatures: 'none',
     lineHeight: 1.75,
   };
 
@@ -375,14 +393,14 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       {/* Edit / Blocks */}
       {!isEditing ? (
 
-        <Box sx={{ ...chatFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }}>
+        <Box sx={{ ...blocksFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }} onDoubleClick={handleMenuEdit}>
 
           {fromSystem && wasEdited && <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>}
 
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
-              ? <RenderCode key={'code-' + index} codeBlock={block} theme={theme} sx={{ ...chatFontCss, fontVariantLigatures: 'none'}} />
-              : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...chatFontCss, background: textBackground } : chatFontCss} />,
+              ? <RenderCode key={'code-' + index} codeBlock={block} sx={{ ...codeFontCss, background: theme.vars.palette.background.level1 }} />
+              : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
           )}
 
           {errorMessage && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>}
@@ -395,7 +413,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
         <Textarea variant='soft' color='warning' autoFocus minRows={1}
                   value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-                  sx={{ ...chatFontCss, flexGrow: 1 }} />
+                  sx={{ ...blocksFontCss, flexGrow: 1 }} />
 
       )}
 
@@ -404,7 +422,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       {!fromSystem && !isEditing && (
         <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant='solid'>
           <IconButton
-            variant='plain' color='primary' onClick={handleMenuCopy}
+            variant='outlined' color='neutral' onClick={handleMenuCopy}
             sx={{
               position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
               opacity: 0, transition: 'opacity 0.3s',
