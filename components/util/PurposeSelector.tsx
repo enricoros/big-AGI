@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AspectRatio, Box, Button, Grid, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { AspectRatio, Box, Button, Grid, Stack, Textarea, Typography } from '@mui/joy';
 
 import { useActiveConfiguration } from '@/lib/store-chats';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
@@ -11,7 +11,6 @@ import { SystemPurposeId, SystemPurposes } from '@/lib/data';
  */
 export function PurposeSelector() {
   // external state
-  const theme = useTheme();
   const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {

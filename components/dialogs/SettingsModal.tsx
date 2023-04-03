@@ -6,8 +6,8 @@ import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
-import { Link } from './util/Link';
-import { useSettingsStore } from '@/lib/store';
+import { Link } from '@/components/util/Link';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>

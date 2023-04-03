@@ -4,8 +4,8 @@ import { Container, useTheme } from '@mui/joy';
 
 import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
-import { isValidOpenAIApiKey, SettingsModal } from '@/components/SettingsModal';
-import { useSettingsStore } from '@/lib/store';
+import { isValidOpenAIApiKey, SettingsModal } from '@/components/dialogs/SettingsModal';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 export default function Home() {

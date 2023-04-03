@@ -10,7 +10,7 @@ import { Link } from '@/components/util/Link';
  * Displays the result of a conversation export as a modal dialog.
  * This is to give the user the chance to write down the deletion key, mainly.
  */
-export function ExportResultDialog(props: { onClose: () => void, response: ApiExportResponse, open: boolean }) {
+export function ExportOutcomeDialog(props: { onClose: () => void, response: ApiExportResponse, open: boolean }) {
   if (!props.response || props.response.type !== 'success')
     return null;
 

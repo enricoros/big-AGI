@@ -27,8 +27,8 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { DMessage } from '@/lib/store-chats';
 import { Link } from '@/components/util/Link';
 import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
-import { prettyBaseModel } from '@/lib/export-conversation';
-import { useSettingsStore } from '@/lib/store';
+import { prettyBaseModel } from '@/lib/export';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 /// Utilities to parse messages into blocks of text and code
