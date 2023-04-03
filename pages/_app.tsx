@@ -1,3 +1,8 @@
+if (typeof window !== 'undefined') {
+  const pdfjs = require('pdfjs-dist');
+  pdfjs.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.js';
+}
+
 import * as React from 'react';
 import Head from 'next/head';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
