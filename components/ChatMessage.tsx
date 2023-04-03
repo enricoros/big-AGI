@@ -373,7 +373,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: 1, px: { xs: 1, md: 2 }, py: 0,
+      gap: 1, px: { xs: 1, md: 2 }, py: 2,
       background,
       borderBottom: '1px solid',
       borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
