@@ -17,6 +17,8 @@ interface SettingsStore {
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
+  renderMarkdown: boolean;
+  setRenderMarkdown: (renderMarkdown: boolean) => void;
 
   // OpenAI API settings
 
@@ -46,6 +48,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       showSystemMessages: false,
       setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
+
+      renderMarkdown: true,
+      setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
       apiKey: (function() {
         // this will be removed in April
