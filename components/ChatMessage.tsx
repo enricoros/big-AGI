@@ -145,7 +145,13 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
 }
 
 const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
-  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5 }}>
+  <Typography component='span' sx={{
+    ...(sx || {}), mx: 1.5,
+    '& p': { // Add this style override
+      marginBlockStart: 0,
+      marginBlockEnd: 0,
+    }
+  }}>
     <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
   </Typography>;
 
@@ -177,7 +183,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       errorMessage = <>
         Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
         and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-        access</Link> to the desired model.
+          access</Link> to the desired model.
       </>;
     } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
@@ -361,7 +367,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: 1, px: { xs: 1, md: 2 }, py: 2,
+      gap: 1, px: { xs: 1, md: 2 }, py: 0,
       background,
       borderBottom: '1px solid',
       borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
