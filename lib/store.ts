@@ -49,7 +49,7 @@ export const useSettingsStore = create<SettingsStore>()(
       showSystemMessages: false,
       setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
 
-      renderMarkdown: true,
+      renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
       apiKey: (function() {

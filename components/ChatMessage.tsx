@@ -25,9 +25,10 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
-import { Link } from './util/Link';
+import { Link } from '@/components/util/Link';
 import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/export-conversation';
+import { useSettingsStore } from '@/lib/store';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -143,13 +144,14 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
   </Box>;
 }
 
-const RenderText = ({ textBlock, onDoubleClick, sx }: { textBlock: TextBlock, onDoubleClick: (e: React.MouseEvent) => void, sx?: SxProps }) =>
-  <Typography
-    level='body1' component='span'
-    onDoubleClick={onDoubleClick}
-    sx={{ ...(sx || {}), mx: 1.5 }}
-  >
+const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
+  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5 }}>
     <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
+  </Typography>;
+
+const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
+  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5 }}>
+    {textBlock.content}
   </Typography>;
 
 
@@ -175,7 +177,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       errorMessage = <>
         Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
         and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-          access</Link> to the desired model.
+        access</Link> to the desired model.
       </>;
     } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
@@ -208,7 +210,6 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  *
  */
 export function ChatMessage(props: { message: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
-  const theme = useTheme();
   const {
     text: messageText,
     sender: messageSender,
@@ -224,15 +225,16 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
 
-  // viewing
+  // state
   const [forceExpanded, setForceExpanded] = React.useState(false);
-
-  // editing
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedText, setEditedText] = React.useState('');
 
+  // external state
+  const theme = useTheme();
+  const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
@@ -368,7 +370,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     }}>
 
       {/* Author */}
-      <Stack sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
+      <Stack
+        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
         onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
         onClick={event => setMenuAnchor(event.currentTarget)}>
 
@@ -404,7 +407,9 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           {parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={{ ...codeFontCss, background: theme.vars.palette.background.level1 }} />
-              : <RenderText key={'text-' + index} textBlock={block} onDoubleClick={handleMenuEdit} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
+              : renderMarkdown
+                ? <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />
+                : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
           )}
 
           {errorMessage && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>}
@@ -415,7 +420,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
       ) : (
 
-        <Textarea variant='soft' color='warning' autoFocus minRows={1}
+        <Textarea
+          variant='soft' color='warning' autoFocus minRows={1}
           value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
           sx={{ ...blocksFontCss, flexGrow: 1 }} />
 
