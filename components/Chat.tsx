@@ -37,7 +37,7 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
 async function _streamAssistantResponseMessage(
   conversationId: string, history: DMessage[],
   apiKey: string | undefined, apiHost: string | undefined,
-  chatModelId: string, modelTemperature: number, modelMaxTokens: number, abortSignal: AbortSignal,
+  chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number, abortSignal: AbortSignal,
   addMessage: (conversationId: string, message: DMessage) => void,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
 ) {
@@ -58,7 +58,7 @@ async function _streamAssistantResponseMessage(
       content: text,
     })),
     temperature: modelTemperature,
-    max_tokens: modelMaxTokens,
+    max_tokens: modelMaxResponseTokens,
   };
 
   try {
@@ -153,9 +153,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     const controller = new AbortController();
     setAbortController(controller);
 
-    const { apiKey, modelTemperature, modelMaxTokens, modelApiHost } = useSettingsStore.getState();
+    const { apiKey, modelTemperature, modelMaxResponseTokens, modelApiHost } = useSettingsStore.getState();
     const { appendMessage, editMessage } = useChatStore.getState();
-    await _streamAssistantResponseMessage(conversationId, history, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxTokens, controller.signal, appendMessage, editMessage);
+    await _streamAssistantResponseMessage(conversationId, history, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxResponseTokens, controller.signal, appendMessage, editMessage);
 
     // clear to send, again
     setAbortController(null);

@@ -10,10 +10,11 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { ChatModels } from '@/lib/data';
 import { countModelTokens } from '@/lib/token-counters';
 import { extractPdfText } from '@/lib/pdf';
 import { useActiveConfiguration } from '@/lib/store-chats';
-import { useComposerStore } from '@/lib/store-settings';
+import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
 
@@ -54,6 +55,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   // external state
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
   const { chatModelId } = useActiveConfiguration();
+  const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
 
   const handleSendClicked = () => {
@@ -187,7 +189,13 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
   // compute tokens (warning: slow - shall have a toggle)
-  const estimatedTokens = countModelTokens(composeText, chatModelId);
+  const modelComposerTokens = countModelTokens(composeText, chatModelId);
+  const modelRestOfChatTokens = 0;
+  const estimatedTokens = modelComposerTokens + modelRestOfChatTokens;
+  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
+  const remainingTokens = modelContextTokens - estimatedTokens - modelMaxResponseTokens;
+  const tokensString = `model: ${modelContextTokens.toLocaleString()} - chat: ${estimatedTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${remainingTokens.toLocaleString()} ${remainingTokens < 0 ? '⚠️' : ''}`;
+  const tokenColor = remainingTokens < 1 ? 'danger' : remainingTokens < modelComposerTokens / 4 ? 'warning' : 'primary';
 
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
@@ -252,8 +260,8 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           <Badge
             size='md' variant='solid' max={65535} showZero={false}
-            color={estimatedTokens >= (8192 - 2048) ? 'danger' : estimatedTokens >= (4097 - 2048) ? 'warning' : 'primary'}
-            badgeContent={estimatedTokens}
+            badgeContent={estimatedTokens > 0 ? <Tooltip title={tokensString} color={tokenColor}><span>{estimatedTokens}</span></Tooltip> : 0}
+            color={tokenColor}
             sx={{
               position: 'absolute', bottom: 8, right: 8,
             }}
