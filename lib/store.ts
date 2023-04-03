@@ -5,8 +5,8 @@ import { persist } from 'zustand/middleware';
 /// Settings Store
 
 interface SettingsStore {
-  apiKey: string;
-  setApiKey: (apiKey: string) => void;
+
+  // UI settings
 
   wideMode: boolean;
   setWideMode: (wideMode: boolean) => void;
@@ -14,27 +14,29 @@ interface SettingsStore {
   freeScroll: boolean;
   setFreeScroll: (freeScroll: boolean) => void;
 
+  showSystemMessages: boolean;
+  setShowSystemMessages: (showSystemMessages: boolean) => void;
+
+
+  // OpenAI API settings
+
+  apiKey: string;
+  setApiKey: (apiKey: string) => void;
+
+  modelApiHost: string;
+  setModelApiHost: (modelApiHost: string) => void;
+
   modelTemperature: number;
   setModelTemperature: (modelTemperature: number) => void;
 
   modelMaxTokens: number;
   setModelMaxTokens: (modelMaxTokens: number) => void;
 
-  modelApiHost: string;
-  setModelApiHost: (modelApiHost: string) => void;
-
-  showSystemMessages: boolean;
-  setShowSystemMessages: (showSystemMessages: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
-  persist((set) => ({
-      apiKey: (function() {
-        // backwards compatibility from the former localStorage key
-        if (typeof localStorage === 'undefined') return '';
-        return localStorage.getItem('app-settings-openai-api-key') || '';
-      })(),
-      setApiKey: (apiKey: string) => set({ apiKey }),
+  persist(
+    (set) => ({
 
       wideMode: false,
       setWideMode: (wideMode: boolean) => set({ wideMode }),
@@ -42,17 +44,25 @@ export const useSettingsStore = create<SettingsStore>()(
       freeScroll: false,
       setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),
 
+      showSystemMessages: false,
+      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
+
+      apiKey: (function() {
+        // this will be removed in April
+        if (typeof localStorage === 'undefined') return '';
+        return localStorage.getItem('app-settings-openai-api-key') || '';
+      })(),
+      setApiKey: (apiKey: string) => set({ apiKey }),
+
+      modelApiHost: '',
+      setModelApiHost: (modelApiHost: string) => set({ modelApiHost }),
+
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),
 
       modelMaxTokens: 2048,
       setModelMaxTokens: (modelMaxTokens: number) => set({ modelMaxTokens }),
 
-      modelApiHost: '',
-      setModelApiHost: (modelApiHost: string) => set({ modelApiHost }),
-
-      showSystemMessages: false,
-      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
     }),
     {
       name: 'app-settings',

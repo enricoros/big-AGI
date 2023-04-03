@@ -23,16 +23,22 @@ Or click fork & run on Vercel
 
 ## Features ✨
 
-🚨 **We added cool new features to the app!** (bare-bones was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
+🚨 **We added cool new features to the app!** (bare-bones
+was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] 🎉 **NEW 04.01** Typing Avatars
+  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p>
+- [x] 🎉 **NEW 03.31** Publish & share chats to paste.gg 📥
+  <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='300' alt="Export chats"/></a></p>
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
 - [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-  <p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
+  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"/></a></p>
 - [x] **Syntax highlighting** - for multiple languages 🌈
 - [x] **Context** - Drag and drop files to add them to the prompt 📁
-  <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
-- [x] 🎉 **NEW** Stop generation 🛑 (fredliubojin) - Voice input 🎙️ (koganei)
+  <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"/></a></p>
+- [x] **Stop generation** 🛑 (fredliubojin)
+- [x] **Voice input** 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
 - [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
 - [x] Dark mode 🌙 - Wide mode ⛶
@@ -46,6 +52,13 @@ Or click fork & run on Vercel
 Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
 
 ![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
+
+## Integrations 🤝
+
+| Integration                          | Description                | Docs                                                   |
+|:-------------------------------------|:---------------------------|:-------------------------------------------------------|
+| [Helicone](https://www.helicone.ai/) | LLM Observability Platform | Settings Menu > Advanced > API Host: 'oai.hconeai.com' |
+| [Paste.gg](https://paste.gg/)        | Paste Sharing              | Chat Menu > Share via paste.gg                         |
 
 ## Developing 🚀
 
@@ -80,7 +93,7 @@ This project is licensed under the MIT License.
 [![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
 [![GitHub issues](https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
-[![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/enricoros?style=social)](https://twitter.com/enricoros)
 
 Made with 💙
