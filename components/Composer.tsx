@@ -13,8 +13,9 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { convertPdfFileToMdDirect } from '@/lib/pdf';
 import { countModelTokens } from '@/lib/token-counters';
 import { useActiveConfiguration } from '@/lib/store-chats';
-import { useComposerStore } from '@/lib/store';
-import { useSpeechRecognition } from '@/lib/use-speech-recognition';
+import { useComposerStore } from '@/lib/store-settings';
+import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
+
 
 /// Text template helpers
 

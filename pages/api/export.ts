@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { postToPasteGG } from '@/lib/export-conversation';
+import { postToPasteGG } from '@/lib/export';
 
 
 export interface ApiExportBody {

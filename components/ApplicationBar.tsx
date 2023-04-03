@@ -20,13 +20,13 @@ import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/
 import { Link } from '@/components/util/Link';
 import { foolsMode } from '@/lib/theme';
 import { useActiveConfiguration, useChatStore, useConversationNames } from '@/lib/store-chats';
-import { useSettingsStore } from '@/lib/store';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-function BeautifulSelect<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
+function Dropdown<TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) {
   return (
     <Select
       variant='solid' color='neutral' size='md'
@@ -201,9 +201,9 @@ export function ApplicationBar({ onClearConversation, onExportConversation, onSh
 
       <Stack direction='row' sx={{ my: 'auto' }}>
 
-        <BeautifulSelect items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
+        <Dropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />
 
-        <BeautifulSelect items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+        <Dropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
 
       </Stack>
 
