@@ -54,11 +54,11 @@ function Section(props: { title?: string; collapsible?: boolean, collapsed?: boo
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
   // external state
-  const { renderMarkdown, setRenderMarkdown, apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxTokens, setModelMaxTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
+  const { renderMarkdown, setRenderMarkdown, apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     apiKey: state.apiKey, setApiKey: state.setApiKey,
     modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
-    modelMaxTokens: state.modelMaxTokens, setModelMaxTokens: state.setModelMaxTokens,
+    modelMaxResponseTokens: state.modelMaxResponseTokens, setModelMaxResponseTokens: state.setModelMaxResponseTokens,
     modelApiHost: state.modelApiHost, setModelApiHost: state.setModelApiHost,
   }), shallow);
 
@@ -70,7 +70,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
 
-  const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxTokens(newValue as number);
+  const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
 
   const handleModelApiHostChange = (e: React.ChangeEvent) => setModelApiHost((e.target as HTMLInputElement).value);
 
@@ -153,7 +153,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               <Slider
                 aria-label='Model Temperature' color='neutral'
                 min={512} max={8192} step={512} defaultValue={2048}
-                value={modelMaxTokens} onChange={handleMaxTokensChange}
+                value={modelMaxResponseTokens} onChange={handleMaxTokensChange}
                 valueLabelDisplay='auto'
                 sx={{ py: 1, mt: 1.1 }}
               />

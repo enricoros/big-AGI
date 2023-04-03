@@ -31,8 +31,8 @@ interface SettingsStore {
   modelTemperature: number;
   setModelTemperature: (modelTemperature: number) => void;
 
-  modelMaxTokens: number;
-  setModelMaxTokens: (modelMaxTokens: number) => void;
+  modelMaxResponseTokens: number;
+  setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
 }
 
@@ -65,8 +65,8 @@ export const useSettingsStore = create<SettingsStore>()(
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),
 
-      modelMaxTokens: 2048,
-      setModelMaxTokens: (modelMaxTokens: number) => set({ modelMaxTokens }),
+      modelMaxResponseTokens: 2048,
+      setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
 
     }),
     {
