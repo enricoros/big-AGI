@@ -1,23 +1,28 @@
-import { getDocument } from 'pdfjs-dist';
-
 // Type guard to check if an item has a 'str' property
 function isTextItem(item: any): item is { str: string } {
   return 'str' in item && typeof item.str === 'string';
 }
 
-export const convertPdfFileToMdDirect = async (pdfFile: File): Promise<string> => {
-  if (typeof window !== 'undefined') {
-    const pdfjs = require('pdfjs-dist');
-    pdfjs.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.js';
-  }
+/**
+ * Extracts text from a PDF file
+ *
+ * Uses the Next.js dynamic import feature to import the 'pdfjs-dist' library
+ * only when this function is called. This allows the 'pdfjs-dist' library to
+ * be bundled into a separate chunk, which is only loaded when this function
+ * is called. This is useful because the 'pdfjs-dist' library is quite large,
+ * and we don't want to load it unless we need to. [Faster startup time!]
+ *
+ * @param file - The PDF file to extract text from
+ */
+export const extractPdfText = async (file: File): Promise<string> => {
 
-  const reader = new FileReader();
-  const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(pdfFile);
-  });
+  // Dynamically import the 'pdfjs-dist' library [nextjs]
+  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
+  // Set the worker script path
+  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
+
+  const arrayBuffer = await file.arrayBuffer();
   const pdf = await getDocument(arrayBuffer).promise;
   let text = '';
 
@@ -29,6 +34,6 @@ export const convertPdfFileToMdDirect = async (pdfFile: File): Promise<string> =
       .map(item => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
     text += strings.join(' ') + '\n';
   }
-  console.log('pdf content:', text);
+
   return text;
 };
