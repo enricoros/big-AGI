@@ -150,6 +150,12 @@ const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps 
     '& p': { // Add this style override
       marginBlockStart: 0,
       marginBlockEnd: 0,
+      maxWidth: '90%',
+    },
+    '& table': { // Add this style override
+      minWidth: '200%',
+      overflowX: 'auto',
+      display: 'block',
     }
   }}>
     <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
