@@ -187,7 +187,7 @@ export function Composer(props: {
   const modelComposerTokens = countModelTokens(composeText, chatModelId);
   const modelRestOfChatTokens = 0;
   const estimatedTokens = modelComposerTokens + modelRestOfChatTokens;
-  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
+  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 4096;
   const remainingTokens = modelContextTokens - estimatedTokens - modelMaxResponseTokens;
   const tokensString = `model: ${modelContextTokens.toLocaleString()} - chat: ${estimatedTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${remainingTokens.toLocaleString()} ${
     remainingTokens < 0 ? '⚠️' : ''
