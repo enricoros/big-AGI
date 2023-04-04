@@ -7,18 +7,19 @@ import { getInitColorSchemeScript } from '@mui/joy/styles';
 import { MyAppProps } from './_app';
 import { bodyFontClassName, createEmotionCache } from '@/lib/theme';
 
+
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
 }
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
-    <Html lang="en" className={bodyFontClassName}>
+    <Html lang='en' className={bodyFontClassName}>
       <Head>
         {/* PWA primary color */}
-        <meta name="theme-color" content="#000000" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <meta name="emotion-insertion-point" content="" />
+        <meta name='theme-color' content='#000000' />
+        <link rel='shortcut icon' href='/favicon.ico' />
+        <meta name='emotion-insertion-point' content='' />
         {emotionStyleTags}
       </Head>
       <body>

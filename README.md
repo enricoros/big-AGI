@@ -15,37 +15,54 @@ Or click fork & run on Vercel
 🚨 **Apr'23 - Attention! We look for your input!** 🚨
 
 | Roadmap              | RFC 📝                                                    | Status | Description                                                                                                      |
-| :------------------- | --------------------------------------------------------- | :----: | :--------------------------------------------------------------------------------------------------------------- |
+|:---------------------|-----------------------------------------------------------|:------:|:-----------------------------------------------------------------------------------------------------------------|
 | Editable Purposes 🎭 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | In-app customization of 'Purposes', as many forks are created for that reason.                                   |
 | Templates sharing 🌐 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | Community repository of Purposes/Systems - Vote with 👍 and usage. Where to store? Bring your own key? Moderate? |
 | Reasoning Systems 🧩 | https://github.com/enricoros/nextjs-chatgpt-app/issues/36 |   🤔   | ReAct, DEPS, Reflexion - shall we?                                                                               |
-| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/octo-org/octo-repo/issues/new?labels=RFC&body=Describe+the+idea) ❗              |
+| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/enricoros/nextjs-chatgpt-app/issues/new?labels=RFC&body=Describe+the+idea) ❗               |
 
 ## Features ✨
 
-🚨 **We added cool new features to the app!** (bare-bones was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
+🚨 **We added cool new features to the app!** (bare-bones
+was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.03_ 🎉 **PDF import** 📄🔀🧠 (fredliubojin) <- "ask questions to a PDF!" 🤯
+- [x] _NEW 04.03_ 🎉 **NEW 04.03** Tokens utilization 📊 [WIP]
+  <p><a href="docs/feature_token_counter.png"><img src="docs/feature_token_counter.png" width='300' alt="Token Counters"/></a></p> 
+- [x] _NEW 04.02_ 🎉 **Markdown rendering** 🎨 (nilshulth) [WIP]
+- [x] 🎉 **NEW 04.01** Typing Avatars
+  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p>
+- [x] 🎉 **NEW 03.31** Publish & share chats to paste.gg 📥
+  <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='200' alt="Export chats"/></a></p>
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
 - [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-<p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
+  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"/></a></p>
 - [x] **Syntax highlighting** - for multiple languages 🌈
 - [x] **Context** - Drag and drop files to add them to the prompt 📁
-<p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
-- [x] 🎉 **NEW** Stop generation 🛑 (fredliubojin) - Voice input 🎙️ (koganei)
+  <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"/></a></p>
+- [x] **Stop generation** 🛑 (fredliubojin)
+- [x] **Voice input** 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
 - [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
 - [x] Dark mode 🌙 - Wide mode ⛶
 - [ ] [~~Code execution for TypeScript, JavaScript, and
-      HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
+  HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
 - [ ] Add your own feature 🚀
 - [ ] Send a PR 🙌
 
 ## Why this? 💡
 
-Because the official Chat is **_slower than the API_**, and the Playground UI **_doesn't even highlight code_**.
+Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
 
 ![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
+
+## Integrations 🤝
+
+| Integration                          | Description                | Docs                                                   |
+|:-------------------------------------|:---------------------------|:-------------------------------------------------------|
+| [Helicone](https://www.helicone.ai/) | LLM Observability Platform | Settings Menu > Advanced > API Host: 'oai.hconeai.com' |
+| [Paste.gg](https://paste.gg/)        | Paste Sharing              | Chat Menu > Share via paste.gg                         |
 
 ## Developing 🚀
 
@@ -73,13 +90,14 @@ make changes, and submit a pull request. If you have any questions or need help,
 
 This project is licensed under the MIT License.
 
+
 ---
 
 [![GitHub stars](https://img.shields.io/github/stars/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
 [![GitHub issues](https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
-[![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/enricoros?style=social)](https://twitter.com/enricoros)
 
 Made with 💙
