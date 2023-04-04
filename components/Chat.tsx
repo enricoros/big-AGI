@@ -9,7 +9,7 @@ import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
-import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
+import { DMessage, downloadConversationJson, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { Link } from '@/components/util/Link';
 import { SystemPurposes } from '@/lib/data';
@@ -172,6 +172,15 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
   };
 
+  const handleDownloadConversationToJson = (conversationId: string | null) => {
+    if (conversationId || activeConversationId) {
+      const conversation = findConversation(conversationId || activeConversationId);
+      if (conversation)
+        downloadConversationJson(conversation);
+    }
+  };
+
+
   const handlePublishConversation = (conversationId: string | null) =>
     setPublishConversationId(conversationId || activeConversationId || null);
 
@@ -205,7 +214,10 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       }}>
 
       <ApplicationBar
-        onClearConversation={handleClearConversation} onPublishConversation={handlePublishConversation} onShowSettings={props.onShowSettings}
+        onClearConversation={handleClearConversation}
+        onDownloadConversationJSON={handleDownloadConversationToJson}
+        onPublishConversation={handlePublishConversation}
+        onShowSettings={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
