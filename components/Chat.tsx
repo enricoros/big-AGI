@@ -241,7 +241,7 @@ export function Chat(props: { onShowSettings: () => void; sx?: SxProps }) {
       >
         <Composer
           disableSend={!!abortController}
-          isDeveloperMode={systemPurposeId === 'Developer'}
+          isDeveloperMode={systemPurposeId === 'Custom'}
           sendMessage={handleSendMessage}
           stopGeneration={handleStopGeneration}
         />

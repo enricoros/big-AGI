@@ -1,4 +1,4 @@
-export type SystemPurposeId = 'Canada' | 'Quebec' | 'cinqSubventions' | 'uneSubvention' | 'Developer' | 'Custom';
+export type SystemPurposeId = 'Canada' | 'Quebec' | 'cinqSubventions' | 'uneSubvention' | 'Custom';
 
 type SystemPurposeData = {
   title: string;
@@ -36,12 +36,6 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
       "Date actuelle: {{Today}}.\n Instructions : Tu es un expert en subvention. À l'aide des détails fournis sur mon entreprise et projet, rédige une réponse complète à la requête donnée.\n Donne-moi la réponse selon ce modèle : NOM DE LA SUBVENTION | DESCRIPTION DE LA SUBVENTION | LES EXIGENCES POUR ÊTRE ÉLIGIBLE | MONTANT DE LA SUBVENTION | DATE DE FERMETURE POSTÉRIEUR DES DEMANDES OBLIGATOIREMENT ET UNIQUEMENT EN JOUR/MOIS. N'acceptez aucune demande qui n'a pas rapport avec les subventions.\n Requête : Donne-moi 1 subventions dans lesquelles je peux être potentiellement qualifié.",
     symbol: '🚀',
   },
-  Developer: {
-    title: 'Pour Developeur',
-    description: '',
-    systemMessage: 'Date actuelle: {{Today}}. Instructions : Tu es un expert developpeur full stack.',
-    symbol: '👨‍💻',
-  },
   Custom: {
     title: 'Personnalisé / Test',
     description: '',
@@ -51,9 +45,9 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   },
 };
 
-export type ChatModelId = 'gpt-4' | 'gpt-3.5-turbo';
+export type ChatModelId = 'gpt-3.5-turbo';
 
-export const defaultChatModelId: ChatModelId = 'gpt-4';
+export const defaultChatModelId: ChatModelId = 'gpt-3.5-turbo';
 
 type ChatModelData = {
   description: string | JSX.Element;
@@ -63,12 +57,6 @@ type ChatModelData = {
 };
 
 export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
-  'gpt-4': {
-    description: 'Most insightful, larger problems, but slow, expensive, and may be unavailable',
-    title: 'GPT-4',
-    fullName: 'GPT-4',
-    contextWindowSize: 8192,
-  },
   'gpt-3.5-turbo': {
     description: 'A good balance between speed and insight',
     title: 'Recherche v1',

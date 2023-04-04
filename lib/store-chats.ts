@@ -82,9 +82,9 @@ const createConversation = (id: string, name: string, systemPurposeId: SystemPur
   updated: Date.now(),
 });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Developer', defaultChatModelId)];
+const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Custom', defaultChatModelId)];
 
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
+const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Custom', defaultChatModelId);
 
 export const useChatStore = create<ChatStore>()(
   devtools(
