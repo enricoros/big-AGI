@@ -135,6 +135,9 @@ export function ApplicationBar(props: { onClearConversation: (id: string | null)
   const { freeScroll, setFreeScroll, setShowSystemMessages, setWideMode, showSystemMessages, wideMode } = useSettingsStore();
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
+  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+  const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
+
   const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setChatModelId(value);
 
   const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) => value && setSystemPurposeId(value);
