@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Badge, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme } from '@mui/joy';
+import { IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Option, Select, Sheet, Stack, Switch, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AddIcon from '@mui/icons-material/Add';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -272,21 +272,23 @@ export function ApplicationBar({ onClearConversation, onDownloadConversationJSON
 
       <MenuItem onClick={handleActionDownloadChatJson}>
         <ListItemDecorator>
-          <Badge size='sm' color='warning'>
-            <FileDownloadIcon />
-          </Badge>
+          {/*<Badge size='sm' color='danger'>*/}
+          <FileDownloadIcon />
+          {/*</Badge>*/}
         </ListItemDecorator>
-        Download as JSON
+        Download JSON
       </MenuItem>
 
       <MenuItem onClick={handleActionPublishChat}>
         <ListItemDecorator>
-          <Badge size='sm' color='primary'>
-            <ExitToAppIcon />
-          </Badge>
+          {/*<Badge size='sm' color='primary'>*/}
+          <ExitToAppIcon />
+          {/*</Badge>*/}
         </ListItemDecorator>
         Share via paste.gg
       </MenuItem>
+
+      <ListDivider />
 
       <MenuItem onClick={e => handleActionClearConversation(e, null)}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
