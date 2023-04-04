@@ -26,8 +26,9 @@ Or click fork & run on Vercel
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.04_ 🎉 **Download JSON** to export/backup chats 📥
 - [x] _NEW 04.03_ 🎉 **PDF import** 📄🔀🧠 (fredliubojin) <- "ask questions to a PDF!" 🤯
-- [x] _NEW 04.03_ 🎉 **NEW 04.03** Tokens utilization 📊 [WIP]
+- [x] _NEW 04.03_ 🎉 **Tokens utilization** 📊 [WIP]
   <p><a href="docs/feature_token_counter.png"><img src="docs/feature_token_counter.png" width='300' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.02_ 🎉 **Markdown rendering** 🎨 (nilshulth) [WIP]
 - [x] 🎉 **NEW 04.01** Typing Avatars
