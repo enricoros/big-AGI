@@ -9,13 +9,13 @@ interface Question {
 }
 
 interface Props {
-  initialData: Question[]; // Ajout d'une annotation de type explicite
+  initialData: Question[];
 }
 
 export default function Home({ initialData }: Props) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [data, setData] = useState<Question[]>(initialData); // Ajout d'une annotation de type explicite
+  const [data, setData] = useState<Question[]>(initialData);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,12 +72,12 @@ export default function Home({ initialData }: Props) {
 }
 
 export async function getStaticProps() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/airtable`);
+  const response = await fetch(process.env.AIRTABLE_API_KEY + '/api/data');
   const initialData = await response.json();
   return {
     props: {
       initialData,
     },
-    revalidate: 60, // Régénérer la page toutes les 60 secondes
+    revalidate: 60,
   };
 }
