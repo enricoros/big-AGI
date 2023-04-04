@@ -14,7 +14,8 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
-import { countModelTokens } from '@/lib/token-counters';
+import { convertHTMLTableToMarkdown } from '@/lib/markdown';
+import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
 import { useActiveConfiguration } from '@/lib/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
@@ -23,10 +24,9 @@ import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
 /// Text template helpers
 
-const PromptTemplates: { [key: string]: string } = {
-  PasteText: '{{input}}\n\n{{clipboard}}\n',
-  PasteCode: '{{input}}\n\n```\n{{clipboard}}\n```\n',
+const PromptTemplates = {
   PasteFile: '{{input}}\n\n```{{fileName}}\n{{fileText}}\n```\n',
+  PasteMarkdown: '{{input}}\n\n```\n{{clipboard}}\n```\n',
 };
 
 const expandPromptTemplate = (template: string, dict: object) => (inputValue: string): string => {
@@ -187,7 +187,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     // dropped text
     const droppedText = e.dataTransfer.getData('text');
     if (droppedText?.length >= 1)
-      return setComposeText(text => expandPromptTemplate(PromptTemplates.PasteText, { clipboard: droppedText })(text));
+      return setComposeText(text => expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: droppedText })(text));
 
     // future info for dropping
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
@@ -206,11 +206,36 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   };
 
 
-  const pasteFromClipboard = async () => {
-    const clipboardContent = (await navigator.clipboard.readText() || '').trim();
-    if (clipboardContent) {
-      const template = props.isDeveloperMode ? PromptTemplates.PasteCode : PromptTemplates.PasteText;
-      setComposeText(expandPromptTemplate(template, { clipboard: clipboardContent }));
+  const handlePasteFromClipboard = async () => {
+    for (let clipboardItem of await navigator.clipboard.read()) {
+
+      // find the text/html item if any
+      try {
+        const htmlItem = await clipboardItem.getType('text/html');
+        const htmlString = await htmlItem.text();
+        // paste tables as markdown
+        if (htmlString.indexOf('<table') == 0) {
+          const markdownString = convertHTMLTableToMarkdown(htmlString);
+          setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
+          continue;
+        }
+        // TODO: paste html to markdown (tried Turndown, but the gfm plugin is not good - need to find another lib with minimal footprint)
+      } catch (error) {
+        // ignore missing html
+      }
+
+      // find the text/plain item if any
+      try {
+        const textItem = await clipboardItem.getType('text/plain');
+        const textString = await textItem.text();
+        setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
+        continue;
+      } catch (error) {
+        // ignore missing text
+      }
+
+      // no text/html or text/plain item found
+      console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
   };
 
@@ -263,13 +288,13 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           <Box sx={{ mt: { xs: 1, md: 2 } }} />
 
-          <IconButton variant='plain' color='neutral' onClick={pasteFromClipboard} sx={{ ...hideOnDesktop }}>
+          <IconButton variant='plain' color='neutral' onClick={handlePasteFromClipboard} sx={{ ...hideOnDesktop }}>
             <ContentPasteGoIcon />
           </IconButton>
           <Tooltip
             variant='solid' placement='top-start'
             title={pasteClipboardLegend}>
-            <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={pasteFromClipboard}
+            <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={handlePasteFromClipboard}
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
               {props.isDeveloperMode ? 'Paste code' : 'Paste'}
             </Button>
