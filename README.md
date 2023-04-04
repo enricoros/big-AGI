@@ -15,11 +15,11 @@ Or click fork & run on Vercel
 🚨 **Apr'23 - Attention! We look for your input!** 🚨
 
 | Roadmap              | RFC 📝                                                    | Status | Description                                                                                                      |
-|:---------------------|-----------------------------------------------------------|:------:|:-----------------------------------------------------------------------------------------------------------------|
+| :------------------- | --------------------------------------------------------- | :----: | :--------------------------------------------------------------------------------------------------------------- |
 | Editable Purposes 🎭 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | In-app customization of 'Purposes', as many forks are created for that reason.                                   |
 | Templates sharing 🌐 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | Community repository of Purposes/Systems - Vote with 👍 and usage. Where to store? Bring your own key? Moderate? |
 | Reasoning Systems 🧩 | https://github.com/enricoros/nextjs-chatgpt-app/issues/36 |   🤔   | ReAct, DEPS, Reflexion - shall we?                                                                               |
-| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/octo-org/octo-repo/issues/new?labels=RFC&body=Describe+the+idea) ❗               |
+| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/octo-org/octo-repo/issues/new?labels=RFC&body=Describe+the+idea) ❗              |
 
 ## Features ✨
 
@@ -28,22 +28,22 @@ Or click fork & run on Vercel
 - [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
 - [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
 - [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-  <p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
+<p><img src="docs/screenshot_feature_system.png" width='200' alt="System presets"></p>
 - [x] **Syntax highlighting** - for multiple languages 🌈
 - [x] **Context** - Drag and drop files to add them to the prompt 📁
-  <p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
+<p><img src="docs/screenshot_drop_target.png" width='300' alt="Drag and drop"></p>
 - [x] 🎉 **NEW** Stop generation 🛑 (fredliubojin) - Voice input 🎙️ (koganei)
 - [x] Real-time streaming of AI responses ⚡
 - [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
 - [x] Dark mode 🌙 - Wide mode ⛶
 - [ ] [~~Code execution for TypeScript, JavaScript, and
-  HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
+      HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
 - [ ] Add your own feature 🚀
 - [ ] Send a PR 🙌
 
 ## Why this? 💡
 
-Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
+Because the official Chat is **_slower than the API_**, and the Playground UI **_doesn't even highlight code_**.
 
 ![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
 
@@ -72,7 +72,6 @@ The source code is Very Simple™ 😀. We'd love to have you contribute to this
 make changes, and submit a pull request. If you have any questions or need help, feel free to reach out to us.
 
 This project is licensed under the MIT License.
-
 
 ---
 
