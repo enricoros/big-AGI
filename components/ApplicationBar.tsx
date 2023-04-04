@@ -138,9 +138,9 @@ function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose: () => 
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar({ onClearConversation, onExportConversation, onShowSettings, sx }: {
+export function ApplicationBar({ onClearConversation, onPublishConversation, onShowSettings, sx }: {
   onClearConversation: (conversationId: (string | null)) => void;
-  onExportConversation: (conversationId: (string | null)) => void;
+  onPublishConversation: (conversationId: (string | null)) => void;
   onShowSettings: () => void;
   sx?: SxProps
 }) {
@@ -178,9 +178,9 @@ export function ApplicationBar({ onClearConversation, onExportConversation, onSh
     closeActionsMenu();
   };
 
-  const handleActionExportChat = (e: React.MouseEvent) => {
+  const handleActionPublishChat = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onExportConversation(null);
+    onPublishConversation(null);
   };
 
   const handleActionClearConversation = (e: React.MouseEvent, id: string | null) => {
@@ -263,7 +263,7 @@ export function ApplicationBar({ onClearConversation, onExportConversation, onSh
 
       <ListDivider />
 
-      <MenuItem onClick={handleActionExportChat}>
+      <MenuItem onClick={handleActionPublishChat}>
         <ListItemDecorator>
           <Badge size='sm' badgeContent='new' color='primary'>
             <ExitToAppIcon />

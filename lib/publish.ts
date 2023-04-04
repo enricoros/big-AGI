@@ -1,6 +1,6 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { ApiExportBody, ApiExportResponse } from '../pages/api/export';
+import { ApiPublishBody, ApiPublishResponse } from '../pages/api/publish';
 import { DConversation } from '@/lib/store-chats';
 import { SystemPurposes } from '@/lib/data';
 
@@ -49,7 +49,7 @@ function getOrigin() {
 }
 
 /**
- * Exports a markdown rendering of the conversation to a service of choice
+ * Publishes a markdown rendering of the conversation to a service of choice
  *
  * **Called by the UI to render the data and post it to the API**
  *
@@ -57,11 +57,11 @@ function getOrigin() {
  *       because the browser wouldn't otherwise allow us to perform a CORS to paste.gg
  *
  * @param gg Only one service for now
- * @param conversation The conversation to export
+ * @param conversation The conversation to render
  */
-export async function exportConversation(gg: 'paste.gg', conversation: DConversation): Promise<ApiExportResponse | null> {
+export async function publishConversation(gg: 'paste.gg', conversation: DConversation): Promise<ApiPublishResponse | null> {
 
-  const body: ApiExportBody = {
+  const body: ApiPublishBody = {
     to: gg,
     title: '🤖💬 Chat Conversation',
     fileContent: conversationToMarkdown(conversation),
@@ -71,18 +71,18 @@ export async function exportConversation(gg: 'paste.gg', conversation: DConversa
 
   try {
 
-    const response = await fetch('/api/export', {
+    const response = await fetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
     if (response.ok) {
-      const paste: ApiExportResponse = await response.json();
+      const paste: ApiPublishResponse = await response.json();
 
       if (paste.type === 'success') {
         // we log this to the console for extra safety
-        console.log('Data from your export to \'paste.gg\'', paste);
+        console.log('Data from your paste to \'paste.gg\'', paste);
         return paste;
       }
 
@@ -90,11 +90,11 @@ export async function exportConversation(gg: 'paste.gg', conversation: DConversa
         throw new Error(`Failed to send the paste: ${paste.error}`);
     }
 
-    throw new Error(`Failed to export conversation: ${response.status}: ${response.statusText}`);
+    throw new Error(`Failed to publish conversation: ${response.status}: ${response.statusText}`);
 
   } catch (error) {
-    console.error('Export issue', error);
-    alert(`Export issue: ${error}`);
+    console.error('Publish issue', error);
+    alert(`Publish issue: ${error}`);
   }
 
   return null;
