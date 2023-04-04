@@ -24,7 +24,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.10.0",
-    "zustand": "^4.3.6"
+    "zustand": "^4.3.6",
+    "@vercel/examples-ui": "^1.0.5"
   },
   "devDependencies": {
     "@types/node": "^18.15.11",
@@ -34,6 +35,10 @@
     "eslint": "^8.37.0",
     "eslint-config-next": "^13.2.4",
     "supabase": "^1.46.5",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.2",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.2.7",
+    "turbo": "^1.8.5"
   }
 }
