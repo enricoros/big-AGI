@@ -6,9 +6,9 @@ import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import PostAddIcon from '@mui/icons-material/PostAdd';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
 import { countModelTokens } from '@/lib/token-counters';
@@ -209,10 +209,10 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
 
           <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
-            <PostAddIcon />
+            <UploadFileIcon />
           </IconButton>
           <Tooltip title={<>Attach {props.isDeveloperMode ? 'code' : 'text'} files · also drag-and-drop 👇</>} variant='solid' placement='top-start'>
-            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<PostAddIcon />}
+            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<UploadFileIcon />}
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
               Attach
             </Button>
