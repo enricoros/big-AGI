@@ -1,5 +1,7 @@
 export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
+export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
+
 type SystemPurposeData = {
   title: string;
   description: string | JSX.Element;

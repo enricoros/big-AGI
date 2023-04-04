@@ -33,6 +33,11 @@ function Dropdown<TValue extends string>(props: { value: TValue, items: Record<s
       value={props.value} onChange={props.onChange}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={{
+        root: {
+          sx: {
+            backgroundColor: 'transparent',
+          },
+        },
         listbox: {
           variant: 'plain', color: 'neutral',
           disablePortal: false,
