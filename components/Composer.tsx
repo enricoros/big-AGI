@@ -260,7 +260,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           <Badge
             size='md' variant='solid' max={65535} showZero={false}
-            badgeContent={estimatedTokens > 0 ? <Tooltip title={tokensString} color={tokenColor}><span>{estimatedTokens}</span></Tooltip> : 0}
+            badgeContent={estimatedTokens > 0 ? <Tooltip title={tokensString} color={tokenColor}><span>{estimatedTokens.toLocaleString()}</span></Tooltip> : 0}
             color={tokenColor}
             sx={{
               position: 'absolute', bottom: 8, right: 8,
