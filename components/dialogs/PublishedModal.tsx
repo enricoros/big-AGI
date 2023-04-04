@@ -2,15 +2,15 @@ import * as React from 'react';
 
 import { Alert, Box, Button, Divider, Input, Modal, ModalDialog, Stack, Typography } from '@mui/joy';
 
-import { ApiExportResponse } from '../../pages/api/export';
+import { ApiPublishResponse } from '../../pages/api/publish';
 import { Link } from '@/components/util/Link';
 
 
 /**
- * Displays the result of a conversation export as a modal dialog.
+ * Displays the result of a Paste.gg paste as a modal dialog.
  * This is to give the user the chance to write down the deletion key, mainly.
  */
-export function ExportOutcomeDialog(props: { onClose: () => void, response: ApiExportResponse, open: boolean }) {
+export function PublishedModal(props: { onClose: () => void, response: ApiPublishResponse, open: boolean }) {
   if (!props.response || props.response.type !== 'success')
     return null;
 

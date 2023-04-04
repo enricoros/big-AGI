@@ -4,16 +4,16 @@ import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiChatInput } from '../pages/api/chat';
-import { ApiExportResponse } from '../pages/api/export';
+import { ApiPublishResponse } from '../pages/api/publish';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { DMessage, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
-import { ExportOutcomeDialog } from '@/components/dialogs/ExportedModal';
+import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { Link } from '@/components/util/Link';
 import { SystemPurposes } from '@/lib/data';
-import { exportConversation } from '@/lib/export';
+import { publishConversation } from '@/lib/publish';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -122,8 +122,8 @@ async function _streamAssistantResponseMessage(
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
-  const [exportConfirmationId, setExportConfirmationId] = React.useState<string | null>(null);
-  const [exportResponse, setExportResponse] = React.useState<ApiExportResponse | null>(null);
+  const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
+  const [publishResponse, setPublishResponse] = React.useState<ApiPublishResponse | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
   // external state
@@ -172,15 +172,15 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
   };
 
-  const handleExportConversation = (conversationId: string | null) =>
-    setExportConfirmationId(conversationId || activeConversationId || null);
+  const handlePublishConversation = (conversationId: string | null) =>
+    setPublishConversationId(conversationId || activeConversationId || null);
 
-  const handleConfirmedExportConversation = async () => {
-    if (exportConfirmationId) {
-      const conversation = findConversation(exportConfirmationId);
-      setExportConfirmationId(null);
+  const handleConfirmedPublishConversation = async () => {
+    if (publishConversationId) {
+      const conversation = findConversation(publishConversationId);
+      setPublishConversationId(null);
       if (conversation)
-        setExportResponse(await exportConversation('paste.gg', conversation));
+        setPublishResponse(await publishConversation('paste.gg', conversation));
     }
   };
 
@@ -205,7 +205,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       }}>
 
       <ApplicationBar
-        onClearConversation={handleClearConversation} onExportConversation={handleExportConversation} onShowSettings={props.onShowSettings}
+        onClearConversation={handleClearConversation} onPublishConversation={handlePublishConversation} onShowSettings={props.onShowSettings}
         sx={{
           position: 'sticky', top: 0, zIndex: 20,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
@@ -233,14 +233,14 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       </Box>
 
 
-      {/* Confirmation for Export */}
+      {/* Confirmation for Publishing */}
       <ConfirmationModal
-        open={!!exportConfirmationId} onClose={() => setExportConfirmationId(null)} onPositive={handleConfirmedExportConversation}
+        open={!!publishConversationId} onClose={() => setPublishConversationId(null)} onPositive={handleConfirmedPublishConversation}
         confirmationText={<>
           Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
           It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
           Are you sure you want to proceed?
-        </>} positiveActionText={'Understood, Export to paste.gg'}
+        </>} positiveActionText={'Understood, upload to paste.gg'}
       />
 
       {/* Confirmation for Delete */}
@@ -249,9 +249,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
       />
 
-      {/* Show the link/key from a chat Export */}
-      {!!exportResponse && (
-        <ExportOutcomeDialog open onClose={() => setExportResponse(null)} response={exportResponse} />
+      {/* Show the Published details */}
+      {!!publishResponse && (
+        <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
       )}
 
     </Stack>

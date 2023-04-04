@@ -27,7 +27,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { DMessage } from '@/lib/store-chats';
 import { Link } from '@/components/util/Link';
 import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
-import { prettyBaseModel } from '@/lib/export';
+import { prettyBaseModel } from '@/lib/publish';
 import { useSettingsStore } from '@/lib/store-settings';
 
 

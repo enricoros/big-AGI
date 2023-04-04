@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { postToPasteGG } from '@/lib/export';
+
+import { postToPasteGG } from '@/lib/publish';
 
 
-export interface ApiExportBody {
+export interface ApiPublishBody {
   to: 'paste.gg';
   title: string;
   fileContent: string;
@@ -10,7 +11,7 @@ export interface ApiExportBody {
   origin: string;
 }
 
-export type ApiExportResponse = {
+export type ApiPublishResponse = {
   type: 'success';
   url: string;
   expires: string;
@@ -26,10 +27,10 @@ export type ApiExportResponse = {
  * 'Proxy' that uploads a file to paste.gg.
  * Called by the UI to avoid CORS issues, as the browser cannot post directly to paste.gg.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiExportResponse>) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiPublishResponse>) {
 
   // validate
-  const { to, title, fileContent, fileName, origin }: ApiExportBody = req.body;
+  const { to, title, fileContent, fileName, origin }: ApiPublishBody = req.body;
   if (req.method !== 'POST' || to !== 'paste.gg' || !title || !fileContent || !fileName)
     return res.status(400).json({ type: 'error', error: 'Invalid options' });
 
