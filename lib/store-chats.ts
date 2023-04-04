@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 
-import { ChatModelId, defaultChatModelId, SystemPurposeId } from '@/lib/data';
+import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '@/lib/data';
 
 
 /// Conversations Store
@@ -76,9 +76,9 @@ export interface DConversation {
 const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
   ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', 'Generic', defaultChatModelId)];
+const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', defaultSystemPurposeId, defaultChatModelId)];
 
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', 'Developer', defaultChatModelId);
+const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', defaultSystemPurposeId, defaultChatModelId);
 
 
 export const useChatStore = create<ChatStore>()(devtools(
