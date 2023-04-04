@@ -16,6 +16,7 @@
     "@mui/icons-material": "^5.11.11",
     "@mui/joy": "^5.0.0-alpha.73",
     "@vercel/analytics": "^0.1.11",
+    "@vercel/examples-ui": "^1.0.5",
     "eventsource-parser": "^1.0.0",
     "next": "^13.2.4",
     "pdfjs-dist": "^3.4.120",
@@ -24,20 +25,19 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.6",
     "remark-gfm": "^3.0.1",
-    "zustand": "^4.3.7",
-    "@vercel/examples-ui": "^1.0.5"
+    "zustand": "^4.3.7"
   },
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.0.32",
     "@types/react-dom": "^18.0.11",
+    "autoprefixer": "^10.4.14",
     "eslint": "^8.37.0",
     "eslint-config-next": "^13.2.4",
-    "typescript": "^5.0.3",
-    "autoprefixer": "^10.4.14",
     "postcss": "^8.4.21",
     "tailwindcss": "^3.2.7",
-    "turbo": "^1.8.5"
+    "turbo": "^1.8.5",
+    "typescript": "^5.0.3"
   }
 }
