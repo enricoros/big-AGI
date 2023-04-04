@@ -13,7 +13,23 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  IconButton,
+  ListDivider,
+  ListItem,
+  ListItemDecorator,
+  Menu,
+  MenuItem,
+  Stack,
+  Textarea,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -30,30 +46,37 @@ import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/export';
 import { useSettingsStore } from '@/lib/store-settings';
 
-
 /// Utilities to parse messages into blocks of text and code
 
 type Block = TextBlock | CodeBlock;
-type TextBlock = { type: 'text'; content: string; };
-type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
+type TextBlock = { type: 'text'; content: string };
+type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string };
 
 const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
   // we have an hint
   if (markdownLanguage) {
     // no dot: assume is the syntax-highlight name
-    if (!markdownLanguage.includes('.'))
-      return markdownLanguage;
+    if (!markdownLanguage.includes('.')) return markdownLanguage;
 
     // dot: there's probably a file extension
     const extension = markdownLanguage.split('.').pop();
     if (extension) {
       const languageMap: { [key: string]: string } = {
-        cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
-        md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
+        cs: 'csharp',
+        html: 'html',
+        java: 'java',
+        js: 'javascript',
+        json: 'json',
+        jsx: 'javascript',
+        md: 'markdown',
+        py: 'python',
+        sh: 'bash',
+        ts: 'typescript',
+        tsx: 'typescript',
+        xml: 'xml',
       };
       const language = languageMap[extension];
-      if (language)
-        return language;
+      if (language) return language;
     }
   }
 
@@ -72,8 +95,7 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
  * FIXME: expensive function, especially as it's not been used in incremental fashion
  */
 const parseBlocks = (forceText: boolean, text: string): Block[] => {
-  if (forceText)
-    return [{ type: 'text', content: text }];
+  if (forceText) return [{ type: 'text', content: text }];
 
   const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
@@ -98,11 +120,7 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
     const codeLanguage = inferCodeLanguage(markdownLanguage, code);
     const highlightLanguage = codeLanguage || 'typescript';
-    const highlightedCode = Prism.highlight(
-      code,
-      Prism.languages[highlightLanguage] || Prism.languages.typescript,
-      highlightLanguage,
-    );
+    const highlightedCode = Prism.highlight(code, Prism.languages[highlightLanguage] || Prism.languages.typescript, highlightLanguage);
 
     result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     result.push({ type: 'code', content: highlightedCode, language: codeLanguage, complete: blockEnd.startsWith('```'), code });
@@ -116,60 +134,84 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
   return result;
 };
 
-
 /// Renderers for the different types of message blocks
 
-function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
+function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock; sx?: SxProps }) {
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
     copyToClipboard(codeBlock.code);
   };
 
-  return <Box component='code' sx={{
-    position: 'relative', ...(sx || {}), mx: 0, p: 1.5,
-    display: 'block', fontWeight: 500,
-    '&:hover > button': { opacity: 1 },
-  }}>
-    <Tooltip title='Copy Code' variant='solid'>
-      <IconButton
-        variant='outlined' color='neutral' onClick={handleCopyToClipboard}
-        sx={{
-          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
-          opacity: 0, transition: 'opacity 0.3s',
-        }}>
-        <ContentCopyIcon />
-      </IconButton>
-    </Tooltip>
-    <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
-  </Box>;
+  return (
+    <Box
+      component="code"
+      sx={{
+        position: 'relative',
+        ...(sx || {}),
+        mx: 0,
+        p: 1.5,
+        display: 'block',
+        fontWeight: 500,
+        '&:hover > button': { opacity: 1 },
+      }}
+    >
+      <Tooltip title="Copy Code" variant="solid">
+        <IconButton
+          variant="outlined"
+          color="neutral"
+          onClick={handleCopyToClipboard}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 10,
+            p: 0.5,
+            opacity: 0,
+            transition: 'opacity 0.3s',
+          }}
+        >
+          <ContentCopyIcon />
+        </IconButton>
+      </Tooltip>
+      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+    </Box>
+  );
 }
 
-const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
-  <Typography component='span' sx={{
-    ...(sx || {}), mx: 1.5,
-    '& p': { // Add this style override
-      marginBlockStart: 0,
-      marginBlockEnd: 0,
-      maxWidth: '90%',
-    },
-    '& table': { // Add this style override
-      minWidth: '200%',
-      overflowX: 'auto',
-      display: 'block',
-    }
-  }}>
+const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxProps }) => (
+  <Typography
+    component="span"
+    sx={{
+      ...(sx || {}),
+      mx: 1.5,
+      '& p': {
+        // Add this style override
+        marginBlockStart: 0,
+        marginBlockEnd: 0,
+        maxWidth: '90%',
+      },
+      '& table': {
+        // Add this style override
+        minWidth: '200%',
+        overflowX: 'auto',
+        display: 'block',
+      },
+    }}
+  >
     <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
-  </Typography>;
+  </Typography>
+);
 
-const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
-  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5 }}>
+const RenderText = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxProps }) => (
+  <Typography component="span" sx={{ ...(sx || {}), mx: 1.5 }}>
     {textBlock.content}
-  </Typography>;
-
+  </Typography>
+);
 
 function copyToClipboard(text: string) {
   if (typeof navigator !== 'undefined')
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => console.log('Message copied to clipboard'))
       .catch((err) => console.error('Failed to copy message: ', err));
 }
@@ -180,38 +222,50 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   if (isAssistantError) {
     if (text.startsWith('OpenAI API error: 429 Too Many Requests')) {
       // TODO: retry at the api/chat level a few times instead of showing this error
-      errorMessage = <>
-        The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>,
-        or give it another go by selecting <b>Run again</b> from the message menu.
-      </>;
+      errorMessage = (
+        <>
+          The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>, or give it another go by selecting <b>Run again</b> from the
+          message menu.
+        </>
+      );
     } else if (text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
-      errorMessage = <>
-        Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
-        and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-          access</Link> to the desired model.
-      </>;
+      errorMessage = (
+        <>
+          Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
+          and simultaneously{' '}
+          <Link noLinkStyle href="https://openai.com/waitlist/gpt-4-api" target="_blank">
+            request access
+          </Link>{' '}
+          to the desired model.
+        </>
+      );
     } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
       const pattern: RegExp = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
       const match = pattern.exec(text);
       const usedText = match ? ` (${match[2]} tokens, max ${match[1]})` : '';
-      errorMessage = <>
-        This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}{usedText}.
-        Please consider removing some earlier messages from the conversation, start a new conversation,
-        choose a model with larger context, or submit a shorter new message.
-      </>;
+      errorMessage = (
+        <>
+          This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}
+          {usedText}. Please consider removing some earlier messages from the conversation, start a new conversation, choose a model with larger context, or
+          submit a shorter new message.
+        </>
+      );
     } else if (text.includes('"invalid_api_key"')) {
-      errorMessage = <>
-        The API key appears to not be correct or to have expired.
-        Please <Link noLinkStyle href='https://openai.com/account/api-keys' target='_blank'>check your API key</Link> and
-        update it in the <b>Settings</b> menu.
-      </>;
+      errorMessage = (
+        <>
+          The API key appears to not be correct or to have expired. Please{' '}
+          <Link noLinkStyle href="https://openai.com/account/api-keys" target="_blank">
+            check your API key
+          </Link>{' '}
+          and update it in the <b>Settings</b> menu.
+        </>
+      );
     }
   }
   return { errorMessage, isAssistantError };
 }
-
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -221,7 +275,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function ChatMessage(props: { message: DMessage; disableSend: boolean; onDelete: () => void; onEdit: (text: string) => void; onRunAgain: () => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -246,7 +300,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
   // external state
   const theme = useTheme();
-  const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
+  const renderMarkdown = useSettingsStore((state) => state.renderMarkdown) && !fromSystem;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
@@ -257,8 +311,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(messageText);
+    if (!isEditing) setEditedText(messageText);
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
@@ -272,9 +325,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     }
   };
 
-
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
+  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setEditedText(e.target.value);
 
   const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
@@ -286,17 +337,13 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
   const handleEditBlur = () => {
     setIsEditing(false);
-    if (editedText !== messageText && editedText?.trim())
-      props.onEdit(editedText);
+    if (editedText !== messageText && editedText?.trim()) props.onEdit(editedText);
   };
-
 
   const handleExpand = () => setForceExpanded(true);
 
-
   // soft error handling
   const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelId);
-
 
   // theming
   let background = theme.vars.palette.background.body;
@@ -311,38 +358,37 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       background = theme.vars.palette.primary.plainHoverBg;
       break;
     case 'assistant':
-      background = (isAssistantError && !errorMessage) ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
+      background = isAssistantError && !errorMessage ? theme.vars.palette.danger.softBg : theme.vars.palette.background.body;
       break;
   }
 
-
   // avatar
-  const avatarEl: JSX.Element = React.useMemo(
-    () => {
-      if (typeof messageAvatar === 'string' && messageAvatar)
-        return <Avatar alt={messageSender} src={messageAvatar} />;
-      switch (messageRole) {
-        case 'system':
-          return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
-        case 'assistant':
-          // display a gif avatar when the assistant is typing (fools mode)
-          if (foolsMode && messageTyping)
-            return <Avatar
-              alt={messageSender} variant='plain'
-              src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+  const avatarEl: JSX.Element = React.useMemo(() => {
+    if (typeof messageAvatar === 'string' && messageAvatar) return <Avatar alt={messageSender} src={messageAvatar} />;
+    switch (messageRole) {
+      case 'system':
+        return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />; // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
+      case 'assistant':
+        // display a gif avatar when the assistant is typing (fools mode)
+        if (foolsMode && messageTyping)
+          return (
+            <Avatar
+              alt={messageSender}
+              variant="plain"
+              src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp"
               sx={{
                 width: 64,
                 height: 64,
                 borderRadius: 8,
               }}
-            />;
-          return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
-        case 'user':
-          return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
-      }
-      return <Avatar alt={messageSender} />;
-    }, [messageAvatar, messageRole, messageSender, messageTyping],
-  );
+            />
+          );
+        return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
+      case 'user':
+        return <Face6Icon sx={{ width: 40, height: 40 }} />; // https://www.svgrepo.com/show/306500/openai.svg
+    }
+    return <Avatar alt={messageSender} />;
+  }, [messageAvatar, messageRole, messageSender, messageTyping]);
 
   // text box css
   const blocksFontCss = {
@@ -369,26 +415,31 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     }
   }
 
-
   return (
-    <ListItem sx={{
-      display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: 1, px: { xs: 1, md: 2 }, py: 2,
-      background,
-      borderBottom: '1px solid',
-      borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
-      position: 'relative',
-      '&:hover > button': { opacity: 1 },
-    }}>
-
+    <ListItem
+      sx={{
+        display: 'flex',
+        flexDirection: !fromAssistant ? 'row-reverse' : 'row',
+        alignItems: 'flex-start',
+        gap: 1,
+        px: { xs: 1, md: 2 },
+        py: 2,
+        background,
+        borderBottom: '1px solid',
+        borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
+        position: 'relative',
+        '&:hover > button': { opacity: 1 },
+      }}
+    >
       {/* Author */}
       <Stack
         sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
-        onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-        onClick={event => setMenuAnchor(event.currentTarget)}>
-
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onClick={(event) => setMenuAnchor(event.currentTarget)}
+      >
         {isHovering ? (
-          <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
+          <IconButton variant="soft" color={fromAssistant ? 'neutral' : 'primary'}>
             <MoreVertIcon />
           </IconButton>
         ) : (
@@ -396,91 +447,113 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         )}
 
         {fromAssistant && (
-          <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
-            <Typography level='body2' sx={messageTyping
-              ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 }
-              : { fontWeight: 500 }
-            }>
+          <Tooltip title={messageModelId || 'unk-model'} variant="solid">
+            <Typography
+              level="body2"
+              sx={messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 } : { fontWeight: 500 }}
+            >
               {prettyBaseModel(messageModelId)}
             </Typography>
           </Tooltip>
         )}
-
       </Stack>
-
 
       {/* Edit / Blocks */}
       {!isEditing ? (
-
         <Box sx={{ ...blocksFontCss, flexGrow: 0, whiteSpace: 'break-spaces' }} onDoubleClick={handleMenuEdit}>
-
-          {fromSystem && wasEdited && <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>}
-
-          {parseBlocks(fromSystem, collapsedText).map((block, index) =>
-            block.type === 'code'
-              ? <RenderCode key={'code-' + index} codeBlock={block} sx={{ ...codeFontCss, background: theme.vars.palette.background.level1 }} />
-              : renderMarkdown
-                ? <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />
-                : <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />,
+          {fromSystem && wasEdited && (
+            <Typography level="body2" color="warning" sx={{ mt: 1, mx: 1.5 }}>
+              modified by user - auto-update disabled
+            </Typography>
           )}
 
-          {errorMessage && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>}
+          {parseBlocks(fromSystem, collapsedText).map((block, index) =>
+            block.type === 'code' ? (
+              <RenderCode key={'code-' + index} codeBlock={block} sx={{ ...codeFontCss, background: theme.vars.palette.background.level1 }} />
+            ) : renderMarkdown ? (
+              <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />
+            ) : (
+              <RenderText key={'text-' + index} textBlock={block} sx={textBackground ? { ...textFontCss, background: textBackground } : textFontCss} />
+            ),
+          )}
 
-          {isCollapsed && <Button variant='plain' onClick={handleExpand}>... expand ...</Button>}
+          {errorMessage && (
+            <Alert variant="soft" color="warning" sx={{ mt: 1 }}>
+              <Typography>{errorMessage}</Typography>
+            </Alert>
+          )}
 
+          {isCollapsed && (
+            <Button variant="plain" onClick={handleExpand}>
+              ... expand ...
+            </Button>
+          )}
         </Box>
-
       ) : (
-
         <Textarea
-          variant='soft' color='warning' autoFocus minRows={1}
-          value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-          sx={{ ...blocksFontCss, flexGrow: 1 }} />
-
+          variant="soft"
+          color="warning"
+          autoFocus
+          minRows={1}
+          value={editedText}
+          onChange={handleEditTextChanged}
+          onKeyDown={handleEditKeyPressed}
+          onBlur={handleEditBlur}
+          sx={{ ...blocksFontCss, flexGrow: 1 }}
+        />
       )}
-
 
       {/* Copy message */}
       {!fromSystem && !isEditing && (
-        <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant='solid'>
+        <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant="solid">
           <IconButton
-            variant='outlined' color='neutral' onClick={handleMenuCopy}
+            variant="outlined"
+            color="neutral"
+            onClick={handleMenuCopy}
             sx={{
-              position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
-              opacity: 0, transition: 'opacity 0.3s',
-            }}>
+              position: 'absolute',
+              ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }),
+              zIndex: 10,
+              opacity: 0,
+              transition: 'opacity 0.3s',
+            }}
+          >
             <ContentCopyIcon />
           </IconButton>
         </Tooltip>
       )}
 
-
       {/* Message Operations menu */}
       {!!menuAnchor && (
-        <Menu
-          variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
-          open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
+        <Menu variant="plain" color="neutral" size="lg" placement="bottom-end" sx={{ minWidth: 280 }} open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
           <MenuItem onClick={handleMenuCopy}>
-            <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+            <ListItemDecorator>
+              <ContentCopyIcon />
+            </ListItemDecorator>
             Copy
           </MenuItem>
           <MenuItem onClick={handleMenuEdit}>
-            <ListItemDecorator><EditIcon /></ListItemDecorator>
+            <ListItemDecorator>
+              <EditIcon />
+            </ListItemDecorator>
             {isEditing ? 'Discard' : 'Edit'}
             {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
           <ListDivider />
           <MenuItem onClick={handleMenuRunAgain} disabled={!fromUser || props.disableSend}>
-            <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
+            <ListItemDecorator>
+              <FastForwardIcon />
+            </ListItemDecorator>
             Run again
           </MenuItem>
           <MenuItem onClick={props.onDelete} disabled={false /*fromSystem*/}>
-            <ListItemDecorator><ClearIcon /></ListItemDecorator>
+            <ListItemDecorator>
+              <ClearIcon />
+            </ListItemDecorator>
             Delete
           </MenuItem>
         </Menu>
       )}
-
     </ListItem>
   );
 }

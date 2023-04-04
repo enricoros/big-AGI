@@ -16,7 +16,6 @@ import { SystemPurposes } from '@/lib/data';
 import { exportConversation } from '@/lib/export';
 import { useSettingsStore } from '@/lib/store-settings';
 
-
 function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
     id: Math.random().toString(36).substring(2, 15), // use uuid4 !!
@@ -30,18 +29,21 @@ function createDMessage(role: DMessage['role'], text: string): DMessage {
   };
 }
 
-
 /**
  * Main function to send the chat to the assistant and receive a response (streaming)
  */
 async function _streamAssistantResponseMessage(
-  conversationId: string, history: DMessage[],
-  apiKey: string | undefined, apiHost: string | undefined,
-  chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number, abortSignal: AbortSignal,
+  conversationId: string,
+  history: DMessage[],
+  apiKey: string | undefined,
+  apiHost: string | undefined,
+  chatModelId: string,
+  modelTemperature: number,
+  modelMaxResponseTokens: number,
+  abortSignal: AbortSignal,
   addMessage: (conversationId: string, message: DMessage) => void,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
 ) {
-
   const assistantMessage: DMessage = createDMessage('assistant', '...');
   assistantMessage.typing = true;
   assistantMessage.modelId = chatModelId;
@@ -62,7 +64,6 @@ async function _streamAssistantResponseMessage(
   };
 
   try {
-
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -104,7 +105,6 @@ async function _streamAssistantResponseMessage(
         editMessage(conversationId, messageId, { text: incrementalText }, false);
       }
     }
-
   } catch (error: any) {
     if (error?.name === 'AbortError') {
       // expected, the user clicked the "stop" button
@@ -118,8 +118,7 @@ async function _streamAssistantResponseMessage(
   editMessage(conversationId, messageId, { typing: false }, false);
 }
 
-
-export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
+export function Chat(props: { onShowSettings: () => void; sx?: SxProps }) {
   // state
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [exportConfirmationId, setExportConfirmationId] = React.useState<string | null>(null);
@@ -128,19 +127,18 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   // external state
   const theme = useTheme();
-  const setMessages = useChatStore(state => state.setMessages);
+  const setMessages = useChatStore((state) => state.setMessages);
   const { conversationId: activeConversationId, chatModelId, systemPurposeId } = useActiveConfiguration();
 
   const runAssistant = async (conversationId: string, history: DMessage[]) => {
     // update the purpose of the system message (if not manually edited), and create if needed
     {
-      const systemMessageIndex = history.findIndex(m => m.role === 'system');
+      const systemMessageIndex = history.findIndex((m) => m.role === 'system');
       const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
 
       if (!systemMessage.updated) {
         systemMessage.purposeId = systemPurposeId;
-        systemMessage.text = SystemPurposes[systemPurposeId].systemMessage
-          .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+        systemMessage.text = SystemPurposes[systemPurposeId].systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
       }
 
       history.unshift(systemMessage);
@@ -155,7 +153,18 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
     const { apiKey, modelTemperature, modelMaxResponseTokens, modelApiHost } = useSettingsStore.getState();
     const { appendMessage, editMessage } = useChatStore.getState();
-    await _streamAssistantResponseMessage(conversationId, history, apiKey, modelApiHost, chatModelId, modelTemperature, modelMaxResponseTokens, controller.signal, appendMessage, editMessage);
+    await _streamAssistantResponseMessage(
+      conversationId,
+      history,
+      apiKey,
+      modelApiHost,
+      chatModelId,
+      modelTemperature,
+      modelMaxResponseTokens,
+      controller.signal,
+      appendMessage,
+      editMessage,
+    );
 
     // clear to send, again
     setAbortController(null);
@@ -164,28 +173,24 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   const handleStopGeneration = () => abortController?.abort();
 
   const findConversation = (conversationId: string) =>
-    (conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) : null) ?? null;
+    (conversationId ? useChatStore.getState().conversations.find((c) => c.id === conversationId) : null) ?? null;
 
   const handleSendMessage = async (userText: string, conversationId: string | null) => {
     const conversation = findConversation(conversationId || activeConversationId);
-    if (conversation)
-      await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
+    if (conversation) await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
   };
 
-  const handleExportConversation = (conversationId: string | null) =>
-    setExportConfirmationId(conversationId || activeConversationId || null);
+  const handleExportConversation = (conversationId: string | null) => setExportConfirmationId(conversationId || activeConversationId || null);
 
   const handleConfirmedExportConversation = async () => {
     if (exportConfirmationId) {
       const conversation = findConversation(exportConfirmationId);
       setExportConfirmationId(null);
-      if (conversation)
-        setExportResponse(await exportConversation('paste.gg', conversation));
+      if (conversation) setExportResponse(await exportConversation('paste.gg', conversation));
     }
   };
 
-  const handleClearConversation = (conversationId: string | null) =>
-    setClearConfirmationId(conversationId || activeConversationId || null);
+  const handleClearConversation = (conversationId: string | null) => setClearConfirmationId(conversationId || activeConversationId || null);
 
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {
@@ -194,67 +199,82 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     }
   };
 
-
   return (
-
     <Stack
       sx={{
         minHeight: '100vh',
         position: 'relative',
         ...(props.sx || {}),
-      }}>
-
+      }}
+    >
       <ApplicationBar
-        onClearConversation={handleClearConversation} onExportConversation={handleExportConversation} onShowSettings={props.onShowSettings}
+        onClearConversation={handleClearConversation}
+        onExportConversation={handleExportConversation}
+        onShowSettings={props.onShowSettings}
         sx={{
-          position: 'sticky', top: 0, zIndex: 20,
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
-        }} />
+        }}
+      />
 
       <ChatMessageList
-        disableSend={!!abortController} runAssistant={runAssistant}
+        disableSend={!!abortController}
+        runAssistant={runAssistant}
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level1,
           overflowY: 'hidden',
-        }} />
+        }}
+      />
 
       <Box
         sx={{
-          position: 'sticky', bottom: 0, zIndex: 21,
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 21,
           background: theme.vars.palette.background.body,
           borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },
-        }}>
+        }}
+      >
         <Composer
-          disableSend={!!abortController} isDeveloperMode={systemPurposeId === 'Developer'}
-          sendMessage={handleSendMessage} stopGeneration={handleStopGeneration}
+          disableSend={!!abortController}
+          isDeveloperMode={systemPurposeId === 'Developer'}
+          sendMessage={handleSendMessage}
+          stopGeneration={handleStopGeneration}
         />
       </Box>
 
-
       {/* Confirmation for Export */}
       <ConfirmationModal
-        open={!!exportConfirmationId} onClose={() => setExportConfirmationId(null)} onPositive={handleConfirmedExportConversation}
-        confirmationText={<>
-          Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
-          It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
-          Are you sure you want to proceed?
-        </>} positiveActionText={'Understood, Export to paste.gg'}
+        open={!!exportConfirmationId}
+        onClose={() => setExportConfirmationId(null)}
+        onPositive={handleConfirmedExportConversation}
+        confirmationText={
+          <>
+            Share your conversation anonymously on{' '}
+            <Link href="https://paste.gg" target="_blank">
+              paste.gg
+            </Link>
+            ? It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible. Are you sure you want to proceed?
+          </>
+        }
+        positiveActionText={'Understood, Export to paste.gg'}
       />
 
       {/* Confirmation for Delete */}
       <ConfirmationModal
-        open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
-        confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+        open={!!clearConfirmationId}
+        onClose={() => setClearConfirmationId(null)}
+        onPositive={handleConfirmedClearConversation}
+        confirmationText={'Are you sure you want to discard all the messages?'}
+        positiveActionText={'Clear conversation'}
       />
 
       {/* Show the link/key from a chat Export */}
-      {!!exportResponse && (
-        <ExportOutcomeDialog open onClose={() => setExportResponse(null)} response={exportResponse} />
-      )}
-
+      {!!exportResponse && <ExportOutcomeDialog open onClose={() => setExportResponse(null)} response={exportResponse} />}
     </Stack>
-
   );
 }

@@ -15,7 +15,6 @@ function isTextItem(item: any): item is { str: string } {
  * @param file - The PDF file to extract text from
  */
 export const extractPdfText = async (file: File): Promise<string> => {
-
   // Dynamically import the 'pdfjs-dist' library [nextjs]
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
@@ -31,7 +30,7 @@ export const extractPdfText = async (file: File): Promise<string> => {
     const content = await page.getTextContent();
     const strings = content.items
       .filter(isTextItem) // Use the type guard to filter out items with the 'str' property
-      .map(item => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
+      .map((item) => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
     text += strings.join(' ') + '\n';
   }
 

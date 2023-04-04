@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { postToPasteGG } from '@/lib/export';
 
-
 export interface ApiExportBody {
   to: 'paste.gg';
   title: string;
@@ -10,24 +9,24 @@ export interface ApiExportBody {
   origin: string;
 }
 
-export type ApiExportResponse = {
-  type: 'success';
-  url: string;
-  expires: string;
-  deletionKey: string;
-  created: string;
-} | {
-  type: 'error';
-  error: string
-};
-
+export type ApiExportResponse =
+  | {
+      type: 'success';
+      url: string;
+      expires: string;
+      deletionKey: string;
+      created: string;
+    }
+  | {
+      type: 'error';
+      error: string;
+    };
 
 /**
  * 'Proxy' that uploads a file to paste.gg.
  * Called by the UI to avoid CORS issues, as the browser cannot post directly to paste.gg.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiExportResponse>) {
-
   // validate
   const { to, title, fileContent, fileName, origin }: ApiExportBody = req.body;
   if (req.method !== 'POST' || to !== 'paste.gg' || !title || !fileContent || !fileName)
@@ -46,12 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
 
     return res.status(200).json({ type: 'error', error: `${paste?.error || 'Unknown error'}: ${paste?.message || 'Paste.gg Error'}` });
-
   } catch (error) {
-
     console.error('Error posting to Paste.GG', error);
     return res.status(500).json({ type: 'error', error: 'Networking issue' });
-
   }
-
 }

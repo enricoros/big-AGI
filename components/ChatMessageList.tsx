@@ -9,19 +9,20 @@ import { DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats
 import { PurposeSelector } from '@/components/util/PurposeSelector';
 import { useSettingsStore } from '@/lib/store-settings';
 
-
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: { disableSend: boolean, sx?: SxProps, runAssistant: (conversationId: string, history: DMessage[]) => void }) {
+export function ChatMessageList(props: { disableSend: boolean; sx?: SxProps; runAssistant: (conversationId: string, history: DMessage[]) => void }) {
   // state
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
   // external state
   const { id: activeConversationId, messages } = useActiveConversation();
-  const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
-  const { freeScroll, showSystemMessages } = useSettingsStore(state => ({ freeScroll: state.freeScroll, showSystemMessages: state.showSystemMessages }), shallow);
-
+  const { editMessage, deleteMessage } = useChatStore((state) => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
+  const { freeScroll, showSystemMessages } = useSettingsStore(
+    (state) => ({ freeScroll: state.freeScroll, showSystemMessages: state.showSystemMessages }),
+    shallow,
+  );
 
   // when messages change, scroll to bottom (aka: at every new token)
   React.useEffect(() => {
@@ -30,40 +31,38 @@ export function ChatMessageList(props: { disableSend: boolean, sx?: SxProps, run
   }, [freeScroll, messages]);
 
   // hide system messages if the user chooses so
-  const filteredMessages = messages
-    .filter(m => m.role !== 'system' || showSystemMessages);
+  const filteredMessages = messages.filter((m) => m.role !== 'system' || showSystemMessages);
 
   // when there are no messages, show the purpose selector
-  if (!filteredMessages.length) return (
-    <Box sx={props.sx || {}}>
-      <PurposeSelector />
-    </Box>
-  );
+  if (!filteredMessages.length)
+    return (
+      <Box sx={props.sx || {}}>
+        <PurposeSelector />
+      </Box>
+    );
 
+  const handleMessageDelete = (messageId: string) => deleteMessage(activeConversationId, messageId);
 
-  const handleMessageDelete = (messageId: string) =>
-    deleteMessage(activeConversationId, messageId);
-
-  const handleMessageEdit = (messageId: string, newText: string) =>
-    editMessage(activeConversationId, messageId, { text: newText }, true);
+  const handleMessageEdit = (messageId: string, newText: string) => editMessage(activeConversationId, messageId, { text: newText }, true);
 
   const handleMessageRunAgain = (messageId: string) => {
-    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+    const truncatedHistory = messages.slice(0, messages.findIndex((m) => m.id === messageId) + 1);
     props.runAssistant(activeConversationId, truncatedHistory);
   };
-
 
   return (
     <Box sx={props.sx || {}}>
       <List sx={{ p: 0 }}>
-
-        {filteredMessages.map(message =>
+        {filteredMessages.map((message) => (
           <ChatMessage
-            key={'msg-' + message.id} message={message} disableSend={props.disableSend}
+            key={'msg-' + message.id}
+            message={message}
+            disableSend={props.disableSend}
             onDelete={() => handleMessageDelete(message.id)}
-            onEdit={newText => handleMessageEdit(message.id, newText)}
-            onRunAgain={() => handleMessageRunAgain(message.id)} />,
-        )}
+            onEdit={(newText) => handleMessageEdit(message.id, newText)}
+            onRunAgain={() => handleMessageRunAgain(message.id)}
+          />
+        ))}
 
         <div ref={messagesEndRef}></div>
       </List>

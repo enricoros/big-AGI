@@ -2,7 +2,6 @@ import { encoding_for_model, get_encoding, Tiktoken } from '@dqbd/tiktoken';
 
 import { ChatModelId, defaultChatModelId } from '@/lib/data';
 
-
 /**
  * Wrapper around the Tiktoken library, to keep tokenizers for all models in a cache
  *

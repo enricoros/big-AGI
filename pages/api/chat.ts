@@ -2,16 +2,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-
 if (!process.env.OPENAI_API_KEY)
-  console.warn('OPENAI_API_KEY has not been provided in this deployment environment. ' +
-    'Will use the optional keys incoming from the client, which is not recommended.');
-
+  console.warn(
+    'OPENAI_API_KEY has not been provided in this deployment environment. ' + 'Will use the optional keys incoming from the client, which is not recommended.',
+  );
 
 // definition for OpenAI wire types
 
 namespace OpenAIAPI.Chat {
-
   export interface CompletionMessage {
     role: 'assistant' | 'system' | 'user';
     content: string;
@@ -40,10 +38,14 @@ namespace OpenAIAPI.Chat {
       finish_reason: 'stop' | 'length' | null;
     }[];
   }
-
 }
 
-async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
+async function OpenAIStream(
+  apiKey: string,
+  apiHost: string,
+  payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>,
+  signal: AbortSignal,
+): Promise<ReadableStream> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -66,7 +68,6 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
 
     return new ReadableStream({
       async start(controller) {
-
         // handle errors here, to return them as custom text on the stream
         if (!res.ok) {
           let errorPayload: object = {};
@@ -88,8 +89,7 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
         // this ensures we properly read chunks and invoke an event for each SSE event stream
         const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
           // ignore reconnect interval
-          if (event.type !== 'event')
-            return;
+          if (event.type !== 'event') return;
 
           // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
           if (event.data === '[DONE]') {
@@ -101,8 +101,7 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
             const json: OpenAIAPI.Chat.CompletionsResponseChunked = JSON.parse(event.data);
 
             // ignore any 'role' delta update
-            if (json.choices[0].delta?.role)
-              return;
+            if (json.choices[0].delta?.role) return;
 
             // stringify and send the first packet as a JSON object
             if (!sentFirstPacket) {
@@ -117,7 +116,6 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
             const text = json.choices[0].delta?.content || '';
             const queue = encoder.encode(text);
             controller.enqueue(queue);
-
           } catch (e) {
             // maybe parse error
             controller.error(e);
@@ -125,14 +123,10 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
         });
 
         // https://web.dev/streams/#asynchronous-iteration
-        for await (const chunk of res.body as any)
-          parser.feed(decoder.decode(chunk));
-
+        for await (const chunk of res.body as any) parser.feed(decoder.decode(chunk));
       },
     });
-
   } catch (error: any) {
-
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted');
       return new ReadableStream({
@@ -150,11 +144,8 @@ async function OpenAIStream(apiKey: string, apiHost: string, payload: Omit<OpenA
         },
       });
     }
-
   }
-
 }
-
 
 // Next.js API route
 
@@ -177,24 +168,26 @@ export interface ApiChatFirstOutput {
 }
 
 export default async function handler(req: NextRequest): Promise<Response> {
-
-  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 2048 } = await req.json() as ApiChatInput;
+  const { apiKey: userApiKey, apiHost: userApiHost, model, messages, temperature = 0.5, max_tokens = 2048 } = (await req.json()) as ApiChatInput;
   const apiHost = (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').replaceAll('https://', '');
   const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
 
   try {
-
-    const stream: ReadableStream = await OpenAIStream(apiKey, apiHost, {
-      model,
-      messages,
-      temperature,
-      max_tokens,
-    }, req.signal);
+    const stream: ReadableStream = await OpenAIStream(
+      apiKey,
+      apiHost,
+      {
+        model,
+        messages,
+        temperature,
+        max_tokens,
+      },
+      req.signal,
+    );
 
     return new NextResponse(stream);
-
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted in handler');
@@ -207,8 +200,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
       return new Response('Error: Fetch request failed.', { status: 500 });
     }
   }
-
-};
+}
 
 //noinspection JSUnusedGlobalSymbols
 export const config = {
