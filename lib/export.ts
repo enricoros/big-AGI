@@ -16,9 +16,6 @@ function conversationToMarkdown(conversation: DConversation) {
     .map((message) => {
       let sender: string = message.sender;
       switch (message.role) {
-        case 'system':
-          sender = '✨ System message';
-          break;
         case 'assistant':
           sender = `Assistant ${prettyBaseModel(message.modelId)}`.trim();
           const purpose = conversation.systemPurposeId || null;
@@ -94,8 +91,8 @@ export async function exportConversation(gg: 'paste.gg', conversation: DConversa
 
 export function prettyBaseModel(model: string | undefined): string {
   if (!model) return '';
-  if (model.startsWith('gpt-4')) return 'gpt-4';
-  if (model.startsWith('gpt-3.5-turbo')) return '3.5 Turbo';
+  if (model.startsWith('gpt-4')) return 'Consultant #2';
+  if (model.startsWith('gpt-3.5-turbo')) return 'Consultant #1';
   return model;
 }
 

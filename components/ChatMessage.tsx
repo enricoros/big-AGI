@@ -224,7 +224,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       // TODO: retry at the api/chat level a few times instead of showing this error
       errorMessage = (
         <>
-          The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>, or give it another go by selecting <b>Run again</b> from the
+          The model appears to be occupied at the moment. Kindly select <b>Consultant #1</b>, or give it another go by selecting <b>Run again</b> from the
           message menu.
         </>
       );
@@ -232,7 +232,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = (
         <>
-          Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5 Turbo</b>
+          Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>Consultant #1</b>
           and simultaneously{' '}
           <Link noLinkStyle href="https://openai.com/waitlist/gpt-4-api" target="_blank">
             request access

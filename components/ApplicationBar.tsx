@@ -109,7 +109,7 @@ function PagesMenu(props: {
       disablePortal={false}
     >
       <ListItem>
-        <Typography level="body2">Active chats</Typography>
+        <Typography level="body2">Recherche Active</Typography>
       </ListItem>
 
       {conversationNames.map((conversation) => (
@@ -123,30 +123,6 @@ function PagesMenu(props: {
           </IconButton>
         </MenuItem>
       ))}
-
-      <MenuItem disabled={true}>
-        <ListItemDecorator>
-          <AddIcon />
-        </ListItemDecorator>
-        <Typography sx={{ opacity: 0.5 }}>
-          New chat (soon)
-          {/* We need stable Chat and Message IDs, and one final review to the data structure of Conversation for future-proofing */}
-        </Typography>
-      </MenuItem>
-
-      <ListItem>
-        <Typography level="body2">Scratchpad</Typography>
-      </ListItem>
-
-      <MenuItem>
-        <ListItemDecorator />
-        <Typography sx={{ opacity: 0.5 }}>
-          Feature{' '}
-          <Link href="https://github.com/enricoros/nextjs-chatgpt-app/issues/17" target="_blank">
-            #17
-          </Link>
-        </Typography>
-      </MenuItem>
     </Menu>
   );
 }
@@ -266,37 +242,13 @@ export function ApplicationBar({
 
         <MenuItem>
           <ListItemDecorator>
-            <SettingsSuggestIcon />
-          </ListItemDecorator>
-          System text
-          <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
-        </MenuItem>
-
-        <MenuItem>
-          <ListItemDecorator>
             <SwapVertIcon />
           </ListItemDecorator>
           Free scroll
           <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
         </MenuItem>
 
-        <MenuItem onClick={handleActionShowSettings}>
-          <ListItemDecorator>
-            <SettingsOutlinedIcon />
-          </ListItemDecorator>
-          Settings
-        </MenuItem>
-
         <ListDivider />
-
-        <MenuItem onClick={handleActionExportChat}>
-          <ListItemDecorator>
-            <Badge size="sm" badgeContent="new" color="primary">
-              <ExitToAppIcon />
-            </Badge>
-          </ListItemDecorator>
-          Share via paste.gg
-        </MenuItem>
 
         <MenuItem onClick={(e) => handleActionClearConversation(e, null)}>
           <ListItemDecorator>
