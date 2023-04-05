@@ -8,21 +8,23 @@ import { SystemPurposes } from '@/lib/data';
 /**
  * Primitive rendering of a Conversation to Markdown
  */
-function conversationToMarkdown(conversation: DConversation) {
+function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean) {
 
   // const title =
   //   `# ${conversation.name || 'Conversation'}\n` +
   //   (new Date(conversation.created)).toLocaleString() + '\n\n';
 
-  return conversation.messages.map(message => {
+  return conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
     let sender: string = message.sender;
+    let text = message.text;
     switch (message.role) {
       case 'system':
         sender = '✨ System message';
+        text = '<img src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp" width="48" height="48" alt="typing fast meme"/>\n\n' + '*' + text + '*';
         break;
       case 'assistant':
-        sender = `Assistant ${prettyBaseModel(message.modelId)}`.trim();
-        const purpose = conversation.systemPurposeId || null;
+        const purpose = message.purposeId || conversation.systemPurposeId || null;
+        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.modelId)}*`.trim();
         if (purpose && purpose in SystemPurposes)
           sender = `${SystemPurposes[purpose]?.symbol || ''} ${sender}`.trim();
         break;
@@ -30,7 +32,7 @@ function conversationToMarkdown(conversation: DConversation) {
         sender = '👤 You';
         break;
     }
-    return `### ${sender}\n\n${message.text}\n\n`;
+    return `### ${sender}\n\n${text}\n\n`;
   }).join('---\n\n');
 
 }
@@ -58,13 +60,14 @@ function getOrigin() {
  *
  * @param gg Only one service for now
  * @param conversation The conversation to render
+ * @param hideSystemMessage True to hide the first message
  */
-export async function publishConversation(gg: 'paste.gg', conversation: DConversation): Promise<ApiPublishResponse | null> {
+export async function publishConversation(gg: 'paste.gg', conversation: DConversation, hideSystemMessage: boolean): Promise<ApiPublishResponse | null> {
 
   const body: ApiPublishBody = {
     to: gg,
     title: '🤖💬 Chat Conversation',
-    fileContent: conversationToMarkdown(conversation),
+    fileContent: conversationToMarkdown(conversation, hideSystemMessage),
     fileName: 'my-chat.md',
     origin: getOrigin(),
   };

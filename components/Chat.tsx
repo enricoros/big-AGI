@@ -189,7 +189,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       const conversation = findConversation(publishConversationId);
       setPublishConversationId(null);
       if (conversation)
-        setPublishResponse(await publishConversation('paste.gg', conversation));
+        setPublishResponse(await publishConversation('paste.gg', conversation, !useSettingsStore.getState().showSystemMessages));
     }
   };
 
