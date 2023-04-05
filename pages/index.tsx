@@ -15,7 +15,7 @@ export default function Home() {
   // external state
   const theme = useTheme();
   const apiKey = useSettingsStore(state => state.apiKey);
-  const wideMode = useSettingsStore(state => state.wideMode);
+  const centerMode = useSettingsStore(state => state.centerMode);
 
 
   // show the Settings Dialog at startup if the API key is required but not set
@@ -32,8 +32,8 @@ export default function Home() {
      */
     <NoSSR>
 
-      <Container maxWidth={wideMode ? false : 'xl'} disableGutters sx={{
-        boxShadow: { xs: 'none', xl: wideMode ? 'none' : theme.vars.shadow.lg },
+      <Container maxWidth={centerMode === 'full' ? false : centerMode === 'narrow' ? 'md' : 'xl'} disableGutters sx={{
+        boxShadow: { xs: 'none', md: centerMode === 'narrow' ? theme.vars.shadow.md : 'none', xl: centerMode !== 'full' ? theme.vars.shadow.lg : 'none' },
       }}>
 
         <Chat onShowSettings={() => setSettingsShown(true)} />
