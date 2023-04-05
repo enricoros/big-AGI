@@ -71,7 +71,7 @@ const attachFileLegend =
 
 const pasteClipboardLegend =
   <Box sx={{ p: 1, fontSize: '14px', fontWeight: 400 }}>
-    Converts Code to 📚 Markdown
+    Converts Code and Tables to 📚 Markdown
   </Box>;
 
 
