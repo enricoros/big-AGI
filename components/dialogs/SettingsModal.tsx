@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, Radio, RadioGroup, Slider, Stack, Switch, Typography } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Radio, RadioGroup, Slider, Stack, Switch, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -16,7 +16,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 
-function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, children: React.ReactNode }) {
+export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, children: React.ReactNode }) {
   const [collapsed, setCollapsed] = React.useState(props.collapsed ?? false);
 
   return <>
@@ -88,7 +88,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   return (
     <Modal open={open} onClose={onClose}>
-      <ModalDialog sx={{ maxWidth: 500, display: 'flex' }}>
+      <ModalOverflow><ModalDialog sx={{ maxWidth: 500, display: 'flex', p: { xs: 1, sm: 2, lg: '20px' } }}>
         <ModalClose />
 
         <Typography level='h5' sx={{ mb: 2 }}>Settings</Typography>
@@ -170,8 +170,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                 <FormHelperText>Response size</FormHelperText>
               </Box>
               <Slider
-                aria-label='Model Temperature' color='neutral'
-                min={512} max={8192} step={512} defaultValue={2048}
+                aria-label='Model Max Tokens' color='neutral'
+                min={256} max={4096} step={256} defaultValue={1024}
                 value={modelMaxResponseTokens} onChange={handleMaxTokensChange}
                 valueLabelDisplay='auto'
                 sx={{ py: 1, mt: 1.1 }}
@@ -206,7 +206,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
           </Button>
         </Box>
 
-      </ModalDialog>
+      </ModalDialog></ModalOverflow>
     </Modal>
   );
 }

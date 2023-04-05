@@ -14,6 +14,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
+import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
@@ -90,6 +91,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   // state
   const [composeText, setComposeText] = React.useState('');
   const [isDragging, setIsDragging] = React.useState(false);
+  const [reducerText, setReducerText] = React.useState('');
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -98,6 +100,14 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const { chatModelId } = useActiveConfiguration();
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
+
+  // token budget (WARNING: slow - future: toggles/caches)
+  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
+  const modelComposerTokens = countModelTokens(composeText, chatModelId);
+  const modelChatTokens = modelComposerTokens /* + TODO: modelRestOfChatTokens */;
+  const tokenBudget = modelContextTokens - modelMaxResponseTokens - modelChatTokens;
+  const budgetString = `model: ${modelContextTokens.toLocaleString()} - chat: ${modelChatTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${tokenBudget.toLocaleString()} ${tokenBudget < 0 ? '⚠️' : ''}`;
+  const budgetColor = tokenBudget < 1 ? 'danger' : tokenBudget < modelComposerTokens / 4 ? 'warning' : 'primary';
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -128,30 +138,10 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const handleMicClicked = () => startRecording();
 
 
-  const eatDragEvent = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleMessageDragEnter = (e: React.DragEvent) => {
-    eatDragEvent(e);
-    setIsDragging(true);
-  };
-
-  const handleOverlayDragLeave = (e: React.DragEvent) => {
-    eatDragEvent(e);
-    setIsDragging(false);
-  };
-
-  const handleOverlayDragOver = (e: React.DragEvent) => {
-    eatDragEvent(e);
-    // e.dataTransfer.dropEffect = 'copy';
-  };
-
   async function loadAndAttachFiles(files: FileList) {
 
     // perform loading and expansion
-    let text = composeText;
+    let newText = '';
     for (let file of files) {
       let fileText = '';
       try {
@@ -159,42 +149,37 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           fileText = await extractPdfText(file);
         else
           fileText = await file.text();
-        text = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: file.name, fileText })(text);
+        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: file.name, fileText })(newText);
       } catch (error) {
         // show errors in the prompt box itself - FUTURE: show in a toast
         console.error(error);
-        text = `${text}\n\nError loading file ${file.name}: ${error}\n`;
+        newText = `${newText}\n\nError loading file ${file.name}: ${error}\n`;
       }
     }
 
+    // see how we fare on budget
+    const newTextTokens = countModelTokens(newText, chatModelId);
+
+    // simple trigger for the reduction dialog
+    if (newTextTokens > tokenBudget) {
+      setReducerText(newText);
+      return;
+    }
+
     // update the text
-    setComposeText(text);
+    setComposeText(text => text + newText);
   }
 
-  const handleOverlayDrop = async (e: React.DragEvent) => {
-    eatDragEvent(e);
-    setIsDragging(false);
-
-    // dropped files
-    if (e.dataTransfer.files?.length >= 1)
-      return loadAndAttachFiles(e.dataTransfer.files);
-
-    // special case: detect failure of dropping from VSCode
-    // VSCode: Drag & Drop does not transfer the File object: https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
-    if ('codeeditors' in e.dataTransfer.types)
-      return setComposeText(test => test + 'Pasting from VSCode is not supported! Fixme. Anyone?');
-
-    // dropped text
-    const droppedText = e.dataTransfer.getData('text');
-    if (droppedText?.length >= 1)
-      return setComposeText(text => expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: droppedText })(text));
-
-    // future info for dropping
-    console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
+  const handleContentReducerClose = () => {
+    setReducerText('');
   };
 
+  const handleContentReducerText = (newText: string) => {
+    handleContentReducerClose();
+    setComposeText(text => text + newText);
+  };
 
-  const handleOpenFilePicker = () => attachmentFileInputRef.current?.click();
+  const handleShowFilePicker = () => attachmentFileInputRef.current?.click();
 
   const handleLoadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
@@ -239,34 +224,69 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     }
   };
 
+
   const pasteFromHistory = (text: string) => {
     setComposeText(text);
     hideHistory();
   };
-
 
   const showHistory = (event: React.MouseEvent<HTMLAnchorElement>) => setHistoryAnchor(event.currentTarget);
 
   const hideHistory = () => setHistoryAnchor(null);
 
 
+  const eatDragEvent = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleMessageDragEnter = (e: React.DragEvent) => {
+    eatDragEvent(e);
+    setIsDragging(true);
+  };
+
+  const handleOverlayDragLeave = (e: React.DragEvent) => {
+    eatDragEvent(e);
+    setIsDragging(false);
+  };
+
+  const handleOverlayDragOver = (e: React.DragEvent) => {
+    eatDragEvent(e);
+    // e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleOverlayDrop = async (e: React.DragEvent) => {
+    eatDragEvent(e);
+    setIsDragging(false);
+
+    // dropped files
+    if (e.dataTransfer.files?.length >= 1)
+      return loadAndAttachFiles(e.dataTransfer.files);
+
+    // special case: detect failure of dropping from VSCode
+    // VSCode: Drag & Drop does not transfer the File object: https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
+    if ('codeeditors' in e.dataTransfer.types)
+      return setComposeText(test => test + 'Pasting from VSCode is not supported! Fixme. Anyone?');
+
+    // dropped text
+    const droppedText = e.dataTransfer.getData('text');
+    if (droppedText?.length >= 1)
+      return setComposeText(text => expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: droppedText })(text));
+
+    // future info for dropping
+    console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
+  };
+
+
   const textPlaceholder: string = `Type ${props.isDeveloperMode ? 'your message and drop source files' : 'a message, or drop text files'}...`;
   const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
   const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
-  // compute tokens (warning: slow - shall have a toggle)
-  const modelComposerTokens = countModelTokens(composeText, chatModelId);
-  const modelRestOfChatTokens = 0;
-  const estimatedTokens = modelComposerTokens + modelRestOfChatTokens;
-  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
-  const remainingTokens = modelContextTokens - estimatedTokens - modelMaxResponseTokens;
-  const tokensString = `model: ${modelContextTokens.toLocaleString()} - chat: ${estimatedTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${remainingTokens.toLocaleString()} ${remainingTokens < 0 ? '⚠️' : ''}`;
-  const tokenColor = remainingTokens < 1 ? 'danger' : remainingTokens < modelComposerTokens / 4 ? 'warning' : 'primary';
 
   return (
     <Grid container spacing={{ xs: 1, md: 2 }}>
 
-      {/* Compose & V-Buttons */}
+      {/* Left pane (buttons and Textarea) */}
       <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
         {/* Vertical Buttons Bar */}
@@ -274,13 +294,13 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
 
-          <IconButton variant='plain' color='neutral' onClick={handleOpenFilePicker} sx={{ ...hideOnDesktop }}>
+          <IconButton variant='plain' color='neutral' onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
             <UploadFileIcon />
           </IconButton>
           <Tooltip
             variant='solid' placement='top-start'
             title={attachFileLegend}>
-            <Button fullWidth variant='plain' color='neutral' onClick={handleOpenFilePicker} startDecorator={<UploadFileIcon />}
+            <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<UploadFileIcon />}
                     sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
               Attach
             </Button>
@@ -333,8 +353,8 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           <Badge
             size='md' variant='solid' max={65535} showZero={false}
-            badgeContent={estimatedTokens > 0 ? <Tooltip title={tokensString} color={tokenColor}><span>{estimatedTokens.toLocaleString()}</span></Tooltip> : 0}
-            color={tokenColor}
+            badgeContent={modelChatTokens > 0 ? <Tooltip title={budgetString} color={budgetColor}><span>{modelChatTokens.toLocaleString()}</span></Tooltip> : 0}
+            color={budgetColor}
             sx={{
               position: 'absolute', bottom: 8, right: 8,
             }}
@@ -431,6 +451,14 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
         </Menu>
       )}
+
+      {/* Content reducer modal */}
+      {reducerText?.length >= 1 &&
+        <ContentReducerModal
+          initialText={reducerText} tokenBudget={tokenBudget} chatModelId={chatModelId}
+          onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
+        />
+      }
 
     </Grid>
   );
