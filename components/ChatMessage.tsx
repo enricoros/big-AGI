@@ -162,7 +162,7 @@ const RenderMarkdown = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps 
   </Typography>;
 
 const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
-  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5 }}>
+  <Typography component='span' sx={{ ...(sx || {}), mx: 1.5, overflowWrap: 'anywhere' }}>
     {textBlock.content}
   </Typography>;
 
