@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Badge, Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -96,6 +96,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
+  const theme = useTheme();
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
   const { chatModelId } = useActiveConfiguration();
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
@@ -334,7 +335,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
         <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
           <Textarea
-            variant='soft' autoFocus placeholder={textPlaceholder}
+            variant='outlined' autoFocus placeholder={textPlaceholder}
             minRows={4} maxRows={12}
             onKeyDown={handleKeyPress}
             onDragEnter={handleMessageDragEnter}
@@ -347,6 +348,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
               },
             }}
             sx={{
+              background: theme.vars.palette.background.level1,
               fontSize: '16px',
               lineHeight: 1.75,
             }} />

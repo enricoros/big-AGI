@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AspectRatio, Box, Button, Grid, Stack, Textarea, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Grid, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 
 import { useActiveConfiguration } from '@/lib/store-chats';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
@@ -11,6 +11,7 @@ import { SystemPurposeId, SystemPurposes } from '@/lib/data';
  */
 export function PurposeSelector() {
   // external state
+  const theme = useTheme();
   const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
@@ -38,9 +39,10 @@ export function PurposeSelector() {
             <Grid key={spId} xs={4} lg={3} xl={2}>
               <AspectRatio variant='plain' ratio={1} sx={{
                 minWidth: { xs: 56, lg: 78, xl: 130 }, maxWidth: 130,
-                background: 'transparent',
-                // borderRadius: 8,
-                // boxShadow: theme.vars.shadow.md,
+                ...(systemPurposeId !== spId ? {
+                  borderRadius: 8,
+                  boxShadow: theme.vars.shadow.md,
+                } : {}),
               }}>
                 <Button
                   variant={systemPurposeId === spId ? 'solid' : 'soft'}
@@ -49,7 +51,10 @@ export function PurposeSelector() {
                   sx={{
                     flexDirection: 'column',
                     gap: { xs: 2, lg: 3 },
-                    /*fontFamily: theme.vars.fontFamily.code,*/
+                    ...(systemPurposeId !== spId ? {
+                      background: theme.vars.palette.background.level1,
+                    } : {}),
+                    // fontFamily: theme.vars.fontFamily.code,
                     fontWeight: 500,
                   }}
                 >

@@ -227,14 +227,15 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         disableSend={!!abortController} runAssistant={runAssistant}
         sx={{
           flexGrow: 1,
-          background: theme.vars.palette.background.level1,
+          background: theme.vars.palette.background.level2,
           overflowY: 'hidden',
+          marginBottom: '-1px',
         }} />
 
       <Box
         sx={{
           position: 'sticky', bottom: 0, zIndex: 21,
-          background: theme.vars.palette.background.body,
+          background: theme.vars.palette.background.surface,
           borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },
         }}>
@@ -255,16 +256,16 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         </>} positiveActionText={'Understood, upload to paste.gg'}
       />
 
+      {/* Show the Published details */}
+      {!!publishResponse && (
+        <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
+      )}
+
       {/* Confirmation for Delete */}
       <ConfirmationModal
         open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
         confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
       />
-
-      {/* Show the Published details */}
-      {!!publishResponse && (
-        <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
-      )}
 
     </Stack>
 
