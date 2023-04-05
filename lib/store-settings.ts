@@ -14,11 +14,14 @@ interface SettingsStore {
   freeScroll: boolean;
   setFreeScroll: (freeScroll: boolean) => void;
 
+  renderMarkdown: boolean;
+  setRenderMarkdown: (renderMarkdown: boolean) => void;
+
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
-  renderMarkdown: boolean;
-  setRenderMarkdown: (renderMarkdown: boolean) => void;
+  zenMode: 'clean' | 'cleaner';
+  setZenMode: (zenMode: 'clean' | 'cleaner') => void;
 
   // OpenAI API settings
 
@@ -46,11 +49,14 @@ export const useSettingsStore = create<SettingsStore>()(
       freeScroll: false,
       setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),
 
+      renderMarkdown: false,
+      setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
+
       showSystemMessages: false,
       setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
 
-      renderMarkdown: false,
-      setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
+      zenMode: 'clean',
+      setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
       apiKey: (function() {
         // this will be removed in April

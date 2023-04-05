@@ -246,6 +246,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
   // external state
   const theme = useTheme();
+  const showAvatars = useSettingsStore(state => state.zenMode) !== 'cleaner';
   const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
@@ -316,8 +317,10 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
 
 
   // avatar
-  const avatarEl: JSX.Element = React.useMemo(
+  const avatarEl: JSX.Element | null = React.useMemo(
     () => {
+      if (!showAvatars)
+        return null;
       if (typeof messageAvatar === 'string' && messageAvatar)
         return <Avatar alt={messageSender} src={messageAvatar} />;
       switch (messageRole) {
@@ -340,7 +343,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
       }
       return <Avatar alt={messageSender} />;
-    }, [messageAvatar, messageRole, messageSender, messageTyping],
+    }, [messageAvatar, messageRole, messageSender, messageTyping, showAvatars],
   );
 
   // text box css
@@ -381,8 +384,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
       '&:hover > button': { opacity: 1 },
     }}>
 
-      {/* Author */}
-      <Stack
+      {/* Avatar */}
+      {showAvatars && <Stack
         sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
         onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
         onClick={event => setMenuAnchor(event.currentTarget)}>
@@ -406,7 +409,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
           </Tooltip>
         )}
 
-      </Stack>
+      </Stack>}
 
 
       {/* Edit / Blocks */}
