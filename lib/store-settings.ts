@@ -8,8 +8,8 @@ interface SettingsStore {
 
   // UI settings
 
-  wideMode: boolean;
-  setWideMode: (wideMode: boolean) => void;
+  centerMode: 'narrow' | 'wide' | 'full';
+  setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
   freeScroll: boolean;
   setFreeScroll: (freeScroll: boolean) => void;
@@ -40,8 +40,8 @@ export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
 
-      wideMode: false,
-      setWideMode: (wideMode: boolean) => set({ wideMode }),
+      centerMode: 'wide',
+      setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
       freeScroll: false,
       setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),

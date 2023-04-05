@@ -14,12 +14,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
-import WidthFullIcon from '@mui/icons-material/WidthFull';
-import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { Link } from '@/components/util/Link';
 import { foolsMode } from '@/lib/theme';
+import { shallow } from 'zustand/shallow';
 import { useActiveConfiguration, useChatStore, useConversationNames } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -152,7 +151,10 @@ export function ApplicationBar({ onClearConversation, onDownloadConversationJSON
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-  const { freeScroll, setFreeScroll, setShowSystemMessages, setWideMode, showSystemMessages, wideMode } = useSettingsStore();
+  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages } = useSettingsStore(state => ({
+    freeScroll: state.freeScroll, setFreeScroll: state.setFreeScroll,
+    showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
+  }), shallow);
   const { chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
 
 
@@ -167,8 +169,6 @@ export function ApplicationBar({ onClearConversation, onDownloadConversationJSON
   const closeActionsMenu = () => setActionsMenuAnchor(null);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
-
-  const handleWideModeToggle = () => setWideMode(!wideMode);
 
   const handleScrollModeToggle = () => setFreeScroll(!freeScroll);
 
@@ -243,12 +243,6 @@ export function ApplicationBar({ onClearConversation, onDownloadConversationJSON
         <ListItemDecorator><DarkModeIcon /></ListItemDecorator>
         Dark
         <Switch checked={colorMode === 'dark'} onChange={handleDarkModeToggle} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem sx={{ display: { xs: 'none', md: 'flex' } }}>
-        <ListItemDecorator>{wideMode ? <WidthFullIcon /> : <WidthWideIcon />}</ListItemDecorator>
-        Wide
-        <Switch checked={wideMode} onChange={handleWideModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem>

@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, Slider, Stack, Switch, Typography } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, Radio, RadioGroup, Slider, Stack, Switch, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import WidthNormalIcon from '@mui/icons-material/WidthNormal';
+import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { Link } from '@/components/util/Link';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -19,11 +21,11 @@ function Section(props: { title?: string; collapsible?: boolean, collapsed?: boo
 
   return <>
 
-    <Stack direction='row' sx={{ mt: (props.title ? 2 : 2), alignItems: 'center' }}>
+    <Stack direction='row' sx={{ mt: (props.title ? 1 : 0), alignItems: 'center' }}>
       {!!props.title && (
-        <Typography level='body2'>
+        <FormLabel>
           {props.title}
-        </Typography>
+        </FormLabel>
       )}
       {!!props.collapsible && (
         <IconButton size='sm' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)}>
@@ -32,14 +34,14 @@ function Section(props: { title?: string; collapsible?: boolean, collapsed?: boo
       )}
     </Stack>
 
-    {!collapsed && <Box sx={{ mt: 1, mb: 1 }}>
+    {!collapsed && <Box sx={{ mt: 1.5, mb: 1.5 }}>
       {props.children}
     </Box>}
 
     {!!props.disclaimer && (
-      <Typography level='body3' sx={{ mb: 1.5 }}>
+      <FormHelperText>
         {props.disclaimer}
-      </Typography>
+      </FormHelperText>
     )}
 
   </>;
@@ -54,7 +56,8 @@ function Section(props: { title?: string; collapsible?: boolean, collapsed?: boo
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
   // external state
-  const { renderMarkdown, setRenderMarkdown, apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
+  const { centerMode, setCenterMode, renderMarkdown, setRenderMarkdown, apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
+    centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     apiKey: state.apiKey, setApiKey: state.setApiKey,
     modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
@@ -68,23 +71,27 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleApiKeyDown = (e: React.KeyboardEvent) =>
     (e.key === 'Enter') && onClose();
 
+  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
+  const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
+
   const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
 
   const handleModelApiHostChange = (e: React.ChangeEvent) => setModelApiHost((e.target as HTMLInputElement).value);
 
-  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
-
   const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
   const isValidKey = isValidOpenAIApiKey(apiKey);
+
+  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 
   return (
     <Modal open={open} onClose={onClose}>
       <ModalDialog sx={{ maxWidth: 500, display: 'flex' }}>
         <ModalClose />
 
-        <Typography level='h5'>Settings</Typography>
+        <Typography level='h5' sx={{ mb: 2 }}>Settings</Typography>
 
 
         <Section>
@@ -109,17 +116,29 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
         </Section>
 
 
-        <Section title={'User Interface'}>
-          <Stack direction='column' sx={{ gap: 2, maxWidth: 400 }}>
+        <Section>
+          <Stack direction='column' sx={{ gap: 3, maxWidth: 400 }}>
+
+            <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <FormLabel>Centering</FormLabel>
+                <FormHelperText>{centerMode === 'full' ? 'Full screen' : centerMode === 'narrow' ? 'Narrow' : 'Wide'} chat</FormHelperText>
+              </Box>
+              <RadioGroup orientation='horizontal' value={centerMode} onChange={handleCenterModeChange}>
+                <Radio value='narrow' label={<WidthNormalIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+                <Radio value='wide' label={<WidthWideIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+                <Radio value='full' label='Full' />
+              </RadioGroup>
+            </FormControl>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
               <Box>
                 <FormLabel>Markdown</FormLabel>
-                <FormHelperText>{renderMarkdown ? 'Best looks' : 'Raw text'}</FormHelperText>
+                <FormHelperText>{renderMarkdown ? 'Render markdown' : 'Text only'}</FormHelperText>
               </Box>
               <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
                       endDecorator={renderMarkdown ? 'On' : 'Off'}
-                      slotProps={{ endDecorator: { sx: { minWidth: 24 } } }} />
+                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
             </FormControl>
 
           </Stack>
@@ -129,12 +148,12 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
         {/* Advanced Settings */}
 
         <Section title='Advanced AI settings' collapsible collapsed={true} disclaimer='Adjust only if you are familiar with these terms'>
-          <Stack direction='column' sx={{ gap: 1, mt: -0.8, maxWidth: 400 }}>
+          <Stack direction='column' sx={{ gap: 3, mt: -0.8, maxWidth: 400 }}>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 140 }}>
+              <Box sx={{ minWidth: 120 }}>
                 <FormLabel>Temperature</FormLabel>
-                <FormHelperText>Creative freedom</FormHelperText>
+                <FormHelperText>{modelTemperature < 0.33 ? 'More strict' : modelTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}</FormHelperText>
               </Box>
               <Slider
                 aria-label='Model Temperature' color='neutral'
@@ -146,9 +165,9 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             </FormControl>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 140 }}>
-                <FormLabel>Max-Tokens</FormLabel>
-                <FormHelperText>Response length</FormHelperText>
+              <Box sx={{ minWidth: 120 }}>
+                <FormLabel>Max Tokens</FormLabel>
+                <FormHelperText>Response size</FormHelperText>
               </Box>
               <Slider
                 aria-label='Model Temperature' color='neutral'
@@ -160,15 +179,15 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             </FormControl>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 140 }}>
+              <Box sx={{ minWidth: 120 }}>
                 <FormLabel>
-                  API host
+                  API Host
                   {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
                   {/*  <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />*/}
                   {/*</Tooltip>*/}
                 </FormLabel>
                 <FormHelperText sx={{ display: 'block' }}>
-                  E.g. for <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>
+                  For <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>
                 </FormHelperText>
               </Box>
               <Input
