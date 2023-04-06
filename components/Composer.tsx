@@ -33,7 +33,7 @@ const PromptTemplates = {
 const expandPromptTemplate = (template: string, dict: object) => (inputValue: string): string => {
   let expanded = template.replaceAll('{{input}}', (inputValue || '').trim()).trim();
   for (const [key, value] of Object.entries(dict))
-    expanded = expanded.replaceAll(`{{${key}}}`, value);
+    expanded = expanded.replaceAll(`{{${key}}}`, value.trim());
   return expanded;
 };
 
@@ -97,7 +97,10 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
   // external state
   const theme = useTheme();
-  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+  const { history, appendMessageToHistory } = useComposerStore(state => ({
+    history: state.history,
+    appendMessageToHistory: state.appendMessageToHistory,
+  }), shallow);
   const { chatModelId } = useActiveConfiguration();
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
