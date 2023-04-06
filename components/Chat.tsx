@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { ApiChatInput } from '../pages/api/chat';
+import { ApiChatInput } from '../pages/api/openai/stream-chat';
 import { ApiPublishResponse } from '../pages/api/publish';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
@@ -63,7 +63,7 @@ async function _streamAssistantResponseMessage(
 
   try {
 
-    const response = await fetch('/api/chat', {
+    const response = await fetch('/api/openai/stream-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
