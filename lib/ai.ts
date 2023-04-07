@@ -59,7 +59,7 @@ export async function streamAssistantMessageEdits(
             incrementalText = incrementalText.substring(endOfJson + 1);
             try {
               const parsed = JSON.parse(json);
-              editMessage(conversationId, assistantMessageId, { modelId: parsed.model }, false);
+              editMessage(conversationId, assistantMessageId, { originLLM: parsed.model }, false);
               parsedFirstPacket = true;
             } catch (e) {
               // error parsing JSON, ignore

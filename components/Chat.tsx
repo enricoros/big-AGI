@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -9,27 +8,14 @@ import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
-import { DMessage, downloadConversationJson, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { SystemPurposes } from '@/lib/data';
-import { streamAssistantMessageEdits } from '@/lib/ai';
+import { createDMessage, DMessage, downloadConversationJson, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
 import { publishConversation } from '@/lib/publish';
+import { streamAssistantMessageEdits } from '@/lib/ai';
 import { useSettingsStore } from '@/lib/store-settings';
 
-
-function createDMessage(role: DMessage['role'], text: string): DMessage {
-  return {
-    id: uuidv4(),
-    text: text,
-    sender: role === 'user' ? 'You' : 'Bot',
-    avatar: null,
-    typing: false,
-    role: role,
-    created: Date.now(),
-    updated: null,
-  };
-}
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
@@ -67,8 +53,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     {
       const assistantMessage: DMessage = createDMessage('assistant', '...');
       assistantMessage.typing = true;
-      assistantMessage.modelId = chatModelId;
       assistantMessage.purposeId = history[0].purposeId;
+      assistantMessage.originLLM = chatModelId;
       appendMessage(conversationId, assistantMessage);
       assistantMessageId = assistantMessage.id;
     }

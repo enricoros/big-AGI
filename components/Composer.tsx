@@ -107,7 +107,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
   // token budget (WARNING: slow - future: toggles/caches)
   const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
-  const modelComposerTokens = countModelTokens(composeText, chatModelId);
+  const modelComposerTokens = composeText ? countModelTokens(composeText, chatModelId, 'composer text') : 0;
   const modelChatTokens = modelComposerTokens /* + TODO: modelRestOfChatTokens */;
   const tokenBudget = modelContextTokens - modelMaxResponseTokens - modelChatTokens;
   const budgetString = `model: ${modelContextTokens.toLocaleString()} - chat: ${modelChatTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${tokenBudget.toLocaleString()} ${tokenBudget < 0 ? '⚠️' : ''}`;
@@ -162,7 +162,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     }
 
     // see how we fare on budget
-    const newTextTokens = countModelTokens(newText, chatModelId);
+    const newTextTokens = countModelTokens(newText, chatModelId, 'reducer trigger');
 
     // simple trigger for the reduction dialog
     if (newTextTokens > tokenBudget) {

@@ -26,7 +26,7 @@ export function ContentReducerModal(props: {
   // ...
 
   // derived state
-  const reducedTokens = countModelTokens(reducedText, props.chatModelId);
+  const reducedTokens = countModelTokens(reducedText, props.chatModelId, 'content reducer');
   const remainingTokens = props.tokenBudget - reducedTokens;
   const budgetColor = remainingTokens < 1 ? 'danger' : 'primary';
   const budgetString = remainingTokens > 0
