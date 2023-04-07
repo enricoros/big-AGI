@@ -80,14 +80,14 @@ export function PurposeSelector() {
         </Grid>
 
         <Typography level='body2' sx={{ mt: 2 }}>
-          {SystemPurposes[systemPurposeId].description}
+          {SystemPurposes[systemPurposeId]?.description}
         </Typography>
 
         {systemPurposeId === 'Custom' && (
           <Textarea
             variant='outlined' autoFocus placeholder={'Enter your custom system message here...'}
             minRows={3}
-            defaultValue={SystemPurposes['Custom'].systemMessage} onChange={handleCustomSystemMessageChange}
+            defaultValue={SystemPurposes['Custom']?.systemMessage} onChange={handleCustomSystemMessageChange}
             sx={{
               background: theme.vars.palette.background.level1,
               lineHeight: 1.75,

@@ -139,7 +139,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
       if (!systemMessage.updated) {
         systemMessage.purposeId = systemPurposeId;
-        systemMessage.text = SystemPurposes[systemPurposeId].systemMessage
+        systemMessage.text = SystemPurposes[systemPurposeId]?.systemMessage
           .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
       }
 
