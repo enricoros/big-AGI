@@ -28,8 +28,11 @@ interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
 
-  modelApiHost: string;
-  setModelApiHost: (modelApiHost: string) => void;
+  apiHost: string;
+  setApiHost: (apiHost: string) => void;
+
+  apiOrganizationId: string;
+  setApiOrganizationId: (apiOrganizationId: string) => void;
 
   modelTemperature: number;
   setModelTemperature: (modelTemperature: number) => void;
@@ -65,8 +68,11 @@ export const useSettingsStore = create<SettingsStore>()(
       })(),
       setApiKey: (apiKey: string) => set({ apiKey }),
 
-      modelApiHost: '',
-      setModelApiHost: (modelApiHost: string) => set({ modelApiHost }),
+      apiHost: '',
+      setApiHost: (apiHost: string) => set({ apiHost }),
+
+      apiOrganizationId: '',
+      setApiOrganizationId: (apiOrganizationId: string) => set({ apiOrganizationId }),
 
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),

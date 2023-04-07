@@ -46,7 +46,7 @@ namespace OpenAIAPI.Chat {
 
 
 async function fetchOpenAIChatCompletions(
-  apiKey: string, apiHost: string,
+  apiCommon: ApiCommonInputs,
   completionRequest: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>,
   signal: AbortSignal,
 ): Promise<Response> {
@@ -57,10 +57,11 @@ async function fetchOpenAIChatCompletions(
     n: 1,
   };
 
-  const response = await fetch(`https://${apiHost}/v1/chat/completions`, {
+  const response = await fetch(`https://${apiCommon.apiHost}/v1/chat/completions`, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiCommon.apiKey}`,
+      ...(apiCommon.apiOrgId && { 'OpenAI-Organization': apiCommon.apiOrgId }),
     },
     method: 'POST',
     body: JSON.stringify(streamingCompletionRequest),
@@ -89,7 +90,7 @@ const sendErrorAndClose = (controller: ReadableStreamDefaultController, encoder:
 };
 
 
-async function chatStreamRepeater(apiKey: string, apiHost: string, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
+async function chatStreamRepeater(apiCommon: ApiCommonInputs, payload: Omit<OpenAIAPI.Chat.CompletionsRequest, 'stream' | 'n'>, signal: AbortSignal): Promise<ReadableStream> {
   const encoder = new TextEncoder();
 
   // Handle the abort event when the connection is closed by the client
@@ -101,7 +102,7 @@ async function chatStreamRepeater(apiKey: string, apiHost: string, payload: Omit
 
   let upstreamResponse: Response;
   try {
-    upstreamResponse = await fetchOpenAIChatCompletions(apiKey, apiHost, payload, signal);
+    upstreamResponse = await fetchOpenAIChatCompletions(apiCommon, payload, signal);
   } catch (error: any) {
     console.log(error);
     const message = '[OpenAI Issue] ' + (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
@@ -173,9 +174,13 @@ async function chatStreamRepeater(apiKey: string, apiHost: string, payload: Omit
 
 // Next.js API route
 
-export interface ApiChatInput {
+interface ApiCommonInputs {
   apiKey?: string;
   apiHost?: string;
+  apiOrgId?: string;
+}
+
+export interface ApiChatInput extends ApiCommonInputs {
   model: string;
   messages: OpenAIAPI.Chat.CompletionMessage[];
   temperature?: number;
@@ -194,27 +199,24 @@ export interface ApiChatFirstOutput {
 
 export default async function handler(req: NextRequest): Promise<Response> {
   const {
-    apiKey: userApiKey,
-    apiHost: userApiHost,
-    model,
-    messages,
-    temperature = 0.5,
-    max_tokens = 2048,
+    apiKey: userApiKey, apiHost: userApiHost, apiOrgId: userApiOrgId,
+    model, messages,
+    temperature = 0.5, max_tokens = 2048,
   } = await req.json() as ApiChatInput;
 
-  const apiHost = (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').replaceAll('https://', '');
-  const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
-
-  if (!apiKey)
+  const apiCommon: ApiCommonInputs = {
+    apiKey: (userApiKey || process.env.OPENAI_API_KEY || '').trim(),
+    apiHost: (userApiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
+    apiOrgId: (userApiOrgId || process.env.OPENAI_API_ORG_ID || '').trim(),
+  };
+  if (!apiCommon.apiKey)
     return new Response('[Issue] missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
 
   try {
 
-    const stream: ReadableStream = await chatStreamRepeater(apiKey, apiHost, {
-      model,
-      messages,
-      temperature,
-      max_tokens,
+    const stream: ReadableStream = await chatStreamRepeater(apiCommon, {
+      model, messages,
+      temperature, max_tokens,
     }, req.signal);
 
     return new NextResponse(stream);
