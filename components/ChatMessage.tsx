@@ -197,7 +197,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
     } else if (text.includes('"model_not_found"')) {
       // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
       errorMessage = <>
-        Your API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5
+        The API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5
         Turbo</b> and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
@@ -216,6 +216,12 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
         The API key appears to not be correct or to have expired.
         Please <Link noLinkStyle href='https://openai.com/account/api-keys' target='_blank'>check your API key</Link> and
         update it in the <b>Settings</b> menu.
+      </>;
+    } else if (text.includes('"insufficient_quota"')) {
+      errorMessage = <>
+        The API key appears to have <b>insufficient quota</b>. Please
+        check <Link noLinkStyle href='https://platform.openai.com/account/usage' target='_blank'>your usage</Link> and
+        make sure the usage is under <Link noLinkStyle href='https://platform.openai.com/account/billing/limits' target='_blank'>the limits</Link>.
       </>;
     }
   }
