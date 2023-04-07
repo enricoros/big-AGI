@@ -182,10 +182,13 @@ interface ApiCommonInputs {
 
 export interface ApiChatInput extends ApiCommonInputs {
   model: string;
-  messages: OpenAIAPI.Chat.CompletionMessage[];
+  messages: ApiChatMessage[];
   temperature?: number;
   max_tokens?: number;
 }
+
+export type ApiChatMessage = OpenAIAPI.Chat.CompletionMessage;
+
 
 /**
  * The client will be sent a stream of words. As an extra (an totally optional) 'data channel' we send a
