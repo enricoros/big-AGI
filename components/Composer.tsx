@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -15,6 +15,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
+import { TokenBadge } from '@/components/util/TokenBadge';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
@@ -92,6 +93,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
   const [composeText, setComposeText] = React.useState('');
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
+  const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
   const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -101,17 +103,17 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     history: state.history,
     appendMessageToHistory: state.appendMessageToHistory,
   }), shallow);
-  const { chatModelId } = useActiveConfiguration();
+  const { chatModelId, tokenCount: conversationTokenCount } = useActiveConfiguration();
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
+  // derived state
+  const tokenLimit = ChatModels[chatModelId]?.contextWindowSize || 8192;
+  const directTokens = React.useMemo(() => {
+    return !composeText ? 0 : countModelTokens(composeText, chatModelId, 'composer text');
+  }, [chatModelId, composeText]);
+  const indirectTokens = modelMaxResponseTokens + conversationTokenCount;
+  const remainingTokens = tokenLimit - directTokens - indirectTokens;
 
-  // token budget (WARNING: slow - future: toggles/caches)
-  const modelContextTokens = ChatModels[chatModelId]?.contextWindowSize || 8192;
-  const modelComposerTokens = composeText ? countModelTokens(composeText, chatModelId, 'composer text') : 0;
-  const modelChatTokens = modelComposerTokens /* + TODO: modelRestOfChatTokens */;
-  const tokenBudget = modelContextTokens - modelMaxResponseTokens - modelChatTokens;
-  const budgetString = `model: ${modelContextTokens.toLocaleString()} - chat: ${modelChatTokens.toLocaleString()} - response: ${modelMaxResponseTokens.toLocaleString()} = remaining: ${tokenBudget.toLocaleString()} ${tokenBudget < 0 ? '⚠️' : ''}`;
-  const budgetColor = tokenBudget < 1 ? 'danger' : tokenBudget < modelComposerTokens / 4 ? 'warning' : 'primary';
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
@@ -165,7 +167,8 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     const newTextTokens = countModelTokens(newText, chatModelId, 'reducer trigger');
 
     // simple trigger for the reduction dialog
-    if (newTextTokens > tokenBudget) {
+    if (newTextTokens > remainingTokens) {
+      setReducerTextTokens(newTextTokens);
       setReducerText(newText);
       return;
     }
@@ -356,21 +359,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
               lineHeight: 1.75,
             }} />
 
-          <Badge
-            size='md' variant='solid' max={65535} showZero={false}
-            badgeContent={modelChatTokens > 0 ? <Tooltip title={budgetString} color={budgetColor}><span>{modelChatTokens.toLocaleString()}</span></Tooltip> : 0}
-            color={budgetColor}
-            sx={{
-              position: 'absolute', bottom: 8, right: 8,
-            }}
-            slotProps={{
-              badge: {
-                sx: {
-                  position: 'static', transform: 'none',
-                },
-              },
-            }}
-          />
+          <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />
 
           <Card
             color='primary' invertedColors variant='soft'
@@ -460,7 +449,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
       {/* Content reducer modal */}
       {reducerText?.length >= 1 &&
         <ContentReducerModal
-          initialText={reducerText} tokenBudget={tokenBudget} chatModelId={chatModelId}
+          initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens} chatModelId={chatModelId}
           onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
         />
       }

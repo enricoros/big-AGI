@@ -1,10 +1,22 @@
 import * as React from 'react';
 
-import { Alert, Badge, Box, Button, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Slider, Textarea, Typography } from '@mui/joy';
+import { Alert, Box, Button, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Slider, Textarea, Typography } from '@mui/joy';
 
 import { ChatModelId } from '@/lib/data';
 import { Section } from '@/components/dialogs/SettingsModal';
+import { TokenBadge } from '@/components/util/TokenBadge';
 import { countModelTokens } from '@/lib/tokens';
+
+
+function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
+  const remainingTokens = tokenLimit - usedTokens;
+
+  const message = remainingTokens >= 1
+    ? `${usedTokens.toLocaleString()} reduced tokens and ${remainingTokens.toLocaleString()} tokens remaining.`
+    : `⚠️ These ${usedTokens.toLocaleString()} tokens go over budget by ${(-remainingTokens).toLocaleString()} tokens.`;
+
+  return <Alert variant='soft' color={remainingTokens >= 1 ? 'primary' : 'danger'} sx={{ mt: 1 }}>{message}</Alert>;
+}
 
 
 /**
@@ -12,7 +24,8 @@ import { countModelTokens } from '@/lib/tokens';
  */
 export function ContentReducerModal(props: {
   initialText: string,
-  tokenBudget: number,
+  initialTokens: number,
+  tokenLimit: number,
   chatModelId: ChatModelId,
   onClose: () => void,
   onReducedText: (text: string) => void,
@@ -26,25 +39,22 @@ export function ContentReducerModal(props: {
   // ...
 
   // derived state
-  const reducedTokens = countModelTokens(reducedText, props.chatModelId, 'content reducer');
-  const remainingTokens = props.tokenBudget - reducedTokens;
-  const budgetColor = remainingTokens < 1 ? 'danger' : 'primary';
-  const budgetString = remainingTokens > 0
-    ? `${reducedTokens.toLocaleString()} reduced tokens and ${remainingTokens.toLocaleString()} tokens remaining.`
-    : `⚠️ These ${reducedTokens.toLocaleString()} tokens go over budget by ${(-remainingTokens).toLocaleString()} tokens.`;
-
+  const reducedTokens = countModelTokens(reducedText, props.chatModelId, 'content reducer reduce');
+  const remainingTokens = props.tokenLimit - reducedTokens;
 
   const handleCompressionLevelChange = (event: Event, newValue: number | number[]) =>
     setCompressionLevel(newValue as number);
 
-  const handlePreviewClicked = () => {
+  const handlePreviewClicked = React.useCallback(() => {
     // just pass Input -> Output for now
     setReducedText(props.initialText);
-  };
+  }, [props.initialText]);
 
   const handleUseReducedTextClicked = () =>
     props.onReducedText(reducedText);
 
+  // upon load, click the preview button
+  React.useEffect(handlePreviewClicked, [handlePreviewClicked]);
 
   return (
     <Modal open onClose={props.onClose}>
@@ -64,11 +74,11 @@ export function ContentReducerModal(props: {
 
         <Section title='Inputs'>
 
-          <Typography>
-            Text: {props.initialText.length.toLocaleString()} characters
+          <Typography level='body2'>
+            Text: {props.initialTokens.toLocaleString()} tokens
           </Typography>
-          <Typography>
-            Budget: {props.tokenBudget.toLocaleString()} tokens
+          <Typography level='body2'>
+            Limit: {props.tokenLimit.toLocaleString()} tokens
           </Typography>
 
         </Section>
@@ -115,20 +125,11 @@ export function ContentReducerModal(props: {
                 lineHeight: 1.75,
               }} />
 
-            <Badge
-              size='md' variant='solid' max={65535} showZero={false}
-              badgeContent={reducedTokens ? reducedTokens.toLocaleString() : 0} color={budgetColor}
-              slotProps={{ badge: { sx: { position: 'static', transform: 'none' } } }}
-              sx={{ position: 'absolute', bottom: 8, right: 8 }}
-            />
+            <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
 
           </Box>
 
-          {!!reducedTokens && (
-            <Alert variant='soft' color={budgetColor} sx={{ mt: 1 }}>
-              {budgetString}
-            </Alert>
-          )}
+          {!!reducedTokens && <TokenUsageAlert usedTokens={reducedTokens} tokenLimit={props.tokenLimit} />}
 
         </Section>
 
@@ -136,7 +137,7 @@ export function ContentReducerModal(props: {
           <Button variant='soft' color='neutral' onClick={props.onClose}>
             Close
           </Button>
-          <Button variant='solid' color={budgetColor} disabled={!reducedText} onClick={handleUseReducedTextClicked}>
+          <Button variant='solid' color={remainingTokens >= 1 ? 'primary' : 'danger'} disabled={!reducedText} onClick={handleUseReducedTextClicked}>
             Use Reduced Text
           </Button>
         </Box>

@@ -229,7 +229,7 @@ export function useActiveConversation(): DConversation {
 }
 
 export function useActiveConfiguration() {
-  const { conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId, tokenCount } = useChatStore(state => {
     const _activeConversationId = state.activeConversationId;
     const conversation = state.conversations.find(conversation => conversation.id === _activeConversationId) || errorConversation;
     return {
@@ -238,6 +238,7 @@ export function useActiveConfiguration() {
       setChatModelId: state.setChatModelId,
       systemPurposeId: conversation.systemPurposeId,
       setSystemPurposeId: state.setSystemPurposeId,
+      tokenCount: conversation.tokenCount,
     };
   }, shallow);
 
@@ -247,6 +248,7 @@ export function useActiveConfiguration() {
     setChatModelId: (chatModelId: ChatModelId) => setChatModelId(conversationId, chatModelId),
     systemPurposeId,
     setSystemPurposeId: (systemPurposeId: SystemPurposeId) => setSystemPurposeId(conversationId, systemPurposeId),
+    tokenCount,
   };
 }
 

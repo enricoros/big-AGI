@@ -73,6 +73,6 @@ export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
     description: 'A good balance between speed and insight',
     title: '3.5-Turbo',
     fullName: 'GPT-3.5 Turbo',
-    contextWindowSize: 4096,
+    contextWindowSize: 4097,
   },
 };
