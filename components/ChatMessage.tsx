@@ -26,7 +26,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { Link } from '@/components/util/Link';
-import { cssRainbowColorKeyframes, foolsMode } from '@/lib/theme';
+import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/publish';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -327,8 +327,8 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
         case 'system':
           return <SettingsSuggestIcon sx={{ width: 40, height: 40 }} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
         case 'assistant':
-          // display a gif avatar when the assistant is typing (fools mode)
-          if (foolsMode && messageTyping)
+          // display a gif avatar when the assistant is typing (people seem to love this, so keeping it after april fools')
+          if (messageTyping)
             return <Avatar
               alt={messageSender} variant='plain'
               src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'

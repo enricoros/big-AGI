@@ -7,7 +7,6 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
@@ -17,7 +16,6 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { Link } from '@/components/util/Link';
 import { StyledDropdown } from '@/components/util/StyledDropdown';
-import { foolsMode } from '@/lib/theme';
 import { shallow } from 'zustand/shallow';
 import { useActiveConfiguration, useChatStore, useConversationNames } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -167,7 +165,7 @@ export function ApplicationBar({ onClearConversation, onDownloadConversationJSON
       }}>
 
       <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
-        {foolsMode ? <LunchDiningIcon /> : <MenuIcon />}
+        <MenuIcon />
       </IconButton>
 
       <Stack direction='row' sx={{ my: 'auto' }}>
