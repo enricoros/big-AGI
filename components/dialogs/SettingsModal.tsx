@@ -56,19 +56,17 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
   // external state
-  const { centerMode, setCenterMode, renderMarkdown, setRenderMarkdown, zenMode, setZenMode, apiKey, setApiKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens, modelApiHost, setModelApiHost } = useSettingsStore(state => ({
-    centerMode: state.centerMode, setCenterMode: state.setCenterMode,
-    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
-    apiKey: state.apiKey, setApiKey: state.setApiKey,
-    modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
-    modelMaxResponseTokens: state.modelMaxResponseTokens, setModelMaxResponseTokens: state.setModelMaxResponseTokens,
-    modelApiHost: state.modelApiHost, setModelApiHost: state.setModelApiHost,
-  }), shallow);
-
-  const handleApiKeyChange = (e: React.ChangeEvent) => setApiKey((e.target as HTMLInputElement).value);
-
-  const handleApiKeyDown = (e: React.KeyboardEvent) => (e.key === 'Enter') && onClose();
+  const {
+    centerMode, setCenterMode,
+    renderMarkdown, setRenderMarkdown,
+    zenMode, setZenMode,
+    apiKey, setApiKey,
+    apiHost, setApiHost,
+    apiOrganizationId, setApiOrganizationId,
+    modelTemperature, setModelTemperature,
+    modelMaxResponseTokens,
+    setModelMaxResponseTokens,
+  } = useSettingsStore(state => ({ ...state }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
@@ -76,11 +74,17 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
+  const handleApiKeyChange = (e: React.ChangeEvent) => setApiKey((e.target as HTMLInputElement).value);
+
+  const handleApiKeyDown = (e: React.KeyboardEvent) => (e.key === 'Enter') && onClose();
+
+  const handleApiHostChange = (e: React.ChangeEvent) => setApiHost((e.target as HTMLInputElement).value);
+
+  const handleApiOrganizationIdChange = (e: React.ChangeEvent) => setApiOrganizationId((e.target as HTMLInputElement).value);
+
   const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
-
-  const handleModelApiHostChange = (e: React.ChangeEvent) => setModelApiHost((e.target as HTMLInputElement).value);
 
   const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
   const isValidKey = isValidOpenAIApiKey(apiKey);
@@ -164,7 +168,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
           <Stack direction='column' sx={{ gap: 3, mt: -0.8, maxWidth: 400 }}>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 120 }}>
+              <Box sx={{ minWidth: 130 }}>
                 <FormLabel>Temperature</FormLabel>
                 <FormHelperText>{modelTemperature < 0.33 ? 'More strict' : modelTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}</FormHelperText>
               </Box>
@@ -178,7 +182,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             </FormControl>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 120 }}>
+              <Box sx={{ minWidth: 130 }}>
                 <FormLabel>Max Tokens</FormLabel>
                 <FormHelperText>Response size</FormHelperText>
               </Box>
@@ -192,7 +196,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             </FormControl>
 
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box sx={{ minWidth: 120 }}>
+              <Box sx={{ minWidth: 130 }}>
                 <FormLabel>
                   API Host
                   {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
@@ -205,7 +209,23 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               </Box>
               <Input
                 variant='outlined' placeholder='api.openai.com'
-                value={modelApiHost} onChange={handleModelApiHostChange}
+                value={apiHost} onChange={handleApiHostChange}
+                sx={{ flexGrow: 1 }}
+              />
+            </FormControl>
+
+            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+              <Box sx={{ minWidth: 130 }}>
+                <FormLabel>
+                  Organization ID
+                </FormLabel>
+                <FormHelperText sx={{ display: 'block' }}>
+                  <Link level='body2' href='https://github.com/enricoros/nextjs-chatgpt-app/issues/63' target='_blank'>What is this</Link>
+                </FormHelperText>
+              </Box>
+              <Input
+                variant='outlined' placeholder='Optional, for multiple orgs'
+                value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
                 sx={{ flexGrow: 1 }}
               />
             </FormControl>
