@@ -6,6 +6,7 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 
 import { createEmotionCache, theme } from '@/lib/theme';
+import '../components/util/GithubMarkdown.css';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.
