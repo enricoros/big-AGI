@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Box, Stack, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -19,7 +20,7 @@ import { useSettingsStore } from '@/lib/store-settings';
 
 function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
-    id: Math.random().toString(36).substring(2, 15), // use uuid4 !!
+    id: uuidv4(),
     text: text,
     sender: role === 'user' ? 'You' : 'Bot',
     avatar: null,

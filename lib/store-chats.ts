@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '@/lib/data';
 
@@ -76,7 +77,7 @@ export interface DConversation {
 const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
   ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
 
-const defaultConversations: DConversation[] = [createConversation('default', 'Conversation', defaultSystemPurposeId, defaultChatModelId)];
+const defaultConversations: DConversation[] = [createConversation(uuidv4(), 'Conversation', defaultSystemPurposeId, defaultChatModelId)];
 
 const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', defaultSystemPurposeId, defaultChatModelId);
 
