@@ -199,7 +199,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {
-      setMessages(clearConfirmationId, []);
+      handleStopGeneration();
+      useChatStore.getState().setMessages(clearConfirmationId, []);
       setClearConfirmationId(null);
     }
   };
