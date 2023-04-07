@@ -24,7 +24,8 @@ function conversationToMarkdown(conversation: DConversation, hideSystemMessage: 
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;
-        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.modelId)}*`.trim();
+        // TODO: remove the "modelId" hack soon, once we let this percolate through the system (modelId was the former name of originLLM)
+        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || (message as any)['modelId'] || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
           sender = `${SystemPurposes[purpose]?.symbol || ''} ${sender}`.trim();
         break;

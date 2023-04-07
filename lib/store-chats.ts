@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '@/lib/data';
+import { updateTokenCount } from '@/lib/tokens';
 
 
 /// Conversations Store
@@ -46,18 +47,32 @@ export interface DMessage {
   typing: boolean;
   role: 'assistant' | 'system' | 'user';
 
-  modelId?: string;                 // only assistant - goes beyond known models
   purposeId?: SystemPurposeId;      // only assistant/system
-  cacheTokensCount?: number;
+  originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
+
+  tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
   created: number;                  // created timestamp
   updated: number | null;           // updated timestamp
 }
 
+export const createDMessage = (role: DMessage['role'], text: string): DMessage =>
+  ({
+    id: uuidv4(),
+    text,
+    sender: role === 'user' ? 'You' : 'Bot',
+    avatar: null,
+    typing: false,
+    role: role,
+    tokenCount: 0,
+    created: Date.now(),
+    updated: null,
+  });
+
+
 /**
  * Conversation, a list of messages between humans and bots
  * Future:
- * - sumTokensCount?: number;
  * - draftUserMessage?: { text: string; attachments: any[] };
  * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
  */
@@ -69,13 +84,13 @@ export interface DConversation {
   chatModelId: ChatModelId;
   userTitle?: string;
   autoTitle?: string;
-  cacheTokensCount?: number;
+  tokenCount: number;        // f(messages, chatModelId)
   created: number;            // created timestamp
   updated: number | null;     // updated timestamp
 }
 
 const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
-  ({ id, name, messages: [], systemPurposeId, chatModelId, created: Date.now(), updated: Date.now() });
+  ({ id, name, messages: [], systemPurposeId, chatModelId, tokenCount: 0, created: Date.now(), updated: Date.now() });
 
 const defaultConversations: DConversation[] = [createConversation(uuidv4(), 'Conversation', defaultSystemPurposeId, defaultChatModelId)];
 
@@ -114,23 +129,25 @@ export const useChatStore = create<ChatStore>()(devtools(
       // within a conversation
 
       setMessages: (conversationId: string, newMessages: DMessage[]) =>
-        get()._editConversation(conversationId,
-          {
+        get()._editConversation(conversationId, conversation => {
+          return ({
             messages: newMessages,
-            // cacheTokensCount: newMessages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            tokenCount: newMessages.reduce((sum, message) => sum + updateTokenCount(message, conversation.chatModelId, false, 'setMessages'), 0),
             updated: Date.now(),
-          },
-        ),
+          });
+        }),
 
       appendMessage: (conversationId: string, message: DMessage) =>
         get()._editConversation(conversationId, conversation => {
+
+          if (!message.typing)
+            updateTokenCount(message, conversation.chatModelId, true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
 
           return {
             messages,
-            // DISABLE THE FOLLOWING FOR NOW - as we haven't decided how to handle token counts
-            // cacheTokensCount: (conversation.cacheTokensCount || 0) + (message.cacheTokensCount || 0),
+            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
             updated: Date.now(),
           };
         }),
@@ -142,12 +159,12 @@ export const useChatStore = create<ChatStore>()(devtools(
 
           return {
             messages,
-            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
+            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
             updated: Date.now(),
           };
         }),
 
-      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) =>
+      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
         get()._editConversation(conversationId, conversation => {
 
           const messages = conversation.messages.map((message: DMessage): DMessage =>
@@ -155,22 +172,25 @@ export const useChatStore = create<ChatStore>()(devtools(
               ? {
                 ...message,
                 ...updatedMessage,
-                ...(touch ? { updated: Date.now() } : {}),
+                ...(setUpdated && { updated: Date.now() }),
+                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateTokenCount(message, conversation.chatModelId, true, 'editMessage(typing=false)') })),
               }
               : message);
 
           return {
             messages,
-            // cacheTokensCount: messages.reduce((sum, message) => sum + (message.cacheTokensCount || 0), 0),
-            ...(touch ? { updated: Date.now() } : {}),
+            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
+            ...(setUpdated && { updated: Date.now() }),
           };
         }),
 
       setChatModelId: (conversationId: string, chatModelId: ChatModelId) =>
-        get()._editConversation(conversationId,
-          {
+        get()._editConversation(conversationId, conversation => {
+          return {
             chatModelId,
-          }),
+            tokenCount: conversation.messages.reduce((sum, message) => sum + updateTokenCount(message, chatModelId, true, 'setChatModelId'), 0),
+          };
+        }),
 
       setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
         get()._editConversation(conversationId,

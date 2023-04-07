@@ -244,8 +244,9 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     avatar: messageAvatar,
     typing: messageTyping,
     role: messageRole,
-    modelId: messageModelId,
     // purposeId: messagePurposeId,
+    originLLM: messageModelId,
+    tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
