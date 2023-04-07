@@ -1,9 +1,24 @@
 import * as React from 'react';
 
-import { AspectRatio, Box, Button, Grid, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Grid, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 
 import { useActiveConfiguration } from '@/lib/store-chats';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
+
+
+// Constants for tile sizes / grid width - breakpoints need to be computed here to work around
+// the "flex box cannot shrink over wrapped content" issue
+//
+// Absolutely dislike this workaround, but it's the only way I found to make it work
+
+const bpTileSize = { xs: 116, md: 125, xl: 130 };
+const tileCols = [3, 4, 6];
+const tileSpacing = 1;
+const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) => {
+  acc[key] = tileCols[index] * (value + 8 * tileSpacing) - 8 * tileSpacing;
+  return acc;
+}, {} as Record<string, number>);
+const bpTileGap = { xs: 2, md: 3 };
 
 
 /**
@@ -26,46 +41,40 @@ export function PurposeSelector() {
   };
 
   return (
-    <Stack direction='column' sx={{ justifyContent: 'center', alignItems: 'center', mx: 2, minHeight: '60vh' }}>
+    <Stack direction='column' sx={{ minHeight: '60vh', justifyContent: 'center', alignItems: 'center' }}>
 
-      <Box>
+      <Box sx={{ maxWidth: bpMaxWidth }}>
 
         <Typography level='body3' color='neutral' sx={{ mb: 2 }}>
           AI purpose
         </Typography>
 
-        <Grid container spacing={1}>
+        <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
           {Object.keys(SystemPurposes).map(spId => (
-            <Grid key={spId} xs={4} lg={3} xl={2}>
-              <AspectRatio variant='plain' ratio={1} sx={{
-                minWidth: { xs: 56, lg: 78, xl: 130 }, maxWidth: 130,
-                ...(systemPurposeId !== spId ? {
-                  borderRadius: 8,
-                  boxShadow: theme.vars.shadow.md,
-                } : {}),
-              }}>
-                <Button
-                  variant={systemPurposeId === spId ? 'solid' : 'soft'}
-                  color={systemPurposeId === spId ? 'primary' : 'neutral'}
-                  onClick={() => handlePurposeChange(spId as SystemPurposeId)}
-                  sx={{
-                    flexDirection: 'column',
-                    gap: { xs: 2, lg: 3 },
-                    ...(systemPurposeId !== spId ? {
-                      background: theme.vars.palette.background.level1,
-                    } : {}),
-                    // fontFamily: theme.vars.fontFamily.code,
-                    fontWeight: 500,
-                  }}
-                >
-                  <div style={{ fontSize: '2rem' }}>
-                    {SystemPurposes[spId as SystemPurposeId]?.symbol}
-                  </div>
-                  <div>
-                    {SystemPurposes[spId as SystemPurposeId]?.title}
-                  </div>
-                </Button>
-              </AspectRatio>
+            <Grid key={spId}>
+              <Button
+                variant={systemPurposeId === spId ? 'solid' : 'soft'}
+                color={systemPurposeId === spId ? 'primary' : 'neutral'}
+                onClick={() => handlePurposeChange(spId as SystemPurposeId)}
+                sx={{
+                  flexDirection: 'column',
+                  fontWeight: 500,
+                  gap: bpTileGap,
+                  height: bpTileSize,
+                  width: bpTileSize,
+                  ...(systemPurposeId !== spId ? {
+                    boxShadow: theme.vars.shadow.md,
+                    background: theme.vars.palette.background.level1,
+                  } : {}),
+                }}
+              >
+                <div style={{ fontSize: '2rem' }}>
+                  {SystemPurposes[spId as SystemPurposeId]?.symbol}
+                </div>
+                <div>
+                  {SystemPurposes[spId as SystemPurposeId]?.title}
+                </div>
+              </Button>
             </Grid>
           ))}
         </Grid>
@@ -75,16 +84,15 @@ export function PurposeSelector() {
         </Typography>
 
         {systemPurposeId === 'Custom' && (
-          <>
-            <Textarea variant='soft' autoFocus placeholder={'Enter your custom system message here...'}
-                      minRows={3}
-                      defaultValue={SystemPurposes['Custom'].systemMessage} onChange={handleCustomSystemMessageChange}
-                      sx={{
-                        mt: 1,
-                        fontSize: '16px',
-                        lineHeight: 1.75,
-                      }} />
-          </>
+          <Textarea
+            variant='outlined' autoFocus placeholder={'Enter your custom system message here...'}
+            minRows={3}
+            defaultValue={SystemPurposes['Custom'].systemMessage} onChange={handleCustomSystemMessageChange}
+            sx={{
+              background: theme.vars.palette.background.level1,
+              lineHeight: 1.75,
+              mt: 1,
+            }} />
         )}
 
       </Box>
