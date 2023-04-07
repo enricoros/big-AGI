@@ -224,7 +224,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                 </FormHelperText>
               </Box>
               <Input
-                variant='outlined' placeholder='Optional, for multiple orgs'
+                variant='outlined' placeholder='Optional, for org users'
                 value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
                 sx={{ flexGrow: 1 }}
               />
