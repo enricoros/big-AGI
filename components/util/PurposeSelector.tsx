@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button, Grid, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Grid, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Clear } from '@mui/icons-material';
 
 import { useActiveConfiguration } from '@/lib/store-chats';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
@@ -20,7 +21,6 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
 }, {} as Record<string, number>);
 const bpTileGap = { xs: 2, md: 3 };
 
-
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
@@ -28,7 +28,34 @@ export function PurposeSelector() {
   // external state
   const theme = useTheme();
   const { setSystemPurposeId, systemPurposeId } = useActiveConfiguration();
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [filteredResults, setFilteredResults] = React.useState<string[]>([]);
 
+  // Filter results based on search term
+  React.useEffect(() => {
+    const results = Object.keys(SystemPurposes)
+      .filter((key) => SystemPurposes.hasOwnProperty(key))
+      .filter((key) => {
+        const SystemPurpose = SystemPurposes[key as SystemPurposeId];
+        return SystemPurpose.title.toLowerCase().includes(searchTerm.toLowerCase()) 
+          || (typeof SystemPurpose.description === 'string' && SystemPurpose.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      });
+    setFilteredResults(results);
+  }, [searchTerm]);
+  
+  // Handle search keydowns (term and esc key)
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Escape') {
+      setSearchTerm('');
+    } else {
+      const target = e.target as HTMLInputElement;
+      setSearchTerm(target.value);
+      if (!!searchTerm) {
+        handlePurposeChange(filteredResults[0] as SystemPurposeId);
+      }
+    }
+  };
+  
   const handlePurposeChange = (purpose: SystemPurposeId | null) => {
     if (purpose)
       setSystemPurposeId(purpose);
@@ -41,6 +68,27 @@ export function PurposeSelector() {
   };
 
   return (
+    <>
+    <Stack direction='row' p={2 * tileSpacing} width='100%'>
+      <Input
+        fullWidth
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={handleSearchKeyDown}
+        placeholder='Search for purpose…'
+        startDecorator='🔎'
+        value={searchTerm}
+        variant='outlined'
+      />
+      <Button
+        color='neutral'
+        disabled={!searchTerm}
+        onClick={() => setSearchTerm('')}
+        size='sm'
+        variant='plain'
+      >
+        <Clear />
+      </Button>
+    </Stack>
     <Stack direction='column' sx={{ minHeight: '60vh', justifyContent: 'center', alignItems: 'center' }}>
 
       <Box sx={{ maxWidth: bpMaxWidth }}>
@@ -50,7 +98,7 @@ export function PurposeSelector() {
         </Typography>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
-          {Object.keys(SystemPurposes).map(spId => (
+          {filteredResults.map((spId) => (
             <Grid key={spId}>
               <Button
                 variant={systemPurposeId === spId ? 'solid' : 'soft'}
@@ -80,7 +128,7 @@ export function PurposeSelector() {
         </Grid>
 
         <Typography level='body2' sx={{ mt: 2 }}>
-          {SystemPurposes[systemPurposeId]?.description}
+          {filteredResults.length > 0 ? SystemPurposes[systemPurposeId]?.description : 'No AI purposes match your search.'}
         </Typography>
 
         {systemPurposeId === 'Custom' && (
@@ -98,5 +146,6 @@ export function PurposeSelector() {
       </Box>
 
     </Stack>
+    </>
   );
 }
