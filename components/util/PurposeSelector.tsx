@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useActiveConfiguration } from '@/lib/store-chats';
@@ -23,10 +24,16 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
 }, {} as Record<string, number>);
 const bpTileGap = { xs: 2, md: 3 };
 
+
+// Add this utility function to get a random array element
+const getRandomElement = <T extends any>(array: T[]): T | undefined =>
+  array.length > 0 ? array[Math.floor(Math.random() * array.length)] : undefined;
+
+
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PurposeSelector() {
+export function PurposeSelector(props: { onRunExample: (example: string) => void }) {
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
@@ -82,6 +89,9 @@ export function PurposeSelector() {
 
   // we show them all if the filter is clear (null)
   const purposeIDs = (filteredIDs && showPurposeFinder) ? filteredIDs : Object.keys(SystemPurposes);
+
+  const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
+  const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
 
   return <>
 
@@ -142,8 +152,18 @@ export function PurposeSelector() {
           ))}
         </Grid>
 
-        <Typography level='body2' sx={{ mt: 2 }}>
-          {purposeIDs.length > 0 ? SystemPurposes[systemPurposeId]?.description : 'Oops! No AI purposes found for your search.'}
+        <Typography level='body2' sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1, '&:hover > button': { opacity: 1 } }}>
+          {!selectedPurpose
+            ? 'Oops! No AI purposes found for your search.'
+            : (selectedExample ? <>
+                {selectedExample}
+                <IconButton variant='plain' color='primary' size='sm'
+                            onClick={() => props.onRunExample(selectedExample)}
+                            sx={{ opacity: 0, transition: 'opacity 0.3s' }}>
+                  <TelegramIcon />
+                </IconButton>
+              </> : selectedPurpose.description
+            )}
         </Typography>
 
         {systemPurposeId === 'Custom' && (

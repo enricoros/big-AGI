@@ -5,8 +5,8 @@ import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
-import { DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { PurposeSelector } from '@/components/util/PurposeSelector';
+import { createDMessage, DMessage, useActiveConversation, useChatStore } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -33,13 +33,6 @@ export function ChatMessageList(props: { disableSend: boolean, sx?: SxProps, run
   const filteredMessages = messages
     .filter(m => m.role !== 'system' || showSystemMessages);
 
-  // when there are no messages, show the purpose selector
-  if (!filteredMessages.length) return (
-    <Box sx={props.sx || {}}>
-      <PurposeSelector />
-    </Box>
-  );
-
 
   const handleMessageDelete = (messageId: string) =>
     deleteMessage(activeConversationId, messageId);
@@ -51,6 +44,16 @@ export function ChatMessageList(props: { disableSend: boolean, sx?: SxProps, run
     const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
     props.runAssistant(activeConversationId, truncatedHistory);
   };
+
+  const handleRunExample = (example: string) =>
+    props.runAssistant(activeConversationId, [...messages, createDMessage('user', example)]);
+
+  // when there are no messages, show the purpose selector
+  if (!filteredMessages.length) return (
+    <Box sx={props.sx || {}}>
+      <PurposeSelector onRunExample={handleRunExample} />
+    </Box>
+  );
 
 
   return (
