@@ -136,7 +136,13 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
 
   const onSpeechResultCallback = React.useCallback((transcript: string) => {
-    setComposeText(current => current + ' ' + transcript);
+    setComposeText(current => {
+      current = current.trim();
+      transcript = transcript.trim();
+      if ((!current || current.endsWith('.') || current.endsWith('!') || current.endsWith('?')) && transcript.length)
+        transcript = transcript[0].toUpperCase() + transcript.slice(1);
+      return current ? current + ' ' + transcript : transcript;
+    });
   }, []);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback);
