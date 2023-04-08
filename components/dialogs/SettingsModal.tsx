@@ -59,6 +59,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const {
     centerMode, setCenterMode,
     renderMarkdown, setRenderMarkdown,
+    showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
     apiKey, setApiKey,
     apiHost, setApiHost,
@@ -66,11 +67,13 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
     modelTemperature, setModelTemperature,
     modelMaxResponseTokens,
     setModelMaxResponseTokens,
-  } = useSettingsStore(state => ({ ...state }), shallow);
+  } = useSettingsStore(state => state, shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
+  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
@@ -155,6 +158,16 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               </Box>
               <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
                       endDecorator={renderMarkdown ? 'On' : 'Off'}
+                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+            </FormControl>
+
+            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+              <Box>
+                <FormLabel>Purpose Finder</FormLabel>
+                <FormHelperText>{showPurposeFinder ? 'Show search bar' : 'Hide search bar'}</FormHelperText>
+              </Box>
+              <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
+                      endDecorator={showPurposeFinder ? 'On' : 'Off'}
                       slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
             </FormControl>
 
