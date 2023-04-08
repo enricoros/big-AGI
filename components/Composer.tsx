@@ -139,10 +139,12 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     setComposeText(current => current + ' ' + transcript);
   }, []);
 
-  const { isSpeechEnabled, isRecordingSpeech, startRecording } = useSpeechRecognition(onSpeechResultCallback);
+  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback);
 
-  const handleMicClicked = () => startRecording();
+  const handleMicClicked = () => toggleRecording();
 
+  const micColor = isSpeechError ? 'danger' : isRecordingSpeech ? 'warning' : isRecordingAudio ? 'warning' : 'neutral';
+  const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'plain';
 
   async function loadAndAttachFiles(files: FileList) {
 
@@ -328,7 +330,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
           </Tooltip>
 
           {isSpeechEnabled && <Box sx={{ mt: { xs: 1, md: 2 }, ...hideOnDesktop }}>
-            <IconButton variant={!isRecordingSpeech ? 'plain' : 'solid'} color={!isRecordingSpeech ? 'neutral' : 'warning'} onClick={handleMicClicked}>
+            <IconButton variant={micVariant} color={micColor} onClick={handleMicClicked}>
               <MicIcon />
             </IconButton>
           </Box>}
@@ -381,7 +383,7 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
           {isSpeechEnabled && (
             <IconButton
-              variant={!isRecordingSpeech ? 'plain' : 'solid'} color={!isRecordingSpeech ? 'primary' : 'warning'}
+              variant={micVariant} color={micColor}
               onClick={handleMicClicked}
               sx={{
                 ...hideOnMobile,
