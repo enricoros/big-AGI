@@ -23,7 +23,7 @@ export const StyledDropdown = <TValue extends string>(props: { value: TValue, it
         variant: 'plain', color: 'neutral', size: 'lg',
         disablePortal: false,
         sx: {
-          minWidth: 140,
+          minWidth: 160,
         },
       },
       indicator: {
