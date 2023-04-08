@@ -27,6 +27,7 @@ import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 /// Text template helpers
 
 const PromptTemplates = {
+  Concatenate: '{{input}}\n\n{{text}}',
   PasteFile: '{{input}}\n\n```{{fileName}}\n{{fileText}}\n```\n',
   PasteMarkdown: '{{input}}\n\n```\n{{clipboard}}\n```\n',
 };
@@ -181,8 +182,8 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
       return;
     }
 
-    // update the text
-    setComposeText(text => text + newText);
+    // update the text: just
+    setComposeText(text => expandPromptTemplate(PromptTemplates.Concatenate, { text: newText })(text));
   }
 
   const handleContentReducerClose = () => {
