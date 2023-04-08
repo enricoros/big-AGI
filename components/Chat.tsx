@@ -70,6 +70,7 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
+  const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<ApiPublishResponse | null>(null);
 
@@ -128,6 +129,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
       <ApplicationBar
         conversationId={activeConversationId}
+        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onDownloadConversationJSON={handleDownloadConversationToJson}
         onPublishConversation={handlePublishConversation}
         onShowSettings={props.onShowSettings}
@@ -138,6 +140,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
       <ChatMessageList
         conversationId={activeConversationId}
+        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onRestartConversation={handleRestartConversation}
         sx={{
           flexGrow: 1,

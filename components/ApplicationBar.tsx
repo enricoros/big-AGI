@@ -3,6 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { Badge, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
+import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
@@ -26,6 +28,7 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
  */
 export function ApplicationBar(props: {
   conversationId: string | null;
+  isMessageSelectionMode: boolean; setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void;
   onDownloadConversationJSON: (conversationId: string) => void;
   onPublishConversation: (conversationId: string) => void;
   onShowSettings: () => void;
@@ -93,6 +96,12 @@ export function ApplicationBar(props: {
   const handleConversationPublish = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     props.conversationId && props.onPublishConversation(props.conversationId);
+  };
+
+  const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    closeActionsMenu();
+    props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
   const handleConversationDownload = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -189,6 +198,11 @@ export function ApplicationBar(props: {
       </MenuItem>
 
       <ListDivider />
+
+      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleToggleMessageSelectionMode}>
+        <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
+        Select messages
+      </MenuItem>
 
       <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationClear}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
