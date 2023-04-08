@@ -17,6 +17,9 @@ interface SettingsStore {
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
+  showPurposeFinder: boolean;
+  setShowPurposeFinder: (showPurposeFinder: boolean) => void;
+
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
@@ -54,6 +57,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
+
+      showPurposeFinder: false,
+      setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
 
       showSystemMessages: false,
       setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
