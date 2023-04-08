@@ -237,7 +237,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, disableSend: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function ChatMessage(props: { message: DMessage, disableSend: boolean, lastMessage: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -246,7 +246,7 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
     role: messageRole,
     // purposeId: messagePurposeId,
     originLLM: messageModelId,
-    tokenCount: messageTokenCount,
+    // tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
@@ -493,10 +493,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, on
             {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
           <ListDivider />
-          <MenuItem onClick={handleMenuRunAgain} disabled={!fromUser || props.disableSend}>
-            <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-            Run again
-          </MenuItem>
+          {fromUser && (
+            <MenuItem onClick={handleMenuRunAgain} disabled={props.disableSend}>
+              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
+              {props.lastMessage ? 'Run Again' : 'Restart From Here'}
+            </MenuItem>
+          )}
           <MenuItem onClick={props.onDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
