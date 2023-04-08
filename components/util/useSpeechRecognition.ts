@@ -50,6 +50,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
         };
 
         instance.onresult = (event) => {
+          if (!event?.results?.length) return;
           let transcript = event.results[event.results.length - 1][0].transcript;
           // shall we have these smarts?
           transcript = (transcript || '')
