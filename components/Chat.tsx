@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Stack, useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ApiPublishResponse } from '../pages/api/publish';
@@ -112,10 +112,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   return (
 
-    <Stack
+    <Box
       sx={{
-        minHeight: '100vh',
-        position: 'relative',
+        display: 'flex', flexDirection: 'column', height: '100vh',
         ...(props.sx || {}),
       }}>
 
@@ -138,16 +137,16 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           marginBottom: '-1px',
         }} />
 
-      <Box
+      <Composer
+        conversationId={activeConversationId} messageId={null}
+        sendMessage={handleSendMessage}
+        isDeveloperMode={systemPurposeId === 'Developer'}
         sx={{
           position: 'sticky', bottom: 0, zIndex: 21,
           background: theme.vars.palette.background.surface,
           borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },
-        }}>
-        <Composer conversationId={activeConversationId} messageId={null} sendMessage={handleSendMessage} isDeveloperMode={systemPurposeId === 'Developer'} />
-      </Box>
-
+        }} />
 
       {/* Confirmation for Publishing */}
       <ConfirmationModal
@@ -170,7 +169,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
       />
 
-    </Stack>
+    </Box>
 
   );
 }
