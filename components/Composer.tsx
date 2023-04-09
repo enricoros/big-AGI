@@ -19,7 +19,7 @@ import { TokenBadge } from '@/components/util/TokenBadge';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
-import { useActiveConfiguration } from '@/lib/store-chats';
+import { useChatStore, useConversationPartial } from '@/lib/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
@@ -89,7 +89,11 @@ const pasteClipboardLegend =
  * @param {(text: string, conversationId: string | null) => void} props.sendMessage - Function to send the message. conversationId is null for the Active conversation
  * @param {() => void} props.stopGeneration - Function to stop response generation
  */
-export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean; sendMessage: (text: string, conversationId: string | null) => void; stopGeneration: () => void }) {
+export function Composer(props: {
+  conversationId: string; messageId: string | null;
+  sendMessage: (conversationId: string, text: string) => void;
+  isDeveloperMode: boolean;
+}) {
   // state
   const [composeText, setComposeText] = React.useState('');
   const [isDragging, setIsDragging] = React.useState(false);
@@ -100,11 +104,9 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
 
   // external state
   const theme = useTheme();
-  const { history, appendMessageToHistory } = useComposerStore(state => ({
-    history: state.history,
-    appendMessageToHistory: state.appendMessageToHistory,
-  }), shallow);
-  const { chatModelId, tokenCount: conversationTokenCount } = useActiveConfiguration();
+  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+  const { assistantTyping, chatModelId, tokenCount: conversationTokenCount } = useConversationPartial(props.conversationId);
+  const stopTyping = useChatStore(state => state.stopTyping);
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
   // derived state
@@ -120,16 +122,16 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
     const text = (composeText || '').trim();
     if (text.length) {
       setComposeText('');
-      props.sendMessage(text, null);
+      props.sendMessage(props.conversationId, text);
       appendMessageToHistory(text);
     }
   };
 
-  const handleStopClicked = () => props.stopGeneration();
+  const handleStopClicked = () => stopTyping(props.conversationId);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      if (!props.disableSend)
+      if (!assistantTyping)
         handleSendClicked();
       e.preventDefault();
     }
@@ -419,11 +421,13 @@ export function Composer(props: { disableSend: boolean; isDeveloperMode: boolean
             )}
 
             {/* Send / Stop */}
-            <Button fullWidth variant={props.disableSend ? 'soft' : 'solid'} color='primary'
-                    onClick={props.disableSend ? handleStopClicked : handleSendClicked}
-                    endDecorator={props.disableSend ? <StopOutlinedIcon /> : <TelegramIcon />}>
-              {props.disableSend ? 'Stop' : 'Chat'}
-            </Button>
+            {assistantTyping
+              ? <Button fullWidth variant='soft' color='primary' onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
+                Stop
+              </Button>
+              : <Button fullWidth variant='solid' color='primary' onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
+                Chat
+              </Button>}
           </Box>
 
           {/* [desktop-only] row with History button */}
