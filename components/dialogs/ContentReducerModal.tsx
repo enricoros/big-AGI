@@ -17,6 +17,8 @@ function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, token
 
   return <Alert variant='soft' color={remainingTokens >= 1 ? 'primary' : 'danger'} sx={{ mt: 1 }}>{message}</Alert>;
 }
+import { summerizeToFitContextBudget } from '@/lib/summerize';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 /**
@@ -45,10 +47,13 @@ export function ContentReducerModal(props: {
   const handleCompressionLevelChange = (event: Event, newValue: number | number[]) =>
     setCompressionLevel(newValue as number);
 
-  const handlePreviewClicked = React.useCallback(() => {
+  const handlePreviewClicked = async () => {
+    const { apiKey, modelTemperature, modelMaxResponseTokens, modelApiHost } = useSettingsStore.getState();
     // just pass Input -> Output for now
-    setReducedText(props.initialText);
-  }, [props.initialText]);
+    console.log("props.tokenBudget", props.tokenBudget);
+    const reducedText = await summerizeToFitContextBudget(props.initialText, apiKey, modelApiHost, props.chatModelId, props.tokenBudget);
+    setReducedText(reducedText);
+  };
 
   const handleUseReducedTextClicked = () =>
     props.onReducedText(reducedText);
