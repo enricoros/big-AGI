@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.3",
+    "@dqbd/tiktoken": "^1.0.4",
     "@emotion/react": "^11.10.6",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
@@ -33,7 +33,7 @@
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.1",
-    "eslint": "^8.37.0",
+    "eslint": "^8.38.0",
     "eslint-config-next": "^13.3.0",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4"
