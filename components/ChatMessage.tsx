@@ -237,7 +237,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, disableSend: boolean, lastMessage: boolean, onDelete: () => void, onEdit: (text: string) => void, onRunAgain: () => void }) {
+export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: () => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -283,11 +283,9 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, la
   };
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
-    if (!props.disableSend) {
-      props.onRunAgain();
-      e.preventDefault();
-      closeOperationsMenu();
-    }
+    e.preventDefault();
+    props.onMessageRunFrom();
+    closeOperationsMenu();
   };
 
 
@@ -298,14 +296,14 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, la
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
       e.preventDefault();
       setIsEditing(false);
-      props.onEdit(editedText);
+      props.onMessageEdit(editedText);
     }
   };
 
   const handleEditBlur = () => {
     setIsEditing(false);
     if (editedText !== messageText && editedText?.trim())
-      props.onEdit(editedText);
+      props.onMessageEdit(editedText);
   };
 
 
@@ -494,12 +492,12 @@ export function ChatMessage(props: { message: DMessage, disableSend: boolean, la
           </MenuItem>
           <ListDivider />
           {fromUser && (
-            <MenuItem onClick={handleMenuRunAgain} disabled={props.disableSend}>
+            <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-              {props.lastMessage ? 'Run Again' : 'Restart From Here'}
+              {props.isLast ? 'Run Again' : 'Restart From Here'}
             </MenuItem>
           )}
-          <MenuItem onClick={props.onDelete} disabled={false /*fromSystem*/}>
+          <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
           </MenuItem>
