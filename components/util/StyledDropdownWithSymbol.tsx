@@ -17,7 +17,7 @@ type Props<TValue extends string> = {
 export const StyledDropdownWithSymbol = <TValue extends string>({ value, items, onChange, sx }: Props<TValue>) => {
   const itemsWithSymbol = Object.keys(items).map((key: string) => ({
     key,
-    value: items[key].symbol + ' ' + items[key].title
+    value: (!!items[key].symbol ? items[key].symbol + ' ' : '') + items[key].title
   }));
 
   return (
