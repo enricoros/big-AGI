@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Box, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -6,106 +7,109 @@ import { SxProps } from '@mui/joy/styles/types';
 import { ApiPublishResponse } from '../pages/api/publish';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
+import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { SystemPurposes } from '@/lib/data';
-import { createDMessage, DMessage, downloadConversationJson, useActiveConfiguration, useChatStore } from '@/lib/store-chats';
+import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/store-chats';
 import { publishConversation } from '@/lib/publish';
 import { streamAssistantMessageEdits } from '@/lib/ai';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
+/**
+ * The main "chat" function. TODO: this is here so we can soon move it to the data model.
+ */
+const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantModel: ChatModelId, assistantPurpose: SystemPurposeId) => {
+
+  // reference the state editing functions
+  const { startTyping, appendMessage, editMessage, setMessages } = useChatStore.getState();
+
+  // update the purpose of the system message (if not manually edited), and create if needed
+  {
+    const systemMessageIndex = history.findIndex(m => m.role === 'system');
+    const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
+
+    if (!systemMessage.updated) {
+      systemMessage.purposeId = assistantPurpose;
+      systemMessage.text = SystemPurposes[assistantPurpose]?.systemMessage
+        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+    }
+
+    history.unshift(systemMessage);
+    setMessages(conversationId, history);
+  }
+
+  // create a blank and 'typing' message for the assistant
+  let assistantMessageId: string;
+  {
+    const assistantMessage: DMessage = createDMessage('assistant', '...');
+    assistantMessage.typing = true;
+    assistantMessage.purposeId = history[0].purposeId;
+    assistantMessage.originLLM = assistantModel;
+    appendMessage(conversationId, assistantMessage);
+    assistantMessageId = assistantMessage.id;
+  }
+
+  // when an abort controller is set, the UI switches to the "stop" mode
+  const controller = new AbortController();
+  startTyping(conversationId, controller);
+
+  const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
+  await streamAssistantMessageEdits(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal);
+
+  // clear to send, again
+  startTyping(conversationId, null);
+};
+
+
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
-  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<ApiPublishResponse | null>(null);
 
   // external state
   const theme = useTheme();
-  const { assistantTyping, conversationId: activeConversationId, chatModelId, systemPurposeId } = useActiveConfiguration();
+  const { activeConversationId, chatModelId, systemPurposeId } = useChatStore(state => {
+    const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
+    return {
+      activeConversationId: state.activeConversationId,
+      chatModelId: conversation?.chatModelId ?? null,
+      systemPurposeId: conversation?.systemPurposeId ?? null,
+    };
+  }, shallow);
 
-  const runAssistant = async (conversationId: string, history: DMessage[]) => {
 
-    // reference the state editing functions
-    const { startTyping, appendMessage, editMessage, setMessages } = useChatStore.getState();
+  const _findConversation = (conversationId: string) =>
+    conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
-    // update the purpose of the system message (if not manually edited), and create if needed
-    {
-      const systemMessageIndex = history.findIndex(m => m.role === 'system');
-      const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
-
-      if (!systemMessage.updated) {
-        systemMessage.purposeId = systemPurposeId;
-        systemMessage.text = SystemPurposes[systemPurposeId]?.systemMessage
-          .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-      }
-
-      history.unshift(systemMessage);
-      setMessages(conversationId, history);
-    }
-
-    // create a blank and 'typing' message for the assistant
-    let assistantMessageId: string;
-    {
-      const assistantMessage: DMessage = createDMessage('assistant', '...');
-      assistantMessage.typing = true;
-      assistantMessage.purposeId = history[0].purposeId;
-      assistantMessage.originLLM = chatModelId;
-      appendMessage(conversationId, assistantMessage);
-      assistantMessageId = assistantMessage.id;
-    }
-
-    // when an abort controller is set, the UI switches to the "stop" mode
-    const controller = new AbortController();
-    startTyping(conversationId, controller);
-
-    const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-    await streamAssistantMessageEdits(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, chatModelId, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal);
-
-    // clear to send, again
-    startTyping(conversationId, null);
-  };
-
-  const findConversation = (conversationId: string) =>
-    (conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) : null) ?? null;
 
   const handleSendMessage = async (conversationId: string, userText: string) => {
-    const conversation = findConversation(conversationId);
-    if (conversation)
-      await runAssistant(conversation.id, [...conversation.messages, createDMessage('user', userText)]);
+    const conversation = _findConversation(conversationId);
+    if (conversation && chatModelId && systemPurposeId)
+      await runAssistantUpdatingState(conversation.id, [...conversation.messages, createDMessage('user', userText)], chatModelId, systemPurposeId);
   };
 
-  const handleDownloadConversationToJson = (conversationId: string | null) => {
-    if (conversationId || activeConversationId) {
-      const conversation = findConversation(conversationId || activeConversationId);
-      if (conversation)
-        downloadConversationJson(conversation);
-    }
+  const handleRestartConversation = async (conversationId: string, history: DMessage[]) => {
+    if (conversationId && chatModelId && systemPurposeId)
+      await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
   };
 
 
-  const handlePublishConversation = (conversationId: string | null) =>
-    setPublishConversationId(conversationId || activeConversationId || null);
+  const handleDownloadConversationToJson = (conversationId: string) => {
+    const conversation = _findConversation(conversationId);
+    conversation && downloadConversationJson(conversation);
+  };
+
+
+  const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
 
   const handleConfirmedPublishConversation = async () => {
     if (publishConversationId) {
-      const conversation = findConversation(publishConversationId);
+      const conversation = _findConversation(publishConversationId);
       setPublishConversationId(null);
-      if (conversation)
-        setPublishResponse(await publishConversation('paste.gg', conversation, !useSettingsStore.getState().showSystemMessages));
-    }
-  };
-
-  const handleClearConversation = (conversationId: string | null) =>
-    setClearConfirmationId(conversationId || activeConversationId || null);
-
-  const handleConfirmedClearConversation = () => {
-    if (clearConfirmationId) {
-      useChatStore.getState().setMessages(clearConfirmationId, []);
-      setClearConfirmationId(null);
+      conversation && setPublishResponse(await publishConversation('paste.gg', conversation, !useSettingsStore.getState().showSystemMessages));
     }
   };
 
@@ -119,7 +123,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       }}>
 
       <ApplicationBar
-        onClearConversation={handleClearConversation}
+        conversationId={activeConversationId}
         onDownloadConversationJSON={handleDownloadConversationToJson}
         onPublishConversation={handlePublishConversation}
         onShowSettings={props.onShowSettings}
@@ -129,7 +133,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         }} />
 
       <ChatMessageList
-        disableSend={assistantTyping} runAssistant={runAssistant}
+        conversationId={activeConversationId}
+        onRestartConversation={handleRestartConversation}
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
@@ -139,8 +144,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
       <Composer
         conversationId={activeConversationId} messageId={null}
-        sendMessage={handleSendMessage}
         isDeveloperMode={systemPurposeId === 'Developer'}
+        onSendMessage={handleSendMessage}
         sx={{
           position: 'sticky', bottom: 0, zIndex: 21,
           background: theme.vars.palette.background.surface,
@@ -162,12 +167,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       {!!publishResponse && (
         <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
       )}
-
-      {/* Confirmation for Delete */}
-      <ConfirmationModal
-        open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
-        confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
-      />
 
     </Box>
 

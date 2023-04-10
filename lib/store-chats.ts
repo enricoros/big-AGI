@@ -9,12 +9,14 @@ import { updateTokenCount } from '@/lib/tokens';
 
 /// Conversations Store
 
+export const MAX_CONVERSATIONS = 10;
+
 export interface ChatStore {
   conversations: DConversation[];
   activeConversationId: string | null;
 
   // store setters
-  addConversation: (conversation: DConversation) => void;
+  addConversation: (conversation: DConversation, activate: boolean) => void;
   deleteConversation: (conversationId: string) => void;
   setActiveConversationId: (conversationId: string) => void;
 
@@ -31,6 +33,35 @@ export interface ChatStore {
   // utility function
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
 }
+
+
+/**
+ * Conversation, a list of messages between humans and bots
+ * Future:
+ * - draftUserMessage?: { text: string; attachments: any[] };
+ * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
+ */
+export interface DConversation {
+  id: string;
+  name: string;
+  messages: DMessage[];
+  systemPurposeId: SystemPurposeId;
+  chatModelId: ChatModelId;
+  userTitle?: string;
+  autoTitle?: string;
+  tokenCount: number;                 // f(messages, chatModelId)
+  created: number;                    // created timestamp
+  updated: number | null;             // updated timestamp
+  // Not persisted, used while in-memory, or temporarily by the UI
+  abortController: AbortController | null;
+}
+
+const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
+  ({ id, name, messages: [], systemPurposeId, chatModelId, tokenCount: 0, created: Date.now(), updated: Date.now(), abortController: null });
+
+export const createDefaultConversation = () =>
+  createConversation(uuidv4(), 'Conversation', defaultSystemPurposeId, defaultChatModelId);
+
 
 /**
  * Message, sent or received, by humans or bots
@@ -72,59 +103,51 @@ export const createDMessage = (role: DMessage['role'], text: string): DMessage =
   });
 
 
-/**
- * Conversation, a list of messages between humans and bots
- * Future:
- * - draftUserMessage?: { text: string; attachments: any[] };
- * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
- */
-export interface DConversation {
-  id: string;
-  name: string;
-  messages: DMessage[];
-  systemPurposeId: SystemPurposeId;
-  chatModelId: ChatModelId;
-  userTitle?: string;
-  autoTitle?: string;
-  tokenCount: number;                 // f(messages, chatModelId)
-  created: number;                    // created timestamp
-  updated: number | null;             // updated timestamp
-  // Not persisted, used while in-memory, or temporarily by the UI
-  abortController: AbortController | null;
-}
-
-const createConversation = (id: string, name: string, systemPurposeId: SystemPurposeId, chatModelId: ChatModelId): DConversation =>
-  ({ id, name, messages: [], systemPurposeId, chatModelId, tokenCount: 0, created: Date.now(), updated: Date.now(), abortController: null });
-
-const defaultConversations: DConversation[] = [createConversation(uuidv4(), 'Conversation', defaultSystemPurposeId, defaultChatModelId)];
-
-const errorConversation: DConversation = createConversation('error-missing', 'Missing Conversation', defaultSystemPurposeId, defaultChatModelId);
-
+const defaultConversations: DConversation[] = [createDefaultConversation()];
 
 export const useChatStore = create<ChatStore>()(devtools(
   persist(
     (set, get) => ({
+
       // default state
       conversations: defaultConversations,
       activeConversationId: defaultConversations[0].id,
 
 
-      addConversation: (conversation: DConversation) =>
+      addConversation: (conversation: DConversation, activate: boolean) =>
         set(state => (
           {
             conversations: [
               conversation,
-              ...state.conversations.slice(0, 19),
+              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
             ],
+            ...(activate ? { activeConversationId: conversation.id } : {}),
           }
         )),
 
       deleteConversation: (conversationId: string) =>
-        set(state => (
-          {
-            conversations: state.conversations.filter((conversation: DConversation): boolean => conversation.id !== conversationId),
-          }
-        )),
+        set(state => {
+
+          // abort any pending requests on this conversation
+          const cIndex = state.conversations.findIndex((conversation: DConversation): boolean => conversation.id === conversationId);
+          if (cIndex >= 0 && state.conversations[cIndex].id !== 'error-missing')
+            state.conversations[cIndex].abortController?.abort();
+
+          // remove from the list
+          const conversations = state.conversations.filter((conversation: DConversation): boolean => conversation.id !== conversationId);
+
+          // update the active conversation to the next in list
+          let activeConversationId = undefined;
+          if (state.activeConversationId === conversationId && cIndex >= 0)
+            activeConversationId = conversations.length
+              ? conversations[cIndex < conversations.length ? cIndex : conversations.length - 1].id
+              : null;
+
+          return {
+            conversations,
+            ...(activeConversationId !== undefined ? { activeConversationId } : {}),
+          };
+        }),
 
       setActiveConversationId: (conversationId: string) =>
         set({ activeConversationId: conversationId }),
@@ -233,6 +256,10 @@ export const useChatStore = create<ChatStore>()(devtools(
     }),
     {
       name: 'app-chats',
+      // version history:
+      //  - 1: [2023-03-18] app launch, single chat
+      //  - 2: [2023-04-10] multi-chat version - invalidating data to be sure
+      version: 2,
 
       // omit the transient property from the persisted state
       partialize: (state) => ({
@@ -243,11 +270,16 @@ export const useChatStore = create<ChatStore>()(devtools(
         }),
       }),
 
-      // rehydrate the transient property
       onRehydrateStorage: () => (state) => {
-        if (state)
+        if (state) {
+          // if nothing is selected, select the first conversation
+          if (!state.activeConversationId && state.conversations.length)
+            state.activeConversationId = state.conversations[0].id;
+
+          // rehydrate the transient property
           for (const conversation of (state.conversations || []))
             conversation.abortController = null;
+        }
       },
     }),
   {
@@ -257,58 +289,9 @@ export const useChatStore = create<ChatStore>()(devtools(
 );
 
 
-// WARNING: this will re-render at high frequency (e.g. token received in any message therein)
-//          only use this for UI that renders messages
-export function useActiveConversation(): DConversation {
-  const activeConversationId = useChatStore(state => state.activeConversationId);
-  return useChatStore(state => state.conversations.find(conversation => conversation.id === activeConversationId) || errorConversation);
-}
-
-export function useActiveConfiguration() {
-  const { assistantTyping, conversationId, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId, tokenCount } = useChatStore(state => {
-    const _activeConversationId = state.activeConversationId;
-    const conversation = state.conversations.find(conversation => conversation.id === _activeConversationId) || errorConversation;
-    return {
-      assistantTyping: !!conversation.abortController,
-      conversationId: conversation.id,
-      chatModelId: conversation.chatModelId,
-      setChatModelId: state.setChatModelId,
-      systemPurposeId: conversation.systemPurposeId,
-      setSystemPurposeId: state.setSystemPurposeId,
-      tokenCount: conversation.tokenCount,
-    };
-  }, shallow);
-
-  return {
-    assistantTyping,
-    conversationId,
-    chatModelId,
-    setChatModelId: (chatModelId: ChatModelId) => setChatModelId(conversationId, chatModelId),
-    systemPurposeId,
-    setSystemPurposeId: (systemPurposeId: SystemPurposeId) => setSystemPurposeId(conversationId, systemPurposeId),
-    tokenCount,
-  };
-}
-
-export function useConversationPartial(conversationId: string) {
-  return useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === conversationId);
-    if (!conversation) return {
-      assistantTyping: false,
-      chatModelId: 'error' as ChatModelId,
-      tokenCount: 0,
-    };
-    return {
-      assistantTyping: !!conversation.abortController,
-      chatModelId: conversation.chatModelId,
-      tokenCount: conversation.tokenCount,
-    };
-  }, shallow);
-}
-
-export const useConversationNames = (): { id: string, name: string, systemPurposeId: SystemPurposeId }[] =>
+export const useConversationIDs = (): string[] =>
   useChatStore(
-    state => state.conversations.map((conversation) => ({ id: conversation.id, name: conversation.name, systemPurposeId: conversation.systemPurposeId })),
+    state => state.conversations.map(conversation => conversation.id),
     shallow,
   );
 
