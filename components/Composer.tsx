@@ -124,7 +124,7 @@ export function Composer(props: {
   // derived state
   const tokenLimit = chatModelId ? ChatModels[chatModelId]?.contextWindowSize || 8192 : 0;
   const directTokens = React.useMemo(() => {
-    return (!composeText || !chatModelId) ? 0 : countModelTokens(composeText, chatModelId, 'composer text');
+    return (!composeText || !chatModelId) ? 0 : 4 + countModelTokens(composeText, chatModelId, 'composer text');
   }, [chatModelId, composeText]);
   const indirectTokens = modelMaxResponseTokens + conversationTokenCount;
   const remainingTokens = tokenLimit - directTokens - indirectTokens;
