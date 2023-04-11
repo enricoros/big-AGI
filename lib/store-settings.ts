@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-
 /// Settings Store
 
 interface SettingsStore {
-
   // UI settings
 
   centerMode: 'narrow' | 'wide' | 'full';
@@ -43,12 +41,13 @@ interface SettingsStore {
   modelMaxResponseTokens: number;
   setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
+  textToSpeechLang: string;
+  setTextToSpeechLang: (textToSpeechLang: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
@@ -67,7 +66,7 @@ export const useSettingsStore = create<SettingsStore>()(
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
-      apiKey: (function() {
+      apiKey: (function () {
         // this will be removed in April
         if (typeof localStorage === 'undefined') return '';
         return localStorage.getItem('app-settings-openai-api-key') || '';
@@ -86,27 +85,30 @@ export const useSettingsStore = create<SettingsStore>()(
       modelMaxResponseTokens: 2048,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
 
+      textToSpeechLang: 'en-US',
+      setTextToSpeechLang: (textToSpeechLang: string) => set({ textToSpeechLang }),
     }),
     {
       name: 'app-settings',
-    }),
+    },
+  ),
 );
-
 
 /// Composer Store
 
 interface ComposerStore {
   history: {
-    date: number,
-    text: string,
-    count: number,
+    date: number;
+    text: string;
+    count: number;
   }[];
 
   appendMessageToHistory: (text: string) => void;
 }
 
 export const useComposerStore = create<ComposerStore>()(
-  persist((set, get) => ({
+  persist(
+    (set, get) => ({
       history: [],
 
       appendMessageToHistory: (text: string) => {
@@ -119,8 +121,7 @@ export const useComposerStore = create<ComposerStore>()(
           history.splice(history.indexOf(item), 1);
           item.date = date;
           item.count++;
-        } else
-          item = { date, text, count: 1 };
+        } else item = { date, text, count: 1 };
 
         // prepend the item to the history array
         history.unshift(item);
@@ -131,5 +132,6 @@ export const useComposerStore = create<ComposerStore>()(
     }),
     {
       name: 'app-composer',
-    }),
+    },
+  ),
 );
