@@ -1,4 +1,4 @@
-import { ApiChatInput, ApiChatMessage } from '../pages/api/openai/stream-chat';
+import { ApiChatInput } from '../pages/api/openai/chat';
 import { DMessage } from '@/lib/store-chats';
 
 
@@ -13,17 +13,17 @@ export async function streamAssistantMessageEdits(
   abortSignal: AbortSignal,
 ) {
 
-  const chatMessages: ApiChatMessage[] = history.map(({ role, text }) => ({
-    role: role,
-    content: text,
-  }));
-
   const payload: ApiChatInput = {
-    ...(apiKey && { apiKey }),
-    ...(apiHost && { apiHost }),
-    ...(apiOrgId && { apiOrgId }),
+    api: {
+      ...(apiKey && { apiKey }),
+      ...(apiHost && { apiHost }),
+      ...(apiOrgId && { apiOrgId }),
+    },
     model: chatModelId,
-    messages: chatMessages,
+    messages: history.map(({ role, text }) => ({
+      role: role,
+      content: text,
+    })),
     temperature: modelTemperature,
     max_tokens: modelMaxResponseTokens,
   };
