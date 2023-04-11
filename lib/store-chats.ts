@@ -186,7 +186,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           conversation.abortController?.abort();
           return {
             messages: newMessages,
-            tokenCount: newMessages.reduce((sum, message) => sum + updateTokenCount(message, conversation.chatModelId, false, 'setMessages'), 0),
+            tokenCount: newMessages.reduce((sum, message) => sum + 4 + updateTokenCount(message, conversation.chatModelId, false, 'setMessages'), 3),
             updated: Date.now(),
             abortController: null,
           };
@@ -202,7 +202,7 @@ export const useChatStore = create<ChatStore>()(devtools(
 
           return {
             messages,
-            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
+            tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
             updated: Date.now(),
           };
         }),
@@ -214,7 +214,7 @@ export const useChatStore = create<ChatStore>()(devtools(
 
           return {
             messages,
-            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
+            tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
             updated: Date.now(),
           };
         }),
@@ -234,7 +234,7 @@ export const useChatStore = create<ChatStore>()(devtools(
 
           return {
             messages,
-            tokenCount: messages.reduce((sum, message) => sum + message.tokenCount || 0, 0),
+            tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
             ...(setUpdated && { updated: Date.now() }),
           };
         }),
@@ -243,7 +243,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         get()._editConversation(conversationId, conversation => {
           return {
             chatModelId,
-            tokenCount: conversation.messages.reduce((sum, message) => sum + updateTokenCount(message, chatModelId, true, 'setChatModelId'), 0),
+            tokenCount: conversation.messages.reduce((sum, message) => sum + 4 + updateTokenCount(message, chatModelId, true, 'setChatModelId'), 3),
           };
         }),
 
