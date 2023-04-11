@@ -107,8 +107,9 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
 
   // external state
   const conversationIDs = useConversationIDs();
-  const { activeConversationId, addConversation, deleteConversation, setActiveConversation } = useChatStore(state => ({
+  const { activeConversationId, setActiveConversationId, addConversation, deleteConversation, setActiveConversation } = useChatStore(state => ({
     activeConversationId: state.activeConversationId,
+    setActiveConversationId: state.setActiveConversationId,
     addConversation: state.addConversation,
     deleteConversation: state.deleteConversation,
     setActiveConversation: state.setActiveConversationId,
@@ -128,6 +129,7 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
   const handleConversationDelete = (e: React.MouseEvent, conversationId: string) => {
     if (!singleChat) {
       e.stopPropagation();
+      setActiveConversationId(conversationId);
       setDeleteConfirmationId(conversationId);
     }
   };

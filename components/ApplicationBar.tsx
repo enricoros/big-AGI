@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
+import { Badge, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -65,10 +65,11 @@ export function ApplicationBar(props: {
 
   // conversation actions
 
-  const { isEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId } = useChatStore(state => {
+  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      isEmpty: conversation ? !conversation.messages.length : true,
+      conversationsCount: state.conversations.length,
+      isConversationEmpty: conversation ? !conversation.messages.length : true,
       chatModelId: conversation ? conversation.chatModelId : null,
       systemPurposeId: conversation ? conversation.systemPurposeId : null,
       setMessages: state.setMessages,
@@ -118,7 +119,9 @@ export function ApplicationBar(props: {
       }}>
 
       <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
-        <MenuIcon />
+        <Badge variant='solid' size='sm' badgeContent={conversationsCount < 2 ? 0 : conversationsCount}>
+          <MenuIcon />
+        </Badge>
       </IconButton>
 
       <Stack direction='row' sx={{ my: 'auto' }}>
@@ -170,7 +173,7 @@ export function ApplicationBar(props: {
 
       <ListDivider />
 
-      <MenuItem disabled={!props.conversationId || isEmpty} onClick={handleConversationDownload}>
+      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationDownload}>
         <ListItemDecorator>
           {/*<Badge size='sm' color='danger'>*/}
           <FileDownloadIcon />
@@ -179,7 +182,7 @@ export function ApplicationBar(props: {
         Download JSON
       </MenuItem>
 
-      <MenuItem disabled={!props.conversationId || isEmpty} onClick={handleConversationPublish}>
+      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationPublish}>
         <ListItemDecorator>
           {/*<Badge size='sm' color='primary'>*/}
           <ExitToAppIcon />
@@ -190,7 +193,7 @@ export function ApplicationBar(props: {
 
       <ListDivider />
 
-      <MenuItem disabled={!props.conversationId || isEmpty} onClick={handleConversationClear}>
+      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationClear}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Clear conversation
       </MenuItem>
