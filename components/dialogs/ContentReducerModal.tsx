@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Slider, Textarea, Typography } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Slider, Textarea, Typography } from '@mui/joy';
 
 import { ChatModelId } from '@/lib/data';
 import { Section } from '@/components/dialogs/SettingsModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
 import { countModelTokens } from '@/lib/tokens';
+import { summerizeToFitContextBudget } from '@/lib/summerize';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
@@ -17,8 +18,6 @@ function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, token
 
   return <Alert variant='soft' color={remainingTokens >= 1 ? 'primary' : 'danger'} sx={{ mt: 1 }}>{message}</Alert>;
 }
-import { summerizeToFitContextBudget } from '@/lib/summerize';
-import { useSettingsStore } from '@/lib/store-settings';
 
 
 /**
@@ -36,6 +35,7 @@ export function ContentReducerModal(props: {
   // state
   const [compressionLevel, setCompressionLevel] = React.useState(3);
   const [reducedText, setReducedText] = React.useState('');
+  const [processing, setProcessing] = React.useState(false);
 
   // external state
   // ...
@@ -48,18 +48,21 @@ export function ContentReducerModal(props: {
     setCompressionLevel(newValue as number);
 
   const handlePreviewClicked = async () => {
-    const { apiKey, modelTemperature, modelMaxResponseTokens, modelApiHost } = useSettingsStore.getState();
-    // just pass Input -> Output for now
-    console.log("props.tokenBudget", props.tokenBudget);
-    const reducedText = await summerizeToFitContextBudget(props.initialText, apiKey, modelApiHost, props.chatModelId, props.tokenBudget);
+    console.log('props.tokenBudget', props.tokenLimit);
+    setProcessing(true);
+    const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, props.chatModelId);
     setReducedText(reducedText);
+    setProcessing(false);
   };
 
   const handleUseReducedTextClicked = () =>
     props.onReducedText(reducedText);
 
   // upon load, click the preview button
-  React.useEffect(handlePreviewClicked, [handlePreviewClicked]);
+  // React.useEffect(() => {
+  //   // noinspection JSIgnoredPromiseFromCall
+  //   handlePreviewClicked();
+  // }, [handlePreviewClicked]);
 
   return (
     <Modal open onClose={props.onClose}>
@@ -107,7 +110,7 @@ export function ContentReducerModal(props: {
           </FormControl>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant='solid' color='primary' onClick={handlePreviewClicked}>
+            <Button variant='solid' color='primary' onClick={handlePreviewClicked} disabled={processing}>
               Preview
             </Button>
           </Box>
@@ -131,6 +134,15 @@ export function ContentReducerModal(props: {
               }} />
 
             <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
+
+            {/* indicator we're processing */}
+            {!processing && (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                <CircularProgress />
+                <Typography level='body2' sx={{ mt: 1 }}>Reduction in progress.</Typography>
+                <Typography level='body3'>This can take a few minutes</Typography>
+              </Box>
+            )}
 
           </Box>
 
