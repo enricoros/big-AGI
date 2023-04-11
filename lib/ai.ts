@@ -1,29 +1,31 @@
-import { ApiChatInput, ApiChatMessage } from '../pages/api/openai/stream-chat';
-import { DMessage } from '@/lib/store-chats';
+import { ApiChatInput, ApiChatResponse } from '../pages/api/openai/chat';
+import { DMessage, useChatStore } from '@/lib/store-chats';
+import { fastChatModelId } from '@/lib/data';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 /**
  * Main function to send the chat to the assistant and receive a response (streaming)
  */
-export async function streamAssistantMessageEdits(
+export async function streamAssistantMessage(
   conversationId: string, assistantMessageId: string, history: DMessage[],
-  apiKey: string | undefined, apiHost: string | undefined, apiOrgId: string | undefined,
+  apiKey: string | undefined, apiHost: string | undefined, apiOrganizationId: string | undefined,
   chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
 ) {
 
-  const chatMessages: ApiChatMessage[] = history.map(({ role, text }) => ({
-    role: role,
-    content: text,
-  }));
-
   const payload: ApiChatInput = {
-    ...(apiKey && { apiKey }),
-    ...(apiHost && { apiHost }),
-    ...(apiOrgId && { apiOrgId }),
+    api: {
+      ...(apiKey && { apiKey }),
+      ...(apiHost && { apiHost }),
+      ...(apiOrganizationId && { apiOrganizationId }),
+    },
     model: chatModelId,
-    messages: chatMessages,
+    messages: history.map(({ role, text }) => ({
+      role: role,
+      content: text,
+    })),
     temperature: modelTemperature,
     max_tokens: modelMaxResponseTokens,
   };
@@ -83,4 +85,64 @@ export async function streamAssistantMessageEdits(
 
   // finally, stop the typing animation
   editMessage(conversationId, assistantMessageId, { typing: false }, false);
+}
+
+
+/**
+ * Creates the AI titles for conversations, by taking the last 5 first-lines and asking AI what's that about
+ */
+export async function updateAutoConversationTitle(conversationId: string) {
+
+  // external state
+  const { conversations, setAutoTitle } = useChatStore.getState();
+
+  // only operate on valid conversations, without any title
+  const conversation = conversations.find(c => c.id === conversationId) ?? null;
+  if (!conversation || conversation.autoTitle || conversation.userTitle) return;
+
+  // first line of the last 5 messages
+  const historyLines: string[] = conversation.messages.slice(-5).filter(m => m.role !== 'system').map(m => {
+    let text = m.text.split('\n')[0];
+    text = text.length > 50 ? text.substring(0, 50) + '...' : text;
+    text = `${m.role === 'user' ? 'You' : 'Assistant'}: ${text}`;
+    return `- ${text}`;
+  });
+
+  // prepare the payload
+  const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
+  const payload: ApiChatInput = {
+    api: {
+      ...(apiKey && { apiKey }),
+      ...(apiHost && { apiHost }),
+      ...(apiOrganizationId && { apiOrganizationId }),
+    },
+    model: fastChatModelId,
+    messages: [
+      { role: 'system', content: `You are an AI language expert who specializes in creating very concise and short chat titles.` },
+      {
+        role: 'user', content:
+          'Analyze the given list of pre-processed first lines from each participant\'s conversation and generate a concise chat ' +
+          'title that represents the content and tone of the conversation. Only respond with the short title and nothing else.\n' +
+          '\n' +
+          historyLines.join('\n') +
+          '\n',
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch('/api/openai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (response.ok) {
+      const chatResponse: ApiChatResponse = await response.json();
+      const title = chatResponse.message?.content?.trim()?.replaceAll('"', '');
+      if (title)
+        setAutoTitle(conversationId, title);
+    }
+  } catch (error: any) {
+    console.error('updateAutoConversationTitle: fetch request error:', error);
+  }
 }

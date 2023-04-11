@@ -20,7 +20,7 @@ import { TokenBadge } from '@/components/util/TokenBadge';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
-import { useChatStore, useConversationPartial } from '@/lib/store-chats';
+import { useChatStore } from '@/lib/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
@@ -91,9 +91,9 @@ const pasteClipboardLegend =
  * @param {() => void} props.stopGeneration - Function to stop response generation
  */
 export function Composer(props: {
-  conversationId: string; messageId: string | null;
-  sendMessage: (conversationId: string, text: string) => void;
+  conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
+  onSendMessage: (conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
@@ -107,14 +107,24 @@ export function Composer(props: {
   // external state
   const theme = useTheme();
   const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
-  const { assistantTyping, chatModelId, tokenCount: conversationTokenCount } = useConversationPartial(props.conversationId);
   const stopTyping = useChatStore(state => state.stopTyping);
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
+
+  const { assistantTyping, chatModelId, tokenCount: conversationTokenCount } = useChatStore(state => {
+    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+    return {
+      assistantTyping: conversation ? !!conversation.abortController : false,
+      chatModelId: conversation ? conversation.chatModelId : null,
+      tokenCount: conversation ? conversation.tokenCount : 0,
+    };
+  }, shallow);
+
+
   // derived state
-  const tokenLimit = ChatModels[chatModelId]?.contextWindowSize || 8192;
+  const tokenLimit = chatModelId ? ChatModels[chatModelId]?.contextWindowSize || 8192 : 0;
   const directTokens = React.useMemo(() => {
-    return !composeText ? 0 : countModelTokens(composeText, chatModelId, 'composer text');
+    return (!composeText || !chatModelId) ? 0 : countModelTokens(composeText, chatModelId, 'composer text');
   }, [chatModelId, composeText]);
   const indirectTokens = modelMaxResponseTokens + conversationTokenCount;
   const remainingTokens = tokenLimit - directTokens - indirectTokens;
@@ -122,14 +132,14 @@ export function Composer(props: {
 
   const handleSendClicked = () => {
     const text = (composeText || '').trim();
-    if (text.length) {
+    if (text.length && props.conversationId) {
       setComposeText('');
-      props.sendMessage(props.conversationId, text);
+      props.onSendMessage(props.conversationId, text);
       appendMessageToHistory(text);
     }
   };
 
-  const handleStopClicked = () => stopTyping(props.conversationId);
+  const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
@@ -177,13 +187,15 @@ export function Composer(props: {
     }
 
     // see how we fare on budget
-    const newTextTokens = countModelTokens(newText, chatModelId, 'reducer trigger');
+    if (chatModelId) {
+      const newTextTokens = countModelTokens(newText, chatModelId, 'reducer trigger');
 
-    // simple trigger for the reduction dialog
-    if (newTextTokens > remainingTokens) {
-      setReducerTextTokens(newTextTokens);
-      setReducerText(newText);
-      return;
+      // simple trigger for the reduction dialog
+      if (newTextTokens > remainingTokens) {
+        setReducerTextTokens(newTextTokens);
+        setReducerText(newText);
+        return;
+      }
     }
 
     // update the text: just
@@ -373,7 +385,7 @@ export function Composer(props: {
                 lineHeight: 1.75,
               }} />
 
-            <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />
+            {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
 
             <Card
               color='primary' invertedColors variant='soft'
@@ -425,10 +437,10 @@ export function Composer(props: {
 
               {/* Send / Stop */}
               {assistantTyping
-                ? <Button fullWidth variant='soft' color='primary' onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
+                ? <Button fullWidth variant='soft' color='primary' disabled={!props.conversationId} onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
                   Stop
                 </Button>
-                : <Button fullWidth variant='solid' color='primary' onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
+                : <Button fullWidth variant='solid' color='primary' disabled={!props.conversationId} onClick={handleSendClicked} endDecorator={<TelegramIcon />}>
                   Chat
                 </Button>}
             </Box>
@@ -463,7 +475,7 @@ export function Composer(props: {
         )}
 
         {/* Content reducer modal */}
-        {reducerText?.length >= 1 &&
+        {reducerText?.length >= 1 && chatModelId &&
           <ContentReducerModal
             initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens} chatModelId={chatModelId}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}

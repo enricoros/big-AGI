@@ -11,7 +11,7 @@ import { SystemPurposes } from '@/lib/data';
 function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean) {
 
   // const title =
-  //   `# ${conversation.name || 'Conversation'}\n` +
+  //   `# ${conversation.manual/auto/name || 'Conversation'}\n` +
   //   (new Date(conversation.created)).toLocaleString() + '\n\n';
 
   return conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {

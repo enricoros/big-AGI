@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -6,7 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
-import { useActiveConfiguration } from '@/lib/store-chats';
+import { useChatStore } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -33,7 +34,7 @@ const getRandomElement = <T extends any>(array: T[]): T | undefined =>
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PurposeSelector(props: { onRunExample: (example: string) => void }) {
+export function PurposeSelector(props: { conversationId: string, runExample: (example: string) => void }) {
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
@@ -41,7 +42,17 @@ export function PurposeSelector(props: { onRunExample: (example: string) => void
   // external state
   const theme = useTheme();
   const showPurposeFinder = useSettingsStore(state => state.showPurposeFinder);
-  const { systemPurposeId, setSystemPurposeId } = useActiveConfiguration();
+  const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+    return {
+      systemPurposeId: conversation ? conversation.systemPurposeId : null,
+      setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
+    };
+  }, shallow);
+
+  // safety check - shouldn't happen
+  if (!systemPurposeId || !setSystemPurposeId)
+    return null;
 
 
   const handleSearchClear = () => {
@@ -76,9 +87,9 @@ export function PurposeSelector(props: { onRunExample: (example: string) => void
   };
 
 
-  const handlePurposeChanged = (purpose: SystemPurposeId | null) => {
-    if (purpose)
-      setSystemPurposeId(purpose);
+  const handlePurposeChanged = (purposeId: SystemPurposeId | null) => {
+    if (purposeId)
+      setSystemPurposeId(props.conversationId, purposeId);
   };
 
   const handleCustomSystemMessageChange = (v: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -158,7 +169,7 @@ export function PurposeSelector(props: { onRunExample: (example: string) => void
             : (selectedExample ? <>
                 {selectedExample}
                 <IconButton variant='plain' color='primary' size='sm'
-                            onClick={() => props.onRunExample(selectedExample)}
+                            onClick={() => props.runExample(selectedExample)}
                             sx={{ opacity: 0, transition: 'opacity 0.3s' }}>
                   <TelegramIcon />
                 </IconButton>
