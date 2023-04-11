@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
-import { ApiChatInput, chatCompletionPayload, extractOpenaiChatInputs, postOpenAI } from './chat';
+import { ApiChatInput, chatCompletionPayload, extractOpenaiChatInputs, postToOpenAI } from './chat';
 import { OpenAIAPI } from '@/types/api-openai';
-
-
-// error function: send them down the stream as text
-const sendErrorAndClose = (controller: ReadableStreamDefaultController, encoder: TextEncoder, message: string) => {
-  controller.enqueue(encoder.encode(message));
-  controller.close();
-};
 
 
 async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Promise<ReadableStream> {
@@ -24,12 +17,15 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
 
   let upstreamResponse: Response;
   try {
-    upstreamResponse = await postOpenAI(input.api, '/v1/chat/completions', chatCompletionPayload(input, true), signal);
+    upstreamResponse = await postToOpenAI(input.api, '/v1/chat/completions', chatCompletionPayload(input, true), signal);
   } catch (error: any) {
     console.log(error);
     const message = '[OpenAI Issue] ' + (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
     return new ReadableStream({
-      start: controller => sendErrorAndClose(controller, encoder, message),
+      start: controller => {
+        controller.enqueue(encoder.encode(message));
+        controller.close();
+      },
     });
   }
 

@@ -27,7 +27,7 @@ function ConversationListItem(props: {
     return conversation && {
       assistantTyping: !!conversation.abortController,
       chatModelId: conversation.chatModelId,
-      name: conversation.name,
+      name: conversation.userTitle || conversation.autoTitle || conversation.name,
       systemPurposeId: conversation.systemPurposeId,
     };
   }, shallow);
