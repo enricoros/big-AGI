@@ -26,6 +26,7 @@ Or click fork & run on Vercel
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.11_ 🎉 **AI-titling** 🧠✍️
 - [x] _NEW 04.10_ 🎉 **Multiple chats** 📝📝📝
 - [x] _NEW 04.09_ 🎉 **Microphone improvements** 🎙️
 - [x] _NEW 04.08_ 🎉 **Precise Token counter** 📊 extra-useful
