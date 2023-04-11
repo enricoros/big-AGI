@@ -4,6 +4,7 @@ const nextConfig = {
   env: {
     // defaults to TRUE, unless API Keys are set at build time; this flag is used by the UI
     REQUIRE_USER_API_KEYS: !process.env.OPENAI_API_KEY,
+    AUTH_TYPE: process.env.AUTH_TYPE,
   },
   webpack(config, { isServer, dev }) {
     // @mui/joy: anything material gets redirected to Joy
