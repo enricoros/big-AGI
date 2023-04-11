@@ -17,6 +17,7 @@ import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { PagesMenu } from '@/components/Pages';
 import { StyledDropdown } from '@/components/util/StyledDropdown';
+import { StyledDropdownWithSymbol } from '@/components/util/StyledDropdownWithSymbol';
 import { useChatStore } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -128,7 +129,7 @@ export function ApplicationBar(props: {
 
         {chatModelId && <StyledDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
 
-        {systemPurposeId && <StyledDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />}
+        {systemPurposeId && <StyledDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />}
 
       </Stack>
 
