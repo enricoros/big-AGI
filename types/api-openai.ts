@@ -4,7 +4,7 @@ export namespace OpenAIAPI {
   export interface Configuration {
     apiKey?: string;
     apiHost?: string;
-    apiOrgId?: string;
+    apiOrganizationId?: string;
   }
 
   // [API] Chat

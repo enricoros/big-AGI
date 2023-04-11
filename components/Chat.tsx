@@ -14,7 +14,7 @@ import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/store-chats';
 import { publishConversation } from '@/lib/publish';
-import { streamAssistantMessageEdits } from '@/lib/ai';
+import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/ai';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -57,10 +57,13 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
   startTyping(conversationId, controller);
 
   const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  await streamAssistantMessageEdits(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal);
+  await streamAssistantMessage(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal);
 
   // clear to send, again
   startTyping(conversationId, null);
+
+  // update text, if needed
+  await updateAutoConversationTitle(conversationId);
 };
 
 

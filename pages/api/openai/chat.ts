@@ -26,7 +26,7 @@ export async function extractOpenaiChatInputs(req: NextRequest): Promise<ApiChat
   const api: OpenAIAPI.Configuration = {
     apiKey: (userApi.apiKey || process.env.OPENAI_API_KEY || '').trim(),
     apiHost: (userApi.apiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
-    apiOrgId: (userApi.apiOrgId || process.env.OPENAI_API_ORG_ID || '').trim(),
+    apiOrganizationId: (userApi.apiOrganizationId || process.env.OPENAI_API_ORG_ID || '').trim(),
   };
   if (!api.apiKey)
     throw new Error('Missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).');
@@ -37,7 +37,7 @@ export async function extractOpenaiChatInputs(req: NextRequest): Promise<ApiChat
 const openAIHeaders = (api: OpenAIAPI.Configuration): HeadersInit => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${api.apiKey}`,
-  ...(api.apiOrgId && { 'OpenAI-Organization': api.apiOrgId }),
+  ...(api.apiOrganizationId && { 'OpenAI-Organization': api.apiOrganizationId }),
 });
 
 export const chatCompletionPayload = (input: Omit<ApiChatInput, 'api'>, stream: boolean): OpenAIAPI.Chat.CompletionsRequest => ({
@@ -49,7 +49,7 @@ export const chatCompletionPayload = (input: Omit<ApiChatInput, 'api'>, stream: 
   n: 1,
 });
 
-export async function postOpenAI<TBody extends object>(api: OpenAIAPI.Configuration, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
+export async function postToOpenAI<TBody extends object>(api: OpenAIAPI.Configuration, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
   const response = await fetch(`https://${api.apiHost}${apiPath}`, {
     method: 'POST',
     headers: openAIHeaders(api),
@@ -86,7 +86,7 @@ export interface ApiChatResponse {
 export default async function handler(req: NextRequest) {
   try {
     const { api, ...rest } = await extractOpenaiChatInputs(req);
-    const response = await postOpenAI(api, '/v1/chat/completions', chatCompletionPayload(rest, false));
+    const response = await postToOpenAI(api, '/v1/chat/completions', chatCompletionPayload(rest, false));
     const completion: OpenAIAPI.Chat.CompletionsResponse = await response.json();
     return new NextResponse(JSON.stringify({
       message: completion.choices[0].message,

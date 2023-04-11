@@ -29,6 +29,8 @@ export interface ChatStore {
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
   setChatModelId: (conversationId: string, chatModelId: ChatModelId) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
+  setAutoTitle: (conversationId: string, autoTitle: string) => void;
+  setUserTitle: (conversationId: string, userTitle: string) => void;
 
   // utility function
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -239,6 +241,18 @@ export const useChatStore = create<ChatStore>()(devtools(
         get()._editConversation(conversationId,
           {
             systemPurposeId,
+          }),
+
+      setAutoTitle: (conversationId: string, autoTitle: string) =>
+        get()._editConversation(conversationId,
+          {
+            autoTitle,
+          }),
+
+      setUserTitle: (conversationId: string, userTitle: string) =>
+        get()._editConversation(conversationId,
+          {
+            userTitle,
           }),
 
 
