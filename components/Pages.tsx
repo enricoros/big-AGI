@@ -1,16 +1,18 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Avatar, Box, IconButton, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 // import { Link } from '@/components/util/Link';
 import { SystemPurposes } from '@/lib/data';
-import { createDefaultConversation, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/store-chats';
+import { conversationTitle, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/store-chats';
+
 
 const DEBUG_CONVERSATION_IDs = false;
+const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 
 function ConversationListItem(props: {
@@ -27,7 +29,7 @@ function ConversationListItem(props: {
     return conversation && {
       assistantTyping: !!conversation.abortController,
       chatModelId: conversation.chatModelId,
-      name: conversation.userTitle || conversation.autoTitle || conversation.name,
+      name: conversationTitle(conversation),
       systemPurposeId: conversation.systemPurposeId,
     };
   }, shallow);
@@ -69,7 +71,7 @@ function ConversationListItem(props: {
       </ListItemDecorator>
 
       {/* Text */}
-      <Box onDoubleClick={() => props.conversationEditTitle(props.conversationId)} sx={{ mr: 1 }}>
+      <Box onDoubleClick={() => props.conversationEditTitle(props.conversationId)} sx={{ mr: 2 }}>
         {DEBUG_CONVERSATION_IDs ? props.conversationId.slice(0, 10) : name}{assistantTyping && '...'}
       </Box>
 
@@ -83,7 +85,7 @@ function ConversationListItem(props: {
       {/*  <EditIcon />*/}
       {/*</IconButton>*/}
 
-      {/* Clear */}
+      {/* Delete */}
       {!props.isSingle && (
         <IconButton
           variant='outlined' color='neutral'
@@ -107,20 +109,21 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
 
   // external state
   const conversationIDs = useConversationIDs();
-  const { activeConversationId, setActiveConversationId, addConversation, deleteConversation, setActiveConversation } = useChatStore(state => ({
+  const { activeConversationId, setActiveConversationId, createConversation, deleteConversation, setActiveConversation } = useChatStore(state => ({
     activeConversationId: state.activeConversationId,
     setActiveConversationId: state.setActiveConversationId,
-    addConversation: state.addConversation,
+    createConversation: state.createConversation,
     deleteConversation: state.deleteConversation,
     setActiveConversation: state.setActiveConversationId,
   }), shallow);
 
 
+  const hasChats = conversationIDs.length > 0;
   const singleChat = conversationIDs.length === 1;
   const maxReached = conversationIDs.length >= MAX_CONVERSATIONS;
 
 
-  const handleNew = () => addConversation(createDefaultConversation(), true);
+  const handleNew = () => createConversation();
 
   const handleConversationActivate = (conversationId: string) => setActiveConversation(conversationId);
 
@@ -135,14 +138,23 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
   };
 
   const handleConfirmedDeleteConversation = () => {
-    if (!singleChat && deleteConfirmationId) {
-      deleteConversation(deleteConfirmationId);
+    if (hasChats && deleteConfirmationId) {
+      if (deleteConfirmationId === SPECIAL_ID_ALL_CHATS) {
+        createConversation();
+        conversationIDs.forEach(conversationId => deleteConversation(conversationId));
+      } else
+        deleteConversation(deleteConfirmationId);
       setDeleteConfirmationId(null);
     }
   };
 
+  const handleDeleteAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteConfirmationId(SPECIAL_ID_ALL_CHATS);
+  };
 
-  const newSuffix = maxReached && <Tooltip title={`Max reached:${MAX_CONVERSATIONS} chats. The oldest will be eliminated.`}><span>⚠️</span></Tooltip>;
+
+  const NewPrefix = maxReached && <Tooltip title={`Maximum limit: ${MAX_CONVERSATIONS} chats. Proceeding will remove the oldest chat.`}><span>⚠️ </span></Tooltip>;
 
   return <>
 
@@ -160,7 +172,7 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
       <MenuItem onClick={handleNew}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
         <Typography>
-          New chat {newSuffix}
+          {NewPrefix}New
         </Typography>
       </MenuItem>
 
@@ -175,12 +187,20 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
           conversationEditTitle={handleConversationEditTitle}
         />)}
 
+      <ListDivider />
+
+      <MenuItem disabled={!hasChats} onClick={handleDeleteAll}>
+        <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+        <Typography>
+          Delete all
+        </Typography>
+      </MenuItem>
+
       {/*<ListItem>*/}
       {/*  <Typography level='body2'>*/}
       {/*    Scratchpad*/}
       {/*  </Typography>*/}
       {/*</ListItem>*/}
-
       {/*<MenuItem>*/}
       {/*  <ListItemDecorator />*/}
       {/*  <Typography sx={{ opacity: 0.5 }}>*/}
@@ -193,7 +213,12 @@ export function PagesMenu(props: { pagesMenuAnchor: HTMLElement | null, onClose:
     {/* Confirmations */}
     <ConfirmationModal
       open={!!deleteConfirmationId} onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
-      confirmationText={'Are you sure you want to delete this conversation?'} positiveActionText={'Delete conversation'}
+      confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
+        : 'Are you sure you want to delete this conversation?'}
+      positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Yes, delete all'
+        : 'Delete conversation'}
     />
 
   </>;
