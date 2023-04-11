@@ -49,13 +49,7 @@ export const chatCompletionPayload = (input: Omit<ApiChatInput, 'api'>, stream: 
   n: 1,
 });
 
-export async function postToOpenAI<TBody extends object>(api: OpenAIAPI.Configuration, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
-  const response = await fetch(`https://${api.apiHost}${apiPath}`, {
-    method: 'POST',
-    headers: openAIHeaders(api),
-    body: JSON.stringify(body),
-    signal,
-  });
+async function rethrowOpenAIError(response: Response) {
   if (!response.ok) {
     let errorPayload: object | null = null;
     try {
@@ -65,6 +59,25 @@ export async function postToOpenAI<TBody extends object>(api: OpenAIAPI.Configur
     }
     throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
+}
+
+export async function getOpenAIJson<TJson extends object>(api: OpenAIAPI.Configuration, apiPath: string): Promise<TJson> {
+  const response = await fetch(`https://${api.apiHost}${apiPath}`, {
+    method: 'GET',
+    headers: openAIHeaders(api),
+  });
+  await rethrowOpenAIError(response);
+  return await response.json();
+}
+
+export async function postToOpenAI<TBody extends object>(api: OpenAIAPI.Configuration, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
+  const response = await fetch(`https://${api.apiHost}${apiPath}`, {
+    method: 'POST',
+    headers: openAIHeaders(api),
+    body: JSON.stringify(body),
+    signal,
+  });
+  await rethrowOpenAIError(response);
   return response;
 }
 
