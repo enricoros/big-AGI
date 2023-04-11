@@ -89,7 +89,7 @@ export async function streamAssistantMessage(
 
 
 /**
- *
+ * Creates the AI titles for conversations, by taking the last 5 first-lines and asking AI what's that about
  */
 export async function updateAutoConversationTitle(conversationId: string) {
 
