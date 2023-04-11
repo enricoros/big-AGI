@@ -1,4 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+// noinspection ExceptionCaughtLocallyJS
+
+import { NextRequest, NextResponse } from 'next/server';
 
 import { postToPasteGG } from '@/lib/publish';
 
@@ -27,31 +29,35 @@ export type ApiPublishResponse = {
  * 'Proxy' that uploads a file to paste.gg.
  * Called by the UI to avoid CORS issues, as the browser cannot post directly to paste.gg.
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiPublishResponse>) {
-
-  // validate
-  const { to, title, fileContent, fileName, origin }: ApiPublishBody = req.body;
-  if (req.method !== 'POST' || to !== 'paste.gg' || !title || !fileContent || !fileName)
-    return res.status(400).json({ type: 'error', error: 'Invalid options' });
+export default async function handler(req: NextRequest) {
 
   try {
-    const paste = await postToPasteGG(title, fileName, fileContent, origin);
-    console.log('server', paste);
-    if (paste?.status === 'success')
-      return res.status(200).json({
-        type: 'success',
-        url: `https://paste.gg/${paste.result.id}`,
-        expires: paste.result.expires || 'never',
-        deletionKey: paste.result.deletion_key || 'none',
-        created: paste.result.created_at,
-      });
 
-    return res.status(200).json({ type: 'error', error: `${paste?.error || 'Unknown error'}: ${paste?.message || 'Paste.gg Error'}` });
+    const { to, title, fileContent, fileName, origin } = await req.json() as ApiPublishBody;
+    if (req.method !== 'POST' || to !== 'paste.gg' || !title || !fileContent || !fileName)
+      throw new Error('Invalid options');
+
+    const paste = await postToPasteGG(title, fileName, fileContent, origin);
+    console.log(`Posted to paste.gg`, paste);
+
+    if (paste?.status !== 'success')
+      throw new Error(`${paste?.error || 'Unknown error'}: ${paste?.message || 'Paste.gg Error'}`);
+
+    return new NextResponse(JSON.stringify({
+      type: 'success',
+      url: `https://paste.gg/${paste.result.id}`,
+      expires: paste.result.expires || 'never',
+      deletionKey: paste.result.deletion_key || 'none',
+      created: paste.result.created_at,
+    } as ApiPublishResponse));
 
   } catch (error) {
 
-    console.error('Error posting to Paste.GG', error);
-    return res.status(500).json({ type: 'error', error: 'Networking issue' });
+    console.error('Error posting to paste.gg', error);
+    return new NextResponse(JSON.stringify({
+      type: 'error',
+      error: error || 'Network issue',
+    } as ApiPublishResponse), { status: 500 });
 
   }
 
