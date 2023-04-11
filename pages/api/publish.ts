@@ -22,7 +22,6 @@ export type ApiPublishResponse = {
   error: string
 };
 
-export const config = { runtime: 'edge' };
 
 /**
  * 'Proxy' that uploads a file to paste.gg.
@@ -57,3 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
 }
+
+// noinspection JSUnusedGlobalSymbols
+export const config = {
+  runtime: 'edge',
+};
