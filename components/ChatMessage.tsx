@@ -26,10 +26,10 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { Link } from '@/components/util/Link';
+import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/publish';
 import { useSettingsStore } from '@/lib/store-settings';
-import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 
 
 /// Utilities to parse messages into blocks of text and code
@@ -355,8 +355,8 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
               }}
             />;
           const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
-          if (symbol) 
-            return <Box 
+          if (symbol)
+            return <Box
               sx={{
                 fontSize: '24px',
                 textAlign: 'center',
@@ -366,7 +366,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
               }}
             >
               {symbol}
-            </Box>
+            </Box>;
           return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
         case 'user':
           return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
