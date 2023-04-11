@@ -138,7 +138,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
     });
     if (response.ok) {
       const chatResponse: ApiChatResponse = await response.json();
-      const title = chatResponse.message?.content?.trim();
+      const title = chatResponse.message?.content?.trim()?.replaceAll('"', '');
       if (title)
         setAutoTitle(conversationId, title);
     }
