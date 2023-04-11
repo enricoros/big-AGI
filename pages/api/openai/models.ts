@@ -1,24 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { OpenAIAPI } from '@/types/api-openai';
 
-// definition for OpenAI wire types
-
-namespace OpenAIAPI.Models {
-  interface Model {
-    id: string;
-    object: 'model';
-    created: number;
-    owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string;
-    permission: any[];
-    root: string;
-    parent: null;
-  }
-
-  export interface ModelList {
-    object: string;
-    data: Model[];
-  }
-}
 
 async function fetchOpenAIModels(apiKey: string, apiHost: string): Promise<OpenAIAPI.Models.ModelList> {
   const response = await fetch(`https://${apiHost}/v1/models`, {
