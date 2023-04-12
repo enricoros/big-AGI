@@ -66,7 +66,7 @@ export function ApplicationBar(props: {
 
   // conversation actions
 
-  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId } = useChatStore(state => {
+  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationsCount: state.conversations.length,
@@ -76,6 +76,7 @@ export function ApplicationBar(props: {
       setMessages: state.setMessages,
       setChatModelId: state.setChatModelId,
       setSystemPurposeId: state.setSystemPurposeId,
+      setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
 
@@ -87,6 +88,7 @@ export function ApplicationBar(props: {
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {
       setMessages(clearConfirmationId, []);
+      setAutoTitle(clearConfirmationId, '');
       setClearConfirmationId(null);
     }
   };
