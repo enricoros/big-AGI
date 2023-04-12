@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -23,6 +23,12 @@ import { extractPdfText } from '@/lib/pdf';
 import { useChatStore } from '@/lib/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
+
+
+// CSS helpers
+
+const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 
 /// Text template helpers
@@ -77,6 +83,14 @@ const pasteClipboardLegend =
   <Box sx={{ p: 1, fontSize: '14px', fontWeight: 400 }}>
     Converts Code and Tables to 📚 Markdown
   </Box>;
+
+
+const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
+  <Tooltip title='CTRL + M' placement='top'>
+    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
+      <MicIcon />
+    </IconButton>
+  </Tooltip>;
 
 
 /**
@@ -309,11 +323,7 @@ export function Composer(props: {
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
 
-
   const textPlaceholder: string = `Type ${props.isDeveloperMode ? 'your message and drop source files' : 'a message, or drop text files'}...`;
-  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-  const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
-
 
   return (
     <Box sx={props.sx}>
@@ -354,9 +364,7 @@ export function Composer(props: {
             </Tooltip>
 
             {isSpeechEnabled && <Box sx={{ mt: { xs: 1, md: 2 }, ...hideOnDesktop }}>
-              <IconButton variant={micVariant} color={micColor} onClick={handleMicClicked}>
-                <MicIcon />
-              </IconButton>
+              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
             <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
@@ -385,6 +393,8 @@ export function Composer(props: {
                 lineHeight: 1.75,
               }} />
 
+            {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{ ...hideOnMobile, position: 'absolute', top: 0, right: 0, margin: 1 }} />}
+
             {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
 
             <Card
@@ -405,21 +415,6 @@ export function Composer(props: {
               </Typography>
             </Card>
 
-            {isSpeechEnabled && (
-              <Tooltip title='CTRL + M' placement='top'>
-                <IconButton
-                  variant={micVariant} color={micColor}
-                  onClick={handleMicClicked}
-                  sx={{
-                    ...hideOnMobile,
-                    position: 'absolute',
-                    top: 0, right: 0,
-                    margin: 1, // 8px
-                  }}>
-                  <MicIcon />
-                </IconButton>
-              </Tooltip>
-            )}
           </Box>
 
         </Stack></Grid>
