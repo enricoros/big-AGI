@@ -4,7 +4,6 @@ import { shallow } from 'zustand/shallow';
 import { Box, Button, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
-import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useChatStore } from '@/lib/store-chats';
@@ -129,9 +128,14 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
       <Box sx={{ maxWidth: bpMaxWidth }}>
 
-        <Typography level='body3' color='neutral' sx={{ mb: 2 }}>
-          Select an AI purpose
-        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3 }}>
+          <Typography level='body2' color='neutral'>
+            Select an AI purpose
+          </Typography>
+          {/*<Button variant='plain' color='neutral' size='sm'>*/}
+          {/*  Edit*/}
+          {/*</Button>*/}
+        </Box>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
           {purposeIDs.map((spId) => (
@@ -163,15 +167,24 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
           ))}
         </Grid>
 
-        <Typography level='body2' sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1, '&:hover > button': { opacity: 1 } }}>
+        <Typography
+          level='body2'
+          sx={{
+            mt: 2,
+            display: 'flex', alignItems: 'center', gap: 1,
+            // justifyContent: 'center',
+            '&:hover > button': { opacity: 1 },
+          }}>
           {!selectedPurpose
             ? 'Oops! No AI purposes found for your search.'
             : (selectedExample ? <>
-                {selectedExample}
-                <IconButton variant='plain' color='primary' size='sm'
-                            onClick={() => props.runExample(selectedExample)}
-                            sx={{ opacity: 0, transition: 'opacity 0.3s' }}>
-                  <TelegramIcon />
+                <i>{selectedExample}</i>
+                <IconButton
+                  variant='plain' color='neutral' size='md'
+                  onClick={() => props.runExample(selectedExample)}
+                  sx={{ opacity: 0, transition: 'opacity 0.3s' }}
+                >
+                  💬
                 </IconButton>
               </> : selectedPurpose.description
             )}
