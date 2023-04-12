@@ -17,6 +17,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { ChatModels } from '@/lib/data';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
+import { TokenProgress } from '@/components/util/TokenProgress';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
@@ -374,24 +375,31 @@ export function Composer(props: {
           {/* Edit box, with Drop overlay */}
           <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
-            <Textarea
-              variant='outlined' autoFocus placeholder={textPlaceholder}
-              minRows={4} maxRows={12}
-              onKeyDown={handleKeyPress}
-              onDragEnter={handleMessageDragEnter}
-              value={composeText} onChange={(e) => setComposeText(e.target.value)}
-              slotProps={{
-                textarea: {
-                  sx: {
-                    ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+            <Box sx={{ position: 'relative' }}>
+
+              <Textarea
+                variant='outlined' autoFocus placeholder={textPlaceholder}
+                minRows={4} maxRows={12}
+                onKeyDown={handleKeyPress}
+                onDragEnter={handleMessageDragEnter}
+                value={composeText} onChange={(e) => setComposeText(e.target.value)}
+                slotProps={{
+                  textarea: {
+                    sx: {
+                      ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+                      mb: 0.5,
+                    },
                   },
-                },
-              }}
-              sx={{
-                background: theme.vars.palette.background.level1,
-                fontSize: '16px',
-                lineHeight: 1.75,
-              }} />
+                }}
+                sx={{
+                  background: theme.vars.palette.background.level1,
+                  fontSize: '16px',
+                  lineHeight: 1.75,
+                }} />
+
+              {tokenLimit > 0 && (directTokens > 0 || indirectTokens > 0) && <TokenProgress direct={directTokens} indirect={indirectTokens} limit={tokenLimit} />}
+
+            </Box>
 
             {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{ ...hideOnMobile, position: 'absolute', top: 0, right: 0, margin: 1 }} />}
 
