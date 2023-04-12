@@ -136,7 +136,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
       <Box sx={{ maxWidth: bpMaxWidth }}>
 
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Typography level='body2' color='neutral'>
             Select an AI purpose
           </Typography>
@@ -185,23 +185,25 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
         <Typography
           level='body2'
           sx={{
-            mt: 2,
+            mt: selectedExample ? 1 : 3,
             display: 'flex', alignItems: 'center', gap: 1,
             // justifyContent: 'center',
             '&:hover > button': { opacity: 1 },
           }}>
           {!selectedPurpose
             ? 'Oops! No AI purposes found for your search.'
-            : (selectedExample ? <>
-                <i>{selectedExample}</i>
-                <IconButton
-                  variant='plain' color='neutral' size='md'
-                  onClick={() => props.runExample(selectedExample)}
-                  sx={{ opacity: 0, transition: 'opacity 0.3s' }}
-                >
-                  💬
-                </IconButton>
-              </> : selectedPurpose.description
+            : (selectedExample
+                ? <>
+                  <i>{selectedExample}</i>
+                  <IconButton
+                    variant='plain' color='neutral' size='md'
+                    onClick={() => props.runExample(selectedExample)}
+                    sx={{ opacity: 0, transition: 'opacity 0.3s' }}
+                  >
+                    💬
+                  </IconButton>
+                </>
+                : selectedPurpose.description
             )}
         </Typography>
 
