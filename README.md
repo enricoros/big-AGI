@@ -56,8 +56,13 @@ was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060
 - [x] Dark mode 🌙 - Wide mode ⛶
 - [ ] [~~Code execution for TypeScript, JavaScript, and
   HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
+- [x] Basic user authentication for public deployments
 - [ ] Add your own feature 🚀
 - [ ] Send a PR 🙌
+
+### Basic Authentication for public deployments 🔐
+
+To protect the web app owner from incurring unauthorized costs when deploying the app with a backend API key (`OPENAI_API_KEY`), you can [set up basic authentication.](/docs/auth.md).
 
 ## Why this? 💡
 
