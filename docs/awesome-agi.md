@@ -1,4 +1,8 @@
-# 🤖 Awesome AGI: A Curated List of Artificial General Intelligence Systems and Techniques
+<h1 align="center">
+ 🤖 Awesome AGI
+</h1>
+
+# A Curated List of Artificial General Intelligence Systems and Techniques
 
 A collection of cutting-edge AGI systems and techniques, designed to help this app developers,
 and enthusiasts stay up-to-date with the latest advancements in the field of Artificial General Intelligence.
