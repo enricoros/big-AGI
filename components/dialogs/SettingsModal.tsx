@@ -263,7 +263,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} onClick={onClose}>
-            Close
+            Save
           </Button>
         </Box>
 
