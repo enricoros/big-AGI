@@ -160,12 +160,12 @@ export function Composer(props: {
     });
   }, []);
 
-  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback);
+  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 'm');
 
   const handleMicClicked = () => toggleRecording();
 
   const micColor = isSpeechError ? 'danger' : isRecordingSpeech ? 'warning' : isRecordingAudio ? 'warning' : 'neutral';
-  const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'plain';
+  const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'solid' : 'plain';
 
   async function loadAndAttachFiles(files: FileList) {
 
@@ -406,17 +406,19 @@ export function Composer(props: {
             </Card>
 
             {isSpeechEnabled && (
-              <IconButton
-                variant={micVariant} color={micColor}
-                onClick={handleMicClicked}
-                sx={{
-                  ...hideOnMobile,
-                  position: 'absolute',
-                  top: 0, right: 0,
-                  margin: 1, // 8px
-                }}>
-                <MicIcon />
-              </IconButton>
+              <Tooltip title='CTRL + M' placement='top'>
+                <IconButton
+                  variant={micVariant} color={micColor}
+                  onClick={handleMicClicked}
+                  sx={{
+                    ...hideOnMobile,
+                    position: 'absolute',
+                    top: 0, right: 0,
+                    margin: 1, // 8px
+                  }}>
+                  <MicIcon />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
 
