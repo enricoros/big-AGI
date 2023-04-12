@@ -83,7 +83,7 @@ export const useSettingsStore = create<SettingsStore>()(
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),
 
-      modelMaxResponseTokens: 2048,
+      modelMaxResponseTokens: 1024,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
 
     }),
