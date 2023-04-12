@@ -1,18 +1,14 @@
-<h1 align="center">
- 🤖 Awesome AGI
-</h1>
-
-## A Curated List of Artificial General Intelligence Systems and Techniques
+# 🤖 Awesome AGI: A Curated List of Artificial General Intelligence Systems & Techniques
 
 A collection of cutting-edge AGI systems and techniques, designed to help this app developers,
-and enthusiasts stay up-to-date with the latest advancements in the field of Artificial General Intelligence.
+and enthusiasts stay up-to-date with the latest advancements in the field of
+Artificial General Intelligence.
 
-If you're thinking of implementing any of the techniques in this app, please
-coordinate with @enricoros and @fredliubojin.
+🤝 Connect with @enricoros and @fredliubojin before implementing any techniques in this app.
 
 ---
 
-#### Reasoning systems
+### 🌌 Reasoning Systems
 
 | System     | Date       | Comments                                    | Information                                                                                                                                                                                            |
 |:-----------|------------|---------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -24,14 +20,14 @@ coordinate with @enricoros and @fredliubojin.
 | DEPS       | 2023-02-03 |                                             | [[PDF](https://arxiv.org/pdf/2302.01560)] [Describe, Explain, Plan and Select: Interactive Planning with Large Language Models Enables Open-World Multi-Task Agents](https://arxiv.org/abs/2302.01560) |
 | ReAct      | 2022-10-06 |                                             | [[PDF](https://arxiv.org/pdf/2210.03629)] [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)                                                               |
 
-#### Other interesting reads
+### 🌠 Other Interesting Reads
 
 | What                                 | Link                                                                                                                                                                                                                                                                                                 |
 |:-------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Task-driven Autonomous Agent (Yohei) | [Task-driven Autonomous Agent Utilizing GPT-4, Pinecone, and LangChain](https://yoheinakajima.com/task-driven-autonomous-agent-utilizing-gpt-4-pinecone-and-langchain-for-diverse-applications/) [Tweet](https://twitter.com/yoheinakajima/status/1640934493489070080?t=TnCAUC_1ypEnxVKAARyIRQ&s=19) |
 | Early experiments with GPT-4         | [Sparks of Artificial General Intelligence](https://arxiv.org/abs/2303.12712)                                                                                                                                                                                                                        |
 
-##### Please Edit!
+### 🌟 Enjoy & Edit!
 
 We welcome contributions to this Awesome AGI list! If you know of any AGI systems, techniques, or resources
 that should be included, please submit a pull request and we'll merge it right away.
