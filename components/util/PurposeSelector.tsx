@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { useChatStore } from '@/lib/store-chats';
+import { usePurposeStore } from '@/lib/store-purposes';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -37,6 +38,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
+  const [editMode, setEditMode] = React.useState(false);
 
   // external state
   const theme = useTheme();
@@ -48,6 +50,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
       setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
     };
   }, shallow);
+  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
 
   // safety check - shouldn't happen
   if (!systemPurposeId || !setSystemPurposeId)
@@ -86,6 +89,9 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
   };
 
 
+  const toggleEditMode = () => setEditMode(!editMode);
+
+
   const handlePurposeChanged = (purposeId: SystemPurposeId | null) => {
     if (purposeId)
       setSystemPurposeId(props.conversationId, purposeId);
@@ -97,8 +103,10 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
     SystemPurposes['Custom'].systemMessage = v.target.value;
   };
 
+
   // we show them all if the filter is clear (null)
-  const purposeIDs = (filteredIDs && showPurposeFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const unfilteredPurposeIDs = (filteredIDs && showPurposeFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
 
   const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
   const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
@@ -132,30 +140,37 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
           <Typography level='body2' color='neutral'>
             Select an AI purpose
           </Typography>
-          {/*<Button variant='plain' color='neutral' size='sm'>*/}
-          {/*  Edit*/}
-          {/*</Button>*/}
+          <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
+            {editMode ? 'Done' : 'Edit'}
+          </Button>
         </Box>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
           {purposeIDs.map((spId) => (
             <Grid key={spId}>
               <Button
-                variant={systemPurposeId === spId ? 'solid' : 'soft'}
-                color={systemPurposeId === spId ? 'primary' : 'neutral'}
-                onClick={() => handlePurposeChanged(spId as SystemPurposeId)}
+                variant={(!editMode && systemPurposeId === spId) ? 'solid' : 'soft'}
+                color={(!editMode && systemPurposeId === spId) ? 'primary' : 'neutral'}
+                onClick={() => !editMode && handlePurposeChanged(spId as SystemPurposeId)}
                 sx={{
                   flexDirection: 'column',
                   fontWeight: 500,
                   gap: bpTileGap,
                   height: bpTileSize,
                   width: bpTileSize,
-                  ...(systemPurposeId !== spId ? {
+                  ...((editMode || systemPurposeId !== spId) ? {
                     boxShadow: theme.vars.shadow.md,
                     background: theme.vars.palette.background.level1,
                   } : {}),
                 }}
               >
+                {editMode && (
+                  <Checkbox
+                    label={<Typography level='body2'>show</Typography>}
+                    checked={!hiddenPurposeIDs.includes(spId)} onChange={() => toggleHiddenPurposeId(spId)}
+                    sx={{ alignSelf: 'flex-start' }}
+                  />
+                )}
                 <div style={{ fontSize: '2rem' }}>
                   {SystemPurposes[spId as SystemPurposeId]?.symbol}
                 </div>
