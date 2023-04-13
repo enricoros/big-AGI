@@ -51,7 +51,7 @@ export async function streamAssistantMessage(
 
         if (done) break;
 
-        incrementalText += decoder.decode(value);
+        incrementalText += decoder.decode(value, { stream: true });
 
         // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
         if (!parsedFirstPacket && incrementalText.startsWith('{')) {
