@@ -1,15 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { SystemPurposeId } from '@/lib/data';
 
 interface PurposeStore {
 
   // state
-  hiddenPurposeIDs: SystemPurposeId[];
+  hiddenPurposeIDs: string[];
 
   // actions
-  toggleHiddenPurposeId: (purposeId: SystemPurposeId) => void;
+  toggleHiddenPurposeId: (purposeId: string) => void;
 
 }
 
@@ -21,7 +20,7 @@ export const usePurposeStore = create<PurposeStore>()(
       // default state
       hiddenPurposeIDs: ['Designer'],
 
-      toggleHiddenPurposeId: (purposeId: SystemPurposeId) => {
+      toggleHiddenPurposeId: (purposeId: string) => {
         set(state => {
           const hiddenPurposeIDs = state.hiddenPurposeIDs.includes(purposeId)
             ? state.hiddenPurposeIDs.filter((id) => id !== purposeId)
