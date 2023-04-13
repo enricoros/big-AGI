@@ -184,6 +184,9 @@ export function Composer(props: {
 
   async function loadAndAttachFiles(files: FileList) {
 
+    // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
+    //       to the common root, but the files[].webkitRelativePath property is not providing that information
+
     // perform loading and expansion
     let newText = '';
     for (let file of files) {
