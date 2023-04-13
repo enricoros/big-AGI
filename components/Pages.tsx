@@ -10,6 +10,7 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { SystemPurposes } from '@/lib/data';
 import { conversationTitle, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/store-chats';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 const DEBUG_CONVERSATION_IDs = false;
@@ -18,7 +19,7 @@ const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 function ConversationListItem(props: {
   conversationId: string,
-  isActive: boolean, isSingle: boolean,
+  isActive: boolean, isSingle: boolean, showSymbols: boolean,
   conversationActivate: (conversationId: string) => void,
   conversationDelete: (e: React.MouseEvent, conversationId: string) => void,
 }) {
@@ -62,7 +63,7 @@ function ConversationListItem(props: {
     >
 
       {/* Icon */}
-      <ListItemDecorator>
+      {props.showSymbols && <ListItemDecorator>
         {assistantTyping
           ? (
             <Avatar
@@ -81,7 +82,7 @@ function ConversationListItem(props: {
               {/*</Badge>*/}
             </Typography>
           )}
-      </ListItemDecorator>
+      </ListItemDecorator>}
 
       {/* Text */}
       {!isEditingTitle ? (
@@ -92,7 +93,7 @@ function ConversationListItem(props: {
 
       ) : (
 
-        <InlineTextEdit initialText={title} onEdit={handleEdited} sx={{ ml: -1.5, flexGrow: 1 }} />
+        <InlineTextEdit initialText={title} onEdit={handleEdited} sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }} />
 
       )}
 
@@ -136,6 +137,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
     deleteConversation: state.deleteConversation,
     setActiveConversation: state.setActiveConversationId,
   }), shallow);
+  const showSymbols = useSettingsStore(state => state.zenMode) !== 'cleaner';
 
 
   const hasChats = conversationIDs.length > 0;
@@ -200,6 +202,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
           conversationId={conversationId}
           isActive={conversationId === props.conversationId}
           isSingle={singleChat}
+          showSymbols={showSymbols}
           conversationActivate={handleConversationActivate}
           conversationDelete={handleConversationDelete}
         />)}
