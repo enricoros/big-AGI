@@ -13,6 +13,7 @@ export async function streamAssistantMessage(
   chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
+  onFirstParagraph?: (firstParagraph: string) => void,
 ) {
 
   const payload: ApiChatInput = {
@@ -46,6 +47,7 @@ export async function streamAssistantMessage(
       // loop forever until the read is done, or the abort controller is triggered
       let incrementalText = '';
       let parsedFirstPacket = false;
+      let sentFirstParagraph = false;
       while (true) {
         const { value, done } = await reader.read();
 
@@ -67,6 +69,16 @@ export async function streamAssistantMessage(
               // error parsing JSON, ignore
               console.log('Error parsing JSON: ' + e);
             }
+          }
+        }
+
+        // if the first paragraph (after the first packet) is complete, call the callback
+        if (parsedFirstPacket && onFirstParagraph && !sentFirstParagraph) {
+          const cutPoint = incrementalText.lastIndexOf('\n');
+          if (cutPoint > 100) {
+            const firstParagraph = incrementalText.substring(0, cutPoint);
+            onFirstParagraph(firstParagraph);
+            sentFirstParagraph = true;
           }
         }
 
