@@ -142,7 +142,7 @@ export function ApplicationBar(props: {
 
 
     {/* Left menu */}
-    {<PagesMenu pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
+    {<PagesMenu conversationId={props.conversationId} pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
 
 
     {/* Right menu */}
