@@ -74,8 +74,10 @@ export async function streamAssistantMessage(
 
         // if the first paragraph (after the first packet) is complete, call the callback
         if (parsedFirstPacket && onFirstParagraph && !sentFirstParagraph) {
-          const cutPoint = incrementalText.lastIndexOf('\n');
-          if (cutPoint > 100) {
+          let cutPoint = incrementalText.lastIndexOf('\n');
+          if (cutPoint < 0)
+            cutPoint = incrementalText.lastIndexOf('. ');
+          if (cutPoint > 100 && cutPoint < 400) {
             const firstParagraph = incrementalText.substring(0, cutPoint);
             onFirstParagraph(firstParagraph);
             sentFirstParagraph = true;

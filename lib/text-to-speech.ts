@@ -2,7 +2,7 @@ import { ApiElevenLabsSpeechBody } from '../pages/api/elevenlabs/speech';
 
 
 export async function speakText(text: string) {
-  if (!text) return;
+  if (!(text?.trim())) return;
 
   try {
     const audioBuffer = await convertTextToSpeech(text);
