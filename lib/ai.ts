@@ -136,7 +136,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
       {
         role: 'user', content:
           'Analyze the given list of pre-processed first lines from each participant\'s conversation and generate a concise chat ' +
-          'title that represents the content and tone of the conversation. Only respond with the short title and nothing else.\n' +
+          'title that represents the content and tone of the conversation. Only respond with the lowercase short title and nothing else.\n' +
           '\n' +
           historyLines.join('\n') +
           '\n',

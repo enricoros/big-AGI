@@ -42,9 +42,10 @@ export function ApplicationBar(props: {
 
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages } = useSettingsStore(state => ({
+  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages, zenMode } = useSettingsStore(state => ({
     freeScroll: state.freeScroll, setFreeScroll: state.setFreeScroll,
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
+    zenMode: state.zenMode,
   }), shallow);
 
   const closePagesMenu = () => setPagesMenuAnchor(null);
@@ -131,7 +132,10 @@ export function ApplicationBar(props: {
 
         {chatModelId && <StyledDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
 
-        {systemPurposeId && <StyledDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />}
+        {systemPurposeId && (zenMode === 'cleaner'
+            ? <StyledDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+            : <StyledDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+        )}
 
       </Stack>
 
