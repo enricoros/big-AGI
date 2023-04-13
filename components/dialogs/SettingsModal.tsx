@@ -2,14 +2,13 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Radio, RadioGroup, Slider, Stack, Switch, Typography } from '@mui/joy';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Link } from '@/components/util/Link';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -263,7 +262,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} onClick={onClose}>
-            Save
+            Close
           </Button>
         </Box>
 
