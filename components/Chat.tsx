@@ -55,7 +55,7 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
   }
 
   // if the server has an API key, we can use text-to-speech of the first paragraph (will be user-driven soon)
-  const onFirstParagraph = requireUserKeyElevenLabs ? speakText : undefined;
+  const onFirstParagraph = !requireUserKeyElevenLabs ? speakText : undefined;
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const controller = new AbortController();
