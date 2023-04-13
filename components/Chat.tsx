@@ -13,6 +13,7 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/store-chats';
+// import { playLastMessage } from '@/lib/text-to-speech';
 import { publishConversation } from '@/lib/publish';
 import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/ai';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -61,6 +62,9 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
 
   // clear to send, again
   startTyping(conversationId, null);
+
+  // play the first paragraph
+  // playLastMessage(conversationId).then(() => null);
 
   // update text, if needed
   await updateAutoConversationTitle(conversationId);
