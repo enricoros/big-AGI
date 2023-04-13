@@ -22,6 +22,7 @@ import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
@@ -120,10 +121,15 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 /// Renderers for the different types of message blocks
 
-function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
+function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
+  const [showSVG, setShowSVG] = React.useState(true);
+
+  const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
+  const renderSVG = hasSVG && showSVG;
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(codeBlock.code);
+    copyToClipboard(props.codeBlock.code);
   };
 
   return (
@@ -133,20 +139,37 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
         position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
         display: 'block', fontWeight: 500,
         whiteSpace: 'break-spaces',
-        '&:hover > button': { opacity: 1 },
-        ...(sx || {}),
+        '&:hover > .code-buttons': { opacity: 1 },
+        ...(props.sx || {}),
       }}>
-      <Tooltip title='Copy Code' variant='solid'>
-        <IconButton
-          variant='outlined' color='neutral' onClick={handleCopyToClipboard}
-          sx={{
-            position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
-            opacity: 0, transition: 'opacity 0.3s',
-          }}>
-          <ContentCopyIcon />
-        </IconButton>
-      </Tooltip>
-      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+
+      {/* Buttons */}
+      <Box
+        className='code-buttons'
+        sx={{
+          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
+          display: 'flex', flexDirection: 'row', gap: 1,
+          opacity: 0, transition: 'opacity 0.3s',
+        }}>
+        {hasSVG && (
+          <Tooltip title={renderSVG ? 'Code' : 'Draw'} variant='solid'>
+            <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
+              <ShapeLineOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title='Copy Code' variant='solid'>
+          <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Highlighted Code / SVG render */}
+      <Box
+        dangerouslySetInnerHTML={{ __html: renderSVG ? props.codeBlock.code : props.codeBlock.content }}
+        sx={renderSVG ? { lineHeight: 0 } : {}}
+      />
     </Box>
   );
 }
