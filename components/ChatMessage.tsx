@@ -13,7 +13,7 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -26,6 +26,7 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
+import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { Link } from '@/components/util/Link';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
@@ -283,7 +284,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState('');
 
   // external state
   const theme = useTheme();
@@ -299,8 +299,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(messageText);
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
@@ -312,24 +310,11 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
     closeOperationsMenu();
   };
 
-
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
-
-  const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      e.preventDefault();
-      setIsEditing(false);
-      props.onMessageEdit(editedText);
-    }
-  };
-
-  const handleEditBlur = () => {
+  const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
-    if (editedText !== messageText && editedText?.trim())
+    if (editedText?.trim() && editedText !== messageText)
       props.onMessageEdit(editedText);
   };
-
 
   const handleExpand = () => setForceExpanded(true);
 
@@ -490,10 +475,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
 
       ) : (
 
-        <Textarea
-          variant='soft' color='warning' autoFocus minRows={1}
-          value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-          sx={{ ...cssBlocks, flexGrow: 1 }} />
+        <InlineTextEdit initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlocks, flexGrow: 1 }} />
 
       )}
 
