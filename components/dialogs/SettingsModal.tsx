@@ -14,6 +14,11 @@ import { Link } from '@/components/util/Link';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
+export const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
+
+export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
+
+
 export const isValidOpenAIApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
@@ -97,8 +102,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
 
-  const needsApiKey = !!process.env.REQUIRE_USER_API_KEYS;
-  const isValidKey = isValidOpenAIApiKey(apiKey);
+  const isValidOpenAIKey = isValidOpenAIApiKey(apiKey);
 
   const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 
@@ -114,10 +118,10 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
           <FormControl>
             <FormLabel>
-              OpenAI API Key {needsApiKey ? '' : '(optional)'}
+              OpenAI API Key {requireUserKeyOpenAI ? '' : '(optional)'}
             </FormLabel>
             <Input
-              variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={needsApiKey ? 'required' : 'sk-...'} error={needsApiKey && !isValidKey}
+              variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requireUserKeyOpenAI ? 'required' : 'sk-...'} error={requireUserKeyOpenAI && !isValidOpenAIKey}
               value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown}
               startDecorator={<KeyIcon />}
               endDecorator={!!apiKey && (
@@ -128,7 +132,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
             />
             <FormHelperText sx={{ display: 'block', lineHeight: 1.75 }}>
-              {needsApiKey
+              {requireUserKeyOpenAI
                 ? <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>Create Key</Link>, then apply to
                   the <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>GPT-4 waitlist</Link></>
                 : `This key will take precedence over the server's.`} <Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>Check usage here</Link>.
@@ -261,7 +265,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
         </Section>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='solid' color={isValidKey ? 'primary' : 'neutral'} onClick={onClose}>
+          <Button variant='solid' color={isValidOpenAIKey ? 'primary' : 'neutral'} onClick={onClose}>
             Close
           </Button>
         </Box>
