@@ -49,10 +49,10 @@ export function ContentReducerModal(props: {
 
   const handlePreviewClicked = async () => {
     console.log('props.tokenBudget', props.tokenLimit);
-    setProcessing(true);
+    setProcessing(false);
     const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, props.chatModelId);
     setReducedText(reducedText);
-    setProcessing(false);
+    setProcessing(true);
   };
 
   const handleUseReducedTextClicked = () =>
