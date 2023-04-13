@@ -7,6 +7,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Link } from '@/components/util/Link';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -69,11 +71,17 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
     setModelMaxResponseTokens,
   } = useSettingsStore(state => state, shallow);
 
+  const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
+
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+
+  const handleToggleApiKeyValue = () => {
+    setShowApiKeyValue(!showApiKeyValue);
+  };
 
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
@@ -109,9 +117,15 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               OpenAI API Key {needsApiKey ? '' : '(optional)'}
             </FormLabel>
             <Input
-              variant='outlined' type='password' placeholder={needsApiKey ? 'required' : 'sk-...'} error={needsApiKey && !isValidKey}
+              variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={needsApiKey ? 'required' : 'sk-...'} error={needsApiKey && !isValidKey}
               value={apiKey} onChange={handleApiKeyChange} onKeyDown={handleApiKeyDown}
               startDecorator={<KeyIcon />}
+              endDecorator={!!apiKey && (
+                <IconButton variant='plain' color='neutral' onClick={handleToggleApiKeyValue}>
+                  {showApiKeyValue ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              )}
+
             />
             <FormHelperText sx={{ display: 'block', lineHeight: 1.75 }}>
               {needsApiKey
