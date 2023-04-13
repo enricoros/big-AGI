@@ -26,6 +26,8 @@ Or click fork & run on Vercel
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.14_ 🎉 **SVG Drawing** 🖌️
+  <p><a href="docs/feature_svg_drawing.png"><img src="docs/feature_svg_drawing.png" width='300' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.13_ 🎉 Token usage progress bars, CTRL+M to use the mic, edge runtime fixes for Cloudflare, [awesome-agi.md](docs/awesome-agi.md)
 - [x] _NEW 04.11_ 🎉 **AI-titling** 🧠✍️
 - [x] _NEW 04.10_ 🎉 **Multiple chats** 📝📝📝
