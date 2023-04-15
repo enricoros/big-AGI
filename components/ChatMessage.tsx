@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
@@ -60,15 +61,41 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
     }
   }
 
-  // based on how the code starts, return the language
-  if (code.startsWith('<DOCTYPE html') || code.startsWith('<!DOCTYPE')) return 'html';
-  if (code.startsWith('<')) return 'xml';
-  if (code.startsWith('from ')) return 'python';
-  if (code.startsWith('import ') || code.startsWith('export ')) return 'typescript'; // or python
-  if (code.startsWith('interface ') || code.startsWith('function ')) return 'typescript'; // ambiguous
-  if (code.startsWith('package ')) return 'java';
-  if (code.startsWith('using ')) return 'csharp';
-  return null;
+  // If no hint or unrecognized hint, try to infer the language based on code content
+  const codeStarts = [
+    { starts: ['<!DOCTYPE html', '<html'], language: 'html' },
+    { starts: ['<'], language: 'xml' },
+    { starts: ['from '], language: 'python' },
+    { starts: ['import ', 'export '], language: 'typescript' }, // or python
+    { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
+    { starts: ['package '], language: 'java' },
+    { starts: ['using '], language: 'csharp' },
+    { starts: ['\n.class', '\n#id', '\n*'], language: 'css' },
+  ];
+  
+  for (const codeStart of codeStarts) {
+    if (codeStart.starts.some((start) => code.startsWith(start))) {
+      return codeStart.language;
+    }
+  }
+
+  // If no language detected based on code start, use Prism to tokenize and detect language
+  const languages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript']; // matches Prism component imports
+  let maxTokens = 0;
+  let detectedLanguage = '';
+
+  languages.forEach((language) => {
+    const grammar = Prism.languages[language];
+    const tokens = Prism.tokenize(code, grammar);
+    const tokenCount = tokens.filter((token) => typeof token !== 'string').length;
+
+    if (tokenCount > maxTokens) {
+      maxTokens = tokenCount;
+      detectedLanguage = language;
+    }
+  });
+
+  return detectedLanguage || null;
 };
 
 /**
