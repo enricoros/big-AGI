@@ -17,6 +17,7 @@ import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { PagesMenu } from '@/components/Pages';
 import { StyledDropdown } from '@/components/util/StyledDropdown';
+import { StyledDropdownWithSymbol } from '@/components/util/StyledDropdownWithSymbol';
 import { useChatStore } from '@/lib/store-chats';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -41,9 +42,10 @@ export function ApplicationBar(props: {
 
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages } = useSettingsStore(state => ({
+  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages, zenMode } = useSettingsStore(state => ({
     freeScroll: state.freeScroll, setFreeScroll: state.setFreeScroll,
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
+    zenMode: state.zenMode,
   }), shallow);
 
   const closePagesMenu = () => setPagesMenuAnchor(null);
@@ -65,7 +67,7 @@ export function ApplicationBar(props: {
 
   // conversation actions
 
-  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId } = useChatStore(state => {
+  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationsCount: state.conversations.length,
@@ -75,6 +77,7 @@ export function ApplicationBar(props: {
       setMessages: state.setMessages,
       setChatModelId: state.setChatModelId,
       setSystemPurposeId: state.setSystemPurposeId,
+      setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
 
@@ -86,6 +89,7 @@ export function ApplicationBar(props: {
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {
       setMessages(clearConfirmationId, []);
+      setAutoTitle(clearConfirmationId, '');
       setClearConfirmationId(null);
     }
   };
@@ -128,7 +132,10 @@ export function ApplicationBar(props: {
 
         {chatModelId && <StyledDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
 
-        {systemPurposeId && <StyledDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />}
+        {systemPurposeId && (zenMode === 'cleaner'
+            ? <StyledDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+            : <StyledDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+        )}
 
       </Stack>
 
@@ -139,7 +146,7 @@ export function ApplicationBar(props: {
 
 
     {/* Left menu */}
-    {<PagesMenu pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
+    {<PagesMenu conversationId={props.conversationId} pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
 
 
     {/* Right menu */}
