@@ -179,6 +179,7 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
       <Box
         className='code-buttons'
         sx={{
+          backdropFilter: 'blur(6px) grayscale(0.8)',
           position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
           display: 'flex', flexDirection: 'row', gap: 1,
           opacity: 0, transition: 'opacity 0.3s',
