@@ -28,6 +28,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
+import { OpenInCodepen } from '@/components/OpenInCodepen';
 import { Link } from '@/components/util/Link';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
@@ -155,6 +156,9 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
   const renderSVG = hasSVG && showSVG;
 
+  const frontendLanguages = ['html', 'css', 'javascript', 'json', 'typescript'];
+  const hasFrontend = hasSVG || (props.codeBlock.language && frontendLanguages.includes(props.codeBlock.language));
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
     copyToClipboard(props.codeBlock.code);
@@ -186,6 +190,9 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
             </IconButton>
           </Tooltip>
         )}
+        {hasFrontend && 
+          <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
+        }
         <Tooltip title='Copy Code' variant='solid'>
           <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
             <ContentCopyIcon />
