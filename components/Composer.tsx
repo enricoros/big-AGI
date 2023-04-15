@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import ClearIcon from '@mui/icons-material/Clear';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -15,6 +16,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
+import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
 import { TokenProgress } from '@/components/util/TokenProgress';
@@ -94,9 +96,39 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
   </Tooltip>;
 
 
+const SentMessagesMenu = (props: {
+  anchorEl: HTMLAnchorElement, onClose: () => void,
+  messages: { date: number; text: string; count: number }[],
+  onPaste: (text: string) => void,
+  onClear: () => void,
+}) =>
+  <Menu
+    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
+    open anchorEl={props.anchorEl} onClose={props.onClose}>
+
+    <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
+
+    <ListDivider />
+
+    {props.messages.map((item, index) =>
+      <MenuItem key={'composer-sent-' + index} onClick={() => props.onPaste(item.text)}>
+        {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
+        {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
+      </MenuItem>)}
+
+    <ListDivider />
+
+    <MenuItem onClick={props.onClear}>
+      <ListItemDecorator><ClearIcon /></ListItemDecorator>
+      Clear all
+    </MenuItem>
+
+  </Menu>;
+
+
 /**
  * A React component for composing and sending messages in a chat-like interface.
- * Supports pasting text and code from the clipboard, and a local history of sent messages.
+ * Supports pasting text and code from the clipboard, and a local log of sent messages.
  *
  * Note: Useful bash trick to generate code from a list of files:
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
@@ -116,12 +148,13 @@ export function Composer(props: {
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
-  const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [confirmClearSent, setConfirmClearSent] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
   const theme = useTheme();
-  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+  const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
   const stopTyping = useChatStore(state => state.stopTyping);
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
@@ -150,7 +183,7 @@ export function Composer(props: {
     if (text.length && props.conversationId) {
       setComposeText('');
       props.onSendMessage(props.conversationId, text);
-      appendMessageToHistory(text);
+      appendSentMessage(text);
     }
   };
 
@@ -275,14 +308,20 @@ export function Composer(props: {
   };
 
 
-  const pasteFromHistory = (text: string) => {
-    setComposeText(text);
-    hideHistory();
+  const showSentMessages = (event: React.MouseEvent<HTMLAnchorElement>) => setSentMessagesAnchor(event.currentTarget);
+
+  const hideSentMessages = () => setSentMessagesAnchor(null);
+
+  const handlePasteSent = (text: string) => setComposeText(text);
+
+  const handleClearSent = () => setConfirmClearSent(true);
+
+  const handleCancelClearSent = () => setConfirmClearSent(false);
+
+  const handleConfirmedClearSent = () => {
+    setConfirmClearSent(false);
+    clearSentMessages();
   };
-
-  const showHistory = (event: React.MouseEvent<HTMLAnchorElement>) => setHistoryAnchor(event.currentTarget);
-
-  const hideHistory = () => setHistoryAnchor(null);
 
 
   const eatDragEvent = (e: React.DragEvent) => {
@@ -436,9 +475,9 @@ export function Composer(props: {
 
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
 
-              {/* [mobile-only] History arrow */}
-              {history.length > 0 && (
-                <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+              {/* [mobile-only] Sent messages arrow */}
+              {sentMessages.length > 0 && (
+                <IconButton variant='plain' color='neutral' onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
                   <KeyboardArrowUpIcon />
                 </IconButton>
               )}
@@ -453,10 +492,10 @@ export function Composer(props: {
                 </Button>}
             </Box>
 
-            {/* [desktop-only] row with History button */}
+            {/* [desktop-only] row with Sent Messages button */}
             <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-              {history.length > 0 && (
-                <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
+              {sentMessages.length > 0 && (
+                <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showSentMessages}>
                   History
                 </Button>
               )}
@@ -465,21 +504,12 @@ export function Composer(props: {
           </Stack>
         </Grid>
 
-        {/* History menu with all the line items (only if shown) */}
-        {!!historyAnchor && (
-          <Menu
-            variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320 }}
-            open anchorEl={historyAnchor} onClose={hideHistory}>
-            <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
-            <ListDivider />
-            {history.map((item, index) => (
-              <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(item.text)}>
-                {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
-                {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
-              </MenuItem>
-            ))}
-            {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
-          </Menu>
+        {/* Sent messages menu */}
+        {!!sentMessagesAnchor && (
+          <SentMessagesMenu
+            anchorEl={sentMessagesAnchor} messages={sentMessages} onClose={hideSentMessages}
+            onPaste={handlePasteSent} onClear={handleClearSent}
+          />
         )}
 
         {/* Content reducer modal */}
@@ -489,6 +519,12 @@ export function Composer(props: {
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }
+
+        {/* Clear confirmation modal */}
+        <ConfirmationModal
+          open={confirmClearSent} onClose={handleCancelClearSent} onPositive={handleConfirmedClearSent}
+          confirmationText={'Are you sure you want to clear all your sent messages?'} positiveActionText={'Clear all'}
+        />
 
       </Grid>
     </Box>
