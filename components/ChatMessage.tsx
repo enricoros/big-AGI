@@ -13,7 +13,7 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -22,10 +22,13 @@ import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
+import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { Link } from '@/components/util/Link';
+import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/publish';
 import { useSettingsStore } from '@/lib/store-settings';
@@ -119,10 +122,15 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 /// Renderers for the different types of message blocks
 
-function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
+function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
+  const [showSVG, setShowSVG] = React.useState(true);
+
+  const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
+  const renderSVG = hasSVG && showSVG;
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(codeBlock.code);
+    copyToClipboard(props.codeBlock.code);
   };
 
   return (
@@ -132,20 +140,37 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
         position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
         display: 'block', fontWeight: 500,
         whiteSpace: 'break-spaces',
-        '&:hover > button': { opacity: 1 },
-        ...(sx || {}),
+        '&:hover > .code-buttons': { opacity: 1 },
+        ...(props.sx || {}),
       }}>
-      <Tooltip title='Copy Code' variant='solid'>
-        <IconButton
-          variant='outlined' color='neutral' onClick={handleCopyToClipboard}
-          sx={{
-            position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
-            opacity: 0, transition: 'opacity 0.3s',
-          }}>
-          <ContentCopyIcon />
-        </IconButton>
-      </Tooltip>
-      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+
+      {/* Buttons */}
+      <Box
+        className='code-buttons'
+        sx={{
+          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
+          display: 'flex', flexDirection: 'row', gap: 1,
+          opacity: 0, transition: 'opacity 0.3s',
+        }}>
+        {hasSVG && (
+          <Tooltip title={renderSVG ? 'Code' : 'Draw'} variant='solid'>
+            <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
+              <ShapeLineOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title='Copy Code' variant='solid'>
+          <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Highlighted Code / SVG render */}
+      <Box
+        dangerouslySetInnerHTML={{ __html: renderSVG ? props.codeBlock.code : props.codeBlock.content }}
+        sx={renderSVG ? { lineHeight: 0 } : {}}
+      />
     </Box>
   );
 }
@@ -244,7 +269,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
     avatar: messageAvatar,
     typing: messageTyping,
     role: messageRole,
-    // purposeId: messagePurposeId,
+    purposeId: messagePurposeId,
     originLLM: messageModelId,
     // tokenCount: messageTokenCount,
     updated: messageUpdated,
@@ -259,7 +284,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState('');
 
   // external state
   const theme = useTheme();
@@ -275,8 +299,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(messageText);
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
@@ -288,24 +310,11 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
     closeOperationsMenu();
   };
 
-
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
-
-  const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      e.preventDefault();
-      setIsEditing(false);
-      props.onMessageEdit(editedText);
-    }
-  };
-
-  const handleEditBlur = () => {
+  const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
-    if (editedText !== messageText && editedText?.trim())
+    if (editedText?.trim() && editedText !== messageText)
       props.onMessageEdit(editedText);
   };
-
 
   const handleExpand = () => setForceExpanded(true);
 
@@ -353,12 +362,25 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
                 borderRadius: 8,
               }}
             />;
+          const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
+          if (symbol)
+            return <Box
+              sx={{
+                fontSize: '24px',
+                textAlign: 'center',
+                width: '100%',
+                height: 40,
+                lineHeight: '40px',
+              }}
+            >
+              {symbol}
+            </Box>;
           return <SmartToyOutlinedIcon sx={{ width: 40, height: 40 }} />; // https://mui.com/static/images/avatar/2.jpg
         case 'user':
           return <Face6Icon sx={{ width: 40, height: 40 }} />;            // https://www.svgrepo.com/show/306500/openai.svg
       }
       return <Avatar alt={messageSender} />;
-    }, [messageAvatar, messageRole, messageSender, messageTyping, showAvatars],
+    }, [messageAvatar, messageRole, messagePurposeId, messageSender, messageTyping, showAvatars],
   );
 
   // text box css
@@ -453,10 +475,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
 
       ) : (
 
-        <Textarea
-          variant='soft' color='warning' autoFocus minRows={1}
-          value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-          sx={{ ...cssBlocks, flexGrow: 1 }} />
+        <InlineTextEdit initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlocks, flexGrow: 1 }} />
 
       )}
 

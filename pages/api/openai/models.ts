@@ -1,20 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { OpenAIAPI } from '@/types/api-openai';
-
-
-async function fetchOpenAIModels(apiKey: string, apiHost: string): Promise<OpenAIAPI.Models.ModelList> {
-  const response = await fetch(`https://${apiHost}/v1/models`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-  });
-
-  if (!response.ok) throw new Error(`Failed to fetch /models: ${response.status} ${response.statusText}`);
-
-  return await response.json();
-}
+import { extractOpenaiChatInputs, getOpenAIJson } from './chat';
 
 
 type ApiModelIDInfo = { id: string; created: number };
@@ -22,26 +9,23 @@ export type ApiOpenAIModelsResponse = {
   models: ApiModelIDInfo[];
 };
 
-export default async function handler(): Promise<NextResponse> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const apiHost = process.env.OPENAI_API_HOST || 'api.openai.com';
-
-  if (!apiKey) {
-    return new NextResponse('[Issue] missing OpenAI API Key. Add it on the server side (your deployment).', { status: 400 });
-  }
-
+export default async function handler(req: NextRequest): Promise<NextResponse> {
   try {
-    const models: OpenAIAPI.Models.ModelList = await fetchOpenAIModels(apiKey, apiHost);
+    const { api } = await extractOpenaiChatInputs(req);
+
+    // FIXME: this is currently broken, the "extractOpenAIChatInputs" is expecting messages/modelId, which we don't have here
+    //        keep working on this
+
+    const models = await getOpenAIJson<OpenAIAPI.Models.ModelList>(api, '/v1/models');
 
     // flatten IDs (most recent first)
-    models.data.sort((a, b) => b.created - a.created);
-    const response: ApiOpenAIModelsResponse = {
+    return new NextResponse(JSON.stringify({
       models: models.data.map((model) => ({ id: model.id, created: model.created })),
-    };
+    } as ApiOpenAIModelsResponse));
 
-    return new NextResponse(JSON.stringify(response));
-  } catch (error) {
-    return new NextResponse('[Issue] Failed to fetch models.', { status: 500 });
+  } catch (error: any) {
+    console.error('Fetch request failed:', error);
+    return new NextResponse(`[Issue] ${error}`, { status: 400 });
   }
 }
 

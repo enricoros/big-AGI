@@ -18,8 +18,10 @@ interface ISpeechRecognition {
 
 /**
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
+ * @param onResultCallback - the callback to invoke when a result is received
+ * @param useShortcutCtrlKey - the key to use as a shortcut to start/stop the speech recognition (e.g. 'm' for "Ctrl + M")
  */
-export const useSpeechRecognition = (onResultCallback: (transcript: string) => void) => {
+export const useSpeechRecognition = (onResultCallback: (transcript: string) => void, useShortcutCtrlKey?: string) => {
   // enablers
   const [isSpeechEnabled, setIsSpeechEnabled] = React.useState<boolean>(false);
   const [recognition, setRecognition] = React.useState<ISpeechRecognition | null>(null);
@@ -74,7 +76,8 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
     }
   }, [onResultCallback]);
 
-  const toggleRecording = () => {
+
+  const toggleRecording = React.useCallback(() => {
     if (!recognition)
       return console.error('Speech recognition is not supported or not initialized.');
 
@@ -83,7 +86,16 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
       recognition.start();
     else
       recognition.stop();
-  };
+  }, [recognition, isRecordingAudio]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (useShortcutCtrlKey && event.ctrlKey && event.key === useShortcutCtrlKey)
+        toggleRecording();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleRecording, useShortcutCtrlKey]);
 
   return { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording };
 };
