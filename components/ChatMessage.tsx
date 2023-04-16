@@ -21,6 +21,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -262,7 +263,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: () => void }) {
+export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -306,7 +307,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onMessageRunFrom();
+    props.onMessageRunFrom(fromAssistant ? -1 : 0);
     closeOperationsMenu();
   };
 
@@ -510,6 +511,12 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
             {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
           <ListDivider />
+          {fromAssistant && (
+            <MenuItem onClick={handleMenuRunAgain}>
+              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
+              Retry
+            </MenuItem>
+          )}
           {fromUser && (
             <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
