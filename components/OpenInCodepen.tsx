@@ -1,5 +1,3 @@
-import { useRef } from 'react';
-
 import { Button, Tooltip } from '@mui/joy';
 
 interface CodeBlockProps {
@@ -15,11 +13,11 @@ export function OpenInCodepen({ codeBlock }: CodeBlockProps): JSX.Element {
   const hasJS = ['javascript', 'json', 'typescript'].includes(language || '');
   const hasHTML = !hasCSS && !hasJS; // use HTML as fallback if an unanticipated frontend language is used
 
-  const handleOpen = () => {
+  const handleOpenInCodepen = () => {
     const data = {
-      title: `GPT ${new Date().toISOString()}`,
-      html: hasHTML ? code : '',
+      title: `GPT ${new Date().toISOString()}`, // eg "GPT 2021-08-31T15:00:00.000Z"
       css: hasCSS ? code : '',
+      html: hasHTML ? code : '',
       js: hasJS ? code : '',
       editors: `${hasHTML ? 1 : 0}${hasCSS ? 1 : 0}${hasJS ? 1 : 0}` // eg '101' for HTML, JS
     };
@@ -42,7 +40,7 @@ export function OpenInCodepen({ codeBlock }: CodeBlockProps): JSX.Element {
 
   return (
     <Tooltip title='Open in Codepen' variant='solid'>
-      <Button variant='outlined' color='neutral' onClick={handleOpen}>
+      <Button variant='outlined' color='neutral' onClick={handleOpenInCodepen}>
         Codepen
       </Button>
     </Tooltip>
