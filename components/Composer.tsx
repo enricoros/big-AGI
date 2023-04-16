@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import ClearIcon from '@mui/icons-material/Clear';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -15,14 +16,22 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels } from '@/lib/data';
+import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
+import { TokenProgress } from '@/components/util/TokenProgress';
 import { convertHTMLTableToMarkdown } from '@/lib/markdown';
 import { countModelTokens } from '@/lib/tokens';
 import { extractPdfText } from '@/lib/pdf';
 import { useChatStore } from '@/lib/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
+
+
+// CSS helpers
+
+const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 
 /// Text template helpers
@@ -79,9 +88,47 @@ const pasteClipboardLegend =
   </Box>;
 
 
+const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
+  <Tooltip title='CTRL + M' placement='top'>
+    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
+      <MicIcon />
+    </IconButton>
+  </Tooltip>;
+
+
+const SentMessagesMenu = (props: {
+  anchorEl: HTMLAnchorElement, onClose: () => void,
+  messages: { date: number; text: string; count: number }[],
+  onPaste: (text: string) => void,
+  onClear: () => void,
+}) =>
+  <Menu
+    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
+    open anchorEl={props.anchorEl} onClose={props.onClose}>
+
+    <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
+
+    <ListDivider />
+
+    {props.messages.map((item, index) =>
+      <MenuItem key={'composer-sent-' + index} onClick={() => props.onPaste(item.text)}>
+        {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
+        {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
+      </MenuItem>)}
+
+    <ListDivider />
+
+    <MenuItem onClick={props.onClear}>
+      <ListItemDecorator><ClearIcon /></ListItemDecorator>
+      Clear all
+    </MenuItem>
+
+  </Menu>;
+
+
 /**
  * A React component for composing and sending messages in a chat-like interface.
- * Supports pasting text and code from the clipboard, and a local history of sent messages.
+ * Supports pasting text and code from the clipboard, and a local log of sent messages.
  *
  * Note: Useful bash trick to generate code from a list of files:
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
@@ -101,12 +148,13 @@ export function Composer(props: {
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
-  const [historyAnchor, setHistoryAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [confirmClearSent, setConfirmClearSent] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
   const theme = useTheme();
-  const { history, appendMessageToHistory } = useComposerStore(state => ({ history: state.history, appendMessageToHistory: state.appendMessageToHistory }), shallow);
+  const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
   const stopTyping = useChatStore(state => state.stopTyping);
   const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
 
@@ -135,7 +183,7 @@ export function Composer(props: {
     if (text.length && props.conversationId) {
       setComposeText('');
       props.onSendMessage(props.conversationId, text);
-      appendMessageToHistory(text);
+      appendSentMessage(text);
     }
   };
 
@@ -160,14 +208,17 @@ export function Composer(props: {
     });
   }, []);
 
-  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback);
+  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 'm');
 
   const handleMicClicked = () => toggleRecording();
 
   const micColor = isSpeechError ? 'danger' : isRecordingSpeech ? 'warning' : isRecordingAudio ? 'warning' : 'neutral';
-  const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'plain';
+  const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'solid' : 'plain';
 
   async function loadAndAttachFiles(files: FileList) {
+
+    // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
+    //       to the common root, but the files[].webkitRelativePath property is not providing that information
 
     // perform loading and expansion
     let newText = '';
@@ -198,7 +249,7 @@ export function Composer(props: {
       }
     }
 
-    // update the text: just
+    // within the budget, so just append
     setComposeText(text => expandPromptTemplate(PromptTemplates.Concatenate, { text: newText })(text));
   }
 
@@ -257,14 +308,20 @@ export function Composer(props: {
   };
 
 
-  const pasteFromHistory = (text: string) => {
-    setComposeText(text);
-    hideHistory();
+  const showSentMessages = (event: React.MouseEvent<HTMLAnchorElement>) => setSentMessagesAnchor(event.currentTarget);
+
+  const hideSentMessages = () => setSentMessagesAnchor(null);
+
+  const handlePasteSent = (text: string) => setComposeText(text);
+
+  const handleClearSent = () => setConfirmClearSent(true);
+
+  const handleCancelClearSent = () => setConfirmClearSent(false);
+
+  const handleConfirmedClearSent = () => {
+    setConfirmClearSent(false);
+    clearSentMessages();
   };
-
-  const showHistory = (event: React.MouseEvent<HTMLAnchorElement>) => setHistoryAnchor(event.currentTarget);
-
-  const hideHistory = () => setHistoryAnchor(null);
 
 
   const eatDragEvent = (e: React.DragEvent) => {
@@ -309,11 +366,7 @@ export function Composer(props: {
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
 
-
   const textPlaceholder: string = `Type ${props.isDeveloperMode ? 'your message and drop source files' : 'a message, or drop text files'}...`;
-  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-  const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
-
 
   return (
     <Box sx={props.sx}>
@@ -354,9 +407,7 @@ export function Composer(props: {
             </Tooltip>
 
             {isSpeechEnabled && <Box sx={{ mt: { xs: 1, md: 2 }, ...hideOnDesktop }}>
-              <IconButton variant={micVariant} color={micColor} onClick={handleMicClicked}>
-                <MicIcon />
-              </IconButton>
+              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
             <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
@@ -366,24 +417,33 @@ export function Composer(props: {
           {/* Edit box, with Drop overlay */}
           <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
-            <Textarea
-              variant='outlined' autoFocus placeholder={textPlaceholder}
-              minRows={4} maxRows={12}
-              onKeyDown={handleKeyPress}
-              onDragEnter={handleMessageDragEnter}
-              value={composeText} onChange={(e) => setComposeText(e.target.value)}
-              slotProps={{
-                textarea: {
-                  sx: {
-                    ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+            <Box sx={{ position: 'relative' }}>
+
+              <Textarea
+                variant='outlined' autoFocus placeholder={textPlaceholder}
+                minRows={4} maxRows={12}
+                onKeyDown={handleKeyPress}
+                onDragEnter={handleMessageDragEnter}
+                value={composeText} onChange={(e) => setComposeText(e.target.value)}
+                slotProps={{
+                  textarea: {
+                    sx: {
+                      ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+                      mb: 0.5,
+                    },
                   },
-                },
-              }}
-              sx={{
-                background: theme.vars.palette.background.level1,
-                fontSize: '16px',
-                lineHeight: 1.75,
-              }} />
+                }}
+                sx={{
+                  background: theme.vars.palette.background.level1,
+                  fontSize: '16px',
+                  lineHeight: 1.75,
+                }} />
+
+              {tokenLimit > 0 && (directTokens > 0 || indirectTokens > 0) && <TokenProgress direct={directTokens} indirect={indirectTokens} limit={tokenLimit} />}
+
+            </Box>
+
+            {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{ ...hideOnMobile, position: 'absolute', top: 0, right: 0, margin: 1 }} />}
 
             {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
 
@@ -405,19 +465,6 @@ export function Composer(props: {
               </Typography>
             </Card>
 
-            {isSpeechEnabled && (
-              <IconButton
-                variant={micVariant} color={micColor}
-                onClick={handleMicClicked}
-                sx={{
-                  ...hideOnMobile,
-                  position: 'absolute',
-                  top: 0, right: 0,
-                  margin: 1, // 8px
-                }}>
-                <MicIcon />
-              </IconButton>
-            )}
           </Box>
 
         </Stack></Grid>
@@ -428,9 +475,9 @@ export function Composer(props: {
 
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
 
-              {/* [mobile-only] History arrow */}
-              {history.length > 0 && (
-                <IconButton variant='plain' color='neutral' onClick={showHistory} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+              {/* [mobile-only] Sent messages arrow */}
+              {sentMessages.length > 0 && (
+                <IconButton variant='plain' color='neutral' onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
                   <KeyboardArrowUpIcon />
                 </IconButton>
               )}
@@ -445,10 +492,10 @@ export function Composer(props: {
                 </Button>}
             </Box>
 
-            {/* [desktop-only] row with History button */}
+            {/* [desktop-only] row with Sent Messages button */}
             <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-              {history.length > 0 && (
-                <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showHistory}>
+              {sentMessages.length > 0 && (
+                <Button fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showSentMessages}>
                   History
                 </Button>
               )}
@@ -457,21 +504,12 @@ export function Composer(props: {
           </Stack>
         </Grid>
 
-        {/* History menu with all the line items (only if shown) */}
-        {!!historyAnchor && (
-          <Menu
-            variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320 }}
-            open anchorEl={historyAnchor} onClose={hideHistory}>
-            <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
-            <ListDivider />
-            {history.map((item, index) => (
-              <MenuItem key={'compose-history-' + index} onClick={() => pasteFromHistory(item.text)}>
-                {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
-                {item.text.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
-              </MenuItem>
-            ))}
-            {/*<ListDivider /><MenuItem><ListItemDecorator><ClearIcon /></ListItemDecorator>Clear</MenuItem>*/}
-          </Menu>
+        {/* Sent messages menu */}
+        {!!sentMessagesAnchor && (
+          <SentMessagesMenu
+            anchorEl={sentMessagesAnchor} messages={sentMessages} onClose={hideSentMessages}
+            onPaste={handlePasteSent} onClear={handleClearSent}
+          />
         )}
 
         {/* Content reducer modal */}
@@ -481,6 +519,12 @@ export function Composer(props: {
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }
+
+        {/* Clear confirmation modal */}
+        <ConfirmationModal
+          open={confirmClearSent} onClose={handleCancelClearSent} onPositive={handleConfirmedClearSent}
+          confirmationText={'Are you sure you want to clear all your sent messages?'} positiveActionText={'Clear all'}
+        />
 
       </Grid>
     </Box>

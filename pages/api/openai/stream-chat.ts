@@ -79,7 +79,7 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
     // https://web.dev/streams/#asynchronous-iteration
     const decoder = new TextDecoder();
     for await (const upstreamChunk of upstreamResponse.body as any)
-      upstreamParser.feed(decoder.decode(upstreamChunk));
+      upstreamParser.feed(decoder.decode(upstreamChunk, { stream: true }));
 
   };
 

@@ -13,6 +13,7 @@ export async function streamAssistantMessage(
   chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
+  onFirstParagraph?: (firstParagraph: string) => void,
 ) {
 
   const payload: ApiChatInput = {
@@ -46,12 +47,13 @@ export async function streamAssistantMessage(
       // loop forever until the read is done, or the abort controller is triggered
       let incrementalText = '';
       let parsedFirstPacket = false;
+      let sentFirstParagraph = false;
       while (true) {
         const { value, done } = await reader.read();
 
         if (done) break;
 
-        incrementalText += decoder.decode(value);
+        incrementalText += decoder.decode(value, { stream: true });
 
         // there may be a JSON object at the beginning of the message, which contains the model name (streaming workaround)
         if (!parsedFirstPacket && incrementalText.startsWith('{')) {
@@ -67,6 +69,18 @@ export async function streamAssistantMessage(
               // error parsing JSON, ignore
               console.log('Error parsing JSON: ' + e);
             }
+          }
+        }
+
+        // if the first paragraph (after the first packet) is complete, call the callback
+        if (parsedFirstPacket && onFirstParagraph && !sentFirstParagraph) {
+          let cutPoint = incrementalText.lastIndexOf('\n');
+          if (cutPoint < 0)
+            cutPoint = incrementalText.lastIndexOf('. ');
+          if (cutPoint > 100 && cutPoint < 400) {
+            const firstParagraph = incrementalText.substring(0, cutPoint);
+            onFirstParagraph(firstParagraph);
+            sentFirstParagraph = true;
           }
         }
 
@@ -122,7 +136,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
       {
         role: 'user', content:
           'Analyze the given list of pre-processed first lines from each participant\'s conversation and generate a concise chat ' +
-          'title that represents the content and tone of the conversation. Only respond with the short title and nothing else.\n' +
+          'title that represents the content and tone of the conversation. Only respond with the lowercase short title and nothing else.\n' +
           '\n' +
           historyLines.join('\n') +
           '\n',
@@ -138,7 +152,10 @@ export async function updateAutoConversationTitle(conversationId: string) {
     });
     if (response.ok) {
       const chatResponse: ApiChatResponse = await response.json();
-      const title = chatResponse.message?.content?.trim()?.replaceAll('"', '');
+      const title = chatResponse.message?.content?.trim()
+        ?.replaceAll('"', '')
+        ?.replace('Title: ', '')
+        ?.replace('title: ', '');
       if (title)
         setAutoTitle(conversationId, title);
     }
