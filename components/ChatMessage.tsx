@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
@@ -13,7 +14,7 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -21,10 +22,15 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
+import { InlineTextEdit } from '@/components/util/InlineTextEdit';
+import { OpenInCodepen } from '@/components/OpenInCodepen';
+import { OpenInReplit } from '@/components/OpenInReplit';
 import { Link } from '@/components/util/Link';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
@@ -39,6 +45,7 @@ type TextBlock = { type: 'text'; content: string; };
 type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 
 const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
+  let detectedLanguage;
   // we have an hint
   if (markdownLanguage) {
     // no dot: assume is the syntax-highlight name
@@ -52,21 +59,44 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
         cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
         md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
       };
-      const language = languageMap[extension];
-      if (language)
-        return language;
+      detectedLanguage = languageMap[extension];
+      if (detectedLanguage)
+        return detectedLanguage;
     }
   }
 
   // based on how the code starts, return the language
-  if (code.startsWith('<DOCTYPE html') || code.startsWith('<!DOCTYPE')) return 'html';
-  if (code.startsWith('<')) return 'xml';
-  if (code.startsWith('from ')) return 'python';
-  if (code.startsWith('import ') || code.startsWith('export ')) return 'typescript'; // or python
-  if (code.startsWith('interface ') || code.startsWith('function ')) return 'typescript'; // ambiguous
-  if (code.startsWith('package ')) return 'java';
-  if (code.startsWith('using ')) return 'csharp';
-  return null;
+  const codeStarts = [
+    { starts: ['<!DOCTYPE html', '<html'], language: 'html' },
+    { starts: ['<'], language: 'xml' },
+    { starts: ['from '], language: 'python' },
+    { starts: ['import ', 'export '], language: 'typescript' }, // or python
+    { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
+    { starts: ['package '], language: 'java' },
+    { starts: ['using '], language: 'csharp' },
+  ];
+  
+  for (const codeStart of codeStarts) {
+    if (codeStart.starts.some((start) => code.startsWith(start))) {
+      return codeStart.language;
+    }
+  }
+
+  // If no language detected based on code start, use Prism to tokenize and detect language
+  const languages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript']; // matches Prism component imports
+  let maxTokens = 0;
+
+  languages.forEach((language) => {
+    const grammar = Prism.languages[language];
+    const tokens = Prism.tokenize(code, grammar);
+    const tokenCount = tokens.filter((token) => typeof token !== 'string').length;
+
+    if (tokenCount > maxTokens) {
+      maxTokens = tokenCount;
+      detectedLanguage = language;
+    }
+  });
+  return detectedLanguage || null;
 };
 
 /**
@@ -120,10 +150,21 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 /// Renderers for the different types of message blocks
 
-function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
+function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
+  const [showSVG, setShowSVG] = React.useState(true);
+
+  const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
+  const renderSVG = hasSVG && showSVG;
+
+  const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
+  const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
+
+  const languagesReplit = ['python', 'java', 'csharp'];
+  const hasReplitLanguage = hasSVG || (props.codeBlock.language && languagesReplit.includes(props.codeBlock.language));
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(codeBlock.code);
+    copyToClipboard(props.codeBlock.code);
   };
 
   return (
@@ -133,20 +174,44 @@ function RenderCode({ codeBlock, sx }: { codeBlock: CodeBlock, sx?: SxProps }) {
         position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
         display: 'block', fontWeight: 500,
         whiteSpace: 'break-spaces',
-        '&:hover > button': { opacity: 1 },
-        ...(sx || {}),
+        '&:hover > .code-buttons': { opacity: 1 },
+        ...(props.sx || {}),
       }}>
-      <Tooltip title='Copy Code' variant='solid'>
-        <IconButton
-          variant='outlined' color='neutral' onClick={handleCopyToClipboard}
-          sx={{
-            position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
-            opacity: 0, transition: 'opacity 0.3s',
-          }}>
-          <ContentCopyIcon />
-        </IconButton>
-      </Tooltip>
-      <Box dangerouslySetInnerHTML={{ __html: codeBlock.content }} />
+
+      {/* Buttons */}
+      <Box
+        className='code-buttons'
+        sx={{
+          backdropFilter: 'blur(6px) grayscale(0.8)',
+          position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, pr: 0.5,
+          display: 'flex', flexDirection: 'row', gap: 1,
+          opacity: 0, transition: 'opacity 0.3s',
+        }}>
+        {hasSVG && (
+          <Tooltip title={renderSVG ? 'Code' : 'Draw'} variant='solid'>
+            <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
+              <ShapeLineOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        {hasCodepenLanguage && 
+          <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
+        }
+        {hasReplitLanguage &&
+          <OpenInReplit codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
+        }
+        <Tooltip title='Copy Code' variant='solid'>
+          <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Highlighted Code / SVG render */}
+      <Box
+        dangerouslySetInnerHTML={{ __html: renderSVG ? props.codeBlock.code : props.codeBlock.content }}
+        sx={renderSVG ? { lineHeight: 0 } : {}}
+      />
     </Box>
   );
 }
@@ -238,7 +303,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: () => void }) {
+export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -260,7 +325,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState('');
 
   // external state
   const theme = useTheme();
@@ -276,8 +340,6 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
-    if (!isEditing)
-      setEditedText(messageText);
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
@@ -285,28 +347,15 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onMessageRunFrom();
+    props.onMessageRunFrom(fromAssistant ? -1 : 0);
     closeOperationsMenu();
   };
 
-
-  const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setEditedText(e.target.value);
-
-  const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      e.preventDefault();
-      setIsEditing(false);
-      props.onMessageEdit(editedText);
-    }
-  };
-
-  const handleEditBlur = () => {
+  const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
-    if (editedText !== messageText && editedText?.trim())
+    if (editedText?.trim() && editedText !== messageText)
       props.onMessageEdit(editedText);
   };
-
 
   const handleExpand = () => setForceExpanded(true);
 
@@ -467,10 +516,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
 
       ) : (
 
-        <Textarea
-          variant='soft' color='warning' autoFocus minRows={1}
-          value={editedText} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-          sx={{ ...cssBlocks, flexGrow: 1 }} />
+        <InlineTextEdit initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlocks, flexGrow: 1 }} />
 
       )}
 
@@ -505,6 +551,12 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
             {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
           <ListDivider />
+          {fromAssistant && (
+            <MenuItem onClick={handleMenuRunAgain}>
+              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
+              Retry
+            </MenuItem>
+          )}
           {fromUser && (
             <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
