@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
@@ -28,6 +29,8 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
+import { OpenInCodepen } from '@/components/OpenInCodepen';
+import { OpenInReplit } from '@/components/OpenInReplit';
 import { Link } from '@/components/util/Link';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
@@ -42,6 +45,7 @@ type TextBlock = { type: 'text'; content: string; };
 type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 
 const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
+  let detectedLanguage;
   // we have an hint
   if (markdownLanguage) {
     // no dot: assume is the syntax-highlight name
@@ -55,21 +59,44 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
         cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
         md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
       };
-      const language = languageMap[extension];
-      if (language)
-        return language;
+      detectedLanguage = languageMap[extension];
+      if (detectedLanguage)
+        return detectedLanguage;
     }
   }
 
   // based on how the code starts, return the language
-  if (code.startsWith('<DOCTYPE html') || code.startsWith('<!DOCTYPE')) return 'html';
-  if (code.startsWith('<')) return 'xml';
-  if (code.startsWith('from ')) return 'python';
-  if (code.startsWith('import ') || code.startsWith('export ')) return 'typescript'; // or python
-  if (code.startsWith('interface ') || code.startsWith('function ')) return 'typescript'; // ambiguous
-  if (code.startsWith('package ')) return 'java';
-  if (code.startsWith('using ')) return 'csharp';
-  return null;
+  const codeStarts = [
+    { starts: ['<!DOCTYPE html', '<html'], language: 'html' },
+    { starts: ['<'], language: 'xml' },
+    { starts: ['from '], language: 'python' },
+    { starts: ['import ', 'export '], language: 'typescript' }, // or python
+    { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
+    { starts: ['package '], language: 'java' },
+    { starts: ['using '], language: 'csharp' },
+  ];
+  
+  for (const codeStart of codeStarts) {
+    if (codeStart.starts.some((start) => code.startsWith(start))) {
+      return codeStart.language;
+    }
+  }
+
+  // If no language detected based on code start, use Prism to tokenize and detect language
+  const languages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript']; // matches Prism component imports
+  let maxTokens = 0;
+
+  languages.forEach((language) => {
+    const grammar = Prism.languages[language];
+    const tokens = Prism.tokenize(code, grammar);
+    const tokenCount = tokens.filter((token) => typeof token !== 'string').length;
+
+    if (tokenCount > maxTokens) {
+      maxTokens = tokenCount;
+      detectedLanguage = language;
+    }
+  });
+  return detectedLanguage || null;
 };
 
 /**
@@ -129,6 +156,12 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
   const renderSVG = hasSVG && showSVG;
 
+  const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
+  const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
+
+  const languagesReplit = ['python', 'java', 'csharp'];
+  const hasReplitLanguage = hasSVG || (props.codeBlock.language && languagesReplit.includes(props.codeBlock.language));
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
     copyToClipboard(props.codeBlock.code);
@@ -149,7 +182,8 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
       <Box
         className='code-buttons'
         sx={{
-          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
+          backdropFilter: 'blur(6px) grayscale(0.8)',
+          position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, pr: 0.5,
           display: 'flex', flexDirection: 'row', gap: 1,
           opacity: 0, transition: 'opacity 0.3s',
         }}>
@@ -160,6 +194,12 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
             </IconButton>
           </Tooltip>
         )}
+        {hasCodepenLanguage && 
+          <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
+        }
+        {hasReplitLanguage &&
+          <OpenInReplit codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
+        }
         <Tooltip title='Copy Code' variant='solid'>
           <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
             <ContentCopyIcon />
