@@ -43,6 +43,7 @@ type TextBlock = { type: 'text'; content: string; };
 type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 
 const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
+  let detectedLanguage;
   // we have an hint
   if (markdownLanguage) {
     // no dot: assume is the syntax-highlight name
@@ -56,9 +57,9 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
         cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
         md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
       };
-      const language = languageMap[extension];
-      if (language)
-        return language;
+      detectedLanguage = languageMap[extension];
+      if (detectedLanguage)
+        return detectedLanguage;
     }
   }
 
@@ -83,7 +84,6 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
   // If no language detected based on code start, use Prism to tokenize and detect language
   const languages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript']; // matches Prism component imports
   let maxTokens = 0;
-  let detectedLanguage = '';
 
   languages.forEach((language) => {
     const grammar = Prism.languages[language];
@@ -95,7 +95,6 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
       detectedLanguage = language;
     }
   });
-
   return detectedLanguage || null;
 };
 
