@@ -72,7 +72,6 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
     { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
     { starts: ['package '], language: 'java' },
     { starts: ['using '], language: 'csharp' },
-    { starts: ['\n.class', '\n#id', '\n*'], language: 'css' },
   ];
   
   for (const codeStart of codeStarts) {
