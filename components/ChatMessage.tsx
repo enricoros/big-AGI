@@ -63,7 +63,7 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
     }
   }
 
-  // If no hint or unrecognized hint, try to infer the language based on code content
+  // based on how the code starts, return the language
   const codeStarts = [
     { starts: ['<!DOCTYPE html', '<html'], language: 'html' },
     { starts: ['<'], language: 'xml' },
