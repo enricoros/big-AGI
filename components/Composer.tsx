@@ -249,7 +249,7 @@ export function Composer(props: {
       }
     }
 
-    // update the text: just
+    // within the budget, so just append
     setComposeText(text => expandPromptTemplate(PromptTemplates.Concatenate, { text: newText })(text));
   }
 
