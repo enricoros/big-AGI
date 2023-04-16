@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { useSettingsStore } from '@/lib/store-settings';
-
 interface ISpeechRecognition {
   lang: string;
   interimResults: boolean;
@@ -15,7 +13,7 @@ interface ISpeechRecognition {
   start: () => void;
   stop: () => void;
 
-  new (): ISpeechRecognition;
+  new(): ISpeechRecognition;
 }
 
 /**
@@ -31,23 +29,22 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
-  const { textToSpeechLang } = useSettingsStore.getState();
-
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const Speech = ((window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition ||
         (window as any).mozSpeechRecognition ||
-        (window as any).msSpeechRecognition) as ISpeechRecognition;
+        (window as any).msSpeechRecognition
+      ) as ISpeechRecognition;
 
       if (typeof Speech !== 'undefined') {
         setIsSpeechEnabled(true);
         const instance = new Speech();
-        instance.lang = textToSpeechLang;
+        instance.lang = 'en-US';
         instance.interimResults = false;
         instance.maxAlternatives = 1;
 
-        instance.onerror = (event) => {
+        instance.onerror = event => {
           console.error('Error occurred during speech recognition:', event.error);
           setIsSpeechError(true);
         };
@@ -56,8 +53,12 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
           if (!event?.results?.length) return;
           let transcript = event.results[event.results.length - 1][0].transcript;
           // shall we have these smarts?
-          transcript = (transcript || '').replaceAll(' question mark', '?').replaceAll(' comma', ',').replaceAll(' exclamation mark', '!');
-          if (transcript) onResultCallback(transcript);
+          transcript = (transcript || '')
+            .replaceAll(' question mark', '?')
+            .replaceAll(' comma', ',')
+            .replaceAll(' exclamation mark', '!');
+          if (transcript)
+            onResultCallback(transcript);
         };
 
         instance.onaudiostart = () => setIsRecordingAudio(true);
@@ -74,11 +75,14 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   }, [onResultCallback]);
 
   const toggleRecording = () => {
-    if (!recognition) return console.error('Speech recognition is not supported or not initialized.');
+    if (!recognition)
+      return console.error('Speech recognition is not supported or not initialized.');
 
     setIsSpeechError(false);
-    if (!isRecordingAudio) recognition.start();
-    else recognition.stop();
+    if (!isRecordingAudio)
+      recognition.start();
+    else
+      recognition.stop();
   };
 
   return { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording };
