@@ -49,10 +49,10 @@ export function ContentReducerModal(props: {
 
   const handlePreviewClicked = async () => {
     console.log('props.tokenBudget', props.tokenLimit);
-    setProcessing(false);
+    setProcessing(true);
     const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, props.chatModelId);
     setReducedText(reducedText);
-    setProcessing(true);
+    setProcessing(false);
   };
 
   const handleUseReducedTextClicked = () =>
@@ -136,7 +136,7 @@ export function ContentReducerModal(props: {
             <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
 
             {/* indicator we're processing */}
-            {!processing && (
+            {processing && (
               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                 <CircularProgress />
                 <Typography level='body2' sx={{ mt: 1 }}>Reduction in progress.</Typography>
