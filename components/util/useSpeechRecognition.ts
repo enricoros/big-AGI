@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { useSettingsStore } from '@/lib/store-settings';
+
 interface ISpeechRecognition {
   lang: string;
   interimResults: boolean;
@@ -31,6 +33,8 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
+  const { textToSpeechLang } = useSettingsStore.getState();
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const Speech = ((window as any).SpeechRecognition ||
@@ -42,7 +46,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
       if (typeof Speech !== 'undefined') {
         setIsSpeechEnabled(true);
         const instance = new Speech();
-        instance.lang = 'en-US';
+        instance.lang = textToSpeechLang;
         instance.interimResults = false;
         instance.maxAlternatives = 1;
 
