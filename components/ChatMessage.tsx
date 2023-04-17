@@ -22,6 +22,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
@@ -29,12 +30,13 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 import { DMessage } from '@/lib/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
+import { Link } from '@/components/util/Link';
 import { OpenInCodepen } from '@/components/OpenInCodepen';
 import { OpenInReplit } from '@/components/OpenInReplit';
-import { Link } from '@/components/util/Link';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/publish';
+import { speakText } from '@/lib/text-to-speech';
 import { useSettingsStore } from '@/lib/store-settings';
 
 
@@ -330,12 +332,19 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   const theme = useTheme();
   const showAvatars = useSettingsStore(state => state.zenMode) !== 'cleaner';
   const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
+  const isSpeakable = !!useSettingsStore(state => state.elevenLabsVoiceId);
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
   const handleMenuCopy = (e: React.MouseEvent) => {
     copyToClipboard(messageText);
     e.preventDefault();
+    closeOperationsMenu();
+  };
+
+  const handleMenuSpeak = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await speakText(messageText);
     closeOperationsMenu();
   };
 
@@ -545,6 +554,12 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
           </MenuItem>
+          {isSpeakable && (
+            <MenuItem onClick={handleMenuSpeak}>
+              <ListItemDecorator><RecordVoiceOverIcon /></ListItemDecorator>
+              Speak
+            </MenuItem>
+          )}
           <MenuItem onClick={handleMenuEdit}>
             <ListItemDecorator><EditIcon /></ListItemDecorator>
             {isEditing ? 'Discard' : 'Edit'}
