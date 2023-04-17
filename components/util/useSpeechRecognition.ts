@@ -33,6 +33,14 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isiPhone = /iPhone|iPod/.test(navigator.userAgent);
+
+      if (isSafari || isiPhone) {
+        console.warn('Speech recognition is disabled on iPhones and Safari browsers.');
+        return;
+      }
+
       const Speech = ((window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition ||
         (window as any).mozSpeechRecognition ||
