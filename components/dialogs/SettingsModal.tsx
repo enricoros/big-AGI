@@ -223,7 +223,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
           </Stack>
 
           <Stack direction="row" sx={{ mt: 3, gap: 2, alignItems: 'center' }}>
-            <Typography>Speach Input Language</Typography>
+            <Typography>Speech Input Language</Typography>
           </Stack>
 
           <Typography level="body2" sx={{ mb: 1 }}>
