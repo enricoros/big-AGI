@@ -109,7 +109,7 @@ export const useSettingsStore = create<SettingsStore>()(
       elevenLabsVoiceId: '',
       setElevenLabsVoiceId: (elevenLabsVoiceId: string) => set({ elevenLabsVoiceId }),
 
-      elevenLabsAutoSpeak: 'off',
+      elevenLabsAutoSpeak: 'firstLine',
       setElevenLabsAutoSpeak: (elevenLabsAutoSpeak: 'off' | 'firstLine') => set({ elevenLabsAutoSpeak }),
 
     }),

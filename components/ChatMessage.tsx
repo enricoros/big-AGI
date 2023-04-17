@@ -36,6 +36,7 @@ import { OpenInReplit } from '@/components/OpenInReplit';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/publish';
+import { requireUserKeyElevenLabs } from '@/components/dialogs/SettingsModal';
 import { speakText } from '@/lib/text-to-speech';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -332,7 +333,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
   const theme = useTheme();
   const showAvatars = useSettingsStore(state => state.zenMode) !== 'cleaner';
   const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
-  const isSpeakable = !!useSettingsStore(state => state.elevenLabsVoiceId);
+  const isSpeakable = !!useSettingsStore(state => state.elevenLabsVoiceId) || !requireUserKeyElevenLabs;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
