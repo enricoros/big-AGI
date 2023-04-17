@@ -20,7 +20,7 @@ import { useSettingsStore } from '@/lib/store-settings';
 
 const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
 
-const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
+export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
 
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
