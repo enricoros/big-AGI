@@ -75,7 +75,7 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
     { starts: ['package '], language: 'java' },
     { starts: ['using '], language: 'csharp' },
   ];
-  
+
   for (const codeStart of codeStarts) {
     if (codeStart.starts.some((start) => code.startsWith(start))) {
       return codeStart.language;
@@ -160,7 +160,7 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
 
   const languagesReplit = ['python', 'java', 'csharp'];
-  const hasReplitLanguage = hasSVG || (props.codeBlock.language && languagesReplit.includes(props.codeBlock.language));
+  const hasReplitLanguage = props.codeBlock.language && languagesReplit.includes(props.codeBlock.language);
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -194,7 +194,7 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
             </IconButton>
           </Tooltip>
         )}
-        {hasCodepenLanguage && 
+        {hasCodepenLanguage &&
           <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
         }
         {hasReplitLanguage &&
