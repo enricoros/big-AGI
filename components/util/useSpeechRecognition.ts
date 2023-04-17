@@ -33,7 +33,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
-  const { textToSpeechLang } = useSettingsStore.getState();
+  const { preferredLanguage } = useSettingsStore.getState();
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -46,7 +46,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
       if (typeof Speech !== 'undefined') {
         setIsSpeechEnabled(true);
         const instance = new Speech();
-        instance.lang = textToSpeechLang;
+        instance.lang = preferredLanguage;
         instance.interimResults = false;
         instance.maxAlternatives = 1;
 

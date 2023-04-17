@@ -74,8 +74,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
     modelTemperature, setModelTemperature,
     modelMaxResponseTokens,
     setModelMaxResponseTokens,
-    textToSpeechLang,
-    setTextToSpeechLang,
+    preferredLanguage,
+    setPreferredLanguage,
   } = useSettingsStore(state => state, shallow);
 
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
@@ -105,7 +105,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
 
   const handleTextToSpeechLangChange = (event: Event, newValue: string) => {
-    setTextToSpeechLang(newValue as string);
+    setPreferredLanguage(newValue as string);
     window.location.reload();
   };
 
@@ -206,7 +206,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             All browsers may not support all languages listed below.
           </Typography>
 
-          <Select onChange={handleTextToSpeechLangChange} defaultValue={'en-US'} value={textToSpeechLang}>
+          <Select onChange={handleTextToSpeechLangChange} defaultValue={'en-US'} value={preferredLanguage}>
             <Option value="ar-SA">Arabic</Option>
             <Option value="bn-BD">Bengali (Bangladesh)</Option>
             <Option value="bn-IN">Bengali (India)</Option>
