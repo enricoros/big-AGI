@@ -43,6 +43,10 @@ interface SettingsStore {
   modelMaxResponseTokens: number;
   setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
+
+  textToSpeechLang: string;
+  setTextToSpeechLang: (textToSpeechLang: string) => void;
+
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -85,6 +89,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       modelMaxResponseTokens: 1024,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
+
+      textToSpeechLang: 'en-US',
+      setTextToSpeechLang: (textToSpeechLang: string) => set({ textToSpeechLang }),
 
     }),
     {

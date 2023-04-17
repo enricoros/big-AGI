@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Radio, RadioGroup, Slider, Stack, Switch, Typography } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -74,6 +74,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
     modelTemperature, setModelTemperature,
     modelMaxResponseTokens,
     setModelMaxResponseTokens,
+    textToSpeechLang,
+    setTextToSpeechLang,
   } = useSettingsStore(state => state, shallow);
 
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
@@ -101,6 +103,11 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
+
+  const handleTextToSpeechLangChange = (event: Event, newValue: string) => {
+    setTextToSpeechLang(newValue as string);
+    window.location.reload();
+  };
 
   const isValidOpenAIKey = isValidOpenAIApiKey(apiKey);
 
@@ -190,8 +197,124 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             </FormControl>
 
           </Stack>
-        </Section>
 
+          <Stack direction="row" sx={{ mt: 3, gap: 2, alignItems: 'center' }}>
+            <Typography>Speach Input Language</Typography>
+          </Stack>
+
+          <Typography level="body2" sx={{ mb: 1 }}>
+            All browsers may not support all languages listed below.
+          </Typography>
+
+          <Select onChange={handleTextToSpeechLangChange} defaultValue={'en-US'} value={textToSpeechLang}>
+            <Option value="ar-SA">Arabic</Option>
+            <Option value="bn-BD">Bengali (Bangladesh)</Option>
+            <Option value="bn-IN">Bengali (India)</Option>
+            <Option value="ca-ES">Catalan</Option>
+            <Option value="cmn-Hans-CN">Chinese (Mandarin, Simplified, China)</Option>
+            <Option value="cmn-Hant-TW">Chinese (Mandarin, Traditional, Taiwan)</Option>
+            <Option value="yue-Hant-HK">Chinese (Cantonese, Traditional, Hong Kong)</Option>
+            <Option value="cs-CZ">Czech</Option>
+            <Option value="da-DK">Danish</Option>
+            <Option value="nl-BE">Dutch (Belgium)</Option>
+            <Option value="nl-NL">Dutch (Netherlands)</Option>
+            <Option value="en-AU">English (Australia)</Option>
+            <Option value="en-CA">English (Canada)</Option>
+            <Option value="en-IN">English (India)</Option>
+            <Option value="en-IE">English (Ireland)</Option>
+            <Option value="en-NZ">English (New Zealand)</Option>
+            <Option value="en-PH">English (Philippines)</Option>
+            <Option value="en-ZA">English (South Africa)</Option>
+            <Option value="en-GB">English (UK)</Option>
+            <Option value="en-US">English (US)</Option>
+            <Option value="et-EE">Estonian</Option>
+            <Option value="fi-FI">Finnish</Option>
+            <Option value="fr-BE">French (Belgium)</Option>
+            <Option value="fr-CA">French (Canada)</Option>
+            <Option value="fr-FR">French (France)</Option>
+            <Option value="fr-CH">French (Switzerland)</Option>
+            <Option value="gl-ES">Galician</Option>
+            <Option value="de-AT">German (Austria)</Option>
+            <Option value="de-DE">German (Germany)</Option>
+            <Option value="de-CH">German (Switzerland)</Option>
+            <Option value="el-GR">Greek</Option>
+            <Option value="gu-IN">Gujarati (India)</Option>
+            <Option value="he-IL">Hebrew</Option>
+            <Option value="hi-IN">Hindi</Option>
+            <Option value="hu-HU">Hungarian</Option>
+            <Option value="is-IS">Icelandic</Option>
+            <Option value="id-ID">Indonesian</Option>
+            <Option value="it-IT">Italian (Italy)</Option>
+            <Option value="it-CH">Italian (Switzerland)</Option>
+            <Option value="ja-JP">Japanese</Option>
+            <Option value="jv-ID">Javanese</Option>
+            <Option value="kn-IN">Kannada (India)</Option>
+            <Option value="kk-KZ">Kazakh</Option>
+            <Option value="km-KH">Khmer</Option>
+            <Option value="ko-KR">Korean (South Korea)</Option>
+            <Option value="lo-LA">Lao</Option>
+            <Option value="lv-LV">Latvian</Option>
+            <Option value="lt-LT">Lithuanian</Option>
+            <Option value="mk-MK">Macedonian</Option>
+            <Option value="ms-MY">Malay</Option>
+            <Option value="ml-IN">Malayalam (India)</Option>
+            <Option value="mr-IN">Marathi (India)</Option>
+            <Option value="mn-MN">Mongolian</Option>
+            <Option value="my-MM">Myanmar (Burmese)</Option>
+            <Option value="ne-NP">Nepali</Option>
+            <Option value="no-NO">Norwegian</Option>
+            <Option value="pl-PL">Polish</Option>
+            <Option value="pt-BR">Portuguese (Brazil)</Option>
+            <Option value="pt-PT">Portuguese (Portugal)</Option>
+            <Option value="pa-IN">Punjabi (India)</Option>
+            <Option value="ro-RO">Romanian</Option>
+            <Option value="ru-RU">Russian</Option>
+            <Option value="sr-RS">Serbian</Option>
+            <Option value="si-LK">Sinhala (Sri Lanka)</Option>
+            <Option value="sk-SK">Slovak</Option>
+            <Option value="sl-SI">Slovenian</Option>
+            <Option value="es-AR">Spanish (Argentina)</Option>
+            <Option value="es-BO">Spanish (Bolivia)</Option>
+            <Option value="es-CL">Spanish (Chile)</Option>
+            <Option value="es-CO">Spanish (Colombia)</Option>
+            <Option value="es-CR">Spanish (Costa Rica)</Option>
+            <Option value="es-DO">Spanish (Dominican Republic)</Option>
+            <Option value="es-EC">Spanish (Ecuador)</Option>
+            <Option value="es-SV">Spanish (El Salvador)</Option>
+            <Option value="es-GT">Spanish (Guatemala)</Option>
+            <Option value="es-HN">Spanish (Honduras)</Option>
+            <Option value="es-MX">Spanish (Mexico)</Option>
+            <Option value="es-NI">Spanish (Nicaragua)</Option>
+            <Option value="es-PA">Spanish (Panama)</Option>
+            <Option value="es-PY">Spanish (Paraguay)</Option>
+            <Option value="es-PE">Spanish (Peru)</Option>
+            <Option value="es-PR">Spanish (Puerto Rico)</Option>
+            <Option value="es-ES">Spanish (Spain)</Option>
+            <Option value="es-US">Spanish (US)</Option>
+            <Option value="es-UY">Spanish (Uruguay)</Option>
+            <Option value="es-VE">Spanish (Venezuela)</Option>
+            <Option value="su-ID">Sundanese</Option>
+            <Option value="sw-TZ">Swahili</Option>
+            <Option value="sv-SE">Swedish</Option>
+            <Option value="ta-IN">Tamil (India)</Option>
+            <Option value="ta-SG">Tamil (Singapore)</Option>
+            <Option value="ta-LK">Tamil (Sri Lanka)</Option>
+            <Option value="te-IN">Telugu (India)</Option>
+            <Option value="th-TH">Thai</Option>
+            <Option value="tr-TR">Turkish</Option>
+            <Option value="uk-UA">Ukrainian</Option>
+            <Option value="ur-IN">Urdu (India)</Option>
+            <Option value="ur-PK">Urdu (Pakistan)</Option>
+            <Option value="uz-UZ">Uzbek</Option>
+            <Option value="vi-VN">Vietnamese</Option>
+            <Option value="cy-GB">Welsh (UK)</Option>
+            <Option value="xh-ZA">Xhosa (South Africa)</Option>
+            <Option value="yi-DE">Yiddish (Germany)</Option>
+            <Option value="yo-NG">Yoruba (Nigeria)</Option>
+            <Option value="zu-ZA">Zulu (South Africa)</Option>
+          </Select>
+
+        </Section>
 
         {/* Advanced Settings */}
 
