@@ -43,11 +43,24 @@ interface SettingsStore {
   modelMaxResponseTokens: number;
   setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
+  // ElevenLabs Text to Speech settings
+
+  elevenLabsApiKey: string;
+  setElevenLabsApiKey: (apiKey: string) => void;
+
+  elevenLabsVoiceId: string;
+  setElevenLabsVoiceId: (voiceId: string) => void;
+
+  elevenLabsAutoSpeak: 'off' | 'firstLine';
+  setElevenLabsAutoSpeak: (autoSpeak: 'off' | 'firstLine') => void;
+
 }
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
+
+      // UI settings
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
@@ -67,6 +80,8 @@ export const useSettingsStore = create<SettingsStore>()(
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
+      // OpenAI API settings
+
       apiKey: (function() {
         // this will be removed in April
         if (typeof localStorage === 'undefined') return '';
@@ -85,6 +100,17 @@ export const useSettingsStore = create<SettingsStore>()(
 
       modelMaxResponseTokens: 1024,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
+
+      // ElevenLabs Text to Speech settings
+
+      elevenLabsApiKey: '',
+      setElevenLabsApiKey: (elevenLabsApiKey: string) => set({ elevenLabsApiKey }),
+
+      elevenLabsVoiceId: '',
+      setElevenLabsVoiceId: (elevenLabsVoiceId: string) => set({ elevenLabsVoiceId }),
+
+      elevenLabsAutoSpeak: 'off',
+      setElevenLabsAutoSpeak: (elevenLabsAutoSpeak: 'off' | 'firstLine') => set({ elevenLabsAutoSpeak }),
 
     }),
     {

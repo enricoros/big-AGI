@@ -1,11 +1,16 @@
-import { ApiElevenLabsSpeechBody } from '../pages/api/elevenlabs/speech';
+import { ElevenLabs } from '@/types/api-elevenlabs';
+import { useSettingsStore } from '@/lib/store-settings';
 
 
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
+  const { elevenLabsApiKey, elevenLabsAutoSpeak, elevenLabsVoiceId } = useSettingsStore.getState();
+  if (elevenLabsAutoSpeak !== 'firstLine')
+    return;
+
   try {
-    const audioBuffer = await convertTextToSpeech(text);
+    const audioBuffer = await convertTextToSpeech(text, elevenLabsApiKey, elevenLabsVoiceId);
     const audioContext = new AudioContext();
     const bufferSource = audioContext.createBufferSource();
     bufferSource.buffer = await audioContext.decodeAudioData(audioBuffer);
@@ -32,9 +37,11 @@ export async function speakText(text: string) {
 }*/
 
 
-async function convertTextToSpeech(text: string): Promise<ArrayBuffer> {
-  const payload: ApiElevenLabsSpeechBody = {
+async function convertTextToSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string): Promise<ArrayBuffer> {
+  const payload: ElevenLabs.API.TextToSpeech.RequestBody = {
+    apiKey: elevenLabsApiKey,
     text,
+    voiceId: elevenLabsVoiceId,
   };
 
   const response = await fetch('/api/elevenlabs/speech', {

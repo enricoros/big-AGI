@@ -15,6 +15,7 @@
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.16",
     "@mui/joy": "^5.0.0-alpha.75",
+    "@tanstack/react-query": "^4.29.3",
     "@vercel/analytics": "^0.1.11",
     "eventsource-parser": "^1.0.0",
     "next": "^13.3.0",
