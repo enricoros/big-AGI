@@ -64,9 +64,10 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
           let transcript = event.results[event.results.length - 1][0].transcript;
           // shall we have these smarts?
           transcript = (transcript || '')
-            .replaceAll(' question mark', '?')
             .replaceAll(' comma', ',')
-            .replaceAll(' exclamation mark', '!');
+            .replaceAll(' exclamation mark', '!')
+            .replaceAll(' period', '.')
+            .replaceAll(' question mark', '?');
           if (transcript)
             onResultCallback(transcript);
         };
