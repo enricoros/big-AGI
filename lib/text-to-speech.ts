@@ -1,16 +1,38 @@
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { useSettingsStore } from '@/lib/store-settings';
 
+// const audioCache: Record<string, ArrayBuffer> = {};
+//
+// function createCacheKey(text: string, voiceId: string): string {
+//   const hash = (str: string) => {
+//     let h = 0;
+//     for (let i = 0; i < str.length; i++) {
+//       h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+//     }
+//     return h;
+//   };
+//
+//   return `${hash(text)}-${hash(voiceId)}`;
+// }
+
+export async function speakIfFirstLine(text: string) {
+  if (useSettingsStore.getState().elevenLabsAutoSpeak === 'firstLine')
+    await speakText(text);
+}
 
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
-  const { elevenLabsApiKey, elevenLabsAutoSpeak, elevenLabsVoiceId } = useSettingsStore.getState();
-  if (elevenLabsAutoSpeak !== 'firstLine')
-    return;
+  const { elevenLabsApiKey, elevenLabsVoiceId } = useSettingsStore.getState();
 
   try {
-    const audioBuffer = await convertTextToSpeech(text, elevenLabsApiKey, elevenLabsVoiceId);
+    // const cacheKey = createCacheKey(text, elevenLabsVoiceId);
+    // if (!audioCache[cacheKey])
+    //   audioCache[cacheKey] = await convertTextToSpeech(text, elevenLabsApiKey, elevenLabsVoiceId);
+    // const audioBuffer = audioCache[cacheKey];
+
+    // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
+    const audioBuffer = await convertTextToSpeech(text.slice(0, 1000), elevenLabsApiKey, elevenLabsVoiceId);
     const audioContext = new AudioContext();
     const bufferSource = audioContext.createBufferSource();
     bufferSource.buffer = await audioContext.decodeAudioData(audioBuffer);
@@ -20,21 +42,6 @@ export async function speakText(text: string) {
     console.error('Error playing first text:', error);
   }
 }
-
-/*async function playLastMessage(conversationId: string) {
-  const messages = useChatStore.getState().conversations.find(conversation => conversation.id === conversationId)?.messages;
-  if (!messages?.length) return;
-  // grab the first paragraph of the last message (and not shorter than 100 characters, if possible)
-  let text = '';
-  const paragraphs = messages[messages.length - 1].text.split('\n');
-  for (const paragraph of paragraphs) {
-    const trimmed = paragraph.trim();
-    if (text.length + trimmed.length > 100)
-      break;
-    text += (text.length > 0 ? '\n' : '') + trimmed;
-  }
-  await speakText(text);
-}*/
 
 
 async function convertTextToSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string): Promise<ArrayBuffer> {
