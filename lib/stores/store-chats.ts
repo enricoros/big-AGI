@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '@/lib/data';
-import { updateTokenCount } from '@/lib/tokens';
+import { updateTokenCount } from '@/lib/llm/tokens';
 
 
 /// Conversations Store

@@ -1,7 +1,7 @@
 // summerize.ts
+import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { cleanupPrompt } from './prompts';
-import { useSettingsStore } from '@/lib/store-settings';
-import { ApiChatInput, ApiChatResponse } from '../pages/api/openai/chat';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
   const words = chunk.split(' ');

@@ -18,8 +18,8 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { PagesMenu } from '@/components/Pages';
 import { StyledDropdown } from '@/components/util/StyledDropdown';
 import { StyledDropdownWithSymbol } from '@/components/util/StyledDropdownWithSymbol';
-import { useChatStore } from '@/lib/store-chats';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useChatStore } from '@/lib/stores/store-chats';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**

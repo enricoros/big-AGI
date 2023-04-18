@@ -5,7 +5,7 @@ import { Container, useTheme } from '@mui/joy';
 import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/dialogs/SettingsModal';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 export default function Home() {

@@ -12,11 +12,11 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/store-chats';
-import { publishConversation } from '@/lib/publish';
-import { speakIfFirstLine } from '@/lib/text-to-speech';
-import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/ai';
-import { useSettingsStore } from '@/lib/store-settings';
+import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/stores/store-chats';
+import { publishConversation } from '@/lib/util/publish';
+import { speakIfFirstLine } from '@/lib/util/text-to-speech';
+import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**

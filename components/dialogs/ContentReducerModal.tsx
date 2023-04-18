@@ -5,8 +5,8 @@ import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperT
 import { ChatModelId } from '@/lib/data';
 import { Section } from '@/components/dialogs/SettingsModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
-import { countModelTokens } from '@/lib/tokens';
-import { summerizeToFitContextBudget } from '@/lib/summerize';
+import { countModelTokens } from '@/lib/llm/tokens';
+import { summerizeToFitContextBudget } from '@/lib/llm/summerize';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
