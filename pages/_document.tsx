@@ -16,9 +16,9 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
     <Html lang='en' className={bodyFontClassName}>
       <Head>
-        {/* PWA primary color */}
-        <meta name='theme-color' content='#000000' />
         <link rel='shortcut icon' href='/favicon.ico' />
+        <link rel='manifest' href='/manifest.json' />
+        <meta name='apple-mobile-web-app-status-bar-style' content='black' />
         <meta name='emotion-insertion-point' content='' />
         {emotionStyleTags}
       </Head>
