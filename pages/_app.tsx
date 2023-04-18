@@ -4,6 +4,7 @@ import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import { AppProps } from 'next/app';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { createEmotionCache, theme } from '@/lib/theme';
 import '../styles/GithubMarkdown.css';
@@ -17,16 +18,20 @@ export interface MyAppProps extends AppProps {
 }
 
 export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
+  const [queryClient] = React.useState(() => new QueryClient());
   return <>
     <CacheProvider value={emotionCache}>
       <Head>
         <meta name='viewport' content='initial-scale=1, width=device-width' />
       </Head>
-      <CssVarsProvider defaultMode='light' theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <Component {...pageProps} />
-      </CssVarsProvider>
+      {/* Rect-query provider */}
+      <QueryClientProvider client={queryClient}>
+        <CssVarsProvider defaultMode='light' theme={theme}>
+          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+          <CssBaseline />
+          <Component {...pageProps} />
+        </CssVarsProvider>
+      </QueryClientProvider>
     </CacheProvider>
     <VercelAnalytics debug={false} />
   </>;

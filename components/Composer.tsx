@@ -20,11 +20,11 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
 import { TokenProgress } from '@/components/util/TokenProgress';
-import { convertHTMLTableToMarkdown } from '@/lib/markdown';
-import { countModelTokens } from '@/lib/tokens';
-import { extractPdfText } from '@/lib/pdf';
-import { useChatStore } from '@/lib/store-chats';
-import { useComposerStore, useSettingsStore } from '@/lib/store-settings';
+import { convertHTMLTableToMarkdown } from '@/lib/util/markdown';
+import { countModelTokens } from '@/lib/llm/tokens';
+import { extractPdfText } from '@/lib/util/pdf';
+import { useChatStore } from '@/lib/stores/store-chats';
+import { useComposerStore, useSettingsStore } from '@/lib/stores/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
 
@@ -249,7 +249,7 @@ export function Composer(props: {
       }
     }
 
-    // update the text: just
+    // within the budget, so just append
     setComposeText(text => expandPromptTemplate(PromptTemplates.Concatenate, { text: newText })(text));
   }
 
@@ -515,7 +515,7 @@ export function Composer(props: {
         {/* Content reducer modal */}
         {reducerText?.length >= 1 && chatModelId &&
           <ContentReducerModal
-            initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens} chatModelId={chatModelId}
+            initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }

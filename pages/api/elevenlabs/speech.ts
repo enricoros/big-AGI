@@ -1,18 +1,47 @@
-// noinspection ExceptionCaughtLocallyJS
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ApiPublishResponse } from '../publish';
 import { ElevenLabs } from '@/types/api-elevenlabs';
 
 
-async function postToElevenLabs<TBody extends object>(configuration: ElevenLabs.API.Configuration, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
-
-  const apiHost = (configuration.apiHost || process.env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim().replaceAll('https://', '');
-  const apiHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
-    'xi-api-key': (configuration.apiKey || process.env.ELEVENLABS_API_KEY || '').trim(),
+function parseApiParameters(apiKey?: string) {
+  return {
+    apiHost: (process.env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim().replaceAll('https://', ''),
+    apiHeaders: {
+      'Content-Type': 'application/json',
+      'xi-api-key': (apiKey || process.env.ELEVENLABS_API_KEY || '').trim(),
+    },
   };
+}
+
+async function rethrowElevenLabsError(response: Response) {
+  if (!response.ok) {
+    let errorPayload: object | null = null;
+    try {
+      errorPayload = await response.json();
+    } catch (e) {
+      // ignore
+    }
+    console.error('Error in ElevenLabs API:', errorPayload);
+    throw new Error('ElevenLabs error: ' + JSON.stringify(errorPayload));
+  }
+}
+
+
+export async function getFromElevenLabs<TJson extends object>(apiKey: string, apiPath: string): Promise<TJson> {
+  const { apiHost, apiHeaders } = parseApiParameters(apiKey);
+
+  const response = await fetch(`https://${apiHost}${apiPath}`, {
+    method: 'GET',
+    headers: apiHeaders,
+  });
+
+  await rethrowElevenLabsError(response);
+  return await response.json();
+}
+
+export async function postToElevenLabs<TBody extends object>(apiKey: string, apiPath: string, body: TBody, signal?: AbortSignal): Promise<Response> {
+  const { apiHost, apiHeaders } = parseApiParameters(apiKey);
 
   const response = await fetch(`https://${apiHost}${apiPath}`, {
     method: 'POST',
@@ -21,37 +50,27 @@ async function postToElevenLabs<TBody extends object>(configuration: ElevenLabs.
     signal,
   });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error('Error in ElevenLabs API:', errorData);
-    throw new Error('ElevenLabs error: ' + JSON.stringify(errorData));
-  }
-
+  await rethrowElevenLabsError(response);
   return response;
 }
 
 
-export interface ApiElevenLabsSpeechBody {
-  api?: ElevenLabs.API.Configuration,
-  text: string,
-  voiceId?: string,
-}
-
-
 export default async function handler(req: NextRequest) {
-  const { api = {}, text, voiceId: userVoiceId } = (await req.json()) as ApiElevenLabsSpeechBody;
   try {
-    if (!text) throw new Error('Missing text');
+    const { apiKey = '', text, voiceId: userVoiceId } = (await req.json()) as ElevenLabs.API.TextToSpeech.RequestBody;
     const voiceId = userVoiceId || process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
-    const response = await postToElevenLabs<ElevenLabs.API.TextToSpeech.Request>(api, `/v1/text-to-speech/${voiceId}`, { text });
-    const audioBuffer = await response.arrayBuffer();
+    const response = await postToElevenLabs<ElevenLabs.Wire.TextToSpeech.Request>(apiKey, `/v1/text-to-speech/${voiceId}`, { text });
+    const audioBuffer: ElevenLabs.API.TextToSpeech.Response = await response.arrayBuffer();
     return new NextResponse(audioBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
   } catch (error) {
     console.error('Error posting to ElevenLabs', error);
-    return new NextResponse(JSON.stringify({
-      type: 'error',
-      error: error || 'Network issue',
-    } as ApiPublishResponse), { status: 500 });
+    return new NextResponse(
+      JSON.stringify({
+        type: 'error',
+        error: error || 'Network issue',
+      } as ApiPublishResponse),
+      { status: 500 },
+    );
   }
 }
 

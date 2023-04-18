@@ -9,12 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.4",
+    "@dqbd/tiktoken": "^1.0.6",
     "@emotion/react": "^11.10.6",
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.16",
-    "@mui/joy": "^5.0.0-alpha.74",
+    "@mui/joy": "^5.0.0-alpha.75",
+    "@tanstack/react-query": "^4.29.3",
     "@vercel/analytics": "^0.1.11",
     "eventsource-parser": "^1.0.0",
     "next": "^13.3.0",
@@ -22,7 +23,7 @@
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-markdown": "^8.0.6",
+    "react-markdown": "^8.0.7",
     "remark-gfm": "^3.0.1",
     "uuid": "^9.0.0",
     "zustand": "^4.3.7"
@@ -30,7 +31,7 @@
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.0.33",
+    "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.1",
     "eslint": "^8.38.0",

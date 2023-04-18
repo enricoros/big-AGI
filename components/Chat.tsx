@@ -12,12 +12,11 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/store-chats';
-import { publishConversation } from '@/lib/publish';
-import { requireUserKeyElevenLabs } from '@/components/dialogs/SettingsModal';
-import { speakText } from '@/lib/text-to-speech';
-import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/ai';
-import { useSettingsStore } from '@/lib/store-settings';
+import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/stores/store-chats';
+import { publishConversation } from '@/lib/util/publish';
+import { speakIfFirstLine } from '@/lib/util/text-to-speech';
+import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -54,15 +53,12 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
     assistantMessageId = assistantMessage.id;
   }
 
-  // if the server has an API key, we can use text-to-speech of the first paragraph (will be user-driven soon)
-  const onFirstParagraph = !requireUserKeyElevenLabs ? speakText : undefined;
-
   // when an abort controller is set, the UI switches to the "stop" mode
   const controller = new AbortController();
   startTyping(conversationId, controller);
 
   const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  await streamAssistantMessage(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal, onFirstParagraph);
+  await streamAssistantMessage(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal, speakIfFirstLine);
 
   // clear to send, again
   startTyping(conversationId, null);

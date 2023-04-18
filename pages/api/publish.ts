@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { postToPasteGG } from '@/lib/publish';
+import { postToPasteGG } from '@/lib/util/publish';
 
 
 export interface ApiPublishBody {

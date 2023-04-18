@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Slider, Textarea, Typography } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
-import { ChatModelId } from '@/lib/data';
+import { ChatModelId, ChatModels, fastChatModelId } from '@/lib/data';
 import { Section } from '@/components/dialogs/SettingsModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
-import { countModelTokens } from '@/lib/tokens';
-import { summerizeToFitContextBudget } from '@/lib/summerize';
+import { countModelTokens } from '@/lib/llm/tokens';
+import { summerizeToFitContextBudget } from '@/lib/llm/summerize';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
@@ -27,37 +27,36 @@ export function ContentReducerModal(props: {
   initialText: string,
   initialTokens: number,
   tokenLimit: number,
-  chatModelId: ChatModelId,
   onClose: () => void,
   onReducedText: (text: string) => void,
 }) {
 
   // state
+  const [reducerModelId, setReducerModelId] = React.useState<ChatModelId>(fastChatModelId);
   const [compressionLevel, setCompressionLevel] = React.useState(3);
   const [reducedText, setReducedText] = React.useState('');
   const [processing, setProcessing] = React.useState(false);
 
-  // external state
-  // ...
 
   // derived state
-  const reducedTokens = countModelTokens(reducedText, props.chatModelId, 'content reducer reduce');
+  const reducedTokens = countModelTokens(reducedText, reducerModelId, 'content reducer reduce');
   const remainingTokens = props.tokenLimit - reducedTokens;
 
-  const handleCompressionLevelChange = (event: Event, newValue: number | number[]) =>
-    setCompressionLevel(newValue as number);
+
+  const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setReducerModelId(value);
+
+  const handleCompressionLevelChange = (event: Event, newValue: number | number[]) => setCompressionLevel(newValue as number);
 
   const handlePreviewClicked = async () => {
-    console.log('props.tokenBudget', props.tokenLimit);
-    setProcessing(false);
-    const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, props.chatModelId);
-    setReducedText(reducedText);
     setProcessing(true);
+    const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, reducerModelId);
+    setReducedText(reducedText);
+    setProcessing(false);
   };
 
-  const handleUseReducedTextClicked = () =>
-    props.onReducedText(reducedText);
+  const handleUseReducedTextClicked = () => props.onReducedText(reducedText);
 
+  // DISABLED: user shall select the model and compression level first
   // upon load, click the preview button
   // React.useEffect(() => {
   //   // noinspection JSIgnoredPromiseFromCall
@@ -75,50 +74,61 @@ export function ContentReducerModal(props: {
 
         <ModalClose />
 
-        <Typography level='h5'>Content Reducer [Pre-Alpha]</Typography>
+        <Typography level='h5'>Content Reducer (preview)</Typography>
 
         <Divider sx={{ my: 2 }} />
 
 
-        <Section title='Inputs'>
+        {/* Settings */}
+        <Section>
+          <Stack direction='column' sx={{ gap: 2 }}>
 
-          <Typography level='body2'>
-            Text: {props.initialTokens.toLocaleString()} tokens
-          </Typography>
-          <Typography level='body2'>
-            Limit: {props.tokenLimit.toLocaleString()} tokens
-          </Typography>
+            <Typography level='body2'>
+              Input: <b>{props.initialTokens.toLocaleString()}</b> tokens · Limit: <b>{props.tokenLimit.toLocaleString()}</b> tokens
+              <br />
+              compression needed ≥ <b>{props.tokenLimit ? Math.round(100 * props.initialTokens / props.tokenLimit) : 0}</b> %
+            </Typography>
 
-        </Section>
+            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+              <Box sx={{ minWidth: 120 }}>
+                <FormLabel>Reducer model</FormLabel>
+                <FormHelperText>{ChatModels[reducerModelId]?.tradeoff}</FormHelperText>
+              </Box>
+              {reducerModelId && <Select value={reducerModelId} onChange={handleChatModelChange} sx={{ minWidth: 140 }}>
+                {Object.keys(ChatModels).map((key: string) => (
+                  <Option key={key} value={key}>
+                    {ChatModels[key as ChatModelId].title}
+                  </Option>
+                ))}
+              </Select>}
+            </FormControl>
 
+            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+              <Box sx={{ minWidth: 120 }}>
+                <FormLabel>Compression</FormLabel>
+                <FormHelperText>{compressionLevel < 2 ? 'Low' : compressionLevel > 4 ? 'High' : 'Medium'}</FormHelperText>
+              </Box>
+              <Slider
+                color='neutral' disabled
+                min={1} max={5} defaultValue={3}
+                value={compressionLevel} onChange={handleCompressionLevelChange}
+                valueLabelDisplay='auto'
+                sx={{ py: 1, mt: 1.1 }}
+              />
+            </FormControl>
 
-        {/* Example User settings */}
-        <Section title='Settings'>
-
-          <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-            <Box sx={{ minWidth: 120 }}>
-              <FormLabel>Compression</FormLabel>
-              <FormHelperText>{compressionLevel < 2 ? 'Low' : compressionLevel > 4 ? 'High' : 'Medium'}</FormHelperText>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant='solid' color='primary' onClick={handlePreviewClicked} disabled={processing}>
+                Preview
+              </Button>
             </Box>
-            <Slider
-              aria-label='Model Temperature' color='neutral'
-              min={1} max={5} defaultValue={3}
-              value={compressionLevel} onChange={handleCompressionLevelChange}
-              valueLabelDisplay='auto'
-              sx={{ py: 1, mt: 1.1 }}
-            />
-          </FormControl>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant='solid' color='primary' onClick={handlePreviewClicked} disabled={processing}>
-              Preview
-            </Button>
-          </Box>
-
+          </Stack>
         </Section>
 
 
-        <Section title='Outputs'>
+        {/* Outputs */}
+        <Section title='Compressed content'>
 
           {/* Readonly output and token counter */}
           <Box sx={{ flexGrow: 1, position: 'relative', minWidth: '30vw' }}>
@@ -136,7 +146,7 @@ export function ContentReducerModal(props: {
             <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
 
             {/* indicator we're processing */}
-            {!processing && (
+            {processing && (
               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                 <CircularProgress />
                 <Typography level='body2' sx={{ mt: 1 }}>Reduction in progress.</Typography>

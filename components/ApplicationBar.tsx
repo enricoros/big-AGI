@@ -13,13 +13,13 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 
+import { AppBarDropdown } from '@/components/util/AppBarDropdown';
+import { AppBarDropdownWithSymbol } from '@/components/util/AppBarDropdownWithSymbol';
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { PagesMenu } from '@/components/Pages';
-import { StyledDropdown } from '@/components/util/StyledDropdown';
-import { StyledDropdownWithSymbol } from '@/components/util/StyledDropdownWithSymbol';
-import { useChatStore } from '@/lib/store-chats';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useChatStore } from '@/lib/stores/store-chats';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -130,11 +130,11 @@ export function ApplicationBar(props: {
 
       <Stack direction='row' sx={{ my: 'auto' }}>
 
-        {chatModelId && <StyledDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
+        {chatModelId && <AppBarDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
 
         {systemPurposeId && (zenMode === 'cleaner'
-            ? <StyledDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
-            : <StyledDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+            ? <AppBarDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+            : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
         )}
 
       </Stack>
