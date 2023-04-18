@@ -15,15 +15,17 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
-import { languageOptions } from '@/lib/languages';
+import { languageOptions } from '@/lib/language-options';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/store-settings';
+
+
+const uniformGap: number = 2;
 
 
 const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
-
 
 export const isValidOpenAIApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
@@ -100,8 +102,8 @@ function ElevenLabsSection() {
   const colWidth = 150;
 
   return (
-    <Section title='Text To Speech' collapsible>
-      <Stack direction='column' sx={{ gap: 3, mt: -0.8 }}>
+    <Section title='Text To Speech' collapsible collapsed>
+      <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <FormLabel sx={{ minWidth: colWidth }}>
@@ -195,7 +197,7 @@ function AdvancedSection() {
 
   return (
     <Section title='Advanced AI settings' collapsible collapsed={true} disclaimer='Adjust only if you are familiar with these terms' sx={{ mt: 2 }}>
-      <Stack direction='column' sx={{ gap: 3, mt: -0.8, maxWidth: 400 }}>
+      <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8, maxWidth: 400 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: 130 }}>
@@ -361,7 +363,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
 
         <Section>
-          <Stack direction='column' sx={{ gap: 3 }}>
+          <Stack direction='column' sx={{ gap: uniformGap }}>
 
             <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
