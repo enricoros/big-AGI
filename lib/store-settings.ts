@@ -8,6 +8,9 @@ interface SettingsStore {
 
   // UI settings
 
+  preferredLanguage: string;
+  setPreferredLanguage: (preferredLanguage: string) => void;
+
   centerMode: 'narrow' | 'wide' | 'full';
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
@@ -61,6 +64,9 @@ export const useSettingsStore = create<SettingsStore>()(
     (set) => ({
 
       // UI settings
+
+      preferredLanguage: (typeof navigator !== 'undefined') && navigator.language || 'en-US',
+      setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
