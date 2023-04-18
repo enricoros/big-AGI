@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { StyledDropdown } from './StyledDropdown';
+import { AppBarDropdown } from './AppBarDropdown';
 import { SxProps } from '@mui/joy/styles/types';
 
 
 /**
- * Wrapper for StyledDropdown that adds a symbol in front of the title
+ * Wrapper for AppBarDropdown that adds a symbol in front of the title
  */
 type Props<TValue extends string> = {
   value: TValue;
@@ -14,14 +14,14 @@ type Props<TValue extends string> = {
   sx?: SxProps;
 };
 
-export const StyledDropdownWithSymbol = <TValue extends string>({ value, items, onChange, sx }: Props<TValue>) => {
+export const AppBarDropdownWithSymbol = <TValue extends string>({ value, items, onChange, sx }: Props<TValue>) => {
   const itemsWithSymbol = Object.keys(items).map((key: string) => ({
     key,
     value: (!!items[key].symbol ? items[key].symbol + ' ' : '') + items[key].title,
   }));
 
   return (
-    <StyledDropdown
+    <AppBarDropdown
       value={value}
       items={Object.fromEntries(itemsWithSymbol.map(({ key, value }) => [key, { title: value }]))}
       onChange={onChange}
