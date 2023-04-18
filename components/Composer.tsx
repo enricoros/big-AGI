@@ -515,7 +515,7 @@ export function Composer(props: {
         {/* Content reducer modal */}
         {reducerText?.length >= 1 && chatModelId &&
           <ContentReducerModal
-            initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens} chatModelId={chatModelId}
+            initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }
