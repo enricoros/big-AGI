@@ -16,8 +16,12 @@ Or click fork & run on Vercel
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
 - [x] _NEW 04.18_ 🎉 **PWA** install on mobile! 📱 looks like a native app (@harlanlewis)
+  <p><a href="docs/pwa_installed_icon.png"><img src="docs/pwa_installed_icon.png" width='40' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.17_ 🎉 **Language Selection** Mic Language 🎙️, with auto-detect, and future app language! (@tbodyston)
+  <p><a href="docs/feature_language.png"><img src="docs/feature_language.png" width='300' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.17_ 🎉 **Text To Speech** 🎙️ Settings for ElevenLabs, including Voice Selection and custom voices!
+  <p><a href="docs/feature_speak.png"><img src="docs/feature_speak.png" width='100' alt="Token Counters"/></a></p> 
+  <p><a href="docs/feature_voice_1.png"><img src="docs/feature_voice_1.png" width='300' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.16_ 🎉 **Codepen/Replit** for code execution 💻 (@harlanlewis)
 - [x] _NEW 04.14_ 🎉 **SVG Drawing** 🖌️
   <p><a href="docs/feature_svg_drawing.png"><img src="docs/feature_svg_drawing.png" width='300' alt="Token Counters"/></a></p> 
