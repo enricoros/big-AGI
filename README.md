@@ -10,25 +10,23 @@ Or click fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
-## Roadmap 🛣️
-
-🚨 ** April 2023 - Attention! We look for your input!** 🚨
-
-| Roadmap              | RFC 📝                                                    | Status | Description                                                                                                      |
-|:---------------------|-----------------------------------------------------------|:------:|:-----------------------------------------------------------------------------------------------------------------|
-| Editable Purposes 🎭 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | In-app customization of 'Purposes', as many forks are created for that reason.                                   |
-| Templates sharing 🌐 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | Community repository of Purposes/Systems - Vote with 👍 and usage. Where to store? Bring your own key? Moderate? |
-| Reasoning Systems 🧩 | https://github.com/enricoros/nextjs-chatgpt-app/issues/36 |   🤔   | ReAct, DEPS, Reflexion - shall we?                                                                               |
-| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/enricoros/nextjs-chatgpt-app/issues/new?labels=RFC&body=Describe+the+idea) ❗     |
-
 ## Features ✨
 
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.18_ 🎉 **PWA** install on mobile! 📱 looks like a native app (@harlanlewis)
+  <p><a href="docs/pwa_installed_icon.png"><img src="docs/pwa_installed_icon.png" width='40' alt="Token Counters"/></a></p> 
+- [x] _NEW 04.17_ 🎉 **Language Selection** Mic Language 🎙️, with auto-detect, and future app language! (@tbodyston)
+  <p><a href="docs/feature_language.png"><img src="docs/feature_language.png" width='300' alt="Token Counters"/></a></p> 
+- [x] _NEW 04.17_ 🎉 **Text To Speech** 🎙️ Settings for ElevenLabs, including Voice Selection and custom voices!
+  <p><a href="docs/feature_speak.png"><img src="docs/feature_speak.png" width='100' alt="Token Counters"/></a></p> 
+  <p><a href="docs/feature_voice_1.png"><img src="docs/feature_voice_1.png" width='300' alt="Token Counters"/></a></p> 
+- [x] _NEW 04.16_ 🎉 **Codepen/Replit** for code execution 💻 (@harlanlewis)
 - [x] _NEW 04.14_ 🎉 **SVG Drawing** 🖌️
   <p><a href="docs/feature_svg_drawing.png"><img src="docs/feature_svg_drawing.png" width='300' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.13_ 🎉 Token usage progress bars, CTRL+M to use the mic, edge runtime fixes for Cloudflare, [awesome-agi.md](https://github.com/enricoros/awesome-agi)
+- [x] _NEW 04.13_ 🎉 Token usage progress bars, CTRL+M to use the mic, edge runtime fixes for
+  Cloudflare, [awesome-agi.md](https://github.com/enricoros/awesome-agi)
 - [x] _NEW 04.11_ 🎉 **AI-titling** 🧠✍️
 - [x] _NEW 04.10_ 🎉 **Multiple chats** 📝📝📝
 - [x] _NEW 04.09_ 🎉 **Microphone improvements** 🎙️
@@ -60,6 +58,17 @@ was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060
   HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
 - [ ] Add your own feature 🚀
 - [ ] Send a PR 🙌
+
+## Roadmap 🛣️
+
+🚨 ** April 2023 - Attention! We look for your input!** 🚨
+
+| Roadmap              | RFC 📝                                                    | Status | Description                                                                                                      |
+|:---------------------|-----------------------------------------------------------|:------:|:-----------------------------------------------------------------------------------------------------------------|
+| Editable Purposes 🎭 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | In-app customization of 'Purposes', as many forks are created for that reason.                                   |
+| Templates sharing 🌐 | https://github.com/enricoros/nextjs-chatgpt-app/issues/35 |   💬   | Community repository of Purposes/Systems - Vote with 👍 and usage. Where to store? Bring your own key? Moderate? |
+| Reasoning Systems 🧩 | https://github.com/enricoros/nextjs-chatgpt-app/issues/36 |   🤔   | ReAct, DEPS, Reflexion - shall we?                                                                               |
+| Your epic idea       |                                                           |   💡   | [Create RFC](https://github.com/enricoros/nextjs-chatgpt-app/issues/new?labels=RFC&body=Describe+the+idea) ❗     |
 
 ## Why this? 💡
 

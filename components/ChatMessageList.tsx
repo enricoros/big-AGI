@@ -6,8 +6,8 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
 import { PurposeSelector } from '@/components/util/PurposeSelector';
-import { createDMessage, DMessage, useChatStore } from '@/lib/store-chats';
-import { useSettingsStore } from '@/lib/store-settings';
+import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -38,8 +38,8 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
   const handleMessageEdit = (messageId: string, newText: string) =>
     props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
 
-  const handleRunFromMessage = (messageId: string) => {
-    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+  const handleRunFromMessage = (messageId: string, offset: number) => {
+    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
     props.conversationId && props.onRestartConversation(props.conversationId, truncatedHistory);
   };
 
@@ -68,7 +68,7 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
             isLast={idx === filteredMessages.length - 1}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={() => handleRunFromMessage(message.id)} />,
+            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />,
         )}
 
         <div ref={messagesEndRef}></div>

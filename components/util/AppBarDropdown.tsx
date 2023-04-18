@@ -8,7 +8,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-export const StyledDropdown = <TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) =>
+export const AppBarDropdown = <TValue extends string>(props: { value: TValue, items: Record<string, { title: string }>, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) =>
   <Select
     variant='solid' color='neutral' size='md'
     value={props.value} onChange={props.onChange}
