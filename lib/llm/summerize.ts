@@ -1,7 +1,7 @@
-// summerize.ts
 import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { cleanupPrompt } from './prompts';
 import { useSettingsStore } from '@/lib/stores/store-settings';
+import { ChatModelId, ChatModels } from '@/lib/data';
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
   const words = chunk.split(' ');
@@ -14,11 +14,7 @@ function breakDownChunk(chunk: string, targetWordCount: number): string[] {
   return subChunks;
 }
 
-export async function summerizeToFitContextBudget(text: string, targetWordCount: number, modelId: string): Promise<string> {
-  if (typeof text !== 'string' || typeof targetWordCount !== 'number') {
-    throw new Error('Invalid input. Please provide a string and a number.');
-  }
-
+export async function summerizeToFitContextBudget(text: string, targetWordCount: number, modelId: ChatModelId): Promise<string> {
   if (targetWordCount < 0) {
     throw new Error('Target word count must be a non-negative number.');
   }
@@ -65,9 +61,15 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   return summarizedChunks.join('\n');
 }
 
-async function cleanUpContent(chunk: string, modelId: string, max_tokens: number): Promise<string> {
+async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_targetWordCount: number): Promise<string> {
 
   const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
+
+  // auto-adjust the tokens assuming the output would be half the size of the input (a bit dangerous,
+  // but at this stage we are not guaranteed the input nor output would fit)
+  const outputTokenShare = 1 / 3;
+  const autoResponseTokensSize = Math.floor(ChatModels[modelId].contextWindowSize * outputTokenShare);
+
   const input: ApiChatInput = {
     api: {
       ...(apiKey && { apiKey }),
@@ -78,7 +80,7 @@ async function cleanUpContent(chunk: string, modelId: string, max_tokens: number
     messages: [
       { role: 'system', content: cleanupPrompt },
       { role: 'user', content: chunk }],
-    max_tokens: max_tokens, // Adjust the max tokens as needed
+    max_tokens: autoResponseTokensSize, // note: before was 'targetWordCount', but it's not correct
   };
 
   const response = await fetch('/api/openai/chat', {
@@ -91,14 +93,14 @@ async function cleanUpContent(chunk: string, modelId: string, max_tokens: number
 
   if (!response.ok) {
     console.error('Error from API call: ', response.status, response.statusText);
-    return "";
+    return '';
   }
 
   const data: ApiChatResponse = await response.json();
   return data.message.content;
 }
 
-async function recursiveSummerize(text: string, modelId: string, targetWordCount: number): Promise<string> {
+async function recursiveSummerize(text: string, modelId: ChatModelId, targetWordCount: number): Promise<string> {
   const words = text.split(' ');
 
   if (words.length <= targetWordCount || words.length <= 1) {
