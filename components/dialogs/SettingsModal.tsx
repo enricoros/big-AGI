@@ -13,11 +13,11 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
+import languages from '@/lib/languages.json' assert { type: 'json' };
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
-import { languageOptions } from '@/lib/language-options';
 import { useQuery } from '@tanstack/react-query';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 const uniformGap: number = 2;
@@ -268,6 +268,45 @@ function AdvancedSection() {
 }
 
 
+function LanguageSelect() {
+  // external state
+  const { preferredLanguage, setPreferredLanguage } = useSettingsStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
+
+  const handleLanguageChanged = (event: any, newValue: string | null) => {
+    if (!newValue) return;
+    setPreferredLanguage(newValue as string);
+
+    // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
+    //if (typeof window !== 'undefined')
+    //  window.location.reload();
+  };
+
+  const languageOptions = React.useMemo(() => Object.entries(languages).map(([language, localesOrCode]) =>
+    typeof localesOrCode === 'string'
+      ? (
+        <Option key={localesOrCode} value={localesOrCode}>
+          {language}
+        </Option>
+      ) : (
+        Object.entries(localesOrCode).map(([country, code]) => (
+          <Option key={code} value={code}>
+            {`${language} (${country})`}
+          </Option>
+        ))
+      )), []);
+
+  return (
+    <Select value={preferredLanguage} onChange={handleLanguageChanged}
+            indicator={<KeyboardArrowDownIcon />}
+            slotProps={{
+              root: { sx: { minWidth: 200 } },
+              indicator: { sx: { opacity: 0.5 } },
+            }}>
+      {languageOptions}
+    </Select>
+  );
+}
+
 /**
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
@@ -281,14 +320,12 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   // external state
   const {
-    preferredLanguage, setPreferredLanguage,
     centerMode, setCenterMode,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
     apiKey, setApiKey,
   } = useSettingsStore(state => ({
-    preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage,
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
@@ -309,17 +346,6 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
-
-
-  const handleTextToSpeechLangChange = (event: any, newValue: string | null) => {
-    if (newValue) {
-      setPreferredLanguage(newValue as string);
-      // reload the page to apply the new language
-      // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
-      //if (typeof window !== 'undefined')
-      //  window.location.reload();
-    }
-  };
 
 
   const isValidOpenAIKey = isValidOpenAIApiKey(apiKey);
@@ -374,14 +400,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                   </FormHelperText>
                 </Tooltip>
               </Box>
-              <Select value={preferredLanguage} onChange={handleTextToSpeechLangChange}
-                      indicator={<KeyboardArrowDownIcon />}
-                      slotProps={{
-                        root: { sx: { minWidth: 200 } },
-                        indicator: { sx: { opacity: 0.5 } },
-                      }}>
-                {languageOptions}
-              </Select>
+              <LanguageSelect />
             </FormControl>
 
             <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>

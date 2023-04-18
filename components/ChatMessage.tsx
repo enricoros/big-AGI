@@ -28,17 +28,17 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
-import { DMessage } from '@/lib/store-chats';
+import { DMessage } from '@/lib/stores/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { Link } from '@/components/util/Link';
 import { OpenInCodepen } from '@/components/OpenInCodepen';
 import { OpenInReplit } from '@/components/OpenInReplit';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
-import { prettyBaseModel } from '@/lib/publish';
+import { prettyBaseModel } from '@/lib/util/publish';
 import { requireUserKeyElevenLabs } from '@/components/dialogs/SettingsModal';
-import { speakText } from '@/lib/text-to-speech';
-import { useSettingsStore } from '@/lib/store-settings';
+import { speakText } from '@/lib/util/text-to-speech';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /// Utilities to parse messages into blocks of text and code

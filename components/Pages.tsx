@@ -9,8 +9,8 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 // import { Link } from '@/components/util/Link';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { SystemPurposes } from '@/lib/data';
-import { conversationTitle, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/store-chats';
-import { useSettingsStore } from '@/lib/store-settings';
+import { conversationTitle, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/stores/store-chats';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 const DEBUG_CONVERSATION_IDs = false;

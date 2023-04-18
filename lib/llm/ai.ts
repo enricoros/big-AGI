@@ -1,7 +1,7 @@
-import { ApiChatInput, ApiChatResponse } from '../pages/api/openai/chat';
-import { DMessage, useChatStore } from '@/lib/store-chats';
+import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
+import { DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { fastChatModelId } from '@/lib/data';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**

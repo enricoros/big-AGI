@@ -1,5 +1,5 @@
 import { ElevenLabs } from '@/types/api-elevenlabs';
-import { useSettingsStore } from '@/lib/store-settings';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 // const audioCache: Record<string, ArrayBuffer> = {};
 //

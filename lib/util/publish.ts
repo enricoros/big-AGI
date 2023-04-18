@@ -1,7 +1,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { ApiPublishBody, ApiPublishResponse } from '../pages/api/publish';
-import { DConversation } from '@/lib/store-chats';
+import { ApiPublishBody, ApiPublishResponse } from '../../pages/api/publish';
+import { DConversation } from '@/lib/stores/store-chats';
 import { SystemPurposes } from '@/lib/data';
 
 
