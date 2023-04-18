@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -14,6 +15,7 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
+import { languageOptions } from '@/lib/languages';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/store-settings';
 
@@ -277,12 +279,14 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
   // external state
   const {
+    preferredLanguage, setPreferredLanguage,
     centerMode, setCenterMode,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
     apiKey, setApiKey,
   } = useSettingsStore(state => ({
+    preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage,
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
@@ -303,6 +307,17 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+
+
+  const handleTextToSpeechLangChange = (event: any, newValue: string | null) => {
+    if (newValue) {
+      setPreferredLanguage(newValue as string);
+      // reload the page to apply the new language
+      // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
+      //if (typeof window !== 'undefined')
+      //  window.location.reload();
+    }
+  };
 
 
   const isValidOpenAIKey = isValidOpenAIApiKey(apiKey);
@@ -346,7 +361,26 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
 
         <Section>
-          <Stack direction='column' sx={{ gap: 3, maxWidth: 400 }}>
+          <Stack direction='column' sx={{ gap: 3 }}>
+
+            <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <FormLabel>Language</FormLabel>
+                <Tooltip title='Not all browsers may support these languages. Please note that speech input is unavailable on iPhone/Safari.'>
+                  <FormHelperText>
+                    Speech input <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+                  </FormHelperText>
+                </Tooltip>
+              </Box>
+              <Select value={preferredLanguage} onChange={handleTextToSpeechLangChange}
+                      indicator={<KeyboardArrowDownIcon />}
+                      slotProps={{
+                        root: { sx: { minWidth: 200 } },
+                        indicator: { sx: { opacity: 0.5 } },
+                      }}>
+                {languageOptions}
+              </Select>
+            </FormControl>
 
             <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>

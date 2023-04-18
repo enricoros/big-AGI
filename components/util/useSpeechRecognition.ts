@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { useSettingsStore } from '@/lib/store-settings';
+
 interface ISpeechRecognition {
   lang: string;
   interimResults: boolean;
@@ -31,8 +33,19 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
+  // external state (will update this function when changed)
+  const preferredLanguage = useSettingsStore(state => state.preferredLanguage);
+
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+
+      // do not re-initialize, just update the language (if we're here there's a high chance the language has changed)
+      if (recognition) {
+        recognition.lang = preferredLanguage;
+        return;
+      }
+
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isiPhone = /iPhone|iPod/.test(navigator.userAgent);
 
@@ -50,7 +63,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
       if (typeof Speech !== 'undefined') {
         setIsSpeechEnabled(true);
         const instance = new Speech();
-        instance.lang = 'en-US';
+        instance.lang = preferredLanguage;
         instance.interimResults = false;
         instance.maxAlternatives = 1;
 
@@ -83,7 +96,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
         setRecognition(instance);
       }
     }
-  }, [onResultCallback]);
+  }, [onResultCallback, preferredLanguage, recognition]);
 
 
   const toggleRecording = React.useCallback(() => {
