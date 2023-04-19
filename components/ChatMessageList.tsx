@@ -50,11 +50,30 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
       </Box>
     ) : null;
 
+  // scrollbar style
+  // const scrollbarStyle: SxProps = {
+  //   '&::-webkit-scrollbar': {
+  //     md: {
+  //       width: 8,
+  //       background: theme.vars.palette.neutral.plainHoverBg,
+  //     },
+  //   },
+  //   '&::-webkit-scrollbar-thumb': {
+  //     background: theme.vars.palette.neutral.solidBg,
+  //     borderRadius: 6,
+  //   },
+  //   '&::-webkit-scrollbar-thumb:hover': {
+  //     background: theme.vars.palette.neutral.solidHoverBg,
+  //   },
+  // };
+
   return (
     <List sx={{
       p: 0, ...(props.sx || {}),
       // this makes sure that the the window is scrolled to the bottom (column-reverse)
       display: 'flex', flexDirection: 'column-reverse',
+      // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
+      marginBottom: '-1px',
     }}>
 
       {filteredMessages.map((message, idx) =>
