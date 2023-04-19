@@ -14,9 +14,6 @@ interface SettingsStore {
   centerMode: 'narrow' | 'wide' | 'full';
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
-  freeScroll: boolean;
-  setFreeScroll: (freeScroll: boolean) => void;
-
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
@@ -70,9 +67,6 @@ export const useSettingsStore = create<SettingsStore>()(
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
-
-      freeScroll: false,
-      setFreeScroll: (freeScroll: boolean) => set({ freeScroll }),
 
       renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
