@@ -143,7 +143,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
           overflowY: 'auto', // overflowY: 'hidden'
-          marginBottom: '-1px',
         }} />
 
       <Composer
