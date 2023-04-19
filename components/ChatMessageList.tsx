@@ -28,7 +28,16 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
   // when messages change, scroll to bottom (aka: at every new token)
   React.useEffect(() => {
     if (freeScroll) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    // check if attached to bottom, with a 16 px margin
+    // let isAttachedToBottom = false;
+    // const scrollableContainer = messagesEndRef.current?.parentElement;
+    // if (scrollableContainer)
+    //   isAttachedToBottom = scrollableContainer.scrollHeight - scrollableContainer.scrollTop - scrollableContainer.clientHeight < 16;
+
+    const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timeoutId = setTimeout(scrollToBottom, 20);
+    return () => clearTimeout(timeoutId);
   }, [freeScroll, messages]);
 
 
