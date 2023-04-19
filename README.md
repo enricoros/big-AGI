@@ -4,11 +4,11 @@ Welcome to `nextjs-chatgpt-app`! 🎉🚀 Responsive chat application powered by
 highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
 designed to be easy to use, customize, and extend. We encourage you to contribute and help improve this project! 😊
 
-[![Official Website](https://img.shields.io/badge/Demo-%23096bde?style=for-the-badge&logo=vercel&label=try)](https://nextjs-chatgpt-app-enricoros.vercel.app)
+
 
 Or click fork & run on Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcafemedia%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
 ## Features ✨
 
