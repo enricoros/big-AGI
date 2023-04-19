@@ -306,7 +306,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void }) {
+export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -466,6 +466,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
       borderBottom: `1px solid ${theme.vars.palette.divider}`,
       // borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
       position: 'relative',
+      ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
     }}>
 
@@ -576,7 +577,7 @@ export function ChatMessage(props: { message: DMessage, isLast: boolean, onMessa
           {fromUser && (
             <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-              {props.isLast ? 'Run Again' : 'Restart From Here'}
+              Run Again
             </MenuItem>
           )}
           <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>

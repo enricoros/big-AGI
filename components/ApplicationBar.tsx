@@ -11,7 +11,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import SwapVertIcon from '@mui/icons-material/SwapVert';
 
 import { AppBarDropdown } from '@/components/util/AppBarDropdown';
 import { AppBarDropdownWithSymbol } from '@/components/util/AppBarDropdownWithSymbol';
@@ -42,8 +41,7 @@ export function ApplicationBar(props: {
 
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const { freeScroll, setFreeScroll, showSystemMessages, setShowSystemMessages, zenMode } = useSettingsStore(state => ({
-    freeScroll: state.freeScroll, setFreeScroll: state.setFreeScroll,
+  const { showSystemMessages, setShowSystemMessages, zenMode } = useSettingsStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
     zenMode: state.zenMode,
   }), shallow);
@@ -53,8 +51,6 @@ export function ApplicationBar(props: {
   const closeActionsMenu = () => setActionsMenuAnchor(null);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
-
-  const handleScrollModeToggle = () => setFreeScroll(!freeScroll);
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
@@ -165,12 +161,6 @@ export function ApplicationBar(props: {
         <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
         System text
         <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem>
-        <ListItemDecorator><SwapVertIcon /></ListItemDecorator>
-        Free scroll
-        <Switch checked={freeScroll} onChange={handleScrollModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem onClick={handleActionShowSettings}>
