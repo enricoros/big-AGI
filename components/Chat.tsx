@@ -122,7 +122,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
     <Box
       sx={{
-        display: 'flex', flexDirection: 'column', minHeight: '100vh',
+        display: 'flex', flexDirection: 'column', height: '100vh',
         ...(props.sx || {}),
       }}>
 
@@ -132,7 +132,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         onPublishConversation={handlePublishConversation}
         onShowSettings={props.onShowSettings}
         sx={{
-          position: 'sticky', top: 0, zIndex: 20,
+          zIndex: 20, // position: 'sticky', top: 0,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
         }} />
 
@@ -142,7 +142,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
-          overflowY: 'hidden',
+          overflowY: 'auto', // overflowY: 'hidden'
           marginBottom: '-1px',
         }} />
 
@@ -151,7 +151,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         isDeveloperMode={systemPurposeId === 'Developer'}
         onSendMessage={handleSendMessage}
         sx={{
-          position: 'sticky', bottom: 0, zIndex: 21,
+          zIndex: 21, // position: 'sticky', bottom: 0,
           background: theme.vars.palette.background.surface,
           borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },
