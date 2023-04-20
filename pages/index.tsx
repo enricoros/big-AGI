@@ -6,7 +6,8 @@ import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/dialogs/SettingsModal';
 import { useSettingsStore } from '@/lib/stores/store-settings';
-
+import { useState, useEffect } from 'react';
+import { userService } from 'services';
 
 export default function Home() {
   // state
@@ -17,9 +18,14 @@ export default function Home() {
   const apiKey = useSettingsStore(state => state.apiKey);
   const centerMode = useSettingsStore(state => state.centerMode);
 
+  const [users, setUsers] = useState(null);
+
+    useEffect(() => {
+        userService.getAll().then(x => setUsers(x));
+    }, []);
 
   // show the Settings Dialog at startup if the API key is required but not set
-  React.useEffect(() => {
+  useEffect(() => {
     if (!process.env.HAS_SERVER_KEY_OPENAI && !isValidOpenAIApiKey(apiKey))
       setSettingsShown(true);
   }, [apiKey]);
@@ -39,6 +45,15 @@ export default function Home() {
           xl: centerMode !== 'full' ? theme.vars.shadow.lg : 'none',
         },
       }}>
+        <h6>Users from secure api end point</h6>
+                {users &&
+                    <ul>
+                        {users.map(user =>
+                            <li key={user.id}>{user.firstName} {user.lastName}</li>
+                        )}
+                    </ul>
+                }
+                {!users && <div className="spinner-border spinner-border-sm"></div>}
 
         <Chat onShowSettings={() => setSettingsShown(true)} />
 

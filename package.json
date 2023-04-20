@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^2.6.1",
     "@dqbd/tiktoken": "^1.0.6",
     "@emotion/react": "^11.10.6",
     "@emotion/server": "^11.10.0",
@@ -19,6 +20,7 @@
     "@vercel/analytics": "^0.1.11",
     "eventsource-parser": "^1.0.0",
     "next": "^13.3.0",
+    "prop-types": "^15.7.2",
     "pdfjs-dist": "^3.5.141",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
@@ -26,7 +28,10 @@
     "react-markdown": "^8.0.7",
     "remark-gfm": "^3.0.1",
     "uuid": "^9.0.0",
-    "zustand": "^4.3.7"
+    "zustand": "^4.3.7",
+    "react-hook-form": "^7.12.1",
+    "rxjs": "^7.3.0",
+    "yup": "^0.32.9"
   },
   "devDependencies": {
     "@types/node": "^18.15.11",

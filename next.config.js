@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  publicRuntimeConfig: {
+    apiUrl: process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000/api' // development api
+        : 'http://localhost:3000/api' // production api
+  },
   env: {
     // defaults to TRUE, unless API Keys are set at build time; this flag is used by the UI
     HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
