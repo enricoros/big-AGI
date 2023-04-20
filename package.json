@@ -14,9 +14,9 @@
     "@emotion/server": "^11.10.0",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.16",
-    "@mui/joy": "^5.0.0-alpha.75",
+    "@mui/joy": "^5.0.0-alpha.76",
     "@tanstack/react-query": "^4.29.3",
-    "@vercel/analytics": "^0.1.11",
+    "@vercel/analytics": "^1.0.0",
     "eventsource-parser": "^1.0.0",
     "next": "^13.3.0",
     "pdfjs-dist": "^3.5.141",
@@ -29,9 +29,9 @@
     "zustand": "^4.3.7"
   },
   "devDependencies": {
-    "@types/node": "^18.15.11",
+    "@types/node": "^18.15.12",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.0.35",
+    "@types/react": "^18.0.37",
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.1",
     "eslint": "^8.38.0",
