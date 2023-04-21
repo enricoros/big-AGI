@@ -191,7 +191,7 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
           opacity: 0, transition: 'opacity 0.3s',
         }}>
         {hasSVG && (
-          <Tooltip title={renderSVG ? 'Code' : 'Draw'} variant='solid'>
+          <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
             <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
               <ShapeLineOutlinedIcon />
             </IconButton>
