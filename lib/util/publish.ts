@@ -44,7 +44,7 @@ function conversationToMarkdown(conversation: DConversation, hideSystemMessage: 
 function getOrigin() {
   let origin = (typeof window !== 'undefined') ? window.location.href : '';
   if (!origin || origin.includes('//localhost'))
-    origin = 'https://github.com/enricoros/nextjs-chatgpt-app';
+    origin = 'https://github.com/enricoros/big-agi';
   origin = origin.replace('https://', '');
   if (origin.endsWith('/'))
     origin = origin.slice(0, -1);
