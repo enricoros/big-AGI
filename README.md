@@ -5,7 +5,7 @@ Personal AGI App, powered by `OpenAI GPT-4`. Designed for smart humans and super
 this responsive web app comes with Streaming, Code Execution, PDF imports, Voice support,
 data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
 
-[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://app.big-agi.com)
+[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
 
 Or click fork & run on Vercel
 
