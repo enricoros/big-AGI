@@ -6,6 +6,8 @@ this responsive web app comes with Streaming, Code Execution, PDF imports, Voice
 data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
+<br/>
+[![Official Discord](https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge)](https://discord.gg/v4Sayj4q)
 
 Or click fork & run on Vercel
 
@@ -20,54 +22,37 @@ Or click fork & run on Vercel
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg
 - Coming up: automatic-AGI reasoning
 
-## Features ✨
+## # changelog
 
-🚨 **We added cool new features to the app!** (bare-bones
-was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
+🚨 **April: more cool new features** to the app!
 
-- [x] _NEW 04.18_ 🎉 **PWA** install on mobile! 📱 looks like a native app (@harlanlewis)
-  <p><a href="docs/pwa_installed_icon.png"><img src="docs/pwa_installed_icon.png" width='40' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.17_ 🎉 **Language Selection** Mic Language 🎙️, with auto-detect, and future app language! (@tbodyston)
-  <p><a href="docs/feature_language.png"><img src="docs/feature_language.png" width='300' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.17_ 🎉 **Text To Speech** 🎙️ Settings for ElevenLabs, including Voice Selection and custom voices!
-  <p><a href="docs/feature_speak.png"><img src="docs/feature_speak.png" width='100' alt="Token Counters"/></a></p> 
-  <p><a href="docs/feature_voice_1.png"><img src="docs/feature_voice_1.png" width='300' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.16_ 🎉 **Codepen/Replit** for code execution 💻 (@harlanlewis)
-- [x] _NEW 04.14_ 🎉 **SVG Drawing** 🖌️
-  <p><a href="docs/feature_svg_drawing.png"><img src="docs/feature_svg_drawing.png" width='300' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.13_ 🎉 Token usage progress bars, CTRL+M to use the mic, edge runtime fixes for
-  Cloudflare, [awesome-agi.md](https://github.com/enricoros/awesome-agi)
-- [x] _NEW 04.11_ 🎉 **AI-titling** 🧠✍️
-- [x] _NEW 04.10_ 🎉 **Multiple chats** 📝📝📝
-- [x] _NEW 04.09_ 🎉 **Microphone improvements** 🎙️
-- [x] _NEW 04.08_ 🎉 **Precise Token counter** 📊 extra-useful
-- [x] _NEW 04.08_ 🎉 Organization ID for OpenAI users
-- [x] _NEW 04.07_ 🎉 **Pixel-perfect Markdown** 🎨
-- [x] _NEW 04.04_ 🎉 **Download JSON** to export/backup chats 📥
-- [x] _NEW 04.03_ 🎉 **PDF import** 📄🔀🧠 (fredliubojin) <- "ask questions to a PDF!" 🤯
-- [x] _NEW 04.03_ 🎉 **Tokens utilization** 📊 [Initial - just new messages, not full chat]
-  <p><a href="docs/feature_token_counter.png"><img src="docs/feature_token_counter.png" width='300' alt="Token Counters"/></a></p> 
-- [x] _NEW 04.02_ 🎉 **Markdown rendering** 🎨 (nilshulth) [WIP]
-- [x] 🎉 **NEW 04.01** Typing Avatars
-  <p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p>
-- [x] 🎉 **NEW 03.31** Publish & share chats to paste.gg 📥
-  <p><a href="docs/screenshot_export_example1.png"><img src="docs/screenshot_export_example1.png" width='200' alt="Export chats"/></a></p>
-- [x] Chat with GPT-4 and 3.5 Turbo 🧠💨
-- [x] **Private**: user-owned API keys 🔑 and localStorage 🛡️
-- [x] **System presets** - including Code, Science, Corporate, and Chat 🎭
-  <p><a href="docs/screenshot_purpose_two.png"><img src="docs/screenshot_purpose_two.png" width='200' alt="System presets"/></a></p>
-- [x] **Syntax highlighting** - for multiple languages 🌈
-- [x] **Context** - Drag and drop files to add them to the prompt 📁
-  <p><a href="docs/screenshot_drop_target.png"><img src="docs/screenshot_drop_target.png" width='200' alt="Drag and drop"/></a></p>
-- [x] **Stop generation** 🛑 (fredliubojin)
-- [x] **Voice input** 🎙️ (koganei)
-- [x] Real-time streaming of AI responses ⚡
-- [x] Switch API hosts to track quality, including [Helicone](https://www.helicone.ai/) 📈
-- [x] Dark mode 🌙 - Wide mode ⛶
-- [ ] [~~Code execution for TypeScript, JavaScript, and
-  HTML~~](https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89) 🖥️
-- [ ] Add your own feature 🚀
-- [ ] Send a PR 🙌
+- 🎉 **[Voice Synthesis](docs/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
+- 🎉 **[Precise Token Counter](docs/feature_token_counter.png)** 📈 extra-useful to pack the context window
+- 🎉 **[Install Mobile APP](docs/pwa_installed_icon.png)** 📲 looks like native (@harlanlewis)
+- 🎉 **[UI language](docs/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
+- 🎉 **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
+- 🎉 **Code Execution: [Codepen](https://codepen.io/)/[Replit](https://replit.com/)** 💻 (@harlanlewis)
+- 🎉 **[SVG Drawing](docs/feature_svg_drawing.png)** - draw with AI 🎨
+- 🎉 Chats: multiple chats, AI titles, download as JSON
+- 🎉 Rendering: Markdown, SVG, improved Code blocks
+- 🎉 Integrations: OpenAI organization ID
+- 🎉 [Cloudflare deployment instructions](docs/deploy-cloudflare.md), [awesome-agi.md](https://github.com/enricoros/awesome-agi) 
+- 🎉 [Typing Avatars](docs/recording_0401.gif) ⌨️
+  <!-- p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p -->
+
+**March: first release**
+
+- 🎉 **[AI Personas](docs/screenshot_purpose_two.png)** - including Code, Science, Corporate, and Chat 🎭
+- 🎉 **Privacy**: user-owned API keys 🔑 and localStorage 🛡️
+- 🎉 **Context** - Attach or [Drag & Drop files](docs/screenshot_drop_target.png) to add them to the prompt 📁
+- 🎉 **Syntax highlighting** - for multiple languages 🌈
+- 🎉 **Code Execution: Sandpack** - [now on branch]((https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
+- 🎉 Chat with GPT-4 and 3.5 Turbo 🧠💨
+- 🎉 Real-time streaming of AI responses ⚡
+- 🎉 **Voice Input** 🎙️ - works great on Chrome / Windows
+- 🎉 Integration: **[Paste.gg](docs/screenshot_export_example1.png)** integration for chat sharing 📥
+- 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
+- 🌙 Dark model - Wide mode ⛶
 
 ## Roadmap 🛣️
 
@@ -103,7 +88,7 @@ Tech Stack 🛠️
 
 Simply clone the repository, install the dependencies, and run the development server:
 
-```
+```bash
 git clone https://github.com/enricoros/nextjs-chatgpt-app.git
 cd nextjs-chatgpt-app
 npm install
