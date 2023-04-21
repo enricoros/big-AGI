@@ -14,7 +14,7 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
-import { Brand } from '@/lib/theme';
+import { Brand } from '@/lib/brand';
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
 import { useQuery } from '@tanstack/react-query';
