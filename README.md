@@ -9,7 +9,7 @@ data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy
 
 Or click fork & run on Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
 ## Useful 👊
 
@@ -47,7 +47,7 @@ Or click fork & run on Vercel
 - 🎉 **Context** - Attach or [Drag & Drop files](docs/screenshot_drop_target.png) to add them to the prompt 📁
 - 🎉 **Syntax highlighting** - for multiple languages 🌈
 - 🎉 **Code Execution: Sandpack
-  ** - [now on branch]((https://github.com/enricoros/nextjs-chatgpt-app/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
+  ** - [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
 - 🎉 Chat with GPT-4 and 3.5 Turbo 🧠💨
 - 🎉 Real-time streaming of AI responses ⚡
 - 🎉 **Voice Input** 🎙️ - works great on Chrome / Windows
@@ -61,14 +61,14 @@ Or click fork & run on Vercel
 
 * Enjoy the vanilla app on [big-AGI.com](https://main.big-agi.com)
 * [Chat with us](https://discord.gg/v4Sayj4q). We just started!
-* Deploy your [fork](https://github.com/enricoros/nextjs-chatgpt-app/fork) and surprise your friends with big-GPT
+* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
   energy!
 * Send a PRs! 🎉 would love help with:
-    * 🎭[Editing Personas](https://github.com/enricoros/nextjs-chatgpt-app/issues/35),
-      🧩[Reasoning Systems](https://github.com/enricoros/nextjs-chatgpt-app/issues/36),
-      🌐[Community Templates](https://github.com/enricoros/nextjs-chatgpt-app/issues/35),
+    * 🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
+      🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
+      🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
       and
-    * [Your BIG-idea](https://github.com/enricoros/nextjs-chatgpt-app/issues/new?labels=RFC&body=Describe+the+idea)❗
+    * [Your BIG-idea](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)❗
 
 ## Why this? 💡
 
@@ -85,8 +85,8 @@ Because the official Chat is ___slower than the API___, and the Playground UI __
 Clone this repo, install the dependencies, and run the development server:
 
 ```bash
-git clone https://github.com/enricoros/nextjs-chatgpt-app.git
-cd nextjs-chatgpt-app
+git clone https://github.com/enricoros/big-agi.git
+cd big-agi
 npm install
 npm run dev
 ```
@@ -102,11 +102,11 @@ Now the app should be running on `http://localhost:3000`
 
 This project is licensed under the MIT License.
 
-[![GitHub stars](https://img.shields.io/github/stars/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/network)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/pulls)
-[![License](https://img.shields.io/github/license/enricoros/nextjs-chatgpt-app)](https://github.com/enricoros/nextjs-chatgpt-app/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/enricoros/big-agi)](https://github.com/enricoros/big-agi/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/enricoros/big-agi)](https://github.com/enricoros/big-agi/network)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/big-agi)](https://github.com/enricoros/big-agi/pulls)
+[![License](https://img.shields.io/github/license/enricoros/big-agi)](https://github.com/enricoros/big-agi/LICENSE)
 
-[//]: # ([![GitHub issues]&#40;https://img.shields.io/github/issues/enricoros/nextjs-chatgpt-app&#41;]&#40;https://github.com/enricoros/nextjs-chatgpt-app/issues&#41;)
+[//]: # ([![GitHub issues]&#40;https://img.shields.io/github/issues/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/issues&#41;)
 
 Made with 💙
