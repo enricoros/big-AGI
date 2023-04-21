@@ -1,14 +1,24 @@
-# Next.js ChatGPT 🤖💬
+# BIG-AGI 🤖💬
 
-Welcome to `nextjs-chatgpt-app`! 🎉🚀 Responsive chat application powered by OpenAI's GPT-4, with chat streaming, code
-highlighting, code execution, development presets, and more. The app is built using Next.js and TypeScript, and it's
-designed to be easy to use, customize, and extend. We encourage you to contribute and help improve this project! 😊
+Welcome to `big-agi`! 🎉
+Personal AGI App, powered by `OpenAI GPT-4`. Designed for smart humans and super-heroes,
+this responsive web app comes with Streaming, Code Execution, PDF imports, Voice support,
+data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
 
-[![Official Website](https://img.shields.io/badge/Demo-%23096bde?style=for-the-badge&logo=vercel&label=try)](https://nextjs-chatgpt-app-enricoros.vercel.app)
+[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://app.big-agi.com)
 
 Or click fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fnextjs-chatgpt-app&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
+
+## Features 👊
+
+- Engaging AI Personas
+- Clean UX, w/ tokens counters
+- Human I/O: Advanced voice support (TTS, STT)
+- Machine I/O: PDF import & Summarization, code execution
+- Many more updates & integrations: ElevenLabs, Helicone, Paste.gg
+- Coming up: automatic-AGI reasoning
 
 ## Features ✨
 
