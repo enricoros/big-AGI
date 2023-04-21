@@ -1,6 +1,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { ApiPublishBody, ApiPublishResponse } from '../../pages/api/publish';
+import { Brand } from '@/lib/theme';
 import { DConversation } from '@/lib/stores/store-chats';
 import { SystemPurposes } from '@/lib/data';
 
@@ -44,7 +45,7 @@ function conversationToMarkdown(conversation: DConversation, hideSystemMessage: 
 function getOrigin() {
   let origin = (typeof window !== 'undefined') ? window.location.href : '';
   if (!origin || origin.includes('//localhost'))
-    origin = 'https://github.com/enricoros/big-agi';
+    origin = Brand.URIs.OpenRepo;
   origin = origin.replace('https://', '');
   if (origin.endsWith('/'))
     origin = origin.slice(0, -1);
