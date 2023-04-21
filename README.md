@@ -1,7 +1,7 @@
 # BIG-AGI 🤖💬
 
-Welcome to `big-agi`! 🎉
-Personal AGI App, powered by `OpenAI GPT-4`. Designed for smart humans and super-heroes,
+Welcome to `big-AGI`! 🎉
+Personal AGI App, powered by `OpenAI GPT-4` and beyond. Designed for smart humans and super-heroes,
 this responsive web app comes with Streaming, Code Execution, PDF imports, Voice support,
 data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
 
@@ -25,33 +25,33 @@ Or click fork & run on Vercel
 
 #### 🚨 April: moar #big-agi-energy
 
-- 🎉 **[Voice Synthesis](docs/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
-- 🎉 **[Precise Token Counter](docs/feature_token_counter.png)** 📈 extra-useful to pack the context window
-- 🎉 **[Install Mobile APP](docs/pwa_installed_icon.png)** 📲 looks like native (@harlanlewis)
-- 🎉 **[UI language](docs/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
+- 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
+- 🎉 **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
+- 🎉 **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
+- 🎉 **[UI language](docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
 - 🎉 **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
 - 🎉 **Code Execution: [Codepen](https://codepen.io/)/[Replit](https://replit.com/)** 💻 (@harlanlewis)
-- 🎉 **[SVG Drawing](docs/feature_svg_drawing.png)** - draw with AI 🎨
+- 🎉 **[SVG Drawing](docs/pixels/feature_svg_drawing.png)** - draw with AI 🎨
 - 🎉 Chats: multiple chats, AI titles, download as JSON
 - 🎉 Rendering: Markdown, SVG, improved Code blocks
 - 🎉 Integrations: OpenAI organization ID
 - 🎉 [Cloudflare deployment instructions](docs/deploy-cloudflare.md),
   [awesome-agi](https://github.com/enricoros/awesome-agi)
-- 🎉 [Typing Avatars](docs/recording_0401.gif) ⌨️
-  <!-- p><a href="docs/recording_0401.gif"><img src="docs/recording_0401.gif" width='700' alt="New Typing Avatars"/></a></p -->
+- 🎉 [Typing Avatars](docs/pixels/gif_typing_040123.gif) ⌨️
+  <!-- p><a href="docs/pixels/gif_typing_040123.gif"><img src="docs/pixels/gif_typing_040123.gif" width='700' alt="New Typing Avatars"/></a></p -->
 
 #### March: first release
 
-- 🎉 **[AI Personas](docs/screenshot_purpose_two.png)** - including Code, Science, Corporate, and Chat 🎭
+- 🎉 **[AI Personas](docs/pixels/feature_purpose_two.png)** - including Code, Science, Corporate, and Chat 🎭
 - 🎉 **Privacy**: user-owned API keys 🔑 and localStorage 🛡️
-- 🎉 **Context** - Attach or [Drag & Drop files](docs/screenshot_drop_target.png) to add them to the prompt 📁
+- 🎉 **Context** - Attach or [Drag & Drop files](docs/pixels/feature_drop_target.png) to add them to the prompt 📁
 - 🎉 **Syntax highlighting** - for multiple languages 🌈
 - 🎉 **Code Execution: Sandpack
   ** - [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
 - 🎉 Chat with GPT-4 and 3.5 Turbo 🧠💨
 - 🎉 Real-time streaming of AI responses ⚡
 - 🎉 **Voice Input** 🎙️ - works great on Chrome / Windows
-- 🎉 Integration: **[Paste.gg](docs/screenshot_export_example1.png)** integration for chat sharing 📥
+- 🎉 Integration: **[Paste.gg](docs/pixels/feature_paste_gg.png)** integration for chat sharing 📥
 - 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
 - 🌙 Dark model - Wide mode ⛶
 
@@ -74,7 +74,7 @@ Or click fork & run on Vercel
 
 Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
 
-![Ask away, paste a ton, copy the gems](docs/screenshot_web_highlighting.png)
+![Ask away, paste a ton, copy the gems](docs/pixels/zold_screenshot_web.png)
 
 ## Code 🧩
 
