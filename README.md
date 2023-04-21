@@ -63,7 +63,7 @@ Or click fork & run on Vercel
 * [Chat with us](https://discord.gg/v4Sayj4q). We just started!
 * Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
   energy!
-* Send a PRs! 🎉 would love help with:
+* Code: Send a PRs! 🎉 would love help with:
     * 🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
       🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
       🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
