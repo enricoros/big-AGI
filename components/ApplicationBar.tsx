@@ -151,13 +151,13 @@ export function ApplicationBar(props: {
       open={!!actionsMenuAnchor} anchorEl={actionsMenuAnchor} onClose={closeActionsMenu}
       disablePortal={false}>
 
-      <MenuItem>
+      <MenuItem onClick={handleDarkModeToggle}>
         <ListItemDecorator><DarkModeIcon /></ListItemDecorator>
         Dark
         <Switch checked={colorMode === 'dark'} onChange={handleDarkModeToggle} sx={{ ml: 'auto' }} />
       </MenuItem>
 
-      <MenuItem>
+      <MenuItem onClick={handleSystemMessagesToggle}>
         <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
         System text
         <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
