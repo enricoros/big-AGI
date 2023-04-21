@@ -6,6 +6,19 @@ import { extendTheme } from '@mui/joy';
 
 // Theme & Fonts
 
+export const Brand = {
+  // Name: 'big-AGI',
+  // Slug: 'big-agi',
+  // UpperName: 'BIG-AGI',
+  Title: {
+    Common: 'big-AGI',
+  },
+  URIs: {
+    // Deployment: 'https://big-agi.com',
+    OpenRepo: 'https://github.com/enricoros/big-agi',
+  },
+};
+
 // For next April Fools' week
 // export const foolsMode = new Date().getMonth() === 3 && new Date().getDate() <= 7;
 

@@ -14,6 +14,7 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
+import { Brand } from '@/lib/theme';
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
 import { useQuery } from '@tanstack/react-query';
@@ -252,7 +253,7 @@ function AdvancedSection() {
               Organization ID
             </FormLabel>
             <FormHelperText sx={{ display: 'block' }}>
-              <Link level='body2' href='https://github.com/enricoros/big-agi/issues/63' target='_blank'>What is this</Link>
+              <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
             </FormHelperText>
           </Box>
           <Input

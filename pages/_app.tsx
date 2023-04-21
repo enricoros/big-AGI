@@ -6,7 +6,7 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { createEmotionCache, theme } from '@/lib/theme';
+import { Brand, createEmotionCache, theme } from '@/lib/theme';
 import '../styles/GithubMarkdown.css';
 
 
@@ -22,7 +22,8 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
   return <>
     <CacheProvider value={emotionCache}>
       <Head>
-        <meta name='viewport' content='initial-scale=1, width=device-width' />
+        <title>{Brand.Title.Common}</title>
+        <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
       </Head>
       {/* Rect-query provider */}
       <QueryClientProvider client={queryClient}>
