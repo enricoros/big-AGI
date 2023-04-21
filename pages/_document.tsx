@@ -5,7 +5,7 @@ import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
 import { MyAppProps } from './_app';
-import { bodyFontClassName, createEmotionCache } from '@/lib/theme';
+import { bodyFontClassName, Brand, createEmotionCache } from '@/lib/theme';
 
 
 interface MyDocumentProps extends DocumentProps {
@@ -16,6 +16,12 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
     <Html lang='en' className={bodyFontClassName}>
       <Head>
+        {/* Meta (missing Title, set by the App or Page) */}
+        <meta name='description' content={Brand.Meta.Description} />
+        <meta name='keywords' content={Brand.Meta.Keywords} />
+        <meta name='theme-color' content={Brand.Meta.ThemeColor} />
+
+        {/* Favicons & PWA */}
         <link rel='shortcut icon' href='/favicon.ico' />
         <link rel='icon' type='image/png' sizes='32x32' href='/icons/favicon-32x32.png' />
         <link rel='icon' type='image/png' sizes='16x16' href='/icons/favicon-16x16.png' />
