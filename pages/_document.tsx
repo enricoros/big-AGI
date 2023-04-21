@@ -31,6 +31,23 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta name='apple-mobile-web-app-capable' content='yes' />
         <meta name='apple-mobile-web-app-status-bar-style' content='black' />
 
+        {/* Opengraph */}
+        <meta property='og:title' content={Brand.Meta.Title} />
+        <meta property='og:description' content={Brand.Meta.Description} />
+        {Brand.URIs.CardImage && <meta property='og:image' content={Brand.URIs.CardImage} />}
+        <meta property='og:url' content={Brand.URIs.Home} />
+        <meta property='og:site_name' content={Brand.Meta.SiteName} />
+        <meta property='og:type' content='website' />
+
+        {/* Twitter */}
+        <meta property='twitter:card' content='summary_large_image' />
+        <meta property='twitter:url' content={Brand.URIs.Home} />
+        <meta property='twitter:title' content={Brand.Meta.Title} />
+        <meta property='twitter:description' content={Brand.Meta.Description} />
+        {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
+        <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
+        <meta name='twitter:card' content='summary_large_image' />
+
         {/* Style Sheets (injected and server-side) */}
         <meta name='emotion-insertion-point' content='' />
         {emotionStyleTags}
