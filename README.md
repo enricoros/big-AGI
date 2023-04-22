@@ -55,25 +55,30 @@ Or click fork & run on Vercel
 - 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
 - 🌙 Dark model - Wide mode ⛶
 
-## thank YOU 🙌
+## Support 🙌
 
-[![Official Discord](https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge)](https://discord.gg/v4Sayj4q)
+[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
+[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
 
-* Enjoy the vanilla app on [big-AGI.com](https://main.big-agi.com)
-* [Chat with us](https://discord.gg/v4Sayj4q). We just started!
+* Enjoy the hosted open-source app on [big-AGI.com](https://main.big-agi.com)
+* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
 * Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
   energy!
-* Code: Send a PRs! 🎉 would love help with:
-    * 🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
-      🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
-      🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
-      and
-    * [Your BIG-idea](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)❗
+* We love code - send PRs! ...
+  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
+  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
+  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
+  and [your big-IDEA](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)s❗
 
 ## Why this? 💡
 
-Because the official Chat is ___slower than the API___, and the Playground UI ___doesn't even highlight code___.
+Because the official Chat ___lacks important features___, is ___more limited than the api___, at times
+___slow or unavailable___, and you cannot deploy it yourself, remix it, add features, or share it with
+your friends.
+Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
+with features that matter to them.
 
+***Outdated*** screenshot below:
 ![Ask away, paste a ton, copy the gems](docs/pixels/zold_screenshot_web.png)
 
 ## Code 🧩
