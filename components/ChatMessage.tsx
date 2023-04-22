@@ -43,9 +43,10 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 
 /// Utilities to parse messages into blocks of text and code
 
-type Block = TextBlock | CodeBlock;
+type Block = TextBlock | CodeBlock | ImageBlock;
 type TextBlock = { type: 'text'; content: string; };
 type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
+type ImageBlock = { type: 'image'; url: string; };
 
 const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
   let detectedLanguage;
@@ -108,6 +109,9 @@ const inferCodeLanguage = (markdownLanguage: string, code: string): string | nul
 const parseBlocks = (forceText: boolean, text: string): Block[] => {
   if (forceText)
     return [{ type: 'text', content: text }];
+
+  if (text.startsWith('https://images.prodia.xyz/') && text.endsWith('.png') && text.length > 60 && text.length < 70)
+    return [{ type: 'image', url: text.trim() }];
 
   const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
@@ -244,6 +248,21 @@ const RenderText = ({ textBlock }: { textBlock: TextBlock }) =>
     }}>
     {textBlock.content}
   </Typography>;
+
+const RenderImage = ({ imageBlock }: { imageBlock: ImageBlock }) => {
+  const theme = useTheme();
+  return <Box
+    sx={{
+      display: 'flex', justifyContent: 'center', alignItems: 'center',
+      mx: 1.5,
+      // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
+      boxShadow: theme.vars.shadow.md,
+      minWidth: 16, minHeight: 16,
+      '& img': { maxWidth: '100%', maxHeight: '100%' },
+    }}>
+    <img src={imageBlock.url} alt='Generated Image' />
+  </Box>;
+};
 
 
 function copyToClipboard(text: string) {
@@ -509,9 +528,11 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           {!errorMessage && parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
-              : renderMarkdown
-                ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                : <RenderText key={'text-' + index} textBlock={block} />,
+              : block.type === 'image'
+                ? <RenderImage key={'image-' + index} imageBlock={block} />
+                : renderMarkdown
+                  ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                  : <RenderText key={'text-' + index} textBlock={block} />,
           )}
 
           {errorMessage && (

@@ -28,11 +28,16 @@ const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
 
+export const requireUserKeyProdia = !process.env.HAS_SERVER_KEY_PRODIA;
+
 export const isValidOpenAIApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.trim()?.length >= 32;
+
+export const isValidProdiaApiKey = (apiKey?: string) =>
+  !!apiKey && apiKey.trim()?.length >= 36;
 
 
 export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, sx?: SxProps, children: React.ReactNode }) {
@@ -170,6 +175,58 @@ function ElevenLabsSection() {
             <Radio value='off' label='Off' />
             <Radio value='firstLine' label='Beginning' />
           </RadioGroup>
+        </FormControl>
+
+      </Stack>
+    </Section>
+  );
+}
+
+
+function ProdiaSection() {
+  // state
+  const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
+
+  // external state
+  const { apiKey, setApiKey } = useSettingsStore(state => ({
+    apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
+  }), shallow);
+
+  const requiresKey = requireUserKeyProdia;
+  const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
+
+  const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value);
+
+  const colWidth = 150;
+
+  return (
+    <Section title='Image Generation' collapsible collapsed disclaimer='Supported image generators: Prodia.com' sx={{ mt: 2 }}>
+      <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8 }}>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <FormLabel sx={{ minWidth: colWidth }}>
+            Prodia API Key {requiresKey ? '' : '(optional)'}
+          </FormLabel>
+          <Input
+            variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requiresKey ? 'required' : '...'} error={!isValidKey}
+            value={apiKey} onChange={handleApiKeyChange}
+            startDecorator={<KeyIcon />}
+            endDecorator={!!apiKey && (
+              <IconButton variant='plain' color='neutral' onClick={handleToggleApiKeyVisibility}>
+                {showApiKeyValue ? <VisibilityIcon /> : <VisibilityOffIcon />}
+              </IconButton>
+            )}
+            slotProps={{
+              input: {
+                sx: {
+                  width: '100%',
+                },
+              },
+            }}
+            sx={{ width: '100%' }}
+          />
         </FormControl>
 
       </Stack>
@@ -453,6 +510,9 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
         {/* ElevenLabs */}
         <ElevenLabsSection />
+
+        {/* Prodia */}
+        <ProdiaSection />
 
         {/* Advanced Settings */}
         <AdvancedSection />
