@@ -17,6 +17,7 @@ export interface ChatStore {
 
   // store setters
   createConversation: () => void;
+  importConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
   setActiveConversationId: (conversationId: string) => void;
 
@@ -137,12 +138,26 @@ export const useChatStore = create<ChatStore>()(devtools(
           };
         }),
 
+      importConversation: (conversation: DConversation) => {
+        get().deleteConversation(conversation.id);
+        set(state => {
+          return {
+            // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
+            conversations: [
+              conversation,
+              ...state.conversations.filter(other => other.id !== conversation.id).slice(0, MAX_CONVERSATIONS - 1),
+            ],
+            activeConversationId: conversation.id,
+          };
+        });
+      },
+
       deleteConversation: (conversationId: string) =>
         set(state => {
 
           // abort any pending requests on this conversation
           const cIndex = state.conversations.findIndex((conversation: DConversation): boolean => conversation.id === conversationId);
-          if (cIndex >= 0 && state.conversations[cIndex].id !== 'error-missing')
+          if (cIndex >= 0)
             state.conversations[cIndex].abortController?.abort();
 
           // remove from the list
@@ -342,4 +357,26 @@ export const downloadConversationJson = (conversation: DConversation) => {
   tempLink.click();
   document.body.removeChild(tempLink);
   URL.revokeObjectURL(tempUrl);
+};
+
+/**
+ * Restore a conversation from a JSON string
+ */
+export const restoreConversationFromJson = (json: string): DConversation | null => {
+  const restored: Partial<DConversation> = JSON.parse(json);
+  if (restored && restored.id && restored.messages) {
+    return {
+      id: restored.id,
+      messages: restored.messages,
+      systemPurposeId: restored.systemPurposeId || defaultSystemPurposeId,
+      chatModelId: restored.chatModelId || defaultChatModelId,
+      // ...(restored.userTitle && { userTitle: restored.userTitle }),
+      // ...(restored.autoTitle && { autoTitle: restored.autoTitle }),
+      tokenCount: restored.tokenCount || 0,
+      created: restored.created || Date.now(),
+      updated: restored.updated || Date.now(),
+      abortController: null,
+    } satisfies DConversation;
+  }
+  return null;
 };
