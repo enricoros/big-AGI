@@ -32,7 +32,7 @@ Or click fork & run on Vercel
 - 🎉 **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
 - 🎉 **Code Execution: [Codepen](https://codepen.io/)/[Replit](https://replit.com/)** 💻 (@harlanlewis)
 - 🎉 **[SVG Drawing](docs/pixels/feature_svg_drawing.png)** - draw with AI 🎨
-- 🎉 Chats: multiple chats, AI titles, download as JSON
+- 🎉 Chats: multiple chats, AI titles, Import/Export, Selection mode
 - 🎉 Rendering: Markdown, SVG, improved Code blocks
 - 🎉 Integrations: OpenAI organization ID
 - 🎉 [Cloudflare deployment instructions](docs/deploy-cloudflare.md),
