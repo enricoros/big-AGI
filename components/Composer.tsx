@@ -383,6 +383,10 @@ export function Composer(props: {
 
             {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
 
+            {isSpeechEnabled && <Box sx={{ mb: { xs: 1, md: 2 }, ...hideOnDesktop }}>
+              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
+            </Box>}
+
             <IconButton variant='plain' color='neutral' onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
               <UploadFileIcon />
             </IconButton>
@@ -408,10 +412,6 @@ export function Composer(props: {
                 {props.isDeveloperMode ? 'Paste code' : 'Paste'}
               </Button>
             </Tooltip>
-
-            {isSpeechEnabled && <Box sx={{ mt: { xs: 1, md: 2 }, ...hideOnDesktop }}>
-              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
-            </Box>}
 
             <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadAttachment} />
 
