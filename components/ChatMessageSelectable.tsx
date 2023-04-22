@@ -48,7 +48,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
     typing: messageTyping,
     role: messageRole,
     purposeId: messagePurposeId,
-    // originLLM: messageModelId,
+    originLLM: messageOriginLLM,
     tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
@@ -60,8 +60,8 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
   const background = messageBackground(theme, messageRole, !!messageUpdated, isAssistantError);
 
   const avatarEl: JSX.Element | null = React.useMemo(() =>
-      makeAvatar(messageAvatar, messageRole, messagePurposeId, messageSender, messageTyping, 'sm'),
-    [messageAvatar, messagePurposeId, messageRole, messageSender, messageTyping],
+      makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping, 'sm'),
+    [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping],
   );
 
   const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => props.onToggleSelected(messageId, event.target.checked);
