@@ -5,6 +5,7 @@ const nextConfig = {
     // defaults to TRUE, unless API Keys are set at build time; this flag is used by the UI
     HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
     HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
+    HAS_SERVER_KEY_PRODIA: !!process.env.PRODIA_API_KEY,
   },
   webpack(config, { isServer, dev }) {
     // @mui/joy: anything material gets redirected to Joy

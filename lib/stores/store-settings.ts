@@ -54,6 +54,11 @@ interface SettingsStore {
   elevenLabsAutoSpeak: 'off' | 'firstLine';
   setElevenLabsAutoSpeak: (autoSpeak: 'off' | 'firstLine') => void;
 
+  // Prodia Image Generation settings
+
+  prodiaApiKey: string;
+  setProdiaApiKey: (apiKey: string) => void;
+
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -111,6 +116,11 @@ export const useSettingsStore = create<SettingsStore>()(
 
       elevenLabsAutoSpeak: 'firstLine',
       setElevenLabsAutoSpeak: (elevenLabsAutoSpeak: 'off' | 'firstLine') => set({ elevenLabsAutoSpeak }),
+
+      // Prodia Image Generation settings
+
+      prodiaApiKey: '',
+      setProdiaApiKey: (prodiaApiKey: string) => set({ prodiaApiKey }),
 
     }),
     {
