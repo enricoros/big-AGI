@@ -7,66 +7,16 @@ import { SxProps } from '@mui/joy/styles/types';
 import { ApiPublishResponse } from '../pages/api/publish';
 import { ApplicationBar } from '@/components/ApplicationBar';
 import { ChatMessageList } from '@/components/ChatMessageList';
-import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { publishConversation } from '@/lib/util/publish';
+import { runAssistantUpdatingState } from '@/lib/llm/agi-immediate';
 import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
-import { speakIfFirstLine } from '@/lib/util/text-to-speech';
-import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
-import { useSettingsStore } from '@/lib/stores/store-settings';
-
-
-/**
- * The main "chat" function. TODO: this is here so we can soon move it to the data model.
- */
-const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantModel: ChatModelId, assistantPurpose: SystemPurposeId) => {
-
-  // reference the state editing functions
-  const { startTyping, appendMessage, editMessage, setMessages } = useChatStore.getState();
-
-  // update the purpose of the system message (if not manually edited), and create if needed
-  {
-    const systemMessageIndex = history.findIndex(m => m.role === 'system');
-    const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
-
-    if (!systemMessage.updated) {
-      systemMessage.purposeId = assistantPurpose;
-      systemMessage.text = SystemPurposes[assistantPurpose]?.systemMessage
-        .replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-    }
-
-    history.unshift(systemMessage);
-    setMessages(conversationId, history);
-  }
-
-  // create a blank and 'typing' message for the assistant
-  let assistantMessageId: string;
-  {
-    const assistantMessage: DMessage = createDMessage('assistant', '...');
-    assistantMessage.typing = true;
-    assistantMessage.purposeId = history[0].purposeId;
-    assistantMessage.originLLM = assistantModel;
-    appendMessage(conversationId, assistantMessage);
-    assistantMessageId = assistantMessage.id;
-  }
-
-  // when an abort controller is set, the UI switches to the "stop" mode
-  const controller = new AbortController();
-  startTyping(conversationId, controller);
-
-  const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  await streamAssistantMessage(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal, speakIfFirstLine);
-
-  // clear to send, again
-  startTyping(conversationId, null);
-
-  // update text, if needed
-  await updateAutoConversationTitle(conversationId);
-};
+import { runReActUpdatingState } from '@/lib/llm/agi-react';
+import { useComposerStore, useSettingsStore } from '@/lib/stores/store-settings';
 
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
@@ -77,6 +27,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   // external state
   const theme = useTheme();
+  const { sendModeId } = useComposerStore(state => ({ sendModeId: state.sendModeId }), shallow);
   const { activeConversationId, chatModelId, systemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
@@ -91,27 +42,33 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
 
-  const handleSendMessage = async (conversationId: string, userText: string) => {
-    const conversation = _findConversation(conversationId);
-    if (!conversation) return;
+  const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
+    if (!conversationId) return;
 
-    const history = [...conversation.messages, createDMessage('user', userText)];
-
-    // image generation
-    const isImageCommand = userText.startsWith('/imagine ') || userText.startsWith('/image ') || userText.startsWith('/img ') || userText.startsWith('/i ');
-    if (isImageCommand) {
-      const prompt = userText.substring(userText.indexOf(' ') + 1).trim();
-      return await runImageGenerationUpdatingState(conversation.id, history, prompt);
+    // [special case] command: '/imagine <prompt>'
+    if (history.length > 0 && history[history.length - 1].role === 'user') {
+      const lastUserText = history[history.length - 1].text;
+      if (lastUserText.startsWith('/imagine ') || lastUserText.startsWith('/image ') || lastUserText.startsWith('/img ')) {
+        const prompt = lastUserText.substring(lastUserText.indexOf(' ') + 1).trim();
+        return await runImageGenerationUpdatingState(conversationId, history, prompt);
+      }
     }
 
-    // assistant
-    if (chatModelId && systemPurposeId)
-      return await runAssistantUpdatingState(conversation.id, history, chatModelId, systemPurposeId);
+    // synchronous long-duration tasks, which update the state as they go
+    if (sendModeId && chatModelId && systemPurposeId) {
+      switch (sendModeId) {
+        case 'immediate':
+          return await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+        case 'react':
+          return await runReActUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+      }
+    }
   };
 
-  const handleRestartConversation = async (conversationId: string, history: DMessage[]) => {
-    if (conversationId && chatModelId && systemPurposeId)
-      await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+  const handleSendUserMessage = async (conversationId: string, userText: string) => {
+    const conversation = _findConversation(conversationId);
+    if (conversation)
+      return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
 
 
@@ -147,7 +104,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       <ChatMessageList
         conversationId={activeConversationId}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onRestartConversation={handleRestartConversation}
+        onRestartConversation={handleExecuteConversation}
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
@@ -157,7 +114,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       <Composer
         conversationId={activeConversationId} messageId={null}
         isDeveloperMode={systemPurposeId === 'Developer'}
-        onSendMessage={handleSendMessage}
+        onSendMessage={handleSendUserMessage}
         sx={{
           zIndex: 21, // position: 'sticky', bottom: 0,
           background: theme.vars.palette.background.surface,
