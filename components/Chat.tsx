@@ -12,7 +12,7 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/stores/store-chats';
+import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { publishConversation } from '@/lib/util/publish';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
@@ -102,12 +102,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   };
 
 
-  const handleDownloadConversationToJson = (conversationId: string) => {
-    const conversation = _findConversation(conversationId);
-    conversation && downloadConversationJson(conversation);
-  };
-
-
   const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
 
   const handleConfirmedPublishConversation = async () => {
@@ -130,7 +124,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       <ApplicationBar
         conversationId={activeConversationId}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onDownloadConversationJSON={handleDownloadConversationToJson}
         onPublishConversation={handlePublishConversation}
         onShowSettings={props.onShowSettings}
         sx={{

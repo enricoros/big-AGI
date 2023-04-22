@@ -52,7 +52,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
     tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
-  console.log('sel', props.message);
+
   const fromAssistant = messageRole === 'assistant';
 
   const isAssistantError = fromAssistant && (messageText.startsWith('[Issue] ') || messageText.startsWith('[OpenAI Issue]'));

@@ -264,7 +264,7 @@ export function Composer(props: {
 
   const handleShowFilePicker = () => attachmentFileInputRef.current?.click();
 
-  const handleLoadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLoadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
     if (files && files.length >= 1)
       await loadAndAttachFiles(files);
@@ -410,7 +410,7 @@ export function Composer(props: {
               <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
-            <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadFile} />
+            <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadAttachment} />
 
           </Stack>
 
