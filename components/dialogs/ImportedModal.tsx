@@ -41,6 +41,9 @@ export function ImportedModal(props: { open: boolean, outcome: ImportedOutcome, 
           <Typography>
             Imported {successes.length} conversation{successes.length === 1 ? '' : 's'}.
           </Typography>
+          <Typography>
+            {successes.length === 1 ? 'It' : 'They'} can be found in the Pages menu. Opening {successes.length === 1 ? 'it' : 'the last one'}.
+          </Typography>
         </>}
 
         {failures.length >= 1 && <>
