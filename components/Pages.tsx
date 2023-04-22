@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Avatar, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 // import { Link } from '@/components/util/Link';
@@ -125,7 +126,7 @@ function ConversationListItem(props: {
 /**
  * FIXME: use a proper Pages drawer instead of this menu
  */
-export function PagesMenu(props: { conversationId: string | null, pagesMenuAnchor: HTMLElement | null, onClose: () => void }) {
+export function PagesMenu(props: { conversationId: string | null, pagesMenuAnchor: HTMLElement | null, onClose: () => void, onImportConversation: () => void }) {
   // state
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
 
@@ -208,6 +209,13 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
         />)}
 
       <ListDivider />
+
+      <MenuItem onClick={props.onImportConversation}>
+        <ListItemDecorator>
+          <FileUploadIcon />
+        </ListItemDecorator>
+        Import conversation
+      </MenuItem>
 
       <MenuItem disabled={!hasChats} onClick={handleDeleteAll}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
