@@ -18,8 +18,9 @@ import { AppBarDropdown } from '@/components/util/AppBarDropdown';
 import { AppBarDropdownWithSymbol } from '@/components/util/AppBarDropdownWithSymbol';
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
+import { ImportedModal, ImportedOutcome } from '@/components/dialogs/ImportedModal';
 import { PagesMenu } from '@/components/Pages';
-import { useChatStore } from '@/lib/stores/store-chats';
+import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
@@ -29,18 +30,31 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 export function ApplicationBar(props: {
   conversationId: string | null;
   isMessageSelectionMode: boolean; setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void;
-  onDownloadConversationJSON: (conversationId: string) => void;
   onPublishConversation: (conversationId: string) => void;
   onShowSettings: () => void;
   sx?: SxProps
 }) {
+
   // state
-  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
-  const [pagesMenuAnchor, setPagesMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [actionsMenuAnchor, setActionsMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [pagesMenuAnchor, setPagesMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
+  const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
+  const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
 
-  // settings
+  // center buttons
+
+  const handleChatModelChange = (event: any, value: ChatModelId | null) =>
+    value && props.conversationId && setChatModelId(props.conversationId, value);
+
+  const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
+    value && props.conversationId && setSystemPurposeId(props.conversationId, value);
+
+
+  // quick actions
+
+  const closeActionsMenu = () => setActionsMenuAnchor(null);
 
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
@@ -48,10 +62,6 @@ export function ApplicationBar(props: {
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
     zenMode: state.zenMode,
   }), shallow);
-
-  const closePagesMenu = () => setPagesMenuAnchor(null);
-
-  const closeActionsMenu = () => setActionsMenuAnchor(null);
 
   const handleDarkModeToggle = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
 
@@ -63,10 +73,9 @@ export function ApplicationBar(props: {
     closeActionsMenu();
   };
 
-
   // conversation actions
 
-  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { conversationsCount, isConversationEmpty, chatModelId, systemPurposeId, setMessages, setChatModelId, setSystemPurposeId, setAutoTitle, importConversation } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationsCount: state.conversations.length,
@@ -77,8 +86,27 @@ export function ApplicationBar(props: {
       setChatModelId: state.setChatModelId,
       setSystemPurposeId: state.setSystemPurposeId,
       setAutoTitle: state.setAutoTitle,
+      importConversation: state.importConversation,
     };
   }, shallow);
+
+  const handleConversationPublish = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    props.conversationId && props.onPublishConversation(props.conversationId);
+  };
+
+  const handleConversationDownload = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const conversation = useChatStore.getState().conversations.find(conversation => conversation.id === props.conversationId);
+    if (conversation)
+      downloadConversationJson(conversation);
+  };
+
+  const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    closeActionsMenu();
+    props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
+  };
 
   const handleConversationClear = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -93,27 +121,43 @@ export function ApplicationBar(props: {
     }
   };
 
-  const handleConversationPublish = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    props.conversationId && props.onPublishConversation(props.conversationId);
+
+  // pages actions
+
+  const closePagesMenu = () => setPagesMenuAnchor(null);
+
+  const handleConversationUpload = () => conversationFileInputRef.current?.click();
+
+  const handleLoadConversations = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target?.files;
+    if (!files || files.length < 1)
+      return;
+
+    // try to restore conversations from the selected files
+    const outcomes: ImportedOutcome = { conversations: [] };
+    for (const file of files) {
+      const fileName = file.name || 'unknown file';
+      try {
+        const conversation = restoreConversationFromJson(await file.text());
+        if (conversation) {
+          importConversation(conversation);
+          outcomes.conversations.push({ fileName, success: true, conversationId: conversation.id });
+        } else {
+          const fileDesc = `(${file.type}) ${file.size.toLocaleString()} bytes`;
+          outcomes.conversations.push({ fileName, success: false, error: `Invalid file: ${fileDesc}` });
+        }
+      } catch (error) {
+        console.error(error);
+        outcomes.conversations.push({ fileName, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+      }
+    }
+
+    // show the outcome of the import
+    setConversationImportOutcome(outcomes);
+
+    // this is needed to allow the same file to be selected again
+    e.target.value = '';
   };
-
-  const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    closeActionsMenu();
-    props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
-  };
-
-  const handleConversationDownload = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    props.conversationId && props.onDownloadConversationJSON(props.conversationId);
-  };
-
-  const handleChatModelChange = (event: any, value: ChatModelId | null) =>
-    value && props.conversationId && setChatModelId(props.conversationId, value);
-
-  const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
-    value && props.conversationId && setSystemPurposeId(props.conversationId, value);
 
 
   return <>
@@ -150,11 +194,15 @@ export function ApplicationBar(props: {
     </Sheet>
 
 
-    {/* Left menu */}
-    {<PagesMenu conversationId={props.conversationId} pagesMenuAnchor={pagesMenuAnchor} onClose={closePagesMenu} />}
+    {/* Left menu content */}
+    <PagesMenu
+      conversationId={props.conversationId}
+      pagesMenuAnchor={pagesMenuAnchor}
+      onClose={closePagesMenu}
+      onImportConversation={handleConversationUpload}
+    />
 
-
-    {/* Right menu */}
+    {/* Right menu content */}
     <Menu
       variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
       open={!!actionsMenuAnchor} anchorEl={actionsMenuAnchor} onClose={closeActionsMenu}
@@ -179,15 +227,6 @@ export function ApplicationBar(props: {
 
       <ListDivider />
 
-      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationDownload}>
-        <ListItemDecorator>
-          {/*<Badge size='sm' color='danger'>*/}
-          <FileDownloadIcon />
-          {/*</Badge>*/}
-        </ListItemDecorator>
-        Download JSON
-      </MenuItem>
-
       <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationPublish}>
         <ListItemDecorator>
           {/*<Badge size='sm' color='primary'>*/}
@@ -195,6 +234,13 @@ export function ApplicationBar(props: {
           {/*</Badge>*/}
         </ListItemDecorator>
         Share via paste.gg
+      </MenuItem>
+
+      <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationDownload}>
+        <ListItemDecorator>
+          <FileDownloadIcon />
+        </ListItemDecorator>
+        Export conversation
       </MenuItem>
 
       <ListDivider />
@@ -211,11 +257,18 @@ export function ApplicationBar(props: {
     </Menu>
 
 
-    {/* Confirmations */}
+    {/* Modals */}
     <ConfirmationModal
       open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
     />
+
+    {!!conversationImportOutcome && (
+      <ImportedModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
+    )}
+
+    {/* Files */}
+    <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleLoadConversations} />
 
   </>;
 }
