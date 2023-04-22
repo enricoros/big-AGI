@@ -5,6 +5,7 @@ import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
+import { ChatMessageSelectable, MessagesSelectionHeader } from '@/components/ChatMessageSelectable';
 import { PurposeSelector } from '@/components/util/PurposeSelector';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -13,7 +14,10 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: { conversationId: string | null, onRestartConversation: (conversationId: string, history: DMessage[]) => void, sx?: SxProps }) {
+export function ChatMessageList(props: { conversationId: string | null, isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void, onRestartConversation: (conversationId: string, history: DMessage[]) => void, sx?: SxProps }) {
+  // state
+  const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
+
   // external state
   const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
   const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
@@ -50,6 +54,29 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
       </Box>
     ) : null;
 
+
+  const handleToggleSelected = (messageId: string, selected: boolean) => {
+    const newSelected = new Set(selectedMessages);
+    selected ? newSelected.add(messageId) : newSelected.delete(messageId);
+    setSelectedMessages(newSelected);
+  };
+
+  const handleSelectAllMessages = (selected: boolean) => {
+    const newSelected = new Set<string>();
+    if (selected)
+      for (let message of messages)
+        newSelected.add(message.id);
+    setSelectedMessages(newSelected);
+  };
+
+  const handleDeleteSelectedMessages = () => {
+    if (props.conversationId)
+      for (let selectedMessage of selectedMessages)
+        deleteMessage(props.conversationId, selectedMessage);
+    setSelectedMessages(new Set());
+  };
+
+
   // scrollbar style
   // const scrollbarStyle: SxProps = {
   //   '&::-webkit-scrollbar': {
@@ -77,13 +104,31 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
     }}>
 
       {filteredMessages.map((message, idx) =>
-        <ChatMessage
-          key={'msg-' + message.id}
-          message={message}
-          isBottom={idx === 0}
-          onMessageDelete={() => handleMessageDelete(message.id)}
-          onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-          onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />,
+        props.isMessageSelectionMode ? (
+          <ChatMessageSelectable
+            key={'sel-' + message.id} message={message}
+            isBottom={idx === 0}
+            selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
+          />
+        ) : (
+          <ChatMessage
+            key={'msg-' + message.id} message={message}
+            isBottom={idx === 0}
+            onMessageDelete={() => handleMessageDelete(message.id)}
+            onMessageEdit={newText => handleMessageEdit(message.id, newText)}
+            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />
+        ),
+      )}
+
+      {/* Header at the bottom because of 'row-reverse' */}
+      {props.isMessageSelectionMode && (
+        <MessagesSelectionHeader
+          hasSelected={selectedMessages.size > 0}
+          isBottom={filteredMessages.length === 0}
+          onClose={() => props.setIsMessageSelectionMode(false)}
+          onSelectAll={handleSelectAllMessages}
+          onDeleteMessages={handleDeleteSelectedMessages}
+        />
       )}
 
     </List>
