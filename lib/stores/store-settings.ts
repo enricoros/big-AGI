@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { defaultSendModeId, SendModeId } from '@/lib/data';
+
 
 /// Settings Store
 
@@ -133,14 +135,14 @@ export const useSettingsStore = create<SettingsStore>()(
 
 interface ComposerStore {
 
-  // state
+  sendModeId: SendModeId;
+  setSendModeId: (sendMode: SendModeId) => void;
+
   sentMessages: {
     date: number,
     text: string,
     count: number,
   }[];
-
-  // actions
   appendSentMessage: (text: string) => void;
   clearSentMessages: () => void;
 
@@ -149,8 +151,10 @@ interface ComposerStore {
 export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
 
-      sentMessages: [],
+      sendModeId: defaultSendModeId,
+      setSendModeId: (sendMode: SendModeId) => set({ sendModeId: sendMode }),
 
+      sentMessages: [],
       appendSentMessage: (text: string) => {
         const date = Date.now();
         const list = [...(get().sentMessages || [])];
@@ -170,7 +174,6 @@ export const useComposerStore = create<ComposerStore>()(
         // update the store (limiting max items)
         set({ sentMessages: list.slice(0, 20) });
       },
-
       clearSentMessages: () => set({ sentMessages: [] }),
 
     }),

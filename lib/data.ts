@@ -93,3 +93,23 @@ export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
     tradeoff: 'Faster and cheaper',
   },
 };
+
+
+export type SendModeId = 'immediate' | 'react';
+export const defaultSendModeId: SendModeId = 'immediate';
+
+type SendModeData = {
+  label: string;
+  description: string | JSX.Element;
+}
+
+export const SendModes: { [key in SendModeId]: SendModeData } = {
+  'immediate': {
+    label: 'Chat',
+    description: 'Direct answers from AI',
+  },
+  'react': {
+    label: 'ReAct',
+    description: 'Use ReAct to answer your question',
+  },
+};
