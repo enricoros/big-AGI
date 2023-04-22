@@ -26,6 +26,7 @@ Or click fork & run on Vercel
 #### 🚨 April: moar #big-agi-energy
 
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
+- 🎉 **Image Generation** using Prodia API Keys (BYOK), just /imagine (or /img or /i) it
 - 🎉 **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
 - 🎉 **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
 - 🎉 **[UI language](docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)

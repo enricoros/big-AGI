@@ -14,6 +14,7 @@ import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { publishConversation } from '@/lib/util/publish';
+import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -92,8 +93,20 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   const handleSendMessage = async (conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation && chatModelId && systemPurposeId)
-      await runAssistantUpdatingState(conversation.id, [...conversation.messages, createDMessage('user', userText)], chatModelId, systemPurposeId);
+    if (!conversation) return;
+
+    const history = [...conversation.messages, createDMessage('user', userText)];
+
+    // image generation
+    const isImageCommand = userText.startsWith('/imagine ') || userText.startsWith('/image ') || userText.startsWith('/img ') || userText.startsWith('/i ');
+    if (isImageCommand) {
+      const prompt = userText.substring(userText.indexOf(' ') + 1).trim();
+      return await runImageGenerationUpdatingState(conversation.id, history, prompt);
+    }
+
+    // assistant
+    if (chatModelId && systemPurposeId)
+      return await runAssistantUpdatingState(conversation.id, history, chatModelId, systemPurposeId);
   };
 
   const handleRestartConversation = async (conversationId: string, history: DMessage[]) => {
