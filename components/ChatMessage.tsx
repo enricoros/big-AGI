@@ -329,7 +329,7 @@ export function messageBackground(theme: Theme, messageRole: DMessage['role'], w
   return defaultBackground;
 }
 
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): JSX.Element {
+export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
     return <Avatar alt={messageSender} src={messageAvatar} />;
   const iconSx = { width: 40, height: 40 };
@@ -343,7 +343,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (messageTyping) {
         return <Avatar
           alt={messageSender} variant='plain'
-          src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+          src={messageOriginLLM === 'prodia' ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
           sx={{ ...mascotSx, borderRadius: 8 }}
         />;
       }
@@ -385,7 +385,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     typing: messageTyping,
     role: messageRole,
     purposeId: messagePurposeId,
-    originLLM: messageModelId,
+    originLLM: messageOriginLLM,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
@@ -441,15 +441,15 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
 
   // soft error handling
-  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelId);
+  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageOriginLLM);
 
   // style
   let background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
 
   // avatar
   const avatarEl: JSX.Element | null = React.useMemo(
-    () => showAvatars ? makeAvatar(messageAvatar, messageRole, messagePurposeId, messageSender, messageTyping) : null,
-    [messageAvatar, messagePurposeId, messageRole, messageSender, messageTyping, showAvatars],
+    () => showAvatars ? makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping) : null,
+    [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping, showAvatars],
   );
 
   // text box css
@@ -503,12 +503,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
         )}
 
         {fromAssistant && (
-          <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
+          <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
             <Typography level='body2' sx={messageTyping
               ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 }
               : { fontWeight: 500 }
             }>
-              {prettyBaseModel(messageModelId)}
+              {prettyBaseModel(messageOriginLLM)}
             </Typography>
           </Tooltip>
         )}
