@@ -26,6 +26,7 @@ import { extractPdfText } from '@/lib/util/pdf';
 import { useChatStore } from '@/lib/stores/store-chats';
 import { useComposerStore, useSettingsStore } from '@/lib/stores/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
+import { requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 
 
 // CSS helpers
@@ -366,7 +367,9 @@ export function Composer(props: {
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
 
-  const textPlaceholder: string = `Type ${props.isDeveloperMode ? 'your message and drop source files' : 'a message, or drop text files'}...`;
+  const textPlaceholder: string = props.isDeveloperMode
+    ? 'Tell me what you need, add drop source files...'
+    : requireUserKeyProdia ? 'Type a message, or drop text files...' : 'Type, /imagine, or drop text files...';
 
   return (
     <Box sx={props.sx}>
