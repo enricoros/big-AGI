@@ -12,8 +12,9 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { createDMessage, DMessage, downloadConversationJson, useChatStore } from '@/lib/stores/store-chats';
+import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { publishConversation } from '@/lib/util/publish';
+import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { streamAssistantMessage, updateAutoConversationTitle } from '@/lib/llm/ai';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -70,6 +71,7 @@ const runAssistantUpdatingState = async (conversationId: string, history: DMessa
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // state
+  const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<ApiPublishResponse | null>(null);
 
@@ -91,19 +93,25 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
   const handleSendMessage = async (conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation && chatModelId && systemPurposeId)
-      await runAssistantUpdatingState(conversation.id, [...conversation.messages, createDMessage('user', userText)], chatModelId, systemPurposeId);
+    if (!conversation) return;
+
+    const history = [...conversation.messages, createDMessage('user', userText)];
+
+    // image generation
+    const isImageCommand = userText.startsWith('/imagine ') || userText.startsWith('/image ') || userText.startsWith('/img ') || userText.startsWith('/i ');
+    if (isImageCommand) {
+      const prompt = userText.substring(userText.indexOf(' ') + 1).trim();
+      return await runImageGenerationUpdatingState(conversation.id, history, prompt);
+    }
+
+    // assistant
+    if (chatModelId && systemPurposeId)
+      return await runAssistantUpdatingState(conversation.id, history, chatModelId, systemPurposeId);
   };
 
   const handleRestartConversation = async (conversationId: string, history: DMessage[]) => {
     if (conversationId && chatModelId && systemPurposeId)
       await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
-  };
-
-
-  const handleDownloadConversationToJson = (conversationId: string) => {
-    const conversation = _findConversation(conversationId);
-    conversation && downloadConversationJson(conversation);
   };
 
 
@@ -122,28 +130,28 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
     <Box
       sx={{
-        display: 'flex', flexDirection: 'column', minHeight: '100vh',
+        display: 'flex', flexDirection: 'column', height: '100vh',
         ...(props.sx || {}),
       }}>
 
       <ApplicationBar
         conversationId={activeConversationId}
-        onDownloadConversationJSON={handleDownloadConversationToJson}
+        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onPublishConversation={handlePublishConversation}
         onShowSettings={props.onShowSettings}
         sx={{
-          position: 'sticky', top: 0, zIndex: 20,
+          zIndex: 20, // position: 'sticky', top: 0,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
         }} />
 
       <ChatMessageList
         conversationId={activeConversationId}
+        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onRestartConversation={handleRestartConversation}
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
-          overflowY: 'hidden',
-          marginBottom: '-1px',
+          overflowY: 'auto', // overflowY: 'hidden'
         }} />
 
       <Composer
@@ -151,7 +159,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         isDeveloperMode={systemPurposeId === 'Developer'}
         onSendMessage={handleSendMessage}
         sx={{
-          position: 'sticky', bottom: 0, zIndex: 21,
+          zIndex: 21, // position: 'sticky', bottom: 0,
           background: theme.vars.palette.background.surface,
           borderTop: `1px solid ${theme.vars.palette.divider}`,
           p: { xs: 1, md: 2 },

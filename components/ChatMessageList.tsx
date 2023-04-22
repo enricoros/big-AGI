@@ -5,6 +5,7 @@ import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessage } from '@/components/ChatMessage';
+import { ChatMessageSelectable, MessagesSelectionHeader } from '@/components/ChatMessageSelectable';
 import { PurposeSelector } from '@/components/util/PurposeSelector';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -13,23 +14,17 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: { conversationId: string | null, onRestartConversation: (conversationId: string, history: DMessage[]) => void, sx?: SxProps }) {
+export function ChatMessageList(props: { conversationId: string | null, isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void, onRestartConversation: (conversationId: string, history: DMessage[]) => void, sx?: SxProps }) {
   // state
-  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+  const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
-  const { freeScroll, showSystemMessages } = useSettingsStore(state => ({ freeScroll: state.freeScroll, showSystemMessages: state.showSystemMessages }), shallow);
+  const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
   const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
   const messages = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation ? conversation.messages : [];
   }, shallow);
-
-  // when messages change, scroll to bottom (aka: at every new token)
-  React.useEffect(() => {
-    if (freeScroll) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [freeScroll, messages]);
 
 
   const handleMessageDelete = (messageId: string) =>
@@ -48,31 +43,94 @@ export function ChatMessageList(props: { conversationId: string | null, onRestar
 
 
   // hide system messages if the user chooses so
-  const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages);
+  // NOTE: reverse is because we'll use flexDirection: 'column-reverse' to auto-snap-to-bottom
+  const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages).reverse();
 
   // when there are no messages, show the purpose selector
   if (!filteredMessages.length)
-    return !props.conversationId ? null
-      : <Box sx={props.sx || {}}>
+    return props.conversationId ? (
+      <Box sx={props.sx || {}}>
         <PurposeSelector conversationId={props.conversationId} runExample={handleRunPurposeExample} />
-      </Box>;
+      </Box>
+    ) : null;
+
+
+  const handleToggleSelected = (messageId: string, selected: boolean) => {
+    const newSelected = new Set(selectedMessages);
+    selected ? newSelected.add(messageId) : newSelected.delete(messageId);
+    setSelectedMessages(newSelected);
+  };
+
+  const handleSelectAllMessages = (selected: boolean) => {
+    const newSelected = new Set<string>();
+    if (selected)
+      for (let message of messages)
+        newSelected.add(message.id);
+    setSelectedMessages(newSelected);
+  };
+
+  const handleDeleteSelectedMessages = () => {
+    if (props.conversationId)
+      for (let selectedMessage of selectedMessages)
+        deleteMessage(props.conversationId, selectedMessage);
+    setSelectedMessages(new Set());
+  };
+
+
+  // scrollbar style
+  // const scrollbarStyle: SxProps = {
+  //   '&::-webkit-scrollbar': {
+  //     md: {
+  //       width: 8,
+  //       background: theme.vars.palette.neutral.plainHoverBg,
+  //     },
+  //   },
+  //   '&::-webkit-scrollbar-thumb': {
+  //     background: theme.vars.palette.neutral.solidBg,
+  //     borderRadius: 6,
+  //   },
+  //   '&::-webkit-scrollbar-thumb:hover': {
+  //     background: theme.vars.palette.neutral.solidHoverBg,
+  //   },
+  // };
 
   return (
-    <Box sx={props.sx || {}}>
-      <List sx={{ p: 0 }}>
+    <List sx={{
+      p: 0, ...(props.sx || {}),
+      // this makes sure that the the window is scrolled to the bottom (column-reverse)
+      display: 'flex', flexDirection: 'column-reverse',
+      // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
+      marginBottom: '-1px',
+    }}>
 
-        {filteredMessages.map((message, idx) =>
+      {filteredMessages.map((message, idx) =>
+        props.isMessageSelectionMode ? (
+          <ChatMessageSelectable
+            key={'sel-' + message.id} message={message}
+            isBottom={idx === 0}
+            selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
+          />
+        ) : (
           <ChatMessage
-            key={'msg-' + message.id}
-            message={message}
-            isLast={idx === filteredMessages.length - 1}
+            key={'msg-' + message.id} message={message}
+            isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />,
-        )}
+            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />
+        ),
+      )}
 
-        <div ref={messagesEndRef}></div>
-      </List>
-    </Box>
+      {/* Header at the bottom because of 'row-reverse' */}
+      {props.isMessageSelectionMode && (
+        <MessagesSelectionHeader
+          hasSelected={selectedMessages.size > 0}
+          isBottom={filteredMessages.length === 0}
+          onClose={() => props.setIsMessageSelectionMode(false)}
+          onSelectAll={handleSelectAllMessages}
+          onDeleteMessages={handleDeleteSelectedMessages}
+        />
+      )}
+
+    </List>
   );
 }

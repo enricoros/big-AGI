@@ -15,6 +15,9 @@ Or click fork & run on Vercel
 🚨 **We added cool new features to the app!** (bare-bones
 was [466a36](https://github.com/enricoros/nextjs-chatgpt-app/tree/466a3667a48060d406d60943af01fe26366563fb))
 
+- [x] _NEW 04.22_ 🎉 **Image Generation** using Prodia (bring your API key)
+- [x] _NEW 04.21_ 🎉 **Selection Mode** for conversations cleanup
+- [x] _NEW 04.20_ 🎉 **Import/Export** of Chats
 - [x] _NEW 04.18_ 🎉 **PWA** install on mobile! 📱 looks like a native app (@harlanlewis)
   <p><a href="docs/pwa_installed_icon.png"><img src="docs/pwa_installed_icon.png" width='40' alt="Token Counters"/></a></p> 
 - [x] _NEW 04.17_ 🎉 **Language Selection** Mic Language 🎙️, with auto-detect, and future app language! (@tbodyston)
