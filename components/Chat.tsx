@@ -16,7 +16,8 @@ import { publishConversation } from '@/lib/util/publish';
 import { runAssistantUpdatingState } from '@/lib/llm/agi-immediate';
 import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
 import { runReActUpdatingState } from '@/lib/llm/agi-react';
-import { useComposerStore, useSettingsStore } from '@/lib/stores/store-settings';
+import { useComposerStore } from '@/lib/stores/store-composer';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
