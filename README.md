@@ -104,6 +104,7 @@ Now the app should be running on `http://localhost:3000`
 * [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
 * [Helicone](https://www.helicone.ai/) LLM Observability Platform - Settings > Advanced > API Host: 'oai.hconeai.com'
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
+* [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
 ---
 

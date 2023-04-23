@@ -3,6 +3,9 @@ import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
+export const prodiaDefaultModelId: string = 'v1-5-pruned-emaonly.ckpt [81761151]';
+
+
 /**
  * The main 'image generation' function - for now specialized to the 'imagine' command.
  */
@@ -23,10 +26,11 @@ export const runImageGenerationUpdatingState = async (conversationId: string, hi
   }
 
   // generate the image
-  const { prodiaApiKey: apiKey } = useSettingsStore.getState();
+  const { prodiaApiKey: apiKey, prodiaModelId } = useSettingsStore.getState();
   const input: Prodia.API.Imagine.RequestBody = {
     ...(apiKey && { apiKey }),
     prompt: imageText,
+    prodiaModelId: prodiaModelId || prodiaDefaultModelId,
   };
 
   try {
