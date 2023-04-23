@@ -27,6 +27,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { DMessage } from '@/lib/stores/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
@@ -249,20 +250,38 @@ const RenderText = ({ textBlock }: { textBlock: TextBlock }) =>
     {textBlock.content}
   </Typography>;
 
-const RenderImage = ({ imageBlock }: { imageBlock: ImageBlock }) => {
-  const theme = useTheme();
-  return <Box
-    sx={{
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
+const RenderImage = (props: { imageBlock: ImageBlock, onRunAgain: (e: React.MouseEvent) => void }) =>
+  <Box
+    sx={theme => ({
+      display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
       mx: 1.5,
       // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-      boxShadow: theme.vars.shadow.md,
-      minWidth: 16, minHeight: 16,
+      minWidth: 32, minHeight: 32, boxShadow: theme.vars.shadow.md,
+      background: theme.palette.neutral.solidBg,
+      '& picture': { display: 'flex' },
       '& img': { maxWidth: '100%', maxHeight: '100%' },
-    }}>
-    <img src={imageBlock.url} alt='Generated Image' />
+      '&:hover > .image-buttons': { opacity: 1 },
+    })}>
+    {/* External Image */}
+    <picture><img src={props.imageBlock.url} alt='Generated Image' /></picture>
+    {/* Image Buttons */}
+    <Box
+      className='image-buttons'
+      sx={{
+        position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, px: 0.5,
+        display: 'flex', flexDirection: 'row', gap: 0.5,
+        opacity: 0, transition: 'opacity 0.3s',
+      }}>
+      <Tooltip title='Draw again' variant='solid'>
+        <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
+          <ReplayIcon />
+        </IconButton>
+      </Tooltip>
+      <IconButton component={Link} href={props.imageBlock.url} target='_blank' variant='solid' color='neutral'>
+        <ZoomOutMapIcon />
+      </IconButton>
+    </Box>
   </Box>;
-};
 
 
 function copyToClipboard(text: string) {
@@ -529,7 +548,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
               : block.type === 'image'
-                ? <RenderImage key={'image-' + index} imageBlock={block} />
+                ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={handleMenuRunAgain} />
                 : renderMarkdown
                   ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                   : <RenderText key={'text-' + index} textBlock={block} />,
@@ -554,7 +573,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Copy message */}
       {!fromSystem && !isEditing && (
-        <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant='solid'>
+        <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
             variant='outlined' color='neutral' onClick={handleMenuCopy}
             sx={{
