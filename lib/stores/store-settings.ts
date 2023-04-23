@@ -59,6 +59,9 @@ interface SettingsStore {
   prodiaApiKey: string;
   setProdiaApiKey: (apiKey: string) => void;
 
+  prodiaModelId: string;
+  setProdiaModelId: (modelId: string) => void;
+
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -121,6 +124,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       prodiaApiKey: '',
       setProdiaApiKey: (prodiaApiKey: string) => set({ prodiaApiKey }),
+
+      prodiaModelId: '',
+      setProdiaModelId: (prodiaModelId: string) => set({ prodiaModelId }),
 
     }),
     {

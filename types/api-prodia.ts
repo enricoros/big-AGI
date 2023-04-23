@@ -7,6 +7,7 @@ export namespace Prodia {
       export interface RequestBody {
         apiKey?: string;
         prompt: string;
+        prodiaModelId: string;
       }
 
       export type Response = (
@@ -14,6 +15,21 @@ export namespace Prodia {
         | { status: 'error', error: string }
         ) & { elapsed: number };
     }
+
+    export namespace Models {
+      export interface RequestBody {
+        apiKey?: string;
+      }
+
+      export interface Response {
+        models: {
+          id: string;
+          label: string;
+          priority?: number;
+        }[];
+      }
+    }
+
   }
 
   /// This is the upstream API [rev-eng on 2023-04-22], for Server (Next.js) -> Upstream Server
