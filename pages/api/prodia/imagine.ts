@@ -11,7 +11,6 @@ export const prodiaHeaders = (apiKey: string): Record<string, string> => ({
 
 
 async function createGenerationJob(apiKey: string, jobRequest: Prodia.Wire.Imagine.JobRequest): Promise<Prodia.Wire.Imagine.JobResponse> {
-  console.log(jobRequest);
   const response = await fetch('https://api.prodia.com/v1/job', {
     method: 'POST',
     headers: {
