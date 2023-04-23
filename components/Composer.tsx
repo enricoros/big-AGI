@@ -23,7 +23,7 @@ import { TokenProgress } from '@/components/util/TokenProgress';
 import { convertHTMLTableToMarkdown } from '@/lib/util/markdown';
 import { countModelTokens } from '@/lib/llm/tokens';
 import { extractPdfText } from '@/lib/util/pdf';
-import { requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
+import { isValidProdiaApiKey, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 import { useChatStore } from '@/lib/stores/store-chats';
 import { useComposerStore } from '@/lib/stores/store-composer';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -396,9 +396,11 @@ export function Composer(props: {
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
 
+  const prodiaApiKey = isValidProdiaApiKey(useSettingsStore(state => state.prodiaApiKey));
+  const isProdiaConfigured = !requireUserKeyProdia || prodiaApiKey;
   const textPlaceholder: string = props.isDeveloperMode
     ? 'Tell me what you need, add drop source files...'
-    : requireUserKeyProdia ? 'Type a message, or drop text files...' : 'Type, /imagine, or drop text files...';
+    : isProdiaConfigured ? 'Type, /imagine, or drop text files...' : 'Type a message, or drop text files...';
 
   return (
     <Box sx={props.sx}>
