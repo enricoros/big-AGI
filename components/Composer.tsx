@@ -23,10 +23,11 @@ import { TokenProgress } from '@/components/util/TokenProgress';
 import { convertHTMLTableToMarkdown } from '@/lib/util/markdown';
 import { countModelTokens } from '@/lib/llm/tokens';
 import { extractPdfText } from '@/lib/util/pdf';
-import { useChatStore } from '@/lib/stores/store-chats';
-import { useComposerStore, useSettingsStore } from '@/lib/stores/store-settings';
-import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 import { requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
+import { useChatStore } from '@/lib/stores/store-chats';
+import { useComposerStore } from '@/lib/stores/store-composer';
+import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
 
 // CSS helpers

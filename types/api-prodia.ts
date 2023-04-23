@@ -1,7 +1,6 @@
 export namespace Prodia {
-  /**
-   * Client (Browser) -> Server (Next.js)
-   */
+
+  /// Client (Browser) -> Server (Next.js)
   export namespace API {
 
     export namespace Imagine {
@@ -17,10 +16,7 @@ export namespace Prodia {
     }
   }
 
-  /**
-   * This is the API as defined by Prodia, for Server (Next.js) -> Server (Prodia)
-   * [Rev-eng on Apr 22, 2023]
-   */
+  /// This is the upstream API [rev-eng on 2023-04-22], for Server (Next.js) -> Upstream Server
   export namespace Wire {
     export namespace Imagine {
       export interface JobRequest {
