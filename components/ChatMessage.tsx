@@ -250,7 +250,7 @@ const RenderText = ({ textBlock }: { textBlock: TextBlock }) =>
     {textBlock.content}
   </Typography>;
 
-const RenderImage = (props: { imageBlock: ImageBlock, onRunAgain: (e: React.MouseEvent) => void }) =>
+const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) =>
   <Box
     sx={theme => ({
       display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
@@ -272,11 +272,13 @@ const RenderImage = (props: { imageBlock: ImageBlock, onRunAgain: (e: React.Mous
         display: 'flex', flexDirection: 'row', gap: 0.5,
         opacity: 0, transition: 'opacity 0.3s',
       }}>
-      <Tooltip title='Draw again' variant='solid'>
-        <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
-          <ReplayIcon />
-        </IconButton>
-      </Tooltip>
+      {props.allowRunAgain && (
+        <Tooltip title='Draw again' variant='solid'>
+          <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
+            <ReplayIcon />
+          </IconButton>
+        </Tooltip>
+      )}
       <IconButton component={Link} href={props.imageBlock.url} target='_blank' variant='solid' color='neutral'>
         <ZoomOutMapIcon />
       </IconButton>
@@ -548,7 +550,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
               : block.type === 'image'
-                ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={handleMenuRunAgain} />
+                ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
                 : renderMarkdown
                   ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                   : <RenderText key={'text-' + index} textBlock={block} />,
