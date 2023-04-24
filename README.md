@@ -1,8 +1,8 @@
-# BIG-AGI 🤖💬
+# `BIG-AGI` 🤖💬
 
-Welcome to `big-AGI`! 🎉
+Welcome to `big-AGI`, formerly known as `nextjs-chatgpt-app`. 👋🎉
 Personal AGI App, powered by `OpenAI GPT-4` and beyond. Designed for smart humans and super-heroes,
-this responsive web app comes with Streaming, Code Execution, PDF imports, Voice support,
+this responsive web app comes with Streaming, Drawing, Code Execution, PDF imports, Voice support,
 data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
@@ -18,15 +18,15 @@ Or click fork & run on Vercel
 - Privacy: user-owned API keys and localStorage
 - Human I/O: Advanced voice support (TTS, STT)
 - Machine I/O: PDF import & Summarization, code execution
-- Many more updates & integrations: ElevenLabs, Helicone, Paste.gg
+- Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
 - Coming up: automatic-AGI reasoning
 
 ### Features
 
-#### 🚨 April: moar #big-agi-energy
+#### 🚨 April: more #big-agi-energy
 
+- 🎉 **Image Generation** using Prodia API Keys (BYOK), just /imagine (or /img) it
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
-- 🎉 **Image Generation** using Prodia API Keys (BYOK), just /imagine (or /img or /i) it
 - 🎉 **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
 - 🎉 **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
 - 🎉 **[UI language](docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
