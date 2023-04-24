@@ -2,8 +2,8 @@
 
 Welcome to `big-AGI`, FKA `nextjs-chatgpt-app`. 👋🎉
 Personal AGI App, powered by `OpenAI GPT-4` and beyond. Designed for smart humans and super-heroes,
-this responsive web app comes with Streaming, Drawing, Code Execution, PDF imports, Voice support,
-data Rendering, AGI functions and chats. Show your friends some `#big-AGI-energy` 🚀
+this responsive web app comes with Personas, Drawing, Code Execution, PDF imports, Voice support,
+data Rendering, AGI functions, chats and more. Show your friends some `#big-AGI-energy` 🚀
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
 
@@ -13,6 +13,8 @@ Or click fork & run on Vercel
 
 ## Useful 👊
 
+![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
+
 - Engaging AI Personas
 - Clean UX, w/ tokens counters
 - Privacy: user-owned API keys and localStorage
@@ -20,8 +22,6 @@ Or click fork & run on Vercel
 - Machine I/O: PDF import & Summarization, code execution
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
 - Coming up: automatic-AGI reasoning
-
-![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
 
 ### Features
 
