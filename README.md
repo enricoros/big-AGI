@@ -38,6 +38,8 @@ Or click fork & run on Vercel
   🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
   and [your big-IDEAs](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)
 
+<br/>
+
 ## Latest Drops 🚀
 
 #### 🚨 April: more #big-agi-energy
@@ -73,6 +75,8 @@ Or click fork & run on Vercel
 - 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
 - 🌙 Dark model - Wide mode ⛶
 
+<br/>
+
 ## Why this? 💡
 
 Because the official Chat ___lacks important features___, is ___more limited than the api___, at times
@@ -107,7 +111,7 @@ Now the app should be running on `http://localhost:3000`
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
----
+<br/>
 
 This project is licensed under the MIT License.
 
