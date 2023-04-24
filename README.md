@@ -23,7 +23,22 @@ Or click fork & run on Vercel
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
 - Coming up: automatic-AGI reasoning
 
-### Features
+## Support 🙌
+
+[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
+[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
+
+* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
+* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
+* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
+  energy!
+* We love code - send PRs! ...
+  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
+  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
+  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
+  and [your big-IDEA](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)s❗
+
+### Feature Drops
 
 #### 🚨 April: more #big-agi-energy
 
@@ -57,21 +72,6 @@ Or click fork & run on Vercel
 - 🎉 Integration: **[Paste.gg](docs/pixels/feature_paste_gg.png)** integration for chat sharing 📥
 - 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
 - 🌙 Dark model - Wide mode ⛶
-
-## Support 🙌
-
-[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
-[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
-
-* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
-* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
-* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
-  energy!
-* We love code - send PRs! ...
-  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
-  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
-  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
-  and [your big-IDEA](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)s❗
 
 ## Why this? 💡
 
