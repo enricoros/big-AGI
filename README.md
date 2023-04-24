@@ -79,8 +79,11 @@ your friends.
 Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
 with features that matter to them.
 
-***Outdated*** screenshot below:
-![Ask away, paste a ton, copy the gems](docs/pixels/zold_screenshot_web.png)
+![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
+
+Useful, clean and fun features:
+
+![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo2.png)
 
 ## Code 🧩
 
