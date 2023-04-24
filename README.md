@@ -32,11 +32,11 @@ Or click fork & run on Vercel
 * [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
 * Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
   energy!
-* We love code - send PRs! ...
+* send PRs! ...
   🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
   🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
   🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
-  and [your big-IDEA](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)s❗
+  and [your big-IDEAs](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)
 
 ### Feature Drops
 
