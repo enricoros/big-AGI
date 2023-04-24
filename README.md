@@ -21,6 +21,8 @@ Or click fork & run on Vercel
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
 - Coming up: automatic-AGI reasoning
 
+![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
+
 ### Features
 
 #### 🚨 April: more #big-agi-energy
@@ -79,11 +81,7 @@ your friends.
 Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
 with features that matter to them.
 
-![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
-
-Useful, clean and fun features:
-
-![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo2.png)
+![Much features, so fun](docs/pixels/big-AGI-compo2.png)
 
 ## Code 🧩
 
