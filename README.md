@@ -38,7 +38,7 @@ Or click fork & run on Vercel
   🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
   and [your big-IDEAs](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)
 
-### Drops 🚀
+## Latest Drops 🚀
 
 #### 🚨 April: more #big-agi-energy
 
