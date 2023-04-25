@@ -38,7 +38,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
     props.conversationId && props.onRestartConversation(props.conversationId, truncatedHistory);
   };
 
-  const handleRunPurposeExample = (text: string) =>
+  const handleSendUserMessage = (text: string) =>
     props.conversationId && props.onRestartConversation(props.conversationId, [...messages, createDMessage('user', text)]);
 
 
@@ -50,7 +50,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   if (!filteredMessages.length)
     return props.conversationId ? (
       <Box sx={props.sx || {}}>
-        <PurposeSelector conversationId={props.conversationId} runExample={handleRunPurposeExample} />
+        <PurposeSelector conversationId={props.conversationId} runExample={handleSendUserMessage} />
       </Box>
     ) : null;
 
@@ -116,7 +116,8 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
             isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />
+            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)}
+            onSendUserMessage={handleSendUserMessage} />
         ),
       )}
 
