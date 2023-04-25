@@ -1,7 +1,6 @@
 export namespace ElevenLabs {
-  /**
-   * Client (Browser) -> Server (Next.js)
-   */
+
+  /// Client (Browser) -> Server (Next.js)
   export namespace API {
 
     export namespace TextToSpeech {
@@ -32,9 +31,7 @@ export namespace ElevenLabs {
     }
   }
 
-  /**
-   * This is the API as defined by ElevenLabs, for Server (Next.js) -> Server (ElevenLabs)
-   */
+  /// This is the upstream API [rev-eng on 2023-04-12], for Server (Next.js) -> Upstream Server
   export namespace Wire {
     export namespace TextToSpeech {
       export interface Request {

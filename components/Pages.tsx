@@ -232,7 +232,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
       {/*<MenuItem>*/}
       {/*  <ListItemDecorator />*/}
       {/*  <Typography sx={{ opacity: 0.5 }}>*/}
-      {/*    Feature <Link href='https://github.com/enricoros/nextjs-chatgpt-app/issues/17' target='_blank'>#17</Link>*/}
+      {/*    Feature <Link href={`${Brand.URIs.OpenRepo}/issues/17`} target='_blank'>#17</Link>*/}
       {/*  </Typography>*/}
       {/*</MenuItem>*/}
 

@@ -27,6 +27,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { DMessage } from '@/lib/stores/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
@@ -249,20 +250,40 @@ const RenderText = ({ textBlock }: { textBlock: TextBlock }) =>
     {textBlock.content}
   </Typography>;
 
-const RenderImage = ({ imageBlock }: { imageBlock: ImageBlock }) => {
-  const theme = useTheme();
-  return <Box
-    sx={{
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
+const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) =>
+  <Box
+    sx={theme => ({
+      display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
       mx: 1.5,
       // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-      boxShadow: theme.vars.shadow.md,
-      minWidth: 16, minHeight: 16,
+      minWidth: 32, minHeight: 32, boxShadow: theme.vars.shadow.md,
+      background: theme.palette.neutral.solidBg,
+      '& picture': { display: 'flex' },
       '& img': { maxWidth: '100%', maxHeight: '100%' },
-    }}>
-    <img src={imageBlock.url} alt='Generated Image' />
+      '&:hover > .image-buttons': { opacity: 1 },
+    })}>
+    {/* External Image */}
+    <picture><img src={props.imageBlock.url} alt='Generated Image' /></picture>
+    {/* Image Buttons */}
+    <Box
+      className='image-buttons'
+      sx={{
+        position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, px: 0.5,
+        display: 'flex', flexDirection: 'row', gap: 0.5,
+        opacity: 0, transition: 'opacity 0.3s',
+      }}>
+      {props.allowRunAgain && (
+        <Tooltip title='Draw again' variant='solid'>
+          <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
+            <ReplayIcon />
+          </IconButton>
+        </Tooltip>
+      )}
+      <IconButton component={Link} href={props.imageBlock.url} target='_blank' variant='solid' color='neutral'>
+        <ZoomOutMapIcon />
+      </IconButton>
+    </Box>
   </Box>;
-};
 
 
 function copyToClipboard(text: string) {
@@ -329,7 +350,7 @@ export function messageBackground(theme: Theme, messageRole: DMessage['role'], w
   return defaultBackground;
 }
 
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): JSX.Element {
+export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
     return <Avatar alt={messageSender} src={messageAvatar} />;
   const iconSx = { width: 40, height: 40 };
@@ -343,7 +364,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (messageTyping) {
         return <Avatar
           alt={messageSender} variant='plain'
-          src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+          src={messageOriginLLM === 'prodia' ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
           sx={{ ...mascotSx, borderRadius: 8 }}
         />;
       }
@@ -385,7 +406,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     typing: messageTyping,
     role: messageRole,
     purposeId: messagePurposeId,
-    originLLM: messageModelId,
+    originLLM: messageOriginLLM,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
@@ -441,15 +462,15 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
 
   // soft error handling
-  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageModelId);
+  const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageOriginLLM);
 
   // style
   let background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
 
   // avatar
   const avatarEl: JSX.Element | null = React.useMemo(
-    () => showAvatars ? makeAvatar(messageAvatar, messageRole, messagePurposeId, messageSender, messageTyping) : null,
-    [messageAvatar, messagePurposeId, messageRole, messageSender, messageTyping, showAvatars],
+    () => showAvatars ? makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping) : null,
+    [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping, showAvatars],
   );
 
   // text box css
@@ -503,12 +524,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
         )}
 
         {fromAssistant && (
-          <Tooltip title={messageModelId || 'unk-model'} variant='solid'>
+          <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
             <Typography level='body2' sx={messageTyping
               ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 }
               : { fontWeight: 500 }
             }>
-              {prettyBaseModel(messageModelId)}
+              {prettyBaseModel(messageOriginLLM)}
             </Typography>
           </Tooltip>
         )}
@@ -529,7 +550,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             block.type === 'code'
               ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
               : block.type === 'image'
-                ? <RenderImage key={'image-' + index} imageBlock={block} />
+                ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
                 : renderMarkdown
                   ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                   : <RenderText key={'text-' + index} textBlock={block} />,
@@ -554,7 +575,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Copy message */}
       {!fromSystem && !isEditing && (
-        <Tooltip title={fromAssistant ? 'Copy response' : 'Copy input'} variant='solid'>
+        <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
             variant='outlined' color='neutral' onClick={handleMenuCopy}
             sx={{

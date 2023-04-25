@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -14,8 +15,11 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
+import { Brand } from '@/lib/brand';
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
+import { Prodia } from '@/types/api-prodia';
+import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
@@ -100,7 +104,7 @@ function ElevenLabsSection() {
 
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value);
 
-  const handleVoiceElevenLabsChange = (e: any, value: string | null) => setVoiceId(value || '');
+  const handleVoiceChange = (e: any, value: string | null) => setVoiceId(value || '');
 
   const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as 'off' | 'firstLine');
 
@@ -140,7 +144,7 @@ function ElevenLabsSection() {
           </FormLabel>
           <Select
             variant='outlined' placeholder={isValidKey ? 'Select a voice' : 'Enter API Key'}
-            value={voiceId} onChange={handleVoiceElevenLabsChange}
+            value={voiceId} onChange={handleVoiceChange}
             startDecorator={<RecordVoiceOverIcon />}
             endDecorator={isValidKey && loadingVoices && <CircularProgress size='sm' />}
             indicator={<KeyboardArrowDownIcon />}
@@ -187,16 +191,30 @@ function ProdiaSection() {
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
 
   // external state
-  const { apiKey, setApiKey } = useSettingsStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId } = useSettingsStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
+    modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
   }), shallow);
 
   const requiresKey = requireUserKeyProdia;
   const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
 
+  // load models, if the server has a key, or the user provided one
+  const { data: modelsData, isLoading: loadingModels } = useQuery(['models', apiKey], {
+    enabled: isValidKey,
+    queryFn: () => fetch('/api/prodia/models', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...(apiKey ? { apiKey: apiKey } : {}) }),
+    }).then(res => res.json() as Promise<Prodia.API.Models.Response>),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
 
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value);
+
+  const handleModelChange = (e: any, value: string | null) => value && setModelId(value);
 
   const colWidth = 150;
 
@@ -226,6 +244,37 @@ function ProdiaSection() {
             }}
             sx={{ width: '100%' }}
           />
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <FormLabel sx={{ minWidth: colWidth }}>
+            Diffusion Model
+          </FormLabel>
+          <Select
+            variant='outlined' placeholder={isValidKey ? 'Select a model' : 'Enter API Key'}
+            value={modelId || prodiaDefaultModelId} onChange={handleModelChange}
+            startDecorator={<FormatPaintIcon />}
+            endDecorator={isValidKey && loadingModels && <CircularProgress size='sm' />}
+            indicator={<KeyboardArrowDownIcon />}
+            slotProps={{
+              root: {
+                sx: {
+                  width: '100%',
+                },
+              },
+              indicator: {
+                sx: {
+                  opacity: 0.5,
+                },
+              },
+            }}
+          >
+            {modelsData && modelsData.models?.map((model, idx) => (
+              <Option key={'prodia-model-' + idx} value={model.id}>
+                {model.label}
+              </Option>
+            ))}
+          </Select>
         </FormControl>
 
       </Stack>
@@ -309,7 +358,7 @@ function AdvancedSection() {
               Organization ID
             </FormLabel>
             <FormHelperText sx={{ display: 'block' }}>
-              <Link level='body2' href='https://github.com/enricoros/nextjs-chatgpt-app/issues/63' target='_blank'>What is this</Link>
+              <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
             </FormHelperText>
           </Box>
           <Input

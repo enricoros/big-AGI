@@ -5,47 +5,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prodia } from '@/types/api-prodia';
 
 
-// FIXME: make model configurable? would need an API to query it
-// const DEFAULT_MODEL = 'sdv1_4.ckpt [7460a6fa]';
-const DEFAULT_MODEL: string = 'deliberate_v2.safetensors [10ec4b29]';
-
-/*const WEBSITE_MODELS = [
-  'sdv1_4.ckpt [7460a6fa]',
-  'v1-5-pruned-emaonly.ckpt [81761151]',
-  'anythingv3_0-pruned.ckpt [2700c435]',
-  'anything-v4.5-pruned.ckpt [65745d25]',
-  'analog-diffusion-1.0.ckpt [9ca13f02]',
-  'theallys-mix-ii-churned.safetensors [5d9225a4]',
-  'elldreths-vivid-mix.safetensors [342d9d26]',
-  'deliberate_v2.safetensors [10ec4b29]',
-  'openjourney_V4.ckpt [ca2f377f]',
-  'dreamlike-diffusion-1.0.safetensors [5c9fd6e0]',
-  'dreamlike-diffusion-2.0.safetensors [fdcf65e7]',
-  'portrait+1.0.safetensors [1400e684]',
-  'riffusion-model-v1.ckpt [3aafa6fe]',
-  'timeless-1.0.ckpt [7c4971d4]'
-];*/
+export const prodiaHeaders = (apiKey: string): Record<string, string> => ({
+  'X-Prodia-Key': (apiKey || process.env.PRODIA_API_KEY || '').trim(),
+});
 
 
 async function createGenerationJob(apiKey: string, jobRequest: Prodia.Wire.Imagine.JobRequest): Promise<Prodia.Wire.Imagine.JobResponse> {
   const response = await fetch('https://api.prodia.com/v1/job', {
     method: 'POST',
     headers: {
-      'X-Prodia-Key': (apiKey || process.env.PRODIA_API_KEY || '').trim(),
+      ...prodiaHeaders(apiKey),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(jobRequest),
   });
-  if (response.status !== 200)
+  if (response.status !== 200) {
+    console.log('Bad Prodia Response:', await response.text());
     throw new Error(`Bad Prodia Response: ${response.status}`);
+  }
   return await response.json();
 }
 
 async function getJobStatus(apiKey: string, jobId: string): Promise<Prodia.Wire.Imagine.JobResponse> {
   const response = await fetch(`https://api.prodia.com/v1/job/${jobId}`, {
-    headers: {
-      'X-Prodia-Key': (apiKey || process.env.PRODIA_API_KEY || '').trim(),
-    },
+    headers: prodiaHeaders(apiKey),
   });
   if (response.status !== 200)
     throw new Error(`Bad Prodia Response: ${response.status}`);
@@ -59,10 +42,11 @@ export default async function handler(req: NextRequest) {
   const tStart = Date.now();
 
   try {
-    const { apiKey = '', prompt } = (await req.json()) as Prodia.API.Imagine.RequestBody;
+    const { apiKey = '', prompt, prodiaModelId } = (await req.json()) as Prodia.API.Imagine.RequestBody;
 
     // crate the job, getting back a job ID
-    let job = await createGenerationJob(apiKey, { model: DEFAULT_MODEL, prompt });
+    const jobRequest: Prodia.Wire.Imagine.JobRequest = { model: prodiaModelId, prompt };
+    let job: Prodia.Wire.Imagine.JobResponse = await createGenerationJob(apiKey, jobRequest);
 
     // poll the job status until it's done
     let sleepDelay = 2000;
@@ -83,7 +67,7 @@ export default async function handler(req: NextRequest) {
     return new NextResponse(JSON.stringify(response));
 
   } catch (error) {
-    console.error('Error in Prodia API:', error);
+    console.error('Handler failed:', error);
     const elapsed = Math.round((Date.now() - tStart) / 100) / 10;
     const response: Prodia.API.Imagine.Response = { status: 'error', error: error?.toString() || 'Network issue', elapsed };
     return new NextResponse(JSON.stringify(response), { status: 500 });
