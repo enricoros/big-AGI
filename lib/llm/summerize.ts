@@ -1,7 +1,8 @@
 import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
-import { cleanupPrompt } from './prompts';
-import { useSettingsStore } from '@/lib/stores/store-settings';
 import { ChatModelId, ChatModels } from '@/lib/data';
+import { cleanupPrompt } from './prompts';
+import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
+
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
   const words = chunk.split(' ');
@@ -63,19 +64,13 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
 
 async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_targetWordCount: number): Promise<string> {
 
-  const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
-
   // auto-adjust the tokens assuming the output would be half the size of the input (a bit dangerous,
   // but at this stage we are not guaranteed the input nor output would fit)
   const outputTokenShare = 1 / 3;
   const autoResponseTokensSize = Math.floor(ChatModels[modelId].contextWindowSize * outputTokenShare);
 
   const input: ApiChatInput = {
-    api: {
-      ...(apiKey && { apiKey }),
-      ...(apiHost && { apiHost }),
-      ...(apiOrganizationId && { apiOrganizationId }),
-    },
+    api: getOpenAIConfiguration(),
     model: modelId, // Replace with the desired model
     messages: [
       { role: 'system', content: cleanupPrompt },

@@ -3,7 +3,7 @@ import { ChatModelId, SystemPurposeId } from '@/lib/data';
 import { DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { OpenAIAPI } from '@/types/api-openai';
 import { createAssistantTypingMessage, updatePurposeInHistory } from '@/lib/llm/agi-immediate';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { getOpenAIConfiguration, useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -48,13 +48,9 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
 async function getLLMChatResponse(model: ChatModelId, messages: OpenAIAPI.Chat.Message[]): Promise<ApiChatResponse> {
 
   // use api values from Settings
-  const { apiKey, apiHost, apiOrganizationId, modelTemperature: temperature } = useSettingsStore.getState();
+  const { modelTemperature: temperature } = useSettingsStore.getState();
   const payload: ApiChatInput = {
-    api: {
-      ...(apiKey && { apiKey }),
-      ...(apiHost && { apiHost }),
-      ...(apiOrganizationId && { apiOrganizationId }),
-    },
+    api: getOpenAIConfiguration(),
     model,
     messages,
     temperature,

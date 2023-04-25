@@ -1,7 +1,7 @@
 import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { fastChatModelId } from '@/lib/data';
+import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
 import { useChatStore } from '@/lib/stores/store-chats';
-import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -25,13 +25,8 @@ export async function updateAutoConversationTitle(conversationId: string) {
   });
 
   // prepare the payload
-  const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
   const payload: ApiChatInput = {
-    api: {
-      ...(apiKey && { apiKey }),
-      ...(apiHost && { apiHost }),
-      ...(apiOrganizationId && { apiOrganizationId }),
-    },
+    api: getOpenAIConfiguration(),
     model: fastChatModelId,
     messages: [
       { role: 'system', content: `You are an AI language expert who specializes in creating very concise and short chat titles.` },
