@@ -592,7 +592,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
 
             <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
-                <FormLabel>Visual clutter</FormLabel>
+                <FormLabel>Appearance</FormLabel>
                 <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Hide sender and menus'}</FormHelperText>
               </Box>
               <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
