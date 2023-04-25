@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { OpenAIAPI } from '@/types/api-openai';
 
+import { Agent } from '@/lib/llm/react';
+
 
 if (!process.env.OPENAI_API_KEY)
   console.warn(

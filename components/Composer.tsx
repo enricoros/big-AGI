@@ -15,7 +15,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
-import { ChatModels, SendModeId, SendModes } from '@/lib/data';
+import { ChatModelId, ChatModels, fastChatModelId , SendModeId, SendModes } from '@/lib/data';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { ContentReducerModal } from '@/components/dialogs/ContentReducerModal';
 import { TokenBadge } from '@/components/util/TokenBadge';
@@ -28,6 +28,9 @@ import { useChatStore } from '@/lib/stores/store-chats';
 import { useComposerStore } from '@/lib/stores/store-composer';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
+
+import { Agent } from '@/lib/llm/react';
+//import { ChatModelId, ChatModels, fastChatModelId } from '@/lib/data';
 
 
 // CSS helpers
@@ -177,6 +180,7 @@ export function Composer(props: {
   const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [confirmClearSent, setConfirmClearSent] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
+  const [reducerModelId, setReducerModelId] = React.useState<ChatModelId>(fastChatModelId);
 
   // external state
   const theme = useTheme();
@@ -204,9 +208,16 @@ export function Composer(props: {
   const remainingTokens = tokenLimit - directTokens - indirectTokens;
 
 
-  const handleSendClicked = () => {
+  const handleSendClicked = async () => {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
+      if (sendModeId === 'react') {
+        // only log when in react mode.
+        console.log("quesiton:", text);
+        const agent = new Agent();
+        const result = await agent.reAct(text, 'gpt-4');
+        console.log("final result:", result);
+      }
       setComposeText('');
       props.onSendMessage(props.conversationId, text);
       appendSentMessage(text);
