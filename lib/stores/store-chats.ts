@@ -70,7 +70,7 @@ export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, cha
 });
 
 export const conversationTitle = (conversation: DConversation): string =>
-  conversation.userTitle || conversation.autoTitle || 'New conversation';
+  conversation.userTitle || conversation.autoTitle || 'hi 👋 '; // 👋💬🗨️
 
 
 /**
