@@ -6,8 +6,8 @@ import { Prodia } from '@/types/api-prodia';
 // for lack of an API
 const HARDCODED_MODELS: Prodia.API.Models.Response = {
   models: [
-    { id: 'sdv1_4.ckpt [7460a6fa]', label: 'Stable Diffusion 1.4', priority: 2 },
-    { id: 'v1-5-pruned-emaonly.ckpt [81761151]', label: 'Stable Diffusion 1.5', priority: 3 },
+    { id: 'sdv1_4.ckpt [7460a6fa]', label: 'Stable Diffusion 1.4', priority: 8 },
+    { id: 'v1-5-pruned-emaonly.ckpt [81761151]', label: 'Stable Diffusion 1.5', priority: 9 },
     { id: 'anythingv3_0-pruned.ckpt [2700c435]', label: 'Anything V3.0' },
     { id: 'anything-v4.5-pruned.ckpt [65745d25]', label: 'Anything V4.5' },
     { id: 'analog-diffusion-1.0.ckpt [9ca13f02]', label: 'Analog Diffusion' },
