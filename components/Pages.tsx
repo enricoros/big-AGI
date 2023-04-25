@@ -151,6 +151,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
       setActiveConversationId(newConversationId);
     else
       createConversation();
+    props.onClose();
   };
 
   const handleConversationActivate = (conversationId: string) => setActiveConversationId(conversationId);
