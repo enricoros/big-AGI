@@ -26,11 +26,15 @@ export const runImageGenerationUpdatingState = async (conversationId: string, hi
   }
 
   // generate the image
-  const { prodiaApiKey: apiKey, prodiaModelId } = useSettingsStore.getState();
+  const { prodiaApiKey: apiKey, prodiaModelId, prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale, prodiaSeed: seed } = useSettingsStore.getState();
   const input: Prodia.API.Imagine.RequestBody = {
     ...(apiKey && { apiKey }),
     prompt: imageText,
     prodiaModelId: prodiaModelId || prodiaDefaultModelId,
+    ...(!!negativePrompt && { negativePrompt }),
+    ...(!!steps && { steps }),
+    ...(!!cfgScale && { cfgScale }),
+    ...(!!seed && { seed }),
   };
 
   try {
@@ -42,8 +46,11 @@ export const runImageGenerationUpdatingState = async (conversationId: string, hi
     if (response.ok) {
       const imagineResponse: Prodia.API.Imagine.Response = await response.json();
       // edit the assistant message to be the image
-      if (imagineResponse.status === 'success')
+      if (imagineResponse.status === 'success') {
         editMessage(conversationId, assistantMessageId, { text: imagineResponse.imageUrl }, false);
+        // NOTE: imagineResponse shall have an altText which contains some description we could show on mouse hover
+        //       Would be hard to do it with the current plain-text URL tho - shall consider changing the workaround format
+      }
     } else
       editMessage(conversationId, assistantMessageId, { text: `Sorry, I had issues requesting this image. Check your API key?` }, false);
   } catch (error: any) {
