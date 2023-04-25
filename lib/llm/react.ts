@@ -1,7 +1,8 @@
 import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
-import { reActPrompt } from './prompts';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { ChatModelId } from '@/lib/data';
 import { OpenAIAPI } from '@/types/api-openai';
+import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
+import { reActPrompt } from './prompts';
 
 const actionRe = /^Action: (\w+): (.*)$/;
 
@@ -9,14 +10,9 @@ class Agent {
   messages: OpenAIAPI.Chat.Message[] = [{ role: 'system', content: reActPrompt }];
 
   async chat(prompt: string, modelId: string): Promise<string> {
-    const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
     this.messages.push({ role: 'user', content: prompt });
     const input: ApiChatInput = {
-      api: {
-        ...(apiKey && { apiKey }),
-        ...(apiHost && { apiHost }),
-        ...(apiOrganizationId && { apiOrganizationId }),
-      },
+      api: getOpenAIConfiguration(),
       model: modelId,
       messages: this.messages,
       max_tokens: 500,
@@ -40,15 +36,16 @@ class Agent {
     return data.message.content;
   }
 
-  async reAct(question: string, modelId: string, maxTurns = 5): Promise<string> {
+  async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log = console.log): Promise<string> {
     let i = 0;
     let nextPrompt = question;
     let lastObservation = '';
 
     while (i < maxTurns) {
       i += 1;
+      log(`\n## Turn ${i}`);
       const result = await this.chat(nextPrompt, modelId);
-      console.log(result);
+      log(result);
       const actions = result
         .split('\n')
         .map((a: string) => actionRe.exec(a))
@@ -59,13 +56,13 @@ class Agent {
         if (!(action in knownActions)) {
           throw new Error(`Unknown action: ${action}: ${actionInput}`);
         }
-        console.log(` -- running ${action} ${actionInput}`);
+        log(` -- running ${action} ${actionInput}`);
         const observation = await knownActions[action](actionInput);
-        console.log('Observation:', observation);
+        log(`Observation: ${observation}`);
         nextPrompt = `Observation: ${observation}`;
         lastObservation = observation;
       } else {
-        console.log('Result:', result);
+        log(`Result: ${result}`);
         return result;
       }
     }
@@ -79,8 +76,8 @@ export { Agent };
 async function wikipedia(q: string): Promise<string> {
   const response = await fetch(
     `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-      q
-    )}&format=json&origin=*`
+      q,
+    )}&format=json&origin=*`,
   );
   const data = await response.json();
   return data.query.search[0].snippet;
@@ -92,13 +89,7 @@ function calculate(what: string): string {
 
 type ActionFunction = (input: string) => Promise<string>;
 
-interface KnownActions {
-  [key: string]: ActionFunction;
-  wikipedia: ActionFunction;
-  calculate: ActionFunction;
-}
-
-const knownActions: KnownActions = {
+const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
   calculate: async (what: string) => String(calculate(what)),
 };
