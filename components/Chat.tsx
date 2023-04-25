@@ -49,7 +49,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     // [special case] command: '/imagine <prompt>'
     if (history.length > 0 && history[history.length - 1].role === 'user') {
       const lastUserText = history[history.length - 1].text;
-      if (lastUserText.startsWith('/imagine ') || lastUserText.startsWith('/image ') || lastUserText.startsWith('/img ')) {
+      if (lastUserText.startsWith('/imagine ') || lastUserText.startsWith('/img ')) {
         const prompt = lastUserText.substring(lastUserText.indexOf(' ') + 1).trim();
         return await runImageGenerationUpdatingState(conversationId, history, prompt);
       }
