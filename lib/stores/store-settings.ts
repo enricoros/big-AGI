@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { OpenAIAPI } from '@/types/api-openai';
 
 
 /// Settings Store
@@ -157,3 +158,13 @@ export const useSettingsStore = create<SettingsStore>()(
       name: 'app-settings',
     }),
 );
+
+
+export const getOpenAIConfiguration = (): OpenAIAPI.Configuration => {
+  const { apiKey, apiHost, apiOrganizationId } = useSettingsStore.getState();
+  return {
+    ...(apiKey ? { apiKey } : {}),
+    ...(apiHost ? { apiHost } : {}),
+    ...(apiOrganizationId ? { apiOrganizationId } : {}),
+  };
+};

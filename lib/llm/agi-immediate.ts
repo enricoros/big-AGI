@@ -1,9 +1,9 @@
 import { ApiChatInput } from '../../pages/api/openai/chat';
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { getOpenAIConfiguration, useSettingsStore } from '@/lib/stores/store-settings';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { updateAutoConversationTitle } from '@/lib/llm/ai';
-import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -22,8 +22,7 @@ export const runAssistantUpdatingState = async (conversationId: string, history:
   const { startTyping, editMessage } = useChatStore.getState();
   startTyping(conversationId, controller);
 
-  const { apiKey, apiHost, apiOrganizationId, modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  await streamAssistantMessage(conversationId, assistantMessageId, history, apiKey, apiHost, apiOrganizationId, assistantModel, modelTemperature, modelMaxResponseTokens, editMessage, controller.signal, speakIfFirstLine);
+  await streamAssistantMessage(conversationId, assistantMessageId, history, assistantModel, editMessage, controller.signal, speakIfFirstLine);
 
   // clear to send, again
   startTyping(conversationId, null);
@@ -60,19 +59,15 @@ export function createAssistantTypingMessage(conversationId: string, history: DM
  */
 async function streamAssistantMessage(
   conversationId: string, assistantMessageId: string, history: DMessage[],
-  apiKey: string | undefined, apiHost: string | undefined, apiOrganizationId: string | undefined,
-  chatModelId: string, modelTemperature: number, modelMaxResponseTokens: number,
+  chatModelId: string,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
   onFirstParagraph?: (firstParagraph: string) => void,
 ) {
 
+  const { modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
   const payload: ApiChatInput = {
-    api: {
-      ...(apiKey && { apiKey }),
-      ...(apiHost && { apiHost }),
-      ...(apiOrganizationId && { apiOrganizationId }),
-    },
+    api: getOpenAIConfiguration(),
     model: chatModelId,
     messages: history.map(({ role, text }) => ({
       role: role,
