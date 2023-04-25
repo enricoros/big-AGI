@@ -55,7 +55,7 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
         </FormLabel>
       )}
       {!!props.collapsible && (
-        <IconButton size='sm' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)}>
+        <IconButton size='md' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
           {!collapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </IconButton>
       )}
@@ -115,9 +115,14 @@ function ElevenLabsSection() {
       <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <FormLabel sx={{ minWidth: colWidth }}>
-            ElevenLabs API Key {requiresKey ? '' : '(optional)'}
-          </FormLabel>
+          <Box>
+            <FormLabel sx={{ minWidth: colWidth }}>
+              ElevenLabs API Key
+            </FormLabel>
+            <FormHelperText>
+              {requiresKey ? '(required)' : '(optional)'}
+            </FormHelperText>
+          </Box>
           <Input
             variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requiresKey ? 'required' : '...'} error={!isValidKey}
             value={apiKey} onChange={handleApiKeyChange}
@@ -213,9 +218,14 @@ function ProdiaSection() {
       <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <FormLabel sx={{ minWidth: colWidth }}>
-            Prodia API Key {requiresKey ? '' : '(optional)'}
-          </FormLabel>
+          <Box>
+            <FormLabel sx={{ minWidth: colWidth }}>
+              Prodia API Key
+            </FormLabel>
+            <FormHelperText>
+              {requiresKey ? '(required)' : '(optional)'}
+            </FormHelperText>
+          </Box>
           <Input
             variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requiresKey ? 'required' : '...'} error={!isValidKey}
             value={apiKey} onChange={handleApiKeyChange}
