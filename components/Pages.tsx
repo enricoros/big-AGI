@@ -32,10 +32,11 @@ function ConversationListItem(props: {
   const conversation = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation && {
+      isNew: conversation.messages.length === 0,
       assistantTyping: !!conversation.abortController,
-      setUserTitle: state.setUserTitle,
       systemPurposeId: conversation.systemPurposeId,
       title: conversationTitle(conversation),
+      setUserTitle: state.setUserTitle,
     };
   }, shallow);
 
@@ -78,9 +79,7 @@ function ConversationListItem(props: {
             />
           ) : (
             <Typography sx={{ fontSize: '18px' }}>
-              {/*<Badge size='sm' variant='solid' color='primary' badgeContent={'3.5'}>*/}
-              {textSymbol}
-              {/*</Badge>*/}
+              {conversation.isNew ? '' : textSymbol}
             </Typography>
           )}
       </ListItemDecorator>}
@@ -132,11 +131,11 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
 
   // external state
   const conversationIDs = useConversationIDs();
-  const { setActiveConversationId, createConversation, deleteConversation, setActiveConversation } = useChatStore(state => ({
+  const { setActiveConversationId, createConversation, deleteConversation, newConversationId } = useChatStore(state => ({
     setActiveConversationId: state.setActiveConversationId,
     createConversation: state.createConversation,
     deleteConversation: state.deleteConversation,
-    setActiveConversation: state.setActiveConversationId,
+    newConversationId: state.conversations.length ? state.conversations[0].messages.length === 0 ? state.conversations[0].id : null : null,
   }), shallow);
   const showSymbols = useSettingsStore(state => state.zenMode) !== 'cleaner';
 
@@ -146,15 +145,27 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
   const maxReached = conversationIDs.length >= MAX_CONVERSATIONS;
 
 
-  const handleNew = () => createConversation();
+  const handleNew = () => {
+    // if the first in the stack is a new conversation, just activate it
+    if (newConversationId)
+      setActiveConversationId(newConversationId);
+    else
+      createConversation();
+  };
 
-  const handleConversationActivate = (conversationId: string) => setActiveConversation(conversationId);
+  const handleConversationActivate = (conversationId: string) => setActiveConversationId(conversationId);
 
   const handleConversationDelete = (e: React.MouseEvent, conversationId: string) => {
     if (!singleChat) {
       e.stopPropagation();
-      setActiveConversationId(conversationId);
-      setDeleteConfirmationId(conversationId);
+      // if the chat is empty, just delete it
+      if (conversationId === newConversationId)
+        deleteConversation(conversationId);
+      // otherwise, ask for confirmation
+      else {
+        setActiveConversationId(conversationId);
+        setDeleteConfirmationId(conversationId);
+      }
     }
   };
 
@@ -190,11 +201,9 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
       {/*  </Typography>*/}
       {/*</ListItem>*/}
 
-      <MenuItem onClick={handleNew}>
+      <MenuItem onClick={handleNew} disabled={!!newConversationId && newConversationId === props.conversationId}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
-        <Typography>
-          {NewPrefix}New
-        </Typography>
+        {NewPrefix}New
       </MenuItem>
 
       {conversationIDs.map(conversationId =>
