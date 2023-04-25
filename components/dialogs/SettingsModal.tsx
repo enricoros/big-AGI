@@ -571,7 +571,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
                 <FormLabel>Language</FormLabel>
                 <Tooltip title='Not all browsers may support these languages. Please note that speech input is unavailable on iPhone/Safari.'>
                   <FormHelperText>
-                    Speech input <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+                    Microphone <InfoOutlinedIcon sx={{ mx: 0.5 }} />
                   </FormHelperText>
                 </Tooltip>
               </Box>
