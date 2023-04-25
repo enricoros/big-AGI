@@ -14,14 +14,16 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-import { Alert, Avatar, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
@@ -37,7 +39,7 @@ import { OpenInReplit } from '@/components/util/OpenInReplit';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/util/publish';
-import { requireUserKeyElevenLabs } from '@/components/dialogs/SettingsModal';
+import { requireUserKeyElevenLabs, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 import { speakText } from '@/lib/util/text-to-speech';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
@@ -114,7 +116,7 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
   if (text.startsWith('https://images.prodia.xyz/') && text.endsWith('.png') && text.length > 60 && text.length < 70)
     return [{ type: 'image', url: text.trim() }];
 
-  const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
+  const codeBlockRegex = /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
 
   let lastIndex = 0;
@@ -369,6 +371,8 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
         />;
       }
       // display the purpose symbol
+      if (messageOriginLLM === 'prodia')
+        return <PaletteOutlinedIcon sx={iconSx} />;
       const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
       if (symbol)
         return <Box
@@ -398,7 +402,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void }) {
+export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void, onImagine: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -419,11 +423,15 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
+  const [isImagining, setIsImagining] = React.useState(false);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
 
   // external state
   const theme = useTheme();
   const showAvatars = useSettingsStore(state => state.zenMode) !== 'cleaner';
   const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
+  const isImaginable = !!useSettingsStore(state => state.prodiaModelId) || !requireUserKeyProdia;
+  const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = !!useSettingsStore(state => state.elevenLabsVoiceId) || !requireUserKeyElevenLabs;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
@@ -434,15 +442,26 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     closeOperationsMenu();
   };
 
-  const handleMenuSpeak = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await speakText(messageText);
-    closeOperationsMenu();
-  };
-
   const handleMenuEdit = (e: React.MouseEvent) => {
     setIsEditing(!isEditing);
     e.preventDefault();
+    closeOperationsMenu();
+  };
+
+
+  const handleMenuImagine = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsImagining(true);
+    await props.onImagine(messageText);
+    setIsImagining(false);
+    closeOperationsMenu();
+  };
+
+  const handleMenuSpeak = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSpeaking(true);
+    await speakText(messageText);
+    setIsSpeaking(false);
     closeOperationsMenu();
   };
 
@@ -597,17 +616,23 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy
           </MenuItem>
-          {isSpeakable && (
-            <MenuItem onClick={handleMenuSpeak}>
-              <ListItemDecorator><RecordVoiceOverIcon /></ListItemDecorator>
-              Speak
-            </MenuItem>
-          )}
           <MenuItem onClick={handleMenuEdit}>
             <ListItemDecorator><EditIcon /></ListItemDecorator>
             {isEditing ? 'Discard' : 'Edit'}
             {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}> (double-click)</span>}
           </MenuItem>
+          {isImaginable && isImaginableEnabled && (
+            <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
+              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon />}</ListItemDecorator>
+              Imagine
+            </MenuItem>
+          )}
+          {isSpeakable && (
+            <MenuItem onClick={handleMenuSpeak} disabled={isSpeaking}>
+              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon />}</ListItemDecorator>
+              Speak
+            </MenuItem>
+          )}
           <ListDivider />
           {fromAssistant && (
             <MenuItem onClick={handleMenuRunAgain}>

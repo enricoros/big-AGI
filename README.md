@@ -2,16 +2,18 @@
 
 Welcome to `big-AGI`, FKA `nextjs-chatgpt-app`. 👋🎉
 Personal AGI App, powered by `OpenAI GPT-4` and beyond. Designed for smart humans and super-heroes,
-this responsive web app comes with Streaming, Drawing, Code Execution, PDF imports, Voice support,
-data Rendering, AGI functions and chats. Show your friends some `#big-agi-energy` 🚀
+this responsive web app comes with Personas, Drawing, Code Execution, PDF imports, Voice support,
+data Rendering, AGI functions, chats and more. Show your friends some `#big-AGI-energy` 🚀
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
 
-Or click fork & run on Vercel
+Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
 ## Useful 👊
+
+![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
 
 - Engaging AI Personas
 - Clean UX, w/ tokens counters
@@ -21,11 +23,28 @@ Or click fork & run on Vercel
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
 - Coming up: automatic-AGI reasoning
 
-### Features
+## Support 🙌
+
+[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
+[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
+
+* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
+* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
+* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
+  energy!
+* send PRs! ...
+  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
+  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
+  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
+  and [your big-IDEAs](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)
+
+<br/>
+
+## Latest Drops 🚀
 
 #### 🚨 April: more #big-agi-energy
 
-- 🎉 **Image Generation** using Prodia API Keys (BYOK), just /imagine (or /img) it
+- 🎉 **[Image Generation](docs/pixels/feature_imagine_command.png)** using Prodia (BYO Keys) - /imagine - or menu option
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
 - 🎉 **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
 - 🎉 **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
@@ -56,20 +75,7 @@ Or click fork & run on Vercel
 - 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
 - 🌙 Dark model - Wide mode ⛶
 
-## Support 🙌
-
-[//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
-[![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
-
-* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
-* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
-* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
-  energy!
-* We love code - send PRs! ...
-  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
-  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
-  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
-  and [your big-IDEA](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)s❗
+<br/>
 
 ## Why this? 💡
 
@@ -79,8 +85,7 @@ your friends.
 Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
 with features that matter to them.
 
-***Outdated*** screenshot below:
-![Ask away, paste a ton, copy the gems](docs/pixels/zold_screenshot_web.png)
+![Much features, so fun](docs/pixels/big-AGI-compo2b.png)
 
 ## Code 🧩
 
@@ -106,7 +111,7 @@ Now the app should be running on `http://localhost:3000`
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
----
+<br/>
 
 This project is licensed under the MIT License.
 

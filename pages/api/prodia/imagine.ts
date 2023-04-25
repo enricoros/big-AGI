@@ -42,10 +42,17 @@ export default async function handler(req: NextRequest) {
   const tStart = Date.now();
 
   try {
-    const { apiKey = '', prompt, prodiaModelId } = (await req.json()) as Prodia.API.Imagine.RequestBody;
+    const { apiKey = '', prompt, prodiaModelId, negativePrompt, steps, cfgScale, seed } = (await req.json()) as Prodia.API.Imagine.RequestBody;
 
     // crate the job, getting back a job ID
-    const jobRequest: Prodia.Wire.Imagine.JobRequest = { model: prodiaModelId, prompt };
+    const jobRequest: Prodia.Wire.Imagine.JobRequest = {
+      model: prodiaModelId,
+      prompt,
+      ...(!!cfgScale && { cfg_scale: cfgScale }),
+      ...(!!steps && { steps }),
+      ...(!!negativePrompt && { negative_prompt: negativePrompt }),
+      ...(!!seed && { seed }),
+    };
     let job: Prodia.Wire.Imagine.JobResponse = await createGenerationJob(apiKey, jobRequest);
 
     // poll the job status until it's done
@@ -63,7 +70,8 @@ export default async function handler(req: NextRequest) {
       throw new Error(`Prodia image generation failed within ${elapsed}s`);
 
     // respond with the image URL
-    const response: Prodia.API.Imagine.Response = { status: 'success', imageUrl: job.imageUrl, elapsed };
+    const altText = `Prodia generated "${jobRequest.prompt}". Options: ${JSON.stringify({ seed: job.params })}.`;
+    const response: Prodia.API.Imagine.Response = { status: 'success', imageUrl: job.imageUrl, altText, elapsed };
     return new NextResponse(JSON.stringify(response));
 
   } catch (error) {
