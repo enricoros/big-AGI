@@ -37,7 +37,6 @@ import { OpenInCodepen } from '@/components/util/OpenInCodepen';
 import { OpenInReplit } from '@/components/util/OpenInReplit';
 import { SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { cssRainbowColorKeyframes } from '@/lib/theme';
-import { imaginePromptFromText } from '@/lib/llm/ai';
 import { prettyBaseModel } from '@/lib/util/publish';
 import { requireUserKeyElevenLabs, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 import { speakText } from '@/lib/util/text-to-speech';
@@ -400,7 +399,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void, onSendUserMessage: (text: string) => void }) {
+export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void, onImagine: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -450,9 +449,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const handleMenuImagine = async (e: React.MouseEvent) => {
     e.preventDefault();
     setIsImagining(true);
-    const prompt = await imaginePromptFromText(messageText);
-    if (prompt)
-      props.onSendUserMessage('/imagine ' + prompt);
+    await props.onImagine(messageText);
     setIsImagining(false);
     closeOperationsMenu();
   };
