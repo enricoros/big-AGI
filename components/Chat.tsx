@@ -12,6 +12,7 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { imaginePromptFromText } from '@/lib/llm/ai';
 import { publishConversation } from '@/lib/util/publish';
 import { runAssistantUpdatingState } from '@/lib/llm/agi-immediate';
 import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
@@ -72,6 +73,15 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
 
+  const handleImagineFromText = async (conversationId: string, messageText: string) => {
+    const conversation = _findConversation(conversationId);
+    if (conversation && chatModelId) {
+      const prompt = await imaginePromptFromText(messageText, chatModelId);
+      if (prompt)
+        return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `/imagine ${prompt}`)]);
+    }
+  };
+
 
   const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
 
@@ -105,7 +115,8 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       <ChatMessageList
         conversationId={activeConversationId}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onRestartConversation={handleExecuteConversation}
+        onExecuteConversation={handleExecuteConversation}
+        onImagineFromText={handleImagineFromText}
         sx={{
           flexGrow: 1,
           background: theme.vars.palette.background.level2,

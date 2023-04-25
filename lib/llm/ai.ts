@@ -1,5 +1,5 @@
 import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
-import { fastChatModelId } from '@/lib/data';
+import { ChatModelId, fastChatModelId } from '@/lib/data';
 import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
 import { useChatStore } from '@/lib/stores/store-chats';
 
@@ -65,7 +65,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
-export async function imaginePromptFromText(messageText: string): Promise<string | null> {
+export async function imaginePromptFromText(messageText: string, modelId: ChatModelId): Promise<string | null> {
 
   const payload: ApiChatInput = {
     api: getOpenAIConfiguration(),
@@ -80,7 +80,7 @@ export async function imaginePromptFromText(messageText: string): Promise<string
       },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
     ],
-    model: fastChatModelId,
+    model: modelId,
   };
 
   try {
