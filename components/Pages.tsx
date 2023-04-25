@@ -207,6 +207,8 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
         {NewPrefix}New
       </MenuItem>
 
+      <ListDivider />
+
       {conversationIDs.map(conversationId =>
         <ConversationListItem
           key={'c-id-' + conversationId}
