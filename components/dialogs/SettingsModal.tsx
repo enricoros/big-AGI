@@ -111,7 +111,7 @@ function ElevenLabsSection() {
   const colWidth = 150;
 
   return (
-    <Section title='📢 Text To Speech' collapsible collapsed>
+    <Section title='📢 Voice Generation' collapsible collapsed>
       <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
