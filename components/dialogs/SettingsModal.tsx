@@ -566,18 +566,6 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
         <Section>
           <Stack direction='column' sx={{ gap: uniformGap }}>
 
-            <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <FormLabel>Language</FormLabel>
-                <Tooltip title='Not all browsers may support these languages. Please note that speech input is unavailable on iPhone/Safari.'>
-                  <FormHelperText>
-                    Microphone <InfoOutlinedIcon sx={{ mx: 0.5 }} />
-                  </FormHelperText>
-                </Tooltip>
-              </Box>
-              <LanguageSelect />
-            </FormControl>
-
             <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <FormLabel>Centering</FormLabel>
@@ -593,7 +581,7 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
             <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <FormLabel>Appearance</FormLabel>
-                <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Hide sender and menus'}</FormHelperText>
+                <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Hide senders and menus'}</FormHelperText>
               </Box>
               <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
                 {/*<Radio value='clean' label={<Face6Icon sx={{ width: 24, height: 24, mt: -0.25 }} />} />*/}
@@ -620,6 +608,20 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
               <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
                       endDecorator={showPurposeFinder ? 'On' : 'Off'}
                       slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+            </FormControl>
+
+            <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Tooltip title='Currently for Microphone input only. Language support varies by browser. Note: iPhone/Safari lacks speech input.'>
+                  <FormLabel>
+                    Language <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+                  </FormLabel>
+                </Tooltip>
+                <FormHelperText>
+                  Speech input
+                </FormHelperText>
+              </Box>
+              <LanguageSelect />
             </FormControl>
 
           </Stack>
