@@ -4,6 +4,7 @@ import { default as Document, DocumentContext, DocumentProps, Head, Html, Main, 
 import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
+import { Brand } from '@/lib/brand';
 import { MyAppProps } from './_app';
 import { bodyFontClassName, createEmotionCache } from '@/lib/theme';
 
@@ -16,9 +17,38 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
     <Html lang='en' className={bodyFontClassName}>
       <Head>
+        {/* Meta (missing Title, set by the App or Page) */}
+        <meta name='description' content={Brand.Meta.Description} />
+        <meta name='keywords' content={Brand.Meta.Keywords} />
+        <meta name='theme-color' content={Brand.Meta.ThemeColor} />
+
+        {/* Favicons & PWA */}
         <link rel='shortcut icon' href='/favicon.ico' />
+        <link rel='icon' type='image/png' sizes='32x32' href='/icons/favicon-32x32.png' />
+        <link rel='icon' type='image/png' sizes='16x16' href='/icons/favicon-16x16.png' />
+        <link rel='apple-touch-icon' sizes='180x180' href='/icons/apple-touch-icon.png' />
         <link rel='manifest' href='/manifest.json' />
+        <meta name='apple-mobile-web-app-capable' content='yes' />
         <meta name='apple-mobile-web-app-status-bar-style' content='black' />
+
+        {/* Opengraph */}
+        <meta property='og:title' content={Brand.Meta.Title} />
+        <meta property='og:description' content={Brand.Meta.Description} />
+        {Brand.URIs.CardImage && <meta property='og:image' content={Brand.URIs.CardImage} />}
+        <meta property='og:url' content={Brand.URIs.Home} />
+        <meta property='og:site_name' content={Brand.Meta.SiteName} />
+        <meta property='og:type' content='website' />
+
+        {/* Twitter */}
+        <meta property='twitter:card' content='summary_large_image' />
+        <meta property='twitter:url' content={Brand.URIs.Home} />
+        <meta property='twitter:title' content={Brand.Meta.Title} />
+        <meta property='twitter:description' content={Brand.Meta.Description} />
+        {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
+        <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
+        <meta name='twitter:card' content='summary_large_image' />
+
+        {/* Style Sheets (injected and server-side) */}
         <meta name='emotion-insertion-point' content='' />
         {emotionStyleTags}
       </Head>

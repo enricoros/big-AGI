@@ -1,25 +1,27 @@
 {
-  "name": "GPT",
-  "short_name": "GPT",
+  "name": "big-AGI",
+  "short_name": "AGI",
+  "theme_color": "#434356",
+  "background_color": "#B9B9C6",
+  "description": "Personal AGI App",
+  "display": "standalone",
+  "start_url": "/",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/icon-1024x1024.png",
+      "src": "/icons/icon-1024x1024.png",
       "sizes": "1024x1024",
       "type": "image/png"
     }
-  ],
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#B9B9C6",
-  "theme_color": "#434356"
+  ]
 }
