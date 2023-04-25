@@ -23,6 +23,7 @@ import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
@@ -370,6 +371,8 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
         />;
       }
       // display the purpose symbol
+      if (messageOriginLLM === 'prodia')
+        return <PaletteOutlinedIcon sx={iconSx} />;
       const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
       if (symbol)
         return <Box

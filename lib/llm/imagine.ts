@@ -17,7 +17,7 @@ export const runImageGenerationUpdatingState = async (conversationId: string, hi
   // create a blank and 'typing' message for the assistant
   let assistantMessageId: string;
   {
-    const assistantMessage: DMessage = createDMessage('assistant', `Give me a few seconds while I draw "${imageText?.length > 20 ? 'that' : imageText}"...`);
+    const assistantMessage: DMessage = createDMessage('assistant', `Give me a few seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`);
     assistantMessageId = assistantMessage.id;
     assistantMessage.typing = true;
     assistantMessage.purposeId = history[0].purposeId;
