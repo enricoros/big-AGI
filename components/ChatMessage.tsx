@@ -114,7 +114,7 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
   if (text.startsWith('https://images.prodia.xyz/') && text.endsWith('.png') && text.length > 60 && text.length < 70)
     return [{ type: 'image', url: text.trim() }];
 
-  const codeBlockRegex = /`{3,}([\w\\.+]+)?\n([\s\S]*?)(`{3,}|$)/g;
+  const codeBlockRegex = /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
 
   let lastIndex = 0;
