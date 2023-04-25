@@ -14,7 +14,7 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: { conversationId: string | null, isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void, onRestartConversation: (conversationId: string, history: DMessage[]) => void, sx?: SxProps }) {
+export function ChatMessageList(props: { conversationId: string | null, isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void, onExecuteConversation: (conversationId: string, history: DMessage[]) => void, onImagineFromText: (conversationId: string, userText: string) => void, sx?: SxProps }) {
   // state
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
@@ -33,13 +33,16 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   const handleMessageEdit = (messageId: string, newText: string) =>
     props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
 
-  const handleRunFromMessage = (messageId: string, offset: number) => {
+  const handleImagineFromText = (messageText: string) =>
+    props.conversationId && props.onImagineFromText(props.conversationId, messageText);
+
+  const handleRestartFromMessage = (messageId: string, offset: number) => {
     const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-    props.conversationId && props.onRestartConversation(props.conversationId, truncatedHistory);
+    props.conversationId && props.onExecuteConversation(props.conversationId, truncatedHistory);
   };
 
-  const handleRunPurposeExample = (text: string) =>
-    props.conversationId && props.onRestartConversation(props.conversationId, [...messages, createDMessage('user', text)]);
+  const handleRunExample = (text: string) =>
+    props.conversationId && props.onExecuteConversation(props.conversationId, [...messages, createDMessage('user', text)]);
 
 
   // hide system messages if the user chooses so
@@ -50,7 +53,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   if (!filteredMessages.length)
     return props.conversationId ? (
       <Box sx={props.sx || {}}>
-        <PurposeSelector conversationId={props.conversationId} runExample={handleRunPurposeExample} />
+        <PurposeSelector conversationId={props.conversationId} runExample={handleRunExample} />
       </Box>
     ) : null;
 
@@ -116,7 +119,8 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
             isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={(offset: number) => handleRunFromMessage(message.id, offset)} />
+            onMessageRunFrom={(offset: number) => handleRestartFromMessage(message.id, offset)}
+            onImagine={handleImagineFromText} />
         ),
       )}
 

@@ -521,7 +521,7 @@ export function Composer(props: {
                 ? <Button fullWidth variant='soft' color='primary' disabled={!props.conversationId} onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
                   Stop
                 </Button>
-                : <Button fullWidth variant='solid' color='primary' disabled={!props.conversationId} onClick={handleSendClicked} onDoubleClick={handleShowSendMode} endDecorator={<TelegramIcon />}>
+                : <Button fullWidth variant='solid' color={sendModeId === 'react' ? 'warning' : 'primary'} disabled={!props.conversationId} onClick={handleSendClicked} onDoubleClick={handleShowSendMode} endDecorator={<TelegramIcon />}>
                   {sendModeId === 'react' ? 'ReAct' : 'Chat'}
                 </Button>}
             </Box>

@@ -1,9 +1,7 @@
-import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
+import { Agent } from '@/lib/llm/react';
 import { ChatModelId, SystemPurposeId } from '@/lib/data';
 import { DMessage, useChatStore } from '@/lib/stores/store-chats';
-import { OpenAIAPI } from '@/types/api-openai';
 import { createAssistantTypingMessage, updatePurposeInHistory } from '@/lib/llm/agi-immediate';
-import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -18,56 +16,42 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
   const assistantMessageId = createAssistantTypingMessage(conversationId, history, assistantModelId);
 
 
-  // main state updater during the full duration of this
-  const { editMessage } = useChatStore.getState();
-  const updateAssistantMessage = (update: Partial<DMessage>) => editMessage(conversationId, assistantMessageId, update, false);
+  // logging function: anything logged gets appended to the 'assistant' message
 
+  const updateAssistantMessage = (update: Partial<DMessage>) =>
+    useChatStore.getState().editMessage(conversationId, assistantMessageId, update, false);
+
+  let logText =
+    'Entering ReAct mode:\n' +
+    '```react-output.md\n';
+
+  const log = (text: string) => {
+    console.log(text);
+    logText += text + '\n';
+    updateAssistantMessage({ text: logText });
+  };
+
+
+  // get the text from the last message in history
+  const lastMessageText = history[history.length - 1].text;
 
   try {
-    const response = await getLLMChatResponse(assistantModelId, history.map(({ role, text }) => ({
-      role: role,
-      content: text,
-    })));
 
-    updateAssistantMessage({ text: response.message.content });
+
+    // react loop
+
+    log(`question: ${lastMessageText}`);
+    const agent = new Agent();
+    const result = await agent.reAct(lastMessageText, assistantModelId, 5, log);
+    log('```');
+    log(`final result: ${result}`);
+
 
   } catch (error: any) {
-
     console.error(error);
-    updateAssistantMessage({ text: `Issue: ${error || 'unknown'}` });
-
+    updateAssistantMessage({ text: logText + `Issue: ${error || 'unknown'}` });
   }
-
 
   // stop the typing animation
   updateAssistantMessage({ typing: false });
-
 };
-
-
-async function getLLMChatResponse(model: ChatModelId, messages: OpenAIAPI.Chat.Message[]): Promise<ApiChatResponse> {
-
-  // use api values from Settings
-  const { apiKey, apiHost, apiOrganizationId, modelTemperature: temperature } = useSettingsStore.getState();
-  const payload: ApiChatInput = {
-    api: {
-      ...(apiKey && { apiKey }),
-      ...(apiHost && { apiHost }),
-      ...(apiOrganizationId && { apiOrganizationId }),
-    },
-    model,
-    messages,
-    temperature,
-  };
-
-  const response = await fetch('/api/openai/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok)
-    throw new Error(`Error ${response.status} ${response.statusText}`);
-
-  return await response.json();
-}

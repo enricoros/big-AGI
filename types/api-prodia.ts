@@ -6,12 +6,16 @@ export namespace Prodia {
     export namespace Imagine {
       export interface RequestBody {
         apiKey?: string;
-        prompt: string;
         prodiaModelId: string;
+        prompt: string;
+        negativePrompt?: string;
+        steps?: number;
+        cfgScale?: number;
+        seed?: number;
       }
 
       export type Response = (
-        { status: 'success', imageUrl: string }
+        { status: 'success', imageUrl: string, altText: string }
         | { status: 'error', error: string }
         ) & { elapsed: number };
     }
@@ -38,6 +42,11 @@ export namespace Prodia {
       export interface JobRequest {
         model: 'sdv1_4.ckpt [7460a6fa]' | string;
         prompt: string;
+        // optional, and not even documented, but inferred from the response data
+        cfg_scale?: number;
+        steps?: number;
+        negative_prompt?: string;
+        seed?: number;
       }
 
       export interface JobResponse {
