@@ -44,7 +44,7 @@ Or fork & run on Vercel
 
 #### 🚨 April: more #big-agi-energy
 
-- 🎉 **Image Generation** using Prodia API Keys (BYOK), just /imagine (or /img) it
+- 🎉 **[Image Generation](docs/pixels/feature_imagine_command.png)** using Prodia (BYO Keys) - /imagine - or menu option
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
 - 🎉 **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
 - 🎉 **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
@@ -85,7 +85,7 @@ your friends.
 Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
 with features that matter to them.
 
-![Much features, so fun](docs/pixels/big-AGI-compo2.png)
+![Much features, so fun](docs/pixels/big-AGI-compo2b.png)
 
 ## Code 🧩
 
