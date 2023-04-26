@@ -31,18 +31,19 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
+import { requireUserKeyElevenLabs, speakText } from '@/modules/elevenlabs/elevenlabs.client';
+import { requireUserKeyProdia } from '@/modules/prodia/prodia.client';
+
 import { DMessage } from '@/common/state/store-chats';
 import { InlineTextarea } from '@/common/components/InlineTextarea';
 import { Link } from '@/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { cssRainbowColorKeyframes } from '@/common/theme';
 import { prettyBaseModel } from '@/common/util/conversationToMarkdown';
-import { requireUserKeyElevenLabs, speakText } from '@/modules/elevenlabs/elevenlabs.client';
 import { useSettingsStore } from '@/common/state/store-settings';
 
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
-import { requireUserKeyProdia } from '@/modules/prodia/prodia.client';
 
 
 /// Utilities to parse messages into blocks of text and code
