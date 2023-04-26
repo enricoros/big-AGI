@@ -72,7 +72,7 @@ Or fork & run on Vercel
 - 🎉 Real-time streaming of AI responses ⚡
 - 🎉 **Voice Input** 🎙️ - works great on Chrome / Windows
 - 🎉 Integration: **[Paste.gg](docs/pixels/feature_paste_gg.png)** integration for chat sharing 📥
-- 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API inspectability 📊
+- 🎉 Integration: **[Helicone](https://www.helicone.ai/)** integration for API observability 📊
 - 🌙 Dark model - Wide mode ⛶
 
 <br/>

@@ -106,10 +106,10 @@ type SendModeData = {
 export const SendModes: { [key in SendModeId]: SendModeData } = {
   'immediate': {
     label: 'Chat',
-    description: 'Direct answers from AI',
+    description: 'AI-powered direct responses',
   },
   'react': {
     label: 'ReAct',
-    description: 'Use ReAct to answer your question',
+    description: 'Use ReAct to answer your questions',
   },
 };

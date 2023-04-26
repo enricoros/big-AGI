@@ -8,7 +8,7 @@ interface CodeBlockProps {
 }
 
 export function OpenInReplit({ codeBlock }: CodeBlockProps): JSX.Element {
-  const { code, language } = codeBlock;
+  const { language } = codeBlock;
 
   const replitLanguageMap: { [key: string]: string } = {
     python: 'python3',

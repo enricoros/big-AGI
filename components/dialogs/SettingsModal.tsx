@@ -19,6 +19,7 @@ import { Brand } from '@/lib/brand';
 import { ElevenLabs } from '@/types/api-elevenlabs';
 import { Link } from '@/components/util/Link';
 import { Prodia } from '@/types/api-prodia';
+import { isValidOpenAIApiKey, requireUserKeyOpenAI } from '@/lib/modules/openai/openai.client';
 import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/stores/store-settings';
@@ -27,14 +28,10 @@ import { useSettingsStore } from '@/lib/stores/store-settings';
 const uniformGap: number = 2;
 
 
-const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
-
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
 
 export const requireUserKeyProdia = !process.env.HAS_SERVER_KEY_PRODIA;
 
-export const isValidOpenAIApiKey = (apiKey?: string) =>
-  !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) =>
   !!apiKey && apiKey.trim()?.length >= 32;
