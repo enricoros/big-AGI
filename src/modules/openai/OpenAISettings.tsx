@@ -7,8 +7,8 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Link } from '@/common/components/Link';
-import { Section } from '@/apps/settings/SettingsModal';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { Section } from '@/common/components/Section';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 import { isValidOpenAIApiKey, requireUserKeyOpenAI } from './openai.client';
 

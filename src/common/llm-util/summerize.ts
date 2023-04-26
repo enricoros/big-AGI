@@ -1,6 +1,6 @@
 import { callChat } from '@/modules/openai/openai.client';
 
-import { ChatModelId, ChatModels } from '../../../data';
+import { ChatModelId, ChatModels } from '../../data';
 import { cleanupPrompt } from './prompts';
 
 
@@ -43,7 +43,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   console.log('************Finished cleaning up the chunks************');
 
   // return if the targetWordCount already reached after step 2
-  if (cleanedChunks.reduce((acc, chunk) => acc + (typeof chunk === 'string' ? chunk.split(' ').length : 0), 0) <= targetWordCount) {
+  if (cleanedChunks.reduce((acc, chunk) => acc + chunk.split(' ').length, 0) <= targetWordCount) {
     console.log('enough content is removed, return the cleaned chunks');
     return cleanedChunks.join('\n');
   }

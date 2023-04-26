@@ -1,5 +1,5 @@
-import { DConversation } from '@/common/stores/store-chats';
-import { SystemPurposes } from '../../../data';
+import { DConversation } from '../state/store-chats';
+import { SystemPurposes } from '../../data';
 
 
 export function prettyBaseModel(model: string | undefined): string {

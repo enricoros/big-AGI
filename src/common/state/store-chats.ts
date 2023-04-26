@@ -3,7 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '../../data';
-import { updateTokenCount } from '../libs/llms/token-counter';
+import { updateTokenCount } from '../llm-util/token-counter';
 
 
 /// Conversations Store

@@ -3,12 +3,10 @@ import { shallow } from 'zustand/shallow';
 import { useQuery } from '@tanstack/react-query';
 
 import { Box, Button, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Modal, ModalClose, ModalDialog, ModalOverflow, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -22,48 +20,17 @@ import { Prodia } from '@/modules/prodia/prodia.types';
 import { isValidElevenLabsApiKey, requireUserKeyElevenLabs } from '@/modules/elevenlabs/elevenlabs.client';
 import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from '@/modules/prodia/prodia.client';
 
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { Section } from '@/common/components/Section';
+import { useSettingsStore } from '@/common/state/store-settings';
 
-import languages from '@/apps/settings/languages.json' assert { type: 'json' };
+import languages from './languages.json' assert { type: 'json' };
+import { hideOnMobile } from '@/common/theme';
 
 
 export const uniformGap: number = 2;
 export const settingsCol1Width: number = 150;
 export const settingsMaxWidth: number = 500;
-export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
-
-export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, sx?: SxProps, children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = React.useState(props.collapsed ?? false);
-
-  return <>
-
-    <Stack direction='row' sx={{ mt: (props.title ? 1 : 0), alignItems: 'center', ...(props.sx ?? {}) }}>
-      {!!props.title && (
-        <FormLabel>
-          {props.title}
-        </FormLabel>
-      )}
-      {!!props.collapsible && (
-        <IconButton size='md' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
-          {!collapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-        </IconButton>
-      )}
-    </Stack>
-
-    {!collapsed && <Box sx={{ mt: 1.5, mb: 1.5 }}>
-      {props.children}
-    </Box>}
-
-    {!!props.disclaimer && !collapsed && (
-      <FormHelperText>
-        {props.disclaimer}
-      </FormHelperText>
-    )}
-
-  </>;
-}
 
 function LanguageSelect() {
   // external state

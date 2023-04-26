@@ -17,18 +17,18 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ChatModels, SendModeId, SendModes } from '../../../../data';
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { countModelTokens } from '@/common/libs/llms/token-counter';
-import { hideOnDesktop, hideOnMobile } from '@/apps/settings/SettingsModal';
-import { htmlTableToMarkdown } from '@/common/libs/converters/htmlTableToMarkdown';
-import { pdfToText } from '@/common/libs/converters/pdfToText';
-import { useChatStore } from '@/common/stores/store-chats';
-import { useComposerStore } from '@/common/stores/store-composer';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { countModelTokens } from '@/common/llm-util/token-counter';
+import { htmlTableToMarkdown } from '@/common/util/htmlTableToMarkdown';
+import { pdfToText } from '@/common/util/pdfToText';
+import { useChatStore } from '@/common/state/store-chats';
+import { useComposerStore } from '@/common/state/store-composer';
+import { useSettingsStore } from '@/common/state/store-settings';
 import { useSpeechRecognition } from '@/common/components/useSpeechRecognition';
 
 import { ContentReducerModal } from './ContentReducerModal';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
+import { hideOnDesktop, hideOnMobile } from '@/common/theme';
 import { isValidProdiaApiKey, requireUserKeyProdia } from '@/modules/prodia/prodia.client';
 
 

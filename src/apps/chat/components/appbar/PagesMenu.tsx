@@ -9,8 +9,8 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
 import { InlineTextarea } from '@/common/components/InlineTextarea';
 import { SystemPurposes } from '../../../../data';
-import { conversationTitle, MAX_CONVERSATIONS, useChatStore } from '@/common/stores/store-chats';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { conversationTitle, MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 
 const DEBUG_CONVERSATION_IDs = false;
