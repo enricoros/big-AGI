@@ -19,10 +19,11 @@
     "paths": {
       "@/components/*": ["components/*"],
       "@/lib/*": ["lib/*"],
-      "@/modules/*": ["src/modules/*"],
-      "@/types/*": ["types/*"],
+      "@/common/*": ["src/common/*"],
+      "@/global/*": ["src/global/*"],
+      "@/modules/*": ["src/modules/*"]
     },
   },
-  "include": ["next-env.d.ts", "types/**/*.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

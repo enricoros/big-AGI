@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ElevenLabs } from '@/types/api-elevenlabs';
+import { ElevenLabs } from '@/modules/elevenlabs/elevenlabs.types';
 import { getFromElevenLabs } from './speech';
 
 

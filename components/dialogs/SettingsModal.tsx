@@ -15,10 +15,10 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
-import { ElevenLabs } from '@/types/api-elevenlabs';
+import { ElevenLabs } from '@/modules/elevenlabs/elevenlabs.types';
 import { OpenAIAdvancedSettings } from '@/modules/openai/OpenAIAdvancedSettings';
 import { OpenAISettings } from '@/modules/openai/OpenAISettings';
-import { Prodia } from '@/types/api-prodia';
+import { Prodia } from '@/modules/prodia/prodia.types';
 import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/stores/store-settings';
