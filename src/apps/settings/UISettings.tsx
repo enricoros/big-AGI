@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/esm/shallow';
+import { shallow } from 'zustand/shallow';
 
 import { Box, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Switch, Tooltip } from '@mui/joy';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';

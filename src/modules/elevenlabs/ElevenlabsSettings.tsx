@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/esm/shallow';
+import { shallow } from 'zustand/shallow';
 import { useQuery } from '@tanstack/react-query';
 
 import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Option, Radio, RadioGroup, Select, Stack } from '@mui/joy';
