@@ -1,6 +1,5 @@
-import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { ChatModelId, fastChatModelId } from '@/lib/data';
-import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
+import { callChat } from '@/lib/modules/openai/openai.client';
 import { useChatStore } from '@/lib/stores/store-chats';
 
 
@@ -10,55 +9,46 @@ import { useChatStore } from '@/lib/stores/store-chats';
 export async function updateAutoConversationTitle(conversationId: string) {
 
   // external state
-  const { conversations, setAutoTitle } = useChatStore.getState();
+  const conversations = useChatStore.getState().conversations;
 
   // only operate on valid conversations, without any title
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
   if (!conversation || conversation.autoTitle || conversation.userTitle) return;
 
   // first line of the last 5 messages
-  const historyLines: string[] = conversation.messages.slice(-5).filter(m => m.role !== 'system').map(m => {
+  const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
     let text = m.text.split('\n')[0];
     text = text.length > 50 ? text.substring(0, 50) + '...' : text;
     text = `${m.role === 'user' ? 'You' : 'Assistant'}: ${text}`;
     return `- ${text}`;
   });
 
-  // prepare the payload
-  const payload: ApiChatInput = {
-    api: getOpenAIConfiguration(),
-    model: fastChatModelId,
-    messages: [
-      { role: 'system', content: `You are an AI language expert who specializes in creating very concise and short chat titles.` },
-      {
-        role: 'user', content:
-          'Analyze the given list of pre-processed first lines from each participant\'s conversation and generate a concise chat ' +
-          'title that represents the content and tone of the conversation. Only respond with the lowercase short title and nothing else.\n' +
-          '\n' +
-          historyLines.join('\n') +
-          '\n',
-      },
-    ],
-  };
+  // LLM
+  callChat(fastChatModelId, [
+    { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
+    {
+      role: 'user', content:
+        'Analyze the given short conversation (every line is truncated) and extract a concise chat title that ' +
+        'summarizes the conversation in as little as a couple of words.\n' +
+        'Only respond with the lowercase short title and nothing else.\n' +
+        '\n' +
+        '```\n' +
+        historyLines.join('\n') +
+        '```\n',
+    },
+  ]).then(chatResponse => {
 
-  try {
-    const response = await fetch('/api/openai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (response.ok) {
-      const chatResponse: ApiChatResponse = await response.json();
-      const title = chatResponse.message?.content?.trim()
-        ?.replaceAll('"', '')
-        ?.replace('Title: ', '')
-        ?.replace('title: ', '');
-      if (title)
-        setAutoTitle(conversationId, title);
-    }
-  } catch (error: any) {
-    console.error('updateAutoConversationTitle: fetch request error:', error);
-  }
+    const title = chatResponse?.message?.content
+      ?.trim()
+      ?.replaceAll('"', '')
+      ?.replace('Title: ', '')
+      ?.replace('title: ', '');
+
+    if (title)
+      useChatStore.getState().setAutoTitle(conversationId, title);
+
+  });
+
 }
 
 // https://www.youtube.com/watch?v=XLG-qtZwxIw
@@ -74,39 +64,24 @@ export async function updateAutoConversationTitle(conversationId: string) {
   'when giving a prompt remove the brackets, speak in natural language and be more specific, use precise, articulate language.';
 */
 
+// NOTE: formerly using this for GPT3.5Turbo
+// 'You are an AI prompt writer for AI art generation. I will provide you with an input that may include ideas or context, and your task is to create coherent and complete prompts that guide the AI in creating visually captivating artwork.\n' +
+// 'Prompts involve crafting descriptive compelling captions that describe scenes, settings, or subjects at a high level, using mostly adjectives and nouns to provide clear and focused guidance. You may also include references to artistic styles, techniques, or cultural influences to help achieve the desired aesthetic.\n' +
+// 'To ensure the AI can interpret and generate the artwork based on the provided guidance, the output must be the lowercase prompt and nothing else.',
+const simpleImagineSystemPrompt: string = 'As an AI art prompt writer, create captivating prompts using adjectives, nouns, and artistic references that a non-technical person can understand. Craft creative, coherent and descriptive captions to guide the AI in generating visually striking artwork. Provide output as a lowercase prompt and nothing else.';
+
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
 export async function imaginePromptFromText(messageText: string, modelId: ChatModelId): Promise<string | null> {
-
-  const payload: ApiChatInput = {
-    api: getOpenAIConfiguration(),
-    messages: [
-      {
-        role: 'system',
-        content: 'As an AI art prompt writer, create captivating prompts using adjectives, nouns, and artistic references that a non-technical person can understand. Craft creative, coherent and descriptive captions to guide the AI in generating visually striking artwork. Provide output as a lowercase prompt and nothing else.',
-        // NOTE: formerly using this for GPT3.5Turbo
-        // 'You are an AI prompt writer for AI art generation. I will provide you with an input that may include ideas or context, and your task is to create coherent and complete prompts that guide the AI in creating visually captivating artwork.\n' +
-        // 'Prompts involve crafting descriptive compelling captions that describe scenes, settings, or subjects at a high level, using mostly adjectives and nouns to provide clear and focused guidance. You may also include references to artistic styles, techniques, or cultural influences to help achieve the desired aesthetic.\n' +
-        // 'To ensure the AI can interpret and generate the artwork based on the provided guidance, the output must be the lowercase prompt and nothing else.',
-      },
-      { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
-    ],
-    model: modelId,
-  };
-
   try {
-    const response = await fetch('/api/openai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (response.ok) {
-      const chatResponse: ApiChatResponse = await response.json();
-      return chatResponse.message?.content?.trim() ?? null;
-    }
+    const chatResponse = await callChat(modelId, [
+      { role: 'system', content: simpleImagineSystemPrompt },
+      { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
+    ]);
+    return chatResponse.message?.content?.trim() ?? null;
   } catch (error: any) {
-    console.error('imagineFromMessage: fetch request error:', error);
+    console.error('imaginePromptFromText: fetch request error:', error);
+    return null;
   }
-  return null;
 }

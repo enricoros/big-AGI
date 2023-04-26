@@ -1,39 +1,23 @@
-import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { ChatModelId } from '@/lib/data';
-import { OpenAIAPI } from '@/types/api-openai';
-import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
+import { OpenAI } from '@/lib/modules/openai/openai.types';
 import { reActPrompt } from './prompts';
+import { callChat } from '@/lib/modules/openai/openai.client';
 
 const actionRe = /^Action: (\w+): (.*)$/;
 
 class Agent {
-  messages: OpenAIAPI.Chat.Message[] = [{ role: 'system', content: reActPrompt }];
+  messages: OpenAI.Wire.Chat.Message[] = [{ role: 'system', content: reActPrompt }];
 
-  async chat(prompt: string, modelId: string): Promise<string> {
+  async chat(prompt: string, modelId: ChatModelId): Promise<string> {
     this.messages.push({ role: 'user', content: prompt });
-    const input: ApiChatInput = {
-      api: getOpenAIConfiguration(),
-      model: modelId,
-      messages: this.messages,
-      max_tokens: 500,
-    };
-
-    const response = await fetch('/api/openai/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      console.error('Error from API call: ', response.status, response.statusText);
-      return '';
+    let content: string;
+    try {
+      content = (await callChat(modelId, this.messages, 500)).message.content;
+    } catch (error: any) {
+      content = `Error in callChat: ${error}`;
     }
-
-    const data: ApiChatResponse = await response.json();
-    this.messages.push({ role: 'assistant', content: data.message.content });
-    return data.message.content;
+    this.messages.push({ role: 'assistant', content });
+    return content;
   }
 
   async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log = console.log): Promise<string> {
