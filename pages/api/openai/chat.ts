@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { OpenAI } from '@/lib/modules/openai/openai.types';
-import { openaiPost, toApiChatRequest, toWireCompletionRequest } from '@/lib/modules/openai/openai.server';
+import { OpenAI } from '@/modules/openai/openai.types';
+import { openaiPost, toApiChatRequest, toWireCompletionRequest } from '@/modules/openai/openai.server';
 
 
 

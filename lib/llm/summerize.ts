@@ -1,6 +1,6 @@
 import { ChatModelId, ChatModels } from '@/lib/data';
 import { cleanupPrompt } from './prompts';
-import { callChat } from '@/lib/modules/openai/openai.client';
+import { callChat } from '@/modules/openai/openai.client';
 
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
