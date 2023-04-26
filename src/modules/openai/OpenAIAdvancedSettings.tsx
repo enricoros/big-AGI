@@ -6,9 +6,8 @@ import { Box, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } fro
 import { Brand } from '@/common/brand';
 import { Link } from '@/common/components/Link';
 import { Section } from '@/common/components/Section';
+import { settingsCol1Width, settingsGap, settingsMaxWidth } from '@/common/theme';
 import { useSettingsStore } from '@/common/state/store-settings';
-
-import { settingsCol1Width, settingsMaxWidth, uniformGap } from '@/apps/settings/SettingsModal';
 
 
 export function OpenAIAdvancedSettings() {
@@ -33,7 +32,7 @@ export function OpenAIAdvancedSettings() {
              collapsible collapsed
              disclaimer='Adjust only if you are familiar with these terms'
              sx={{ mt: 2 }}>
-      <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8, maxWidth: settingsMaxWidth }}>
+      <Stack direction='column' sx={{ gap: settingsGap, mt: -0.8, maxWidth: settingsMaxWidth }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: settingsCol1Width }}>

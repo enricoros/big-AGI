@@ -1,12 +1,18 @@
 import createCache from '@emotion/cache';
-import { keyframes } from '@emotion/react';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
+import { keyframes } from '@emotion/react';
 
 
 // CSS utils
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
+
+// Dimensions
+export const settingsGap: number = 2;
+export const settingsCol1Width: number = 150;
+export const settingsMaxWidth: number = 500;
+
 
 // Theme & Fonts
 
