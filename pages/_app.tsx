@@ -6,9 +6,9 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import '@/global/styles/GithubMarkdown.css';
-import { Brand } from '@/lib/brand';
-import { createEmotionCache, theme } from '@/lib/theme';
+import '@/common/styles/GithubMarkdown.css';
+import { Brand } from '../src/brand';
+import { createEmotionCache, theme } from '../src/theme';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.

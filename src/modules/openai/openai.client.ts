@@ -1,6 +1,7 @@
-import { ChatModelId } from '@/lib/data';
+import { ChatModelId } from '../../data';
+import { useSettingsStore } from '@/common/stores/store-settings';
+
 import { OpenAI } from './openai.types';
-import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;

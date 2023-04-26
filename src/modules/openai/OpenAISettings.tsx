@@ -6,10 +6,11 @@ import KeyIcon from '@mui/icons-material/Key';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { Link } from '@/components/util/Link';
-import { Section } from '@/components/dialogs/SettingsModal';
+import { Link } from '@/common/components/Link';
+import { Section } from '@/apps/settings/SettingsModal';
+import { useSettingsStore } from '@/common/stores/store-settings';
+
 import { isValidOpenAIApiKey, requireUserKeyOpenAI } from './openai.client';
-import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export function OpenAISettings() {
