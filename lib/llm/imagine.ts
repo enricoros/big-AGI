@@ -1,4 +1,4 @@
-import { Prodia } from '@/types/api-prodia';
+import { Prodia } from '@/modules/prodia/prodia.types';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 

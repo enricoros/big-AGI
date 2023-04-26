@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ApiPublishResponse } from '../publish';
-import { ElevenLabs } from '@/types/api-elevenlabs';
+import { ElevenLabs } from '@/modules/elevenlabs/elevenlabs.types';
 
 
 function parseApiParameters(apiKey?: string) {
