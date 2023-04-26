@@ -15,17 +15,20 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
-import { Brand } from '@/lib/brand';
 import { ElevenLabs } from '@/types/api-elevenlabs';
-import { Link } from '@/components/util/Link';
+import { OpenAIAdvancedSettings } from '@/lib/modules/openai/OpenAIAdvancedSettings';
+import { OpenAISettings } from '@/lib/modules/openai/OpenAISettings';
 import { Prodia } from '@/types/api-prodia';
-import { isValidOpenAIApiKey, requireUserKeyOpenAI } from '@/lib/modules/openai/openai.client';
 import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
-const uniformGap: number = 2;
+export const uniformGap: number = 2;
+export const settingsCol1Width: number = 150;
+export const settingsMaxWidth: number = 500;
+export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
@@ -71,6 +74,133 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
   </>;
 }
 
+function LanguageSelect() {
+  // external state
+  const { preferredLanguage, setPreferredLanguage } = useSettingsStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
+
+  const handleLanguageChanged = (event: any, newValue: string | null) => {
+    if (!newValue) return;
+    setPreferredLanguage(newValue as string);
+
+    // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
+    //if (typeof window !== 'undefined')
+    //  window.location.reload();
+  };
+
+  const languageOptions = React.useMemo(() => Object.entries(languages).map(([language, localesOrCode]) =>
+    typeof localesOrCode === 'string'
+      ? (
+        <Option key={localesOrCode} value={localesOrCode}>
+          {language}
+        </Option>
+      ) : (
+        Object.entries(localesOrCode).map(([country, code]) => (
+          <Option key={code} value={code}>
+            {`${language} (${country})`}
+          </Option>
+        ))
+      )), []);
+
+  return (
+    <Select value={preferredLanguage} onChange={handleLanguageChanged}
+            indicator={<KeyboardArrowDownIcon />}
+            slotProps={{
+              root: { sx: { minWidth: 200 } },
+              indicator: { sx: { opacity: 0.5 } },
+            }}>
+      {languageOptions}
+    </Select>
+  );
+}
+
+function UISettings() {
+  // external state
+  const {
+    centerMode, setCenterMode,
+    renderMarkdown, setRenderMarkdown,
+    showPurposeFinder, setShowPurposeFinder,
+    zenMode, setZenMode,
+  } = useSettingsStore(state => ({
+    centerMode: state.centerMode, setCenterMode: state.setCenterMode,
+    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
+    showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
+    zenMode: state.zenMode, setZenMode: state.setZenMode,
+  }), shallow);
+
+  const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
+
+  const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
+
+  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
+  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+
+  return (
+    <Section>
+      <Stack direction='column' sx={{ gap: uniformGap }}>
+
+        <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <FormLabel>Centering</FormLabel>
+            <FormHelperText>{centerMode === 'full' ? 'Full screen' : centerMode === 'narrow' ? 'Narrow' : 'Wide'} chat</FormHelperText>
+          </Box>
+          <RadioGroup orientation='horizontal' value={centerMode} onChange={handleCenterModeChange}>
+            <Radio value='narrow' label={<WidthNormalIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+            <Radio value='wide' label={<WidthWideIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+            <Radio value='full' label='Full' />
+          </RadioGroup>
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <FormLabel>Appearance</FormLabel>
+            <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Hide senders and menus'}</FormHelperText>
+          </Box>
+          <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
+            {/*<Radio value='clean' label={<Face6Icon sx={{ width: 24, height: 24, mt: -0.25 }} />} />*/}
+            <Radio value='clean' label='Clean' />
+            <Radio value='cleaner' label='Empty' />
+          </RadioGroup>
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <Box>
+            <FormLabel>Markdown</FormLabel>
+            <FormHelperText>{renderMarkdown ? 'Render markdown' : 'Text only'}</FormHelperText>
+          </Box>
+          <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
+                  endDecorator={renderMarkdown ? 'On' : 'Off'}
+                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <Box>
+            <FormLabel>Purpose finder</FormLabel>
+            <FormHelperText>{showPurposeFinder ? 'Show search bar' : 'Hide search bar'}</FormHelperText>
+          </Box>
+          <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
+                  endDecorator={showPurposeFinder ? 'On' : 'Off'}
+                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Tooltip title='Currently for Microphone input only. Language support varies by browser. Note: iPhone/Safari lacks speech input.'>
+              <FormLabel>
+                Language <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+              </FormLabel>
+            </Tooltip>
+            <FormHelperText>
+              Speech input
+            </FormHelperText>
+          </Box>
+          <LanguageSelect />
+        </FormControl>
+
+      </Stack>
+    </Section>
+  );
+}
 
 function ElevenLabsSection() {
   // state
@@ -172,7 +302,6 @@ function ElevenLabsSection() {
     </Section>
   );
 }
-
 
 function ProdiaSection() {
   // state
@@ -349,136 +478,6 @@ function ProdiaSection() {
 }
 
 
-function AdvancedSection() {
-  // external state
-  const { apiHost, setApiHost, apiOrganizationId, setApiOrganizationId, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens } = useSettingsStore(state => ({
-    apiHost: state.apiHost, setApiHost: state.setApiHost,
-    apiOrganizationId: state.apiOrganizationId, setApiOrganizationId: state.setApiOrganizationId,
-    modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
-    modelMaxResponseTokens: state.modelMaxResponseTokens, setModelMaxResponseTokens: state.setModelMaxResponseTokens,
-  }), shallow);
-
-  const handleTemperatureChange = (event: Event, newValue: number | number[]) => setModelTemperature(newValue as number);
-
-  const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
-
-  const handleApiHostChange = (e: React.ChangeEvent) => setApiHost((e.target as HTMLInputElement).value);
-
-  const handleApiOrganizationIdChange = (e: React.ChangeEvent) => setApiOrganizationId((e.target as HTMLInputElement).value);
-
-
-  return (
-    <Section title='Advanced AI settings' collapsible collapsed={true} disclaimer='Adjust only if you are familiar with these terms' sx={{ mt: 2 }}>
-      <Stack direction='column' sx={{ gap: uniformGap, mt: -0.8, maxWidth: 400 }}>
-
-        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ minWidth: 130 }}>
-            <FormLabel>Temperature</FormLabel>
-            <FormHelperText>{modelTemperature < 0.33 ? 'More strict' : modelTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}</FormHelperText>
-          </Box>
-          <Slider
-            aria-label='Model Temperature' color='neutral'
-            min={0} max={1} step={0.1} defaultValue={0.5}
-            value={modelTemperature} onChange={handleTemperatureChange}
-            valueLabelDisplay='auto'
-            sx={{ py: 1, mt: 1.1 }}
-          />
-        </FormControl>
-
-        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ minWidth: 130 }}>
-            <FormLabel>Max Tokens</FormLabel>
-            <FormHelperText>Response size</FormHelperText>
-          </Box>
-          <Slider
-            aria-label='Model Max Tokens' color='neutral'
-            min={256} max={4096} step={256} defaultValue={1024}
-            value={modelMaxResponseTokens} onChange={handleMaxTokensChange}
-            valueLabelDisplay='auto'
-            sx={{ py: 1, mt: 1.1 }}
-          />
-        </FormControl>
-
-        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ minWidth: 130 }}>
-            <FormLabel>
-              API Host
-              {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
-              {/*  <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />*/}
-              {/*</Tooltip>*/}
-            </FormLabel>
-            <FormHelperText sx={{ display: 'block' }}>
-              For <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>
-            </FormHelperText>
-          </Box>
-          <Input
-            variant='outlined' placeholder='api.openai.com'
-            value={apiHost} onChange={handleApiHostChange}
-            sx={{ flexGrow: 1 }}
-          />
-        </FormControl>
-
-        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ minWidth: 130 }}>
-            <FormLabel>
-              Organization ID
-            </FormLabel>
-            <FormHelperText sx={{ display: 'block' }}>
-              <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
-            </FormHelperText>
-          </Box>
-          <Input
-            variant='outlined' placeholder='Optional, for org users'
-            value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
-            sx={{ flexGrow: 1 }}
-          />
-        </FormControl>
-
-      </Stack>
-    </Section>
-  );
-}
-
-
-function LanguageSelect() {
-  // external state
-  const { preferredLanguage, setPreferredLanguage } = useSettingsStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
-
-  const handleLanguageChanged = (event: any, newValue: string | null) => {
-    if (!newValue) return;
-    setPreferredLanguage(newValue as string);
-
-    // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
-    //if (typeof window !== 'undefined')
-    //  window.location.reload();
-  };
-
-  const languageOptions = React.useMemo(() => Object.entries(languages).map(([language, localesOrCode]) =>
-    typeof localesOrCode === 'string'
-      ? (
-        <Option key={localesOrCode} value={localesOrCode}>
-          {language}
-        </Option>
-      ) : (
-        Object.entries(localesOrCode).map(([country, code]) => (
-          <Option key={code} value={code}>
-            {`${language} (${country})`}
-          </Option>
-        ))
-      )), []);
-
-  return (
-    <Select value={preferredLanguage} onChange={handleLanguageChanged}
-            indicator={<KeyboardArrowDownIcon />}
-            slotProps={{
-              root: { sx: { minWidth: 200 } },
-              indicator: { sx: { opacity: 0.5 } },
-            }}>
-      {languageOptions}
-    </Select>
-  );
-}
-
 /**
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
@@ -487,159 +486,32 @@ function LanguageSelect() {
  * @param {() => void} onClose Call this to close the dialog from outside
  */
 export function SettingsModal({ open, onClose }: { open: boolean, onClose: () => void; }) {
-  // state
-  const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
-
-  // external state
-  const {
-    centerMode, setCenterMode,
-    renderMarkdown, setRenderMarkdown,
-    showPurposeFinder, setShowPurposeFinder,
-    zenMode, setZenMode,
-    apiKey, setApiKey,
-  } = useSettingsStore(state => ({
-    centerMode: state.centerMode, setCenterMode: state.setCenterMode,
-    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
-    apiKey: state.apiKey, setApiKey: state.setApiKey,
-  }), shallow);
-
-
-  const handleApiKeyChange = (e: React.ChangeEvent) => setApiKey((e.target as HTMLInputElement).value);
-
-  const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
-
-
-  const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
-
-  const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
-
-  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
-
-  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
-
-
-  const isValidOpenAIKey = isValidOpenAIApiKey(apiKey);
-
-  const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-
   return (
     <Modal open={open} onClose={onClose}>
-      <ModalOverflow><ModalDialog sx={{ maxWidth: 500, display: 'flex', p: { xs: 1, sm: 2, lg: '20px' } }}>
-        <ModalClose />
+      <ModalOverflow>
+        <ModalDialog sx={{ maxWidth: 500, display: 'flex', p: { xs: 1, sm: 2, lg: '20px' } }}>
 
-        <Typography level='h5' sx={{ mb: 2 }}>Settings</Typography>
+          <Typography level='h6' sx={{ mb: 2 }}>Settings</Typography>
+          <ModalClose />
 
+          <OpenAISettings />
 
-        <Section>
+          <UISettings />
 
-          <FormControl>
-            <FormLabel>
-              OpenAI API Key {requireUserKeyOpenAI ? '' : '(optional)'}
-            </FormLabel>
-            <Input
-              variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requireUserKeyOpenAI ? 'required' : 'sk-...'} error={requireUserKeyOpenAI && !isValidOpenAIKey}
-              value={apiKey} onChange={handleApiKeyChange}
-              startDecorator={<KeyIcon />}
-              endDecorator={!!apiKey && (
-                <IconButton variant='plain' color='neutral' onClick={handleToggleApiKeyVisibility}>
-                  {showApiKeyValue ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                </IconButton>
-              )}
+          <ElevenLabsSection />
 
-            />
-            <FormHelperText sx={{ display: 'block', lineHeight: 1.75 }}>
-              {requireUserKeyOpenAI
-                ? <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>Create Key</Link>, then apply to
-                  the <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>GPT-4 waitlist</Link></>
-                : `This key will take precedence over the server's.`} <Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>Check usage here</Link>.
-            </FormHelperText>
-          </FormControl>
+          <ProdiaSection />
 
-        </Section>
+          <OpenAIAdvancedSettings />
 
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button variant='solid' onClick={onClose}>
+              Close
+            </Button>
+          </Box>
 
-        <Section>
-          <Stack direction='column' sx={{ gap: uniformGap }}>
-
-            <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <FormLabel>Centering</FormLabel>
-                <FormHelperText>{centerMode === 'full' ? 'Full screen' : centerMode === 'narrow' ? 'Narrow' : 'Wide'} chat</FormHelperText>
-              </Box>
-              <RadioGroup orientation='horizontal' value={centerMode} onChange={handleCenterModeChange}>
-                <Radio value='narrow' label={<WidthNormalIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-                <Radio value='wide' label={<WidthWideIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-                <Radio value='full' label='Full' />
-              </RadioGroup>
-            </FormControl>
-
-            <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <FormLabel>Appearance</FormLabel>
-                <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Hide senders and menus'}</FormHelperText>
-              </Box>
-              <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
-                {/*<Radio value='clean' label={<Face6Icon sx={{ width: 24, height: 24, mt: -0.25 }} />} />*/}
-                <Radio value='clean' label='Clean' />
-                <Radio value='cleaner' label='Empty' />
-              </RadioGroup>
-            </FormControl>
-
-            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box>
-                <FormLabel>Markdown</FormLabel>
-                <FormHelperText>{renderMarkdown ? 'Render markdown' : 'Text only'}</FormHelperText>
-              </Box>
-              <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
-                      endDecorator={renderMarkdown ? 'On' : 'Off'}
-                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-            </FormControl>
-
-            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-              <Box>
-                <FormLabel>Purpose finder</FormLabel>
-                <FormHelperText>{showPurposeFinder ? 'Show search bar' : 'Hide search bar'}</FormHelperText>
-              </Box>
-              <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
-                      endDecorator={showPurposeFinder ? 'On' : 'Off'}
-                      slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-            </FormControl>
-
-            <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Tooltip title='Currently for Microphone input only. Language support varies by browser. Note: iPhone/Safari lacks speech input.'>
-                  <FormLabel>
-                    Language <InfoOutlinedIcon sx={{ mx: 0.5 }} />
-                  </FormLabel>
-                </Tooltip>
-                <FormHelperText>
-                  Speech input
-                </FormHelperText>
-              </Box>
-              <LanguageSelect />
-            </FormControl>
-
-          </Stack>
-        </Section>
-
-        {/* ElevenLabs */}
-        <ElevenLabsSection />
-
-        {/* Prodia */}
-        <ProdiaSection />
-
-        {/* Advanced Settings */}
-        <AdvancedSection />
-
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='solid' color={isValidOpenAIKey ? 'primary' : 'neutral'} onClick={onClose}>
-            Close
-          </Button>
-        </Box>
-
-      </ModalDialog></ModalOverflow>
+        </ModalDialog>
+      </ModalOverflow>
     </Modal>
   );
 }
