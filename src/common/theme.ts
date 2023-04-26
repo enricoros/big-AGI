@@ -4,10 +4,11 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 
-// Theme & Fonts
+// CSS utils
+export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
+export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
-// For next April Fools' week
-// export const foolsMode = new Date().getMonth() === 3 && new Date().getDate() <= 7;
+// Theme & Fonts
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -135,3 +136,8 @@ export function createEmotionCache() {
 
   return createCache({ key: 'mui-style', insertionPoint });
 }
+
+// MISC
+
+// For next April Fools' week
+// export const foolsMode = new Date().getMonth() === 3 && new Date().getDate() <= 7;

@@ -1,7 +1,7 @@
 import { OpenAI } from '@/modules/openai/openai.types';
 import { callChat } from '@/modules/openai/openai.client';
 
-import { ChatModelId } from '../../../data';
+import { ChatModelId } from '../../data';
 import { reActPrompt } from './prompts';
 
 const actionRe = /^Action: (\w+): (.*)$/;

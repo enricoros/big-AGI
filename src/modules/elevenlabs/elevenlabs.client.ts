@@ -1,5 +1,5 @@
 import { ElevenLabs } from './elevenlabs.types';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;

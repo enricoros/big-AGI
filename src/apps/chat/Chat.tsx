@@ -10,10 +10,10 @@ import { callPublish } from '@/modules/pastegg/pastegg.client';
 
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
 import { Link } from '@/common/components/Link';
-import { conversationToMarkdown } from '@/common/libs/converters/conversationToMarkdown';
-import { createDMessage, DMessage, useChatStore } from '@/common/stores/store-chats';
-import { useComposerStore } from '@/common/stores/store-composer';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { conversationToMarkdown } from '@/common/util/conversationToMarkdown';
+import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
+import { useComposerStore } from '@/common/state/store-composer';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 import { ApplicationBar } from './components/appbar/ApplicationBar';
 import { ChatMessageList } from './components/ChatMessageList';

@@ -1,5 +1,5 @@
 import { ChatModelId } from '../../data';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 import { OpenAI } from './openai.types';
 

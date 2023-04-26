@@ -16,8 +16,8 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/common/stores/store-chats';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/common/state/store-chats';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 import { AppBarDropdown } from './AppBarDropdown';
 import { AppBarDropdownWithSymbol } from './AppBarDropdownWithSymbol';

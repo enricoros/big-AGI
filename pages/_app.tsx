@@ -7,8 +7,8 @@ import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import '@/common/styles/GithubMarkdown.css';
-import { Brand } from '../src/brand';
-import { createEmotionCache, theme } from '../src/theme';
+import { Brand } from '@/common/brand';
+import { createEmotionCache, theme } from '@/common/theme';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.

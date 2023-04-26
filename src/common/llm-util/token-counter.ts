@@ -1,7 +1,7 @@
 import { encoding_for_model, get_encoding, Tiktoken } from '@dqbd/tiktoken';
 
-import { ChatModelId, defaultChatModelId } from '../../../data';
-import { DMessage } from '../../stores/store-chats';
+import { ChatModelId, defaultChatModelId } from '../../data';
+import { DMessage } from '../state/store-chats';
 
 
 // Do not set this to true in production, it's very verbose

@@ -3,9 +3,9 @@ import * as React from 'react';
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
 import { ChatModelId, ChatModels, fastChatModelId } from '../../../../data';
-import { Section } from '@/apps/settings/SettingsModal';
-import { countModelTokens } from '@/common/libs/llms/token-counter';
-import { summerizeToFitContextBudget } from '@/common/libs/llms/summerize';
+import { Section } from '@/common/components/Section';
+import { countModelTokens } from '@/common/llm-util/token-counter';
+import { summerizeToFitContextBudget } from '@/common/llm-util/summerize';
 
 import { TokenBadge } from './TokenBadge';
 

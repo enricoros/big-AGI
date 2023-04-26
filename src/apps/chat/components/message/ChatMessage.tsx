@@ -31,14 +31,14 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
-import { DMessage } from '@/common/stores/store-chats';
+import { DMessage } from '@/common/state/store-chats';
 import { InlineTextarea } from '@/common/components/InlineTextarea';
 import { Link } from '@/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { cssRainbowColorKeyframes } from '../../../../theme';
-import { prettyBaseModel } from '@/common/libs/converters/conversationToMarkdown';
+import { cssRainbowColorKeyframes } from '@/common/theme';
+import { prettyBaseModel } from '@/common/util/conversationToMarkdown';
 import { requireUserKeyElevenLabs, speakText } from '@/modules/elevenlabs/elevenlabs.client';
-import { useSettingsStore } from '@/common/stores/store-settings';
+import { useSettingsStore } from '@/common/state/store-settings';
 
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
