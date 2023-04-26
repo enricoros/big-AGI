@@ -23,17 +23,11 @@ import { TokenProgress } from '@/components/util/TokenProgress';
 import { convertHTMLTableToMarkdown } from '@/lib/util/markdown';
 import { countModelTokens } from '@/lib/llm/tokens';
 import { extractPdfText } from '@/lib/util/pdf';
-import { isValidProdiaApiKey, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
+import { hideOnDesktop, hideOnMobile, isValidProdiaApiKey, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 import { useChatStore } from '@/lib/stores/store-chats';
 import { useComposerStore } from '@/lib/stores/store-composer';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
-
-
-// CSS helpers
-
-const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 
 /// Text template helpers
