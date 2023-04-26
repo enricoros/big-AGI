@@ -3,10 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } from '@mui/joy';
 
-import { Brand } from '@/lib/brand';
-import { Link } from '@/components/util/Link';
-import { Section, settingsCol1Width, settingsMaxWidth, uniformGap } from '@/components/dialogs/SettingsModal';
-import { useSettingsStore } from '@/global/stores/store-settings';
+import { Brand } from '../../brand';
+import { Link } from '@/common/components/Link';
+import { Section, settingsCol1Width, settingsMaxWidth, uniformGap } from '@/apps/settings/SettingsModal';
+import { useSettingsStore } from '@/common/stores/store-settings';
 
 
 export function OpenAIAdvancedSettings() {

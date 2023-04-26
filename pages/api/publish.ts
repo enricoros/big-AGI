@@ -2,27 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { postToPasteGG } from '@/lib/util/publish';
-
-
-export interface ApiPublishBody {
-  to: 'paste.gg';
-  title: string;
-  fileContent: string;
-  fileName: string;
-  origin: string;
-}
-
-export type ApiPublishResponse = {
-  type: 'success';
-  url: string;
-  expires: string;
-  deletionKey: string;
-  created: string;
-} | {
-  type: 'error';
-  error: string
-};
+import { PasteGG } from '@/modules/pastegg/pastegg.types';
+import { pasteGgPost } from '@/modules/pastegg/pastegg.server';
 
 
 /**
@@ -33,11 +14,11 @@ export default async function handler(req: NextRequest) {
 
   try {
 
-    const { to, title, fileContent, fileName, origin } = await req.json() as ApiPublishBody;
+    const { to, title, fileContent, fileName, origin }: PasteGG.API.Publish.RequestBody = await req.json();
     if (req.method !== 'POST' || to !== 'paste.gg' || !title || !fileContent || !fileName)
       throw new Error('Invalid options');
 
-    const paste = await postToPasteGG(title, fileName, fileContent, origin);
+    const paste = await pasteGgPost(title, fileName, fileContent, origin);
     console.log(`Posted to paste.gg`, paste);
 
     if (paste?.status !== 'success')
@@ -49,15 +30,15 @@ export default async function handler(req: NextRequest) {
       expires: paste.result.expires || 'never',
       deletionKey: paste.result.deletion_key || 'none',
       created: paste.result.created_at,
-    } as ApiPublishResponse));
+    } satisfies PasteGG.API.Publish.Response));
 
   } catch (error) {
 
     console.error('Error posting to paste.gg', error);
     return new NextResponse(JSON.stringify({
       type: 'error',
-      error: error || 'Network issue',
-    } as ApiPublishResponse), { status: 500 });
+      error: error?.toString() || 'Network issue',
+    } satisfies PasteGG.API.Publish.Response), { status: 500 });
 
   }
 

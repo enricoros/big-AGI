@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ApiPublishResponse } from '../publish';
 import { ElevenLabs } from '@/modules/elevenlabs/elevenlabs.types';
 
 
@@ -64,13 +63,7 @@ export default async function handler(req: NextRequest) {
     return new NextResponse(audioBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
   } catch (error) {
     console.error('Error posting to ElevenLabs', error);
-    return new NextResponse(
-      JSON.stringify({
-        type: 'error',
-        error: error || 'Network issue',
-      } as ApiPublishResponse),
-      { status: 500 },
-    );
+    return new NextResponse(JSON.stringify(`speechToText error: ${error?.toString() || 'Network issue'}`), { status: 500 });
   }
 }
 
