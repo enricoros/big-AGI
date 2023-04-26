@@ -4,7 +4,7 @@ import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography, useThem
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DMessage } from '@/lib/stores/store-chats';
+import { DMessage } from '@/global/stores/store-chats';
 import { TokenBadge } from '@/components/util/TokenBadge';
 import { makeAvatar, messageBackground } from '@/components/ChatMessage';
 

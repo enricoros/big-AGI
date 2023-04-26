@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '@/lib/data';
@@ -326,13 +325,6 @@ export const useChatStore = create<ChatStore>()(devtools(
     enabled: false,
   }),
 );
-
-
-export const useConversationIDs = (): string[] =>
-  useChatStore(
-    state => state.conversations.map(conversation => conversation.id),
-    shallow,
-  );
 
 
 /**

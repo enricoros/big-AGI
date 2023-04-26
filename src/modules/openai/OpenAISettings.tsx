@@ -9,7 +9,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Link } from '@/components/util/Link';
 import { Section } from '@/components/dialogs/SettingsModal';
 import { isValidOpenAIApiKey, requireUserKeyOpenAI } from './openai.client';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export function OpenAISettings() {

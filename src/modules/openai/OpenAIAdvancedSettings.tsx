@@ -6,7 +6,7 @@ import { Box, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } fro
 import { Brand } from '@/lib/brand';
 import { Link } from '@/components/util/Link';
 import { Section, settingsCol1Width, settingsMaxWidth, uniformGap } from '@/components/dialogs/SettingsModal';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export function OpenAIAdvancedSettings() {

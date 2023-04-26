@@ -20,8 +20,8 @@ import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '@/lib/
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { ImportedModal, ImportedOutcome } from '@/components/dialogs/ImportedModal';
 import { PagesMenu } from '@/components/Pages';
-import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/lib/stores/store-chats';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/global/stores/store-chats';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 /**

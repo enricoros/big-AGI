@@ -1,10 +1,10 @@
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
 import { OpenAI } from '@/modules/openai/openai.types';
-import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { createDMessage, DMessage, useChatStore } from '@/global/stores/store-chats';
 import { getOpenAISettings } from '@/modules/openai/openai.client';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { updateAutoConversationTitle } from '@/lib/llm/ai';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 /**

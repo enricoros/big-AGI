@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 interface ISpeechRecognition {
   lang: string;
