@@ -1,7 +1,6 @@
-import { ApiChatInput, ApiChatResponse } from '../../pages/api/openai/chat';
 import { ChatModelId, ChatModels } from '@/lib/data';
 import { cleanupPrompt } from './prompts';
-import { getOpenAIConfiguration } from '@/lib/stores/store-settings';
+import { callChat } from '@/lib/modules/openai/openai.client';
 
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
@@ -50,7 +49,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
 
   console.log('Simply removing non-sensical contents is not enough, proceed with recursive summerization');
 
-  // 3) Reduce the length of each chunk proportionally based on the text's lenght over the total length
+  // 3) Reduce the length of each chunk proportionally based on the text's length over the total length
   const totalLength = cleanedChunks.reduce((acc, chunk) => acc + chunk.split(' ').length, 0);
   const summarizedChunks = await Promise.all(cleanedChunks.map(async chunk => {
     const chunkLength = chunk.split(' ').length;
@@ -69,30 +68,15 @@ async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_t
   const outputTokenShare = 1 / 3;
   const autoResponseTokensSize = Math.floor(ChatModels[modelId].contextWindowSize * outputTokenShare);
 
-  const input: ApiChatInput = {
-    api: getOpenAIConfiguration(),
-    model: modelId, // Replace with the desired model
-    messages: [
+  try {
+    const chatResponse = await callChat(modelId, [
       { role: 'system', content: cleanupPrompt },
-      { role: 'user', content: chunk }],
-    max_tokens: autoResponseTokensSize, // note: before was 'targetWordCount', but it's not correct
-  };
-
-  const response = await fetch('/api/openai/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    console.error('Error from API call: ', response.status, response.statusText);
+      { role: 'user', content: chunk },
+    ], autoResponseTokensSize);
+    return chatResponse?.message?.content ?? '';
+  } catch (error: any) {
     return '';
   }
-
-  const data: ApiChatResponse = await response.json();
-  return data.message.content;
 }
 
 async function recursiveSummerize(text: string, modelId: ChatModelId, targetWordCount: number): Promise<string> {
