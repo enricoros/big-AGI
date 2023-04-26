@@ -15,6 +15,7 @@ const DEBUG_TOKEN_COUNT = false;
  * a message, it doesn't stall loading the tokenizer.
  */
 export const countModelTokens: (text: string, chatModelId: ChatModelId, debugFrom: string) => number = (() => {
+  //return () => 0;
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 
   function tokenCount(text: string, chatModelId: ChatModelId, debugFrom: string): number {

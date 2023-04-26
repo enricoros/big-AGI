@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
-import { ApiChatInput, chatCompletionPayload, extractOpenaiChatInputs, postToOpenAI } from './chat';
-import { OpenAIAPI } from '@/types/api-openai';
+import { OpenAI } from '@/lib/modules/openai/openai.types';
+import { openaiPostResponse, toApiChatRequest, toWireCompletionRequest } from '@/lib/modules/openai/openai.server';
 
 
-async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Promise<ReadableStream> {
+async function chatStreamRepeater(input: OpenAI.API.Chat.Request, signal: AbortSignal): Promise<ReadableStream> {
 
   // Handle the abort event when the connection is closed by the client
   signal.addEventListener('abort', () => {
@@ -17,7 +17,8 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
 
   let upstreamResponse: Response;
   try {
-    upstreamResponse = await postToOpenAI(input.api, '/v1/chat/completions', chatCompletionPayload(input, true), signal);
+    const request: OpenAI.Wire.Chat.CompletionRequest = toWireCompletionRequest(input, true);
+    upstreamResponse = await openaiPostResponse(input.api, '/v1/chat/completions', request, signal);
   } catch (error: any) {
     console.log(error);
     const message = '[OpenAI Issue] ' + (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
@@ -50,7 +51,7 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
       }
 
       try {
-        const json: OpenAIAPI.Chat.CompletionsResponseChunked = JSON.parse(event.data);
+        const json: OpenAI.Wire.Chat.CompletionResponseChunked = JSON.parse(event.data);
 
         // ignore any 'role' delta update
         if (json.choices[0].delta?.role)
@@ -59,7 +60,7 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
         // stringify and send the first packet as a JSON object
         if (!hasBegun) {
           hasBegun = true;
-          const firstPacket: ApiChatFirstOutput = {
+          const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
             model: json.model,
           };
           controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
@@ -90,20 +91,12 @@ async function chatStreamRepeater(input: ApiChatInput, signal: AbortSignal): Pro
 }
 
 
-/**
- * The client will be sent a stream of words. As an extra (an totally optional) 'data channel' we send a
- * string JSON object with the few initial variables. We hope in the future to adopt a better
- * solution (e.g. websockets, but that will exclude deployment in Edge Functions).
- */
-export interface ApiChatFirstOutput {
-  model: string;
-}
-
 export default async function handler(req: NextRequest): Promise<Response> {
   try {
-    const apiChatInput = await extractOpenaiChatInputs(req);
-    const stream: ReadableStream = await chatStreamRepeater(apiChatInput, req.signal);
-    return new NextResponse(stream);
+    const requestBodyJson = await req.json();
+    const chatRequest: OpenAI.API.Chat.Request = await toApiChatRequest(requestBodyJson);
+    const chatResponseStream: ReadableStream = await chatStreamRepeater(chatRequest, req.signal);
+    return new NextResponse(chatResponseStream);
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted in handler');

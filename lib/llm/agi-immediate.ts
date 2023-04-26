@@ -1,9 +1,10 @@
-import { ApiChatInput } from '../../pages/api/openai/chat';
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
+import { OpenAI } from '@/lib/modules/openai/openai.types';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
-import { getOpenAIConfiguration, useSettingsStore } from '@/lib/stores/store-settings';
+import { getOpenAISettings } from '@/lib/modules/openai/openai.client';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { updateAutoConversationTitle } from '@/lib/llm/ai';
+import { useSettingsStore } from '@/lib/stores/store-settings';
 
 
 /**
@@ -66,8 +67,8 @@ async function streamAssistantMessage(
 ) {
 
   const { modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  const payload: ApiChatInput = {
-    api: getOpenAIConfiguration(),
+  const payload: OpenAI.API.Chat.Request = {
+    api: getOpenAISettings(),
     model: chatModelId,
     messages: history.map(({ role, text }) => ({
       role: role,
@@ -108,7 +109,7 @@ async function streamAssistantMessage(
             const json = incrementalText.substring(0, endOfJson + 1);
             incrementalText = incrementalText.substring(endOfJson + 1);
             try {
-              const parsed = JSON.parse(json);
+              const parsed: OpenAI.API.Chat.StreamingFirstResponse = JSON.parse(json);
               editMessage(conversationId, assistantMessageId, { originLLM: parsed.model }, false);
               parsedFirstPacket = true;
             } catch (e) {

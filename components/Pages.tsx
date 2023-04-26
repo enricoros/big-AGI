@@ -187,7 +187,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
   };
 
 
-  const NewPrefix = maxReached && <Tooltip title={`Maximum limit: ${MAX_CONVERSATIONS} chats. Proceeding will remove the oldest chat.`}><span>⚠️ </span></Tooltip>;
+  const NewPrefix = maxReached && <Tooltip title={`Maximum limit: ${MAX_CONVERSATIONS} chats. Proceeding will remove the oldest chat.`}><Box sx={{ mr: 2 }}>⚠️</Box></Tooltip>;
 
   return <>
 
