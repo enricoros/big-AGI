@@ -2,11 +2,12 @@ import * as React from 'react';
 
 import { Container, useTheme } from '@mui/joy';
 
-import { Chat } from '@/apps/chat/Chat';
 import { NoSSR } from '@/common/components/NoSSR';
-import { SettingsModal } from '@/apps/settings/SettingsModal';
 import { isValidOpenAIApiKey } from '@/modules/openai/openai.client';
 import { useSettingsStore } from '@/common/state/store-settings';
+
+import { Chat } from '../src/apps/chat/Chat';
+import { SettingsModal } from '../src/apps/settings/SettingsModal';
 
 
 export default function Home() {
