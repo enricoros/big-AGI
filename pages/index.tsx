@@ -5,7 +5,7 @@ import { Container, useTheme } from '@mui/joy';
 import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { SettingsModal } from '@/components/dialogs/SettingsModal';
-import { isValidOpenAIApiKey } from '@/lib/modules/openai/openai.client';
+import { isValidOpenAIApiKey } from '@/modules/openai/openai.client';
 import { useSettingsStore } from '@/lib/stores/store-settings';
 
 

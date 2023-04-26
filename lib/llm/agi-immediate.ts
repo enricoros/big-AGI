@@ -1,7 +1,7 @@
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '@/lib/data';
-import { OpenAI } from '@/lib/modules/openai/openai.types';
+import { OpenAI } from '@/modules/openai/openai.types';
 import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
-import { getOpenAISettings } from '@/lib/modules/openai/openai.client';
+import { getOpenAISettings } from '@/modules/openai/openai.client';
 import { speakIfFirstLine } from '@/lib/util/text-to-speech';
 import { updateAutoConversationTitle } from '@/lib/llm/ai';
 import { useSettingsStore } from '@/lib/stores/store-settings';

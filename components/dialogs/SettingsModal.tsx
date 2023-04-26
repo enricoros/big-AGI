@@ -16,8 +16,8 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import languages from '@/lib/languages.json' assert { type: 'json' };
 import { ElevenLabs } from '@/types/api-elevenlabs';
-import { OpenAIAdvancedSettings } from '@/lib/modules/openai/OpenAIAdvancedSettings';
-import { OpenAISettings } from '@/lib/modules/openai/OpenAISettings';
+import { OpenAIAdvancedSettings } from '@/modules/openai/OpenAIAdvancedSettings';
+import { OpenAISettings } from '@/modules/openai/OpenAISettings';
 import { Prodia } from '@/types/api-prodia';
 import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';

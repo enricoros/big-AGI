@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
-import { OpenAI } from '@/lib/modules/openai/openai.types';
-import { openaiPostResponse, toApiChatRequest, toWireCompletionRequest } from '@/lib/modules/openai/openai.server';
+import { OpenAI } from '@/modules/openai/openai.types';
+import { openaiPostResponse, toApiChatRequest, toWireCompletionRequest } from '@/modules/openai/openai.server';
 
 
 async function chatStreamRepeater(input: OpenAI.API.Chat.Request, signal: AbortSignal): Promise<ReadableStream> {
