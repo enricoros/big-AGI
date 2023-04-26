@@ -7,8 +7,8 @@ import { SxProps } from '@mui/joy/styles/types';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from '@/components/ChatMessageSelectable';
 import { PurposeSelector } from '@/components/util/PurposeSelector';
-import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { createDMessage, DMessage, useChatStore } from '@/global/stores/store-chats';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 /**

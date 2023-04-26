@@ -31,7 +31,7 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
-import { DMessage } from '@/lib/stores/store-chats';
+import { DMessage } from '@/global/stores/store-chats';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { Link } from '@/components/util/Link';
 import { OpenInCodepen } from '@/components/util/OpenInCodepen';
@@ -41,7 +41,7 @@ import { cssRainbowColorKeyframes } from '@/lib/theme';
 import { prettyBaseModel } from '@/lib/util/publish';
 import { requireUserKeyElevenLabs, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
 import { speakText } from '@/lib/util/text-to-speech';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 /// Utilities to parse messages into blocks of text and code

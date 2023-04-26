@@ -24,9 +24,9 @@ import { convertHTMLTableToMarkdown } from '@/lib/util/markdown';
 import { countModelTokens } from '@/lib/llm/tokens';
 import { extractPdfText } from '@/lib/util/pdf';
 import { hideOnDesktop, hideOnMobile, isValidProdiaApiKey, requireUserKeyProdia } from '@/components/dialogs/SettingsModal';
-import { useChatStore } from '@/lib/stores/store-chats';
-import { useComposerStore } from '@/lib/stores/store-composer';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useChatStore } from '@/global/stores/store-chats';
+import { useComposerStore } from '@/global/stores/store-composer';
+import { useSettingsStore } from '@/global/stores/store-settings';
 import { useSpeechRecognition } from '@/components/util/useSpeechRecognition';
 
 

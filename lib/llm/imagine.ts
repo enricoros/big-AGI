@@ -1,6 +1,6 @@
 import { Prodia } from '@/modules/prodia/prodia.types';
-import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { createDMessage, DMessage, useChatStore } from '@/global/stores/store-chats';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export const prodiaDefaultModelId: string = 'v1-5-pruned-emaonly.ckpt [81761151]';

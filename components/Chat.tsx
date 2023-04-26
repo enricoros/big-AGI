@@ -11,14 +11,14 @@ import { Composer } from '@/components/Composer';
 import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { Link } from '@/components/util/Link';
 import { PublishedModal } from '@/components/dialogs/PublishedModal';
-import { createDMessage, DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { createDMessage, DMessage, useChatStore } from '@/global/stores/store-chats';
 import { imaginePromptFromText } from '@/lib/llm/ai';
 import { publishConversation } from '@/lib/util/publish';
 import { runAssistantUpdatingState } from '@/lib/llm/agi-immediate';
 import { runImageGenerationUpdatingState } from '@/lib/llm/imagine';
 import { runReActUpdatingState } from '@/lib/llm/agi-react';
-import { useComposerStore } from '@/lib/stores/store-composer';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useComposerStore } from '@/global/stores/store-composer';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {

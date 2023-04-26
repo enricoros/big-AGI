@@ -10,8 +10,8 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 // import { Link } from '@/components/util/Link';
 import { InlineTextEdit } from '@/components/util/InlineTextEdit';
 import { SystemPurposes } from '@/lib/data';
-import { conversationTitle, MAX_CONVERSATIONS, useChatStore, useConversationIDs } from '@/lib/stores/store-chats';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { conversationTitle, MAX_CONVERSATIONS, useChatStore } from '@/global/stores/store-chats';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 const DEBUG_CONVERSATION_IDs = false;
@@ -130,7 +130,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
 
   // external state
-  const conversationIDs = useConversationIDs();
+  const conversationIDs = useChatStore(state => state.conversations.map(conversation => conversation.id), shallow);
   const { setActiveConversationId, createConversation, deleteConversation, newConversationId } = useChatStore(state => ({
     setActiveConversationId: state.setActiveConversationId,
     createConversation: state.createConversation,

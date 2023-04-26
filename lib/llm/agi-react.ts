@@ -1,6 +1,6 @@
 import { Agent } from '@/lib/llm/react';
 import { ChatModelId, SystemPurposeId } from '@/lib/data';
-import { DMessage, useChatStore } from '@/lib/stores/store-chats';
+import { DMessage, useChatStore } from '@/global/stores/store-chats';
 import { createAssistantTypingMessage, updatePurposeInHistory } from '@/lib/llm/agi-immediate';
 
 

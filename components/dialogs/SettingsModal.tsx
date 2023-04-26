@@ -21,7 +21,7 @@ import { OpenAISettings } from '@/modules/openai/OpenAISettings';
 import { Prodia } from '@/modules/prodia/prodia.types';
 import { prodiaDefaultModelId } from '@/lib/llm/imagine';
 import { useQuery } from '@tanstack/react-query';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export const uniformGap: number = 2;

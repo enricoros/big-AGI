@@ -6,7 +6,7 @@ import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { SettingsModal } from '@/components/dialogs/SettingsModal';
 import { isValidOpenAIApiKey } from '@/modules/openai/openai.client';
-import { useSettingsStore } from '@/lib/stores/store-settings';
+import { useSettingsStore } from '@/global/stores/store-settings';
 
 
 export default function Home() {
