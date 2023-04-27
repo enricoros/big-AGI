@@ -8,6 +8,7 @@ import { OpenAISettings } from '@/modules/openai/OpenAISettings';
 import { ProdiaSettings } from '@/modules/prodia/ProdiaSettings';
 
 import { UISettings } from './UISettings';
+import { SearchSettings } from '@/modules/search/SearchSettings';
 
 
 /**
@@ -33,6 +34,8 @@ export function SettingsModal({ open, onClose }: { open: boolean, onClose: () =>
           <ElevenlabsSettings />
 
           <ProdiaSettings />
+
+          <SearchSettings />
 
           <OpenAIAdvancedSettings />
 
