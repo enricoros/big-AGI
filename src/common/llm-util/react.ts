@@ -1,9 +1,9 @@
 import { OpenAI } from '@/modules/openai/openai.types';
+import { callApiSearchGoogle } from '@/modules/search/search.client';
 import { callChat } from '@/modules/openai/openai.client';
 
 import { ChatModelId } from '../../data';
 import { reActPrompt } from './prompts';
-import { useSettingsStore } from '@/common/state/store-settings'
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
@@ -91,9 +91,7 @@ type ActionFunction = (input: string) => Promise<string>;
 
 async function wikipedia(q: string): Promise<string> {
   const response = await fetch(
-    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-      q,
-    )}&format=json&origin=*`,
+    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`,
   );
   const data = await response.json();
   return data.query.search[0].snippet;
@@ -101,15 +99,7 @@ async function wikipedia(q: string): Promise<string> {
 
 async function search(query: string): Promise<string> {
   try {
-    const { googleApiKey, cseId } = useSettingsStore.getState();
-    const apiUrl = `/api/search/google?query=${encodeURIComponent(query)}&key=${encodeURIComponent(googleApiKey)}&cx=${encodeURIComponent(cseId)}`;
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await callApiSearchGoogle(query);
     console.log(data);
     return JSON.stringify(data);
   } catch (error) {
