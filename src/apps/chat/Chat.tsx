@@ -18,6 +18,7 @@ import { useSettingsStore } from '@/common/state/store-settings';
 import { ApplicationBar } from './components/appbar/ApplicationBar';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
+import { Ephemerals } from './components/ephemerals/Ephemerals';
 import { imaginePromptFromText } from './util/ai-functions';
 import { runAssistantUpdatingState } from './util/agi-immediate';
 import { runImageGenerationUpdatingState } from './util/imagine';
@@ -128,6 +129,13 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
           flexGrow: 1,
           background: theme.vars.palette.background.level2,
           overflowY: 'auto', // overflowY: 'hidden'
+        }} />
+
+      <Ephemerals
+        conversationId={activeConversationId}
+        sx={{
+          borderTop: `1px solid ${theme.vars.palette.divider}`,
+          p: { xs: 1, md: 2 },
         }} />
 
       <Composer

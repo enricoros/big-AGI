@@ -6,36 +6,8 @@ import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeI
 import { updateTokenCount } from '../llm-util/token-counter';
 
 
-/// Conversations Store
-
+// configuration
 export const MAX_CONVERSATIONS = 10;
-
-export interface ChatStore {
-  conversations: DConversation[];
-  activeConversationId: string | null;
-
-  // store setters
-  createConversation: () => void;
-  importConversation: (conversation: DConversation) => void;
-  deleteConversation: (conversationId: string) => void;
-  setActiveConversationId: (conversationId: string) => void;
-
-  // within a conversation
-  startTyping: (conversationId: string, abortController: AbortController | null) => void;
-  stopTyping: (conversationId: string) => void;
-  setMessages: (conversationId: string, messages: DMessage[]) => void;
-  appendMessage: (conversationId: string, message: DMessage) => void;
-  deleteMessage: (conversationId: string, messageId: string) => void;
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
-  setChatModelId: (conversationId: string, chatModelId: ChatModelId) => void;
-  setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
-  setAutoTitle: (conversationId: string, autoTitle: string) => void;
-  setUserTitle: (conversationId: string, userTitle: string) => void;
-
-  // utility function
-  _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
-}
-
 
 /**
  * Conversation, a list of messages between humans and bots
@@ -55,6 +27,7 @@ export interface DConversation {
   updated: number | null;             // updated timestamp
   // Not persisted, used while in-memory, or temporarily by the UI
   abortController: AbortController | null;
+  ephemerals: DEphemeral[];
 }
 
 export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, chatModelId?: ChatModelId): DConversation => ({
@@ -66,11 +39,13 @@ export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, cha
   created: Date.now(),
   updated: Date.now(),
   abortController: null,
+  ephemerals: [],
 });
 
 export const conversationTitle = (conversation: DConversation): string =>
   conversation.userTitle || conversation.autoTitle || 'new conversation'; // 👋💬🗨️
 
+const defaultConversations: DConversation[] = [createDefaultConversation()];
 
 /**
  * Message, sent or received, by humans or bots
@@ -111,8 +86,54 @@ export const createDMessage = (role: DMessage['role'], text: string): DMessage =
     updated: null,
   });
 
+/**
+ * InterimStep, a place side-channel information is displayed
+ */
+export interface DEphemeral {
+  id: string;
+  title: string;
+  text: string;
+}
 
-const defaultConversations: DConversation[] = [createDefaultConversation()];
+export const createEphemeral = (title: string, initialText: string): DEphemeral => ({
+  id: uuidv4(),
+  title: title,
+  text: initialText,
+});
+
+
+/// Conversations Store
+
+
+export interface ChatStore {
+  conversations: DConversation[];
+  activeConversationId: string | null;
+
+  // store setters
+  createConversation: () => void;
+  importConversation: (conversation: DConversation) => void;
+  deleteConversation: (conversationId: string) => void;
+  setActiveConversationId: (conversationId: string) => void;
+
+  // within a conversation
+  startTyping: (conversationId: string, abortController: AbortController | null) => void;
+  stopTyping: (conversationId: string) => void;
+  setMessages: (conversationId: string, messages: DMessage[]) => void;
+  appendMessage: (conversationId: string, message: DMessage) => void;
+  deleteMessage: (conversationId: string, messageId: string) => void;
+  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
+  setChatModelId: (conversationId: string, chatModelId: ChatModelId) => void;
+  setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
+  setAutoTitle: (conversationId: string, autoTitle: string) => void;
+  setUserTitle: (conversationId: string, userTitle: string) => void;
+
+  appendEphemeral: (conversationId: string, devTool: DEphemeral) => void;
+  deleteEphemeral: (conversationId: string, ephemeralId: string) => void;
+  updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) => void;
+
+  // utility function
+  _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
+}
 
 export const useChatStore = create<ChatStore>()(devtools(
   persist(
@@ -279,6 +300,35 @@ export const useChatStore = create<ChatStore>()(devtools(
             userTitle,
           }),
 
+      appendEphemeral: (conversationId: string, ephemeral: DEphemeral) =>
+        get()._editConversation(conversationId, conversation => {
+          const ephemerals = [...conversation.ephemerals, ephemeral];
+          return {
+            ephemerals,
+          };
+        }),
+
+      deleteEphemeral: (conversationId: string, ephemeralId: string) =>
+        get()._editConversation(conversationId, conversation => {
+          const ephemerals = conversation.ephemerals?.filter((e: DEphemeral): boolean => e.id !== ephemeralId) || [];
+          return {
+            ephemerals,
+          };
+        }),
+
+      updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) =>
+        get()._editConversation(conversationId, conversation => {
+          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
+            e.id === ephemeralId
+              ? {
+                ...e,
+                text,
+              }
+              : e) || [];
+          return {
+            ephemerals,
+          };
+        }),
 
       _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) =>
         set(state => ({
@@ -303,7 +353,10 @@ export const useChatStore = create<ChatStore>()(devtools(
       partialize: (state) => ({
         ...state,
         conversations: state.conversations.map((conversation: DConversation) => {
-          const { abortController, ...rest } = conversation;
+          const {
+            abortController, ephemerals,
+            ...rest
+          } = conversation;
           return rest;
         }),
       }),
@@ -314,9 +367,11 @@ export const useChatStore = create<ChatStore>()(devtools(
           if (!state.activeConversationId && state.conversations.length)
             state.activeConversationId = state.conversations[0].id;
 
-          // rehydrate the transient property
-          for (const conversation of (state.conversations || []))
+          // rehydrate the transient properties
+          for (const conversation of (state.conversations || [])) {
             conversation.abortController = null;
+            conversation.ephemerals = [];
+          }
         }
       },
     }),
@@ -331,10 +386,11 @@ export const useChatStore = create<ChatStore>()(devtools(
  * Download a conversation as a JSON file, for backup and future restore
  * Not the best place to have this function, but we want it close to the (re)store function
  */
-export const downloadConversationJson = (conversation: DConversation) => {
+export const downloadConversationJson = (_conversation: DConversation) => {
   if (typeof window === 'undefined') return;
 
   // payload to be downloaded
+  const { abortController, ephemerals, ...conversation } = _conversation;
   const json = JSON.stringify(conversation, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const filename = `conversation-${conversation.id}.json`;
@@ -368,6 +424,7 @@ export const restoreConversationFromJson = (json: string): DConversation | null 
       created: restored.created || Date.now(),
       updated: restored.updated || Date.now(),
       abortController: null,
+      ephemerals: [],
     } satisfies DConversation;
   }
   return null;
