@@ -22,6 +22,11 @@ Observation will be the result of running those actions.
 
 Your available actions are:
 
+google:
+e.g. google: Django
+Returns google custom search results
+Always look up on google when the question is related to live events, such as sports, news, or weather.
+
 calculate:
 e.g. calculate: 4 * 7 / 3
 Runs a calculation and returns the number - uses Python so be sure to use floating point syntax if necessary
@@ -30,7 +35,7 @@ wikipedia:
 e.g. wikipedia: Django
 Returns a summary from searching Wikipedia
 
-Always look things up on Wikipedia if you have the opportunity to do so.
+Only look things up on Wikipedia when explicitly asked to do so.
 
 Example session:
 

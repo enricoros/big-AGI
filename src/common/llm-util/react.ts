@@ -3,8 +3,11 @@ import { callChat } from '@/modules/openai/openai.client';
 
 import { ChatModelId } from '../../data';
 import { reActPrompt } from './prompts';
+import { useSettingsStore } from '@/common/state/store-settings'
+
 
 const actionRe = /^Action: (\w+): (.*)$/;
+const answerRe = /Answer: .*/;
 
 
 /**
@@ -26,13 +29,15 @@ export class Agent {
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
   async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log: (...data: any[]) => void = console.log): Promise<string> {
     let i = 0;
+    // TODO: to initialize with previous chat messages to provide context.
     const S: State = await this.initialize(question);
     while (i < maxTurns && S.result === undefined) {
       i++;
       log(`\n## Turn ${i}`);
       await this.step(S, modelId, log);
     }
-    return S.result || 'No result';
+    const answer = S.result?.match(answerRe)?.[0];
+    return answer || 'No result';
   }
 
   initialize(question: string): State {
@@ -94,9 +99,29 @@ async function wikipedia(q: string): Promise<string> {
   return data.query.search[0].snippet;
 }
 
+async function search(query: string): Promise<string> {
+  try {
+    const { googleApiKey, cseId } = useSettingsStore.getState();
+    const apiUrl = `/api/search/google?query=${encodeURIComponent(query)}&key=${encodeURIComponent(googleApiKey)}&cx=${encodeURIComponent(cseId)}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return JSON.stringify(data);
+  } catch (error) {
+    console.error('Error fetching search results:', (error as Error).message);
+    return 'An error occurred while fetching search results.';
+  }
+}
+
 const calculate = async (what: string): Promise<string> => String(eval(what));
 
 const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
+  google: search,
   calculate: calculate,
 };
