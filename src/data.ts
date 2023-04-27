@@ -8,6 +8,7 @@ type SystemPurposeData = {
   systemMessage: string;
   symbol: string;
   examples?: string[];
+  highlighted?: boolean;
 }
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
