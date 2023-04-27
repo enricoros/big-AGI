@@ -1,28 +1,43 @@
-// pages/api/search/google.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query, key, cx } = req.query;
+import { Search } from '@/modules/search/search.types';
+import { objectToQueryString } from '@/modules/search/search.client';
 
-  if (typeof query !== 'string' || !key || !cx) {
-    res.status(400).json({ error: 'Invalid query, API key, or Custom Search Engine ID parameter.' });
-    return;
-  }
-  // limit to 2 search results first in order for smaller context window such as in GPT-3.5 to work.
-  // TODO: use summerization feature later to shorten results
-  const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${key}&cx=${cx}&q=${encodeURIComponent(query)}&num=2`;
+
+export default async function handler(req: NextRequest): Promise<NextResponse> {
+  const { searchParams } = new URL(req.url);
+
+  const customSearchParams: Search.Wire.RequestParams = {
+    q: searchParams.get('query') || '',
+    cx: searchParams.get('cx') || process.env.GOOGLE_CSE_ID,
+    key: searchParams.get('key') || process.env.GOOGLE_CLOUD_API_KEY,
+    num: 2,
+  };
 
   try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message);
+    if (!customSearchParams.key || !customSearchParams.cx) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('Missing API key or Custom Search Engine ID');
     }
 
-    res.status(200).json(data.items);
-  } catch (error) {
-    console.error('Error in customGoogleSearch:', (error as Error).message);
-    res.status(500).json({ error: 'An error occurred while fetching search results.' });
+    const wireResponse = await fetch(`https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`);
+    const data: Search.Wire.Response & { error?: { message?: string } } = await wireResponse.json();
+
+    if (data.error) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(`Google Custom Search API error: ${data.error?.message}`);
+    }
+
+    const apiResponse: Search.API.Response = data.items;
+    return new NextResponse(JSON.stringify(apiResponse));
+
+  } catch (error: any) {
+    console.error('Handler failed:', error);
+    return new NextResponse(`An error occurred while fetching search results`, { status: 500 });
   }
 }
+
+// noinspection JSUnusedGlobalSymbols
+export const config = {
+  runtime: 'edge',
+};

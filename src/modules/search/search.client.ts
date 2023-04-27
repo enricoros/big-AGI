@@ -1,5 +1,41 @@
-export const requireUserKeyGoogleApi = !process.env.HAS_SERVER_KEY_GOOGLE_API;
-export const requireUserKeyCseId = !process.env.HAS_SERVER_KEY_CSE_ID;
+import { useSettingsStore } from '@/common/state/store-settings';
 
-export const isValidGoogleApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 40;
-export const isValidCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 18;
+import { Search } from './search.types';
+
+export const requireUserKeyGoogleCse = !process.env.HAS_SERVER_KEYS_GOOGLE_CSE;
+
+export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
+export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
+
+
+/**
+ * This function either returns the Search JSON response, or throws a descriptive error string
+ */
+export async function callApiSearchGoogle(queryText: string): Promise<Search.API.Response> {
+
+  // create the query with the current keys
+  const { googleCloudApiKey, googleCSEId } = useSettingsStore.getState();
+  const queryParams: Search.API.RequestParams = {
+    query: queryText,
+    ...(googleCloudApiKey ? { key: googleCloudApiKey } : {}),
+    ...(googleCSEId ? { cx: googleCSEId } : {}),
+  };
+
+  let errorMessage: string;
+  try {
+    const response = await fetch(`/api/search/google?${objectToQueryString(queryParams)}`);
+    if (response.ok)
+      return await response.json();
+    errorMessage = `issue fetching: ${response.status} · ${response.statusText}`;
+  } catch (error: any) {
+    errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+  }
+  console.error(`callSearchGoogle: ${errorMessage}`);
+  throw new Error(errorMessage);
+}
+
+export function objectToQueryString(params: Record<string, any>): string {
+  return Object.entries(params)
+    .map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
+    .join('&');
+}

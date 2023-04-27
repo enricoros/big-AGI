@@ -18,6 +18,10 @@ declare namespace NodeJS {
     // Prodia - imagine.ts
     PRODIA_API_KEY: string;
 
+    // Google Custom Search
+    GOOGLE_CLOUD_API_KEY: string;
+    GOOGLE_CSE_ID: string;
+
   }
 
   interface ProcessEnv {
@@ -26,6 +30,7 @@ declare namespace NodeJS {
     HAS_SERVER_KEY_OPENAI: boolean;
     HAS_SERVER_KEY_ELEVENLABS: boolean;
     HAS_SERVER_KEY_PRODIA: boolean;
+    HAS_SERVER_KEYS_GOOGLE_CSE: boolean;
 
   }
 }
