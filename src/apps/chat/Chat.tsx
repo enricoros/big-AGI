@@ -134,8 +134,9 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
       <Ephemerals
         conversationId={activeConversationId}
         sx={{
+          minHeight: '25vh', maxHeight: '40vh',
+          overflowY: 'auto',
           borderTop: `1px solid ${theme.vars.palette.divider}`,
-          maxHeight: '30vh', overflow: 'auto',
         }} />
 
       <Composer

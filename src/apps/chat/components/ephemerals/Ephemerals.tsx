@@ -7,8 +7,6 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useChatStore } from '@/common/state/store-chats';
 
-import { RenderText } from '../message/ChatMessage';
-
 
 export function Ephemerals(props: { conversationId: string | null, sx?: SxProps }) {
   // global state
@@ -26,7 +24,7 @@ export function Ephemerals(props: { conversationId: string | null, sx?: SxProps 
   };
 
   return (
-    <Sheet variant='soft' color='info' invertedColors sx={props.sx || {}}>
+    <Sheet variant='soft' color='info' invertedColors sx={props.sx}>
 
       {ephemerals.map((ephemeral, i) => (
         <Box
@@ -41,10 +39,15 @@ export function Ephemerals(props: { conversationId: string | null, sx?: SxProps 
             <CloseIcon />
           </IconButton>
 
-          {ephemeral.title && <Typography level='h6'>{ephemeral.title}</Typography>}
+          {ephemeral.title && (
+            <Typography>
+              {ephemeral.title}
+            </Typography>
+          )}
 
-          <RenderText textBlock={{ type: 'text', content: ephemeral.text }} sx={{ fontSize: '12px', mx: 0 }} />
-
+          <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces' }}>
+            {ephemeral.text}
+          </Typography>
         </Box>
       ))}
 

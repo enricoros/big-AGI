@@ -243,7 +243,7 @@ const RenderMarkdown = ({ textBlock }: { textBlock: TextBlock }) => {
   </Box>;
 };
 
-export const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
+const RenderText = ({ textBlock, sx }: { textBlock: TextBlock, sx?: SxProps }) =>
   <Typography
     sx={{
       lineHeight: 1.75,
