@@ -7,7 +7,7 @@ import { reActPrompt } from './prompts';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
-const answerRe = /Answer: .*/;
+const answerRe = /Answer: (.*)/;
 
 
 /**
@@ -36,7 +36,7 @@ export class Agent {
       log(`\n## Turn ${i}`);
       await this.step(S, modelId, log);
     }
-    const answer = S.result?.match(answerRe)?.[0];
+    const answer = S.result?.match(answerRe)?.[1];
     return answer || 'No result';
   }
 
@@ -62,6 +62,7 @@ export class Agent {
   }
 
   async step(S: State, modelId: ChatModelId, log: (...data: any[]) => void = console.log) {
+    log('→ reAct [...' + (S.messages.length + 1) + ']: ' + S.nextPrompt);
     const result = await this.chat(S, S.nextPrompt, modelId);
     log(result);
     const actions = result
@@ -74,13 +75,14 @@ export class Agent {
       if (!(action in knownActions)) {
         throw new Error(`Unknown action: ${action}: ${actionInput}`);
       }
-      log(` -- running ${action} *${actionInput}*`);
+      log(`→ running ${action} "${actionInput}"`);
       const observation = await knownActions[action](actionInput);
       log(`Observation: ${observation}`);
       S.nextPrompt = `Observation: ${observation}`;
       S.lastObservation = observation;
     } else {
-      log(`Result: ${result}`);
+      log('🡗 no further action')
+      // log(`Result: ${result}`);
       S.result = result;
     }
   }

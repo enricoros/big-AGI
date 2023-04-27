@@ -367,8 +367,12 @@ export const useChatStore = create<ChatStore>()(devtools(
           if (!state.activeConversationId && state.conversations.length)
             state.activeConversationId = state.conversations[0].id;
 
-          // rehydrate the transient properties
           for (const conversation of (state.conversations || [])) {
+            // fixup stale state
+            for (const message of conversation.messages)
+              message.typing = false;
+
+            // rehydrate the transient properties
             conversation.abortController = null;
             conversation.ephemerals = [];
           }
