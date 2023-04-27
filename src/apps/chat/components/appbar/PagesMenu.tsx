@@ -1,124 +1,19 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Avatar, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { InlineTextarea } from '@/common/components/InlineTextarea';
-import { SystemPurposes } from '../../../../data';
-import { conversationTitle, MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
+import { MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
 import { useSettingsStore } from '@/common/state/store-settings';
 
+import { PagesMenuItem } from './PagesMenuItem';
 
-const DEBUG_CONVERSATION_IDs = false;
+
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
-
-
-function ConversationListItem(props: {
-  conversationId: string,
-  isActive: boolean, isSingle: boolean, showSymbols: boolean,
-  conversationActivate: (conversationId: string) => void,
-  conversationDelete: (e: React.MouseEvent, conversationId: string) => void,
-}) {
-
-  // state
-  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
-
-  // bind to conversation
-  const conversation = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    return conversation && {
-      isNew: conversation.messages.length === 0,
-      assistantTyping: !!conversation.abortController,
-      systemPurposeId: conversation.systemPurposeId,
-      title: conversationTitle(conversation),
-      setUserTitle: state.setUserTitle,
-    };
-  }, shallow);
-
-  // sanity check: shouldn't happen, but just in case
-  if (!conversation) return null;
-
-  const { assistantTyping, setUserTitle, systemPurposeId, title } = conversation;
-
-  const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
-
-  const handleEditBegin = () => setIsEditingTitle(true);
-
-  const handleEdited = (text: string) => {
-    setIsEditingTitle(false);
-    setUserTitle(props.conversationId, text);
-  };
-
-  return (
-    <MenuItem
-      variant={props.isActive ? 'solid' : 'plain'} color='neutral'
-      onClick={() => props.conversationActivate(props.conversationId)}
-      sx={{
-        // py: 0,
-        '&:hover > button': { opacity: 1 },
-      }}
-    >
-
-      {/* Icon */}
-      {props.showSymbols && <ListItemDecorator>
-        {assistantTyping
-          ? (
-            <Avatar
-              alt='typing' variant='plain'
-              src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
-              sx={{
-                width: 24,
-                height: 24,
-                borderRadius: 8,
-              }}
-            />
-          ) : (
-            <Typography sx={{ fontSize: '18px' }}>
-              {conversation.isNew ? '' : textSymbol}
-            </Typography>
-          )}
-      </ListItemDecorator>}
-
-      {/* Text */}
-      {!isEditingTitle ? (
-
-        <Box onDoubleClick={handleEditBegin} sx={{ flexGrow: 1 }}>
-          {DEBUG_CONVERSATION_IDs ? props.conversationId.slice(0, 10) : title}{assistantTyping && '...'}
-        </Box>
-
-      ) : (
-
-        <InlineTextarea initialText={title} onEdit={handleEdited} sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }} />
-
-      )}
-
-      {/* Edit */}
-      {/*<IconButton*/}
-      {/*  variant='plain' color='neutral'*/}
-      {/*  onClick={() => props.onEditTitle(props.conversationId)}*/}
-      {/*  sx={{*/}
-      {/*    opacity: 0, transition: 'opacity 0.3s', ml: 'auto',*/}
-      {/*  }}>*/}
-      {/*  <EditIcon />*/}
-      {/*</IconButton>*/}
-
-      {/* Delete */}
-      {!props.isSingle && (
-        <IconButton
-          variant='outlined' color='neutral'
-          size='sm' sx={{ ml: 1, opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.3s', ...(props.isActive ? { color: 'white' } : {}) }}
-          onClick={e => props.conversationDelete(e, props.conversationId)}>
-          <DeleteOutlineIcon />
-        </IconButton>
-      )}
-
-    </MenuItem>
-  );
-}
 
 
 /**
@@ -158,14 +53,17 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
   const handleConversationDelete = (e: React.MouseEvent, conversationId: string) => {
     if (!singleChat) {
       e.stopPropagation();
-      // if the chat is empty, just delete it
-      if (conversationId === newConversationId)
+      // NOTE: the old behavior was good, keeping it for reference - now we'll only ask for confirmation when deleting all chats
+      // // if the chat is empty, just delete it
+      // if (conversationId === newConversationId)
+      //   deleteConversation(conversationId);
+      // // otherwise, ask for confirmation
+      // else {
+      //   setActiveConversationId(conversationId);
+      //   setDeleteConfirmationId(conversationId);
+      // }
+      if (conversationId)
         deleteConversation(conversationId);
-      // otherwise, ask for confirmation
-      else {
-        setActiveConversationId(conversationId);
-        setDeleteConfirmationId(conversationId);
-      }
     }
   };
 
@@ -209,7 +107,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
       <ListDivider />
 
       {conversationIDs.map(conversationId =>
-        <ConversationListItem
+        <PagesMenuItem
           key={'c-id-' + conversationId}
           conversationId={conversationId}
           isActive={conversationId === props.conversationId}
