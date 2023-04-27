@@ -150,7 +150,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
             <Grid key={spId}>
               <Button
                 variant={(!editMode && systemPurposeId === spId) ? 'solid' : 'soft'}
-                color={(!editMode && systemPurposeId === spId) ? 'primary' : 'neutral'}
+                color={(!editMode && systemPurposeId === spId) ? 'primary' : SystemPurposes[spId as SystemPurposeId]?.highlighted ? 'warning' : 'neutral'}
                 onClick={() => !editMode && handlePurposeChanged(spId as SystemPurposeId)}
                 sx={{
                   flexDirection: 'column',
@@ -160,7 +160,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
                   width: bpTileSize,
                   ...((editMode || systemPurposeId !== spId) ? {
                     boxShadow: theme.vars.shadow.md,
-                    background: theme.vars.palette.background.level1,
+                    ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { background: theme.vars.palette.background.level1 }),
                   } : {}),
                 }}
               >
