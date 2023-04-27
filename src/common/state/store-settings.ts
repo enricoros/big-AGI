@@ -74,6 +74,12 @@ interface SettingsStore {
   prodiaSeed: number | null;
   setProdiaSeed: (seed: string) => void;
 
+  // Google Custom Search settings
+  googleCloudApiKey: string;
+  setGoogleCloudApiKey: (googleApiKey: string) => void;
+
+  googleCSEId: string;
+  setGoogleCSEId: (cseId: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -152,6 +158,12 @@ export const useSettingsStore = create<SettingsStore>()(
       prodiaSeed: null,
       setProdiaSeed: (prodiaSeed: string) => set({ prodiaSeed: (prodiaSeed === '' || prodiaSeed === '-1') ? null : parseInt(prodiaSeed) ?? null }),
 
+      // Google Custom Search settings
+      googleCloudApiKey: '',
+      setGoogleCloudApiKey: (googleApiKey: string) => set({ googleCloudApiKey: googleApiKey }),
+
+      googleCSEId: '',
+      setGoogleCSEId: (cseId: string) => set({ googleCSEId: cseId }),
     }),
     {
       name: 'app-settings',
