@@ -25,20 +25,15 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
 
 
   // create an ephemeral space
-  let ephemeralId: string;
+  const ephemeral = createEphemeral(`ReAct · ${lastMessageText}`, 'Initializing ReAct..');
+  appendEphemeral(conversationId, ephemeral);
+
   let ephemeralText: string = '';
-  {
-    const ephemeral = createEphemeral('ReAct', 'Initializing ReAct..');
-    appendEphemeral(conversationId, ephemeral);
-    ephemeralId = ephemeral.id;
-  }
   const logToEphemeral = (text: string) => {
     console.log(text);
     ephemeralText += text + '\n';
-    updateEphemeralText(conversationId, ephemeralId, ephemeralText);
+    updateEphemeralText(conversationId, ephemeral.id, ephemeralText);
   };
-
-  logToEphemeral(`question: ${lastMessageText}`);
 
   try {
 
@@ -49,7 +44,7 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
     if (reactResult.startsWith('Answer: '))
       reactResult = reactResult.substring(8);
 
-    setTimeout(() => deleteEphemeral(conversationId, ephemeralId), 5000);
+    setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 60 * 1000);
     updateAssistantMessage({ text: reactResult, typing: false });
 
   } catch (error: any) {
