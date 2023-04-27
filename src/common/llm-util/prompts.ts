@@ -15,12 +15,12 @@ const summerizationPrompt: string = `You are a semantic text compressor AI, with
 // porting of implementation from here: https://til.simonwillison.net/llms/python-react-pattern
 export const reActPrompt = `
 You run in a loop of Thought, Action, Observation.
-At the end of the loop you output an Answer
-Use Thought to describe your thoughts about the question you have been asked.
-Use Action to run one of the actions available to you - then return PAUSE.
+At the end of the loop you output an "Answer: "
+Use "Thought: " to describe your thoughts about the question you have been asked.
+Use "Action: " to run one of the actions available to you - then return PAUSE.
 Observation will be the result of running those actions.
 
-Your available actions are:
+Your available Actions are:
 
 google:
 e.g. google: Django

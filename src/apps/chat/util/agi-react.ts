@@ -31,7 +31,7 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
   let ephemeralText: string = '';
   const logToEphemeral = (text: string) => {
     console.log(text);
-    ephemeralText += text + '\n';
+    ephemeralText += (text.length > 300 ? text.slice(0, 300) + '...' : text) + '\n';
     updateEphemeralText(conversationId, ephemeral.id, ephemeralText);
   };
 
