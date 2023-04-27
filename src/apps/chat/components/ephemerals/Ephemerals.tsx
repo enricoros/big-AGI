@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, ModalClose, Sheet, Typography } from '@mui/joy';
+import { Box, IconButton, Sheet, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useChatStore } from '@/common/state/store-chats';
 
@@ -10,6 +11,8 @@ import { RenderText } from '../message/ChatMessage';
 
 
 export function Ephemerals(props: { conversationId: string | null, sx?: SxProps }) {
+  // global state
+  const theme = useTheme();
   const ephemerals = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation ? conversation.ephemerals : [];
@@ -17,20 +20,31 @@ export function Ephemerals(props: { conversationId: string | null, sx?: SxProps 
 
   if (!ephemerals?.length) return null;
 
-  return (
-    <Sheet
-      variant='soft' color='info' invertedColors
-      sx={{
-        maxHeight: '30vh', overflow: 'auto',
-        position: 'relative',
-        ...(props.sx || {}),
-      }}>
+  const handleDeleteEphemeral = (ephemeralId: string) => {
+    if (props.conversationId && ephemeralId)
+      useChatStore.getState().deleteEphemeral(props.conversationId, ephemeralId);
+  };
 
-      {ephemerals.map((block, i) => (
-        <Box key={`ephemeral-${i}`}>
-          <ModalClose />
-          {block.title && <Typography level='h5'>{block.title}</Typography>}
-          <RenderText textBlock={{ type: 'text', content: block.text }} sx={{ fontSize: '12px' }} />
+  return (
+    <Sheet variant='soft' color='info' invertedColors sx={props.sx || {}}>
+
+      {ephemerals.map((ephemeral, i) => (
+        <Box
+          key={`ephemeral-${i}`}
+          sx={{
+            p: { xs: 1, md: 2 },
+            position: 'relative',
+            borderBottom: (i < ephemerals.length - 1) ? `1px solid ${theme.vars.palette.divider}` : undefined,
+          }}>
+
+          <IconButton size='sm' sx={{ float: 'right' }} onClick={() => handleDeleteEphemeral(ephemeral.id)}>
+            <CloseIcon />
+          </IconButton>
+
+          {ephemeral.title && <Typography level='h6'>{ephemeral.title}</Typography>}
+
+          <RenderText textBlock={{ type: 'text', content: ephemeral.text }} sx={{ fontSize: '12px', mx: 0 }} />
+
         </Box>
       ))}
 

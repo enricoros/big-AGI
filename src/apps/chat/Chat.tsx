@@ -135,7 +135,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         conversationId={activeConversationId}
         sx={{
           borderTop: `1px solid ${theme.vars.palette.divider}`,
-          p: { xs: 1, md: 2 },
+          maxHeight: '30vh', overflow: 'auto',
         }} />
 
       <Composer
