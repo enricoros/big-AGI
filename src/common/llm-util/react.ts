@@ -14,7 +14,7 @@ const actionRe = /^Action: (\w+): (.*)$/;
  *   - initialize(): will create the state with initial values
  *   - loop() is a function that will update the state (in place)
  */
-interface State {
+export interface State {
   messages: OpenAI.Wire.Chat.Message[];
   nextPrompt: string;
   lastObservation: string;
