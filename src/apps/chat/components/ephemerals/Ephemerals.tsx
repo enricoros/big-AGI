@@ -33,9 +33,10 @@ export function Ephemerals(props: { conversationId: string | null, sx?: SxProps 
             p: { xs: 1, md: 2 },
             position: 'relative',
             borderBottom: (i < ephemerals.length - 1) ? `1px solid ${theme.vars.palette.divider}` : undefined,
+            '&:hover > button': { opacity: 1 },
           }}>
 
-          <IconButton size='sm' sx={{ float: 'right' }} onClick={() => handleDeleteEphemeral(ephemeral.id)}>
+          <IconButton size='sm' sx={{ float: 'right', opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s' }} onClick={() => handleDeleteEphemeral(ephemeral.id)}>
             <CloseIcon />
           </IconButton>
 
