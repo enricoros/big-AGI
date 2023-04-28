@@ -7,6 +7,9 @@ export const requireUserKeyGoogleCse = !process.env.HAS_SERVER_KEYS_GOOGLE_CSE;
 export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
 export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
 
+export const CmdRunReact: string[] = ['/react'];
+export const CmdRunSearch: string[] = ['/search'];
+
 
 /**
  * This function either returns the Search JSON response, or throws a descriptive error string

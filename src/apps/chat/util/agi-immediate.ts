@@ -18,7 +18,7 @@ export const runAssistantUpdatingState = async (conversationId: string, history:
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
 
   // create a blank and 'typing' message for the assistant
-  const assistantMessageId = createAssistantTypingMessage(conversationId, history, assistantModel);
+  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantModel, history[0].purposeId, '...');
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const controller = new AbortController();
@@ -47,10 +47,10 @@ export function updatePurposeInHistory(conversationId: string, history: DMessage
   return history;
 }
 
-export function createAssistantTypingMessage(conversationId: string, history: DMessage[], assistantModel: ChatModelId): string {
-  const assistantMessage: DMessage = createDMessage('assistant', '...');
+export function createAssistantTypingMessage(conversationId: string, assistantModel: ChatModelId | 'prodia' | 'react-...', assistantPurposeId: SystemPurposeId | undefined, text: string): string {
+  const assistantMessage: DMessage = createDMessage('assistant', text);
   assistantMessage.typing = true;
-  assistantMessage.purposeId = history[0].purposeId;
+  assistantMessage.purposeId = assistantPurposeId;
   assistantMessage.originLLM = assistantModel;
   useChatStore.getState().appendMessage(conversationId, assistantMessage);
   return assistantMessage.id;
