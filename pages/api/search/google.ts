@@ -11,7 +11,7 @@ export default async function handler(req: NextRequest): Promise<NextResponse> {
     q: searchParams.get('query') || '',
     cx: searchParams.get('cx') || process.env.GOOGLE_CSE_ID,
     key: searchParams.get('key') || process.env.GOOGLE_CLOUD_API_KEY,
-    num: 4,
+    num: 5,
   };
 
   try {
