@@ -18,7 +18,7 @@ export const Brand = {
     Description: 'big-AGI is a free, open-source project to build a general artificial intelligence (AGI) that can solve any problem.',
     Keywords: 'artificial general intelligence, agi, openai, gpt-4, ai personas, code execution, pdf import, voice i/o, ai chat, artificial intelligence',
     ThemeColor: '#434356',
-    TwitterSite: '@enricoros',
+    TwitterSite: '@bigagienergy',
   },
   URIs: {
     // Slug: 'big-agi',
