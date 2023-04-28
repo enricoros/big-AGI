@@ -369,7 +369,11 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (messageTyping) {
         return <Avatar
           alt={messageSender} variant='plain'
-          src={messageOriginLLM === 'prodia' ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
+          src={messageOriginLLM === 'prodia'
+            ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
+            : messageOriginLLM?.startsWith('react-')
+              ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
+              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
           sx={{ ...mascotSx, borderRadius: 8 }}
         />;
       }

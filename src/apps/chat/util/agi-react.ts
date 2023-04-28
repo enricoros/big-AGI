@@ -19,13 +19,14 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
   history = updatePurposeInHistory(conversationId, history, systemPurposeId);
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
-  const assistantMessageId = createAssistantTypingMessage(conversationId, history, assistantModelId);
+  const assistantModelStr = 'react-' + assistantModelId.slice(4, 7); // HACK: this is used to change the Avatar animation
+  const assistantMessageId = createAssistantTypingMessage(conversationId, history, assistantModelStr as ChatModelId);
   const updateAssistantMessage = (update: Partial<DMessage>) =>
     editMessage(conversationId, assistantMessageId, update, false);
 
 
   // create an ephemeral space
-  const ephemeral = createEphemeral(`ReAct · ${lastMessageText}`, 'Initializing ReAct..');
+  const ephemeral = createEphemeral(`ReAct Development Tools`, 'Initializing ReAct..');
   appendEphemeral(conversationId, ephemeral);
 
   let ephemeralText: string = '';
