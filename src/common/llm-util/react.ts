@@ -7,7 +7,6 @@ import { reActPrompt } from './prompts';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
-const answerRe = /Answer: (.*)/;
 
 
 /**
@@ -36,8 +35,7 @@ export class Agent {
       log(`\n## Turn ${i}`);
       await this.step(S, modelId, log);
     }
-    const answer = S.result?.match(answerRe)?.[1];
-    return answer || 'No result';
+    return S.result?.startsWith('Answer: ') ? S.result.slice(8) : S.result || 'No result';
   }
 
   initialize(question: string): State {
@@ -81,7 +79,7 @@ export class Agent {
       S.nextPrompt = `Observation: ${observation}`;
       S.lastObservation = observation;
     } else {
-      log('🡗 no further action')
+      log('↙ done');
       // log(`Result: ${result}`);
       S.result = result;
     }
