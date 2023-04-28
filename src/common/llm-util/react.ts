@@ -26,14 +26,16 @@ export interface State {
 export class Agent {
 
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
-  async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log: (...data: any[]) => void = console.log): Promise<string> {
+  async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
     const S: State = await this.initialize(question);
+    show(S);
     while (i < maxTurns && S.result === undefined) {
       i++;
       log(`\n## Turn ${i}`);
       await this.step(S, modelId, log);
+      show(S);
     }
     return S.result?.startsWith('Answer: ') ? S.result.slice(8) : S.result || 'No result';
   }
