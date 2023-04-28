@@ -30,7 +30,7 @@ export async function callApiSearchGoogle(queryText: string): Promise<Search.API
   } catch (error: any) {
     errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
   }
-  console.error(`callSearchGoogle: ${errorMessage}`);
+  console.error(`callApiSearchGoogle: ${errorMessage}`);
   throw new Error(errorMessage);
 }
 

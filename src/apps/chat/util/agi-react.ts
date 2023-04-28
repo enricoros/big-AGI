@@ -41,7 +41,7 @@ export const runReActUpdatingState = async (conversationId: string, history: DMe
     const agent = new Agent();
     let reactResult = await agent.reAct(lastMessageText, assistantModelId, 5, logToEphemeral);
 
-    setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 60 * 1000);
+    setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 2 * 1000);
     updateAssistantMessage({ text: reactResult, typing: false });
 
   } catch (error: any) {
