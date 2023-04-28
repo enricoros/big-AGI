@@ -93,12 +93,14 @@ export interface DEphemeral {
   id: string;
   title: string;
   text: string;
+  state: object;
 }
 
 export const createEphemeral = (title: string, initialText: string): DEphemeral => ({
   id: uuidv4(),
   title: title,
   text: initialText,
+  state: {},
 });
 
 
@@ -130,6 +132,7 @@ export interface ChatStore {
   appendEphemeral: (conversationId: string, devTool: DEphemeral) => void;
   deleteEphemeral: (conversationId: string, ephemeralId: string) => void;
   updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) => void;
+  updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) => void;
 
   // utility function
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -321,10 +324,18 @@ export const useChatStore = create<ChatStore>()(devtools(
         get()._editConversation(conversationId, conversation => {
           const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
             e.id === ephemeralId
-              ? {
-                ...e,
-                text,
-              }
+              ? { ...e, text }
+              : e) || [];
+          return {
+            ephemerals,
+          };
+        }),
+
+      updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) =>
+        get()._editConversation(conversationId, conversation => {
+          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
+            e.id === ephemeralId
+              ? { ...e, state: state }
               : e) || [];
           return {
             ephemerals,

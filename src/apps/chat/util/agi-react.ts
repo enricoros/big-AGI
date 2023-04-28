@@ -10,7 +10,7 @@ import { createAssistantTypingMessage } from './agi-immediate';
  */
 export const runReActUpdatingState = async (conversationId: string, question: string, assistantModelId: ChatModelId) => {
 
-  const { appendEphemeral, updateEphemeralText, deleteEphemeral, editMessage } = useChatStore.getState();
+  const { appendEphemeral, updateEphemeralText, updateEphemeralState, deleteEphemeral, editMessage } = useChatStore.getState();
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
   const assistantModelStr = 'react-' + assistantModelId.slice(4, 7); // HACK: this is used to change the Avatar animation
@@ -20,7 +20,7 @@ export const runReActUpdatingState = async (conversationId: string, question: st
 
 
   // create an ephemeral space
-  const ephemeral = createEphemeral(`ReAct Development Tools`, 'Initializing ReAct..');
+  const ephemeral = createEphemeral(`Reason+Act`, 'Initializing ReAct..');
   appendEphemeral(conversationId, ephemeral);
 
   let ephemeralText: string = '';
@@ -34,7 +34,10 @@ export const runReActUpdatingState = async (conversationId: string, question: st
 
     // react loop
     const agent = new Agent();
-    let reactResult = await agent.reAct(question, assistantModelId, 5, logToEphemeral);
+    const reactResult = await agent.reAct(question, assistantModelId, 5,
+      logToEphemeral,
+      (state: object) => updateEphemeralState(conversationId, ephemeral.id, state),
+    );
 
     setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 2 * 1000);
     updateAssistantMessage({ text: reactResult, typing: false });
