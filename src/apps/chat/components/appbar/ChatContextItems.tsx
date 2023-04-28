@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { Badge, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
@@ -24,6 +25,7 @@ export function ChatContextItems(props: {
 }) {
 
   // external state
+  const { duplicateConversation } = useChatStore(state => ({ duplicateConversation: state.duplicateConversation }), shallow);
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -42,6 +44,12 @@ export function ChatContextItems(props: {
     const conversation = useChatStore.getState().conversations.find(conversation => conversation.id === props.conversationId);
     if (conversation)
       downloadConversationJson(conversation);
+  };
+
+  const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    closeContextMenu();
+    props.conversationId && duplicateConversation(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
@@ -69,6 +77,17 @@ export function ChatContextItems(props: {
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
       System message
       <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
+    </MenuItem>
+
+    <ListDivider inset='startContent' />
+
+    <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
+      <ListItemDecorator>
+        <Badge size='sm' color='info'>
+          <ForkRightIcon color='info' />
+        </Badge>
+      </ListItemDecorator>
+      Duplicate
     </MenuItem>
 
     <ListDivider inset='startContent' />

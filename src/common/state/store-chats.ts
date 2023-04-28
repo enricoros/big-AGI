@@ -117,6 +117,7 @@ export interface ChatStore {
 
   // store setters
   createConversation: () => void;
+  duplicateConversation: (conversationId: string) => void;
   importConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
   deleteAllConversations: () => void;
@@ -162,6 +163,35 @@ export const useChatStore = create<ChatStore>()(devtools(
               ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
             ],
             activeConversationId: conversation.id,
+          };
+        }),
+
+      duplicateConversation: (conversationId: string) =>
+        set(state => {
+          const conversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === conversationId);
+          if (!conversation)
+            return {};
+
+          // create a deep copy of the conversation
+          const deepCopy: DConversation = JSON.parse(JSON.stringify(conversation));
+          const duplicate: DConversation = {
+            ...deepCopy,
+            id: uuidv4(),
+            messages: deepCopy.messages.map((message: DMessage): DMessage => ({
+              ...message,
+              id: uuidv4(),
+            })),
+            updated: Date.now(),
+            abortController: null,
+            ephemerals: [],
+          };
+
+          return {
+            conversations: [
+              duplicate,
+              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+            ],
+            activeConversationId: duplicate.id,
           };
         }),
 
