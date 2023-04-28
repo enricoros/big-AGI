@@ -110,7 +110,7 @@ export const SendModes: { [key in SendModeId]: SendModeData } = {
     description: 'AI-powered direct responses',
   },
   'react': {
-    label: 'ReAct',
-    description: 'Use ReAct to answer your questions',
+    label: 'Reason+Act',
+    description: 'Answer your questions with ReAct and search',
   },
 };
