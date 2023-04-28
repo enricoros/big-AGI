@@ -100,7 +100,6 @@ async function wikipedia(q: string): Promise<string> {
 async function search(query: string): Promise<string> {
   try {
     const data = await callApiSearchGoogle(query);
-    console.log(data);
     return JSON.stringify(data);
   } catch (error) {
     console.error('Error fetching search results:', (error as Error).message);
