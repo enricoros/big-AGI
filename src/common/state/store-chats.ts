@@ -224,6 +224,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             tokenCount: newMessages.reduce((sum, message) => sum + 4 + updateTokenCount(message, conversation.chatModelId, false, 'setMessages'), 3),
             updated: Date.now(),
             abortController: null,
+            ephemerals: [],
           };
         }),
 

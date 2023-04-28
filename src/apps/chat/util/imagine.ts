@@ -1,28 +1,23 @@
 import { Prodia } from '@/modules/prodia/prodia.types';
 import { prodiaDefaultModelId } from '@/modules/prodia/prodia.client';
 
-import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
+import { useChatStore } from '@/common/state/store-chats';
 import { useSettingsStore } from '@/common/state/store-settings';
+
+import { createAssistantTypingMessage } from './agi-immediate';
 
 
 /**
  * The main 'image generation' function - for now specialized to the 'imagine' command.
  */
-export const runImageGenerationUpdatingState = async (conversationId: string, history: DMessage[], imageText: string) => {
+export const runImageGenerationUpdatingState = async (conversationId: string, imageText: string) => {
 
   // reference the state editing functions
-  const { editMessage, setMessages } = useChatStore.getState();
+  const { editMessage } = useChatStore.getState();
 
   // create a blank and 'typing' message for the assistant
-  let assistantMessageId: string;
-  {
-    const assistantMessage: DMessage = createDMessage('assistant', `Give me a few seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`);
-    assistantMessageId = assistantMessage.id;
-    assistantMessage.typing = true;
-    assistantMessage.purposeId = history[0].purposeId;
-    assistantMessage.originLLM = 'prodia';
-    setMessages(conversationId, [...history, assistantMessage]);
-  }
+  const assistantMessageId = createAssistantTypingMessage(conversationId, 'prodia', undefined,
+    `Give me a few seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`);
 
   // generate the image
   const { prodiaApiKey: apiKey, prodiaModelId, prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale, prodiaSeed: seed } = useSettingsStore.getState();

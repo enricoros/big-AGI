@@ -4,6 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { Box, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
+import { CmdRunProdia } from '@/modules/prodia/prodia.client';
+import { CmdRunReact } from '@/modules/search/search.client';
 import { PasteGG } from '@/modules/pastegg/pastegg.types';
 import { PublishedModal } from '@/modules/pastegg/PublishedModal';
 import { callPublish } from '@/modules/pastegg/pastegg.client';
@@ -12,6 +14,7 @@ import { ConfirmationModal } from '@/common/components/ConfirmationModal';
 import { Link } from '@/common/components/Link';
 import { conversationToMarkdown } from '@/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
+import { extractCommands } from '@/common/util/extractCommands';
 import { useComposerStore } from '@/common/state/store-composer';
 import { useSettingsStore } from '@/common/state/store-settings';
 
@@ -34,29 +37,37 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
   // external state
   const theme = useTheme();
   const { sendModeId } = useComposerStore(state => ({ sendModeId: state.sendModeId }), shallow);
-  const { activeConversationId, chatModelId, systemPurposeId } = useChatStore(state => {
+  const { activeConversationId, setMessages, chatModelId, systemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
+      setMessages: state.setMessages,
       chatModelId: conversation?.chatModelId ?? null,
       systemPurposeId: conversation?.systemPurposeId ?? null,
     };
   }, shallow);
 
 
-  const _findConversation = (conversationId: string) =>
-    conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
-
-
   const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
     if (!conversationId) return;
 
-    // [special case] command: '/imagine <prompt>'
-    if (history.length > 0 && history[history.length - 1].role === 'user') {
-      const lastUserText = history[history.length - 1].text;
-      if (lastUserText.startsWith('/imagine ') || lastUserText.startsWith('/img ')) {
-        const prompt = lastUserText.substring(lastUserText.indexOf(' ') + 1).trim();
-        return await runImageGenerationUpdatingState(conversationId, history, prompt);
+    // Command - last user message is a cmd
+    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
+    if (lastMessage?.role === 'user') {
+      const pieces = extractCommands(lastMessage.text);
+      if (pieces.length == 2 && pieces[0].type === 'cmd' && pieces[1].type === 'text') {
+        const command = pieces[0].value;
+        const prompt = pieces[1].value;
+        if (CmdRunProdia.includes(command)) {
+          setMessages(conversationId, history);
+          return await runImageGenerationUpdatingState(conversationId, prompt);
+        }
+        if (CmdRunReact.includes(command) && chatModelId) {
+          setMessages(conversationId, history);
+          return await runReActUpdatingState(conversationId, prompt, chatModelId);
+        }
+        // if (CmdRunSearch.includes(command))
+        //   return await run...
       }
     }
 
@@ -66,10 +77,19 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         case 'immediate':
           return await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
         case 'react':
-          return await runReActUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+          if (lastMessage?.text) {
+            setMessages(conversationId, history);
+            return await runReActUpdatingState(conversationId, lastMessage.text, chatModelId);
+          }
       }
     }
+
+    // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
+    setMessages(conversationId, history);
   };
+
+  const _findConversation = (conversationId: string) =>
+    conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
   const handleSendUserMessage = async (conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
@@ -82,7 +102,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
     if (conversation && chatModelId) {
       const prompt = await imaginePromptFromText(messageText, chatModelId);
       if (prompt)
-        return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `/imagine ${prompt}`)]);
+        return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
     }
   };
 
