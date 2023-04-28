@@ -103,7 +103,7 @@ async function search(query: string): Promise<string> {
     return JSON.stringify(data);
   } catch (error) {
     console.error('Error fetching search results:', (error as Error).message);
-    return 'An error occurred while fetching search results.';
+    return 'An error occurred while searching the internet. Missing API Key?';
   }
 }
 
