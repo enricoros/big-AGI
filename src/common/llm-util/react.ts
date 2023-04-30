@@ -37,7 +37,13 @@ export class Agent {
       await this.step(S, modelId, log);
       show(S);
     }
-    return S.result?.startsWith('Answer: ') ? S.result.slice(8) : S.result || 'No result';
+    // return only the 'Answer: ' part of the result
+    if (S.result) {
+      const idx = S.result.indexOf('Answer: ');
+      if (idx !== -1)
+        return S.result.slice(idx + 8);
+    }
+    return S.result || 'No result';
   }
 
   initialize(question: string): State {
