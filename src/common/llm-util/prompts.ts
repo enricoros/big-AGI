@@ -1,14 +1,14 @@
 // prompts.ts
 
 // Use the string template to include the current date in a string
-const currentDate = (() => {
+export const currentDate = (): string => {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Add 1 to the month since it's 0-based
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
-})();
+};
 
 export const cleanupPrompt: string = `
 Please remove any non-sensical portions and complete references from the following text extracts while preserving the original meaning and semantics of the text as much as possible. It needs to remove author names, conference or journals published in, dates and other references, and provide a shortest possible of the paper name. For instance, It needs to remove the text that looks like below, which are references to academic papers:
@@ -34,7 +34,7 @@ You will use "Action: " to run one of the actions available to you - then return
 "Observation" will be presented to you as the result of previous "Action".
 If the "Observation" you received is not related to the question asked, or you cannot derive the answer from the observation, change the Action to be performed and try again.
 
-ALWAYS assume today as ${currentDate} when dealing with questions regarding dates.
+ALWAYS assume today as {{currentDate}} when dealing with questions regarding dates.
 Never mention your knowledge cutoff date
 
 Your available "Actions" are:
