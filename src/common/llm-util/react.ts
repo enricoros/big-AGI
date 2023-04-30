@@ -3,7 +3,7 @@ import { callApiSearchGoogle } from '@/modules/search/search.client';
 import { callChat } from '@/modules/openai/openai.client';
 
 import { ChatModelId } from '../../data';
-import { reActPrompt } from './prompts';
+import { currentDate, reActPrompt } from './prompts';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
@@ -42,7 +42,7 @@ export class Agent {
 
   initialize(question: string): State {
     return {
-      messages: [{ role: 'system', content: reActPrompt }],
+      messages: [{ role: 'system', content: reActPrompt.replaceAll('{{currentDate}}', currentDate()) }],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
@@ -50,7 +50,7 @@ export class Agent {
   }
 
   truncateStringAfterPause(input: string): string {
-    const pauseKeyword = "PAUSE";
+    const pauseKeyword = 'PAUSE';
     const pauseIndex = input.indexOf(pauseKeyword);
 
     if (pauseIndex === -1) {
