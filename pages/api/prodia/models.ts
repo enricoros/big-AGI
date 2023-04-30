@@ -20,6 +20,9 @@ const HARDCODED_MODELS: Prodia.API.Models.Response = {
     { id: 'portrait+1.0.safetensors [1400e684]', label: 'Portrait' },
     { id: 'riffusion-model-v1.ckpt [3aafa6fe]', label: 'Riffusion' },
     { id: 'timeless-1.0.ckpt [7c4971d4]', label: 'Timeless' },
+    { id: 'dreamshaper_5BakedVae.safetensors [a3fbf318]', label: 'Dreamshaper 5' },
+    { id: 'revAnimated_v122.safetensors [3f4fefd9]', label: 'ReV Animated V1.2.2' },
+    { id: 'meinamix_meinaV9.safetensors [2ec66ab0]', label: 'MeinaMix Meina V9' },
   ],
 };
 
