@@ -127,7 +127,7 @@ export function UISettings() {
 
         <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
-            <Tooltip title='Currently for Microphone input only. Language support varies by browser. Note: iPhone/Safari lacks speech input.'>
+            <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
               <FormLabel>
                 Language <InfoOutlinedIcon sx={{ mx: 0.5 }} />
               </FormLabel>

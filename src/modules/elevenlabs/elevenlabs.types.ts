@@ -8,6 +8,7 @@ export namespace ElevenLabs {
         apiKey?: string;
         text: string;
         voiceId?: string;
+        nonEnglish: boolean;
       }
 
       export type Response = ArrayBuffer;
@@ -36,6 +37,7 @@ export namespace ElevenLabs {
     export namespace TextToSpeech {
       export interface Request {
         text: string;
+        model_id?: 'eleven_monolingual_v1' | string;
         voice_settings?: {
           stability: number;
           similarity_boost: number;

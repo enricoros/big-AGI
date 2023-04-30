@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { useQuery } from '@tanstack/react-query';
 
 import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Option, Radio, RadioGroup, Select, Stack } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
@@ -13,8 +12,7 @@ import { Section } from '@/common/components/Section';
 import { settingsGap } from '@/common/theme';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { ElevenLabs } from './elevenlabs.types';
-import { isValidElevenLabsApiKey, requireUserKeyElevenLabs } from './elevenlabs.client';
+import { isValidElevenLabsApiKey, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
 
 
 export function ElevenlabsSettings() {
@@ -31,16 +29,7 @@ export function ElevenlabsSettings() {
   const requiresKey = requireUserKeyElevenLabs;
   const isValidKey = apiKey ? isValidElevenLabsApiKey(apiKey) : !requiresKey;
 
-  // load voices, if the server has a key, or the user provided one
-  const { data: voicesData, isLoading: loadingVoices } = useQuery(['voices', apiKey], {
-    enabled: isValidKey,
-    queryFn: () => fetch('/api/elevenlabs/voices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(apiKey ? { apiKey: apiKey } : {}) }),
-    }).then(res => res.json() as Promise<ElevenLabs.API.Voices.Response>),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { voicesData, loadingVoices } = useElevenLabsVoices(apiKey, isValidKey);
 
   const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
 
