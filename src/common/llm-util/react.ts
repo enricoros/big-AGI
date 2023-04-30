@@ -3,7 +3,7 @@ import { callApiSearchGoogle } from '@/modules/search/search.client';
 import { callChat } from '@/modules/openai/openai.client';
 
 import { ChatModelId } from '../../data';
-import { reActPrompt } from './prompts';
+import { currentDate, reActPrompt } from './prompts';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
@@ -29,7 +29,7 @@ export class Agent {
   async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
-    const S: State = await this.initialize(question);
+    const S: State = await this.initialize(`Question: ${question}`);
     show(S);
     while (i < maxTurns && S.result === undefined) {
       i++;
@@ -42,11 +42,23 @@ export class Agent {
 
   initialize(question: string): State {
     return {
-      messages: [{ role: 'system', content: reActPrompt }],
+      messages: [{ role: 'system', content: reActPrompt.replaceAll('{{currentDate}}', currentDate()) }],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
     };
+  }
+
+  truncateStringAfterPause(input: string): string {
+    const pauseKeyword = 'PAUSE';
+    const pauseIndex = input.indexOf(pauseKeyword);
+
+    if (pauseIndex === -1) {
+      return input;
+    }
+
+    const endIndex = pauseIndex + pauseKeyword.length;
+    return input.slice(0, endIndex);
   }
 
   async chat(S: State, prompt: string, modelId: ChatModelId): Promise<string> {
@@ -57,6 +69,8 @@ export class Agent {
     } catch (error: any) {
       content = `Error in callChat: ${error}`;
     }
+    // process response, strip out potential hallucinated response after PAUSE is detected
+    content = this.truncateStringAfterPause(content);
     S.messages.push({ role: 'assistant', content });
     return content;
   }
