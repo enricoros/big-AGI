@@ -6,8 +6,7 @@ import { Chat } from '@/components/Chat';
 import { NoSSR } from '@/components/util/NoSSR';
 import { isValidOpenAIApiKey, SettingsModal } from '@/components/dialogs/SettingsModal';
 import { useSettingsStore } from '@/lib/stores/store-settings';
-import { useState, useEffect } from 'react';
-import { userService } from 'services';
+
 
 export default function Home() {
   // state
@@ -18,14 +17,9 @@ export default function Home() {
   const apiKey = useSettingsStore(state => state.apiKey);
   const centerMode = useSettingsStore(state => state.centerMode);
 
-  const [users, setUsers] = useState(null);
-
-    useEffect(() => {
-        userService.getAll().then(x => setUsers(x));
-    }, []);
 
   // show the Settings Dialog at startup if the API key is required but not set
-  useEffect(() => {
+  React.useEffect(() => {
     if (!process.env.HAS_SERVER_KEY_OPENAI && !isValidOpenAIApiKey(apiKey))
       setSettingsShown(true);
   }, [apiKey]);
