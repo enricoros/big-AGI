@@ -15,7 +15,7 @@ AUTH_USER_0=your_username
 AUTH_PASSWORD_0=your_password
 
 # [Required if AUTH_TYPE == credential and *not in development mode*] See: https://next-auth.js.org/configuration/options#nextauth_url
-NEXTAUTH_URL=http://example.com
+NEXTAUTH_URL=https://example.com
 
 # [Required if AUTH_TYPE == credential] See: https://next-auth.js.org/configuration/options#secret
 NEXTAUTH_SECRET=your_nextauth_secret

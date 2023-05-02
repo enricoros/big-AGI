@@ -217,6 +217,7 @@ export function ApplicationBar(props: {
       </Stack>
     </Sheet>
 
+
     {/* Left menu content */}
     <PagesMenu
       conversationId={props.conversationId}
