@@ -1,10 +1,11 @@
+import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { CmdRunSearch } from '~/modules/google/search.client';
 
 export const CmdAddRoleMessage: string[] = ['/assistant', '/a', '/system', '/s'];
 
-export const commands = [...CmdRunProdia, ...CmdRunReact, ...CmdRunSearch, ...CmdAddRoleMessage];
+export const commands = [...CmdRunBrowse, ...CmdRunProdia, ...CmdRunReact, ...CmdRunSearch, ...CmdAddRoleMessage];
 
 export interface SentencePiece {
   type: 'text' | 'cmd';
