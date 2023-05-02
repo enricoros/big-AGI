@@ -111,7 +111,7 @@ export function ApplicationBar(props: {
     return (
       <>
       <Image
-    src="https://theme.zdassets.com/theme_assets/569060/1cd492cc0c8bcd4d6c220cd75f4499337b550275.png"
+    src="https://adthrive.com/images/Raptive_AISquared_Wordmark.png"
     alt="logo"
     width={100}
     height={30}
@@ -121,6 +121,19 @@ export function ApplicationBar(props: {
    )
    }
 
+  const mySpacer = () => {
+    return (
+      <>
+      <Image
+    src="https://adthrive.com/images/40x30-00000000.png"
+    alt="This is a spacer"
+    width={40}
+    height={30}
+    objectFit='contain'
+  />
+      </>
+   )
+   }
 
   return <>
 
@@ -137,6 +150,7 @@ export function ApplicationBar(props: {
         <Badge variant='solid' size='sm' badgeContent={conversationsCount < 2 ? 0 : conversationsCount}>
           <MenuIcon />
         </Badge>
+        {mySpacer()}  
         {myLogo()}
       </IconButton>
 
@@ -148,7 +162,7 @@ export function ApplicationBar(props: {
 
         {systemPurposeId && (zenMode === 'cleaner'
             ? <AppBarDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
-            : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+           : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
         )}
 
       </Stack>
