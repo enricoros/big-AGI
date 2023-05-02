@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
-import { Badge, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Sheet, Stack, SvgIcon, Switch, useColorScheme, useTheme } from '@mui/joy';
+import { Badge, Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Sheet, Stack, SvgIcon, Switch, Typography, useColorScheme, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
@@ -10,10 +11,14 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+
+import { buildTimeAuthEnabled } from '@/modules/authentication/auth.client';
 
 import { Brand } from '@/common/brand';
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -103,6 +108,8 @@ export function ApplicationBar(props: {
 
 
   // center buttons
+
+  const { data: authSession } = useSession();
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) =>
     value && props.conversationId && setChatModelId(props.conversationId, value);
@@ -246,10 +253,24 @@ export function ApplicationBar(props: {
         )}
 
       </Stack>
-
-      <IconButton variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
-        <MoreVertIcon />
-      </IconButton>
+      <Stack direction='row'>
+        {buildTimeAuthEnabled && (
+          authSession?.user ? (
+            <IconButton onClick={() => signOut()}>
+              <LogoutIcon style={{ marginRight: '0.33em' }} />
+              <Typography level='body3'>Sign out {authSession.user?.name ?? ''}</Typography>
+            </IconButton>
+          ) : (
+            <IconButton onClick={() => signIn()}>
+              <LoginIcon style={{ marginRight: '0.33em' }} />
+              <Typography>Sign in </Typography>
+            </IconButton>
+          )
+        )}
+        <IconButton variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
+          <MoreVertIcon />
+        </IconButton>
+      </Stack>
     </Sheet>
 
 

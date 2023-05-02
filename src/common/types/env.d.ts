@@ -31,6 +31,7 @@ declare namespace NodeJS {
     HAS_SERVER_KEY_ELEVENLABS: boolean;
     HAS_SERVER_KEY_PRODIA: boolean;
     HAS_SERVER_KEYS_GOOGLE_CSE: boolean;
+    SERVER_AUTH_TYPE: string | undefined;
 
   }
 }

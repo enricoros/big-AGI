@@ -42,7 +42,11 @@ Or fork & run on Vercel
 
 ## Latest Drops 🚀
 
-#### 🚨 April: more #big-agi-energy
+#### 🚨 May: mature #big-agi-energy 
+
+- 🎉 **Authentication** basic user authentication framework
+
+#### April: #big-agi-energy grows
 
 - 🎉 **[Google Search](docs/pixels/feature_react_google.png)** active in ReAct - add your keys to Settings > Google Search
 - 🎉 **[Reason+Act](docs/pixels/feature_react_turn_on.png)** preview feature - activate with 2-taps on the 'Chat' button
@@ -78,6 +82,10 @@ Or fork & run on Vercel
 - 🌙 Dark model - Wide mode ⛶
 
 <br/>
+
+### Basic Authentication for public deployments 🔐
+
+To protect the web app owner from incurring unauthorized costs when deploying the app with a backend API key (`OPENAI_API_KEY`), you can [set up basic authentication.](/docs/authentication.md).
 
 ## Why this? 💡
 
