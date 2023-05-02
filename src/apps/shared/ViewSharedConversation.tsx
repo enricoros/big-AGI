@@ -87,6 +87,19 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
   useLayoutPluggable(null, null, menuItems);
 
 
+  // heuristic: turn on Markdown if a table is detected
+  React.useEffect(() => {
+    const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore.getState();
+    if (!renderMarkdown) {
+      const hasMarkdownTables = messages.some(m => m.text.includes('|---'));
+      if (hasMarkdownTables) {
+        setRenderMarkdown(true);
+        console.log('Turning on Markdown because of tables');
+      }
+    }
+  }, [messages]);
+
+
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
