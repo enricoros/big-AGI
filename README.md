@@ -42,7 +42,11 @@ Or fork & run on Vercel
 
 ## Latest Drops 🚀
 
-#### 🚨 April: more #big-agi-energy
+#### 🚨 May: mature #big-agi-energy 
+
+- 🎉 **Authentication** basic user authentication framework
+
+#### April: #big-agi-energy grows
 
 - 🎉 **[Image Generation](docs/pixels/feature_imagine_command.png)** using Prodia (BYO Keys) - /imagine - or menu option
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
@@ -76,6 +80,10 @@ Or fork & run on Vercel
 - 🌙 Dark model - Wide mode ⛶
 
 <br/>
+
+### Basic Authentication for public deployments 🔐
+
+To protect the web app owner from incurring unauthorized costs when deploying the app with a backend API key (`OPENAI_API_KEY`), you can [set up basic authentication.](/docs/auth.md).
 
 ## Why this? 💡
 

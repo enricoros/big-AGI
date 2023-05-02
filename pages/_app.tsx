@@ -2,6 +2,9 @@ import * as React from 'react';
 import Head from 'next/head';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import { AppProps } from 'next/app';
+import { Session } from 'next-auth';
+import { SessionProvider } from 'next-auth/react';
+
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,9 +19,10 @@ const clientSideEmotionCache = createEmotionCache();
 
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
+  session?: Session;
 }
 
-export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
+export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps: { session, ...pageProps } }: MyAppProps) {
   const [queryClient] = React.useState(() => new QueryClient());
   return <>
     <CacheProvider value={emotionCache}>
@@ -31,7 +35,9 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
         <CssVarsProvider defaultMode='light' theme={theme}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
+          <SessionProvider session={session}>
           <Component {...pageProps} />
+        </SessionProvider>
         </CssVarsProvider>
       </QueryClientProvider>
     </CacheProvider>

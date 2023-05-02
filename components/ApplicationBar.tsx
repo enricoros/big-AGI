@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
-import { Badge, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
+import { Badge, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
@@ -9,6 +10,8 @@ import ClearIcon from '@mui/icons-material/Clear';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
@@ -22,6 +25,8 @@ import { ImportedModal, ImportedOutcome } from '@/components/dialogs/ImportedMod
 import { PagesMenu } from '@/components/Pages';
 import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
+
+import { authNeeded } from '@/lib/auth';
 
 
 /**
@@ -44,6 +49,8 @@ export function ApplicationBar(props: {
 
 
   // center buttons
+
+  const { data: session } = useSession();
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) =>
     value && props.conversationId && setChatModelId(props.conversationId, value);
@@ -187,12 +194,28 @@ export function ApplicationBar(props: {
         )}
 
       </Stack>
+      <Stack direction='row'>
+        {authNeeded ? (
+          session?.user ? (
+              <IconButton onClick={() => signOut()}>
+                <LogoutIcon style={{ marginRight: '0.33em' }} />
+                <Typography level='body3'>Sign out {session.user?.name ?? ''}</Typography>
+              </IconButton>
+            )
+            : (
 
-      <IconButton variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
-        <MoreVertIcon />
-      </IconButton>
+              <IconButton onClick={() => signIn()}>
+                <LoginIcon style={{ marginRight: '0.33em' }} />
+                <Typography>Sign in </Typography>
+              </IconButton>
+            )
+        ) : <></>
+        }
+        <IconButton variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
+          <MoreVertIcon />
+        </IconButton>
+      </Stack>
     </Sheet>
-
 
     {/* Left menu content */}
     <PagesMenu
