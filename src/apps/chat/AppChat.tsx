@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 
+import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
@@ -29,6 +30,7 @@ import { Ephemerals } from './components/Ephemerals';
 import { usePanesManager } from './components/usePanesManager';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
+import { runBrowseUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
 
@@ -128,6 +130,10 @@ export function AppChat() {
         if (CmdRunReact.includes(command) && chatLLMId) {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
+        }
+        if (CmdRunBrowse.includes(command) && prompt?.trim()) {
+          setMessages(conversationId, history);
+          return await runBrowseUpdatingState(conversationId, prompt);
         }
         if (CmdAddRoleMessage.includes(command)) {
           lastMessage.role = command.startsWith('/s') ? 'system' : command.startsWith('/a') ? 'assistant' : 'user';
