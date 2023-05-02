@@ -16,7 +16,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
     <Html lang='en' className={bodyFontClassName}>
       <Head>
-        <link rel='shortcut icon' href='/favicon.ico' />
+        <link rel='shortcut icon' href='/raptivelogo1.jpg' />
         <link rel='manifest' href='/manifest.json' />
         <meta name='apple-mobile-web-app-status-bar-style' content='black' />
         <meta name='emotion-insertion-point' content='' />

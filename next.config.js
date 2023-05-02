@@ -6,6 +6,9 @@ const nextConfig = {
     HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
     HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
   },
+  images: {
+      domains: ['theme.zdassets.com'],
+  },
   webpack(config, { isServer, dev }) {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';

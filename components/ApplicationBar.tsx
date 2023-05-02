@@ -19,6 +19,7 @@ import { ConfirmationModal } from '@/components/dialogs/ConfirmationModal';
 import { PagesMenu } from '@/components/Pages';
 import { useChatStore } from '@/lib/stores/store-chats';
 import { useSettingsStore } from '@/lib/stores/store-settings';
+import Image from 'next/image'
 
 
 /**
@@ -106,6 +107,20 @@ export function ApplicationBar(props: {
   const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
     value && props.conversationId && setSystemPurposeId(props.conversationId, value);
 
+  const myLogo = () => {
+    return (
+      <>
+      <Image
+    src="https://theme.zdassets.com/theme_assets/569060/1cd492cc0c8bcd4d6c220cd75f4499337b550275.png"
+    alt="logo"
+    width={100}
+    height={30}
+    objectFit='contain'
+  />
+      </>
+   )
+   }
+
 
   return <>
 
@@ -118,13 +133,16 @@ export function ApplicationBar(props: {
         ...(props.sx || {}),
       }}>
 
-      <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
+        <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
         <Badge variant='solid' size='sm' badgeContent={conversationsCount < 2 ? 0 : conversationsCount}>
           <MenuIcon />
         </Badge>
+        {myLogo()}
       </IconButton>
 
+
       <Stack direction='row' sx={{ my: 'auto' }}>
+        
 
         {chatModelId && <AppBarDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
 
@@ -139,6 +157,7 @@ export function ApplicationBar(props: {
         <MoreVertIcon />
       </IconButton>
     </Sheet>
+    
 
 
     {/* Left menu */}

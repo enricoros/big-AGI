@@ -1,6 +1,6 @@
 import createCache from '@emotion/cache';
 import { keyframes } from '@emotion/react';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Newsreader } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 
@@ -9,7 +9,7 @@ import { extendTheme } from '@mui/joy';
 // For next April Fools' week
 // export const foolsMode = new Date().getMonth() === 3 && new Date().getDate() <= 7;
 
-const inter = Inter({
+const newsreader = Newsreader({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
   display: 'swap',
@@ -25,18 +25,18 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const theme = extendTheme({
   fontFamily: {
-    body: inter.style.fontFamily,
+    body: newsreader.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
   colorSchemes: {
     light: {
       palette: {
         background: {
-          body: 'var(--joy-palette-neutral-300, #B9B9C6)', // background.level4
+          body: '#f0edeb', // background.level4
         },
         primary: {
           // 50: '#F4FAFF', // softBg
-          100: '#f0f8ff', // plainHoverBg  -  #DDF1FF | #f0f4ff | #f0f8ff (aliceblue)
+          100: '#ff7858', // plainHoverBg  -  #DDF1FF | #f0f4ff | #f0f8ff (aliceblue)
           // 200: '#ADDBFF',
           // 300: '#6FB6FF',
           // 400: '#3990FF',
@@ -47,8 +47,8 @@ export const theme = extendTheme({
           // 900: '#00153C',
         },
         neutral: {
-          solidBg: 'var(--joy-palette-neutral-700, #434356)',
-          solidHoverBg: 'var(--joy-palette-neutral-800, #25252D)', // hover Neutral buttons (App Bar)
+          solidBg: '#6b65ff',
+          solidHoverBg: '#ff7858', // hover Neutral buttons (App Bar)
           // 50: '#F7F7F8',
           // 100: '#EBEBEF',
           // 200: '#D8D8DF',
@@ -65,9 +65,9 @@ export const theme = extendTheme({
     dark: {
       palette: {
         background: {
-          surface: 'var(--joy-palette-neutral-900, #131318)',
-          level1: 'var(--joy-palette-common-black, #09090D)',
-          level2: 'var(--joy-palette-neutral-800, #25252D)',
+          surface: '#e1dad4',
+          level1: '#f0edeb',
+          level2: '#ecb5d2',
           // popup: 'var(--joy-palette-common-black, #09090D)',
         },
       },
@@ -76,7 +76,7 @@ export const theme = extendTheme({
   },
 });
 
-export const bodyFontClassName = inter.className;
+export const bodyFontClassName = newsreader.className;
 
 export const cssRainbowColorKeyframes = keyframes`
   100%, 0% {
