@@ -21,7 +21,7 @@ async function rethrowElevenLabsError(response: Response) {
     } catch (e) {
       // ignore
     }
-    console.error('Error in ElevenLabs API:', errorPayload);
+    // console.error('Error in ElevenLabs API:', errorPayload);
     throw new Error('ElevenLabs error: ' + JSON.stringify(errorPayload));
   }
 }
