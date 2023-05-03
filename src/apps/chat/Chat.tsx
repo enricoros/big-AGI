@@ -126,7 +126,7 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
 
     <Box
       sx={{
-        display: 'flex', flexDirection: 'column', height: '100vh',
+        display: 'flex', flexDirection: 'column', height: '100dvh',
         ...(props.sx || {}),
       }}>
 
