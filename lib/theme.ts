@@ -48,7 +48,7 @@ export const theme = extendTheme({
         },
         neutral: {
           solidBg: '#6b65ff',
-          solidHoverBg: '#ff7858', // hover Neutral buttons (App Bar)
+          solidHoverBg: '#000000', // hover Neutral buttons (App Bar)
           // 50: '#F7F7F8',
           // 100: '#EBEBEF',
           // 200: '#D8D8DF',
@@ -67,7 +67,7 @@ export const theme = extendTheme({
         background: {
           surface: '#e1dad4',
           level1: '#f0edeb',
-          level2: '#ecb5d2',
+          level2: '#e1dad4',
           // popup: 'var(--joy-palette-common-black, #09090D)',
         },
       },
