@@ -94,7 +94,7 @@ export function OpenAIAdvancedSettings() {
             </FormHelperText>
           </Box>
           <Input
-            variant='outlined' placeholder='api.openai.com'
+            variant='outlined' placeholder='e.g., oai.hconeai.com'
             value={apiHost} onChange={handleApiHostChange}
             sx={{ flexGrow: 1 }}
           />
