@@ -7,11 +7,15 @@ export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
+export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLabsApiKey(apiKey) : !requireUserKeyElevenLabs;
+
 
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
   const { elevenLabsApiKey, elevenLabsVoiceId, preferredLanguage } = useSettingsStore.getState();
+  if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
+
   try {
     // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
     const nonEnglish = !(preferredLanguage.toLowerCase().startsWith('en'));
