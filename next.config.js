@@ -7,7 +7,7 @@ const nextConfig = {
     HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
   },
   images: {
-      domains: ['theme.zdassets.com'],
+      domains: ['adthrive.com'],
   },
   webpack(config, { isServer, dev }) {
     // @mui/joy: anything material gets redirected to Joy
