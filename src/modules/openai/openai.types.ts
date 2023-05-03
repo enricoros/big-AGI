@@ -6,8 +6,9 @@ export namespace OpenAI {
     // the parameters are optional because they can be server-set
     export interface Configuration {
       apiKey?: string;
-      apiHost?: string;           // default: api.openai.com
       apiOrganizationId?: string; // default: ''
+      apiHost?: string;           // default: api.openai.com
+      heliconeKey?: string;       // default: missing
     }
 
     export namespace Chat {

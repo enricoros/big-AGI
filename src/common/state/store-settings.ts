@@ -31,11 +31,14 @@ interface SettingsStore {
   apiKey: string;
   setApiKey: (apiKey: string) => void;
 
+  apiOrganizationId: string;
+  setApiOrganizationId: (apiOrganizationId: string) => void;
+
   apiHost: string;
   setApiHost: (apiHost: string) => void;
 
-  apiOrganizationId: string;
-  setApiOrganizationId: (apiOrganizationId: string) => void;
+  heliconeKey: string;
+  setHeliconeKey: (heliconeKey: string) => void;
 
   modelTemperature: number;
   setModelTemperature: (modelTemperature: number) => void;
@@ -108,18 +111,17 @@ export const useSettingsStore = create<SettingsStore>()(
 
       // OpenAI API settings
 
-      apiKey: (function() {
-        // this will be removed in April
-        if (typeof localStorage === 'undefined') return '';
-        return localStorage.getItem('app-settings-openai-api-key') || '';
-      })(),
+      apiKey: '',
       setApiKey: (apiKey: string) => set({ apiKey }),
+
+      apiOrganizationId: '',
+      setApiOrganizationId: (apiOrganizationId: string) => set({ apiOrganizationId }),
 
       apiHost: '',
       setApiHost: (apiHost: string) => set({ apiHost }),
 
-      apiOrganizationId: '',
-      setApiOrganizationId: (apiOrganizationId: string) => set({ apiOrganizationId }),
+      heliconeKey: '',
+      setHeliconeKey: (heliconeKey: string) => set({ heliconeKey }),
 
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),

@@ -11,6 +11,7 @@ function openAIHeaders(api: OpenAI.API.Configuration): HeadersInit {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${api.apiKey}`,
     ...(api.apiOrganizationId && { 'OpenAI-Organization': api.apiOrganizationId }),
+    ...(api.heliconeKey && { 'Helicone-Auth': `Bearer ${api.heliconeKey}` }),
   };
 }
 
@@ -35,7 +36,7 @@ export async function openaiGet<TOut extends object>(api: OpenAI.API.Configurati
   return await response.json();
 }
 
-export async function openaiPostResponse<TBody extends object>(api: OpenAI.API.Configuration, path: string, body: TBody, signal?: AbortSignal,): Promise<Response> {
+export async function openaiPostResponse<TBody extends object>(api: OpenAI.API.Configuration, path: string, body: TBody, signal?: AbortSignal): Promise<Response> {
   const response = await fetch(`https://${api.apiHost}${path}`, {
     method: 'POST',
     headers: openAIHeaders(api),
@@ -63,8 +64,9 @@ export function toApiChatRequest(body: Partial<OpenAI.API.Chat.Request>): OpenAI
   // override with optional client configuration
   const api: OpenAI.API.Configuration = {
     apiKey: (body.api?.apiKey || process.env.OPENAI_API_KEY || '').trim(),
-    apiHost: (body?.api?.apiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
     apiOrganizationId: (body.api?.apiOrganizationId || process.env.OPENAI_API_ORG_ID || '').trim(),
+    apiHost: (body?.api?.apiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
+    heliconeKey: (body?.api?.heliconeKey || process.env.HELICONE_API_KEY || '').trim(),
   };
   if (!api.apiKey) throw new Error('Missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).');
 

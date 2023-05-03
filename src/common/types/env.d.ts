@@ -7,8 +7,11 @@ declare namespace NodeJS {
 
     // OpenAI - chat.ts
     OPENAI_API_KEY: string;
-    OPENAI_API_HOST: string;
     OPENAI_API_ORG_ID: string;
+    OPENAI_API_HOST: string;
+
+    // Helicone
+    HELICONE_API_KEY: string;
 
     // ElevenLabs - speech.ts
     ELEVENLABS_API_KEY: string;
