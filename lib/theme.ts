@@ -36,7 +36,7 @@ export const theme = extendTheme({
         },
         primary: {
           // 50: '#F4FAFF', // softBg
-          100: '#ff7858', // plainHoverBg  -  #DDF1FF | #f0f4ff | #f0f8ff (aliceblue)
+          100: '#ecb5d2', // plainHoverBg  -  #DDF1FF | #f0f4ff | #f0f8ff (aliceblue)
           // 200: '#ADDBFF',
           // 300: '#6FB6FF',
           // 400: '#3990FF',
