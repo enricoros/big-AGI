@@ -1,7 +1,7 @@
 import { OpenAI } from './openai.types';
 
-if (!process.env.OPENAI_API_KEY)
-  console.warn('OPENAI_API_KEY has not been provided in this deployment environment. Will need client-supplied keys, which is not recommended.');
+// if (!process.env.OPENAI_API_KEY)
+//   console.warn('OPENAI_API_KEY has not been provided in this deployment environment. Will need client-supplied keys, which is not recommended.');
 
 
 /// OpenAI upstream API Helpers
