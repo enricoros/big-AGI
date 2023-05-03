@@ -84,13 +84,6 @@ type ChatModelData = {
 }
 
 export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
-  'gpt-4': {
-    description: 'Most insightful, larger problems, but slow, expensive, and may be unavailable',
-    title: 'GPT-4',
-    fullName: 'GPT-4',
-    contextWindowSize: 8192,
-    tradeoff: 'Precise, slow and expensive',
-  },
   'gpt-3.5-turbo': {
     description: 'A good balance between speed and insight',
     title: '3.5-Turbo',
@@ -98,4 +91,11 @@ export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
     contextWindowSize: 4097,
     tradeoff: 'Faster and cheaper',
   },
+  'gpt-4': {
+    description: 'Most insightful, larger problems, but slow, expensive, and may be unavailable',
+    title: 'GPT-4',
+    fullName: 'GPT-4',
+    contextWindowSize: 8192,
+    tradeoff: 'Precise, slow and expensive',
+  }
 };
