@@ -12,9 +12,10 @@ import { useSettingsStore } from '@/common/state/store-settings';
 
 export function OpenAIAdvancedSettings() {
   // external state
-  const { apiHost, setApiHost, apiOrganizationId, setApiOrganizationId, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens } = useSettingsStore(state => ({
-    apiHost: state.apiHost, setApiHost: state.setApiHost,
+  const { apiOrganizationId, setApiOrganizationId, apiHost, setApiHost, heliconeKey, setHeliconeKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens } = useSettingsStore(state => ({
     apiOrganizationId: state.apiOrganizationId, setApiOrganizationId: state.setApiOrganizationId,
+    apiHost: state.apiHost, setApiHost: state.setApiHost,
+    heliconeKey: state.heliconeKey, setHeliconeKey: state.setHeliconeKey,
     modelTemperature: state.modelTemperature, setModelTemperature: state.setModelTemperature,
     modelMaxResponseTokens: state.modelMaxResponseTokens, setModelMaxResponseTokens: state.setModelMaxResponseTokens,
   }), shallow);
@@ -23,9 +24,11 @@ export function OpenAIAdvancedSettings() {
 
   const handleMaxTokensChange = (event: Event, newValue: number | number[]) => setModelMaxResponseTokens(newValue as number);
 
+  const handleApiOrganizationIdChange = (e: React.ChangeEvent) => setApiOrganizationId((e.target as HTMLInputElement).value);
+
   const handleApiHostChange = (e: React.ChangeEvent) => setApiHost((e.target as HTMLInputElement).value);
 
-  const handleApiOrganizationIdChange = (e: React.ChangeEvent) => setApiOrganizationId((e.target as HTMLInputElement).value);
+  const handleHeliconeKeyChange = (e: React.ChangeEvent) => setHeliconeKey((e.target as HTMLInputElement).value);
 
   return (
     <Section title='Advanced AI settings'
@@ -65,6 +68,22 @@ export function OpenAIAdvancedSettings() {
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: settingsCol1Width }}>
             <FormLabel>
+              Organization ID
+            </FormLabel>
+            <FormHelperText sx={{ display: 'block' }}>
+              <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
+            </FormHelperText>
+          </Box>
+          <Input
+            variant='outlined' placeholder='Optional, for org users'
+            value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
+            sx={{ flexGrow: 1 }}
+          />
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <Box sx={{ minWidth: settingsCol1Width }}>
+            <FormLabel>
               API Host
               {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
               {/*  <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />*/}
@@ -84,15 +103,15 @@ export function OpenAIAdvancedSettings() {
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: settingsCol1Width }}>
             <FormLabel>
-              Organization ID
+              Helicone Key
             </FormLabel>
             <FormHelperText sx={{ display: 'block' }}>
-              <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
+              Generate <Link level='body2' href='https://www.helicone.ai/keys' target='_blank'>here</Link>
             </FormHelperText>
           </Box>
           <Input
-            variant='outlined' placeholder='Optional, for org users'
-            value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
+            variant='outlined' placeholder='sk-...'
+            value={heliconeKey} onChange={handleHeliconeKeyChange}
             sx={{ flexGrow: 1 }}
           />
         </FormControl>
