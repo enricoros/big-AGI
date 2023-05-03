@@ -12,7 +12,7 @@ import { Section } from '@/common/components/Section';
 import { settingsGap } from '@/common/theme';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { isValidElevenLabsApiKey, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
+import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
 
 
 export function ElevenlabsSettings() {
@@ -27,7 +27,7 @@ export function ElevenlabsSettings() {
   }), shallow);
 
   const requiresKey = requireUserKeyElevenLabs;
-  const isValidKey = apiKey ? isValidElevenLabsApiKey(apiKey) : !requiresKey;
+  const isValidKey = isElevenLabsEnabled(apiKey);
 
   const { voicesData, loadingVoices } = useElevenLabsVoices(apiKey, isValidKey);
 
