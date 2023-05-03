@@ -16,7 +16,9 @@ export default async function handler(req: NextRequest) {
       message: upstreamResponse.choices[0].message,
     } satisfies OpenAI.API.Chat.Response));
   } catch (error: any) {
-    console.error('Fetch request failed:', error);
+    // don't log 429 errors, they are expected
+    if (!error?.startsWith('Error: 429 · Too Many Requests'))
+      console.error('Fetch request failed:', error);
     return new NextResponse(`[Issue] ${error}`, { status: 400 });
   }
 }
