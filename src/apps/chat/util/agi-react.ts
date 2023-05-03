@@ -45,6 +45,6 @@ export const runReActUpdatingState = async (conversationId: string, question: st
   } catch (error: any) {
     console.error(error);
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
-    updateAssistantMessage({ text: 'Issue: ReAct did nor produce an answer.', typing: false });
+    updateAssistantMessage({ text: 'Issue: ReAct did not produce an answer.', typing: false });
   }
 };
