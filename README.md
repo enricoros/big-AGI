@@ -68,8 +68,8 @@ Or fork & run on Vercel
 - 🎉 **Privacy**: user-owned API keys 🔑 and localStorage 🛡️
 - 🎉 **Context** - Attach or [Drag & Drop files](docs/pixels/feature_drop_target.png) to add them to the prompt 📁
 - 🎉 **Syntax highlighting** - for multiple languages 🌈
-- 🎉 **Code Execution: Sandpack
-  ** - [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
+- 🎉 **Code Execution: Sandpack** -
+   [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
 - 🎉 Chat with GPT-4 and 3.5 Turbo 🧠💨
 - 🎉 Real-time streaming of AI responses ⚡
 - 🎉 **Voice Input** 🎙️ - works great on Chrome / Windows
