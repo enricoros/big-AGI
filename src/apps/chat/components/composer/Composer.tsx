@@ -399,11 +399,11 @@ export function Composer(props: {
         <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
           {/* Vertical Buttons Bar */}
-          <Stack>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
             {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
 
-            {isSpeechEnabled && <Box sx={{ mb: { xs: 1, md: 2 }, ...hideOnDesktop }}>
+            {isSpeechEnabled && <Box sx={hideOnDesktop}>
               <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
@@ -419,8 +419,6 @@ export function Composer(props: {
               </Button>
             </Tooltip>
 
-            <Box sx={{ mt: { xs: 1, md: 2 } }} />
-
             <IconButton variant='plain' color='neutral' onClick={handlePasteFromClipboard} sx={{ ...hideOnDesktop }}>
               <ContentPasteGoIcon />
             </IconButton>
@@ -435,7 +433,7 @@ export function Composer(props: {
 
             <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadAttachment} />
 
-          </Stack>
+          </Box>
 
           {/* Edit box, with Drop overlay */}
           <Box sx={{ flexGrow: 1, position: 'relative' }}>
