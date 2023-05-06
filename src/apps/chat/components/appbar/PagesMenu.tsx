@@ -89,7 +89,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
   return <>
 
     <Menu
-      variant='plain' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 320 }}
+      variant='plain' color='neutral' size='lg' placement='top-start' sx={{ minWidth: 320 }}
       open={!!props.pagesMenuAnchor} anchorEl={props.pagesMenuAnchor} onClose={props.onClose}
       disablePortal={false}>
 

@@ -263,7 +263,7 @@ export function ApplicationBar(props: {
 
     {/* Right menu content */}
     <Menu
-      variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
+      variant='plain' color='neutral' size='lg' placement='top-end' sx={{ minWidth: 280 }}
       open={!!actionsMenuAnchor} anchorEl={actionsMenuAnchor} onClose={closeActionsMenu}
       disablePortal={false}>
 
