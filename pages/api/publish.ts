@@ -34,7 +34,7 @@ export default async function handler(req: NextRequest) {
 
   } catch (error) {
 
-    console.error('Error posting to paste.gg', error);
+    console.error('api/publish error:', error);
     return new NextResponse(JSON.stringify({
       type: 'error',
       error: error?.toString() || 'Network issue',

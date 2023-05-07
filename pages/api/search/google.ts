@@ -36,7 +36,7 @@ export default async function handler(req: NextRequest): Promise<NextResponse> {
     return new NextResponse(JSON.stringify(apiResponse));
 
   } catch (error: any) {
-    console.error('Handler failed:', error);
+    console.error('api/search/google error:', error);
     return new NextResponse(`A search error occurred: ${error}`, { status: 500 });
   }
 }

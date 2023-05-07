@@ -19,7 +19,7 @@ export default async function handler(req: NextRequest): Promise<NextResponse> {
     } satisfies OpenAI.API.Models.Response));
 
   } catch (error: any) {
-    console.error('Fetch request failed:', error);
+    console.error('api/openai/models error:', error);
     return new NextResponse(`[Issue] ${error}`, { status: 400 });
   }
 }

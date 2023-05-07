@@ -66,7 +66,7 @@ export default async function handler(req: NextRequest) {
     const audioBuffer: ElevenLabs.API.TextToSpeech.Response = await response.arrayBuffer();
     return new NextResponse(audioBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
   } catch (error) {
-    console.error('Error posting to ElevenLabs', error);
+    console.error('api/elevenlabs/speech error:', error);
     return new NextResponse(JSON.stringify(`speechToText error: ${error?.toString() || 'Network issue'}`), { status: 500 });
   }
 }

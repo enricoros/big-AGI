@@ -105,7 +105,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
       console.log('Connection reset by the client in handler');
       return new Response('Connection reset by the client.', { status: 499 }); // Use 499 status code for client closed request
     } else {
-      console.error('Fetch request failed:', error);
+      console.error('api/openai/stream-chat error:', error);
       return new NextResponse(`[Issue] ${error}`, { status: 400 });
     }
   }

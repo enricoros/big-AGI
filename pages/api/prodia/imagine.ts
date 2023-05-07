@@ -75,7 +75,7 @@ export default async function handler(req: NextRequest) {
     return new NextResponse(JSON.stringify(response));
 
   } catch (error) {
-    console.error('Handler failed:', error);
+    console.error('api/prodia/imagine error:', error);
     const elapsed = Math.round((Date.now() - tStart) / 100) / 10;
     const response: Prodia.API.Imagine.Response = { status: 'error', error: error?.toString() || 'Network issue', elapsed };
     return new NextResponse(JSON.stringify(response), { status: 500 });
