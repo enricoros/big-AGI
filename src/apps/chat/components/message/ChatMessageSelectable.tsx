@@ -13,14 +13,14 @@ import { makeAvatar, messageBackground } from './ChatMessage';
 /**
  * Header bar for controlling the operations during the Selection mode
  */
-export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom: boolean, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
+export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom: boolean, sumTokens: number, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
   <Sheet color='warning' variant='solid' invertedColors sx={{
     display: 'flex', flexDirection: 'row', alignItems: 'center',
     gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 1,
   }}>
     <Checkbox size='md' onChange={event => props.onSelectAll(event.target.checked)} sx={{ minWidth: 24, justifyContent: 'center' }} />
 
-    <Box>Select All</Box>
+    <Box>Select all ({props.sumTokens})</Box>
 
     <Button variant='solid' disabled={!props.hasSelected} onClick={props.onDeleteMessages} sx={{ ml: 'auto', mr: 'auto', minWidth: 150 }} endDecorator={<DeleteOutlineIcon />}>
       Delete
@@ -37,7 +37,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
  *
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
-export function ChatMessageSelectable(props: { message: DMessage, isBottom: boolean, selected: boolean, onToggleSelected: (messageId: string, selected: boolean) => void }) {
+export function ChatMessageSelectable(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens: number, onToggleSelected: (messageId: string, selected: boolean) => void }) {
   // external state
   const theme = useTheme();
 
@@ -91,7 +91,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
       </Typography>
 
       <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
-        <TokenBadge directTokens={messageTokenCount} tokenLimit={0} inline />
+        <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
       </Box>
 
       <Typography level='body1' sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>

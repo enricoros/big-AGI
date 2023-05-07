@@ -14,7 +14,7 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, i
     message += `${remainingTokens.toLocaleString()} available tokens\n\n= Model capacity: ${tokenLimit.toLocaleString()}\n- Request: ${usedTokens.toLocaleString()} tokens`;
     message += ` (Chat: ${directTokens.toLocaleString()}${indirectTokens ? ', History + Response: ' + indirectTokens?.toLocaleString() : ''})`;
   } else
-    message += `${remainingTokens.toLocaleString()} remaining tokens · Allowed: ${tokenLimit.toLocaleString()} - Requested: ${usedTokens.toLocaleString()} tokens`;
+    message += `${(tokenLimit + usedTokens).toLocaleString()} available tokens = Currently free: ${tokenLimit.toLocaleString()} + This message: ${usedTokens.toLocaleString()} tokens`;
   const color: ColorPaletteProp = (tokenLimit && remainingTokens < 1) ? 'danger' : remainingTokens < tokenLimit / 4 ? 'warning' : 'primary';
   return { message, color };
 }
