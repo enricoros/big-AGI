@@ -37,7 +37,7 @@ export default async function handler(req: NextRequest): Promise<NextResponse> {
     const { apiKey = '' } = (await req.json()) as Prodia.API.Models.RequestBody;
     return new NextResponse(JSON.stringify(HARDCODED_MODELS));
   } catch (error: any) {
-    console.error('Handler failed:', error);
+    console.error('api/prodia/models error:', error);
     return new NextResponse(`[Issue] ${error}`, { status: 400 });
   }
 }
