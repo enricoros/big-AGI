@@ -14,7 +14,7 @@ import { makeAvatar, messageBackground } from './ChatMessage';
  * Header bar for controlling the operations during the Selection mode
  */
 export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom: boolean, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
-  <Sheet color='neutral' variant='solid' invertedColors sx={{
+  <Sheet color='warning' variant='solid' invertedColors sx={{
     display: 'flex', flexDirection: 'row', alignItems: 'center',
     gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 1,
   }}>
