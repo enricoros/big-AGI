@@ -91,7 +91,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
       </Typography>
 
       <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
-        <TokenBadge directTokens={messageTokenCount} tokenLimit={12345} inline />
+        <TokenBadge directTokens={messageTokenCount} tokenLimit={0} inline />
       </Box>
 
       <Typography level='body1' sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>

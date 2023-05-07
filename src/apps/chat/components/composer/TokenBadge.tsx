@@ -1,7 +1,23 @@
 import * as React from 'react';
 
-import { Badge, Tooltip, useTheme } from '@mui/joy';
+import { Badge, ColorPaletteProp, Tooltip, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+
+
+export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, indirectTokens?: number): { message: string, color: ColorPaletteProp } {
+  const usedTokens = directTokens + (indirectTokens || 0);
+  const remainingTokens = tokenLimit - usedTokens;
+  let message: string = (tokenLimit && remainingTokens < 0) ? '⚠️ ' : '';
+  if (!tokenLimit) {
+    message += `Requested: ${usedTokens.toLocaleString()} tokens`;
+  } else if (indirectTokens) {
+    message += `${remainingTokens.toLocaleString()} available tokens\n\n= Model capacity: ${tokenLimit.toLocaleString()}\n- Request: ${usedTokens.toLocaleString()} tokens`;
+    message += ` (Chat: ${directTokens.toLocaleString()}${indirectTokens ? ', History + Response: ' + indirectTokens?.toLocaleString() : ''})`;
+  } else
+    message += `${remainingTokens.toLocaleString()} remaining tokens · Allowed: ${tokenLimit.toLocaleString()} - Requested: ${usedTokens.toLocaleString()} tokens`;
+  const color: ColorPaletteProp = (tokenLimit && remainingTokens < 1) ? 'danger' : remainingTokens < tokenLimit / 4 ? 'warning' : 'primary';
+  return { message, color };
+}
 
 
 /**
@@ -12,24 +28,14 @@ export function TokenBadge({ directTokens, indirectTokens, tokenLimit, absoluteB
   // external state
   const theme = useTheme();
 
-  // derived state
-  const usedTokens = directTokens + (indirectTokens || 0);
-  const remainingTokens = tokenLimit - usedTokens;
-
-  let message: string = remainingTokens < 0 ? '⚠️ ' : '';
-  if (indirectTokens) {
-    message += `${remainingTokens.toLocaleString()} remaining tokens · Model capacity: ${tokenLimit.toLocaleString()} - Request: ${usedTokens.toLocaleString()} tokens`;
-    message += ` (Chat: ${directTokens.toLocaleString()}${indirectTokens ? ', History & Response: ' + indirectTokens?.toLocaleString() + ')' : ''})`;
-  } else
-    message += `${remainingTokens.toLocaleString()} remaining tokens · Allowed: ${tokenLimit.toLocaleString()} - Requested: ${usedTokens.toLocaleString()} tokens`;
-  const color = remainingTokens < 1 ? 'danger' : remainingTokens < tokenLimit / 4 ? 'warning' : 'primary';
-
   const fontSx: SxProps = { fontFamily: theme.fontFamily.code, ...(sx || {}) };
   const outerSx: SxProps = absoluteBottomRight ? { position: 'absolute', bottom: 8, right: 8 } : {};
   const innerSx: SxProps = (absoluteBottomRight || inline) ? { position: 'static', transform: 'none', ...fontSx } : fontSx;
 
+  const { message, color } = tokensPrettyMath(tokenLimit, directTokens, indirectTokens);
+
   const badgeContent = directTokens > 0
-    ? <Tooltip title={message} color={color} sx={fontSx}><span>{directTokens.toLocaleString()}</span></Tooltip>
+    ? <Tooltip title={<span style={{ whiteSpace: 'pre' }}>{message}</span>} color={color} sx={fontSx}><span>{directTokens.toLocaleString()}</span></Tooltip>
     : null;
 
   return (
