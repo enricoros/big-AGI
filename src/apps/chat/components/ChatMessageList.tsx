@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/common/state/store-settings';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
+import { ChatModels } from '../../../data';
 import { PurposeSelector } from './PurposeSelector';
 
 
@@ -22,9 +23,14 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   // external state
   const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
   const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
-  const messages = useChatStore(state => {
+  const { messages, tokenLimit, tokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    return conversation ? conversation.messages : [];
+    const chatModelId = conversation ? conversation.chatModelId : null;
+    return {
+      messages: conversation ? conversation.messages : [],
+      tokenLimit: chatModelId ? ChatModels[chatModelId]?.contextWindowSize || 8192 : 0,
+      tokenCount: conversation ? conversation.tokenCount : 0,
+    };
   }, shallow);
 
 
@@ -111,7 +117,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
         props.isMessageSelectionMode ? (
           <ChatMessageSelectable
             key={'sel-' + message.id} message={message}
-            isBottom={idx === 0}
+            isBottom={idx === 0} remainingTokens={tokenLimit - tokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
           />
         ) : (
@@ -130,6 +136,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
         <MessagesSelectionHeader
           hasSelected={selectedMessages.size > 0}
           isBottom={filteredMessages.length === 0}
+          sumTokens={tokenCount}
           onClose={() => props.setIsMessageSelectionMode(false)}
           onSelectAll={handleSelectAllMessages}
           onDeleteMessages={handleDeleteSelectedMessages}
