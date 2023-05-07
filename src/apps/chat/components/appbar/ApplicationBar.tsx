@@ -306,7 +306,7 @@ export function ApplicationBar(props: {
 
       <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleToggleMessageSelectionMode}>
         <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
-        Cleanup ...
+        <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>Cleanup ...</span>
       </MenuItem>
 
       <MenuItem disabled={!props.conversationId || isConversationEmpty} onClick={handleConversationClear}>
