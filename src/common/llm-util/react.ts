@@ -123,7 +123,7 @@ async function search(query: string): Promise<string> {
     const data = await callApiSearchGoogle(query);
     return JSON.stringify(data);
   } catch (error) {
-    console.error('Error fetching search results:', (error as Error).message);
+    console.error('Error fetching search results:', error);
     return 'An error occurred while searching the internet. Missing API Key?';
   }
 }
