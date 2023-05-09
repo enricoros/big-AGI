@@ -10,29 +10,35 @@ import { tokensPrettyMath } from './TokenBadge';
  *
  * The Textarea contains it within the Composer (at least).
  */
-export function TokenProgressbar(props: { indirect: number, direct: number, limit: number }) {
+export function TokenProgressbar(props: { history: number, response: number, direct: number, limit: number }) {
   // external state
   const theme = useTheme();
 
-  if (!(props.limit > 0) || (!props.direct && !props.indirect)) return null;
+  if (!(props.limit > 0) || (!props.direct && !props.history && !props.response)) return null;
 
   // compute percentages
-  let indirectPct = 100 * props.indirect / props.limit;
-  let totalPct = 100 * (props.indirect + props.direct) / props.limit;
+  let historyPct = 100 * props.history / props.limit;
+  let responsePct = 100 * props.response / props.limit;
+  let directPct = 100 * props.direct / props.limit;
+  const totalPct = historyPct + responsePct + directPct;
   const isOverflow = totalPct >= 100;
 
   if (isOverflow) {
-    indirectPct *= 100 / totalPct;
-    totalPct = 100 * 100 / totalPct;
+    let scale = 100 / totalPct;
+    scale *= scale; // make proportional space for the 'danger' (overflow) representation
+    historyPct *= scale;
+    responsePct *= scale;
+    directPct *= scale;
   }
 
   // bar colors
+  const historyColor = theme.vars.palette.neutral.softHoverBg;
   const directColor = theme.vars.palette.primary.solidBg;
-  const indirectColor = theme.vars.palette.neutral.softHoverBg;
+  const responseColor = theme.vars.palette.neutral.softHoverBg;
   const overflowColor = theme.vars.palette.danger.solidBg;
 
   // tooltip message/color
-  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.indirect);
+  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history + props.response);
 
   // sizes
   const containerHeight = 8;
@@ -47,22 +53,28 @@ export function TokenProgressbar(props: { indirect: number, direct: number, limi
         overflow: 'hidden', borderBottomLeftRadius: 7, borderBottomRightRadius: 7,
       }}>
 
-        {/* Indirect */}
-        {indirectPct > 0 && <Box sx={{
-          background: indirectColor,
-          position: 'absolute', left: 0, bottom: 0, width: indirectPct + '%', height,
+        {/* History */}
+        {historyPct > 0 && <Box sx={{
+          background: historyColor,
+          position: 'absolute', left: 0, bottom: 0, width: historyPct + '%', height,
         }} />}
 
         {/* Direct */}
-        {totalPct > indirectPct && <Box sx={{
+        {directPct > 0 && <Box sx={{
           background: directColor,
-          position: 'absolute', left: indirectPct + '%', bottom: 0, width: (totalPct - indirectPct) + '%', height,
+          position: 'absolute', left: historyPct + '%', bottom: 0, width: directPct + '%', height,
+        }} />}
+
+        {/* Response */}
+        {responsePct > 0 && <Box sx={{
+          background: responseColor,
+          position: 'absolute', left: (totalPct > 100 ? (historyPct + directPct) : (100 - responsePct)) + '%', bottom: 0, width: responsePct + '%', height,
         }} />}
 
         {/* Overflow */}
         {isOverflow && <Box sx={{
           background: overflowColor,
-          position: 'absolute', left: totalPct + '%', right: 0, bottom: 0, height,
+          position: 'absolute', left: (historyPct + directPct + responsePct) + '%', right: 0, bottom: 0, height,
         }} />}
 
       </Box>
