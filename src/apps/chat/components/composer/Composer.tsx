@@ -125,17 +125,16 @@ const SentMessagesMenu = (props: {
   onClear: () => void,
 }) =>
   <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
-    open anchorEl={props.anchorEl} onClose={props.onClose}>
+    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, maxWidth: '100dvw', overflow: 'hidden' }}
+    open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}>
 
     <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
 
     <ListDivider />
 
     {props.messages.map((item, index) =>
-      <MenuItem key={'composer-sent-' + index} onClick={() => props.onPaste(item.text)}>
-        {item.count > 1 && <Typography level='body2' color='neutral' sx={{ mr: 1 }}>({item.count})</Typography>}
-        {item.text?.length > 60 ? item.text.slice(0, 58) + '...' : item.text}
+      <MenuItem key={'composer-sent-' + index} onClick={() => props.onPaste(item.text)} sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline', overflow: 'hidden' }}>
+        {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
       </MenuItem>)}
 
     <ListDivider />
@@ -512,7 +511,7 @@ export function Composer(props: {
 
               {/* [mobile-only] Sent messages arrow */}
               {sentMessages.length > 0 && (
-                <IconButton variant='plain' color='neutral' onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+                <IconButton disabled={!!sentMessagesAnchor} variant='plain' color='neutral' onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
                   <KeyboardArrowUpIcon />
                 </IconButton>
               )}
