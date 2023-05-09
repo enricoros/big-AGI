@@ -50,12 +50,12 @@ export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.
 }
 
 
-export const getOpenAISettings = (): OpenAI.API.Configuration => {
-  const { apiKey, apiOrganizationId, apiHost, heliconeKey } = useSettingsStore.getState();
+export const getOpenAISettings = (): Partial<OpenAI.API.Configuration> => {
+  const { apiHost, apiKey, apiOrganizationId, heliconeKey } = useSettingsStore.getState();
   return {
+    ...(apiHost ? { apiHost } : {}),
     ...(apiKey ? { apiKey } : {}),
     ...(apiOrganizationId ? { apiOrganizationId } : {}),
-    ...(apiHost ? { apiHost } : {}),
     ...(heliconeKey ? { heliconeKey } : {}),
   };
 };

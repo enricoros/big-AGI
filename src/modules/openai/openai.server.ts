@@ -27,8 +27,15 @@ async function rethrowOpenAIError(response: Response) {
   }
 }
 
+function apiUrl(apiHost: string, apiPath: string) {
+  let URL = apiHost.startsWith('http') ? apiHost : `https://${apiHost}`;
+  if (URL.endsWith('/') && apiPath.startsWith('/'))
+    URL = URL.slice(0, -1);
+  return URL + apiPath;
+}
+
 export async function openaiGet<TOut extends object>(api: OpenAI.API.Configuration, path: string): Promise<TOut> {
-  const response = await fetch(`https://${api.apiHost}${path}`, {
+  const response = await fetch(apiUrl(api.apiHost, path), {
     method: 'GET',
     headers: openAIHeaders(api),
   });
@@ -37,7 +44,7 @@ export async function openaiGet<TOut extends object>(api: OpenAI.API.Configurati
 }
 
 export async function openaiPostResponse<TBody extends object>(api: OpenAI.API.Configuration, path: string, body: TBody, signal?: AbortSignal): Promise<Response> {
-  const response = await fetch(`https://${api.apiHost}${path}`, {
+  const response = await fetch(apiUrl(api.apiHost, path), {
     method: 'POST',
     headers: openAIHeaders(api),
     body: JSON.stringify(body),
@@ -60,12 +67,12 @@ export async function openaiPost<TOut extends object, TBody extends object>(
 
 /// API <> Wire conversion helpers
 
-export function toApiChatRequest(body: Partial<OpenAI.API.Chat.Request>): OpenAI.API.Chat.Request {
+export function toApiChatRequest(body: Partial<OpenAI.API.Chat.Request>): Omit<OpenAI.API.Chat.Request, 'api'> & { api: OpenAI.API.Configuration } {
   // override with optional client configuration
   const api: OpenAI.API.Configuration = {
+    apiHost: (body?.api?.apiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
     apiKey: (body.api?.apiKey || process.env.OPENAI_API_KEY || '').trim(),
     apiOrganizationId: (body.api?.apiOrganizationId || process.env.OPENAI_API_ORG_ID || '').trim(),
-    apiHost: (body?.api?.apiHost || process.env.OPENAI_API_HOST || 'api.openai.com').trim().replaceAll('https://', ''),
     heliconeKey: (body?.api?.heliconeKey || process.env.HELICONE_API_KEY || '').trim(),
   };
   if (!api.apiKey) throw new Error('Missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).');

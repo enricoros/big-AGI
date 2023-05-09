@@ -28,14 +28,14 @@ interface SettingsStore {
 
   // OpenAI API settings
 
+  apiHost: string;
+  setApiHost: (apiHost: string) => void;
+
   apiKey: string;
   setApiKey: (apiKey: string) => void;
 
   apiOrganizationId: string;
   setApiOrganizationId: (apiOrganizationId: string) => void;
-
-  apiHost: string;
-  setApiHost: (apiHost: string) => void;
 
   heliconeKey: string;
   setHeliconeKey: (heliconeKey: string) => void;
@@ -111,14 +111,14 @@ export const useSettingsStore = create<SettingsStore>()(
 
       // OpenAI API settings
 
+      apiHost: '',
+      setApiHost: (apiHost: string) => set({ apiHost }),
+
       apiKey: '',
       setApiKey: (apiKey: string) => set({ apiKey }),
 
       apiOrganizationId: '',
       setApiOrganizationId: (apiOrganizationId: string) => set({ apiOrganizationId }),
-
-      apiHost: '',
-      setApiHost: (apiHost: string) => set({ apiHost }),
 
       heliconeKey: '',
       setHeliconeKey: (heliconeKey: string) => set({ heliconeKey }),

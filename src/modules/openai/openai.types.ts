@@ -5,15 +5,15 @@ export namespace OpenAI {
 
     // the parameters are optional because they can be server-set
     export interface Configuration {
-      apiKey?: string;
+      apiHost: string;            // default: api.openai.com
+      apiKey: string;
       apiOrganizationId?: string; // default: ''
-      apiHost?: string;           // default: api.openai.com
       heliconeKey?: string;       // default: missing
     }
 
     export namespace Chat {
       export interface Request {
-        api: Configuration;
+        api: Partial<Configuration>;
         model: string;
         messages: OpenAI.Wire.Chat.Message[];
         temperature?: number;
