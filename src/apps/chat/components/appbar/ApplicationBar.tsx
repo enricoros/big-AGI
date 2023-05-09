@@ -230,7 +230,7 @@ export function ApplicationBar(props: {
         ...(props.sx || {}),
       }}>
 
-      <IconButton variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!pagesMenuAnchor} variant='plain' onClick={event => setPagesMenuAnchor(event.currentTarget)}>
         <Badge variant='solid' size='sm' badgeContent={conversationsCount < 2 ? 0 : conversationsCount}>
           <MenuIcon />
         </Badge>
@@ -247,7 +247,7 @@ export function ApplicationBar(props: {
 
       </Stack>
 
-      <IconButton variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!actionsMenuAnchor} variant='plain' onClick={event => setActionsMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
