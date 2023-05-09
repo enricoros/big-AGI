@@ -28,7 +28,7 @@ import { runImageGenerationUpdatingState } from './util/imagine';
 import { runReActUpdatingState } from './util/agi-react';
 
 
-export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
+export function Chat(props: { sx?: SxProps }) {
   // state
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
@@ -134,7 +134,6 @@ export function Chat(props: { onShowSettings: () => void, sx?: SxProps }) {
         conversationId={activeConversationId}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onPublishConversation={handlePublishConversation}
-        onShowSettings={props.onShowSettings}
         sx={{
           zIndex: 20, // position: 'sticky', top: 0,
           // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
