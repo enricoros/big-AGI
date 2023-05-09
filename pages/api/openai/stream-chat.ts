@@ -70,6 +70,12 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
         const text = json.choices[0].delta?.content || '';
         controller.enqueue(encoder.encode(text));
 
+        // Workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
+        if (json.choices[0].finish_reason) {
+          controller.close();
+          return;
+        }
+
       } catch (error) {
         // maybe parse error
         console.error('Error parsing OpenAI response', error);
