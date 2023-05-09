@@ -7,7 +7,7 @@ import { updateTokenCount } from '../llm-util/token-counter';
 
 
 // configuration
-export const MAX_CONVERSATIONS = 10;
+export const MAX_CONVERSATIONS = 20;
 
 /**
  * Conversation, a list of messages between humans and bots
