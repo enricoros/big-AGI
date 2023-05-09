@@ -196,8 +196,9 @@ export function Composer(props: {
   const directTokens = React.useMemo(() => {
     return (!composeText || !chatModelId) ? 0 : 4 + countModelTokens(composeText, chatModelId, 'composer text');
   }, [chatModelId, composeText]);
-  const indirectTokens = modelMaxResponseTokens + conversationTokenCount;
-  const remainingTokens = tokenLimit - directTokens - indirectTokens;
+  const historyTokens = conversationTokenCount;
+  const responseTokens = modelMaxResponseTokens;
+  const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
   const handleSendClicked = () => {
@@ -473,13 +474,13 @@ export function Composer(props: {
                   lineHeight: 1.75,
                 }} />
 
-              {tokenLimit > 0 && (directTokens > 0 || indirectTokens > 0) && <TokenProgressbar direct={directTokens} indirect={indirectTokens} limit={tokenLimit} />}
+              {tokenLimit > 0 && (directTokens > 0 || (historyTokens + responseTokens) > 0) && <TokenProgressbar history={historyTokens} response={responseTokens} direct={directTokens} limit={tokenLimit} />}
 
             </Box>
 
             {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{ ...hideOnMobile, position: 'absolute', top: 0, right: 0, margin: 1 }} />}
 
-            {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={indirectTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
+            {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
 
             <Card
               color='primary' invertedColors variant='soft'
