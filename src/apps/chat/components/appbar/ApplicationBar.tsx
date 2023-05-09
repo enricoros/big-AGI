@@ -22,6 +22,7 @@ import { Link } from '@/common/components/Link';
 import { cssRainbowColorKeyframes } from '@/common/theme';
 import { downloadConversationJson, restoreConversationFromJson, useChatStore } from '@/common/state/store-chats';
 import { useSettingsStore } from '@/common/state/store-settings';
+import { useUIStore } from '@/common/state/store-ui';
 
 import { AppBarDropdown } from './AppBarDropdown';
 import { AppBarDropdownWithSymbol } from './AppBarDropdownWithSymbol';
@@ -90,7 +91,6 @@ export function ApplicationBar(props: {
   conversationId: string | null;
   isMessageSelectionMode: boolean; setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void;
   onPublishConversation: (conversationId: string) => void;
-  onShowSettings: () => void;
   sx?: SxProps
 }) {
 
@@ -128,7 +128,7 @@ export function ApplicationBar(props: {
 
   const handleActionShowSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
-    props.onShowSettings();
+    useUIStore.getState().openSettings();
     closeActionsMenu();
   };
 
