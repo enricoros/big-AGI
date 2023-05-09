@@ -54,7 +54,7 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
         const json: OpenAI.Wire.Chat.CompletionResponseChunked = JSON.parse(event.data);
 
         // ignore any 'role' delta update
-        if (json.choices[0].delta?.role)
+        if (json.choices[0].delta?.role && !json.choices[0].delta?.content)
           return;
 
         // stringify and send the first packet as a JSON object
