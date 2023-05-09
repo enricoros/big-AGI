@@ -68,6 +68,27 @@ export function OpenAIAdvancedSettings() {
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: settingsCol1Width }}>
             <FormLabel>
+              API Host
+              {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
+              {/*  <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />*/}
+              {/*</Tooltip>*/}
+            </FormLabel>
+            <FormHelperText sx={{ display: 'block' }}>
+              <Link level='body2' href='https://github.com/go-skynet/LocalAI' target='_blank'>LocalAI</Link>
+              , <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>
+              , ...
+            </FormHelperText>
+          </Box>
+          <Input
+            variant='outlined' placeholder='e.g., oai.hconeai.com'
+            value={apiHost} onChange={handleApiHostChange}
+            sx={{ flexGrow: 1 }}
+          />
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <Box sx={{ minWidth: settingsCol1Width }}>
+            <FormLabel>
               Organization ID
             </FormLabel>
             <FormHelperText sx={{ display: 'block' }}>
@@ -77,25 +98,6 @@ export function OpenAIAdvancedSettings() {
           <Input
             variant='outlined' placeholder='Optional, for org users'
             value={apiOrganizationId} onChange={handleApiOrganizationIdChange}
-            sx={{ flexGrow: 1 }}
-          />
-        </FormControl>
-
-        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ minWidth: settingsCol1Width }}>
-            <FormLabel>
-              API Host
-              {/*<Tooltip title='Change API host for compatibility with services like Helicone' variant='solid'>*/}
-              {/*  <InfoIcon sx={{ ml: 1, cursor: 'pointer' }} />*/}
-              {/*</Tooltip>*/}
-            </FormLabel>
-            <FormHelperText sx={{ display: 'block' }}>
-              For <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>
-            </FormHelperText>
-          </Box>
-          <Input
-            variant='outlined' placeholder='e.g., oai.hconeai.com'
-            value={apiHost} onChange={handleApiHostChange}
             sx={{ flexGrow: 1 }}
           />
         </FormControl>
