@@ -223,16 +223,11 @@ export function Chat() {
   }, [activeConversationId, isConversationEmpty, isMessageSelectionMode]);
 
 
-  console.log('chat', { activeConversationId, chatModelId, systemPurposeId, sendModeId });
-
   // Register actions when the component mounts
   React.useEffect(() => {
-    console.log('registering actions');
-
     useApplicationBarStore.getState().register(appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents);
 
     return () => {
-      console.log('unregistering actions');
       useApplicationBarStore.getState().unregister();
     };
   }, [appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents]);
