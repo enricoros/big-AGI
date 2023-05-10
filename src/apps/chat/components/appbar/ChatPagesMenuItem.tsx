@@ -14,7 +14,7 @@ import { conversationTitle, useChatStore } from '@/common/state/store-chats';
 const DEBUG_CONVERSATION_IDs = false;
 
 
-export function PagesMenuItem(props: {
+export function ChatPagesMenuItem(props: {
   conversationId: string,
   isActive: boolean, isSingle: boolean, showSymbols: boolean,
   conversationActivate: (conversationId: string) => void,

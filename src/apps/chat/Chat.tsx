@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, useTheme } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { useTheme } from '@mui/joy';
 
 import { CmdRunProdia } from '@/modules/prodia/prodia.client';
 import { CmdRunReact } from '@/modules/search/search.client';
@@ -13,37 +12,54 @@ import { callPublish } from '@/modules/pastegg/pastegg.client';
 import { ConfirmationModal } from '@/common/components/ConfirmationModal';
 import { Link } from '@/common/components/Link';
 import { conversationToMarkdown } from '@/common/util/conversationToMarkdown';
-import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
+import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '@/common/state/store-chats';
 import { extractCommands } from '@/common/util/extractCommands';
+import { useApplicationBarStore } from '@/common/components/appbar/useApplicationBarStore';
 import { useComposerStore } from '@/common/state/store-composer';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { ApplicationBar } from './components/appbar/ApplicationBar';
+import { AppBarDropdown } from './components/appbar/AppBarDropdown';
+import { AppBarDropdownWithSymbol } from './components/appbar/AppBarDropdownWithSymbol';
+import { ChatContextMenu } from './components/appbar/ChatContextMenu';
 import { ChatMessageList } from './components/ChatMessageList';
+import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../data';
+import { ChatPagesMenu } from './components/appbar/ChatPagesMenu';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/ephemerals/Ephemerals';
+import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
 import { imaginePromptFromText } from './util/ai-functions';
 import { runAssistantUpdatingState } from './util/agi-immediate';
 import { runImageGenerationUpdatingState } from './util/imagine';
 import { runReActUpdatingState } from './util/agi-react';
 
 
-export function Chat(props: { sx?: SxProps }) {
+export function Chat() {
+
   // state
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
+  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<PasteGG.API.Publish.Response | null>(null);
+  const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
+  const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
   const theme = useTheme();
+  const { zenMode } = useSettingsStore(state => ({ zenMode: state.zenMode }), shallow);
   const { sendModeId } = useComposerStore(state => ({ sendModeId: state.sendModeId }), shallow);
-  const { activeConversationId, setMessages, chatModelId, systemPurposeId } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, setMessages, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
+      isConversationEmpty: conversation ? !conversation.messages.length : true,
+      conversationsCount: state.conversations.length,
+      importConversation: state.importConversation,
       setMessages: state.setMessages,
       chatModelId: conversation?.chatModelId ?? null,
+      setChatModelId: state.setChatModelId,
       systemPurposeId: conversation?.systemPurposeId ?? null,
+      setSystemPurposeId: state.setSystemPurposeId,
+      setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
 
@@ -107,6 +123,16 @@ export function Chat(props: { sx?: SxProps }) {
   };
 
 
+  const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
+
+  const handleConfirmedClearConversation = () => {
+    if (clearConfirmationId) {
+      setMessages(clearConfirmationId, []);
+      setAutoTitle(clearConfirmationId, '');
+      setClearConfirmationId(null);
+    }
+  };
+
   const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
 
   const handleConfirmedPublishConversation = async () => {
@@ -121,72 +147,156 @@ export function Chat(props: { sx?: SxProps }) {
     }
   };
 
+  const handleLoadConversations = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target?.files;
+    if (!files || files.length < 1)
+      return;
 
-  return (
+    // try to restore conversations from the selected files
+    const outcomes: ImportedOutcome = { conversations: [] };
+    for (const file of files) {
+      const fileName = file.name || 'unknown file';
+      try {
+        const conversation = restoreConversationFromJson(await file.text());
+        if (conversation) {
+          importConversation(conversation);
+          outcomes.conversations.push({ fileName, success: true, conversationId: conversation.id });
+        } else {
+          const fileDesc = `(${file.type}) ${file.size.toLocaleString()} bytes`;
+          outcomes.conversations.push({ fileName, success: false, error: `Invalid file: ${fileDesc}` });
+        }
+      } catch (error) {
+        console.error(error);
+        outcomes.conversations.push({ fileName, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+      }
+    }
 
-    <Box
-      sx={{
-        display: 'flex', flexDirection: 'column', height: '100dvh',
-        ...(props.sx || {}),
-      }}>
+    // show the outcome of the import
+    setConversationImportOutcome(outcomes);
 
-      <ApplicationBar
-        conversationId={activeConversationId}
-        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onPublishConversation={handlePublishConversation}
-        sx={{
-          zIndex: 20, // position: 'sticky', top: 0,
-          // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
-        }} />
+    // this is needed to allow the same file to be selected again
+    e.target.value = '';
+  };
 
-      <ChatMessageList
-        conversationId={activeConversationId}
-        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onExecuteConversation={handleExecuteConversation}
-        onImagineFromText={handleImagineFromText}
-        sx={{
-          flexGrow: 1,
-          background: theme.vars.palette.background.level2,
-          overflowY: 'auto', // overflowY: 'hidden'
-          minHeight: 96,
-        }} />
 
-      <Ephemerals
-        conversationId={activeConversationId}
-        sx={{
-          // flexGrow: 0.1,
-          flexShrink: 0.5,
-          overflowY: 'auto',
-          minHeight: 64,
-        }} />
+  // AppBar: Center Components
+  const appBarCenterComponents = React.useMemo(() => {
 
-      <Composer
-        conversationId={activeConversationId} messageId={null}
-        isDeveloperMode={systemPurposeId === 'Developer'}
-        onSendMessage={handleSendUserMessage}
-        sx={{
-          zIndex: 21, // position: 'sticky', bottom: 0,
-          background: theme.vars.palette.background.surface,
-          borderTop: `1px solid ${theme.vars.palette.divider}`,
-          p: { xs: 1, md: 2 },
-        }} />
+    const handleChatModelChange = (event: any, value: ChatModelId | null) =>
+      value && activeConversationId && setChatModelId(activeConversationId, value);
 
-      {/* Confirmation for Publishing */}
-      <ConfirmationModal
-        open={!!publishConversationId} onClose={() => setPublishConversationId(null)} onPositive={handleConfirmedPublishConversation}
-        confirmationText={<>
-          Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
-          It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
-          Are you sure you want to proceed?
-        </>} positiveActionText={'Understood, upload to paste.gg'}
-      />
+    const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
+      value && activeConversationId && setSystemPurposeId(activeConversationId, value);
 
-      {/* Show the Published details */}
-      {!!publishResponse && (
-        <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
+    return <>
+      {chatModelId && <AppBarDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
+
+      {systemPurposeId && (zenMode === 'cleaner'
+          ? <AppBarDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
+          : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
       )}
+    </>;
 
-    </Box>
+  }, [activeConversationId, chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId, zenMode]);
 
-  );
+  // AppBar: Page Badge
+  const appBarLeftBadge = conversationsCount < 2 ? 0 : conversationsCount;
+
+  // AppBar: Page Menu
+  const appBarLeftComponents = React.useMemo(() => {
+    const handleConversationUpload = () => conversationFileInputRef.current?.click();
+
+    return <ChatPagesMenu
+      conversationId={activeConversationId}
+      onImportConversation={handleConversationUpload}
+    />;
+  }, [activeConversationId]);
+
+  // AppBar: Conversation Menu
+  const appBarRightComponents = React.useMemo(() => {
+    return <ChatContextMenu
+      conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
+      isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
+      onClearConversation={handleClearConversation}
+      onPublishConversation={handlePublishConversation}
+    />;
+  }, [activeConversationId, isConversationEmpty, isMessageSelectionMode]);
+
+
+  console.log('chat', { activeConversationId, chatModelId, systemPurposeId, sendModeId });
+
+  // Register actions when the component mounts
+  React.useEffect(() => {
+    console.log('registering actions');
+
+    useApplicationBarStore.getState().register(appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents);
+
+    return () => {
+      console.log('unregistering actions');
+      useApplicationBarStore.getState().unregister();
+    };
+  }, [appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents]);
+
+
+  return <>
+
+    <ChatMessageList
+      conversationId={activeConversationId}
+      isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
+      onExecuteConversation={handleExecuteConversation}
+      onImagineFromText={handleImagineFromText}
+      sx={{
+        flexGrow: 1,
+        background: theme.vars.palette.background.level2,
+        overflowY: 'auto', // overflowY: 'hidden'
+        minHeight: 96,
+      }} />
+
+    <Ephemerals
+      conversationId={activeConversationId}
+      sx={{
+        // flexGrow: 0.1,
+        flexShrink: 0.5,
+        overflowY: 'auto',
+        minHeight: 64,
+      }} />
+
+    <Composer
+      conversationId={activeConversationId} messageId={null}
+      isDeveloperMode={systemPurposeId === 'Developer'}
+      onSendMessage={handleSendUserMessage}
+      sx={{
+        zIndex: 21, // position: 'sticky', bottom: 0,
+        background: theme.vars.palette.background.surface,
+        borderTop: `1px solid ${theme.vars.palette.divider}`,
+        p: { xs: 1, md: 2 },
+      }} />
+
+
+    {/* Import Chat */}
+    <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleLoadConversations} />
+    {!!conversationImportOutcome && (
+      <ImportedModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
+    )}
+
+    {/* Deletion */}
+    <ConfirmationModal
+      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+      confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+    />
+
+    {/* Publishing */}
+    <ConfirmationModal
+      open={!!publishConversationId} onClose={() => setPublishConversationId(null)} onPositive={handleConfirmedPublishConversation}
+      confirmationText={<>
+        Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
+        It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
+        Are you sure you want to proceed?
+      </>} positiveActionText={'Understood, upload to paste.gg'}
+    />
+    {!!publishResponse && (
+      <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
+    )}
+
+  </>;
 }

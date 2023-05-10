@@ -1,17 +1,20 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
-import { Container, useTheme } from '@mui/joy';
+import { Box, Container, useTheme } from '@mui/joy';
 
-import { NoSSR } from '@/common/components/NoSSR';
 import { useSettingsStore } from '@/common/state/store-settings';
 
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
+import { ApplicationBar } from '../components/appbar/ApplicationBar';
+import { NoSSR } from '../components/NoSSR';
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+
+export function AppLayout(props: { children: React.ReactNode, noAppBar?: boolean, noSettings?: boolean }) {
   // external state
   const theme = useTheme();
-  const centerMode = useSettingsStore(state => state.centerMode);
+  const { centerMode } = useSettingsStore(state => ({ centerMode: state.centerMode }), shallow);
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
@@ -28,11 +31,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           },
         }}>
 
-        {children}
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
 
-        <SettingsModal />
+          {!props.noAppBar && <ApplicationBar sx={{
+            zIndex: 20, // position: 'sticky', top: 0,
+            // ...(process.env.NODE_ENV === 'development' ? { background: theme.vars.palette.danger.solidBg } : {}),
+          }} />}
+
+          {props.children}
+
+        </Box>
 
       </Container>
+
+      {!props.noSettings && <SettingsModal />}
 
     </NoSSR>
   );
