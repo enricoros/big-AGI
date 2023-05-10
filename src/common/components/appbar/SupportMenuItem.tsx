@@ -35,7 +35,7 @@ function BringTheLove(props: { text: string, link: string, icon: JSX.Element }) 
 }
 
 
-export function SupportItem() {
+export function SupportMenuItem() {
   const theme = useTheme();
   const fadedColor = theme.palette.neutral.plainDisabledColor;
   const iconColor = '';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, ListDivider, ListItemDecorator, Menu, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
@@ -10,16 +10,13 @@ import { ConfirmationModal } from '@/common/components/ConfirmationModal';
 import { MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { PagesMenuItem } from './PagesMenuItem';
+import { ChatPagesMenuItem } from './ChatPagesMenuItem';
 
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 
-/**
- * FIXME: use a proper Pages drawer instead of this menu
- */
-export function PagesMenu(props: { conversationId: string | null, pagesMenuAnchor: HTMLElement | null, onClose: () => void, onImportConversation: () => void }) {
+export function ChatPagesMenu(props: { conversationId: string | null, onImportConversation: () => void }) {
   // state
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
 
@@ -45,7 +42,7 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
       setActiveConversationId(newConversationId);
     else
       createConversation();
-    props.onClose();
+    /// FIXME props.onClose();
   };
 
   const handleConversationActivate = (conversationId: string) => setActiveConversationId(conversationId);
@@ -88,64 +85,57 @@ export function PagesMenu(props: { conversationId: string | null, pagesMenuAncho
 
   return <>
 
-    <Menu
-      variant='plain' color='neutral' size='lg' placement='top-start' sx={{ minWidth: 320 }}
-      open={!!props.pagesMenuAnchor} anchorEl={props.pagesMenuAnchor} onClose={props.onClose}
-      disablePortal={false}>
+    {/*<ListItem>*/}
+    {/*  <Typography level='body2'>*/}
+    {/*    Active chats*/}
+    {/*  </Typography>*/}
+    {/*</ListItem>*/}
 
-      {/*<ListItem>*/}
-      {/*  <Typography level='body2'>*/}
-      {/*    Active chats*/}
-      {/*  </Typography>*/}
-      {/*</ListItem>*/}
+    <MenuItem onClick={handleNew} disabled={!!newConversationId && newConversationId === props.conversationId}>
+      <ListItemDecorator><AddIcon /></ListItemDecorator>
+      {NewPrefix}New
+    </MenuItem>
 
-      <MenuItem onClick={handleNew} disabled={!!newConversationId && newConversationId === props.conversationId}>
-        <ListItemDecorator><AddIcon /></ListItemDecorator>
-        {NewPrefix}New
-      </MenuItem>
+    <ListDivider />
 
-      <ListDivider />
+    {conversationIDs.map(conversationId =>
+      <ChatPagesMenuItem
+        key={'c-id-' + conversationId}
+        conversationId={conversationId}
+        isActive={conversationId === props.conversationId}
+        isSingle={singleChat}
+        showSymbols={showSymbols}
+        conversationActivate={handleConversationActivate}
+        conversationDelete={handleConversationDelete}
+      />)}
 
-      {conversationIDs.map(conversationId =>
-        <PagesMenuItem
-          key={'c-id-' + conversationId}
-          conversationId={conversationId}
-          isActive={conversationId === props.conversationId}
-          isSingle={singleChat}
-          showSymbols={showSymbols}
-          conversationActivate={handleConversationActivate}
-          conversationDelete={handleConversationDelete}
-        />)}
+    <ListDivider />
 
-      <ListDivider />
+    <MenuItem onClick={props.onImportConversation}>
+      <ListItemDecorator>
+        <FileUploadIcon />
+      </ListItemDecorator>
+      Import conversation
+    </MenuItem>
 
-      <MenuItem onClick={props.onImportConversation}>
-        <ListItemDecorator>
-          <FileUploadIcon />
-        </ListItemDecorator>
-        Import conversation
-      </MenuItem>
+    <MenuItem disabled={!hasChats} onClick={handleDeleteAll}>
+      <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+      <Typography>
+        Delete all
+      </Typography>
+    </MenuItem>
 
-      <MenuItem disabled={!hasChats} onClick={handleDeleteAll}>
-        <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-        <Typography>
-          Delete all
-        </Typography>
-      </MenuItem>
-
-      {/*<ListItem>*/}
-      {/*  <Typography level='body2'>*/}
-      {/*    Scratchpad*/}
-      {/*  </Typography>*/}
-      {/*</ListItem>*/}
-      {/*<MenuItem>*/}
-      {/*  <ListItemDecorator />*/}
-      {/*  <Typography sx={{ opacity: 0.5 }}>*/}
-      {/*    Feature <Link href={`${Brand.URIs.OpenRepo}/issues/17`} target='_blank'>#17</Link>*/}
-      {/*  </Typography>*/}
-      {/*</MenuItem>*/}
-
-    </Menu>
+    {/*<ListItem>*/}
+    {/*  <Typography level='body2'>*/}
+    {/*    Scratchpad*/}
+    {/*  </Typography>*/}
+    {/*</ListItem>*/}
+    {/*<MenuItem>*/}
+    {/*  <ListItemDecorator />*/}
+    {/*  <Typography sx={{ opacity: 0.5 }}>*/}
+    {/*    Feature <Link href={`${Brand.URIs.OpenRepo}/issues/17`} target='_blank'>#17</Link>*/}
+    {/*  </Typography>*/}
+    {/*</MenuItem>*/}
 
     {/* Confirmations */}
     <ConfirmationModal
