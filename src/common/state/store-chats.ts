@@ -115,6 +115,7 @@ export interface ChatStore {
   createConversation: () => void;
   importConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
+  deleteAllConversations: () => void;
   setActiveConversationId: (conversationId: string) => void;
 
   // within a conversation
@@ -198,6 +199,23 @@ export const useChatStore = create<ChatStore>()(devtools(
             ...(activeConversationId !== undefined ? { activeConversationId } : {}),
           };
         }),
+
+      deleteAllConversations: () => {
+        set(state => {
+          // inherit some values from the active conversation (matches users' expectations)
+          const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
+          const conversation = createDefaultConversation(activeConversation?.systemPurposeId, activeConversation?.chatModelId);
+
+          // abort any pending requests on all conversations
+          state.conversations.forEach((conversation: DConversation) => conversation.abortController?.abort());
+
+          // delete all, but be left with one
+          return {
+            conversations: [conversation],
+            activeConversationId: conversation.id,
+          };
+        });
+      },
 
       setActiveConversationId: (conversationId: string) =>
         set({ activeConversationId: conversationId }),

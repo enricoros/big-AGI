@@ -14,11 +14,11 @@ import { conversationTitle, useChatStore } from '@/common/state/store-chats';
 const DEBUG_CONVERSATION_IDs = false;
 
 
-export function ChatPagesMenuItem(props: {
+export function ConversationItem(props: {
   conversationId: string,
   isActive: boolean, isSingle: boolean, showSymbols: boolean,
   conversationActivate: (conversationId: string) => void,
-  conversationDelete: (e: React.MouseEvent, conversationId: string) => void,
+  conversationDelete: (conversationId: string) => void,
 }) {
 
   // state
@@ -26,7 +26,7 @@ export function ChatPagesMenuItem(props: {
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // bind to conversation
-  const conversation = useChatStore(state => {
+  const cState = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation && {
       isNew: conversation.messages.length === 0,
@@ -37,14 +37,19 @@ export function ChatPagesMenuItem(props: {
     };
   }, shallow);
 
-  // auto-close the menu when clicking away
+  // auto-close the arming menu when clicking away
+  // NOTE: there currently is a bug (race condition) where the menu closes on a new item right after opening
+  //       because the isActive prop is not yet updated
   React.useEffect(() => {
     if (deleteArmed && !props.isActive)
       setDeleteArmed(false);
   }, [deleteArmed, props.isActive]);
 
   // sanity check: shouldn't happen, but just in case
-  if (!conversation) return null;
+  if (!cState) return null;
+  const { isNew, assistantTyping, setUserTitle, systemPurposeId, title } = cState;
+
+  const handleActivate = () => props.conversationActivate(props.conversationId);
 
   const handleEditBegin = () => setIsEditingTitle(true);
 
@@ -58,14 +63,13 @@ export function ChatPagesMenuItem(props: {
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     if (deleteArmed) {
       setDeleteArmed(false);
-      props.conversationDelete(e, props.conversationId);
+      e.stopPropagation();
+      props.conversationDelete(props.conversationId);
     }
   };
 
   const handleDeleteCancel = () => setDeleteArmed(false);
 
-
-  const { assistantTyping, setUserTitle, systemPurposeId, title } = conversation;
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
   const buttonSx: SxProps = { ml: 1, ...(props.isActive ? { color: 'white' } : {}) };
 
@@ -73,7 +77,7 @@ export function ChatPagesMenuItem(props: {
     <MenuItem
       variant={props.isActive ? 'solid' : 'plain'} color='neutral'
       selected={props.isActive}
-      onClick={() => props.conversationActivate(props.conversationId)}
+      onClick={handleActivate}
       sx={{
         // py: 0,
         '&:hover > button': { opacity: 1 },
@@ -90,12 +94,12 @@ export function ChatPagesMenuItem(props: {
               sx={{
                 width: 24,
                 height: 24,
-                borderRadius: 8,
+                borderRadius: 'var(--joy-radius-sm)',
               }}
             />
           ) : (
             <Typography sx={{ fontSize: '18px' }}>
-              {conversation.isNew ? '' : textSymbol}
+              {isNew ? '' : textSymbol}
             </Typography>
           )}
       </ListItemDecorator>}
