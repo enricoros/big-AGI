@@ -14,10 +14,11 @@ import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
 
 
-export type Block = TextBlock | CodeBlock | ImageBlock;
+export type Block = TextBlock | CodeBlock | ImageBlock | HtmlBlock;
 export type TextBlock = { type: 'text'; content: string; };
 export type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
 export type ImageBlock = { type: 'image'; url: string; };
+export type HtmlBlock = { type: 'html'; html: string; };
 
 
 /**
@@ -29,6 +30,9 @@ export const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
   if (text.startsWith('https://images.prodia.xyz/') && text.endsWith('.png') && text.length > 60 && text.length < 70)
     return [{ type: 'image', url: text.trim() }];
+
+  if (text.startsWith('<!DOCTYPE html'))
+    return [{ type: 'html', html: text }];
 
   const codeBlockRegex = /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}|$)/g;
   const result: Block[] = [];
