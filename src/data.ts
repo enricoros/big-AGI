@@ -1,3 +1,4 @@
+
 export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
@@ -70,7 +71,7 @@ export type ChatModelId = 'gpt-4' | 'gpt-3.5-turbo';
 export const defaultChatModelId: ChatModelId = 'gpt-4';
 export const fastChatModelId: ChatModelId = 'gpt-3.5-turbo';
 
-type ChatModelData = {
+export type ChatModelData = {
   description: string | JSX.Element;
   title: string;
   fullName: string; // seems unused
@@ -78,7 +79,7 @@ type ChatModelData = {
   tradeoff: string;
 }
 
-export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
+export let ChatModels: { [key in ChatModelId]: ChatModelData } = {
   'gpt-4': {
     description: 'Most insightful, larger problems, but slow, expensive, and may be unavailable',
     title: 'GPT-4',
@@ -94,6 +95,35 @@ export const ChatModels: { [key in ChatModelId]: ChatModelData } = {
     tradeoff: 'Faster and cheaper',
   },
 };
+
+export async function fetchModels(url:string) {
+  try {
+    const modelUrl = url + `/v1/models`
+    const response = await fetch(modelUrl);
+    const data = await response.json();
+
+    // Create a copy of the existing ChatModels object
+    let chatModels: { [key in ChatModelId]: ChatModelData } = { ...ChatModels };
+
+    data.data.forEach((model: any) => {
+      chatModels[model.id as ChatModelId] = {
+        description: model.description || 'Unknown',
+        title: model.title || model.id,
+        fullName: model.fullName || model.id,
+        contextWindowSize: model.contextWindowSize || 4097,
+        tradeoff: model.tradeoff || 'unknown',
+      } as ChatModelData;
+    });
+
+    console.debug("Model query results: ", chatModels);
+
+    // Assign the updated chatModels object to ChatModels
+    return chatModels;
+
+  } catch (error) {
+    console.error("Error fetching models:", error);
+  }
+}
 
 
 export type SendModeId = 'immediate' | 'react';

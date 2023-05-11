@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-
+import { Button, CircularProgress } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useTheme } from '@mui/joy';
 
 import { CmdRunProdia } from '@/modules/prodia/prodia.client';
@@ -22,7 +23,7 @@ import { AppBarDropdown } from './components/appbar/AppBarDropdown';
 import { AppBarDropdownWithSymbol } from './components/appbar/AppBarDropdownWithSymbol';
 import { ChatContextMenu } from './components/appbar/ChatContextMenu';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../data';
+import { ChatModelId, ChatModels, fetchModels, SystemPurposeId, SystemPurposes} from '../../data';
 import { ChatPagesMenu } from './components/appbar/ChatPagesMenu';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/ephemerals/Ephemerals';
@@ -31,6 +32,7 @@ import { imaginePromptFromText } from './util/ai-functions';
 import { runAssistantUpdatingState } from './util/agi-immediate';
 import { runImageGenerationUpdatingState } from './util/imagine';
 import { runReActUpdatingState } from './util/agi-react';
+
 
 
 export function Chat() {
@@ -42,6 +44,9 @@ export function Chat() {
   const [publishResponse, setPublishResponse] = React.useState<PasteGG.API.Publish.Response | null>(null);
   const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
   const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
+  const [chatModels, setChatModels] = React.useState(ChatModels);
+  const [loadingModels] = React.useState(false);
+  const localAIUrl = useSettingsStore(state => state.localAIUrl);
 
   // external state
   const theme = useTheme();
@@ -62,6 +67,16 @@ export function Chat() {
       setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
+
+  const fetchAndSetModels = async (localAIUrl:string) => {
+    const models = await fetchModels(localAIUrl);
+    if(models) {
+      console.log("Populating models: ", models)
+      setChatModels(models);
+    } else {
+      console.warn('Failed to fetch chat models');
+    }
+  };
 
 
   const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
@@ -147,6 +162,19 @@ export function Chat() {
     }
   };
 
+  // Populate Chat Models on page load
+  React.useEffect(() => {
+    console.log('fetching chat models...')
+
+    fetchAndSetModels(localAIUrl);
+  }, [localAIUrl]);
+
+  const handleRefreshModels = () => {
+
+    fetchAndSetModels(localAIUrl);
+  };
+
+
   const handleLoadConversations = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
     if (!files || files.length < 1)
@@ -189,8 +217,11 @@ export function Chat() {
       value && activeConversationId && setSystemPurposeId(activeConversationId, value);
 
     return <>
-      {chatModelId && <AppBarDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
-
+      <Button onClick={handleRefreshModels} disabled={loadingModels} color="inherit">
+        <RefreshIcon color="secondary" />
+        {loadingModels && <CircularProgress size={24} />}
+      </Button>
+{chatModelId && <AppBarDropdown items={chatModels} value={chatModelId} onChange={handleChatModelChange} />}
       {systemPurposeId && (zenMode === 'cleaner'
           ? <AppBarDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
           : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
@@ -222,8 +253,7 @@ export function Chat() {
     />;
   }, [activeConversationId, isConversationEmpty, isMessageSelectionMode]);
 
-
-  // Register actions when the component mounts
+    // Register actions when the component mounts
   React.useEffect(() => {
     useApplicationBarStore.getState().register(appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents);
 

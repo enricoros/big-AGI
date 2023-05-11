@@ -2,5 +2,6 @@
   "singleQuote": true,
   "trailingComma": "all",
   "endOfLine": "lf",
-  "printWidth": 160
+  "printWidth": 160,
+  "tabWidth": 2
 }

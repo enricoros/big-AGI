@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/common/state/store-settings';
 import { useUIStore } from '@/common/state/store-ui';
 
 import { UISettings } from './UISettings';
+import { LocalAISettings } from './LocalAISettings';
 
 
 /**
@@ -39,6 +40,8 @@ export function SettingsModal() {
           <ModalClose />
 
           <OpenAISettings />
+
+          <LocalAISettings />
 
           <UISettings />
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+type centerModeType = 'narrow' | 'wide' | 'full';
 
 /// Settings Store
 
@@ -11,8 +12,8 @@ interface SettingsStore {
   preferredLanguage: string;
   setPreferredLanguage: (preferredLanguage: string) => void;
 
-  centerMode: 'narrow' | 'wide' | 'full';
-  setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
+  centerMode: centerModeType;
+  setCenterMode: (centerMode: centerModeType) => void;
 
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
@@ -39,6 +40,10 @@ interface SettingsStore {
 
   heliconeKey: string;
   setHeliconeKey: (heliconeKey: string) => void;
+
+  // LocalAI settings
+  localAIUrl: string;
+  setLocalAIUrl: (url: string) => void;
 
   modelTemperature: number;
   setModelTemperature: (modelTemperature: number) => void;
@@ -122,6 +127,11 @@ export const useSettingsStore = create<SettingsStore>()(
 
       heliconeKey: '',
       setHeliconeKey: (heliconeKey: string) => set({ heliconeKey }),
+
+      // LocalAI settings
+      localAIUrl: 'http://localhost:8080',
+
+      setLocalAIUrl: (url) => set({ localAIUrl: url }),
 
       modelTemperature: 0.5,
       setModelTemperature: (modelTemperature: number) => set({ modelTemperature }),
