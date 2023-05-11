@@ -14,6 +14,8 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
+import { encode as plantUmlEncode } from 'plantuml-encoder';
+
 import { Alert, Avatar, Box, Button, Chip, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -26,6 +28,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
+import SchemaIcon from '@mui/icons-material/Schema';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -165,9 +168,25 @@ const parseBlocks = (forceText: boolean, text: string): Block[] => {
 
 function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   const [showSVG, setShowSVG] = React.useState(true);
+  const [showPlantUML, setShowPlantUML] = React.useState(true);
 
   const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
   const renderSVG = hasSVG && showSVG;
+
+  const hasPlantUML = props.codeBlock.code.startsWith('@startuml') && props.codeBlock.code.endsWith('@enduml');
+  const renderPlantUML = hasPlantUML && showPlantUML;
+  const plantUMLComponent: string | null = React.useMemo(() => {
+    if (renderPlantUML) {
+      try {
+        const encodedPlantUML: string = plantUmlEncode(props.codeBlock.code);
+        if (encodedPlantUML)
+          return `<img src='https://www.plantuml.com/plantuml/svg/${encodedPlantUML}' alt='PlantUML diagram' />`;
+      } catch (e) {
+        // ignore errors encoding PlantUML for server rendering
+      }
+    }
+    return null;
+  }, [renderPlantUML, props.codeBlock.code]);
 
   const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
   const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
@@ -207,6 +226,13 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
             </IconButton>
           </Tooltip>
         )}
+        {hasPlantUML && (
+          <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
+            <IconButton variant={renderPlantUML ? 'solid' : 'soft'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
+              <SchemaIcon />
+            </IconButton>
+          </Tooltip>
+        )}
         {hasCodepenLanguage &&
           <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
         }
@@ -222,7 +248,7 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
 
       {/* Highlighted Code / SVG render */}
       <Box
-        dangerouslySetInnerHTML={{ __html: renderSVG ? props.codeBlock.code : props.codeBlock.content }}
+        dangerouslySetInnerHTML={{ __html: plantUMLComponent || (renderSVG ? props.codeBlock.code : props.codeBlock.content) }}
         sx={renderSVG ? { lineHeight: 0 } : {}}
       />
     </Box>

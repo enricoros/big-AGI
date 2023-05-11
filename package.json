@@ -23,6 +23,7 @@
     "eventsource-parser": "^1.0.0",
     "next": "^13.4.1",
     "pdfjs-dist": "^3.6.172",
+    "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@pkgr/utils": "2.3.1",
     "@types/node": "^20.1.2",
+    "@types/plantuml-encoder": "^1.4.0",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
