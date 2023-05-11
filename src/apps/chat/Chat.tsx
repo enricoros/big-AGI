@@ -18,13 +18,11 @@ import { useApplicationBarStore } from '@/common/components/appbar/useApplicatio
 import { useComposerStore } from '@/common/state/store-composer';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { AppBarDropdown } from './components/appbar/AppBarDropdown';
-import { AppBarDropdownWithSymbol } from './components/appbar/AppBarDropdownWithSymbol';
-import { ChatContextMenu } from './components/appbar/ChatContextMenu';
+import { ActionItems } from './components/appbar/ActionItems';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../data';
-import { ChatPagesMenu } from './components/appbar/ChatPagesMenu';
 import { Composer } from './components/composer/Composer';
+import { ConversationItems } from './components/appbar/ConversationItems';
+import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/ephemerals/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
 import { imaginePromptFromText } from './util/ai-functions';
@@ -33,11 +31,15 @@ import { runImageGenerationUpdatingState } from './util/imagine';
 import { runReActUpdatingState } from './util/agi-react';
 
 
+const SPECIAL_ID_ALL_CHATS = 'all-chats';
+
+
 export function Chat() {
 
   // state
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
+  const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<PasteGG.API.Publish.Response | null>(null);
   const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
@@ -45,20 +47,20 @@ export function Chat() {
 
   // external state
   const theme = useTheme();
-  const { zenMode } = useSettingsStore(state => ({ zenMode: state.zenMode }), shallow);
-  const { sendModeId } = useComposerStore(state => ({ sendModeId: state.sendModeId }), shallow);
-  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, setMessages, chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { sendModeId } = useComposerStore(state => ({
+    sendModeId: state.sendModeId,
+  }), shallow);
+  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, chatModelId, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
       isConversationEmpty: conversation ? !conversation.messages.length : true,
       conversationsCount: state.conversations.length,
       importConversation: state.importConversation,
+      deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
       chatModelId: conversation?.chatModelId ?? null,
-      setChatModelId: state.setChatModelId,
       systemPurposeId: conversation?.systemPurposeId ?? null,
-      setSystemPurposeId: state.setSystemPurposeId,
       setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
@@ -133,6 +135,18 @@ export function Chat() {
     }
   };
 
+  const handleDeleteAllConversations = () => setDeleteConfirmationId(SPECIAL_ID_ALL_CHATS);
+
+  const handleConfirmedDeleteConversation = () => {
+    if (deleteConfirmationId) {
+      if (deleteConfirmationId === SPECIAL_ID_ALL_CHATS) {
+        deleteAllConversations();
+      }// else
+      //  deleteConversation(deleteConfirmationId);
+      setDeleteConfirmationId(null);
+    }
+  };
+
   const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
 
   const handleConfirmedPublishConversation = async () => {
@@ -147,7 +161,9 @@ export function Chat() {
     }
   };
 
-  const handleLoadConversations = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportConversation = () => conversationFileInputRef.current?.click();
+
+  const handleImportConversationFromFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
     if (!files || files.length < 1)
       return;
@@ -179,59 +195,38 @@ export function Chat() {
   };
 
 
-  // AppBar: Center Components
-  const appBarCenterComponents = React.useMemo(() => {
+  // Pluggable ApplicationBar components
 
-    const handleChatModelChange = (event: any, value: ChatModelId | null) =>
-      value && activeConversationId && setChatModelId(activeConversationId, value);
+  const dropdowns = React.useMemo(() =>
+      <Dropdowns conversationId={activeConversationId} />,
+    [activeConversationId],
+  );
 
-    const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
-      value && activeConversationId && setSystemPurposeId(activeConversationId, value);
+  const conversationsBadge = conversationsCount < 2 ? 0 : conversationsCount;
 
-    return <>
-      {chatModelId && <AppBarDropdown items={ChatModels} value={chatModelId} onChange={handleChatModelChange} />}
+  const conversationItems = React.useMemo(() =>
+      <ConversationItems
+        conversationId={activeConversationId}
+        onImportConversation={handleImportConversation}
+        onDeleteAllConversations={handleDeleteAllConversations}
+      />,
+    [activeConversationId],
+  );
 
-      {systemPurposeId && (zenMode === 'cleaner'
-          ? <AppBarDropdown items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
-          : <AppBarDropdownWithSymbol items={SystemPurposes} value={systemPurposeId} onChange={handleSystemPurposeChange} />
-      )}
-    </>;
+  const actionItems = React.useMemo(() =>
+      <ActionItems
+        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
+        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
+        onClearConversation={handleClearConversation}
+        onPublishConversation={handlePublishConversation}
+      />,
+    [activeConversationId, isConversationEmpty, isMessageSelectionMode],
+  );
 
-  }, [activeConversationId, chatModelId, setChatModelId, setSystemPurposeId, systemPurposeId, zenMode]);
-
-  // AppBar: Page Badge
-  const appBarLeftBadge = conversationsCount < 2 ? 0 : conversationsCount;
-
-  // AppBar: Page Menu
-  const appBarLeftComponents = React.useMemo(() => {
-    const handleConversationUpload = () => conversationFileInputRef.current?.click();
-
-    return <ChatPagesMenu
-      conversationId={activeConversationId}
-      onImportConversation={handleConversationUpload}
-    />;
-  }, [activeConversationId]);
-
-  // AppBar: Conversation Menu
-  const appBarRightComponents = React.useMemo(() => {
-    return <ChatContextMenu
-      conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
-      isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-      onClearConversation={handleClearConversation}
-      onPublishConversation={handlePublishConversation}
-    />;
-  }, [activeConversationId, isConversationEmpty, isMessageSelectionMode]);
-
-
-  // Register actions when the component mounts
   React.useEffect(() => {
-    useApplicationBarStore.getState().register(appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents);
-
-    return () => {
-      useApplicationBarStore.getState().unregister();
-    };
-  }, [appBarCenterComponents, appBarLeftBadge, appBarLeftComponents, appBarRightComponents]);
-
+    useApplicationBarStore.getState().register(dropdowns, conversationsBadge, conversationItems, actionItems);
+    return () => useApplicationBarStore.getState().unregister();
+  }, [dropdowns, conversationsBadge, conversationItems, actionItems]);
 
   return <>
 
@@ -269,15 +264,26 @@ export function Chat() {
 
 
     {/* Import Chat */}
-    <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleLoadConversations} />
+    <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleImportConversationFromFiles} />
     {!!conversationImportOutcome && (
       <ImportedModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
     )}
 
-    {/* Deletion */}
+    {/* Clear */}
     <ConfirmationModal
       open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+    />
+
+    {/* Deletion */}
+    <ConfirmationModal
+      open={!!deleteConfirmationId} onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
+      confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
+        : 'Are you sure you want to delete this conversation?'}
+      positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Yes, delete all'
+        : 'Delete conversation'}
     />
 
     {/* Publishing */}

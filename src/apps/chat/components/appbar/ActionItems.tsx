@@ -13,7 +13,7 @@ import { downloadConversationJson, useChatStore } from '@/common/state/store-cha
 import { useSettingsStore } from '@/common/state/store-settings';
 
 
-export function ChatContextMenu(props: {
+export function ActionItems(props: {
   conversationId: string | null, isConversationEmpty: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
@@ -58,7 +58,7 @@ export function ChatContextMenu(props: {
 
     <MenuItem onClick={handleSystemMessagesToggle}>
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
-      System text
+      System message
       <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
 
@@ -84,7 +84,9 @@ export function ChatContextMenu(props: {
 
     <MenuItem disabled={disabled} onClick={handleToggleMessageSelectionMode}>
       <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
-      <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>Cleanup ...</span>
+      <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
+        Cleanup ...
+      </span>
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
