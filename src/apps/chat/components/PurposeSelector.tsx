@@ -127,7 +127,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
           </IconButton>
         )}
         sx={{
-          boxShadow: theme.vars.shadow.sm,
+          boxShadow: theme.shadow.sm,
         }}
       />
     </Box>}
@@ -159,7 +159,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
                   height: bpTileSize,
                   width: bpTileSize,
                   ...((editMode || systemPurposeId !== spId) ? {
-                    boxShadow: theme.vars.shadow.md,
+                    boxShadow: theme.shadow.md,
                     ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { background: theme.vars.palette.background.level1 }),
                   } : {}),
                 }}
