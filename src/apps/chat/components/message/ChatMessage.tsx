@@ -28,6 +28,7 @@ import { prettyBaseModel } from '@/common/util/conversationToMarkdown';
 import { useSettingsStore } from '@/common/state/store-settings';
 
 import { RenderCode } from './RenderCode';
+import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderMarkdown } from './RenderMarkdown';
 import { RenderText } from './RenderText';
@@ -309,13 +310,15 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           )}
 
           {!errorMessage && parseBlocks(fromSystem, collapsedText).map((block, index) =>
-            block.type === 'code'
-              ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
-              : block.type === 'image'
-                ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
-                : renderMarkdown
-                  ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                  : <RenderText key={'text-' + index} textBlock={block} />,
+            block.type === 'html'
+              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={cssCode} />
+              : block.type === 'code'
+                ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
+                : block.type === 'image'
+                  ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
+                  : renderMarkdown
+                    ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                    : <RenderText key={'text-' + index} textBlock={block} />,
           )}
 
           {errorMessage && (
