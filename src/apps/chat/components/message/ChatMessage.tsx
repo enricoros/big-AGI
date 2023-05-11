@@ -1,23 +1,6 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
-import Prism from 'prismjs';
-import 'prismjs/themes/prism.css';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-java';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markdown';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-typescript';
-
-import { encode as plantUmlEncode } from 'plantuml-encoder';
-
-import { Alert, Avatar, Box, Button, Chip, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -29,11 +12,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
-import SchemaIcon from '@mui/icons-material/Schema';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { requireUserKeyElevenLabs, speakText } from '@/modules/elevenlabs/elevenlabs.client';
 import { requireUserKeyProdia } from '@/modules/prodia/prodia.client';
@@ -42,315 +22,78 @@ import { DMessage } from '@/common/state/store-chats';
 import { InlineTextarea } from '@/common/components/InlineTextarea';
 import { Link } from '@/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { copyToClipboard } from '@/common/util/copyToClipboard';
 import { cssRainbowColorKeyframes } from '@/common/theme';
-import { extractCommands } from '@/common/util/extractCommands';
 import { prettyBaseModel } from '@/common/util/conversationToMarkdown';
 import { useSettingsStore } from '@/common/state/store-settings';
 
-import { OpenInCodepen } from './OpenInCodepen';
-import { OpenInReplit } from './OpenInReplit';
+import { RenderCode } from './RenderCode';
+import { RenderImage } from './RenderImage';
+import { RenderMarkdown } from './RenderMarkdown';
+import { RenderText } from './RenderText';
+import { parseBlocks } from './Block';
 
 
-/// Utilities to parse messages into blocks of text and code
-
-type Block = TextBlock | CodeBlock | ImageBlock;
-type TextBlock = { type: 'text'; content: string; };
-type CodeBlock = { type: 'code'; content: string; language: string | null; complete: boolean; code: string; };
-type ImageBlock = { type: 'image'; url: string; };
-
-const inferCodeLanguage = (markdownLanguage: string, code: string): string | null => {
-  let detectedLanguage;
-  // we have an hint
-  if (markdownLanguage) {
-    // no dot: assume is the syntax-highlight name
-    if (!markdownLanguage.includes('.'))
-      return markdownLanguage;
-
-    // dot: there's probably a file extension
-    const extension = markdownLanguage.split('.').pop();
-    if (extension) {
-      const languageMap: { [key: string]: string } = {
-        cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
-        md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
-      };
-      detectedLanguage = languageMap[extension];
-      if (detectedLanguage)
-        return detectedLanguage;
-    }
+export function messageBackground(theme: Theme, messageRole: DMessage['role'], wasEdited: boolean, unknownAssistantIssue: boolean): string {
+  const defaultBackground = theme.vars.palette.background.surface;
+  switch (messageRole) {
+    case 'system':
+      return wasEdited ? theme.vars.palette.warning.plainHoverBg : defaultBackground;
+    case 'user':
+      return theme.vars.palette.primary.plainHoverBg; // .background.level1
+    case 'assistant':
+      return unknownAssistantIssue ? theme.vars.palette.danger.softBg : defaultBackground;
   }
-
-  // based on how the code starts, return the language
-  const codeStarts = [
-    { starts: ['<!DOCTYPE html', '<html'], language: 'html' },
-    { starts: ['<'], language: 'xml' },
-    { starts: ['from '], language: 'python' },
-    { starts: ['import ', 'export '], language: 'typescript' }, // or python
-    { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
-    { starts: ['package '], language: 'java' },
-    { starts: ['using '], language: 'csharp' },
-  ];
-
-  for (const codeStart of codeStarts) {
-    if (codeStart.starts.some((start) => code.startsWith(start))) {
-      return codeStart.language;
-    }
-  }
-
-  // If no language detected based on code start, use Prism to tokenize and detect language
-  const languages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript']; // matches Prism component imports
-  let maxTokens = 0;
-
-  languages.forEach((language) => {
-    const grammar = Prism.languages[language];
-    const tokens = Prism.tokenize(code, grammar);
-    const tokenCount = tokens.filter((token) => typeof token !== 'string').length;
-
-    if (tokenCount > maxTokens) {
-      maxTokens = tokenCount;
-      detectedLanguage = language;
-    }
-  });
-  return detectedLanguage || null;
-};
-
-/**
- * FIXME: expensive function, especially as it's not been used in incremental fashion
- */
-const parseBlocks = (forceText: boolean, text: string): Block[] => {
-  if (forceText)
-    return [{ type: 'text', content: text }];
-
-  if (text.startsWith('https://images.prodia.xyz/') && text.endsWith('.png') && text.length > 60 && text.length < 70)
-    return [{ type: 'image', url: text.trim() }];
-
-  const codeBlockRegex = /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}|$)/g;
-  const result: Block[] = [];
-
-  let lastIndex = 0;
-  let match;
-
-  while ((match = codeBlockRegex.exec(text)) !== null) {
-    const markdownLanguage = (match[1] || '').trim();
-    const code = match[2].trim();
-    const blockEnd: string = match[3];
-
-    // Load the specified language if it's not loaded yet
-    // NOTE: this is commented out because it inflates the size of the bundle by 200k
-    // if (!Prism.languages[language]) {
-    //   try {
-    //     require(`prismjs/components/prism-${language}`);
-    //   } catch (e) {
-    //     console.warn(`Prism language '${language}' not found, falling back to 'typescript'`);
-    //   }
-    // }
-
-    const codeLanguage = inferCodeLanguage(markdownLanguage, code);
-    const highlightLanguage = codeLanguage || 'typescript';
-    const highlightedCode = Prism.highlight(
-      code,
-      Prism.languages[highlightLanguage] || Prism.languages.typescript,
-      highlightLanguage,
-    );
-
-    result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
-    result.push({ type: 'code', content: highlightedCode, language: codeLanguage, complete: blockEnd.startsWith('```'), code });
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    result.push({ type: 'text', content: text.slice(lastIndex) });
-  }
-
-  return result;
-};
-
-
-/// Renderers for the different types of message blocks
-
-function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
-  const [showSVG, setShowSVG] = React.useState(true);
-  const [showPlantUML, setShowPlantUML] = React.useState(true);
-
-  const hasSVG = props.codeBlock.code.startsWith('<svg') && props.codeBlock.code.endsWith('</svg>');
-  const renderSVG = hasSVG && showSVG;
-
-  const hasPlantUML = props.codeBlock.code.startsWith('@startuml') && props.codeBlock.code.endsWith('@enduml');
-  let renderPlantUML = hasPlantUML && showPlantUML;
-  const { data: plantUmlSvgData } = useQuery({
-    enabled: renderPlantUML,
-    queryKey: ['plantuml', props.codeBlock.code],
-    queryFn: async () => {
-      try {
-        // retrieve and manually adapt the SVG, to remove the background
-        const encodedPlantUML: string = plantUmlEncode(props.codeBlock.code);
-        const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
-        const svg = await response.text();
-        const start = svg.indexOf('<svg ');
-        const end = svg.indexOf('</svg>');
-        if (start < 0 || end <= start)
-          return null;
-        return svg.slice(start, end + 6).replace('background:#FFFFFF;', '');
-      } catch (e) {
-        // ignore errors, and disable the component in that case
-        return null;
-      }
-    },
-    staleTime: 24 * 60 * 60 * 1000, // 1 day
-  });
-  renderPlantUML = renderPlantUML && !!plantUmlSvgData;
-
-  const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
-  const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
-
-  const languagesReplit = ['python', 'java', 'csharp'];
-  const hasReplitLanguage = props.codeBlock.language && languagesReplit.includes(props.codeBlock.language);
-
-  const handleCopyToClipboard = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    copyToClipboard(props.codeBlock.code);
-  };
-
-  return (
-    <Box
-      component='code'
-      sx={{
-        position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
-        display: 'block', fontWeight: 500,
-        whiteSpace: 'break-spaces',
-        '&:hover > .code-buttons': { opacity: 1 },
-        ...(props.sx || {}),
-      }}>
-
-      {/* Buttons */}
-      <Box
-        className='code-buttons'
-        sx={{
-          backdropFilter: 'blur(6px) grayscale(0.8)',
-          position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, pr: 0.5,
-          display: 'flex', flexDirection: 'row', gap: 1,
-          opacity: 0, transition: 'opacity 0.3s',
-        }}>
-        {hasSVG && (
-          <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
-            <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
-              <ShapeLineOutlinedIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {hasPlantUML && (
-          <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
-            <IconButton variant={renderPlantUML ? 'solid' : 'soft'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
-              <SchemaIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {hasCodepenLanguage &&
-          <OpenInCodepen codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
-        }
-        {hasReplitLanguage &&
-          <OpenInReplit codeBlock={{ code: props.codeBlock.code, language: props.codeBlock.language || undefined }} />
-        }
-        <Tooltip title='Copy Code' variant='solid'>
-          <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
-            <ContentCopyIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Highlighted Code / SVG render */}
-      <Box
-        dangerouslySetInnerHTML={{ __html: (renderPlantUML && plantUmlSvgData) ? plantUmlSvgData : renderSVG ? props.codeBlock.code : props.codeBlock.content }}
-        sx={{
-          ...(renderSVG ? { lineHeight: 0 } : {}),
-          ...(renderPlantUML ? { textAlign: 'center' } : {}),
-        }}
-      />
-    </Box>
-  );
+  return defaultBackground;
 }
 
-const RenderMarkdown = ({ textBlock }: { textBlock: TextBlock }) => {
-  const theme = useTheme();
-  return <Box
-    className={`markdown-body ${theme.palette.mode === 'dark' ? 'markdown-body-dark' : 'markdown-body-light'}`}
-    sx={{
-      mx: '12px !important',                                // margin: 1.5 like other blocks
-      '& table': { width: 'inherit !important' },           // un-break auto-width (tables have 'max-content', which overflows)
-      '--color-canvas-default': 'transparent !important',   // remove the default background color
-      fontFamily: `inherit !important`,                     // use the default font family
-      lineHeight: '1.75 !important',                        // line-height: 1.75 like the text block
-    }}>
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
-  </Box>;
-};
+export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
+  if (typeof messageAvatar === 'string' && messageAvatar)
+    return <Avatar alt={messageSender} src={messageAvatar} />;
+  const iconSx = { width: 40, height: 40 };
+  const mascotSx = size === 'sm' ? { width: 40, height: 40 } : { width: 64, height: 64 };
+  switch (messageRole) {
+    case 'system':
+      return <SettingsSuggestIcon sx={iconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
 
-const RenderText = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxProps; }) => {
-  const elements = extractCommands(textBlock.content);
-  return (
-    <Typography
-      sx={{
-        lineHeight: 1.75,
-        mx: 1.5,
-        display: 'flex', alignItems: 'baseline',
-        overflowWrap: 'anywhere',
-        whiteSpace: 'break-spaces',
-        ...(sx || {}),
-      }}
-    >
-      {elements.map((element, index) =>
-        element.type === 'cmd'
-          ? <Chip key={index} component='span' size='md' variant='solid' color='neutral' sx={{ mr: 1 }}>{element.value}</Chip>
-          : <span key={index}>{element.value}</span>,
-      )}
-    </Typography>
-  );
-};
+    case 'assistant':
+      // display a gif avatar when the assistant is typing (people seem to love this, so keeping it after april fools')
+      if (messageTyping) {
+        return <Avatar
+          alt={messageSender} variant='plain'
+          src={messageOriginLLM === 'prodia'
+            ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
+            : messageOriginLLM?.startsWith('react-')
+              ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
+              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
+          sx={{ ...mascotSx, borderRadius: 'var(--joy-radius-sm)' }}
+        />;
+      }
+      // display the purpose symbol
+      if (messageOriginLLM === 'prodia')
+        return <PaletteOutlinedIcon sx={iconSx} />;
+      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
+      if (symbol)
+        return <Box
+          sx={{
+            fontSize: '24px',
+            textAlign: 'center',
+            width: '100%', minWidth: `${iconSx.width}px`, lineHeight: `${iconSx.height}px`,
+          }}
+        >
+          {symbol}
+        </Box>;
+      // default assistant avatar
+      return <SmartToyOutlinedIcon sx={iconSx} />; // https://mui.com/static/images/avatar/2.jpg
 
-const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) =>
-  <Box
-    sx={theme => ({
-      display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
-      mx: 1.5,
-      // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-      minWidth: 32, minHeight: 32, boxShadow: theme.vars.shadow.md,
-      background: theme.palette.neutral.solidBg,
-      '& picture': { display: 'flex' },
-      '& img': { maxWidth: '100%', maxHeight: '100%' },
-      '&:hover > .image-buttons': { opacity: 1 },
-    })}>
-    {/* External Image */}
-    <picture><img src={props.imageBlock.url} alt='Generated Image' /></picture>
-    {/* Image Buttons */}
-    <Box
-      className='image-buttons'
-      sx={{
-        position: 'absolute', top: 0, right: 0, zIndex: 10, pt: 0.5, px: 0.5,
-        display: 'flex', flexDirection: 'row', gap: 0.5,
-        opacity: 0, transition: 'opacity 0.3s',
-      }}>
-      {props.allowRunAgain && (
-        <Tooltip title='Draw again' variant='solid'>
-          <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
-            <ReplayIcon />
-          </IconButton>
-        </Tooltip>
-      )}
-      <IconButton component={Link} href={props.imageBlock.url} target='_blank' variant='solid' color='neutral'>
-        <ZoomOutMapIcon />
-      </IconButton>
-    </Box>
-  </Box>;
-
-
-function copyToClipboard(text: string) {
-  if (typeof navigator !== 'undefined')
-    navigator.clipboard.writeText(text)
-      .then(() => console.log('Message copied to clipboard'))
-      .catch((err) => console.error('Failed to copy message: ', err));
+    case 'user':
+      return <Face6Icon sx={iconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
+  }
+  return <Avatar alt={messageSender} />;
 }
 
 function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: string) {
-  let errorMessage: JSX.Element | null = null;
+  let errorMessage: React.JSX.Element | null = null;
   const isAssistantError = isAssistant && (text.startsWith('[Issue] ') || text.startsWith('[OpenAI Issue]'));
   if (isAssistantError) {
     if (text.startsWith('OpenAI API error: 429 Too Many Requests')) {
@@ -392,65 +135,6 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   }
   return { errorMessage, isAssistantError };
 }
-
-export function messageBackground(theme: Theme, messageRole: DMessage['role'], wasEdited: boolean, unknownAssistantIssue: boolean): string {
-  const defaultBackground = theme.vars.palette.background.surface;
-  switch (messageRole) {
-    case 'system':
-      return wasEdited ? theme.vars.palette.warning.plainHoverBg : defaultBackground;
-    case 'user':
-      return theme.vars.palette.primary.plainHoverBg; // .background.level1
-    case 'assistant':
-      return unknownAssistantIssue ? theme.vars.palette.danger.softBg : defaultBackground;
-  }
-  return defaultBackground;
-}
-
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): JSX.Element {
-  if (typeof messageAvatar === 'string' && messageAvatar)
-    return <Avatar alt={messageSender} src={messageAvatar} />;
-  const iconSx = { width: 40, height: 40 };
-  const mascotSx = size === 'sm' ? { width: 40, height: 40 } : { width: 64, height: 64 };
-  switch (messageRole) {
-    case 'system':
-      return <SettingsSuggestIcon sx={iconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
-
-    case 'assistant':
-      // display a gif avatar when the assistant is typing (people seem to love this, so keeping it after april fools')
-      if (messageTyping) {
-        return <Avatar
-          alt={messageSender} variant='plain'
-          src={messageOriginLLM === 'prodia'
-            ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
-            : messageOriginLLM?.startsWith('react-')
-              ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
-              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
-          sx={{ ...mascotSx, borderRadius: 8 }}
-        />;
-      }
-      // display the purpose symbol
-      if (messageOriginLLM === 'prodia')
-        return <PaletteOutlinedIcon sx={iconSx} />;
-      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
-      if (symbol)
-        return <Box
-          sx={{
-            fontSize: '24px',
-            textAlign: 'center',
-            width: '100%', minWidth: `${iconSx.width}px`, lineHeight: `${iconSx.height}px`,
-          }}
-        >
-          {symbol}
-        </Box>;
-      // default assistant avatar
-      return <SmartToyOutlinedIcon sx={iconSx} />; // https://mui.com/static/images/avatar/2.jpg
-
-    case 'user':
-      return <Face6Icon sx={iconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
-  }
-  return <Avatar alt={messageSender} />;
-}
-
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -545,21 +229,22 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   let background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
 
   // avatar
-  const avatarEl: JSX.Element | null = React.useMemo(
+  const avatarEl: React.JSX.Element | null = React.useMemo(
     () => showAvatars ? makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping) : null,
     [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping, showAvatars],
   );
 
-  // text box css
-  const cssBlocks = {
+  // per-blocks css
+  const cssBlock: SxProps = {
     my: 'auto',
   };
-  const cssCode = {
-    background: theme.vars.palette.background.level1,
+  const cssCode: SxProps = {
+    background: fromAssistant ? theme.vars.palette.background.level1 : theme.vars.palette.primary.softDisabledBg,
     fontFamily: theme.fontFamily.code,
     fontSize: '14px',
     fontVariantLigatures: 'none',
     lineHeight: 1.75,
+    borderRadius: 'var(--joy-radius-sm)',
   };
 
   // user message truncation
@@ -617,7 +302,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       {/* Edit / Blocks */}
       {!isEditing ? (
 
-        <Box sx={{ ...cssBlocks, flexGrow: 0 }} onDoubleClick={handleMenuEdit}>
+        <Box sx={{ ...cssBlock, flexGrow: 0 }} onDoubleClick={handleMenuEdit}>
 
           {fromSystem && wasEdited && (
             <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
@@ -651,7 +336,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       ) : (
 
-        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlocks, flexGrow: 1 }} />
+        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlock, lineHeight: 1.75, flexGrow: 1 }} />
 
       )}
 
