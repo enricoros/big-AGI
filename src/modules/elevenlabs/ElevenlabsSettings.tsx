@@ -9,7 +9,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Section } from '@/common/components/Section';
-import { settingsGap } from '@/common/theme';
+import { settingsCol1Width, settingsGap } from '@/common/theme';
 import { useSettingsStore } from '@/common/state/store-settings';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
@@ -39,15 +39,13 @@ export function ElevenlabsSettings() {
 
   const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as 'off' | 'firstLine');
 
-  const colWidth = 150;
-
   return (
     <Section title='📢 Voice Generation' collapsible collapsed>
       <Stack direction='column' sx={{ gap: settingsGap, mt: -0.8 }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <FormLabel sx={{ minWidth: colWidth }}>
+            <FormLabel sx={{ minWidth: settingsCol1Width }}>
               ElevenLabs API Key
             </FormLabel>
             <FormHelperText>
@@ -69,7 +67,7 @@ export function ElevenlabsSettings() {
         </FormControl>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-          <FormLabel sx={{ minWidth: colWidth }}>
+          <FormLabel sx={{ minWidth: settingsCol1Width }}>
             Assistant voice
           </FormLabel>
           <Select
