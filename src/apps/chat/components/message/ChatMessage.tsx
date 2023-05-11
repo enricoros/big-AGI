@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -174,19 +175,29 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   const renderSVG = hasSVG && showSVG;
 
   const hasPlantUML = props.codeBlock.code.startsWith('@startuml') && props.codeBlock.code.endsWith('@enduml');
-  const renderPlantUML = hasPlantUML && showPlantUML;
-  const plantUMLComponent: string | null = React.useMemo(() => {
-    if (renderPlantUML) {
+  let renderPlantUML = hasPlantUML && showPlantUML;
+  const { data: plantUmlSvgData } = useQuery({
+    enabled: renderPlantUML,
+    queryKey: ['plantuml', props.codeBlock.code],
+    queryFn: async () => {
       try {
+        // retrieve and manually adapt the SVG, to remove the background
         const encodedPlantUML: string = plantUmlEncode(props.codeBlock.code);
-        if (encodedPlantUML)
-          return `<img src='https://www.plantuml.com/plantuml/svg/${encodedPlantUML}' alt='PlantUML diagram' />`;
+        const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
+        const svg = await response.text();
+        const start = svg.indexOf('<svg ');
+        const end = svg.indexOf('</svg>');
+        if (start < 0 || end <= start)
+          return null;
+        return svg.slice(start, end + 6).replace('background:#FFFFFF;', '');
       } catch (e) {
-        // ignore errors encoding PlantUML for server rendering
+        // ignore errors, and disable the component in that case
+        return null;
       }
-    }
-    return null;
-  }, [renderPlantUML, props.codeBlock.code]);
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 1 day
+  });
+  renderPlantUML = renderPlantUML && !!plantUmlSvgData;
 
   const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
   const hasCodepenLanguage = hasSVG || (props.codeBlock.language && languagesCodepen.includes(props.codeBlock.language));
@@ -248,8 +259,11 @@ function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
 
       {/* Highlighted Code / SVG render */}
       <Box
-        dangerouslySetInnerHTML={{ __html: plantUMLComponent || (renderSVG ? props.codeBlock.code : props.codeBlock.content) }}
-        sx={renderSVG ? { lineHeight: 0 } : {}}
+        dangerouslySetInnerHTML={{ __html: (renderPlantUML && plantUmlSvgData) ? plantUmlSvgData : renderSVG ? props.codeBlock.code : props.codeBlock.content }}
+        sx={{
+          ...(renderSVG ? { lineHeight: 0 } : {}),
+          ...(renderPlantUML ? { textAlign: 'center' } : {}),
+        }}
       />
     </Box>
   );
