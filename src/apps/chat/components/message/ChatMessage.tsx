@@ -641,6 +641,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
           {isCollapsed && <Button variant='plain' onClick={handleExpand}>... expand ...</Button>}
 
+          {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
+          {/*<br />*/}
+          {/*<Chip variant='outlined' size='lg' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
+          {/*  BlockAction*/}
+          {/*</Chip>*/}
+
         </Box>
 
       ) : (
