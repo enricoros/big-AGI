@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Divider } from '@mui/joy';
+import { Divider, Sheet } from '@mui/joy';
 
 import { GoodModal } from '@/common/components/GoodModal';
 import { useSettingsStore } from '@/common/state/store-settings';
@@ -9,6 +9,25 @@ import { useUIStore } from '@/common/state/store-ui';
 
 import { AddVendor } from './AddVendor';
 import { ConfigureSources } from './ConfigureSources';
+
+
+function ListModels() {
+  return <>
+    {/*<Typography>*/}
+    {/*  List Models*/}
+    {/*</Typography>*/}
+    <Sheet
+      variant='solid'
+      invertedColors
+      sx={{ borderRadius: 'sm', p: 2 }}
+    >
+      <div>Model 1</div>
+      <div>Model 2</div>
+      <div>Model 3</div>
+      <div>Model 4</div>
+    </Sheet>
+  </>;
+}
 
 
 export function ModelsModal() {
@@ -32,19 +51,14 @@ export function ModelsModal() {
 
       <ConfigureSources />
 
-      {/*<Divider />*/}
+      <Divider />
 
-      {/* Models List */}
-      {/*<Sheet*/}
-      {/*  variant='solid'*/}
-      {/*  invertedColors*/}
-      {/*  sx={{ borderRadius: 'sm', p: 2 }}*/}
-      {/*>*/}
-      {/*  <div>Model 1</div>*/}
-      {/*  <div>Model 2</div>*/}
-      {/*  <div>Model 3</div>*/}
-      {/*  <div>Model 4</div>*/}
-      {/*</Sheet>*/}
+      {/*<OpenAISource />*/}
+
+      <ListModels />
+
+      <Divider />
+
 
     </GoodModal>
   );
