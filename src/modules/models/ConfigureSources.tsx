@@ -1,23 +1,34 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DModelSource, DModelSourceId } from '@/modules/models/store-models';
-import { LocalAISource } from '@/modules/models/localai/LocalAISource';
-import { OpenAISource } from '@/modules/models/openai/OpenAISource';
+import { DModelSourceId, useModelsStore } from './store-models';
+import { LocalAISource } from './localai/LocalAISource';
+import { OpenAISource } from './openai/OpenAISource';
 
 
-export function ConfigureSources(props: {
-  llmSources: DModelSource[],
-  selectedSourceId: DModelSourceId | null,
-  setSelectedSourceId: (sourceId: DModelSourceId | null) => void,
-  onDeleteSourceId: (sourceId: DModelSourceId) => void,
-}) {
+export function ConfigureSources() {
+  // external state
+  const { modelSources, removeModelSource } = useModelsStore((state) => ({
+    modelSources: state.modelSources, removeModelSource: state.removeModelSource,
+  }), shallow);
 
-  const sourceItems = React.useMemo(() => props.llmSources.map(source => {
-    const checked = source.sourceId === props.selectedSourceId;
+  // state
+  const [selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(modelSources?.[0]?.sourceId ?? null);
+
+  // when nothing is selected, select the first available source
+  React.useEffect(() => {
+    if (!selectedSourceId && modelSources.length > 0)
+      setSelectedSourceId(modelSources[0].sourceId);
+  }, [modelSources, selectedSourceId]);
+
+
+  // derived state
+  const sourceItems = React.useMemo(() => modelSources.map(source => {
+    const checked = source.sourceId === selectedSourceId;
     return {
       source,
       component: (
@@ -45,13 +56,24 @@ export function ConfigureSources(props: {
         </Chip>
       ),
     };
-  }), [props.llmSources, props.selectedSourceId]);
+  }), [modelSources, selectedSourceId]);
 
-  const selectedSource = sourceItems.find(item => item.source.sourceId === props.selectedSourceId);
+  const selectedSource = sourceItems.find(item => item.source.sourceId === selectedSourceId);
+
+
+  const enableDeleteButton = !!setSelectedSourceId && sourceItems.length >= 2;
+
+  const handleDeleteSourceId = (sourceId: DModelSourceId) => {
+    removeModelSource(sourceId);
+    if (selectedSourceId === sourceId) {
+      setSelectedSourceId(null);
+    }
+  };
+
 
   let vendorConfigComponent: React.JSX.Element | null = null;
   if (selectedSource) {
-    switch (selectedSource.source.sourceId) {
+    switch (selectedSource.source.vendorId) {
       case 'openai':
         vendorConfigComponent = <OpenAISource />;
         break;
@@ -65,15 +87,14 @@ export function ConfigureSources(props: {
     }
   }
 
-  const enableDeleteButton = !!props.setSelectedSourceId && sourceItems.length >= 2;
 
   return <>
 
     {/* Configuration Items */}
     <RadioGroup
       overlay
-      value={props.selectedSourceId}
-      onChange={event => props.setSelectedSourceId(event.target.value)}
+      value={selectedSourceId}
+      onChange={event => setSelectedSourceId(event.target.value)}
       sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}
     >
       {sourceItems.map(item => item.component)}
@@ -82,7 +103,7 @@ export function ConfigureSources(props: {
       <IconButton
         variant='plain' color='neutral'
         disabled={!enableDeleteButton}
-        onClick={() => props.onDeleteSourceId(props.selectedSourceId!)}
+        onClick={() => handleDeleteSourceId(selectedSourceId!)}
         sx={{ ml: 'auto' }}
       >
         <DeleteOutlineIcon />
