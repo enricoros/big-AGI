@@ -11,7 +11,7 @@ import { AddVendor } from './AddVendor';
 import { ConfigureSources } from './ConfigureSources';
 
 
-export function ModelingModal() {
+export function ModelsModal() {
 
   // external state
   const { modelingOpen, openModeling, closeModeling } = useUIStore();
