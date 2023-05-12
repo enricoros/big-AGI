@@ -5,7 +5,7 @@ import { GoodModal } from '@/common/components/GoodModal';
 import { useSettingsStore } from '@/common/state/store-settings';
 import { useUIStore } from '@/common/state/store-ui';
 
-import { Modeling } from './Modeling';
+import { ModelConfigurator } from './ModelConfigurator';
 
 
 export function ModelingModal() {
@@ -16,13 +16,13 @@ export function ModelingModal() {
 
   // show the Configuration Dialog at startup if the API key is required but not set
   React.useEffect(() => {
-    // if (requireUserKeyOpenAI && !isValidOpenAIApiKey(apiKey))
+    // if (!hasServerKeyOpenAI && !isValidOpenAIApiKey(apiKey))
     openModeling();
   }, [apiKey, openModeling]);
 
   return (
-    <GoodModal title='Models Setup' open={modelingOpen} onClose={closeModeling}>
-      <Modeling />
+    <GoodModal title='Configure AI Models' open={modelingOpen} onClose={closeModeling}>
+      <ModelConfigurator />
     </GoodModal>
   );
 }
