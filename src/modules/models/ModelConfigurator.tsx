@@ -25,10 +25,7 @@ export function ModelConfigurator() {
   return <>
 
     {/* Instantiating Vendors */}
-    <AddVendor
-      llmSources={modelSources}
-      onAddSource={handleAddSource}
-    />
+    <AddVendor />
 
     <Divider />
 
