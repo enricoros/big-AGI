@@ -7,7 +7,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, sx?: SxProps, children: React.ReactNode }) {
   const [collapsed, setCollapsed] = React.useState(props.collapsed ?? false);
 
-  return <>
+  return <Box>
 
     <Stack direction='row' sx={{ mt: (props.title ? 1 : 0), alignItems: 'center', ...(props.sx ?? {}) }}>
       {!!props.title && (
@@ -32,5 +32,5 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
       </FormHelperText>
     )}
 
-  </>;
+  </Box>;
 }
