@@ -6,8 +6,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DModelSourceId, useModelsStore } from './store-models';
-import { LocalAISource } from './localai/LocalAISource';
 import { OpenAISource } from './openai/OpenAISource';
+import { LocalAISource } from './localai/LocalAISource';
 
 
 export function ConfigureSources() {
@@ -97,6 +97,7 @@ export function ConfigureSources() {
       onChange={event => setSelectedSourceId(event.target.value)}
       sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}
     >
+      {/* All the Source items */}
       {sourceItems.map(item => item.component)}
 
       {/* Delete Configuration Button */}
@@ -109,6 +110,8 @@ export function ConfigureSources() {
         <DeleteOutlineIcon />
       </IconButton>
     </RadioGroup>
+
+    {/*<Divider />*/}
 
     {/* Selected Item Configuration */}
     {vendorConfigComponent}

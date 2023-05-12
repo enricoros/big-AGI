@@ -28,7 +28,7 @@ export function OpenAISource() {
   return <>
 
     <FormInputKey
-      label={'OpenAI API Key' + (needsKey ? '' : ' (not required, server has it)')}
+      label={'OpenAI API Key' + (needsKey ? '' : ' (not required)')}
       value={apiKey} onChange={setApiKey}
       required={needsKey} validate={isValidOpenAIApiKey}
       placeholder='sk-...' description={description}
