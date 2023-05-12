@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/common/state/store-settings';
 import { OpenAI } from './openai.types';
 
 
-export const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
+export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 

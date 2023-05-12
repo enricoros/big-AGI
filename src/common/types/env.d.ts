@@ -30,7 +30,7 @@ declare namespace NodeJS {
   interface ProcessEnv {
 
     // set in next.config.js and available to the client-side
-    HAS_SERVER_KEY_OPENAI: boolean;
+    HAS_SERVER_KEY_OPENAI?: boolean;
     HAS_SERVER_KEY_ELEVENLABS: boolean;
     HAS_SERVER_KEY_PRODIA: boolean;
     HAS_SERVER_KEYS_GOOGLE_CSE: boolean;
