@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,7 +8,7 @@ import ComputerIcon from '@mui/icons-material/Computer';
 
 import { hideOnMobile } from '@/common/theme';
 
-import { DModelSource, DModelSourceId, ModelVendorId } from './store-models';
+import { DModelSourceId, ModelVendorId, useModelsStore } from './store-models';
 
 
 interface ModelVendorDescription {
@@ -28,12 +29,18 @@ const MODEL_VENDOR_DESCRIPTIONS: ModelVendorDescription[] = [
 const DEFAULT_MODEL_VENDOR_ID: ModelVendorId = 'openai';
 
 
-export function AddVendor(props: { llmSources: DModelSource[], onAddSource: (llmSource: DModelSource) => void }) {
+export function AddVendor() {
   // state
-  const [selectedVendorId, setSelectedVendorId] = React.useState<ModelVendorId | null>(DEFAULT_MODEL_VENDOR_ID);
+  const [selectedVendorId, setSelectedVendorId] = React.useState<ModelVendorId | null>(null);
+
+  // external state
+  const { modelSources, addModelSource } = useModelsStore(state => ({
+    modelSources: state.modelSources, addModelSource: state.addModelSource,
+  }), shallow);
+
 
   const vendorItems = React.useMemo(() => MODEL_VENDOR_DESCRIPTIONS.map(vendor => {
-    const existingCount = props.llmSources.filter(source => source.vendorId === vendor.id).length;
+    const existingCount = modelSources.filter(source => source.vendorId === vendor.id).length;
     const disabled = !vendor.multiple && existingCount >= 1 || existingCount >= 2;
     return {
       vendor,
@@ -41,11 +48,12 @@ export function AddVendor(props: { llmSources: DModelSource[], onAddSource: (llm
       component: <Option key={vendor.id} value={vendor.id} disabled={disabled}>{vendor.name}</Option>,
       existingCount,
     };
-  }), [props.llmSources]);
+  }), [modelSources]);
 
   const selectedVendor = vendorItems.find(item => item.vendor.id === selectedVendorId);
 
-  const handleAddSource = () => {
+
+  const handleAddSource = React.useCallback(() => {
     if (!selectedVendor || selectedVendor.disabled)
       return;
 
@@ -55,30 +63,33 @@ export function AddVendor(props: { llmSources: DModelSource[], onAddSource: (llm
     let suffix = 0;
     if (selectedVendor.existingCount > 0) {
       suffix += 2;
-      while (props.llmSources.find(source => source.sourceId === `${sourceId}-${suffix}`))
+      while (modelSources.find(source => source.sourceId === `${sourceId}-${suffix}`))
         suffix++;
       sourceId = `${sourceId}-${suffix}`;
     }
 
     // add the new configuration
-    props.onAddSource({
+    addModelSource({
       sourceId,
       label: selectedVendor.vendor.name + (suffix > 0 ? ` #${suffix}` : ''),
       vendorId,
     });
-  };
+  }, [addModelSource, modelSources, selectedVendor]);
 
-  // if there are no configs, add the default one
+
+  // select the default option if none is selected
   React.useEffect(() => {
-    if (!props.llmSources.length) {
-      const vendorId = DEFAULT_MODEL_VENDOR_ID;
-      props.onAddSource({
-        sourceId: vendorId,
-        label: MODEL_VENDOR_DESCRIPTIONS.find(vendor => vendor.id === vendorId)?.name || '',
-        vendorId,
-      });
-    }
-  }, [props, selectedVendorId]);
+    if (!selectedVendorId)
+      setSelectedVendorId(DEFAULT_MODEL_VENDOR_ID);
+  }, [selectedVendorId]);
+
+  // if there are no sources, click on 'Add'
+  const hasSources = modelSources.length;
+  React.useEffect(() => {
+    if (selectedVendorId && !hasSources)
+      handleAddSource();
+  }, [handleAddSource, hasSources, selectedVendorId]);
+
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
