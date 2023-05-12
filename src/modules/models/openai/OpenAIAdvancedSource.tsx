@@ -10,7 +10,7 @@ import { settingsCol1Width, settingsGap, settingsMaxWidth } from '@/common/theme
 import { useSettingsStore } from '@/common/state/store-settings';
 
 
-export function OpenAIAdvancedSettings() {
+export function OpenAIAdvancedSource() {
   // external state
   const { apiOrganizationId, setApiOrganizationId, apiHost, setApiHost, heliconeKey, setHeliconeKey, modelTemperature, setModelTemperature, modelMaxResponseTokens, setModelMaxResponseTokens } = useSettingsStore(state => ({
     apiOrganizationId: state.apiOrganizationId, setApiOrganizationId: state.setApiOrganizationId,
@@ -33,9 +33,9 @@ export function OpenAIAdvancedSettings() {
   return (
     <Section title='Advanced AI settings'
              collapsible collapsed
-             disclaimer='Adjust only if you are familiar with these terms'
-             sx={{ mt: 2 }}>
-      <Stack direction='column' sx={{ gap: settingsGap, mt: -0.8, maxWidth: settingsMaxWidth }}>
+             disclaimer='Adjust only if you are familiar with these terms'>
+
+      <Stack direction='column' sx={{ gap: settingsGap,maxWidth: settingsMaxWidth }}>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ minWidth: settingsCol1Width }}>
