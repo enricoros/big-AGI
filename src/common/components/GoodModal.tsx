@@ -28,7 +28,7 @@ export function GoodModal(props: { title: string, open: boolean, onClose: () => 
 
           {props.children}
 
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+          <Box sx={{ mt: 'auto', display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
             <Button variant='solid' color='neutral' onClick={props.onClose}>
               Close
             </Button>
