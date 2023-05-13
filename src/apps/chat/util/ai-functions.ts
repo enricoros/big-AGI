@@ -1,6 +1,7 @@
+import { callChat } from '~/modules/openai/openai.client';
+
 import { ChatModelId, fastChatModelId } from '../../../data';
-import { callChat } from '@/modules/openai/openai.client';
-import { useChatStore } from '@/common/state/store-chats';
+import { useChatStore } from '~/common/state/store-chats';
 
 
 /**

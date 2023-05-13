@@ -4,8 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';

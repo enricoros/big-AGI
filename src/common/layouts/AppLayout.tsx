@@ -3,13 +3,12 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Container, useTheme } from '@mui/joy';
 
-import { ModelsModal } from '@/modules/models/ModelsModal';
+import { ModelsModal } from '~/modules/models/ModelsModal';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
-
-import { useSettingsStore } from '@/common/state/store-settings';
 
 import { ApplicationBar } from './appbar/ApplicationBar';
 import { NoSSR } from '../components/NoSSR';
+import { useSettingsStore } from '../state/store-settings';
 
 
 export function AppLayout(props: {

@@ -1,6 +1,7 @@
 import { ElevenLabs } from './elevenlabs.types';
 import { useQuery } from '@tanstack/react-query';
-import { useSettingsStore } from '@/common/state/store-settings';
+
+import { useSettingsStore } from '~/common/state/store-settings';
 
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;

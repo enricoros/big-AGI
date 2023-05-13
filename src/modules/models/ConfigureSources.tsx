@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 //import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { DModelSourceId, useModelsStore } from './store-models';
-import { configureVendorSource } from '@/modules/models/vendors-registry';
+import { configureVendorSource } from './vendors-registry';
 
 
 export function ConfigureSources() {

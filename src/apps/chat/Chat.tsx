@@ -3,20 +3,20 @@ import { shallow } from 'zustand/shallow';
 
 import { useTheme } from '@mui/joy';
 
-import { CmdRunProdia } from '@/modules/prodia/prodia.client';
-import { CmdRunReact } from '@/modules/search/search.client';
-import { PasteGG } from '@/modules/pastegg/pastegg.types';
-import { PublishedModal } from '@/modules/pastegg/PublishedModal';
-import { callPublish } from '@/modules/pastegg/pastegg.client';
+import { CmdRunProdia } from '~/modules/prodia/prodia.client';
+import { CmdRunReact } from '~/modules/search/search.client';
+import { PasteGG } from '~/modules/pastegg/pastegg.types';
+import { PublishedModal } from '~/modules/pastegg/PublishedModal';
+import { callPublish } from '~/modules/pastegg/pastegg.client';
 
-import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { Link } from '@/common/components/Link';
-import { conversationToMarkdown } from '@/common/util/conversationToMarkdown';
-import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '@/common/state/store-chats';
-import { extractCommands } from '@/common/util/extractCommands';
-import { useApplicationBarStore } from '@/common/layouts/appbar/useApplicationBarStore';
-import { useComposerStore } from '@/common/state/store-composer';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { Link } from '~/common/components/Link';
+import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
+import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
+import { extractCommands } from '~/common/util/extractCommands';
+import { useApplicationBarStore } from '~/common/layouts/appbar/useApplicationBarStore';
+import { useComposerStore } from '~/common/state/store-composer';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ActionItems } from './components/appbar/ActionItems';
 import { ChatMessageList } from './components/ChatMessageList';

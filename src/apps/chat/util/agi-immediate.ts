@@ -1,10 +1,11 @@
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '../../../data';
-import { createDMessage, DMessage, useChatStore } from '@/common/state/store-chats';
 
-import { OpenAI } from '@/modules/openai/openai.types';
-import { getOpenAISettings } from '@/modules/openai/openai.client';
-import { speakText } from '@/modules/elevenlabs/elevenlabs.client';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { OpenAI } from '~/modules/openai/openai.types';
+import { getOpenAISettings } from '~/modules/openai/openai.client';
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+
+import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { updateAutoConversationTitle } from './ai-functions';
 

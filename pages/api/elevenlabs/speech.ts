@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ElevenLabs } from '@/modules/elevenlabs/elevenlabs.types';
-import { postToElevenLabs } from '@/modules/elevenlabs/elevenlabs.server';
+import { ElevenLabs } from '~/modules/elevenlabs/elevenlabs.types';
+import { postToElevenLabs } from '~/modules/elevenlabs/elevenlabs.server';
 
 
 export default async function handler(req: NextRequest) {

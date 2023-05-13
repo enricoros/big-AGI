@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { OpenAI } from '@/modules/openai/openai.types';
-import { openaiGet, toApiChatRequest } from '@/modules/openai/openai.server';
+import { OpenAI } from '~/modules/openai/openai.types';
+import { openaiGet, toApiChatRequest } from '~/modules/openai/openai.server';
 
 
 export default async function handler(req: NextRequest): Promise<NextResponse> {

@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { Box, Button } from '@mui/joy';
 
-import { ElevenlabsSettings } from '@/modules/elevenlabs/ElevenlabsSettings';
-import { ProdiaSettings } from '@/modules/prodia/ProdiaSettings';
-import { SearchSettings } from '@/modules/search/SearchSettings';
+import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
+import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
+import { SearchSettings } from '~/modules/search/SearchSettings';
 
-import { GoodModal } from '@/common/components/GoodModal';
-import { useUIStore } from '@/common/state/store-ui';
+import { GoodModal } from '~/common/components/GoodModal';
+import { useUIStore } from '~/common/state/store-ui';
 
 import { UISettings } from './UISettings';
 

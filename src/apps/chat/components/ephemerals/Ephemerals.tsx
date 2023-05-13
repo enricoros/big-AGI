@@ -5,7 +5,7 @@ import { Box, Grid, IconButton, Sheet, Stack, styled, Typography, useTheme } fro
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { DEphemeral, useChatStore } from '@/common/state/store-chats';
+import { DEphemeral, useChatStore } from '~/common/state/store-chats';
 
 
 const StateLine = styled(Typography)(({ theme }) => ({
@@ -42,7 +42,7 @@ function ListRenderer({ name, list }: { name: string, list: any[] }) {
   return <StateLine><b>{name}</b>[{list.length ? list.length : ''}]: {list.length ? '(not displayed)' : 'empty'}</StateLine>;
 }
 
-function ObjectRenderer({ name, value }: { name: string, value: object }) {
+function ObjectRenderer({ name }: { name: string }) {
   return <StateLine><b>{name}</b>: <i>object not displayed</i></StateLine>;
 }
 
@@ -66,7 +66,7 @@ function StateRenderer(props: { state: object }) {
             : Array.isArray(value)
               ? <ListRenderer key={'state-' + key} name={key} list={value} />
               : typeof value === 'object'
-                ? <ObjectRenderer key={'state-' + key} name={key} value={value} />
+                ? <ObjectRenderer key={'state-' + key} name={key} />
                 : <Typography key={'state-' + key} level='body2'>{key}: {value}</Typography>,
         )}
       </Sheet>

@@ -8,10 +8,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { useUIStore } from '@/common/state/store-ui';
-
 import { SupportMenuItem } from './SupportMenuItem';
 import { useApplicationBarStore } from './useApplicationBarStore';
+import { useUIStore } from '../../state/store-ui';
 
 
 function CommonContextItems(props: { onClose: () => void }) {

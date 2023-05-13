@@ -6,9 +6,9 @@ import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { SystemPurposeId, SystemPurposes } from '../../../data';
-import { useChatStore } from '@/common/state/store-chats';
-import { usePurposeStore } from '@/common/state/store-purposes';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { useChatStore } from '~/common/state/store-chats';
+import { usePurposeStore } from '~/common/state/store-purposes';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 
 // Constants for tile sizes / grid width - breakpoints need to be computed here to work around

@@ -6,7 +6,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 
-import { hideOnMobile } from '@/common/theme';
+import { hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore } from './store-models';
 import { defaultVendorId, ModelVendorId, rankedVendors } from './vendors-registry';

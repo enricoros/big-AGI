@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/joy';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
-import { Link } from '@/common/components/Link';
+import { Link } from '~/common/components/Link';
 
 import { ImageBlock } from './Block';
 

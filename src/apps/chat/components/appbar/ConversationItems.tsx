@@ -6,8 +6,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ConversationItem } from './ConversationItem';
 

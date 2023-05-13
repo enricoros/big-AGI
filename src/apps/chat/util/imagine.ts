@@ -1,8 +1,8 @@
-import { Prodia } from '@/modules/prodia/prodia.types';
-import { prodiaDefaultModelId } from '@/modules/prodia/prodia.client';
+import { Prodia } from '~/modules/prodia/prodia.types';
+import { prodiaDefaultModelId } from '~/modules/prodia/prodia.client';
 
-import { useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { createAssistantTypingMessage } from './agi-immediate';
 

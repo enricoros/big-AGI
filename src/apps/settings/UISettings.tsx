@@ -7,9 +7,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
-import { Section } from '@/common/components/Section';
-import { hideOnMobile, settingsGap } from '@/common/theme';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { Section } from '~/common/components/Section';
+import { hideOnMobile, settingsGap } from '~/common/theme';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 // languages is defined as a JSON file
 import languages from './languages.json' assert { type: 'json' };

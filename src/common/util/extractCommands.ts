@@ -1,5 +1,5 @@
-import { CmdRunProdia } from '@/modules/prodia/prodia.client';
-import { CmdRunReact, CmdRunSearch } from '@/modules/search/search.client';
+import { CmdRunProdia } from '~/modules/prodia/prodia.client';
+import { CmdRunReact, CmdRunSearch } from '~/modules/search/search.client';
 
 export const commands = [...CmdRunProdia, ...CmdRunSearch, ...CmdRunReact];
 

@@ -4,14 +4,14 @@ import { shallow } from 'zustand/shallow';
 import { Box, FormControl, FormHelperText, FormLabel, Input, Stack, Tooltip } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
-import { Section } from '@/common/components/Section';
-import { settingsCol1Width, settingsGap } from '@/common/theme';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { Link } from '~/common/components/Link';
+import { Section } from '~/common/components/Section';
+import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { isValidGoogleCloudApiKey, isValidGoogleCseId, requireUserKeyGoogleCse } from './search.client';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Link } from '@/common/components/Link';
 
 
 export function SearchSettings() {

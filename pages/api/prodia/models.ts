@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { Prodia } from '@/modules/prodia/prodia.types';
+import { Prodia } from '~/modules/prodia/prodia.types';
 
 
 // for lack of an API

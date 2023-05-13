@@ -2,13 +2,13 @@ import * as React from 'react';
 
 import { Box, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } from '@mui/joy';
 
-import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '@/modules/openai/openai.client';
+import { Brand } from '~/common/brand';
+import { FormInputKey } from '~/common/components/FormInputKey';
+import { Link } from '~/common/components/Link';
+import { Section } from '~/common/components/Section';
+import { settingsCol1Width, settingsGap, settingsMaxWidth } from '~/common/theme';
 
-import { Brand } from '@/common/brand';
-import { FormInputKey } from '@/common/components/FormInputKey';
-import { Link } from '@/common/components/Link';
-import { Section } from '@/common/components/Section';
-import { settingsCol1Width, settingsGap, settingsMaxWidth } from '@/common/theme';
+import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '../../openai/openai.client';
 
 import { DModelSourceId, useSourceConfigurator } from '../store-models';
 import { normConfigOpenAI, SourceConfigOpenAI } from './vendor';
