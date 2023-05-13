@@ -10,7 +10,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
-import { findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
+import { defaultVendorId, findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
 
@@ -49,13 +49,14 @@ export function EditSources(props: {
 
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
+    const modelSources = useModelsStore.getState().sources;
     const { id, count } = createUniqueSourceId(vendorId, modelSources);
     const modelSource = findVendor(vendorId)?.createSource(id, count);
     if (modelSource) {
       addModelSource(modelSource);
       props.setSelectedSourceId(id);
     }
-  }, [addModelSource, modelSources, props]);
+  }, [addModelSource, props]);
 
 
   const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
@@ -103,18 +104,11 @@ export function EditSources(props: {
   const noSources = !modelSources.length;
 
 
-  // // select the default option if none is selected
-  // React.useEffect(() => {
-  //   if (!props.selectedVendorId)
-  //     props.setSelectedVendorId(defaultVendorId());
-  // }, [props, props.selectedVendorId]);
-  //
-  // // if there are no sources, click on 'Add'
-  // const hasSources = modelSources.length;
-  // React.useEffect(() => {
-  //   if (props.selectedVendorId && !hasSources)
-  //     handleAddSourceFromVendor();
-  // }, [handleAddSourceFromVendor, hasSources, props.selectedVendorId]);
+  // if there are no sources, click on 'Add'
+  React.useEffect(() => {
+    if (!useModelsStore.getState().sources.length)
+      handleAddSourceFromVendor(defaultVendorId());
+  }, [handleAddSourceFromVendor]);
 
 
   return (
