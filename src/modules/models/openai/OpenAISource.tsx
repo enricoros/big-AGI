@@ -7,9 +7,10 @@ import { useSettingsStore } from '@/common/state/store-settings';
 
 import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '../../openai/openai.client';
 import { OpenAIAdvancedSource } from '@/modules/models/openai/OpenAIAdvancedSource';
+import { DModelSourceId } from '@/modules/models/store-models';
 
 
-export function OpenAISource() {
+export function OpenAISource(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { apiKey, setApiKey } = useSettingsStore(state => ({ apiKey: state.apiKey, setApiKey: state.setApiKey }), shallow);

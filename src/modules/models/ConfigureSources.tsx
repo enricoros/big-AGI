@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
+import { Box, Button, Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { DModelSourceId, useModelsStore } from './store-models';
-import { OpenAISource } from './openai/OpenAISource';
-import { LocalAISource } from './localai/LocalAISource';
+import { configureVendorSource } from '@/modules/models/vendors-registry';
 
 
 export function ConfigureSources() {
@@ -19,6 +19,7 @@ export function ConfigureSources() {
   // state
   const [selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(modelSources?.[0]?.sourceId ?? null);
 
+
   // when nothing is selected, select the first available source
   React.useEffect(() => {
     if (!selectedSourceId && modelSources.length > 0)
@@ -27,41 +28,38 @@ export function ConfigureSources() {
 
 
   // derived state
-  const sourceItems = React.useMemo(() => modelSources.map(source => {
+  const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
+
+  const sourceComponents: React.JSX.Element[] = React.useMemo(() => modelSources.map(source => {
     const checked = source.sourceId === selectedSourceId;
-    return {
-      source,
-      component: (
-        <Chip
-          key={source.sourceId}
-          variant={checked ? 'soft' : 'plain'}
-          color={checked ? 'primary' : 'neutral'}
-          size='lg'
-          startDecorator={
-            checked && <CheckIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
-            // configured
-            //   ? <CheckIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
-            //   : <CheckBoxOutlineBlankOutlinedIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
-          }
-        >
-          <Radio
-            variant='outlined'
-            checked={checked}
-            // color={checked ? 'danger' : 'warning'}
-            disableIcon
-            overlay
-            label={source.label}
-            value={source.sourceId}
-          />
-        </Chip>
-      ),
-    };
+    return (
+      <Chip
+        key={source.sourceId}
+        variant={checked ? 'soft' : 'plain'}
+        color={checked ? 'primary' : 'neutral'}
+        size='lg'
+        startDecorator={
+          checked && <CheckIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
+          // configured
+          //   ? <CheckIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
+          //   : <CheckBoxOutlineBlankOutlinedIcon sx={{ zIndex: 1, pointerEvents: 'none' }} />
+        }
+      >
+        <Radio
+          variant='outlined'
+          checked={checked}
+          // color={checked ? 'danger' : 'warning'}
+          disableIcon
+          overlay
+          label={source.label}
+          value={source.sourceId}
+        />
+      </Chip>
+    );
   }), [modelSources, selectedSourceId]);
 
-  const selectedSource = sourceItems.find(item => item.source.sourceId === selectedSourceId);
 
-
-  const enableDeleteButton = !!setSelectedSourceId && sourceItems.length >= 2;
+  const enableDeleteButton = !!setSelectedSourceId && modelSources.length >= 2;
 
   const handleDeleteSourceId = (sourceId: DModelSourceId) => {
     removeModelSource(sourceId);
@@ -71,22 +69,7 @@ export function ConfigureSources() {
   };
 
 
-  let vendorConfigComponent: React.JSX.Element | null = null;
-  if (selectedSource) {
-    switch (selectedSource.source.vendorId) {
-      case 'openai':
-        vendorConfigComponent = <OpenAISource />;
-        break;
-      case 'google_vertex':
-        break;
-      case 'anthropic':
-        break;
-      case 'localai':
-        vendorConfigComponent = <LocalAISource />;
-        break;
-    }
-  }
-
+  const vendorConfigComponent = configureVendorSource(activeSource?.vendorId, selectedSourceId!);
 
   return <>
 
@@ -97,8 +80,8 @@ export function ConfigureSources() {
       onChange={event => setSelectedSourceId(event.target.value)}
       sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}
     >
-      {/* All the Source items */}
-      {sourceItems.map(item => item.component)}
+      {/* Chips */}
+      {sourceComponents}
 
       {/* Delete Configuration Button */}
       <IconButton
@@ -115,6 +98,12 @@ export function ConfigureSources() {
 
     {/* Selected Item Configuration */}
     {vendorConfigComponent}
+
+    <Box>
+      <Button sx={{ minWidth: 200 }} disabled={!activeSource?.configured} endDecorator={<FileDownloadIcon />}>
+        Get Models
+      </Button>
+    </Box>
 
   </>;
 }

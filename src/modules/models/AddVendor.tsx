@@ -8,25 +8,8 @@ import ComputerIcon from '@mui/icons-material/Computer';
 
 import { hideOnMobile } from '@/common/theme';
 
-import { DModelSourceId, ModelVendorId, useModelsStore } from './store-models';
-
-
-interface ModelVendorDescription {
-  id: ModelVendorId;
-  name: string;
-  multiple: boolean;
-  icon: React.ReactNode;
-}
-
-const MODEL_VENDOR_DESCRIPTIONS: ModelVendorDescription[] = [
-  { id: 'openai', name: 'OpenAI', multiple: false, icon: <CloudOutlinedIcon /> },
-  { id: 'localai', name: 'LocalAI', multiple: true, icon: <ComputerIcon /> },
-  { id: 'google_vertex', name: 'Google Vertex', multiple: false, icon: <CloudOutlinedIcon /> },
-  { id: 'azure_openai', name: 'Azure OpenAI', multiple: false, icon: <CloudOutlinedIcon /> },
-  { id: 'anthropic', name: 'Anthropic', multiple: false, icon: <CloudOutlinedIcon /> },
-];
-
-const DEFAULT_MODEL_VENDOR_ID: ModelVendorId = 'openai';
+import { DModelSourceId, useModelsStore } from './store-models';
+import { defaultVendorId, ModelVendorId, rankedVendors } from './vendors-registry';
 
 
 export function AddVendor() {
@@ -39,29 +22,34 @@ export function AddVendor() {
   }), shallow);
 
 
-  const vendorItems = React.useMemo(() => MODEL_VENDOR_DESCRIPTIONS.map(vendor => {
-    const existingCount = modelSources.filter(source => source.vendorId === vendor.id).length;
-    const disabled = !vendor.multiple && existingCount >= 1 || existingCount >= 2;
-    return {
-      vendor,
-      disabled,
-      component: <Option key={vendor.id} value={vendor.id} disabled={disabled}>{vendor.name}</Option>,
-      existingCount,
-    };
-  }), [modelSources]);
-
-  const selectedVendor = vendorItems.find(item => item.vendor.id === selectedVendorId);
+  // map vendors to options
+  const { vendorItems, selectedVendorItem } = React.useMemo(() => {
+    // create side objects for all vendors
+    const vendorItems = rankedVendors().map(vendor => {
+      const existingCount = modelSources.filter(source => source.vendorId === vendor.id).length;
+      const disabled = !vendor.multiple && existingCount >= 1 || existingCount >= 2;
+      return {
+        vendor,
+        disabled,
+        component: <Option key={vendor.id} value={vendor.id} disabled={disabled}>{vendor.name}</Option>,
+        existingCount,
+      };
+    });
+    // find the selected item
+    const selectedVendorItem = vendorItems.find(item => item.vendor.id === selectedVendorId);
+    return { vendorItems, selectedVendorItem };
+  }, [modelSources, selectedVendorId]);
 
 
   const handleAddSource = React.useCallback(() => {
-    if (!selectedVendor || selectedVendor.disabled)
+    if (!selectedVendorItem || selectedVendorItem.disabled)
       return;
 
     // create a unique DModelSourceId
-    const vendorId = selectedVendor.vendor.id;
+    const vendorId = selectedVendorItem.vendor.id;
     let sourceId: DModelSourceId = vendorId;
     let suffix = 0;
-    if (selectedVendor.existingCount > 0) {
+    if (selectedVendorItem.existingCount > 0) {
       suffix += 2;
       while (modelSources.find(source => source.sourceId === `${sourceId}-${suffix}`))
         suffix++;
@@ -71,16 +59,17 @@ export function AddVendor() {
     // add the new configuration
     addModelSource({
       sourceId,
-      label: selectedVendor.vendor.name + (suffix > 0 ? ` #${suffix}` : ''),
+      label: selectedVendorItem.vendor.name + (suffix > 0 ? ` #${suffix}` : ''),
       vendorId,
+      configured: false,
     });
-  }, [addModelSource, modelSources, selectedVendor]);
+  }, [addModelSource, modelSources, selectedVendorItem]);
 
 
   // select the default option if none is selected
   React.useEffect(() => {
     if (!selectedVendorId)
-      setSelectedVendorId(DEFAULT_MODEL_VENDOR_ID);
+      setSelectedVendorId(defaultVendorId());
   }, [selectedVendorId]);
 
   // if there are no sources, click on 'Add'
@@ -102,7 +91,7 @@ export function AddVendor() {
         variant='outlined'
         value={selectedVendorId}
         onChange={(event, value) => setSelectedVendorId(value)}
-        startDecorator={selectedVendor?.vendor?.icon}
+        startDecorator={selectedVendorItem?.vendor?.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />}
         // endDecorator={selectedVendor?.existingCount ? <CheckOutlinedIcon /> : null}
         slotProps={{
           root: { sx: { minWidth: 190 } },
@@ -112,7 +101,7 @@ export function AddVendor() {
         {vendorItems.map(option => option.component)}
       </Select>
 
-      <Button variant='plain' disabled={!!selectedVendor?.disabled} onClick={handleAddSource} startDecorator={<AddIcon />}>
+      <Button variant='plain' disabled={!!selectedVendorItem?.disabled} onClick={handleAddSource} startDecorator={<AddIcon />}>
         Add
       </Button>
 
