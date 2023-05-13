@@ -7,13 +7,13 @@ import { GoodModal } from '~/common/components/GoodModal';
 import { useSettingsStore } from '~/common/state/store-settings';
 import { useUIStore } from '~/common/state/store-ui';
 
-import { AddVendor } from './AddVendor';
-import { ConfigureSources } from './ConfigureSources';
-import { EditModels } from './EditModels';
-import { useModelsStore } from './store-models';
+import { LLMList } from './LLMList';
+import { SourceAdd } from './SourceAdd';
+import { SourceEdit } from './SourceEdit';
+import { useModelsStore } from '../store-models';
 
 
-export function ModelsModal() {
+export function Configurator() {
 
   // external state
   const { modelingOpen, openModeling, closeModeling } = useUIStore();
@@ -29,17 +29,17 @@ export function ModelsModal() {
   return (
     <GoodModal title='Configure AI Models' open={modelingOpen} onClose={closeModeling}>
 
-      <AddVendor />
+      <SourceAdd />
 
       <Divider />
 
-      <ConfigureSources />
+      <SourceEdit />
+
+      {/*<Divider />*/}
+
+      {!!llmCount && <LLMList />}
 
       <Divider />
-
-      {!!llmCount && <EditModels />}
-
-      {!!llmCount && <Divider />}
 
     </GoodModal>
   );

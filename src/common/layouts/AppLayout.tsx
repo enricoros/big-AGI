@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Container, useTheme } from '@mui/joy';
 
-import { ModelsModal } from '~/modules/models/ModelsModal';
+import { Configurator } from '~/modules/llms/configurator/Configurator';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
 import { ApplicationBar } from './appbar/ApplicationBar';
@@ -49,7 +49,7 @@ export function AppLayout(props: {
 
       {!props.noSettings && <SettingsModal />}
 
-      {!props.noModeling && <ModelsModal />}
+      {!props.noModeling && <Configurator />}
 
     </NoSSR>
   );

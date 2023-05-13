@@ -8,11 +8,11 @@ import ComputerIcon from '@mui/icons-material/Computer';
 
 import { hideOnMobile } from '~/common/theme';
 
-import { DModelSourceId, useModelsStore } from './store-models';
-import { defaultVendorId, ModelVendorId, rankedVendors } from './vendors-registry';
+import { DModelSourceId, useModelsStore } from '../store-models';
+import { defaultVendorId, ModelVendorId, rankedVendors } from '../vendors-registry';
 
 
-export function AddVendor() {
+export function SourceAdd() {
   // state
   const [selectedVendorId, setSelectedVendorId] = React.useState<ModelVendorId | null>(null);
 

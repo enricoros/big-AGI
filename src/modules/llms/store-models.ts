@@ -120,3 +120,19 @@ export function useSourceConfigurator<T>(sourceId: DModelSourceId, normalizeDefa
   const update = (entry: Partial<T>) => updateSourceConfig<T>(sourceId, entry);
   return { config, update };
 }
+
+
+/**
+ * Joined list of models
+ */
+export function useJoinedLLMs(): { model: DLLM, sourceLabel: string, vendorId: ModelVendorId | null }[] {
+  const llms = useModelsStore(state => state.llms);
+  return llms.map((model) => {
+    const source = useModelsStore.getState().sources.find((s) => s.sourceId === model._sourceId);
+    return {
+      model: model,
+      sourceLabel: source?.label ?? 'Unknown',
+      vendorId: source?.vendorId ?? null,
+    };
+  });
+}
