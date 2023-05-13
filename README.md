@@ -89,6 +89,24 @@ with features that matter to them.
 
 ![Much features, so fun](docs/pixels/big-AGI-compo2b.png)
 
+## Docker 🐳
+
+### Pre-built image
+Add your OpenAI API key to the `.env` file, then in a terminal run:
+
+```bash
+docker-compose up
+```
+
+### Locally built image
+
+If you wish to build the image yourself, run
+
+```bash
+docker build -t big-agi .
+docker run --detach 'big-agi'
+``` 
+
 ## Code 🧩
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white)
