@@ -34,15 +34,6 @@ function apiUrl(apiHost: string, apiPath: string) {
   return URL + apiPath;
 }
 
-export async function openaiGet<TOut extends object>(api: OpenAI.API.Configuration, path: string): Promise<TOut> {
-  const response = await fetch(apiUrl(api.apiHost, path), {
-    method: 'GET',
-    headers: openAIHeaders(api),
-  });
-  await rethrowOpenAIError(response);
-  return await response.json();
-}
-
 export async function openaiPostResponse<TBody extends object>(api: OpenAI.API.Configuration, path: string, body: TBody, signal?: AbortSignal): Promise<Response> {
   const response = await fetch(apiUrl(api.apiHost, path), {
     method: 'POST',

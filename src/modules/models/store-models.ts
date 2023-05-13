@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
-import { devtools, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
 import { ModelVendorId } from './vendors-registry';
 
@@ -9,28 +9,23 @@ import { ModelVendorId } from './vendors-registry';
  * Model - a LLM with certain capabilities, referenced by ID, and with a link to the source
  */
 export interface DLLM {
-  modelId: DModelId; // unique
-  sourceId: DModelSourceId;
-
-  // metadata
+  uid: DLLMId; // unique, saved in chats
+  _sourceId: DModelSourceId;
+  _sourceModelId: string;
   label: string;
-  // name: string;
-  description: string;
-  tradeoff: string;
-  speed: 'slow' | 'medium' | 'fast';
 
   // capabilities
   contextWindowSize: number;
   canStream: boolean;
   canChat: boolean;
 
-  // state attributes?
-  // - current state
-  // - history
-  // - etc.
+  // optional
+  description?: string;
+  tradeoff?: string;
+  created?: number;
 }
 
-type DModelId = string;
+type DLLMId = string;
 
 /**
  * ModelSource - a source of models, e.g. a vendor
@@ -51,25 +46,33 @@ export type DModelSourceId = string;
 
 
 interface ModelsStore {
+  // Models
+  llms: DLLM[];
+  addLLMs: (models: DLLM[]) => void;
+  removeLLM: (uid: DLLMId) => void;
 
   // Sources
   sources: DModelSource[];
   addSource: (source: DModelSource) => void;
   removeSource: (sourceId: DModelSourceId) => void;
   updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) => void;
-
-  // fetchModels: (sourceId: DModelSourceId) => Promise<DLLM[]>;
-
-  // Models
-  models: DLLM[];
-  addModel: (model: DLLM) => void;
-  removeModel: (modelId: string) => void;
-
 }
 
-export const useModelsStore = create<ModelsStore>()(devtools(
+export const useModelsStore = create<ModelsStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
+
+      llms: [],
+
+      addLLMs: (models: DLLM[]) =>
+        set(state => ({
+          // remove existing models with the same uid
+          llms: state.llms.filter(model => !models.find((m) => m.uid === model.uid)).concat(models),
+        })),
+
+      removeLLM: (uid: DLLMId) =>
+        set((state) => ({ llms: state.llms.filter((model) => model.uid !== uid) })),
+
 
       sources: [],
 
@@ -79,7 +82,7 @@ export const useModelsStore = create<ModelsStore>()(devtools(
       removeSource: (sourceId: DModelSourceId) =>
         set(state => ({
           sources: state.sources.filter((source) => source.sourceId !== sourceId),
-          models: state.models.filter((model) => model.sourceId !== sourceId),
+          llms: state.llms.filter((model) => model._sourceId !== sourceId),
         })),
 
       updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) =>
@@ -93,35 +96,10 @@ export const useModelsStore = create<ModelsStore>()(devtools(
           ),
         })),
 
-      /*fetchModels: async (sourceId) => {
-        const modelSource = get().sources.find((source) => source.sourceId === sourceId);
-        if (!modelSource) {
-          throw new Error('Model source not found');
-        }
-
-        const models = await mockApi.fetchModelsFromVendor(modelSource.vendorId);
-        set((state) => ({ models: [...state.models, ...models] }));
-        return models;
-      },*/
-
-
-      models: [],
-
-      addModel: (model) =>
-        set(state => ({ models: [...state.models, model] })),
-
-      removeModel: (modelId) => {
-        set((state) => ({ models: state.models.filter((model) => model.modelId !== modelId) }));
-      },
-
     }),
     {
       name: 'app-models',
     }),
-  {
-    name: 'AppModels',
-    enabled: false,
-  }),
 );
 
 
@@ -129,7 +107,6 @@ export const useModelsStore = create<ModelsStore>()(devtools(
  * Hook used by the UIs to configure their own specific model source
  */
 export function useSourceConfigurator<T>(sourceId: DModelSourceId, normalizeDefaults: (config?: Partial<T>) => T): { config: T; update: (entry: Partial<T>) => void } {
-
   // finds the source, and returns its normalized config
   const { config, updateSourceConfig } = useModelsStore(state => {
     const modelSource = state.sources.find((s) => s.sourceId === sourceId);
@@ -142,60 +119,4 @@ export function useSourceConfigurator<T>(sourceId: DModelSourceId, normalizeDefa
   // prepares a function to update the source config
   const update = (entry: Partial<T>) => updateSourceConfig<T>(sourceId, entry);
   return { config, update };
-
 }
-
-
-async function fetchModels(sourceId: DModelSourceId) {
-  const modelSource = useModelsStore.getState().sources.find(
-    (source) => source.sourceId === sourceId,
-  );
-  if (!modelSource) {
-    throw new Error('Model source not found');
-  }
-
-  const models = await mockApi.fetchModelsFromVendor(modelSource.vendorId);
-  models.forEach((model) => useModelsStore.getState().addModel(model));
-  return models;
-}
-
-export interface ApiTest {
-  fetchModelsFromVendor: (vendorId: ModelVendorId) => Promise<DLLM[]>;
-}
-
-export class MockApi implements ApiTest {
-  async fetchModelsFromVendor(vendorId: ModelVendorId): Promise<DLLM[]> {
-    // Example models data
-    const exampleModels: DLLM[] = [
-      {
-        modelId: 'model1',
-        sourceId: 'source1',
-        label: 'Model 1',
-        description: 'This is an example model 1.',
-        tradeoff: 'balanced',
-        speed: 'medium',
-        contextWindowSize: 4096,
-        canStream: true,
-        canChat: false,
-      },
-      {
-        modelId: 'model2',
-        sourceId: 'source1',
-        label: 'Model 2',
-        description: 'This is an example model 2.',
-        tradeoff: 'speed',
-        speed: 'fast',
-        contextWindowSize: 8192,
-        canStream: false,
-        canChat: true,
-      },
-    ];
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    return exampleModels;
-  }
-}
-
-const mockApi: ApiTest = new MockApi();
