@@ -23,7 +23,7 @@ export const runReActUpdatingState = async (conversationId: string, question: st
   const ephemeral = createEphemeral(`Reason+Act`, 'Initializing ReAct..');
   appendEphemeral(conversationId, ephemeral);
 
-  let ephemeralText: string = '';
+  let ephemeralText = '';
   const logToEphemeral = (text: string) => {
     console.log(text);
     ephemeralText += (text.length > 300 ? text.slice(0, 300) + '...' : text) + '\n';

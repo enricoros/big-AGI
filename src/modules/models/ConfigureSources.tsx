@@ -69,7 +69,7 @@ export function ConfigureSources() {
   };
 
 
-  const vendorConfigComponent = configureVendorSource(activeSource?.vendorId, selectedSourceId!);
+  const vendorConfigComponent = selectedSourceId ? configureVendorSource(activeSource?.vendorId, selectedSourceId) : null;
 
   return <>
 
@@ -87,7 +87,7 @@ export function ConfigureSources() {
       <IconButton
         variant='plain' color='neutral'
         disabled={!enableDeleteButton}
-        onClick={() => handleDeleteSourceId(selectedSourceId!)}
+        onClick={() => selectedSourceId && handleDeleteSourceId(selectedSourceId)}
         sx={{ ml: 'auto' }}
       >
         <DeleteOutlineIcon />

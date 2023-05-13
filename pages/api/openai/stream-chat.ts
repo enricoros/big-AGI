@@ -115,7 +115,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
       return new NextResponse(`[Issue] ${error}`, { status: 400 });
     }
   }
-};
+}
 
 //noinspection JSUnusedGlobalSymbols
 export const config = {

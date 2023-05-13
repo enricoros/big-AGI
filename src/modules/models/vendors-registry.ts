@@ -36,7 +36,7 @@ export function rankedVendors(): ModelVendor[] {
 }
 
 export function defaultVendorId(): ModelVendorId {
-  return rankedVendors()[0]!.id;
+  return rankedVendors()[0].id;
 }
 
 export function configureVendorSource(vendorId?: ModelVendorId, sourceId?: DModelSourceId): React.JSX.Element | null {

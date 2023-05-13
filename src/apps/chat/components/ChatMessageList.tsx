@@ -74,14 +74,14 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   const handleSelectAllMessages = (selected: boolean) => {
     const newSelected = new Set<string>();
     if (selected)
-      for (let message of messages)
+      for (const message of messages)
         newSelected.add(message.id);
     setSelectedMessages(newSelected);
   };
 
   const handleDeleteSelectedMessages = () => {
     if (props.conversationId)
-      for (let selectedMessage of selectedMessages)
+      for (const selectedMessage of selectedMessages)
         deleteMessage(props.conversationId, selectedMessage);
     setSelectedMessages(new Set());
   };

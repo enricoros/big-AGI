@@ -4,8 +4,6 @@ import { OpenAI } from '~/modules/openai/openai.types';
 import { openaiPost, toApiChatRequest, toWireCompletionRequest } from '~/modules/openai/openai.server';
 
 
-
-
 export default async function handler(req: NextRequest) {
   try {
     const requestBodyJson = await req.json();
