@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
+import { Box, Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
+//import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { DModelSourceId, useModelsStore } from './store-models';
 import { configureVendorSource } from '@/modules/models/vendors-registry';
@@ -13,7 +13,7 @@ import { configureVendorSource } from '@/modules/models/vendors-registry';
 export function ConfigureSources() {
   // external state
   const { modelSources, removeModelSource } = useModelsStore((state) => ({
-    modelSources: state.modelSources, removeModelSource: state.removeModelSource,
+    modelSources: state.sources, removeModelSource: state.removeSource,
   }), shallow);
 
   // state
@@ -97,13 +97,17 @@ export function ConfigureSources() {
     {/*<Divider />*/}
 
     {/* Selected Item Configuration */}
-    {vendorConfigComponent}
+    {vendorConfigComponent && (
+      <Box>
+        {vendorConfigComponent}
+      </Box>
+    )}
 
-    <Box>
-      <Button sx={{ minWidth: 200 }} disabled={!activeSource?.configured} endDecorator={<FileDownloadIcon />}>
-        Get Models
-      </Button>
-    </Box>
+    {/*<Box>*/}
+    {/*  <Button sx={{ minWidth: 200 }} disabled={!activeSource?.configured} endDecorator={<FileDownloadIcon />}>*/}
+    {/*    Get Models*/}
+    {/*  </Button>*/}
+    {/*</Box>*/}
 
   </>;
 }

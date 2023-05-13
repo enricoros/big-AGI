@@ -18,7 +18,7 @@ export function AddVendor() {
 
   // external state
   const { modelSources, addModelSource } = useModelsStore(state => ({
-    modelSources: state.modelSources, addModelSource: state.addModelSource,
+    modelSources: state.sources, addModelSource: state.addSource,
   }), shallow);
 
 
