@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { IconButton, List, ListItem, ListItemContent, ListItemDecorator, Sheet, Typography } from '@mui/joy';
+import { IconButton, List, ListItem, ListItemContent, ListItemDecorator, Sheet, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { ModelVendorId } from '../vendors-registry';
@@ -28,29 +28,33 @@ export function LLMList() {
   // find out if there's more than 1 sourceLabel in the llms array
   const moreVendors = llms.length >= 2 && !!llms.find(llm => llm.sourceLabel !== llms[0].sourceLabel);
   let lastSourceLabel = '';
+  let labelsCount = 0;
 
   return (
 
-    <Sheet variant='soft' invertedColors sx={{ borderRadius: 'sm', p: { xs: 1, md: 2 } }}>
+    <Sheet variant='soft' color='info' invertedColors sx={{ borderRadius: 'sm', pl: { xs: 1, md: 2 }, pr: { xs: 0, md: 1 }, py: { xs: 0, md: 1 } }}>
 
       <List size='sm'>
         {llms.map(({ model, sourceLabel, vendorId }) => {
           let labelComponent: React.JSX.Element | null = null;
           if (moreVendors && sourceLabel !== lastSourceLabel) {
-            labelComponent = <Typography level='body2' sx={{ mb: 1 }}>{sourceLabel}</Typography>;
+            labelComponent = <Typography key={'lab-' + labelsCount++} level='body2' sx={{ mb: 1 }}>{sourceLabel}</Typography>;
             lastSourceLabel = sourceLabel;
           }
           return <>
             {labelComponent}
             <ListItem key={model.uid}>
               {!!vendorId && (
-                <ListItemDecorator>
+                <ListItemDecorator sx={{ justifyContent: 'start' }}>
                   {iconForVendor(vendorId)}
                 </ListItemDecorator>
               )}
               <ListItemContent>
-                <Typography>{model.label}</Typography>
-                <Typography level='body3'>{model.description}</Typography>
+                <Tooltip title={`${sourceLabel} - ${model.description}`}>
+                  <Typography sx={{ display: 'inline' }}>
+                    {model.label}
+                  </Typography>
+                </Tooltip>
               </ListItemContent>
               <IconButton variant='plain' onClick={() => handleDeleteModel(model.uid)} sx={{ ml: 'auto' }}>
                 <DeleteOutlineIcon />
