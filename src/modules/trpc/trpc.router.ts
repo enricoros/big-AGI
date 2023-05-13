@@ -1,5 +1,6 @@
 import { createTRPCRouter } from './trpc.server';
-import { exampleRouter } from './routers/example';
+
+import { openAIRouter } from '../models/openai/openai.router';
 
 /**
  * This is the primary router for your server.
@@ -7,7 +8,7 @@ import { exampleRouter } from './routers/example';
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  example: exampleRouter,
+  openai: openAIRouter,
 });
 
 // export type definition of API

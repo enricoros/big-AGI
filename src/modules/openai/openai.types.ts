@@ -34,14 +34,6 @@ export namespace OpenAI {
       }
     }
 
-    export namespace Models {
-      export interface Response {
-        models: {
-          id: string;
-          created: number;
-        }[];
-      }
-    }
   }
 
   /// This is the upstream API, for Server (Next.js) -> Upstream Server
@@ -95,7 +87,7 @@ export namespace OpenAI {
     }
 
     export namespace Models {
-      interface ModelDescription {
+      export interface ModelDescription {
         id: string;
         object: 'model';
         created: number;

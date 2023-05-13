@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { IconButton, List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Sheet, Typography } from '@mui/joy';
+import { IconButton, List, ListItem, ListItemContent, Sheet, Typography } from '@mui/joy';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { useModelsStore } from './store-models';
 
 export function EditModels() {
-  const { models, removeModel } = useModelsStore(state => ({ models: state.models, removeModel: state.removeModel }), shallow);
+  const { models, removeModel } = useModelsStore(state => ({ models: state.llms, removeModel: state.removeLLM }), shallow);
 
   const handleDeleteModel = (modelId: string) => {
     removeModel(modelId);
@@ -22,18 +22,12 @@ export function EditModels() {
       >
         <List>
           {models.map((model) => (
-            <ListItem key={model.modelId}>
-              <ListItemDecorator>
-                X
-              </ListItemDecorator>
-              <ListItemButton>
-                test
-              </ListItemButton>
+            <ListItem key={model.uid}>
               <ListItemContent>
-                {model.label}
-                <Typography level={'body2'}>{model.description}</Typography>
+                <Typography>{model.label}</Typography>
+                <Typography level='body3'>{model.description}</Typography>
               </ListItemContent>
-              <IconButton onClick={() => handleDeleteModel(model.modelId)} sx={{ ml: 'auto' }}>
+              <IconButton onClick={() => handleDeleteModel(model.uid)} sx={{ ml: 'auto' }}>
                 <DeleteIcon />
               </IconButton>
             </ListItem>

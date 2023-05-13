@@ -10,6 +10,7 @@ import { useUIStore } from '~/common/state/store-ui';
 import { AddVendor } from './AddVendor';
 import { ConfigureSources } from './ConfigureSources';
 import { EditModels } from './EditModels';
+import { useModelsStore } from './store-models';
 
 
 export function ModelsModal() {
@@ -17,6 +18,7 @@ export function ModelsModal() {
   // external state
   const { modelingOpen, openModeling, closeModeling } = useUIStore();
   const { apiKey } = useSettingsStore(state => ({ apiKey: state.apiKey }), shallow);
+  const llmCount = useModelsStore(state => state.llms.length);
 
   // show the Configuration Dialog at startup if the API key is required but not set
   React.useEffect(() => {
@@ -35,10 +37,9 @@ export function ModelsModal() {
 
       <Divider />
 
-      <EditModels />
+      {!!llmCount && <EditModels />}
 
-      <Divider />
-
+      {!!llmCount && <Divider />}
 
     </GoodModal>
   );

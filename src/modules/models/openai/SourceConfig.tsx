@@ -1,6 +1,11 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } from '@mui/joy';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+
+import { OpenAI } from '~/modules/openai/openai.types';
+import { api } from '~/modules/trpc/trpc.client';
+import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/openai/openai.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';
@@ -8,9 +13,7 @@ import { Link } from '~/common/components/Link';
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap, settingsMaxWidth } from '~/common/theme';
 
-import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '../../openai/openai.client';
-
-import { DModelSourceId, useSourceConfigurator } from '../store-models';
+import { DLLM, DModelSourceId, useModelsStore, useSourceConfigurator } from '../store-models';
 import { normConfigOpenAI, SourceConfigOpenAI } from './vendor';
 
 
@@ -21,10 +24,22 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
     config: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
     update,
   } = useSourceConfigurator<SourceConfigOpenAI>(props.sourceId, normConfigOpenAI);
-
-  const needsKey = !hasServerKeyOpenAI;
+  const llmsCount = useModelsStore(state => state.llms.length);
 
   const keyError = (/*needsKey ||*/ !!oaiKey) && !isValidOpenAIApiKey(oaiKey);
+  const needsKey = !hasServerKeyOpenAI;
+  const shallFetchSucceed = oaiKey ? isValidOpenAIApiKey(oaiKey) : !needsKey;
+
+  // fetch models
+  const { isFetching, refetch } = api.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
+    enabled: !llmsCount && shallFetchSucceed,
+    onSuccess: models => {
+      const llms = models.map(model => openAIModelToDLLM(model, props.sourceId));
+      useModelsStore.getState().addLLMs(llms);
+    },
+    staleTime: Infinity,
+  });
+
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
@@ -128,5 +143,59 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
 
     </Section>
 
+    <Box>
+      <Button
+        variant='solid' color='neutral'
+        disabled={!shallFetchSucceed || isFetching}
+        endDecorator={<FileDownloadIcon />}
+        onClick={() => refetch()}
+        sx={{ minWidth: 120 }}
+      >
+        Models
+      </Button>
+    </Box>
+
   </Box>;
+}
+
+
+function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, sourceId: DModelSourceId): DLLM {
+  const id = model.id;
+  const family: '4-32' | '4' | '3.5' | 'unknown' = id.startsWith('gpt-4-32k') ? '4-32' : id.startsWith('gpt-4') ? '4' : id.startsWith('gpt-3.5') ? '3.5' : 'unknown';
+  let label: string;
+  let contextWindowSize: number;
+  let description: string;
+  switch (family) {
+    case '4-32':
+      label = 'GPT-4-32' + id.replace('gpt-4-32k', '');
+      contextWindowSize = 32768;
+      description = 'Largest context window for large scale problems';
+      break;
+    case '4':
+      label = 'GPT-4' + id.replace('gpt-4', '');
+      contextWindowSize = 8192;
+      description = 'Most insightful, larger problems, but slow, pricey';
+      break;
+    case '3.5':
+      label = '3.5' + id.replace('gpt-3.5', '');
+      contextWindowSize = 4097;
+      description = 'A good balance between speed and insight';
+      break;
+    default:
+      label = id.toUpperCase() + '?';
+      contextWindowSize = 4000;
+      description = `Unknown model ${id}`;
+      break;
+  }
+  return {
+    uid: `${sourceId}-${id}`,
+    _sourceId: sourceId,
+    _sourceModelId: id,
+    label,
+    contextWindowSize,
+    canStream: true,
+    canChat: true,
+    description,
+    created: model.created,
+  };
 }
