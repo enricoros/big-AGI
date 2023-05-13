@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
+import { ModelVendorId } from './vendors-registry';
+
+
 /**
  * Model - a LLM with certain capabilities, referenced by ID, and with a link to the source
  */
@@ -37,20 +40,12 @@ export interface DModelSource {
   sourceId: DModelSourceId;
   label: string;
   vendorId: ModelVendorId;
+  // state attributes
+  configured: boolean;
   // specific config?
 }
 
 export type DModelSourceId = string;
-
-/**
- * Vendor - a vendor of models, e.g. OpenAI - not stored, client-side only - not dynamic
- */
-export type ModelVendorId =
-  | 'anthropic'
-  | 'azure_openai'
-  | 'google_vertex'
-  | 'localai'
-  | 'openai';
 
 
 interface ModelsStore {

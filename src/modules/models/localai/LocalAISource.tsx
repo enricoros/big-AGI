@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { FormControl, FormLabel, Input } from '@mui/joy';
+import { DModelSourceId } from '@/modules/models/store-models';
 
 // export function LocalAISettings() {
 //   const { localAIUrl, setLocalAIUrl } = useSettingsStore(state => ({
@@ -24,7 +25,7 @@ import { FormControl, FormLabel, Input } from '@mui/joy';
 //   );
 // }
 
-export function LocalAISource() {
+export function LocalAISource(props: { sourceId: DModelSourceId }) {
 
 
   return (
