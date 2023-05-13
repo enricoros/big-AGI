@@ -1,5 +1,6 @@
 import { ModelVendor } from '../vendors-registry';
 import { SourceConfig } from './SourceConfig';
+import { DModelSource, DModelSourceId } from '~/modules/llms/store-models';
 
 export const ModelVendorOpenAI: ModelVendor = {
   id: 'openai',
@@ -11,7 +12,13 @@ export const ModelVendorOpenAI: ModelVendor = {
   rank: 10,
 
   // factories
-  configureSourceComponent: (sourceId) => <SourceConfig sourceId={sourceId} />,
+  createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
+    sourceId,
+    label: 'OpenAI' + (count > 0 ? ` #${count}` : ''),
+    vendorId: 'openai',
+    _config: {},
+  }),
+  configureSourceComponent: (sourceId: DModelSourceId) => <SourceConfig sourceId={sourceId} />,
 };
 
 export interface SourceConfigOpenAI {

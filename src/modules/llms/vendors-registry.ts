@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import { DModelSourceId } from './store-models';
+import { DModelSource, DModelSourceId } from './store-models';
 import { ModelVendorLocalAI } from './localai/vendor';
 import { ModelVendorOpenAI } from './openai/vendor';
 
@@ -20,7 +20,7 @@ export interface ModelVendor {
   rank: number;
 
   // factories
-  // createModelSource: (sourceId: DModelSourceId, label: string) => DModelSource;
+  createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
   configureSourceComponent: (sourceId: DModelSourceId) => React.JSX.Element;
 
 }
