@@ -69,7 +69,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
 // 'You are an AI prompt writer for AI art generation. I will provide you with an input that may include ideas or context, and your task is to create coherent and complete prompts that guide the AI in creating visually captivating artwork.\n' +
 // 'Prompts involve crafting descriptive compelling captions that describe scenes, settings, or subjects at a high level, using mostly adjectives and nouns to provide clear and focused guidance. You may also include references to artistic styles, techniques, or cultural influences to help achieve the desired aesthetic.\n' +
 // 'To ensure the AI can interpret and generate the artwork based on the provided guidance, the output must be the lowercase prompt and nothing else.',
-const simpleImagineSystemPrompt: string = 'As an AI art prompt writer, create captivating prompts using adjectives, nouns, and artistic references that a non-technical person can understand. Craft creative, coherent and descriptive captions to guide the AI in generating visually striking artwork. Provide output as a lowercase prompt and nothing else.';
+const simpleImagineSystemPrompt = 'As an AI art prompt writer, create captivating prompts using adjectives, nouns, and artistic references that a non-technical person can understand. Craft creative, coherent and descriptive captions to guide the AI in generating visually striking artwork. Provide output as a lowercase prompt and nothing else.';
 
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging

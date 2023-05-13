@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { Prodia } from '~/modules/prodia/prodia.types';
 
@@ -30,11 +30,11 @@ const HARDCODED_MODELS: Prodia.API.Models.Response = {
 HARDCODED_MODELS.models.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
 
 
-export default async function handler(req: NextRequest): Promise<NextResponse> {
+export default async function handler(): Promise<NextResponse> {
   try {
     // this is ignored for now, as there's not an API - but still we want to be able to use it in the future
     // noinspection JSUnusedLocalSymbols
-    const { apiKey = '' } = (await req.json()) as Prodia.API.Models.RequestBody;
+    // const { apiKey = '' } = (await req.json()) as Prodia.API.Models.RequestBody;
     return new NextResponse(JSON.stringify(HARDCODED_MODELS));
   } catch (error: any) {
     console.error('api/prodia/models error:', error);

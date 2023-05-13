@@ -9,9 +9,9 @@ export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 // Dimensions
-export const settingsGap: number = 2;
-export const settingsCol1Width: number = 150;
-export const settingsMaxWidth: number = 520;
+export const settingsGap = 2;
+export const settingsCol1Width = 150;
+export const settingsMaxWidth = 520;
 
 
 // Theme & Fonts

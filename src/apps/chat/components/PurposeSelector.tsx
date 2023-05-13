@@ -27,7 +27,7 @@ const bpTileGap = { xs: 2, md: 3 };
 
 
 // Add this utility function to get a random array element
-const getRandomElement = <T extends any>(array: T[]): T | undefined =>
+const getRandomElement = <T,>(array: T[]): T | undefined =>
   array.length > 0 ? array[Math.floor(Math.random() * array.length)] : undefined;
 
 

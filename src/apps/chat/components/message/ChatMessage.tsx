@@ -112,7 +112,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       </>;
     } else if (text.includes('"context_length_exceeded"')) {
       // TODO: propose to summarize or split the input?
-      const pattern: RegExp = /maximum context length is (\d+) tokens.+you requested (\d+) tokens/;
+      const pattern = /maximum context length is (\d+) tokens.+you requested (\d+) tokens/;
       const match = pattern.exec(text);
       const usedText = match ? <b>{parseInt(match[2] || '0').toLocaleString()} tokens &gt; {parseInt(match[1] || '0').toLocaleString()}</b> : '';
       errorMessage = <>
@@ -227,7 +227,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageOriginLLM);
 
   // style
-  let background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
+  const background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
 
   // avatar
   const avatarEl: React.JSX.Element | null = React.useMemo(

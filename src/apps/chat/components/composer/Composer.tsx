@@ -248,7 +248,7 @@ export function Composer(props: {
 
     // perform loading and expansion
     let newText = '';
-    for (let file of files) {
+    for (const file of files) {
       let fileText = '';
       try {
         if (file.type === 'application/pdf')
@@ -301,7 +301,7 @@ export function Composer(props: {
 
 
   const handlePasteFromClipboard = async () => {
-    for (let clipboardItem of await navigator.clipboard.read()) {
+    for (const clipboardItem of await navigator.clipboard.read()) {
 
       // find the text/html item if any
       try {
