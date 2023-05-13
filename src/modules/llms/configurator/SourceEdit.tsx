@@ -4,13 +4,12 @@ import { shallow } from 'zustand/shallow';
 import { Box, Chip, IconButton, Radio, RadioGroup } from '@mui/joy';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-//import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-import { DModelSourceId, useModelsStore } from './store-models';
-import { configureVendorSource } from './vendors-registry';
+import { DModelSourceId, useModelsStore } from '../store-models';
+import { configureVendorSource } from '../vendors-registry';
 
 
-export function ConfigureSources() {
+export function SourceEdit() {
   // external state
   const { modelSources, removeModelSource } = useModelsStore((state) => ({
     modelSources: state.sources, removeModelSource: state.removeSource,
@@ -28,8 +27,6 @@ export function ConfigureSources() {
 
 
   // derived state
-  const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
-
   const sourceComponents: React.JSX.Element[] = React.useMemo(() => modelSources.map(source => {
     const checked = source.sourceId === selectedSourceId;
     return (
@@ -69,6 +66,7 @@ export function ConfigureSources() {
   };
 
 
+  const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
   const vendorConfigComponent = selectedSourceId ? configureVendorSource(activeSource?.vendorId, selectedSourceId) : null;
 
   return <>
@@ -94,20 +92,12 @@ export function ConfigureSources() {
       </IconButton>
     </RadioGroup>
 
-    {/*<Divider />*/}
-
     {/* Selected Item Configuration */}
     {vendorConfigComponent && (
       <Box>
         {vendorConfigComponent}
       </Box>
     )}
-
-    {/*<Box>*/}
-    {/*  <Button sx={{ minWidth: 200 }} disabled={!activeSource?.configured} endDecorator={<FileDownloadIcon />}>*/}
-    {/*    Get Models*/}
-    {/*  </Button>*/}
-    {/*</Box>*/}
 
   </>;
 }

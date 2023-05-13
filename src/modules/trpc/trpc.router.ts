@@ -1,6 +1,6 @@
 import { createTRPCRouter } from './trpc.server';
 
-import { openAIRouter } from '../models/openai/openai.router';
+import { openAIRouter } from '~/modules/llms/openai/openai.router';
 
 /**
  * This is the primary router for your server.
