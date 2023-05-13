@@ -8,7 +8,7 @@ import { OpenAIIcon } from '../openai/OpenAIIcon';
 import { useJoinedLLMs, useModelsStore } from '../store-models';
 
 
-function iconForVendor(vendorId: ModelVendorId) {
+export function iconForVendor(vendorId: ModelVendorId) {
   switch (vendorId) {
     case 'openai':
       return <OpenAIIcon />;
@@ -41,9 +41,9 @@ export function LLMList() {
             labelComponent = <Typography key={'lab-' + labelsCount++} level='body2' sx={{ mb: 1 }}>{sourceLabel}</Typography>;
             lastSourceLabel = sourceLabel;
           }
-          return <>
+          return <React.Fragment key={model.uid}>
             {labelComponent}
-            <ListItem key={model.uid}>
+            <ListItem>
               {!!vendorId && (
                 <ListItemDecorator sx={{ justifyContent: 'start' }}>
                   {iconForVendor(vendorId)}
@@ -60,7 +60,7 @@ export function LLMList() {
                 <DeleteOutlineIcon />
               </IconButton>
             </ListItem>
-          </>;
+          </React.Fragment>;
         })}
       </List>
 

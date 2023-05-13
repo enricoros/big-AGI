@@ -39,7 +39,6 @@ export interface DModelSource {
 
   // vendor-specific data
   _config?: any;
-  configured: boolean;
 }
 
 export type DModelSourceId = string;
