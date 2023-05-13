@@ -1,4 +1,4 @@
-import { LocalAISource } from './LocalAISource';
+import { SourceConfig } from './SourceConfig';
 import { ModelVendor } from '../vendors-registry';
 
 export const ModelVendorLocalAI: ModelVendor = {
@@ -11,5 +11,17 @@ export const ModelVendorLocalAI: ModelVendor = {
   rank: 20,
 
   // factories
-  configureSourceComponent: (sourceId) => <LocalAISource sourceId={sourceId} />,
+  configureSourceComponent: (sourceId) => <SourceConfig sourceId={sourceId} />,
 };
+
+
+export interface SourceConfigLocalAI {
+  hostUrl: string;
+}
+
+export function normConfigLocalAI(config?: Partial<SourceConfigLocalAI>): SourceConfigLocalAI {
+  return {
+    hostUrl: '',
+    ...config,
+  };
+}

@@ -9,8 +9,8 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 export function FormInputKey(props: {
   label?: string, description?: string | React.JSX.Element,
   value: string, onChange: (value: string) => void,
-  required: boolean, validate?: (value: string) => boolean,
   placeholder?: string, isVisible?: boolean,
+  required: boolean, isError?: boolean,
   noFormControl?: boolean,
 }) {
 
@@ -25,8 +25,6 @@ export function FormInputKey(props: {
     </IconButton>
   ), [props.value, isVisible]);
 
-  const isError = (/*props.required ||*/ !!props.value) && !!props.validate && !props.validate(props.value);
-
   const Wrapper = props.noFormControl ? React.Fragment : FormControl;
 
   return <Wrapper>
@@ -38,7 +36,7 @@ export function FormInputKey(props: {
       value={props.value} onChange={handleChange}
       placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
       type={isVisible ? 'text' : 'password'}
-      error={isError}
+      error={props.isError}
       startDecorator={<KeyIcon />}
       endDecorator={endDecorator}
     />

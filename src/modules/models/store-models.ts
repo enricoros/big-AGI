@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { shallow } from 'zustand/shallow';
 import { devtools, persist } from 'zustand/middleware';
 
 import { ModelVendorId } from './vendors-registry';
@@ -40,9 +41,10 @@ export interface DModelSource {
   sourceId: DModelSourceId;
   label: string;
   vendorId: ModelVendorId;
-  // state attributes
+
+  // vendor-specific data
+  _config?: any;
   configured: boolean;
-  // specific config?
 }
 
 export type DModelSourceId = string;
@@ -50,13 +52,15 @@ export type DModelSourceId = string;
 
 interface ModelsStore {
 
-  modelSources: DModelSource[];
-  addModelSource: (modelSource: DModelSource) => void;
-  removeModelSource: (sourceId: DModelSourceId) => void;
-  updateModelSource: (sourceId: DModelSourceId, updatedModelSource: Partial<DModelSource>) => void;
+  // Sources
+  sources: DModelSource[];
+  addSource: (source: DModelSource) => void;
+  removeSource: (sourceId: DModelSourceId) => void;
+  updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) => void;
 
-  fetchModels: (sourceId: DModelSourceId) => Promise<DLLM[]>;
+  // fetchModels: (sourceId: DModelSourceId) => Promise<DLLM[]>;
 
+  // Models
   models: DLLM[];
   addModel: (model: DLLM) => void;
   removeModel: (modelId: string) => void;
@@ -67,24 +71,30 @@ export const useModelsStore = create<ModelsStore>()(devtools(
   persist(
     (set, get) => ({
 
-      modelSources: [],
+      sources: [],
 
-      addModelSource: (modelSource) => {
-        set((state) => ({ modelSources: [...state.modelSources, modelSource] }));
-      },
+      addSource: (source: DModelSource) =>
+        set(state => ({ sources: [...state.sources, source] })),
 
-      removeModelSource: (sourceId) => {
-        set((state) => removeSourceAndModels(state, sourceId));
-      },
+      removeSource: (sourceId: DModelSourceId) =>
+        set(state => ({
+          sources: state.sources.filter((source) => source.sourceId !== sourceId),
+          models: state.models.filter((model) => model.sourceId !== sourceId),
+        })),
 
-      updateModelSource: (sourceId, updatedModelSource) => {
-        set((state) => ({
-          modelSources: state.modelSources.map((source) => (source.sourceId === sourceId ? { ...source, ...updatedModelSource } : source)),
-        }));
-      },
+      updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) =>
+        set(state => ({
+          sources: state.sources.map((source: DModelSource): DModelSource =>
+            source.sourceId === sourceId
+              ? {
+                ...source,
+                _config: { ...source._config, ...config },
+              } : source,
+          ),
+        })),
 
-      fetchModels: async (sourceId) => {
-        const modelSource = get().modelSources.find((source) => source.sourceId === sourceId);
+      /*fetchModels: async (sourceId) => {
+        const modelSource = get().sources.find((source) => source.sourceId === sourceId);
         if (!modelSource) {
           throw new Error('Model source not found');
         }
@@ -92,15 +102,18 @@ export const useModelsStore = create<ModelsStore>()(devtools(
         const models = await mockApi.fetchModelsFromVendor(modelSource.vendorId);
         set((state) => ({ models: [...state.models, ...models] }));
         return models;
-      },
+      },*/
+
 
       models: [],
-      addModel: (model) => {
-        set((state) => ({ models: [...state.models, model] }));
-      },
+
+      addModel: (model) =>
+        set(state => ({ models: [...state.models, model] })),
+
       removeModel: (modelId) => {
         set((state) => ({ models: state.models.filter((model) => model.modelId !== modelId) }));
       },
+
     }),
     {
       name: 'app-models',
@@ -111,15 +124,30 @@ export const useModelsStore = create<ModelsStore>()(devtools(
   }),
 );
 
-function removeSourceAndModels(state: ModelsStore, sourceId: DModelSourceId): Partial<ModelsStore> {
-  const updatedModelSources = state.modelSources.filter((source) => source.sourceId !== sourceId);
-  const updatedModels = state.models.filter((model) => model.sourceId !== sourceId);
-  return { modelSources: updatedModelSources, models: updatedModels };
+
+/**
+ * Hook used by the UIs to configure their own specific model source
+ */
+export function useSourceConfigurator<T>(sourceId: DModelSourceId, normalizeDefaults: (config?: Partial<T>) => T): { config: T; update: (entry: Partial<T>) => void } {
+
+  // finds the source, and returns its normalized config
+  const { config, updateSourceConfig } = useModelsStore(state => {
+    const modelSource = state.sources.find((s) => s.sourceId === sourceId);
+    return {
+      config: normalizeDefaults(modelSource?._config as Partial<T>),
+      updateSourceConfig: state.updateSourceConfig,
+    };
+  }, shallow);
+
+  // prepares a function to update the source config
+  const update = (entry: Partial<T>) => updateSourceConfig<T>(sourceId, entry);
+  return { config, update };
+
 }
 
 
 async function fetchModels(sourceId: DModelSourceId) {
-  const modelSource = useModelsStore.getState().modelSources.find(
+  const modelSource = useModelsStore.getState().sources.find(
     (source) => source.sourceId === sourceId,
   );
   if (!modelSource) {

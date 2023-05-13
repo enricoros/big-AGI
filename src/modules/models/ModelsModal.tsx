@@ -35,8 +35,6 @@ export function ModelsModal() {
 
       <Divider />
 
-      {/*<OpenAISource />*/}
-
       <EditModels />
 
       <Divider />
