@@ -1,4 +1,4 @@
-import { callChat } from '@/modules/openai/openai.client';
+import { callChat } from '~/modules/openai/openai.client';
 
 import { ChatModelId, ChatModels } from '../../data';
 import { cleanupPrompt } from './prompts';

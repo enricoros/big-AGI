@@ -2,9 +2,10 @@ import * as React from 'react';
 
 import { FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
 
+import { Link } from '~/common/components/Link';
+
 import { DModelSourceId, useSourceConfigurator } from '../store-models';
 import { normConfigLocalAI, SourceConfigLocalAI } from './vendor';
-import { Link } from '@/common/components/Link';
 
 
 export function SourceConfig(props: { sourceId: DModelSourceId }) {

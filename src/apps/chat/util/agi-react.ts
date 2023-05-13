@@ -1,6 +1,6 @@
-import { Agent } from '@/common/llm-util/react';
+import { Agent } from '~/common/llm-util/react';
 import { ChatModelId } from '../../../data';
-import { createEphemeral, DMessage, useChatStore } from '@/common/state/store-chats';
+import { createEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 
 import { createAssistantTypingMessage } from './agi-immediate';
 

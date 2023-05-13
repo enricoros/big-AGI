@@ -9,8 +9,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { downloadConversationJson, useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { downloadConversationJson, useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 
 export function ActionItems(props: {

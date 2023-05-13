@@ -15,17 +15,17 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
-import { requireUserKeyElevenLabs, speakText } from '@/modules/elevenlabs/elevenlabs.client';
-import { requireUserKeyProdia } from '@/modules/prodia/prodia.client';
+import { requireUserKeyElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { requireUserKeyProdia } from '~/modules/prodia/prodia.client';
 
-import { DMessage } from '@/common/state/store-chats';
-import { InlineTextarea } from '@/common/components/InlineTextarea';
-import { Link } from '@/common/components/Link';
+import { DMessage } from '~/common/state/store-chats';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { copyToClipboard } from '@/common/util/copyToClipboard';
-import { cssRainbowColorKeyframes } from '@/common/theme';
-import { prettyBaseModel } from '@/common/util/conversationToMarkdown';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { cssRainbowColorKeyframes } from '~/common/theme';
+import { prettyBaseModel } from '~/common/util/conversationToMarkdown';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';

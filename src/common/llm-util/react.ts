@@ -1,6 +1,6 @@
-import { OpenAI } from '@/modules/openai/openai.types';
-import { callApiSearchGoogle } from '@/modules/search/search.client';
-import { callChat } from '@/modules/openai/openai.client';
+import { OpenAI } from '~/modules/openai/openai.types';
+import { callApiSearchGoogle } from '~/modules/search/search.client';
+import { callChat } from '~/modules/openai/openai.client';
 
 import { ChatModelId } from '../../data';
 import { currentDate, reActPrompt } from './prompts';

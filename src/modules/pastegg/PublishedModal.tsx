@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { Alert, Box, Button, Divider, Input, Modal, ModalDialog, Stack, Typography } from '@mui/joy';
 
-import { Link } from '@/common/components/Link';
+import { Link } from '~/common/components/Link';
+
 import { PasteGG } from './pastegg.types';
 
 

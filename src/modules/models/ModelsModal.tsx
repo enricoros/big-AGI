@@ -3,13 +3,13 @@ import { shallow } from 'zustand/shallow';
 
 import { Divider } from '@mui/joy';
 
-import { GoodModal } from '@/common/components/GoodModal';
-import { useSettingsStore } from '@/common/state/store-settings';
-import { useUIStore } from '@/common/state/store-ui';
+import { GoodModal } from '~/common/components/GoodModal';
+import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIStore } from '~/common/state/store-ui';
 
 import { AddVendor } from './AddVendor';
 import { ConfigureSources } from './ConfigureSources';
-import { EditModels } from '@/modules/models/EditModels';
+import { EditModels } from './EditModels';
 
 
 export function ModelsModal() {

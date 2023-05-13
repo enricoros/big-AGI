@@ -8,9 +8,9 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { Section } from '@/common/components/Section';
-import { settingsCol1Width, settingsGap } from '@/common/theme';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { Section } from '~/common/components/Section';
+import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
 

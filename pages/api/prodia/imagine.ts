@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { Prodia } from '@/modules/prodia/prodia.types';
+import { Prodia } from '~/modules/prodia/prodia.types';
 
 
 export const prodiaHeaders = (apiKey: string): Record<string, string> => ({

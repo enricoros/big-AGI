@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { AppBarDropdown } from '@/common/layouts/appbar/AppBarDropdown';
-import { useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { AppBarDropdown } from '~/common/layouts/appbar/AppBarDropdown';
+import { useChatStore } from '~/common/state/store-chats';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
 

@@ -1,4 +1,4 @@
-import { useSettingsStore } from '@/common/state/store-settings';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { Search } from './search.types';
 

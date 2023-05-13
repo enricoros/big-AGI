@@ -10,9 +10,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { Section } from '@/common/components/Section';
-import { settingsGap } from '@/common/theme';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { Section } from '~/common/components/Section';
+import { settingsGap } from '~/common/theme';
+import { useSettingsStore } from '~/common/state/store-settings';
 
 import { Prodia } from './prodia.types';
 import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from './prodia.client';
