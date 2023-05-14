@@ -13,17 +13,17 @@ import { Link } from '~/common/components/Link';
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap, settingsMaxWidth } from '~/common/theme';
 
-import { DLLM, DModelSourceId, useModelsStore, useSourceConfigurator } from '../store-models';
-import { normConfigOpenAI, SourceConfigOpenAI } from './vendor';
+import { DLLM, DModelSourceId, useModelsStore, useSourceSetup } from '../store-models';
+import { normalizeSetup, SourceSetupOpenAI } from './vendor';
 
 
-export function SourceConfig(props: { sourceId: DModelSourceId }) {
+export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    config: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
-    update,
-  } = useSourceConfigurator<SourceConfigOpenAI>(props.sourceId, normConfigOpenAI);
+    setup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
+    updateSetup,
+  } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
   const llmsCount = useModelsStore(state => state.llms.length);
 
   const keyError = (/*needsKey ||*/ !!oaiKey) && !isValidOpenAIApiKey(oaiKey);
@@ -45,7 +45,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
 
     <FormInputKey
       label={'API Key' + (needsKey ? '' : ' - not required')}
-      value={oaiKey} onChange={value => update({ oaiKey: value })}
+      value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
       required={needsKey} isError={keyError}
       placeholder='sk-...'
       description={<>
@@ -68,7 +68,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
       <Slider
         aria-label='Model Temperature' color='neutral'
         min={0} max={1} step={0.1} defaultValue={0.5}
-        value={llmTemperature} onChange={(event, value) => update({ llmTemperature: value as number })}
+        value={llmTemperature} onChange={(event, value) => updateSetup({ llmTemperature: value as number })}
         valueLabelDisplay='auto'
         sx={{ py: 1, mt: 1.1 }}
       />
@@ -82,7 +82,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
       <Slider
         aria-label='Model Max Tokens' color='neutral'
         min={256} max={4096} step={256} defaultValue={1024}
-        value={llmResponseTokens} onChange={(event, value) => update({ llmResponseTokens: value as number })}
+        value={llmResponseTokens} onChange={(event, value) => updateSetup({ llmResponseTokens: value as number })}
         valueLabelDisplay='on'
         sx={{ py: 1, mt: 1.1 }}
       />
@@ -103,7 +103,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
           </Box>
           <Input
             variant='outlined' placeholder='Optional, for org users'
-            value={oaiOrg} onChange={event => update({ oaiOrg: event.target.value })}
+            value={oaiOrg} onChange={event => updateSetup({ oaiOrg: event.target.value })}
             sx={{ flexGrow: 1 }}
           />
         </FormControl>
@@ -119,7 +119,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
           </Box>
           <Input
             variant='outlined' placeholder='e.g., oai.hconeai.com'
-            value={oaiHost} onChange={event => update({ oaiHost: event.target.value })}
+            value={oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
             sx={{ flexGrow: 1 }}
           />
         </FormControl>
@@ -135,7 +135,7 @@ export function SourceConfig(props: { sourceId: DModelSourceId }) {
           </Box>
           <Input
             variant='outlined' placeholder='sk-...'
-            value={heliKey} onChange={event => update({ heliKey: event.target.value })}
+            value={heliKey} onChange={event => updateSetup({ heliKey: event.target.value })}
             sx={{ flexGrow: 1 }}
           />
         </FormControl>

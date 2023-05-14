@@ -3,6 +3,8 @@ import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
 import { ModelVendorId } from './vendors-registry';
+import { SourceSetupLocalAI } from './localai/vendor';
+import { SourceSetupOpenAI } from './openai/vendor';
 
 
 /**
@@ -37,8 +39,8 @@ export interface DModelSource {
   label: string;
   vendorId: ModelVendorId;
 
-  // vendor-specific data
-  _config?: any;
+  // vendor-specific
+  setup?: Partial<SourceSetupOpenAI> | Partial<SourceSetupLocalAI>;
 }
 
 export type DModelSourceId = string;
@@ -54,7 +56,7 @@ interface ModelsStore {
   sources: DModelSource[];
   addSource: (source: DModelSource) => void;
   removeSource: (sourceId: DModelSourceId) => void;
-  updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) => void;
+  updateSourceSetup: <T>(sourceId: DModelSourceId, setup: Partial<T>) => void;
 }
 
 export const useModelsStore = create<ModelsStore>()(
@@ -84,13 +86,13 @@ export const useModelsStore = create<ModelsStore>()(
           llms: state.llms.filter((model) => model._sourceId !== sourceId),
         })),
 
-      updateSourceConfig: <T>(sourceId: DModelSourceId, config: Partial<T>) =>
+      updateSourceSetup: <T>(sourceId: DModelSourceId, setup: Partial<T>) =>
         set(state => ({
           sources: state.sources.map((source: DModelSource): DModelSource =>
             source.sourceId === sourceId
               ? {
                 ...source,
-                _config: { ...source._config, ...config },
+                setup: { ...source.setup, ...setup },
               } : source,
           ),
         })),
@@ -98,26 +100,33 @@ export const useModelsStore = create<ModelsStore>()(
     }),
     {
       name: 'app-models',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // remove models with unknown source
+          //   state.llms = state.llms.filter((llm) => state.sources.find((source) => source.sourceId === llm._sourceId));
+        }
+      },
     }),
 );
 
 
 /**
- * Hook used by the UIs to configure their own specific model source
+ * Hook used for Source-specific setup
  */
-export function useSourceConfigurator<T>(sourceId: DModelSourceId, normalizeDefaults: (config?: Partial<T>) => T): { config: T; update: (entry: Partial<T>) => void } {
-  // finds the source, and returns its normalized config
-  const { config, updateSourceConfig } = useModelsStore(state => {
+export function useSourceSetup<T>(sourceId: DModelSourceId, normalizer: (partialSetup?: Partial<T>) => T): { setup: T; updateSetup: (partialSetup: Partial<T>) => void } {
+
+  // invalidate when the setup changes
+  const { setup, updateSourceSetup } = useModelsStore(state => {
     const modelSource = state.sources.find((s) => s.sourceId === sourceId);
     return {
-      config: normalizeDefaults(modelSource?._config as Partial<T>),
-      updateSourceConfig: state.updateSourceConfig,
+      setup: normalizer(modelSource?.setup as Partial<T> | undefined),
+      updateSourceSetup: state.updateSourceSetup,
     };
   }, shallow);
 
-  // prepares a function to update the source config
-  const update = (entry: Partial<T>) => updateSourceConfig<T>(sourceId, entry);
-  return { config, update };
+  // convenience function for this source
+  const updateSetup = (partialSetup: Partial<T>) => updateSourceSetup<T>(sourceId, partialSetup);
+  return { setup, updateSetup };
 }
 
 
