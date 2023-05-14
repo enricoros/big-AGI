@@ -65,7 +65,7 @@ export function EditSources(props: {
   // vendor list items
   const vendorItems = React.useMemo(() => rankedVendors().map(vendor => {
     const sourceCount = modelSources.filter(source => source.vendorId === vendor.id).length;
-    const enabled = (vendor.multiple || sourceCount < 1) && sourceCount < 2;
+    const enabled = (vendor.multiple || sourceCount < 1) && sourceCount < 2 && !!vendor.enabled;
     return {
       vendor,
       enabled,

@@ -11,6 +11,7 @@ export const ModelVendorLocalAI: ModelVendor = {
   multiple: true,
   location: 'local',
   rank: 20,
+  enabled: true,
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({

@@ -10,6 +10,7 @@ export const ModelVendorOpenAI: ModelVendor = {
   multiple: false,
   location: 'cloud',
   rank: 10,
+  enabled: true,
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({

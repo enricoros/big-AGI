@@ -8,7 +8,7 @@ import { ModelVendorOpenAI } from './openai/vendor';
 /**
  * Vendor - a vendor of models, e.g. OpenAI - not stored, client-side only - not dynamic
  */
-export type ModelVendorId = 'localai' | 'openai';
+export type ModelVendorId = 'localai' | 'openai'; // | 'anthropic' | 'azure_openai' | 'google_vertex';
 
 export interface ModelVendor {
   id: ModelVendorId;
@@ -18,6 +18,7 @@ export interface ModelVendor {
   multiple: boolean;
   location: 'local' | 'cloud';
   rank: number;
+  enabled?: boolean; // probably remove
 
   // factories
   createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
@@ -68,6 +69,6 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
     name: 'Google Vertex',
     multiple: false,
     location: 'cloud',
-    rank: 40
-  },*/
+    rank: 40,
+  }*/
 };
