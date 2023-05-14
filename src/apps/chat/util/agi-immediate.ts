@@ -1,7 +1,6 @@
 import { ChatModelId, SystemPurposeId, SystemPurposes } from '../../../data';
 
 import { OpenAI } from '~/modules/openai/openai.types';
-import { getOpenAISettings } from '~/modules/openai/openai.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
@@ -149,3 +148,13 @@ async function streamAssistantMessage(
   // finally, stop the typing animation
   editMessage(conversationId, assistantMessageId, { typing: false }, false);
 }
+
+const getOpenAISettings = (): Partial<OpenAI.API.Configuration> => {
+  const { apiHost, apiKey, apiOrganizationId, heliconeKey } = useSettingsStore.getState();
+  return {
+    ...(apiHost ? { apiHost } : {}),
+    ...(apiKey ? { apiKey } : {}),
+    ...(apiOrganizationId ? { apiOrganizationId } : {}),
+    ...(heliconeKey ? { heliconeKey } : {}),
+  };
+};

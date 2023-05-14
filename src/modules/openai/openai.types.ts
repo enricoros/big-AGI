@@ -21,7 +21,9 @@ export namespace OpenAI {
       }
 
       export interface Response {
-        message: OpenAI.Wire.Chat.Message;
+        role: 'assistant' | 'system' | 'user';
+        content: string;
+        finish_reason: 'stop' | 'length' | null;
       }
 
       /**

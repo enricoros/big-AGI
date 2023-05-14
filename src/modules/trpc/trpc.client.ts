@@ -4,7 +4,7 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { httpBatchLink, loggerLink } from '@trpc/client';
+import { createTRPCProxyClient, httpBatchLink, httpLink, loggerLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
 import superjson from 'superjson';
@@ -43,6 +43,15 @@ export const api = createTRPCNext<AppRouter>({
           url: `${getBaseUrl()}/api/trpc`,
         }),
       ],
+
+      // change options globally
+      queryClientConfig: {
+        defaultOptions: {
+          queries: {
+            retry: false, // TODO: enable retries in production?
+          },
+        },
+      },
     };
   },
   /**
@@ -52,6 +61,22 @@ export const api = createTRPCNext<AppRouter>({
    */
   ssr: false,
 });
+
+/** Double-API! A set of type-safe async/await hooks for your tRPC API. */
+export const asyncApi = createTRPCProxyClient<AppRouter>({
+    transformer: superjson,
+    links: [
+      loggerLink({
+        enabled: (opts) =>
+          process.env.NODE_ENV === 'development' ||
+          (opts.direction === 'down' && opts.result instanceof Error),
+      }),
+      httpLink({
+        url: `${getBaseUrl()}/api/trpc`,
+      }),
+    ],
+  },
+);
 
 /**
  * Inference helper for inputs.

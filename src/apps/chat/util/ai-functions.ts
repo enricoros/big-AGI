@@ -39,7 +39,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
     },
   ]).then(chatResponse => {
 
-    const title = chatResponse?.message?.content
+    const title = chatResponse?.content
       ?.trim()
       ?.replaceAll('"', '')
       ?.replace('Title: ', '')
@@ -80,7 +80,7 @@ export async function imaginePromptFromText(messageText: string, modelId: ChatMo
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
     ]);
-    return chatResponse.message?.content?.trim() ?? null;
+    return chatResponse.content?.trim() ?? null;
   } catch (error: any) {
     console.error('imaginePromptFromText: fetch request error:', error);
     return null;
