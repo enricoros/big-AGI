@@ -3,18 +3,23 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, IconButton, ListItemDecorator, Menu, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { hasServerKeyOpenAI } from '../../openai/openai.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+
 import { DModelSource, DModelSourceId, findUniqueSourceId, useModelsStore } from '../store-models';
 import { findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
 
 
 function locationIcon(vendor?: ModelVendor | null) {
+  if (vendor && vendor.id === 'openai' && hasServerKeyOpenAI)
+    return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }
 
