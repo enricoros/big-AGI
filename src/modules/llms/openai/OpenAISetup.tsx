@@ -102,7 +102,7 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
             </FormHelperText>
           </Box>
           <Input
-            variant='outlined' placeholder='Optional, for org users'
+            variant='outlined' placeholder='Optional, for enterprise users'
             value={oaiOrg} onChange={event => updateSetup({ oaiOrg: event.target.value })}
             sx={{ flexGrow: 1 }}
           />

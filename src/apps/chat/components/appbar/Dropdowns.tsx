@@ -1,11 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import { ListItemDecorator, Option, Typography } from '@mui/joy';
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
+
+import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
+
 import { AppBarDropdown } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
-
-import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
+import { useUIStore } from '~/common/state/store-ui';
 
 
 export function Dropdowns(props: {
@@ -23,6 +27,7 @@ export function Dropdowns(props: {
       setSystemPurposeId: state.setSystemPurposeId,
     };
   }, shallow);
+  const openModeling = useUIStore(state => state.openModeling);
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) =>
     value && props.conversationId && setChatModelId(props.conversationId, value);
@@ -36,6 +41,16 @@ export function Dropdowns(props: {
       <AppBarDropdown
         items={ChatModels}
         value={chatModelId} onChange={handleChatModelChange}
+        appendOption={
+          <Option onClick={openModeling}>
+            <ListItemDecorator>
+              <BuildCircleIcon color='info' />
+            </ListItemDecorator>
+            <Typography>
+              Setup
+            </Typography>
+          </Option>
+        }
       />
     )}
 

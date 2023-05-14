@@ -10,7 +10,12 @@ type DropdownItem = Record<string, { title: string, symbol?: string }>;
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-export const AppBarDropdown = <TValue extends string>(props: { value: TValue, items: DropdownItem, showSymbols?: boolean, onChange: (event: any, value: TValue | null) => void, sx?: SxProps }) =>
+export const AppBarDropdown = <TValue extends string>(props: {
+  items: DropdownItem, appendOption?: React.JSX.Element,
+  value: TValue, onChange: (event: any, value: TValue | null) => void,
+  showSymbols?: boolean,
+  sx?: SxProps
+}) =>
   <Select
     variant='solid' color='neutral' size='md'
     value={props.value} onChange={props.onChange}
@@ -49,4 +54,5 @@ export const AppBarDropdown = <TValue extends string>(props: { value: TValue, it
         {props.showSymbols ? props.items[key]?.symbol || '' : ''} {props.items[key].title}
       </Option>
     ))}
+    {props.appendOption}
   </Select>;
