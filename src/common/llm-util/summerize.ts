@@ -55,7 +55,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   const summarizedChunks = await Promise.all(cleanedChunks.map(async chunk => {
     const chunkLength = chunk.split(' ').length;
     const chunkTargetWordCount = Math.floor(targetWordCount * (chunkLength / totalLength));
-    return await recursiveSummerize(chunk, modelId, chunkTargetWordCount);
+    return await recursiveSummerize(chunk, modelId, chunkTargetWordCount, 0); // Add the initial depth value
   }));
 
   // 4) Combine the summarized chunks and return
@@ -80,14 +80,14 @@ async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_t
   }
 }
 
-async function recursiveSummerize(text: string, modelId: ChatModelId, targetWordCount: number): Promise<string> {
+async function recursiveSummerize(text: string, modelId: ChatModelId, targetWordCount: number, depth: number = 0): Promise<string> {
   const words = text.split(' ');
 
-  if (words.length <= targetWordCount || words.length <= 1) {
+  if (words.length <= targetWordCount || words.length <= 1 || depth >= 2) {
     return text;
   }
 
   const shortenedWords = await cleanUpContent(text, modelId, targetWordCount);
 
-  return await recursiveSummerize(shortenedWords, modelId, targetWordCount);
+  return await recursiveSummerize(shortenedWords, modelId, targetWordCount, depth + 1);
 }
