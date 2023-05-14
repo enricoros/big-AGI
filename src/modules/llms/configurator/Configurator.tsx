@@ -6,11 +6,12 @@ import { Divider } from '@mui/joy';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStore } from '~/common/state/store-ui';
 
-import { DModelSourceId, useModelsStore } from '../store-models';
+import { DModelSourceId } from '../llm.types';
 import { EditSources } from './EditSources';
 import { ListLLMs } from './ListLLMs';
 import { SetupSource } from './SetupSource';
-import { addDefaultSourceIfEmpty } from '../vendors-registry';
+import { createDefaultSource } from '../vendors/vendor.registry';
+import { useModelsStore } from '../llm.store';
 
 
 export function Configurator() {
@@ -39,7 +40,11 @@ export function Configurator() {
   }, [selectedSourceId, openModeling]);
 
   // add the default source on cold - will require setup
-  React.useEffect(() => addDefaultSourceIfEmpty(), []);
+  React.useEffect(() => {
+    const { addSource, sources } = useModelsStore.getState();
+    if (!sources.length)
+      addSource(createDefaultSource(sources));
+  }, []);
 
 
   return (

@@ -4,14 +4,15 @@ import { FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
 
-import { DModelSourceId, useSourceSetup } from '../store-models';
+import { DModelSourceId } from '../llm.types';
 import { normalizeSetup, SourceSetupLocalAI } from './vendor';
+import { useSourceSetup } from '../llm.store';
 
 
 export function LocalAISetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { setup: { hostUrl }, updateSetup } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
+  const { normSetup: { hostUrl }, updateSetup } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
 
   return (
 
