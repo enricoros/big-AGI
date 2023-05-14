@@ -1,25 +1,28 @@
-import { ModelVendor } from '../vendors-registry';
+import * as React from 'react';
+
+import { DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
+import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAISetup } from './OpenAISetup';
-import { DModelSource, DModelSourceId } from '~/modules/llms/store-models';
+
 
 export const ModelVendorOpenAI: ModelVendor = {
   id: 'openai',
-
-  // metadata
   name: 'OpenAI',
-  multiple: false,
-  location: 'cloud',
   rank: 10,
-  enabled: true,
+  icon: <OpenAIIcon />,
+  location: 'cloud',
+  instanceLimit: 2,
+
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
     id: sourceId,
     label: 'OpenAI' + (count > 0 ? ` #${count}` : ''),
-    vendorId: 'openai',
+    vId: 'openai',
     setup: {},
   }),
-  createSetupComponent: (sourceId: DModelSourceId) => <OpenAISetup sourceId={sourceId} />,
+  createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISetup sourceId={sourceId} />,
+  createLLMSettingsComponent: () => <>No OpenAI Settings</>,
 };
 
 

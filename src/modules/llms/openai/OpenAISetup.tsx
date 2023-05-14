@@ -13,18 +13,18 @@ import { Link } from '~/common/components/Link';
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap, settingsMaxWidth } from '~/common/theme';
 
-import { DLLM, DModelSourceId, useModelsStore, useSourceSetup } from '../store-models';
+import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { normalizeSetup, SourceSetupOpenAI } from './vendor';
+import { useModelsStore, useSourceSetup } from '../llm.store';
 
 
 export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    setup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
-    updateSetup,
+    source, sourceLLMs, updateSetup,
+    normSetup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
-  const llmsCount = useModelsStore(state => state.llms.length);
 
   const keyError = (/*needsKey ||*/ !!oaiKey) && !isValidOpenAIApiKey(oaiKey);
   const needsKey = !hasServerKeyOpenAI;
@@ -32,9 +32,9 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch } = api.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
-    enabled: !llmsCount && shallFetchSucceed,
+    enabled: !sourceLLMs.length && shallFetchSucceed && !!source,
     onSuccess: models => {
-      const llms = models.map(model => openAIModelToDLLM(model, props.sourceId));
+      const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
@@ -160,44 +160,44 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, sourceId: DModelSourceId): DLLM {
+function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM {
   const id = model.id;
   const family: '4-32' | '4' | '3.5' | 'unknown' = id.startsWith('gpt-4-32k') ? '4-32' : id.startsWith('gpt-4') ? '4' : id.startsWith('gpt-3.5') ? '3.5' : 'unknown';
   let label: string;
-  let contextWindowSize: number;
+  let contextTokens: number;
   let description: string;
   const labelSnapshot = 'snapshot';
   switch (family) {
     case '4-32':
       label = 'GPT-4-32' + id.replace('gpt-4-32k', '');
-      contextWindowSize = 32768;
+      contextTokens = 32768;
       description = id !== 'gpt-4-32k' ? labelSnapshot : 'Largest context window for big thinking';
       break;
     case '4':
       label = 'GPT-4' + id.replace('gpt-4', '').replaceAll('-', ' ');
-      contextWindowSize = 8192;
+      contextTokens = 8192;
       description = id !== 'gpt-4' ? labelSnapshot : 'Insightful, big thinker, slower, pricey';
       break;
     case '3.5':
       label = '3.5' + id.replace('gpt-3.5', '').replace('turbo', 'Turbo').replaceAll('-', ' ');
-      contextWindowSize = 4097;
+      contextTokens = 4097;
       description = id !== 'gpt-3.5-turbo' ? labelSnapshot : 'Fair speed and insight';
       break;
     default:
       label = id.toUpperCase() + '?';
-      contextWindowSize = 4000;
+      contextTokens = 4000;
       description = `Unknown model ${id}`;
       break;
   }
   return {
-    uid: `${sourceId}-${id}`,
-    _sourceId: sourceId,
-    _sourceModelId: id,
+    id: `${source.id}-${id}`,
     label,
-    contextWindowSize,
-    canStream: true,
-    canChat: true,
-    description,
     created: model.created,
+    description,
+    tags: ['stream', 'chat'],
+    contextTokens,
+    sId: source.id,
+    _source: source,
+    settings: {},
   };
 }

@@ -1,26 +1,26 @@
-import { DModelSource, DModelSourceId } from '../store-models';
+import * as React from 'react';
+
+import { DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
 import { LocalAISetup } from './LocalAISetup';
-import { ModelVendor } from '../vendors-registry';
 
 
 export const ModelVendorLocalAI: ModelVendor = {
   id: 'localai',
-
-  // metadata
   name: 'LocalAI',
-  multiple: true,
-  location: 'local',
   rank: 20,
-  enabled: true,
+  icon: null,
+  location: 'local',
+  instanceLimit: 2,
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
     id: sourceId,
     label: 'LocalAI' + (count > 0 ? ` #${count}` : ''),
-    vendorId: 'localai',
+    vId: 'localai',
     setup: {},
   }),
-  createSetupComponent: (sourceId: DModelSourceId) => <LocalAISetup sourceId={sourceId} />,
+  createSourceSetupComponent: (sourceId: DModelSourceId) => <LocalAISetup sourceId={sourceId} />,
+  createLLMSettingsComponent: () => <>No LocalAI Settings</>,
 };
 
 

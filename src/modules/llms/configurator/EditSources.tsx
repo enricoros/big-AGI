@@ -8,13 +8,14 @@ import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { hasServerKeyOpenAI } from '../../openai/openai.client';
+import { hasServerKeyOpenAI } from '~/modules/openai/openai.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
-import { DModelSource, DModelSourceId, findUniqueSourceId, useModelsStore } from '../store-models';
-import { findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
+import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
+import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendors/vendor.registry';
+import { useModelsStore } from '../llm.store';
 
 
 function locationIcon(vendor?: ModelVendor | null) {
@@ -37,7 +38,6 @@ export function EditSources(props: {
     modelSources: state.sources, addModelSource: state.addSource, removeModelSource: state.removeSource,
   }), shallow);
 
-
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
 
   const closeVendorsMenu = () => setVendorsMenuAnchor(null);
@@ -45,11 +45,11 @@ export function EditSources(props: {
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
     const modelSources = useModelsStore.getState().sources;
-    const { id, count } = findUniqueSourceId(vendorId, modelSources);
-    const source = findVendor(vendorId)?.createSource(id, count);
+    const { id: sourceId, count } = getUniqueSourceId(vendorId, modelSources);
+    const source = findVendorById(vendorId)?.createSource(sourceId, count);
     if (source) {
       addModelSource(source);
-      props.setSelectedSourceId(id);
+      props.setSelectedSourceId(sourceId);
     }
   }, [addModelSource, props]);
 
@@ -69,8 +69,8 @@ export function EditSources(props: {
 
   // vendor list items
   const vendorItems = React.useMemo(() => rankedVendors().map(vendor => {
-    const sourceCount = modelSources.filter(source => source.vendorId === vendor.id).length;
-    const enabled = (vendor.multiple || sourceCount < 1) && sourceCount < 2 && !!vendor.enabled;
+    const sourceCount = modelSources.filter(source => source.vId === vendor.id).length;
+    const enabled = !vendor.disabled && (vendor.instanceLimit > sourceCount);
     return {
       vendor,
       enabled,
@@ -88,17 +88,16 @@ export function EditSources(props: {
 
 
   // source items
-  const sourceItems = React.useMemo(() => modelSources.map((source: DModelSource) => {
+  const sourceItems = React.useMemo(() => modelSources.map(source => {
     return {
       source,
-      icon: locationIcon(findVendor(source.vendorId)),
+      icon: locationIcon(findVendorById(source.vId)),
       component: <Option key={source.id} value={source.id}>{source.label}</Option>,
     };
   }), [modelSources]);
+
   const selectedSourceItem = sourceItems.find(item => item.source.id === props.selectedSourceId);
-
-
-  const noSources = !modelSources.length;
+  const noSources = !sourceItems.length;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>

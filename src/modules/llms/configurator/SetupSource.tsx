@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { DModelSource } from '../store-models';
-import { findVendor } from '../vendors-registry';
+import { DModelSource } from '../llm.types';
+import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 
 export function SetupSource(props: { source: DModelSource }) {
-  const vendor = findVendor(props.source.vendorId);
-  return vendor?.createSetupComponent(props.source.id) ?? null;
+  const vendor = findVendorById(props.source.vId);
+  return vendor?.createSourceSetupComponent(props.source.id) ?? null;
 }
