@@ -14,6 +14,9 @@ interface SettingsStore {
   centerMode: 'narrow' | 'wide' | 'full';
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
+  enterToSend: boolean;
+  setEnterToSend: (enterToSend: boolean) => void;
+
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
@@ -96,6 +99,9 @@ export const useSettingsStore = create<SettingsStore>()(
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
+
+      enterToSend: false,
+      setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
 
       renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),

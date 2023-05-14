@@ -178,8 +178,7 @@ export function Composer(props: {
   const theme = useTheme();
   const { sendModeId, setSendModeId, sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
   const stopTyping = useChatStore(state => state.stopTyping);
-  const modelMaxResponseTokens = useSettingsStore(state => state.modelMaxResponseTokens);
-
+  const { enterToSend, modelMaxResponseTokens } = useSettingsStore(state => ({ enterToSend: state.enterToSend, modelMaxResponseTokens: state.modelMaxResponseTokens }), shallow);
 
   const { assistantTyping, chatModelId, tokenCount: conversationTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -217,10 +216,13 @@ export function Composer(props: {
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      if (!assistantTyping)
-        handleSendClicked();
-      e.preventDefault();
+    if (e.key === 'Enter') {
+      const shiftOrAlt = e.shiftKey || e.altKey;
+      if (enterToSend ? !shiftOrAlt : shiftOrAlt) {
+        if (!assistantTyping)
+          handleSendClicked();
+        e.preventDefault();
+      }
     }
   };
 
@@ -471,6 +473,7 @@ export function Composer(props: {
                 value={composeText} onChange={(e) => setComposeText(e.target.value)}
                 slotProps={{
                   textarea: {
+                    enterkeyhint: enterToSend ? 'send' : 'enter',
                     sx: {
                       ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
                       mb: 0.5,
