@@ -22,7 +22,7 @@ export const openAIRouter = createTRPCRouter({
     .input(accessSchema)
     .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
       const wireModels = await openaiGET<OpenAI.Wire.Models.Response>(input, '/v1/models');
-      const llms = wireModels.data.filter(model => model.id.includes('gpt'));
+      const llms = wireModels.data?.filter(model => model.id.includes('gpt')) ?? [];
 
       // sort by which model has the least number of '-' in the name, and then by id, decreasing
       llms.sort((a, b) => {

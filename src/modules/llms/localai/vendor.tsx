@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import DevicesIcon from '@mui/icons-material/Devices';
+
 import { DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
 import { LocalAISetup } from './LocalAISetup';
 
@@ -8,7 +10,7 @@ export const ModelVendorLocalAI: ModelVendor = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,
-  icon: null,
+  icon: <DevicesIcon />,
   location: 'local',
   instanceLimit: 2,
 

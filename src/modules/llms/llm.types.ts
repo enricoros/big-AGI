@@ -14,7 +14,7 @@ export type ModelVendorId = 'localai' | 'openai'; // | 'anthropic' | 'azure_open
 export interface DLLM {
   id: DLLMId;
   label: string;
-  created: number;
+  created: number | 0;
   description: string;
   tags: DLLMTags[];
   contextTokens: number;

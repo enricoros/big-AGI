@@ -19,7 +19,7 @@ export function ListLLMs() {
   const singleOrigin = llms.length < 2 || !llms.find(llm => llm._source !== llms[0]._source);
   let lastGroupLabel = '';
   let labelsCount = 0;
-  console.log('llms', llms);
+
   return (
 
     <Sheet variant='soft' color='info' invertedColors sx={{ borderRadius: 'sm', pl: { xs: 1, md: 2 }, pr: { xs: 0, md: 1 }, py: { xs: 0, md: 1 } }}>
@@ -31,7 +31,7 @@ export function ListLLMs() {
           let labelComponent: React.JSX.Element | null = null;
           if (!singleOrigin && groupLabel !== lastGroupLabel) {
             lastGroupLabel = groupLabel;
-            labelComponent = <Typography key={'lab-' + labelsCount++} level='body2' sx={{ mb: 1 }}>{groupLabel}</Typography>;
+            labelComponent = <Typography key={'lab-' + labelsCount++} level='body2' sx={{ my: 1 }}>{groupLabel}</Typography>;
           }
           const vendor = findVendorById(llm._source.vId);
           return <React.Fragment key={llm.id}>
