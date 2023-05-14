@@ -6,16 +6,11 @@ import { Divider } from '@mui/joy';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStore } from '~/common/state/store-ui';
 
-import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
+import { DModelSourceId, useModelsStore } from '../store-models';
 import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
-import { addDefaultVendorIfEmpty, findVendor } from '../vendors-registry';
-
-
-function SetupSource(props: { source: DModelSource }) {
-  const vendor = findVendor(props.source.vendorId);
-  return vendor?.createSetupComponent(props.source.sourceId) ?? null;
-}
+import { SetupSource } from './SetupSource';
+import { addDefaultVendorIfEmpty } from '../vendors-registry';
 
 
 export function Configurator() {
@@ -36,7 +31,7 @@ export function Configurator() {
 
   const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
 
-  
+
   // if no sources at startup, open the modal
   React.useEffect(() => {
     if (!selectedSourceId)
