@@ -6,13 +6,17 @@ import { SxProps } from '@mui/joy/styles/types';
 export function InlineTextarea(props: { initialText: string, onEdit: (text: string) => void, sx?: SxProps }) {
 
   const [text, setText] = React.useState(props.initialText);
+  const enterToSend = true; //useSettingsStore(state => state.enterToSend);
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value);
 
   const handleEditKeyPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-      e.preventDefault();
-      props.onEdit(text);
+    if (e.key === 'Enter') {
+      const shiftOrAlt = e.shiftKey || e.altKey;
+      if (!shiftOrAlt) {
+        e.preventDefault();
+        props.onEdit(text);
+      }
     }
   };
 
@@ -22,6 +26,12 @@ export function InlineTextarea(props: { initialText: string, onEdit: (text: stri
     <Textarea
       variant='soft' color='warning' autoFocus minRows={1}
       value={text} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
-      sx={props.sx} />
+      slotProps={{
+        textarea: {
+          enterkeyhint: enterToSend ? 'done' : 'enter',
+        },
+      }}
+      sx={props.sx}
+    />
   );
 }

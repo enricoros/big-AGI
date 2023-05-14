@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Switch, Tooltip } from '@mui/joy';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import TelegramIcon from '@mui/icons-material/Telegram';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -59,17 +60,21 @@ export function UISettings() {
   // external state
   const {
     centerMode, setCenterMode,
+    enterToSend, setEnterToSend,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
   } = useSettingsStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
+    enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
+
+  const handleEnterToSendChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterToSend(event.target.checked);
 
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
@@ -103,6 +108,16 @@ export function UISettings() {
             <Radio value='clean' label='Clean' />
             <Radio value='cleaner' label='Empty' />
           </RadioGroup>
+        </FormControl>
+
+        <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+          <Box>
+            <FormLabel>Enter to send</FormLabel>
+            <FormHelperText>{enterToSend ? <>Sends message<TelegramIcon /></> : 'New line'}</FormHelperText>
+          </Box>
+          <Switch checked={enterToSend} onChange={handleEnterToSendChange}
+                  endDecorator={enterToSend ? 'On' : 'Off'}
+                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
         </FormControl>
 
         <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
