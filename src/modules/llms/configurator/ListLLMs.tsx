@@ -18,7 +18,7 @@ export function iconForVendor(vendorId: ModelVendorId) {
 }
 
 
-export function LLMList() {
+export function ListLLMs() {
 
   // external state
   const llms = useJoinedLLMs();

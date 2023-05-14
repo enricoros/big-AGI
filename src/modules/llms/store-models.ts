@@ -35,17 +35,32 @@ type DLLMId = string;
  * Has all the parameters for accessing a list of models, and to call generation functions
  */
 export interface DModelSource {
-  sourceId: DModelSourceId;
+  id: DModelSourceId;
   label: string;
+
+  // foreign keys
   vendorId: ModelVendorId;
 
-  // vendor-specific
+  // source-specific
   setup?: Partial<SourceSetupOpenAI> | Partial<SourceSetupLocalAI>;
 }
 
 export type DModelSourceId = string;
 
+export function findUniqueSourceId(vendorId: ModelVendorId, otherSources: DModelSource[]): { id: string, count: number } {
+  let id: DModelSourceId = vendorId;
+  let count = 0;
+  while (otherSources.find(source => source.id === id)) {
+    count++;
+    id = `${vendorId}-${count}`;
+  }
+  return { id, count };
+}
 
+
+/**
+ * ModelsStore - a store for models and sources
+ */
 interface ModelsStore {
   // Models
   llms: DLLM[];
@@ -82,14 +97,14 @@ export const useModelsStore = create<ModelsStore>()(
 
       removeSource: (sourceId: DModelSourceId) =>
         set(state => ({
-          sources: state.sources.filter((source) => source.sourceId !== sourceId),
+          sources: state.sources.filter((source) => source.id !== sourceId),
           llms: state.llms.filter((model) => model._sourceId !== sourceId),
         })),
 
       updateSourceSetup: <T>(sourceId: DModelSourceId, setup: Partial<T>) =>
         set(state => ({
           sources: state.sources.map((source: DModelSource): DModelSource =>
-            source.sourceId === sourceId
+            source.id === sourceId
               ? {
                 ...source,
                 setup: { ...source.setup, ...setup },
@@ -103,7 +118,7 @@ export const useModelsStore = create<ModelsStore>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           // remove models with unknown source
-          //   state.llms = state.llms.filter((llm) => state.sources.find((source) => source.sourceId === llm._sourceId));
+          //   state.llms = state.llms.filter((llm) => state.sources.find((source) => source.id === llm._sourceId));
         }
       },
     }),
@@ -117,7 +132,7 @@ export function useSourceSetup<T>(sourceId: DModelSourceId, normalizer: (partial
 
   // invalidate when the setup changes
   const { setup, updateSourceSetup } = useModelsStore(state => {
-    const modelSource = state.sources.find((s) => s.sourceId === sourceId);
+    const modelSource = state.sources.find((source) => source.id === sourceId);
     return {
       setup: normalizer(modelSource?.setup as Partial<T> | undefined),
       updateSourceSetup: state.updateSourceSetup,
@@ -136,11 +151,11 @@ export function useSourceSetup<T>(sourceId: DModelSourceId, normalizer: (partial
 export function useJoinedLLMs(): { model: DLLM, sourceLabel: string, vendorId: ModelVendorId | null }[] {
   const llms = useModelsStore(state => state.llms);
   return llms.map((model) => {
-    const source = useModelsStore.getState().sources.find((s) => s.sourceId === model._sourceId);
+    const modelSource = useModelsStore.getState().sources.find((source) => source.id === model._sourceId);
     return {
       model: model,
-      sourceLabel: source?.label ?? 'Unknown',
-      vendorId: source?.vendorId ?? null,
+      sourceLabel: modelSource?.label ?? 'Unknown',
+      vendorId: modelSource?.vendorId ?? null,
     };
   });
 }

@@ -10,19 +10,9 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
+import { DModelSource, DModelSourceId, findUniqueSourceId, useModelsStore } from '../store-models';
 import { findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
 
-
-function createUniqueSourceId(vendorId: ModelVendorId, sources: DModelSource[]): { id: string, count: number } {
-  let id: DModelSourceId = vendorId;
-  let count = 0;
-  while (sources.find(source => source.sourceId === id)) {
-    count++;
-    id = `${vendorId}-${count}`;
-  }
-  return { id, count };
-}
 
 function locationIcon(vendor?: ModelVendor | null) {
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
@@ -50,10 +40,10 @@ export function EditSources(props: {
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
     const modelSources = useModelsStore.getState().sources;
-    const { id, count } = createUniqueSourceId(vendorId, modelSources);
-    const modelSource = findVendor(vendorId)?.createSource(id, count);
-    if (modelSource) {
-      addModelSource(modelSource);
+    const { id, count } = findUniqueSourceId(vendorId, modelSources);
+    const source = findVendor(vendorId)?.createSource(id, count);
+    if (source) {
+      addModelSource(source);
       props.setSelectedSourceId(id);
     }
   }, [addModelSource, props]);
@@ -61,11 +51,11 @@ export function EditSources(props: {
 
   const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
 
-  const handleDeleteSource = (sourceId: DModelSourceId) => setConfirmDeletionSourceId(sourceId);
+  const handleDeleteSource = (id: DModelSourceId) => setConfirmDeletionSourceId(id);
 
   const handleDeleteSourceConfirmed = React.useCallback(() => {
     if (confirmDeletionSourceId) {
-      props.setSelectedSourceId(modelSources.find(source => source.sourceId !== confirmDeletionSourceId)?.sourceId ?? null);
+      props.setSelectedSourceId(modelSources.find(source => source.id !== confirmDeletionSourceId)?.id ?? null);
       removeModelSource(confirmDeletionSourceId);
       setConfirmDeletionSourceId(null);
     }
@@ -97,10 +87,10 @@ export function EditSources(props: {
     return {
       source,
       icon: locationIcon(findVendor(source.vendorId)),
-      component: <Option key={source.sourceId} value={source.sourceId}>{source.label}</Option>,
+      component: <Option key={source.id} value={source.id}>{source.label}</Option>,
     };
   }), [modelSources]);
-  const selectedSourceItem = sourceItems.find(item => item.source.sourceId === props.selectedSourceId);
+  const selectedSourceItem = sourceItems.find(item => item.source.id === props.selectedSourceId);
 
 
   const noSources = !modelSources.length;

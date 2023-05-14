@@ -8,9 +8,9 @@ import { useUIStore } from '~/common/state/store-ui';
 
 import { DModelSourceId, useModelsStore } from '../store-models';
 import { EditSources } from './EditSources';
-import { LLMList } from './LLMList';
+import { ListLLMs } from './ListLLMs';
 import { SetupSource } from './SetupSource';
-import { addDefaultVendorIfEmpty } from '../vendors-registry';
+import { addDefaultSourceIfEmpty } from '../vendors-registry';
 
 
 export function Configurator() {
@@ -27,9 +27,9 @@ export function Configurator() {
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
-  const selectedSourceId = _selectedSourceId ?? modelSources[0]?.sourceId ?? null;
+  const selectedSourceId = _selectedSourceId ?? modelSources[0]?.id ?? null;
 
-  const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
+  const activeSource = modelSources.find(source => source.id === selectedSourceId);
 
 
   // if no sources at startup, open the modal
@@ -39,7 +39,7 @@ export function Configurator() {
   }, [selectedSourceId, openModeling]);
 
   // add the default source on cold - will require setup
-  React.useEffect(() => addDefaultVendorIfEmpty(), []);
+  React.useEffect(() => addDefaultSourceIfEmpty(), []);
 
 
   return (
@@ -53,7 +53,7 @@ export function Configurator() {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <LLMList />}
+      {!!llmCount && <ListLLMs />}
 
       <Divider />
 
