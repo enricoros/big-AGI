@@ -74,7 +74,7 @@ async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_t
       { role: 'system', content: cleanupPrompt },
       { role: 'user', content: chunk },
     ], autoResponseTokensSize);
-    return chatResponse?.message?.content ?? '';
+    return chatResponse?.content ?? '';
   } catch (error: any) {
     return '';
   }

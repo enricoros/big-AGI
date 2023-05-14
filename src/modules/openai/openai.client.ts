@@ -1,5 +1,7 @@
 import { ChatModelId } from '../../data';
 
+import { asyncApi } from '~/modules/trpc/trpc.client';
+
 import { useSettingsStore } from '~/common/state/store-settings';
 
 import { OpenAI } from './openai.types';
@@ -14,49 +16,17 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
  * This function either returns the LLM response, or throws a descriptive error string
  */
 export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
-
-  // this payload contains the 'api' key, org, host
-  const payload: OpenAI.API.Chat.Request = {
-    api: getOpenAISettings(),
-    model: modelId,
-    messages,
-    ...(maxTokens !== undefined && { max_tokens: maxTokens }),
-  };
-
-  let errorMessage: string;
+  const { apiHost, apiKey, apiOrganizationId, heliconeKey, modelTemperature } = useSettingsStore.getState();
   try {
-    const response = await fetch('/api/openai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    return await asyncApi.openai.chatGenerate.mutate({
+      access: { oaiKey: apiKey, oaiHost: apiHost, oaiOrg: apiOrganizationId, heliKey: heliconeKey },
+      history: messages,
+      model: { id: modelId, temperature: modelTemperature, ...(maxTokens && { maxTokens }) },
     });
-
-    if (response.ok)
-      return await response.json();
-
-    // decode a possible error payload, if present, but ignore if missing
-    let errorPayload: any = null;
-    try {
-      errorPayload = await response.json();
-    } catch (error: any) {
-      // ignore - it's expected there may not be a payload
-    }
-    errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
+    // errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
   } catch (error: any) {
-    errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+    const errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+    console.error(`callChat: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
-
-  console.error(`callChat: ${errorMessage}`);
-  throw new Error(errorMessage);
 }
-
-
-export const getOpenAISettings = (): Partial<OpenAI.API.Configuration> => {
-  const { apiHost, apiKey, apiOrganizationId, heliconeKey } = useSettingsStore.getState();
-  return {
-    ...(apiHost ? { apiHost } : {}),
-    ...(apiKey ? { apiKey } : {}),
-    ...(apiOrganizationId ? { apiOrganizationId } : {}),
-    ...(heliconeKey ? { heliconeKey } : {}),
-  };
-};

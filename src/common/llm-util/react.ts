@@ -71,7 +71,7 @@ export class Agent {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await callChat(modelId, S.messages, 500)).message.content;
+      content = (await callChat(modelId, S.messages, 500)).content;
     } catch (error: any) {
       content = `Error in callChat: ${error}`;
     }
