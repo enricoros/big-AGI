@@ -26,13 +26,14 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
     normSetup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
 
-  const keyError = (/*needsKey ||*/ !!oaiKey) && !isValidOpenAIApiKey(oaiKey);
   const needsKey = !hasServerKeyOpenAI;
-  const shallFetchSucceed = oaiKey ? isValidOpenAIApiKey(oaiKey) : !needsKey;
+  const keyValid = isValidOpenAIApiKey(oaiKey);
+  const keyError = (/*needsKey ||*/ !!oaiKey) && !keyValid;
+  const shallFetchSucceed = oaiKey ? keyValid : !needsKey;
 
   // fetch models
   const { isFetching, refetch } = api.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
-    enabled: !sourceLLMs.length && shallFetchSucceed && !!source,
+    enabled: !sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -44,21 +45,16 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormInputKey
-      label={'API Key' + (needsKey ? '' : ' - not required')}
+      label={'API Key'}
+      rightLabel={<>{needsKey
+        ? !oaiKey && <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
+        : 'not required'
+      } {oaiKey && keyValid && <Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
+      </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
       required={needsKey} isError={keyError}
       placeholder='sk-...'
-      description={<>
-        {needsKey
-          ? <>
-            <Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>Create Key</Link>, then apply to
-            the <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>GPT-4 wait-list</Link>
-          </>
-          : '' // `This key will take precedence over the server's.`
-        } {' '}<Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>Check usage</Link>
-      </>}
     />
-
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <Box sx={{ minWidth: settingsCol1Width }}>
@@ -144,17 +140,16 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 
     </Section>
 
-    <Box>
-      <Button
-        variant='solid' color='neutral'
-        disabled={!shallFetchSucceed || isFetching}
-        endDecorator={<FileDownloadIcon />}
-        onClick={() => refetch()}
-        sx={{ minWidth: 120 }}
-      >
-        Models
-      </Button>
-    </Box>
+
+    <Button
+      variant='solid' color='neutral'
+      disabled={!shallFetchSucceed || isFetching}
+      endDecorator={<FileDownloadIcon />}
+      onClick={() => refetch()}
+      sx={{ minWidth: 120, ml: 'auto' }}
+    >
+      Models
+    </Button>
 
   </Box>;
 }
