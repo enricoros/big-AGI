@@ -6,14 +6,15 @@ import { Divider } from '@mui/joy';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStore } from '~/common/state/store-ui';
 
-import { LLMList } from './LLMList';
-import { EditSources } from './EditSources';
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
-import { configureVendorSource } from '~/modules/llms/vendors-registry';
+import { EditSources } from './EditSources';
+import { LLMList } from './LLMList';
+import { addDefaultVendorIfEmpty, findVendor } from '../vendors-registry';
 
 
-function SourceConfiguration(props: { source: DModelSource }) {
-  return configureVendorSource(props.source.vendorId, props.source.sourceId);
+function SetupSource(props: { source: DModelSource }) {
+  const vendor = findVendor(props.source.vendorId);
+  return vendor?.createSetupComponent(props.source.sourceId) ?? null;
 }
 
 
@@ -35,11 +36,16 @@ export function Configurator() {
 
   const activeSource = modelSources.find(source => source.sourceId === selectedSourceId);
 
-  // show the Configuration Dialog at startup if the API key is required but not set
+  
+  // if no sources at startup, open the modal
   React.useEffect(() => {
-    if (!activeSource)
+    if (!selectedSourceId)
       openModeling();
-  }, [activeSource, openModeling]);
+  }, [selectedSourceId, openModeling]);
+
+  // add the default source on cold - will require setup
+  React.useEffect(() => addDefaultVendorIfEmpty(), []);
+
 
   return (
     <GoodModal title='Configure AI Models' open={modelingOpen} onClose={closeModeling}>
@@ -48,7 +54,7 @@ export function Configurator() {
 
       {!!activeSource && <Divider />}
 
-      {!!activeSource && <SourceConfiguration source={activeSource} />}
+      {!!activeSource && <SetupSource source={activeSource} />}
 
       {!!llmCount && <Divider />}
 

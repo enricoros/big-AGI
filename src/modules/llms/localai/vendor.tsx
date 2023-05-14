@@ -1,6 +1,7 @@
-import { SourceConfig } from './SourceConfig';
+import { DModelSource, DModelSourceId } from '../store-models';
+import { LocalAISetup } from './LocalAISetup';
 import { ModelVendor } from '../vendors-registry';
-import { DModelSource, DModelSourceId } from '~/modules/llms/store-models';
+
 
 export const ModelVendorLocalAI: ModelVendor = {
   id: 'localai',
@@ -16,19 +17,19 @@ export const ModelVendorLocalAI: ModelVendor = {
     sourceId,
     label: 'LocalAI' + (count > 0 ? ` #${count}` : ''),
     vendorId: 'localai',
-    _config: {},
+    setup: {},
   }),
-  configureSourceComponent: (sourceId: DModelSourceId) => <SourceConfig sourceId={sourceId} />,
+  createSetupComponent: (sourceId: DModelSourceId) => <LocalAISetup sourceId={sourceId} />,
 };
 
 
-export interface SourceConfigLocalAI {
+export interface SourceSetupLocalAI {
   hostUrl: string;
 }
 
-export function normConfigLocalAI(config?: Partial<SourceConfigLocalAI>): SourceConfigLocalAI {
+export function normalizeSetup(partialSetup?: Partial<SourceSetupLocalAI>): SourceSetupLocalAI {
   return {
     hostUrl: '',
-    ...config,
+    ...partialSetup,
   };
 }

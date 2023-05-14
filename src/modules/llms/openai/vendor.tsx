@@ -1,5 +1,5 @@
 import { ModelVendor } from '../vendors-registry';
-import { SourceConfig } from './SourceConfig';
+import { OpenAISetup } from './OpenAISetup';
 import { DModelSource, DModelSourceId } from '~/modules/llms/store-models';
 
 export const ModelVendorOpenAI: ModelVendor = {
@@ -16,12 +16,13 @@ export const ModelVendorOpenAI: ModelVendor = {
     sourceId,
     label: 'OpenAI' + (count > 0 ? ` #${count}` : ''),
     vendorId: 'openai',
-    _config: {},
+    setup: {},
   }),
-  configureSourceComponent: (sourceId: DModelSourceId) => <SourceConfig sourceId={sourceId} />,
+  createSetupComponent: (sourceId: DModelSourceId) => <OpenAISetup sourceId={sourceId} />,
 };
 
-export interface SourceConfigOpenAI {
+
+export interface SourceSetupOpenAI {
   oaiKey: string;
   oaiOrg: string;
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
@@ -30,7 +31,7 @@ export interface SourceConfigOpenAI {
   llmResponseTokens: number;
 }
 
-export function normConfigOpenAI(config?: Partial<SourceConfigOpenAI>): SourceConfigOpenAI {
+export function normalizeSetup(partialSetup?: Partial<SourceSetupOpenAI>): SourceSetupOpenAI {
   return {
     oaiKey: '',
     oaiOrg: '',
@@ -38,6 +39,6 @@ export function normConfigOpenAI(config?: Partial<SourceConfigOpenAI>): SourceCo
     heliKey: '',
     llmTemperature: 0.5,
     llmResponseTokens: 1024,
-    ...config,
+    ...partialSetup,
   };
 }

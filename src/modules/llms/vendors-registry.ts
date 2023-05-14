@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import { DModelSource, DModelSourceId } from './store-models';
+import { DModelSource, DModelSourceId, useModelsStore } from './store-models';
 import { ModelVendorLocalAI } from './localai/vendor';
 import { ModelVendorOpenAI } from './openai/vendor';
 
@@ -21,12 +21,7 @@ export interface ModelVendor {
 
   // factories
   createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
-  configureSourceComponent: (sourceId: DModelSourceId) => React.JSX.Element;
-
-}
-
-export function findVendor(id?: ModelVendorId): ModelVendor | null {
-  return id ? (MODEL_VENDOR_REGISTRY[id] ?? null) : null;
+  createSetupComponent: (sourceId: DModelSourceId) => React.JSX.Element;
 }
 
 export function rankedVendors(): ModelVendor[] {
@@ -35,12 +30,14 @@ export function rankedVendors(): ModelVendor[] {
   return modelVendors;
 }
 
-export function defaultVendorId(): ModelVendorId {
-  return rankedVendors()[0].id;
+export function findVendor(id?: ModelVendorId): ModelVendor | null {
+  return id ? (MODEL_VENDOR_REGISTRY[id] ?? null) : null;
 }
 
-export function configureVendorSource(vendorId?: ModelVendorId, sourceId?: DModelSourceId): React.JSX.Element | null {
-  return sourceId ? findVendor(vendorId)?.configureSourceComponent(sourceId) ?? null : null;
+export function addDefaultVendorIfEmpty() {
+  const { addSource, sources } = useModelsStore.getState();
+  if (!sources.length)
+    addSource(ModelVendorOpenAI.createSource(ModelVendorOpenAI.id, 0));
 }
 
 

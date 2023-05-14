@@ -9,9 +9,9 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
-import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
-import { defaultVendorId, findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { DModelSource, DModelSourceId, useModelsStore } from '../store-models';
+import { findVendor, ModelVendor, ModelVendorId, rankedVendors } from '../vendors-registry';
 
 
 function createUniqueSourceId(vendorId: ModelVendorId, sources: DModelSource[]): { id: string, count: number } {
@@ -91,6 +91,7 @@ export function EditSources(props: {
     };
   }), [handleAddSourceFromVendor, modelSources]);
 
+
   // source items
   const sourceItems = React.useMemo(() => modelSources.map((source: DModelSource) => {
     return {
@@ -101,15 +102,8 @@ export function EditSources(props: {
   }), [modelSources]);
   const selectedSourceItem = sourceItems.find(item => item.source.sourceId === props.selectedSourceId);
 
+
   const noSources = !modelSources.length;
-
-
-  // if there are no sources, click on 'Add'
-  React.useEffect(() => {
-    if (!useModelsStore.getState().sources.length)
-      handleAddSourceFromVendor(defaultVendorId());
-  }, [handleAddSourceFromVendor]);
-
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
