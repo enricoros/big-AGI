@@ -473,7 +473,7 @@ export function Composer(props: {
                 value={composeText} onChange={(e) => setComposeText(e.target.value)}
                 slotProps={{
                   textarea: {
-                    enterkeyhint: enterToSend ? 'send' : 'enter',
+                    enterKeyHint: enterToSend ? 'send' : 'enter',
                     sx: {
                       ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
                       mb: 0.5,
