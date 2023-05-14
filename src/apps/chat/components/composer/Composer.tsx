@@ -19,6 +19,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { ChatModels, SendModeId, SendModes } from '../../../../data';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { countModelTokens } from '~/common/llm-util/token-counter';
+import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfToText';
@@ -241,25 +242,27 @@ export function Composer(props: {
   const micColor = isSpeechError ? 'danger' : isRecordingSpeech ? 'warning' : isRecordingAudio ? 'warning' : 'neutral';
   const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'solid' : 'plain';
 
-  async function loadAndAttachFiles(files: FileList) {
+  async function loadAndAttachFiles(files: FileList, overrideFileNames: string[]) {
 
     // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
     //       to the common root, but the files[].webkitRelativePath property is not providing that information
 
     // perform loading and expansion
     let newText = '';
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = overrideFileNames.length === files.length ? overrideFileNames[i] : file.name;
       let fileText = '';
       try {
         if (file.type === 'application/pdf')
           fileText = await pdfToText(file);
         else
           fileText = await file.text();
-        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: file.name, fileText })(newText);
+        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: fileName, fileText })(newText);
       } catch (error) {
         // show errors in the prompt box itself - FUTURE: show in a toast
         console.error(error);
-        newText = `${newText}\n\nError loading file ${file.name}: ${error}\n`;
+        newText = `${newText}\n\nError loading file ${fileName}: ${error}\n`;
       }
     }
 
@@ -293,7 +296,7 @@ export function Composer(props: {
   const handleLoadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
     if (files && files.length >= 1)
-      await loadAndAttachFiles(files);
+      await loadAndAttachFiles(files, []);
 
     // this is needed to allow the same file to be selected again
     e.target.value = '';
@@ -375,12 +378,19 @@ export function Composer(props: {
     setIsDragging(false);
 
     // dropped files
-    if (e.dataTransfer.files?.length >= 1)
-      return loadAndAttachFiles(e.dataTransfer.files);
+    if (e.dataTransfer.files?.length >= 1) {
+      // Workaround: as we don't have the full path in the File object, we need to get it from the text/plain data
+      let overrideFileNames: string[] = [];
+      if (e.dataTransfer.types?.includes('text/plain')) {
+        const plainText = e.dataTransfer.getData('text/plain');
+        overrideFileNames = extractFilePathsWithCommonRadix(plainText);
+      }
+      return loadAndAttachFiles(e.dataTransfer.files, overrideFileNames);
+    }
 
     // special case: detect failure of dropping from VSCode
     // VSCode: Drag & Drop does not transfer the File object: https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
-    if ('codeeditors' in e.dataTransfer.types)
+    if (e.dataTransfer.types?.includes('codeeditors'))
       return setComposeText(test => test + 'Pasting from VSCode is not supported! Fixme. Anyone?');
 
     // dropped text
