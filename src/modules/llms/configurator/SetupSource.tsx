@@ -6,5 +6,5 @@ import { findVendor } from '../vendors-registry';
 
 export function SetupSource(props: { source: DModelSource }) {
   const vendor = findVendor(props.source.vendorId);
-  return vendor?.createSetupComponent(props.source.sourceId) ?? null;
+  return vendor?.createSetupComponent(props.source.id) ?? null;
 }

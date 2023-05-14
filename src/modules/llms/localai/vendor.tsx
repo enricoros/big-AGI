@@ -14,7 +14,7 @@ export const ModelVendorLocalAI: ModelVendor = {
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
-    sourceId,
+    id: sourceId,
     label: 'LocalAI' + (count > 0 ? ` #${count}` : ''),
     vendorId: 'localai',
     setup: {},

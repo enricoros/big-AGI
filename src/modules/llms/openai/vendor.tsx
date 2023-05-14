@@ -13,7 +13,7 @@ export const ModelVendorOpenAI: ModelVendor = {
 
   // factories
   createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
-    sourceId,
+    id: sourceId,
     label: 'OpenAI' + (count > 0 ? ` #${count}` : ''),
     vendorId: 'openai',
     setup: {},

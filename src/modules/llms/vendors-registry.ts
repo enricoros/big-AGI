@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import { DModelSource, DModelSourceId, useModelsStore } from './store-models';
+import { DModelSource, DModelSourceId, findUniqueSourceId, useModelsStore } from './store-models';
 import { ModelVendorLocalAI } from './localai/vendor';
 import { ModelVendorOpenAI } from './openai/vendor';
 
@@ -34,10 +34,13 @@ export function findVendor(id?: ModelVendorId): ModelVendor | null {
   return id ? (MODEL_VENDOR_REGISTRY[id] ?? null) : null;
 }
 
-export function addDefaultVendorIfEmpty() {
+export function addDefaultSourceIfEmpty() {
   const { addSource, sources } = useModelsStore.getState();
-  if (!sources.length)
-    addSource(ModelVendorOpenAI.createSource(ModelVendorOpenAI.id, 0));
+  if (!sources.length) {
+    const { id, count } = findUniqueSourceId(ModelVendorOpenAI.id, sources);
+    const source = ModelVendorOpenAI.createSource(id, count);
+    addSource(source);
+  }
 }
 
 
