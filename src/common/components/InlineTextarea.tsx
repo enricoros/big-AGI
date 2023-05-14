@@ -28,7 +28,7 @@ export function InlineTextarea(props: { initialText: string, onEdit: (text: stri
       value={text} onChange={handleEditTextChanged} onKeyDown={handleEditKeyPressed} onBlur={handleEditBlur}
       slotProps={{
         textarea: {
-          enterkeyhint: enterToSend ? 'done' : 'enter',
+          enterKeyHint: enterToSend ? 'done' : 'enter',
         },
       }}
       sx={props.sx}
