@@ -49,7 +49,7 @@ export function EditSources(props: {
   }, [addModelSource, props]);
 
 
-  const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
+  const enableDeleteButton = !!props.selectedSourceId && (modelSources.length > 1 || (process.env.NODE_ENV === 'development'));
 
   const handleDeleteSource = (id: DModelSourceId) => setConfirmDeletionSourceId(id);
 
