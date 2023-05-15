@@ -6,7 +6,7 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { api } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import '~/common/styles/GithubMarkdown.css';
 import { Brand } from '~/common/brand';
@@ -41,4 +41,5 @@ function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: 
   </>;
 }
 
-export default api.withTRPC(MyApp);
+// enables the react-query api invocation
+export default apiQuery.withTRPC(MyApp);
