@@ -53,7 +53,7 @@ export function LLMSettings(props: { id: DLLMId }) {
         <FormLabel sx={{ minWidth: 80 }}>
           Delete
         </FormLabel>
-        <IconButton variant='plain' color='danger' onClick={handleLlmDelete}>
+        <IconButton variant='plain' color='neutral' onClick={handleLlmDelete}>
           <DeleteOutlineIcon />
         </IconButton>
       </FormControl>

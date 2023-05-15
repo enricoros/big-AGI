@@ -6,13 +6,13 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
-import { settingsGap } from '~/common/theme';
+import { FormInputKey } from '~/common/components/FormInputKey';
 import { Link } from '~/common/components/Link';
+import { settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { normalizeSetup, SourceSetupLocalAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
-import { FormInputKey } from '~/common/components/FormInputKey';
 
 
 const urlSchema = z.string().url().startsWith('http');
@@ -21,15 +21,15 @@ const urlSchema = z.string().url().startsWith('http');
 export function LocalAISetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { normSetup: { hostUrl }, updateSetup, sourceLLMs, source } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
+  const { normSetup: { hostUrl }, updateSetup, /*sourceLLMs,*/ source } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
 
   // validate if url is a well formed proper url with zod
   const { success: isValidHost } = urlSchema.safeParse(hostUrl);
   const shallFetchSucceed = isValidHost;
 
   // fetch models
-  const { isFetching, refetch } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
-    enabled: !sourceLLMs.length && shallFetchSucceed,
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
+    enabled: false, //!sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => localAIToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -47,7 +47,7 @@ export function LocalAISetup(props: { sourceId: DModelSourceId }) {
     />
 
     <Button
-      variant='solid' color='neutral'
+      variant='solid' color={isError ? 'warning' : 'primary'}
       disabled={!shallFetchSucceed || isFetching}
       endDecorator={<FileDownloadIcon />}
       onClick={() => refetch()}

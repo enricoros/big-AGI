@@ -8,7 +8,7 @@ import { LLMSettingsOpenAI, normalizeLLMSettings } from './vendor';
 import { useModelsStore } from '../llm.store';
 
 
-export function LLMSettings(props: { llm: DLLM }) {
+export function OpenAILLMSettings(props: { llm: DLLM }) {
 
   // external state
   const updateLLMSettings = useModelsStore(state => state.updateLLMSettings<LLMSettingsOpenAI>);
