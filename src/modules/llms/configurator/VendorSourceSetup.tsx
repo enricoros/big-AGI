@@ -4,7 +4,7 @@ import { DModelSource } from '../llm.types';
 import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 
-export function SetupSource(props: { source: DModelSource }) {
+export function VendorSourceSetup(props: { source: DModelSource }) {
   const vendor = findVendorById(props.source.vId);
   if (!vendor)
     return <>Configuration issue: Vendor not found for Source {props.source.id}</>;

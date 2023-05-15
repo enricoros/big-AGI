@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Slider, Stack } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Stack } from '@mui/joy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { OpenAI } from '~/modules/openai/openai.types';
@@ -18,12 +18,12 @@ import { normalizeSetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
 
 
-export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
+export function SourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
     source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
+    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
 
   const keyValid = isValidOpenAIApiKey(oaiKey);
@@ -54,35 +54,6 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       required={!hasServerKeyOpenAI} isError={keyError}
       placeholder='sk-...'
     />
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>Temperature</FormLabel>
-        <FormHelperText>{llmTemperature < 0.33 ? 'More strict' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}</FormHelperText>
-      </Box>
-      <Slider
-        aria-label='Model Temperature' color='neutral'
-        min={0} max={1} step={0.1} defaultValue={0.5}
-        value={llmTemperature} onChange={(event, value) => updateSetup({ llmTemperature: value as number })}
-        valueLabelDisplay='auto'
-        sx={{ py: 1, mt: 1.1 }}
-      />
-    </FormControl>
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>Output Tokens</FormLabel>
-        <FormHelperText>Reduces input</FormHelperText>
-      </Box>
-      <Slider
-        aria-label='Model Max Tokens' color='neutral'
-        min={256} max={4096} step={256} defaultValue={1024}
-        value={llmResponseTokens} onChange={(event, value) => updateSetup({ llmResponseTokens: value as number })}
-        valueLabelDisplay='on'
-        sx={{ py: 1, mt: 1.1 }}
-      />
-    </FormControl>
-
 
     <Section title='Advanced' collapsible collapsed asLink>
 

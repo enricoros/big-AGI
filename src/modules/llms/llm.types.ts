@@ -1,10 +1,10 @@
 import type React from 'react';
+import type { LLMSettingsOpenAI, SourceSetupOpenAI } from './openai/vendor';
 import type { SourceSetupLocalAI } from './localai/vendor';
-import type { SourceSetupOpenAI } from './openai/vendor';
 
 export type DLLMId = string;
 export type DLLMTags = 'stream' | 'chat';
-export type DLLMValues = object; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
+export type DLLMValues = LLMSettingsOpenAI; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
 export type DModelSourceId = string;
 export type DModelSourceSetup = SourceSetupOpenAI | SourceSetupLocalAI;
 export type ModelVendorId = 'localai' | 'openai'; // | 'anthropic' | 'azure_openai' | 'google_vertex';
