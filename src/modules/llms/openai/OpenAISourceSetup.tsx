@@ -13,12 +13,12 @@ import { Link } from '~/common/components/Link';
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap, settingsMaxWidth } from '~/common/theme';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DLLMId, DModelSource, DModelSourceId } from '../llm.types';
 import { normalizeSetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
 
 
-export function OpenAISetup(props: { sourceId: DModelSourceId }) {
+export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {

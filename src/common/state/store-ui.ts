@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { DLLMId } from '~/modules/llms/llm.types';
+
 
 /// UI Store (not persisted)
 
@@ -13,6 +15,10 @@ interface UIStore {
   openModeling: () => void;
   closeModeling: () => void;
 
+  llmSetupId: DLLMId | null;
+  openLLMSetup: (llmId: DLLMId) => void;
+  closeLLMSetup: () => void;
+
 }
 
 export const useUIStore = create<UIStore>()(
@@ -25,6 +31,10 @@ export const useUIStore = create<UIStore>()(
     modelingOpen: false,
     openModeling: () => set({ modelingOpen: true }),
     closeModeling: () => set({ modelingOpen: false }),
+
+    llmSetupId: null,
+    openLLMSetup: (llmId: DLLMId) => set({ llmSetupId: llmId }),
+    closeLLMSetup: () => set({ llmSetupId: null }),
 
   }),
 );

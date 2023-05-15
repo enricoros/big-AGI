@@ -55,5 +55,5 @@ export interface ModelVendor {
   // factories
   createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
   createSourceSetupComponent: (sourceId: DModelSourceId) => React.JSX.Element;
-  createLLMSettingsComponent: (llmId: DLLMId) => React.JSX.Element;
+  createLLMSettingsComponent: (llm: DLLM) => React.JSX.Element;
 }

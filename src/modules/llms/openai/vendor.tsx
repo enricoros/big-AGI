@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
-import { OpenAISetup } from './OpenAISetup';
+import { OpenAISourceSetup } from './OpenAISourceSetup';
 
 
 export const ModelVendorOpenAI: ModelVendor = {
@@ -21,7 +21,7 @@ export const ModelVendorOpenAI: ModelVendor = {
     vId: 'openai',
     setup: {},
   }),
-  createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISetup sourceId={sourceId} />,
+  createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISourceSetup sourceId={sourceId} />,
   createLLMSettingsComponent: () => <>No OpenAI Settings</>,
 };
 
