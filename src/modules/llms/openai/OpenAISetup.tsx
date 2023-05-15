@@ -26,10 +26,9 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
     normSetup: { heliKey, llmResponseTokens, llmTemperature, oaiHost, oaiKey, oaiOrg },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
 
-  const needsKey = !hasServerKeyOpenAI;
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsKey ||*/ !!oaiKey) && !keyValid;
-  const shallFetchSucceed = oaiKey ? keyValid : !needsKey;
+  const shallFetchSucceed = oaiKey ? keyValid : hasServerKeyOpenAI;
 
   // fetch models
   const { isFetching, refetch } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
@@ -46,13 +45,13 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 
     <FormInputKey
       label={'API Key'}
-      rightLabel={<>{needsKey
-        ? !oaiKey && <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
-        : 'not required'
+      rightLabel={<>{hasServerKeyOpenAI
+        ? '✔️ already set'
+        : !oaiKey && <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
       } {oaiKey && keyValid && <Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
-      required={needsKey} isError={keyError}
+      required={!hasServerKeyOpenAI} isError={keyError}
       placeholder='sk-...'
     />
 
