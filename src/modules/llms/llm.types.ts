@@ -18,6 +18,7 @@ export interface DLLM {
   description: string;
   tags: DLLMTags[];
   contextTokens: number;
+  hidden: boolean;
 
   // llm -> source
   sId: DModelSourceId;

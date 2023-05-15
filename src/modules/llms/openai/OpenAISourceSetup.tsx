@@ -154,44 +154,52 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
 }
 
 
+// this will help with adding metadata to the models
+const knownBases = [
+  {
+    id: 'gpt-4-32k',
+    label: 'GPT-4-32',
+    context: 32768,
+    description: 'Largest context window for big thinking',
+  },
+  {
+    id: 'gpt-4',
+    label: 'GPT-4',
+    context: 8192,
+    description: 'Insightful, big thinker, slower, pricey',
+  },
+  {
+    id: 'gpt-3.5-turbo',
+    label: '3.5-Turbo',
+    context: 4097,
+    description: 'Fair speed and smarts',
+  },
+  {
+    id: '',
+    label: '?:',
+    context: 2048,
+    description: 'Unknown, please let us know the ID',
+  },
+];
+
+
 function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM {
-  const id = model.id;
-  const family: '4-32' | '4' | '3.5' | 'unknown' = id.startsWith('gpt-4-32k') ? '4-32' : id.startsWith('gpt-4') ? '4' : id.startsWith('gpt-3.5') ? '3.5' : 'unknown';
-  let label: string;
-  let contextTokens: number;
-  let description: string;
-  const labelSnapshot = 'snapshot';
-  switch (family) {
-    case '4-32':
-      label = 'GPT-4-32' + id.replace('gpt-4-32k', '');
-      contextTokens = 32768;
-      description = id !== 'gpt-4-32k' ? labelSnapshot : 'Largest context window for big thinking';
-      break;
-    case '4':
-      label = 'GPT-4' + id.replace('gpt-4', '').replaceAll('-', ' ');
-      contextTokens = 8192;
-      description = id !== 'gpt-4' ? labelSnapshot : 'Insightful, big thinker, slower, pricey';
-      break;
-    case '3.5':
-      label = '3.5' + id.replace('gpt-3.5', '').replace('turbo', 'Turbo').replaceAll('-', ' ');
-      contextTokens = 4097;
-      description = id !== 'gpt-3.5-turbo' ? labelSnapshot : 'Fair speed and insight';
-      break;
-    default:
-      label = id.toUpperCase() + '?';
-      contextTokens = 4000;
-      description = `Unknown model ${id}`;
-      break;
-  }
+  const llmId: DLLMId = model.id;
+  const base = knownBases.find(base => llmId.startsWith(base.id)) || knownBases[knownBases.length - 1];
+  const suffix = llmId.slice(base.id.length).trim();
   return {
-    id: `${source.id}-${id}`,
-    label,
+    id: `${source.id}-${llmId}`,
+    label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
     created: model.created,
-    description,
+    description: base.description,
     tags: ['stream', 'chat'],
-    contextTokens,
+    contextTokens: base.context,
+    hidden: !!suffix,
     sId: source.id,
     _source: source,
-    settings: {},
+    settings: {
+      llmTemperature: 0.5,
+      llmResponseTokens: Math.round(base.context / 8),
+    },
   };
 }
