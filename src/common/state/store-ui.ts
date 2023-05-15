@@ -15,9 +15,9 @@ interface UIStore {
   openModeling: () => void;
   closeModeling: () => void;
 
-  llmSetupId: DLLMId | null;
-  openLLMSetup: (llmId: DLLMId) => void;
-  closeLLMSetup: () => void;
+  llmSettingsId: DLLMId | null;
+  openLLMSettings: (llmId: DLLMId) => void;
+  closeLLMSettings: () => void;
 
 }
 
@@ -32,9 +32,9 @@ export const useUIStore = create<UIStore>()(
     openModeling: () => set({ modelingOpen: true }),
     closeModeling: () => set({ modelingOpen: false }),
 
-    llmSetupId: null,
-    openLLMSetup: (llmId: DLLMId) => set({ llmSetupId: llmId }),
-    closeLLMSetup: () => set({ llmSetupId: null }),
+    llmSettingsId: null,
+    openLLMSettings: (llmId: DLLMId) => set({ llmSettingsId: llmId }),
+    closeLLMSettings: () => set({ llmSettingsId: null }),
 
   }),
 );

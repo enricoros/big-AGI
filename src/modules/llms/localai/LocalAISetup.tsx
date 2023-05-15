@@ -77,6 +77,7 @@ function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSou
     description: 'Local model',
     tags: ['stream', 'chat'],
     contextTokens,
+    hidden: false,
     sId: source.id,
     _source: source,
     settings: {},
