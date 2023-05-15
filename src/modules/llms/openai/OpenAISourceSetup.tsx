@@ -38,6 +38,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
+    refetchOnMount: 'always',
   });
 
 
