@@ -8,7 +8,9 @@ import { useUIStore } from '~/common/state/store-ui';
 
 import { DModelSourceId } from '../llm.types';
 import { EditSources } from './EditSources';
-import { ListLLMs } from './ListLLMs';
+import { LLMList } from './LLMList';
+import { SetupLLM } from './SetupLLM';
+import { SetupLLMCommon } from './SetupLLMCommon';
 import { SetupSource } from './SetupSource';
 import { createDefaultSource } from '../vendors/vendor.registry';
 import { useModelsStore } from '../llm.store';
@@ -20,10 +22,11 @@ export function Configurator() {
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
-  const { modelingOpen, openModeling, closeModeling } = useUIStore();
-  const { modelSources, llmCount } = useModelsStore(state => ({
+  const { modelingOpen, openModeling, closeModeling, llmSetupId, closeLLMSetup } = useUIStore();
+  const { modelSources, llmCount, llmSetup } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
+    llmSetup: llmSetupId ? state.llms.find(llm => llm.id === llmSetupId) : null,
   }), shallow);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
@@ -47,7 +50,9 @@ export function Configurator() {
   }, []);
 
 
-  return (
+  return <>
+
+    {/* Sources Setup */}
     <GoodModal title='Configure AI Models' open={modelingOpen} onClose={closeModeling}>
 
       <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
@@ -58,10 +63,23 @@ export function Configurator() {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <ListLLMs />}
+      {!!llmCount && <LLMList />}
 
       <Divider />
 
     </GoodModal>
-  );
+
+
+    {/* Models Settings */}
+    <GoodModal title='Model Settings' open={!!llmSetupId} onClose={closeLLMSetup}>
+
+      {!!llmSetup && <SetupLLM llm={llmSetup} />}
+
+      <Divider />
+
+      {!!llmSetup && <SetupLLMCommon llm={llmSetup} />}
+
+    </GoodModal>
+
+  </>;
 }
