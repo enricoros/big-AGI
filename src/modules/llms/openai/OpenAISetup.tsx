@@ -4,7 +4,7 @@ import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Slider, Sta
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { OpenAI } from '~/modules/openai/openai.types';
-import { api } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/modules/trpc/trpc.client';
 import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/openai/openai.client';
 
 import { Brand } from '~/common/brand';
@@ -32,7 +32,7 @@ export function OpenAISetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsKey;
 
   // fetch models
-  const { isFetching, refetch } = api.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
+  const { isFetching, refetch } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
     enabled: !sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];

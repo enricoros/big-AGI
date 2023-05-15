@@ -18,7 +18,7 @@ const getBaseUrl = () => {
 };
 
 /** A set of type-safe react-query hooks for your tRPC API. */
-export const api = createTRPCNext<AppRouter>({
+export const apiQuery = createTRPCNext<AppRouter>({
   config() {
     return {
       /**
@@ -63,7 +63,7 @@ export const api = createTRPCNext<AppRouter>({
 });
 
 /** Double-API! A set of type-safe async/await hooks for your tRPC API. */
-export const asyncApi = createTRPCProxyClient<AppRouter>({
+export const apiAsync = createTRPCProxyClient<AppRouter>({
     transformer: superjson,
     links: [
       loggerLink({

@@ -1,6 +1,6 @@
 import { ChatModelId } from '../../data';
 
-import { asyncApi } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { useSettingsStore } from '~/common/state/store-settings';
 
@@ -18,7 +18,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
 export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
   const { apiHost, apiKey, apiOrganizationId, heliconeKey, modelTemperature } = useSettingsStore.getState();
   try {
-    return await asyncApi.openai.chatGenerate.mutate({
+    return await apiAsync.openai.chatGenerate.mutate({
       access: { oaiKey: apiKey, oaiHost: apiHost, oaiOrg: apiOrganizationId, heliKey: heliconeKey },
       history: messages,
       model: { id: modelId, temperature: modelTemperature, ...(maxTokens && { maxTokens }) },

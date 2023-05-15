@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Box, Button } from '@mui/joy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-import { api } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { settingsGap } from '~/common/theme';
 import { Link } from '~/common/components/Link';
@@ -28,7 +28,7 @@ export function LocalAISetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = isValidHost;
 
   // fetch models
-  const { isFetching, refetch } = api.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
+  const { isFetching, refetch } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
     enabled: !sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => localAIToDLLM(model, source)) : [];
