@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouter } from '~/modules/trpc/trpc.router';
-import { createEdgeContext } from '~/modules/trpc/trpc.server';
+import { createTRPCContext } from '~/modules/trpc/trpc.server';
 
 
 /*
@@ -29,7 +29,7 @@ export default async function handler(req: NextRequest) {
     endpoint: '/api/trpc',
     router: appRouter,
     req,
-    createContext: createEdgeContext,
+    createContext: createTRPCContext,
     onError:
       process.env.NODE_ENV === 'development'
         ? ({ path, error }) => console.error(`❌ tRPC failed on ${path ?? '<no-path>'}:`, error)
