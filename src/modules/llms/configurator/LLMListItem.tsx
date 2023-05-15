@@ -33,9 +33,11 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
 
         {/* 'Actions' (only click -> configure in reality) */}
         <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          {llm.hidden && <IconButton disabled variant='plain' color='neutral'>
-            <VisibilityOffOutlinedIcon />
-          </IconButton>}
+          {llm.hidden && (
+            <IconButton disabled variant='plain' color='neutral'>
+              <VisibilityOffOutlinedIcon />
+            </IconButton>
+          )}
           <IconButton variant='plain' color='neutral'>
             <SettingsOutlinedIcon />
           </IconButton>

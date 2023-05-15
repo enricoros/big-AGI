@@ -18,7 +18,7 @@ import { normalizeSetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
 
 
-export function SourceSetup(props: { sourceId: DModelSourceId }) {
+export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
@@ -31,7 +31,7 @@ export function SourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : hasServerKeyOpenAI;
 
   // fetch models
-  const { isFetching, refetch } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
     enabled: !sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
@@ -112,7 +112,7 @@ export function SourceSetup(props: { sourceId: DModelSourceId }) {
 
 
     <Button
-      variant='solid' color='neutral'
+      variant='solid' color={isError ? 'warning' : 'primary'}
       disabled={!shallFetchSucceed || isFetching}
       endDecorator={<FileDownloadIcon />}
       onClick={() => refetch()}
