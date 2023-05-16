@@ -58,13 +58,15 @@ export function LLMOptions(props: { id: DLLMId }) {
         <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap' }}>
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabel sx={{ minWidth: 80 }}>
           Visibility
         </FormLabel>
         <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
                 endDecorator={!llm.hidden ? 'Show' : 'Hide'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+        {/*<Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
+        {/*<Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
