@@ -4,17 +4,17 @@ import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM } from '../llm.types';
-import { LLMSettingsOpenAI, normalizeLLMSettings } from './vendor';
+import { LLMOptionsOpenAI, normalizeLLMOptions } from './vendor';
 import { useModelsStore } from '../llm.store';
 
 
-export function OpenAILLMSettings(props: { llm: DLLM }) {
+export function OpenAILLMOptions(props: { llm: DLLM }) {
 
   // external state
-  const updateLLMSettings = useModelsStore(state => state.updateLLMSettings<LLMSettingsOpenAI>);
+  const updateLLMOptions = useModelsStore(state => state.updateLLMOptions<LLMOptionsOpenAI>);
 
   const { id: llmId } = props.llm;
-  const { llmResponseTokens, llmTemperature } = normalizeLLMSettings(props.llm.settings);
+  const { llmResponseTokens, llmTemperature } = normalizeLLMOptions(props.llm.options);
 
   const maxValue = props.llm.contextTokens > 1024 ? Math.round(props.llm.contextTokens / 2) : 4096;
 
@@ -28,7 +28,7 @@ export function OpenAILLMSettings(props: { llm: DLLM }) {
       <Slider
         aria-label='Model Temperature' color='neutral'
         min={0} max={1} step={0.1} defaultValue={0.5}
-        value={llmTemperature} onChange={(event, value) => updateLLMSettings(llmId, { llmTemperature: value as number })}
+        value={llmTemperature} onChange={(event, value) => updateLLMOptions(llmId, { llmTemperature: value as number })}
         valueLabelDisplay='auto'
         sx={{ py: 1, mt: 1.1 }}
       />
@@ -42,7 +42,7 @@ export function OpenAILLMSettings(props: { llm: DLLM }) {
       <Slider
         aria-label='Model Max Tokens' color='neutral'
         min={256} max={maxValue} step={256} defaultValue={1024}
-        value={llmResponseTokens} onChange={(event, value) => updateLLMSettings(llmId, { llmResponseTokens: value as number })}
+        value={llmResponseTokens} onChange={(event, value) => updateLLMOptions(llmId, { llmResponseTokens: value as number })}
         valueLabelDisplay='on'
         sx={{ py: 1, mt: 1.1 }}
       />

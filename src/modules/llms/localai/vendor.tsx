@@ -3,7 +3,7 @@ import * as React from 'react';
 import DevicesIcon from '@mui/icons-material/Devices';
 
 import { DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
-import { LocalAISetup } from './LocalAISetup';
+import { LocalAISourceSetup } from './LocalAISourceSetup';
 
 
 export const ModelVendorLocalAI: ModelVendor = {
@@ -21,8 +21,8 @@ export const ModelVendorLocalAI: ModelVendor = {
     vId: 'localai',
     setup: {},
   }),
-  createSourceSetupComponent: (sourceId: DModelSourceId) => <LocalAISetup sourceId={sourceId} />,
-  createLLMSettingsComponent: () => <>No LocalAI Settings</>,
+  createSourceSetupComponent: (sourceId: DModelSourceId) => <LocalAISourceSetup sourceId={sourceId} />,
+  createLLMOptionsComponent: () => <>No LocalAI Options</>,
 };
 
 

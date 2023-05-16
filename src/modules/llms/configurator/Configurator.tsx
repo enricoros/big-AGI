@@ -9,7 +9,7 @@ import { useUIStore } from '~/common/state/store-ui';
 import { DModelSourceId } from '../llm.types';
 import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
-import { LLMSettings } from './LLMSettings';
+import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
 import { createDefaultSource } from '../vendors/vendor.registry';
 import { useModelsStore } from '../llm.store';
@@ -21,7 +21,7 @@ export function Configurator() {
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
-  const { modelingOpen, openModeling, closeModeling, llmSettingsId } = useUIStore();
+  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStore();
   const { modelSources, llmCount } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
@@ -37,8 +37,8 @@ export function Configurator() {
   // if no sources at startup, open the modal
   React.useEffect(() => {
     if (!selectedSourceId)
-      openModeling();
-  }, [selectedSourceId, openModeling]);
+      openModelsSetup();
+  }, [selectedSourceId, openModelsSetup]);
 
   // add the default source on cold - will require setup
   React.useEffect(() => {
@@ -51,7 +51,7 @@ export function Configurator() {
   return <>
 
     {/* Sources Setup */}
-    <GoodModal title='Configure AI Models' open={modelingOpen} onClose={closeModeling}>
+    <GoodModal title='Configure AI Models' open={modelsSetupOpen} onClose={closeModelsSetup}>
 
       <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
@@ -67,8 +67,8 @@ export function Configurator() {
 
     </GoodModal>
 
-    {/* Models Settings */}
-    {!!llmSettingsId && <LLMSettings id={llmSettingsId} />}
+    {/* per-LLM options */}
+    {!!llmOptionsId && <LLMOptions id={llmOptionsId} />}
 
   </>;
 }

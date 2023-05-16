@@ -41,6 +41,9 @@ export const openAIRouter = createTRPCRouter({
 
       // sort by which model has the least number of '-' in the name, and then by id, decreasing
       llms.sort((a, b) => {
+        // model that have '-0' in their name go at the end
+        // if (a.id.includes('-0') && !b.id.includes('-0')) return 1;
+        // if (!a.id.includes('-0') && b.id.includes('-0')) return -1;
         const aCount = a.id.split('-').length;
         const bCount = b.id.split('-').length;
         if (aCount === bCount)
@@ -103,7 +106,7 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
 function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
-  if (!oaiKey) throw new Error('Missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).');
+  if (!oaiKey) throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // Organization ID
   const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';

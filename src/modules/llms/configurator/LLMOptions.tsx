@@ -8,14 +8,14 @@ import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStore } from '~/common/state/store-ui';
 
 import { DLLMId } from '../llm.types';
-import { VendorLLMSettings } from './VendorLLMSettings';
+import { VendorLLMOptions } from './VendorLLMOptions';
 import { useModelsStore } from '../llm.store';
 
 
-export function LLMSettings(props: { id: DLLMId }) {
+export function LLMOptions(props: { id: DLLMId }) {
 
   // external state
-  const closeLLMSettings = useUIStore(state => state.closeLLMSettings);
+  const closeLLMOptions = useUIStore(state => state.closeLLMOptions);
   const { llm, removeLLM, updateLLM } = useModelsStore(state => ({
     llm: state.llms.find(llm => llm.id === props.id),
     removeLLM: state.removeLLM,
@@ -23,20 +23,20 @@ export function LLMSettings(props: { id: DLLMId }) {
   }), shallow);
 
   if (!llm)
-    return <>Settings issue: LLM not found for id {props.id}</>;
+    return <>Options issue: LLM not found for id {props.id}</>;
 
   const handleLlmVisibilityToggle = () => updateLLM(llm.id, { hidden: !llm.hidden });
 
   const handleLlmDelete = () => {
     removeLLM(llm.id);
-    closeLLMSettings();
+    closeLLMOptions();
   };
 
   return (
 
-    <GoodModal title='Model Settings' open={!!props.id} onClose={closeLLMSettings}>
+    <GoodModal title={`${llm.label} Options`} open={!!props.id} onClose={closeLLMOptions}>
 
-      <VendorLLMSettings id={props.id} />
+      <VendorLLMOptions id={props.id} />
 
       <Divider />
 

@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { Box, Button } from '@mui/joy';
+import { Box, Button, Divider } from '@mui/joy';
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 import { SearchSettings } from '~/modules/search/SearchSettings';
-
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStore } from '~/common/state/store-ui';
 
@@ -17,15 +17,18 @@ import { UISettings } from './UISettings';
  */
 export function SettingsModal() {
   // external state
-  const { settingsOpen, closeSettings, openModeling } = useUIStore();
+  const { settingsOpen, closeSettings, openModelsSetup } = useUIStore();
 
   return (
-    <GoodModal title='Settings' open={settingsOpen} onClose={closeSettings}
+    <GoodModal title={`Preferences`} open={settingsOpen} onClose={closeSettings}
+               startButton={
+                 <Button variant='plain' color='info' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
+                   Models
+                 </Button>
+               }
                sx={{ p: { xs: 1, sm: 2, lg: 2.5 } }}>
 
-      <Button size='lg' variant='solid' color='primary' onClick={openModeling}>
-        Configure Models
-      </Button>
+      <Divider />
 
       <Box>
 
@@ -38,6 +41,8 @@ export function SettingsModal() {
         <SearchSettings />
 
       </Box>
+
+      <Divider />
 
     </GoodModal>
   );

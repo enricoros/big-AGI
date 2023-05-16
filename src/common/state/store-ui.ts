@@ -11,13 +11,13 @@ interface UIStore {
   openSettings: () => void;
   closeSettings: () => void;
 
-  modelingOpen: boolean;
-  openModeling: () => void;
-  closeModeling: () => void;
+  modelsSetupOpen: boolean;
+  openModelsSetup: () => void;
+  closeModelsSetup: () => void;
 
-  llmSettingsId: DLLMId | null;
-  openLLMSettings: (llmId: DLLMId) => void;
-  closeLLMSettings: () => void;
+  llmOptionsId: DLLMId | null;
+  openLLMOptions: (llmId: DLLMId) => void;
+  closeLLMOptions: () => void;
 
 }
 
@@ -28,13 +28,13 @@ export const useUIStore = create<UIStore>()(
     closeSettings: () => set({ settingsOpen: false }),
     openSettings: () => set({ settingsOpen: true }),
 
-    modelingOpen: false,
-    openModeling: () => set({ modelingOpen: true }),
-    closeModeling: () => set({ modelingOpen: false }),
+    modelsSetupOpen: false,
+    openModelsSetup: () => set({ modelsSetupOpen: true }),
+    closeModelsSetup: () => set({ modelsSetupOpen: false }),
 
-    llmSettingsId: null,
-    openLLMSettings: (llmId: DLLMId) => set({ llmSettingsId: llmId }),
-    closeLLMSettings: () => set({ llmSettingsId: null }),
+    llmOptionsId: null,
+    openLLMOptions: (llmId: DLLMId) => set({ llmOptionsId: llmId }),
+    closeLLMOptions: () => set({ llmOptionsId: null }),
 
   }),
 );

@@ -35,7 +35,7 @@ function CommonContextItems(props: { onClose: () => void }) {
 
     <MenuItem onClick={handleShowSettings}>
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
-      Settings
+      Preferences
     </MenuItem>
 
   </>;

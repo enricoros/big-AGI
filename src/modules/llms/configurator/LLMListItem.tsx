@@ -11,7 +11,7 @@ import { useUIStore } from '~/common/state/store-ui';
 export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
 
   // external state
-  const openLLMSettings = useUIStore(state => state.openLLMSettings);
+  const openLLMOptions = useUIStore(state => state.openLLMOptions);
 
   // derived
   const llm = props.llm;
@@ -20,12 +20,12 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
 
   return (
     <ListItem>
-      <ListItemButton onClick={() => openLLMSettings(llm.id)}>
+      <ListItemButton onClick={() => openLLMOptions(llm.id)}>
 
         {/* Model Name */}
         <ListItemContent>
           <Tooltip title={tooltip}>
-            <Typography sx={{ display: 'inline' }}>
+            <Typography sx={{ display: 'inline', ...(llm.hidden && { opacity: 0.6 }) }}>
               {label}
             </Typography>
           </Tooltip>
