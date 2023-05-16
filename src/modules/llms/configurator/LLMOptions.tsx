@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Divider, FormControl, FormLabel, IconButton, Switch } from '@mui/joy';
+import { Button, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { GoodModal } from '~/common/components/GoodModal';
@@ -25,6 +25,9 @@ export function LLMOptions(props: { id: DLLMId }) {
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
 
+
+  const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
+
   const handleLlmVisibilityToggle = () => updateLLM(llm.id, { hidden: !llm.hidden });
 
   const handleLlmDelete = () => {
@@ -34,11 +37,26 @@ export function LLMOptions(props: { id: DLLMId }) {
 
   return (
 
-    <GoodModal title={`${llm.label} Options`} open={!!props.id} onClose={closeLLMOptions}>
+    <GoodModal
+      title={`${llm.label} Options`}
+      open={!!props.id} onClose={closeLLMOptions}
+      startButton={
+        <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
+          Delete
+        </Button>
+      }
+    >
 
       <VendorLLMOptions id={props.id} />
 
       <Divider />
+
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap' }}>
+        <FormLabel sx={{ minWidth: 80 }}>
+          Name
+        </FormLabel>
+        <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
+      </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap' }}>
         <FormLabel sx={{ minWidth: 80 }}>
@@ -49,13 +67,14 @@ export function LLMOptions(props: { id: DLLMId }) {
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap' }}>
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabel sx={{ minWidth: 80 }}>
-          Delete
+          Debug Info
         </FormLabel>
-        <IconButton variant='plain' color='neutral' onClick={handleLlmDelete}>
-          <DeleteOutlineIcon />
-        </IconButton>
+        <Typography level='body2' sx={{ display: 'block' }}>
+          [{llm.id}]: {llm.options.llmId && `id: ${llm.options.llmId} · `} context tokens: {llm.contextTokens} · {
+          llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description} · tags: {llm.tags.join(', ')}
+        </Typography>
       </FormControl>
 
     </GoodModal>

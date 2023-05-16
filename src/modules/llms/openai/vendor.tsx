@@ -46,12 +46,14 @@ export function normalizeSetup(partialSetup?: Partial<SourceSetupOpenAI>): Sourc
 
 
 export interface LLMOptionsOpenAI {
+  llmId: string;
   llmTemperature: number;
   llmResponseTokens: number;
 }
 
 export function normalizeLLMOptions(partialOptions?: Partial<LLMOptionsOpenAI>): LLMOptionsOpenAI {
   return {
+    llmId: 'unknown_id',
     llmTemperature: 0.5,
     llmResponseTokens: 1024,
     ...partialOptions,
