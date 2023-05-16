@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { Box, Button } from '@mui/joy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
@@ -18,14 +19,16 @@ import { useModelsStore, useSourceSetup } from '../llm.store';
 const urlSchema = z.string().url().startsWith('http');
 
 
-export function LocalAISetup(props: { sourceId: DModelSourceId }) {
+export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { normSetup: { hostUrl }, updateSetup, /*sourceLLMs,*/ source } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
+  const { normSetup: { hostUrl }, updateSetup, sourceLLMs, source } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeSetup);
 
   // validate if url is a well formed proper url with zod
   const { success: isValidHost } = urlSchema.safeParse(hostUrl);
   const shallFetchSucceed = isValidHost;
+
+  const hasModels = !!sourceLLMs.length;
 
   // fetch models
   const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
@@ -49,7 +52,7 @@ export function LocalAISetup(props: { sourceId: DModelSourceId }) {
     <Button
       variant='solid' color={isError ? 'warning' : 'primary'}
       disabled={!shallFetchSucceed || isFetching}
-      endDecorator={<FileDownloadIcon />}
+      endDecorator={hasModels ? <SyncIcon /> : <FileDownloadIcon />}
       onClick={() => refetch()}
       sx={{ minWidth: 120, ml: 'auto' }}
     >
@@ -80,6 +83,6 @@ function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSou
     hidden: false,
     sId: source.id,
     _source: source,
-    settings: {},
+    options: {},
   };
 }

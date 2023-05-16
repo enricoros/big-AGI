@@ -5,9 +5,9 @@ import { SxProps } from '@mui/joy/styles/types';
 
 
 /**
- * Base for out Modal components (Settings, Modeling, etc.)
+ * Base for out Modal components (Preferences, Models Setup, etc.)
  */
-export function GoodModal(props: { title: string, open: boolean, onClose: () => void, sx?: SxProps, children: React.ReactNode }) {
+export function GoodModal(props: { title: string, open: boolean, onClose: () => void, startButton?: React.JSX.Element, sx?: SxProps, children: React.ReactNode }) {
   return (
     <Modal open={props.open} onClose={props.onClose}>
       <ModalOverflow>
@@ -28,8 +28,9 @@ export function GoodModal(props: { title: string, open: boolean, onClose: () => 
 
           {props.children}
 
-          <Box sx={{ mt: 'auto', display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ minWidth: 80 }}>
+          <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
+            {props.startButton}
+            <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 80 }}>
               Close
             </Button>
           </Box>

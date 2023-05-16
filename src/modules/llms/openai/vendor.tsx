@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { DLLM, DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
-import { OpenAILLMSettings } from './OpenAILLMSettings';
+import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
 
 
@@ -23,7 +23,7 @@ export const ModelVendorOpenAI: ModelVendor = {
     setup: {},
   }),
   createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISourceSetup sourceId={sourceId} />,
-  createLLMSettingsComponent: (llm: DLLM) => <OpenAILLMSettings llm={llm} />,
+  createLLMOptionsComponent: (llm: DLLM) => <OpenAILLMOptions llm={llm} />,
 };
 
 
@@ -45,15 +45,15 @@ export function normalizeSetup(partialSetup?: Partial<SourceSetupOpenAI>): Sourc
 }
 
 
-export interface LLMSettingsOpenAI {
+export interface LLMOptionsOpenAI {
   llmTemperature: number;
   llmResponseTokens: number;
 }
 
-export function normalizeLLMSettings(partialSettings?: Partial<LLMSettingsOpenAI>): LLMSettingsOpenAI {
+export function normalizeLLMOptions(partialOptions?: Partial<LLMOptionsOpenAI>): LLMOptionsOpenAI {
   return {
     llmTemperature: 0.5,
     llmResponseTokens: 1024,
-    ...partialSettings,
+    ...partialOptions,
   };
 }

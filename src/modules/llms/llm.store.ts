@@ -14,7 +14,7 @@ interface ModelsStore {
   addLLMs: (llms: DLLM[]) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
-  updateLLMSettings: <T>(id: DLLMId, partialSettings: Partial<T>) => void;
+  updateLLMOptions: <T>(id: DLLMId, partialOptions: Partial<T>) => void;
 
   addSource: (source: DModelSource) => void;
   removeSource: (id: DModelSourceId) => void;
@@ -51,11 +51,11 @@ export const useModelsStore = create<ModelsStore>()(
           ),
         })),
 
-      updateLLMSettings: <T>(id: DLLMId, partialSettings: Partial<T>) =>
+      updateLLMOptions: <T>(id: DLLMId, partialOptions: Partial<T>) =>
         set(state => ({
           llms: state.llms.map((llm: DLLM): DLLM =>
             llm.id === id
-              ? { ...llm, settings: { ...llm.settings, ...partialSettings } }
+              ? { ...llm, options: { ...llm.options, ...partialOptions } }
               : llm,
           ),
         })),

@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { ListItemDecorator, Option, Typography } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
 
@@ -27,7 +28,9 @@ export function Dropdowns(props: {
       setSystemPurposeId: state.setSystemPurposeId,
     };
   }, shallow);
-  const openModeling = useUIStore(state => state.openModeling);
+  const { openLLMOptions, openModelsSetup } = useUIStore(state => ({
+    openLLMOptions: state.openLLMOptions, openModelsSetup: state.openModelsSetup,
+  }), shallow);
 
   const handleChatModelChange = (event: any, value: ChatModelId | null) =>
     value && props.conversationId && setChatModelId(props.conversationId, value);
@@ -41,16 +44,27 @@ export function Dropdowns(props: {
       <AppBarDropdown
         items={ChatModels}
         value={chatModelId} onChange={handleChatModelChange}
-        appendOption={
-          <Option onClick={openModeling}>
+        appendOption={<>
+
+          <Option onClick={() => openLLMOptions('openai-gpt-4') /* FIXME */}>
+            <ListItemDecorator>
+              <SettingsIcon color='info' />
+            </ListItemDecorator>
+            <Typography>
+              Options
+            </Typography>
+          </Option>
+
+          <Option onClick={openModelsSetup}>
             <ListItemDecorator>
               <BuildCircleIcon color='info' />
             </ListItemDecorator>
             <Typography>
-              Setup
+              Models
             </Typography>
           </Option>
-        }
+
+        </>}
       />
     )}
 

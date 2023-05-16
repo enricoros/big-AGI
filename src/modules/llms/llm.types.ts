@@ -1,10 +1,10 @@
 import type React from 'react';
-import type { LLMSettingsOpenAI, SourceSetupOpenAI } from './openai/vendor';
+import type { LLMOptionsOpenAI, SourceSetupOpenAI } from './openai/vendor';
 import type { SourceSetupLocalAI } from './localai/vendor';
 
 export type DLLMId = string;
 export type DLLMTags = 'stream' | 'chat';
-export type DLLMValues = LLMSettingsOpenAI; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
+export type DLLMOptions = LLMOptionsOpenAI; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
 export type DModelSourceId = string;
 export type DModelSourceSetup = SourceSetupOpenAI | SourceSetupLocalAI;
 export type ModelVendorId = 'localai' | 'openai'; // | 'anthropic' | 'azure_openai' | 'google_vertex';
@@ -25,7 +25,7 @@ export interface DLLM {
   _source: DModelSource;
 
   // llm-specific
-  settings: Partial<DLLMValues>;
+  options: Partial<DLLMOptions>;
 }
 
 
@@ -55,5 +55,5 @@ export interface ModelVendor {
   // factories
   createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
   createSourceSetupComponent: (sourceId: DModelSourceId) => React.JSX.Element;
-  createLLMSettingsComponent: (llm: DLLM) => React.JSX.Element;
+  createLLMOptionsComponent: (llm: DLLM) => React.JSX.Element;
 }

@@ -12,7 +12,7 @@ import { useSettingsStore } from '../state/store-settings';
 
 
 export function AppLayout(props: {
-  noAppBar?: boolean, noSettings?: boolean, noModeling?: boolean,
+  noAppBar?: boolean, noSettings?: boolean, noModelsSetup?: boolean,
   children: React.ReactNode,
 }) {
   // external state
@@ -49,7 +49,7 @@ export function AppLayout(props: {
 
       {!props.noSettings && <SettingsModal />}
 
-      {!props.noModeling && <Configurator />}
+      {!props.noModelsSetup && <Configurator />}
 
     </NoSSR>
   );
