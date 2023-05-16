@@ -14,7 +14,7 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DLLMId, DModelSource, DModelSourceId } from '../llm.types';
-import { normalizeSetup, SourceSetupOpenAI } from './vendor';
+import { LLMOptionsOpenAI, normalizeSetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
 
 
@@ -160,7 +160,7 @@ const knownBases = [
 ];
 
 
-function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM {
+function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM & { options: LLMOptionsOpenAI } {
   const llmId: DLLMId = model.id;
   const base = knownBases.find(base => llmId.startsWith(base.id)) || knownBases[knownBases.length - 1];
   const suffix = llmId.slice(base.id.length).trim();
@@ -175,6 +175,7 @@ function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: D
     sId: source.id,
     _source: source,
     options: {
+      llmId: llmId,
       llmTemperature: 0.5,
       llmResponseTokens: Math.round(base.context / 8),
     },
