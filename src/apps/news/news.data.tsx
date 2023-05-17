@@ -15,6 +15,7 @@ export const NewsItems: NewsItem[] = [
   // {
   //   versionName: '1.3.0',
   //   items: [
+  //     { text: '[tool] Flatten Conversation - 4 summary modes!' },
   //     { text: '/s and /a to add a System or Assistant message' },
   //   ],
   // },
