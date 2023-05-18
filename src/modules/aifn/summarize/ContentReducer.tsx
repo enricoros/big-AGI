@@ -10,7 +10,7 @@ import { useModelsStore } from '~/modules/llms/llm.store';
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/llm-util/token-counter';
 
-import { TokenBadge } from './TokenBadge';
+import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
@@ -27,7 +27,7 @@ function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, token
 /**
  * Dialog to compress a PDF
  */
-export function ContentReducerModal(props: {
+export function ContentReducer(props: {
   initialText: string,
   initialTokens: number,
   tokenLimit: number,
