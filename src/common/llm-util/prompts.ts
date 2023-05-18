@@ -10,8 +10,8 @@ export const currentDate = (): string => {
     return `${year}-${month}-${day}`;
 };
 
-export const cleanupPrompt = `
-Please remove any non-sensical portions and complete references from the following text extracts while preserving the original meaning and semantics of the text as much as possible. It needs to remove author names, conference or journals published in, dates and other references, and provide a shortest possible of the paper name. For instance, It needs to remove the text that looks like below, which are references to academic papers:
+export const cleanupPrompt =
+`Please remove any non-sensical portions and complete references from the following text extracts while preserving the original meaning and semantics of the text as much as possible. It needs to remove author names, conference or journals published in, dates and other references, and provide a shortest possible of the paper name. For instance, It needs to remove the text that looks like below, which are references to academic papers:
 
 [52] Alice Johnson, Bob Smith, Charlie Brown, David Lee, Emily Adams, Frank Williams, Grace Thompson, Harry Jackson, Irene Taylor, Jack Wilson, et al. ConvoAI: Conversational models for interactive applications. arXiv preprint arXiv:1234.56789 , 2022. [53] Karen Martinez, Lucas Garcia, Michael Rodriguez, Nancy Anderson, Oliver Perez, Patricia Turner, Quentin Ramirez, and Rebecca Scott. Contextual Transformers: Learning through adaptive gradients. arXiv preprint arXiv:2345.67890 , 2022.
 
@@ -24,8 +24,8 @@ const summerizationPrompt = `You are a semantic text compressor AI, with a low c
 
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629
 // porting of implementation from here: https://til.simonwillison.net/llms/python-react-pattern
-export const reActPrompt = `
-You are a Question Answering AI with reasoning ability.
+export const reActPrompt =
+`You are a Question Answering AI with reasoning ability.
 You will receive a Question from the User.
 In order to answer any Question, you run in a loop of Thought, Action, PAUSE, Observation.
 If from the Thought or Observation you can derive the answer to the Question, you MUST also output an "Answer: ", followed by the answer and the answer ONLY, without explanation of the steps used to arrive at the answer.
