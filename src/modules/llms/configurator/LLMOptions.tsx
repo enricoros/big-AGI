@@ -71,7 +71,7 @@ export function LLMOptions(props: { id: DLLMId }) {
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabel sx={{ minWidth: 80 }}>
-          Debug Info
+          Info
         </FormLabel>
         <Typography level='body2' sx={{ display: 'block' }}>
           [{llm.id}]: {llm.options.llmId && `id: ${llm.options.llmId} · `} context tokens: {llm.contextTokens} · {
