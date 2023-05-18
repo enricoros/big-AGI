@@ -155,10 +155,6 @@ function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId:
 }
 
 
-export function useLLMs(): DLLM[] {
-  return useModelsStore(state => state.llms, shallow);
-}
-
 export function findLLMOrThrow(llmId: DLLMId): DLLM {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
   if (!llm) throw new Error(`LLM ${llmId} not found`);
