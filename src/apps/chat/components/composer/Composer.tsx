@@ -16,6 +16,8 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
+import { useModelsStore } from '~/modules/llms/llm.store';
+
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SendModeId, SendModes } from '../../../../data';
 import { countModelTokens } from '~/common/llm-util/token-counter';
@@ -31,7 +33,6 @@ import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { ContentReducerModal } from './ContentReducerModal';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useLLMs } from '~/modules/llms/llm.store';
 
 
 /// Text template helpers
@@ -178,25 +179,31 @@ export function Composer(props: {
   // external state
   const theme = useTheme();
   const { sendModeId, setSendModeId, sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
-  const stopTyping = useChatStore(state => state.stopTyping);
-  const { enterToSend, modelMaxResponseTokens } = useSettingsStore(state => ({ enterToSend: state.enterToSend, modelMaxResponseTokens: state.modelMaxResponseTokens }), shallow);
-
-  const llms = useLLMs();
-  const { assistantTyping, llmId, tokenCount: conversationTokenCount } = useChatStore(state => {
+  const { enterToSend, modelMaxResponseTokens } = useSettingsStore(state => ({
+    enterToSend: state.enterToSend, modelMaxResponseTokens: state.modelMaxResponseTokens,
+  }), shallow);
+  const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
-      llmId: conversation ? conversation.llmId : null,
       tokenCount: conversation ? conversation.tokenCount : 0,
+      stopTyping: state.stopTyping,
+    };
+  }, shallow);
+  const { chatLLMId, chatLLMTokens: tokenLimit } = useModelsStore(state => {
+    const chatLLMId = state.chatLLMId;
+    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) : null;
+    return {
+      chatLLMId,
+      chatLLMTokens: chatLLM ? chatLLM.contextTokens : 0,
     };
   }, shallow);
 
 
   // derived state
-  const tokenLimit = llmId ? llms.find(llm => llm.id === llmId)?.contextTokens || 4096 : 0;
   const directTokens = React.useMemo(() => {
-    return (!composeText || !llmId) ? 0 : 4 + countModelTokens(composeText, llmId, 'composer text');
-  }, [llmId, composeText]);
+    return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
+  }, [chatLLMId, composeText]);
   const historyTokens = conversationTokenCount;
   const responseTokens = modelMaxResponseTokens;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
@@ -271,8 +278,8 @@ export function Composer(props: {
     }
 
     // see how we fare on budget
-    if (llmId) {
-      const newTextTokens = countModelTokens(newText, llmId, 'reducer trigger');
+    if (chatLLMId) {
+      const newTextTokens = countModelTokens(newText, chatLLMId, 'reducer trigger');
 
       // simple trigger for the reduction dialog
       if (newTextTokens > remainingTokens) {
@@ -568,7 +575,7 @@ export function Composer(props: {
         )}
 
         {/* Content reducer modal */}
-        {reducerText?.length >= 1 && llmId &&
+        {reducerText?.length >= 1 &&
           <ContentReducerModal
             initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
