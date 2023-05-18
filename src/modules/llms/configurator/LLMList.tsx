@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { List, Sheet, Typography } from '@mui/joy';
 
 import { LLMListItem } from './LLMListItem';
-import { findVendorById } from '../vendors/vendor.registry';
+import { findVendorById } from '../vendor.registry';
 import { useModelsStore } from '../llm.store';
 
 
