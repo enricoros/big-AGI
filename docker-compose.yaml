@@ -4,7 +4,7 @@ services:
   big-agi:
     image: ghcr.io/enricoros/big-agi:main
     ports:
-      - 3000:3000
+      - "3000:3000"
     env_file:
       - .env
-    command: ["next", "start", "-p", "3000" ]
+    command: [ "next", "start", "-p", "3000" ]

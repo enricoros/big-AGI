@@ -45,16 +45,6 @@ export async function openaiPostResponse<TBody extends object>(api: OpenAI.API.C
   return response;
 }
 
-export async function openaiPost<TOut extends object, TBody extends object>(
-  api: OpenAI.API.Configuration,
-  apiPath: string,
-  body: TBody,
-  signal?: AbortSignal,
-): Promise<TOut> {
-  const response = await openaiPostResponse(api, apiPath, body, signal);
-  return await response.json();
-}
-
 
 /// API <> Wire conversion helpers
 
