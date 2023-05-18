@@ -2,13 +2,14 @@ import { SystemPurposeId, SystemPurposes } from '../../../data';
 
 import { DLLMId } from '~/modules/llms/llm.types';
 import { OpenAI } from '~/modules/openai/openai.types';
+import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
 import { findOpenAILlmRefOrThrow } from '~/modules/llms/llm.store';
-import { updateAutoConversationTitle } from './ai-functions';
+
 
 
 /**
@@ -33,7 +34,7 @@ export const runAssistantUpdatingState = async (conversationId: string, history:
   startTyping(conversationId, null);
 
   // update text, if needed
-  await updateAutoConversationTitle(conversationId);
+  await autoTitle(conversationId);
 };
 
 

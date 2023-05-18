@@ -4,7 +4,7 @@ import { prodiaDefaultModelId } from '~/modules/prodia/prodia.client';
 import { useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
-import { createAssistantTypingMessage } from './agi-immediate';
+import { createAssistantTypingMessage } from './chat-stream';
 
 
 /**

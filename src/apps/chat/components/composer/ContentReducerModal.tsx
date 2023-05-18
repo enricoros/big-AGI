@@ -4,11 +4,11 @@ import { shallow } from 'zustand/shallow';
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
 import { DLLM, DLLMId } from '~/modules/llms/llm.types';
+import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize';
 import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/llm-util/token-counter';
-import { summerizeToFitContextBudget } from '~/common/llm-util/summerize';
 
 import { TokenBadge } from './TokenBadge';
 

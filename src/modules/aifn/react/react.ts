@@ -1,9 +1,9 @@
+import { DLLMId } from '~/modules/llms/llm.types';
 import { OpenAI } from '~/modules/openai/openai.types';
 import { callApiSearchGoogle } from '~/modules/search/search.client';
 import { callChat } from '~/modules/openai/openai.client';
 
-import { currentDate, reActPrompt } from './prompts';
-import { DLLMId } from '~/modules/llms/llm.types';
+import { currentDate, reActPrompt } from '../prompts';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
