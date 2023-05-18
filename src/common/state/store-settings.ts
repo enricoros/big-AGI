@@ -172,6 +172,7 @@ export const useSettingsStore = create<SettingsStore>()(
 
       googleCSEId: '',
       setGoogleCSEId: (cseId: string) => set({ googleCSEId: cseId }),
+
     }),
     {
       name: 'app-settings',

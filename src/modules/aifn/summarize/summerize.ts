@@ -1,8 +1,8 @@
 import { DLLMId } from '~/modules/llms/llm.types';
 import { callChat } from '~/modules/openai/openai.client';
-
-import { cleanupPrompt } from './prompts';
 import { findLLMOrThrow } from '~/modules/llms/llm.store';
+
+import { cleanupPrompt } from '../prompts';
 
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {

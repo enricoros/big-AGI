@@ -8,6 +8,7 @@ import { CmdRunReact } from '~/modules/search/search.client';
 import { PasteGG } from '~/modules/pastegg/pastegg.types';
 import { PublishedModal } from '~/modules/pastegg/PublishedModal';
 import { callPublish } from '~/modules/pastegg/pastegg.client';
+import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -26,10 +27,9 @@ import { ConversationItems } from './components/appbar/ConversationItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/ephemerals/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
-import { imaginePromptFromText } from './util/ai-functions';
-import { runAssistantUpdatingState } from './util/agi-immediate';
-import { runImageGenerationUpdatingState } from './util/imagine';
-import { runReActUpdatingState } from './util/agi-react';
+import { runAssistantUpdatingState } from './editors/chat-stream';
+import { runImageGenerationUpdatingState } from './editors/image-generate';
+import { runReActUpdatingState } from './editors/react-tangent';
 
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';

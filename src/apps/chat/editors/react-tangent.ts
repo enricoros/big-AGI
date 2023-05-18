@@ -1,9 +1,9 @@
+import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/llm.types';
 
-import { Agent } from '~/common/llm-util/react';
 import { createDEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 
-import { createAssistantTypingMessage } from './agi-immediate';
+import { createAssistantTypingMessage } from './chat-stream';
 
 
 /**
