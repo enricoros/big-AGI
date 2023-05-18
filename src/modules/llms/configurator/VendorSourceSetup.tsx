@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DModelSource } from '../llm.types';
-import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { findVendorById } from '~/modules/llms/vendor.registry';
 
 
 export function VendorSourceSetup(props: { source: DModelSource }) {

@@ -11,7 +11,7 @@ import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
 import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
-import { createDefaultSource } from '../vendors/vendor.registry';
+import { createDefaultSource } from '../vendor.registry';
 import { useModelsStore } from '../llm.store';
 
 

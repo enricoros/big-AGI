@@ -14,7 +14,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
-import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendors/vendor.registry';
+import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendor.registry';
 import { useModelsStore } from '../llm.store';
 
 

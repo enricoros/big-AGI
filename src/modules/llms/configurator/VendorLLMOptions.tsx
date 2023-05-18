@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { DLLMId } from '../llm.types';
-import { findVendorById } from '../vendors/vendor.registry';
+import { findVendorById } from '../vendor.registry';
 import { useModelsStore } from '~/modules/llms/llm.store';
 
 
