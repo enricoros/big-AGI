@@ -8,13 +8,12 @@ import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { hasServerKeyOpenAI } from '~/modules/openai/openai.client';
-
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
 import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendor.registry';
+import { hasServerKeyOpenAI } from '../openai/openai.client';
 import { useModelsStore } from '../llm.store';
 
 

@@ -1,4 +1,4 @@
-import { callChat } from '~/modules/openai/openai.client';
+import { callChat } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/llm.store';
 
 

@@ -4,6 +4,7 @@ import { DLLM, DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
+import { callChat } from './openai.client';
 
 
 export const ModelVendorOpenAI: ModelVendor = {
@@ -24,6 +25,7 @@ export const ModelVendorOpenAI: ModelVendor = {
   }),
   createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISourceSetup sourceId={sourceId} />,
   createLLMOptionsComponent: (llm: DLLM) => <OpenAILLMOptions llm={llm} />,
+  callChat: callChat,
 };
 
 
