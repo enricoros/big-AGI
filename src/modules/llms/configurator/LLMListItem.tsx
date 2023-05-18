@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItem, ListItemButton, ListItemContent, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Chip, IconButton, ListItem, ListItemButton, ListItemContent, Tooltip, Typography, useTheme } from '@mui/joy';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
@@ -8,7 +8,7 @@ import { DLLM, ModelVendor } from '../llm.types';
 import { useUIStore } from '~/common/state/store-ui';
 
 
-export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
+export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: boolean, chipFast?: boolean }) {
 
   // external state
   const theme = useTheme();
@@ -24,13 +24,17 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
       <ListItemButton onClick={() => openLLMOptions(llm.id)}>
 
         {/* Model Name */}
-        <ListItemContent>
+        <ListItemContent sx={{ display: 'flex', alignItems: 'center' }}>
           <Tooltip title={tooltip}>
             <Typography sx={{ display: 'inline', ...(llm.hidden && { color: theme.vars.palette.neutral.plainDisabledColor }) }}>
               {label}
             </Typography>
           </Tooltip>
         </ListItemContent>
+
+        {!!props.chipChat && <Chip size='sm' variant='soft' sx={{ ml: 1 }}>chat</Chip>}
+
+        {!!props.chipFast && <Chip size='sm' variant='soft' sx={{ ml: 1 }}>fast</Chip>}
 
         {/* 'Actions' (only click -> configure in reality) */}
         <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
