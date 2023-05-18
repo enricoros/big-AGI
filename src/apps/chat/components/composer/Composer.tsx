@@ -178,10 +178,8 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
+  const enterToSend = useSettingsStore(state => state.enterToSend);
   const { sendModeId, setSendModeId, sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
-  const { enterToSend, modelMaxResponseTokens } = useSettingsStore(state => ({
-    enterToSend: state.enterToSend, modelMaxResponseTokens: state.modelMaxResponseTokens,
-  }), shallow);
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -198,7 +196,7 @@ export function Composer(props: {
     return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
   }, [chatLLMId, composeText]);
   const historyTokens = conversationTokenCount;
-  const responseTokens = modelMaxResponseTokens;
+  const responseTokens = chatLLM?.options?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
