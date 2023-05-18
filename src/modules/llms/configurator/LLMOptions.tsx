@@ -38,7 +38,7 @@ export function LLMOptions(props: { id: DLLMId }) {
   return (
 
     <GoodModal
-      title={`${llm.label} Options`}
+      title={<><b>{llm.label}</b> options</>}
       open={!!props.id} onClose={closeLLMOptions}
       startButton={
         <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
