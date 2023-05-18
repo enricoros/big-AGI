@@ -1,9 +1,10 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
 import { DLLM, DLLMId } from '~/modules/llms/llm.types';
-import { useLLMs } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/llm-util/token-counter';
@@ -34,17 +35,17 @@ export function ContentReducerModal(props: {
   onReducedText: (text: string) => void,
 }) {
 
+  // external state
+  const { llms, fastLLMId } = useModelsStore(state => ({ llms: state.llms, fastLLMId: state.fastLLMId }), shallow);
+
   // state
-  const [reducerModelId, setReducerModelId] = React.useState<DLLMId>('gpt-3.5-turbo' /*FIXME:HACK*/);
+  const [reducerModelId, setReducerModelId] = React.useState<DLLMId | null>(fastLLMId);
   const [compressionLevel, setCompressionLevel] = React.useState(3);
   const [reducedText, setReducedText] = React.useState('');
   const [processing, setProcessing] = React.useState(false);
 
-  // external state
-  const llms = useLLMs();
-
   // derived state
-  const reducedTokens = countModelTokens(reducedText, reducerModelId, 'content reducer reduce');
+  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') : 0;
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 
@@ -54,8 +55,10 @@ export function ContentReducerModal(props: {
 
   const handlePreviewClicked = async () => {
     setProcessing(true);
-    const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, reducerModelId);
-    setReducedText(reducedText);
+    if (reducerModelId) {
+      const reducedText = await summerizeToFitContextBudget(props.initialText, props.tokenLimit, reducerModelId);
+      setReducedText(reducedText);
+    }
     setProcessing(false);
   };
 
@@ -102,7 +105,7 @@ export function ContentReducerModal(props: {
               {reducerModelId && <Select value={reducerModelId} onChange={handleReducerModelChange} sx={{ minWidth: 140 }}>
                 {llms.map((llm: DLLM) => (
                   <Option key={llm.id} value={llm.id}>
-                    {llm.label}
+                    {llm.label} {llm.id === fastLLMId && '*'}
                   </Option>
                 ))}
               </Select>}
