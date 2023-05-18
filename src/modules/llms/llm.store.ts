@@ -13,6 +13,8 @@ interface ModelsStore {
   llms: DLLM[];
   sources: DModelSource[];
 
+  setChatLLMId: (id: DLLMId | null) => void;
+
   addLLMs: (llms: DLLM[]) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
@@ -33,6 +35,9 @@ export const useModelsStore = create<ModelsStore>()(
       fastLLMId: null,
       llms: [],
       sources: [],
+
+      setChatLLMId: (id: DLLMId | null) =>
+        set({ chatLLMId: id }),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
       // this will replace existing llms with the same id

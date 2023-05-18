@@ -7,7 +7,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { useLLMs } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
@@ -20,13 +20,16 @@ export function Dropdowns(props: {
 }) {
 
   // external state
-  const llms = useLLMs();
+  const { chatLLMId, setChatLLMId, llms } = useModelsStore(state => ({
+    chatLLMId: state.chatLLMId,
+    setChatLLMId: state.setChatLLMId,
+    llms: state.llms,
+  }), shallow);
+
   const { zenMode } = useSettingsStore(state => ({ zenMode: state.zenMode }), shallow);
-  const { llmId, setLLMId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      llmId: conversation?.llmId ?? null,
-      setLLMId: state.setLLMId,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       setSystemPurposeId: state.setSystemPurposeId,
     };
@@ -36,7 +39,7 @@ export function Dropdowns(props: {
   }), shallow);
 
   const handleChatModelChange = (event: any, value: DLLMId | null) =>
-    value && props.conversationId && setLLMId(props.conversationId, value);
+    value && props.conversationId && setChatLLMId(value);
 
   const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
     value && props.conversationId && setSystemPurposeId(props.conversationId, value);
@@ -44,14 +47,14 @@ export function Dropdowns(props: {
   // filter-out hidden models
   const llmItems: DropdownItems = {};
   for (const llm of llms)
-    if (!llm.hidden || llm.id === llmId)
+    if (!llm.hidden || llm.id === chatLLMId)
       llmItems[llm.id] = { title: llm.label };
 
   return <>
 
     <AppBarDropdown
       items={llmItems}
-      value={llmId} onChange={handleChatModelChange}
+      value={chatLLMId} onChange={handleChatModelChange}
       placeholder='Model'
       appendOption={<>
 

@@ -11,7 +11,11 @@ import { useModelsStore } from '../llm.store';
 export function LLMList() {
 
   // external state
-  const llms = useModelsStore(state => state.llms, shallow);
+  const { chatLLMId, fastLLMId, llms } = useModelsStore(state => ({
+    chatLLMId: state.chatLLMId,
+    fastLLMId: state.fastLLMId,
+    llms: state.llms,
+  }), shallow);
 
   // find out if there's more than 1 sourceLabel in the llms array
   const singleOrigin = llms.length < 2 || !llms.find(llm => llm._source !== llms[0]._source);
@@ -32,7 +36,7 @@ export function LLMList() {
     // for safety, ensure the vendor exists
     const vendor = findVendorById(llm._source.vId);
     if (vendor)
-      items.push(<LLMListItem key={'llm-' + llm.id} llm={llm} vendor={vendor} />);
+      items.push(<LLMListItem key={'llm-' + llm.id} llm={llm} vendor={vendor} chipChat={llm.id === chatLLMId} chipFast={llm.id === fastLLMId} />);
   }
 
   return (
