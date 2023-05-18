@@ -6,7 +6,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 
 import { OpenAI } from '~/modules/openai/openai.types';
 import { apiQuery } from '~/modules/trpc/trpc.client';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/openai/openai.client';
+import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/llms/openai/openai.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';

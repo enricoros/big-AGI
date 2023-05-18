@@ -1,6 +1,10 @@
 import type React from 'react';
+
+import type { OpenAI } from '~/modules/openai/openai.types';
+
 import type { LLMOptionsOpenAI, SourceSetupOpenAI } from './openai/vendor';
 import type { SourceSetupLocalAI } from './localai/vendor';
+
 
 export type DLLMId = string;
 export type DLLMTags = 'stream' | 'chat';
@@ -52,8 +56,9 @@ export interface ModelVendor {
   instanceLimit: number;
   disabled?: boolean; // probably remove
 
-  // factories
+  // factories/methods
   createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
   createSourceSetupComponent: (sourceId: DModelSourceId) => React.JSX.Element;
   createLLMOptionsComponent: (llm: DLLM) => React.JSX.Element;
+  callChat: (llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;
 }

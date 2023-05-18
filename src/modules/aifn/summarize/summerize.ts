@@ -1,5 +1,5 @@
 import { DLLMId } from '~/modules/llms/llm.types';
-import { callChat } from '~/modules/openai/openai.client';
+import { callChat } from '~/modules/llms/llm.client';
 import { findLLMOrThrow } from '~/modules/llms/llm.store';
 
 import { cleanupPrompt } from '../prompts';

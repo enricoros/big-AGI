@@ -23,6 +23,7 @@ export const ModelVendorLocalAI: ModelVendor = {
   }),
   createSourceSetupComponent: (sourceId: DModelSourceId) => <LocalAISourceSetup sourceId={sourceId} />,
   createLLMOptionsComponent: () => <>No LocalAI Options</>,
+  callChat: () => Promise.reject(new Error('LocalAI is not implemented')),
 };
 
 
