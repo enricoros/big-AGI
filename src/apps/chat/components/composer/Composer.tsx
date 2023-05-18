@@ -16,6 +16,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
+import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { useChatLLM } from '~/modules/llms/llm.store';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -30,7 +31,6 @@ import { useComposerStore } from '~/common/state/store-composer';
 import { useSettingsStore } from '~/common/state/store-settings';
 import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 
-import { ContentReducerModal } from './ContentReducerModal';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
 
@@ -567,7 +567,7 @@ export function Composer(props: {
 
         {/* Content reducer modal */}
         {reducerText?.length >= 1 &&
-          <ContentReducerModal
+          <ContentReducer
             initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
