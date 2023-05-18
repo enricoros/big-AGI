@@ -1,4 +1,3 @@
-import { DLLMId } from '~/modules/llms/llm.types';
 import { callChat } from '~/modules/openai/openai.client';
 import { useModelsStore } from '~/modules/llms/llm.store';
 
@@ -76,9 +75,11 @@ const simpleImagineSystemPrompt = 'As an AI art prompt writer, create captivatin
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
-export async function imaginePromptFromText(messageText: string, llmId: DLLMId): Promise<string | null> {
+export async function imaginePromptFromText(messageText: string): Promise<string | null> {
+  const { fastLLMId } = useModelsStore.getState();
+  if (!fastLLMId) return null;
   try {
-    const chatResponse = await callChat(llmId, [
+    const chatResponse = await callChat(fastLLMId, [
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
     ]);
