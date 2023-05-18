@@ -1,6 +1,6 @@
-import { ChatModelId } from '../../data';
-
+import { DLLMId } from '~/modules/llms/llm.types';
 import { apiAsync } from '~/modules/trpc/trpc.client';
+import { findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
 
 import { useSettingsStore } from '~/common/state/store-settings';
 
@@ -15,13 +15,14 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
 /**
  * This function either returns the LLM response, or throws a descriptive error string
  */
-export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
+export async function callChat(llmId: DLLMId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
   const { apiHost, apiKey, apiOrganizationId, heliconeKey, modelTemperature } = useSettingsStore.getState();
+  const openaiLlmId = findOpenAILlmIdOrThrow(llmId);
   try {
     return await apiAsync.openai.chatGenerate.mutate({
       access: { oaiKey: apiKey, oaiHost: apiHost, oaiOrg: apiOrganizationId, heliKey: heliconeKey },
       history: messages,
-      model: { id: modelId, temperature: modelTemperature, ...(maxTokens && { maxTokens }) },
+      model: { id: openaiLlmId, temperature: modelTemperature, ...(maxTokens && { maxTokens }) },
     });
     // errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
   } catch (error: any) {

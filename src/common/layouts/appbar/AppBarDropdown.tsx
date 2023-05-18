@@ -5,20 +5,22 @@ import { SxProps } from '@mui/joy/styles/types';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
-type DropdownItem = Record<string, { title: string, symbol?: string }>;
+export type DropdownItems = Record<string, { title: string, symbol?: string }>;
 
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
 export const AppBarDropdown = <TValue extends string>(props: {
-  items: DropdownItem, appendOption?: React.JSX.Element,
-  value: TValue, onChange: (event: any, value: TValue | null) => void,
+  items: DropdownItems, appendOption?: React.JSX.Element,
+  value: TValue | null, onChange: (event: any, value: TValue | null) => void,
+  placeholder?: string,
   showSymbols?: boolean,
   sx?: SxProps
 }) =>
   <Select
     variant='solid' color='neutral' size='md'
     value={props.value} onChange={props.onChange}
+    placeholder={props.placeholder}
     indicator={<KeyboardArrowDownIcon />}
     slotProps={{
       root: {

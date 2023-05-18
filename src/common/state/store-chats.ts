@@ -2,12 +2,16 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ChatModelId, defaultChatModelId, defaultSystemPurposeId, SystemPurposeId } from '../../data';
+import { DLLMId } from '~/modules/llms/llm.types';
+
+import { defaultLLMId } from '~/modules/llms/llm.store';
+import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 import { updateTokenCount } from '../llm-util/token-counter';
 
 
 // configuration
 export const MAX_CONVERSATIONS = 20;
+
 
 /**
  * Conversation, a list of messages between humans and bots
@@ -19,10 +23,10 @@ export interface DConversation {
   id: string;
   messages: DMessage[];
   systemPurposeId: SystemPurposeId;
-  chatModelId: ChatModelId;
+  llmId: DLLMId | null,
   userTitle?: string;
   autoTitle?: string;
-  tokenCount: number;                 // f(messages, chatModelId)
+  tokenCount: number;                 // f(messages, llmId)
   created: number;                    // created timestamp
   updated: number | null;             // updated timestamp
   // Not persisted, used while in-memory, or temporarily by the UI
@@ -30,22 +34,21 @@ export interface DConversation {
   ephemerals: DEphemeral[];
 }
 
-export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, chatModelId?: ChatModelId): DConversation => ({
-  id: uuidv4(),
-  messages: [],
-  systemPurposeId: systemPurposeId || defaultSystemPurposeId,
-  chatModelId: chatModelId || defaultChatModelId,
-  tokenCount: 0,
-  created: Date.now(),
-  updated: Date.now(),
-  abortController: null,
-  ephemerals: [],
-});
+function createDConversation(systemPurposeId?: SystemPurposeId, llmId?: DLLMId): DConversation {
+  return {
+    id: uuidv4(),
+    messages: [],
+    systemPurposeId: systemPurposeId || defaultSystemPurposeId,
+    llmId: llmId ?? defaultLLMId(),
+    tokenCount: 0,
+    created: Date.now(),
+    updated: Date.now(),
+    abortController: null,
+    ephemerals: [],
+  };
+}
 
-export const conversationTitle = (conversation: DConversation): string =>
-  conversation.userTitle || conversation.autoTitle || 'new conversation'; // 👋💬🗨️
-
-const defaultConversations: DConversation[] = [createDefaultConversation()];
+const defaultConversations: DConversation[] = [createDConversation()];
 
 /**
  * Message, sent or received, by humans or bots
@@ -73,8 +76,8 @@ export interface DMessage {
   updated: number | null;           // updated timestamp
 }
 
-export const createDMessage = (role: DMessage['role'], text: string): DMessage =>
-  ({
+export function createDMessage(role: DMessage['role'], text: string): DMessage {
+  return {
     id: uuidv4(),
     text,
     sender: role === 'user' ? 'You' : 'Bot',
@@ -84,7 +87,8 @@ export const createDMessage = (role: DMessage['role'], text: string): DMessage =
     tokenCount: 0,
     created: Date.now(),
     updated: null,
-  });
+  };
+}
 
 /**
  * InterimStep, a place side-channel information is displayed
@@ -96,12 +100,14 @@ export interface DEphemeral {
   state: object;
 }
 
-export const createEphemeral = (title: string, initialText: string): DEphemeral => ({
-  id: uuidv4(),
-  title: title,
-  text: initialText,
-  state: {},
-});
+export function createDEphemeral(title: string, initialText: string): DEphemeral {
+  return {
+    id: uuidv4(),
+    title: title,
+    text: initialText,
+    state: {},
+  };
+}
 
 
 /// Conversations Store
@@ -125,7 +131,7 @@ export interface ChatStore {
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
-  setChatModelId: (conversationId: string, chatModelId: ChatModelId) => void;
+  setLLMId: (conversationId: string, llmId: DLLMId) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -152,7 +158,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         set(state => {
           // inherit some values from the active conversation (matches users' expectations)
           const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
-          const conversation = createDefaultConversation(activeConversation?.systemPurposeId, activeConversation?.chatModelId);
+          const conversation = createDConversation(activeConversation?.systemPurposeId, activeConversation?.llmId ?? undefined);
           return {
             conversations: [
               conversation,
@@ -204,7 +210,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         set(state => {
           // inherit some values from the active conversation (matches users' expectations)
           const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
-          const conversation = createDefaultConversation(activeConversation?.systemPurposeId, activeConversation?.chatModelId);
+          const conversation = createDConversation(activeConversation?.systemPurposeId, activeConversation?.llmId ?? undefined);
 
           // abort any pending requests on all conversations
           state.conversations.forEach((conversation: DConversation) => conversation.abortController?.abort());
@@ -242,7 +248,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           conversation.abortController?.abort();
           return {
             messages: newMessages,
-            tokenCount: newMessages.reduce((sum, message) => sum + 4 + updateTokenCount(message, conversation.chatModelId, false, 'setMessages'), 3),
+            tokenCount: newMessages.reduce((sum, message) => sum + 4 + updateTokenCount(message, conversation.llmId, false, 'setMessages'), 3),
             updated: Date.now(),
             abortController: null,
             ephemerals: [],
@@ -253,7 +259,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         get()._editConversation(conversationId, conversation => {
 
           if (!message.typing)
-            updateTokenCount(message, conversation.chatModelId, true, 'appendMessage');
+            updateTokenCount(message, conversation.llmId, true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
 
@@ -285,7 +291,7 @@ export const useChatStore = create<ChatStore>()(devtools(
                 ...message,
                 ...updatedMessage,
                 ...(setUpdated && { updated: Date.now() }),
-                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateTokenCount(message, conversation.chatModelId, true, 'editMessage(typing=false)') })),
+                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateTokenCount(message, conversation.llmId, true, 'editMessage(typing=false)') })),
               }
               : message);
 
@@ -296,11 +302,11 @@ export const useChatStore = create<ChatStore>()(devtools(
           };
         }),
 
-      setChatModelId: (conversationId: string, chatModelId: ChatModelId) =>
+      setLLMId: (conversationId: string, llmId: DLLMId) =>
         get()._editConversation(conversationId, conversation => {
           return {
-            chatModelId,
-            tokenCount: conversation.messages.reduce((sum, message) => sum + 4 + updateTokenCount(message, chatModelId, true, 'setChatModelId'), 3),
+            llmId,
+            tokenCount: conversation.messages.reduce((sum, message) => sum + 4 + updateTokenCount(message, llmId, true, 'setLLMId'), 3),
           };
         }),
 
@@ -451,7 +457,7 @@ export const restoreConversationFromJson = (json: string): DConversation | null 
       id: restored.id,
       messages: restored.messages,
       systemPurposeId: restored.systemPurposeId || defaultSystemPurposeId,
-      chatModelId: restored.chatModelId || defaultChatModelId,
+      llmId: restored.llmId ?? defaultLLMId(),
       // ...(restored.userTitle && { userTitle: restored.userTitle }),
       // ...(restored.autoTitle && { autoTitle: restored.autoTitle }),
       tokenCount: restored.tokenCount || 0,

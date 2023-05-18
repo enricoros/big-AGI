@@ -9,8 +9,8 @@ import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
-import { ChatModels } from '../../../data';
 import { PurposeSelector } from './PurposeSelector';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
 
 /**
@@ -25,10 +25,11 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
   const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
   const { messages, tokenLimit, tokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    const chatModelId = conversation ? conversation.chatModelId : null;
+    const llmId = conversation ? conversation.llmId : null;
+    const tokenLimit = llmId ? useModelsStore.getState().llms.find(llm => llm.id === llmId)?.contextTokens || 4096 : 0;
     return {
       messages: conversation ? conversation.messages : [],
-      tokenLimit: chatModelId ? ChatModels[chatModelId]?.contextWindowSize || 8192 : 0,
+      tokenLimit,
       tokenCount: conversation ? conversation.tokenCount : 0,
     };
   }, shallow);

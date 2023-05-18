@@ -2,8 +2,8 @@ import { OpenAI } from '~/modules/openai/openai.types';
 import { callApiSearchGoogle } from '~/modules/search/search.client';
 import { callChat } from '~/modules/openai/openai.client';
 
-import { ChatModelId } from '../../data';
 import { currentDate, reActPrompt } from './prompts';
+import { DLLMId } from '~/modules/llms/llm.types';
 
 
 const actionRe = /^Action: (\w+): (.*)$/;
@@ -26,7 +26,7 @@ export interface State {
 export class Agent {
 
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
-  async reAct(question: string, modelId: ChatModelId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
+  async reAct(question: string, llmId: DLLMId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
     const S: State = await this.initialize(`Question: ${question}`);
@@ -34,7 +34,7 @@ export class Agent {
     while (i < maxTurns && S.result === undefined) {
       i++;
       log(`\n## Turn ${i}`);
-      await this.step(S, modelId, log);
+      await this.step(S, llmId, log);
       show(S);
     }
     // return only the 'Answer: ' part of the result
@@ -67,11 +67,11 @@ export class Agent {
     return input.slice(0, endIndex);
   }
 
-  async chat(S: State, prompt: string, modelId: ChatModelId): Promise<string> {
+  async chat(S: State, prompt: string, llmId: DLLMId): Promise<string> {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await callChat(modelId, S.messages, 500)).content;
+      content = (await callChat(llmId, S.messages, 500)).content;
     } catch (error: any) {
       content = `Error in callChat: ${error}`;
     }
@@ -81,9 +81,9 @@ export class Agent {
     return content;
   }
 
-  async step(S: State, modelId: ChatModelId, log: (...data: any[]) => void = console.log) {
+  async step(S: State, llmId: DLLMId, log: (...data: any[]) => void = console.log) {
     log('→ reAct [...' + (S.messages.length + 1) + ']: ' + S.nextPrompt);
-    const result = await this.chat(S, S.nextPrompt, modelId);
+    const result = await this.chat(S, S.nextPrompt, llmId);
     log(`← ${result}`);
     const actions = result
       .split('\n')
