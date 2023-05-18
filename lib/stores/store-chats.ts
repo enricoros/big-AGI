@@ -9,7 +9,7 @@ import { updateTokenCount } from '@/lib/llm/tokens';
 
 /// Conversations Store
 
-export const MAX_CONVERSATIONS = 10;
+export const MAX_CONVERSATIONS = 50;
 
 export interface ChatStore {
   conversations: DConversation[];
