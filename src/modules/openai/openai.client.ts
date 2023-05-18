@@ -1,6 +1,6 @@
 import { DLLMId } from '~/modules/llms/llm.types';
 import { apiAsync } from '~/modules/trpc/trpc.client';
-import { findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
+import { findOpenAILlmRefOrThrow } from '~/modules/llms/llm.store';
 
 import { useSettingsStore } from '~/common/state/store-settings';
 
@@ -17,7 +17,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
  */
 export async function callChat(llmId: DLLMId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
   const { apiHost, apiKey, apiOrganizationId, heliconeKey, modelTemperature } = useSettingsStore.getState();
-  const openaiLlmId = findOpenAILlmIdOrThrow(llmId);
+  const openaiLlmId = findOpenAILlmRefOrThrow(llmId);
   try {
     return await apiAsync.openai.chatGenerate.mutate({
       access: { oaiKey: apiKey, oaiHost: apiHost, oaiOrg: apiOrganizationId, heliKey: heliconeKey },

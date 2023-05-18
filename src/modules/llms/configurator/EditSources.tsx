@@ -45,7 +45,7 @@ export function EditSources(props: {
 
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
-    const modelSources = useModelsStore.getState().sources;
+    const { sources: modelSources } = useModelsStore.getState();
     const { id: sourceId, count } = getUniqueSourceId(vendorId, modelSources);
     const source = findVendorById(vendorId)?.createSource(sourceId, count);
     if (source) {

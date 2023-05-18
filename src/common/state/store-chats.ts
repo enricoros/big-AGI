@@ -3,10 +3,10 @@ import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId } from '~/modules/llms/llm.types';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
-import { defaultLLMId } from '~/modules/llms/llm.store';
+import { countModelTokens } from '../llm-util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
-import { updateTokenCount } from '../llm-util/token-counter';
 
 
 // configuration
@@ -23,7 +23,6 @@ export interface DConversation {
   id: string;
   messages: DMessage[];
   systemPurposeId: SystemPurposeId;
-  llmId: DLLMId | null,
   userTitle?: string;
   autoTitle?: string;
   tokenCount: number;                 // f(messages, llmId)
@@ -34,12 +33,11 @@ export interface DConversation {
   ephemerals: DEphemeral[];
 }
 
-function createDConversation(systemPurposeId?: SystemPurposeId, llmId?: DLLMId): DConversation {
+function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
   return {
     id: uuidv4(),
     messages: [],
     systemPurposeId: systemPurposeId || defaultSystemPurposeId,
-    llmId: llmId ?? defaultLLMId(),
     tokenCount: 0,
     created: Date.now(),
     updated: Date.now(),
@@ -131,7 +129,6 @@ export interface ChatStore {
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
-  setLLMId: (conversationId: string, llmId: DLLMId) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -158,7 +155,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         set(state => {
           // inherit some values from the active conversation (matches users' expectations)
           const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
-          const conversation = createDConversation(activeConversation?.systemPurposeId, activeConversation?.llmId ?? undefined);
+          const conversation = createDConversation(activeConversation?.systemPurposeId);
           return {
             conversations: [
               conversation,
@@ -210,7 +207,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         set(state => {
           // inherit some values from the active conversation (matches users' expectations)
           const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
-          const conversation = createDConversation(activeConversation?.systemPurposeId, activeConversation?.llmId ?? undefined);
+          const conversation = createDConversation(activeConversation?.systemPurposeId);
 
           // abort any pending requests on all conversations
           state.conversations.forEach((conversation: DConversation) => conversation.abortController?.abort());
@@ -248,7 +245,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           conversation.abortController?.abort();
           return {
             messages: newMessages,
-            tokenCount: newMessages.reduce((sum, message) => sum + 4 + updateTokenCount(message, conversation.llmId, false, 'setMessages'), 3),
+            tokenCount: updateTokenCounts(newMessages, false, 'setMessages'),
             updated: Date.now(),
             abortController: null,
             ephemerals: [],
@@ -259,7 +256,7 @@ export const useChatStore = create<ChatStore>()(devtools(
         get()._editConversation(conversationId, conversation => {
 
           if (!message.typing)
-            updateTokenCount(message, conversation.llmId, true, 'appendMessage');
+            updateTokenCounts([message], true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
 
@@ -291,7 +288,7 @@ export const useChatStore = create<ChatStore>()(devtools(
                 ...message,
                 ...updatedMessage,
                 ...(setUpdated && { updated: Date.now() }),
-                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateTokenCount(message, conversation.llmId, true, 'editMessage(typing=false)') })),
+                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateDMessageTokenCount(message, useModelsStore.getState().chatLLMId, true, 'editMessage(typing=false)') })),
               }
               : message);
 
@@ -299,14 +296,6 @@ export const useChatStore = create<ChatStore>()(devtools(
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
             ...(setUpdated && { updated: Date.now() }),
-          };
-        }),
-
-      setLLMId: (conversationId: string, llmId: DLLMId) =>
-        get()._editConversation(conversationId, conversation => {
-          return {
-            llmId,
-            tokenCount: conversation.messages.reduce((sum, message) => sum + 4 + updateTokenCount(message, llmId, true, 'setLLMId'), 3),
           };
         }),
 
@@ -423,6 +412,24 @@ export const useChatStore = create<ChatStore>()(devtools(
 
 
 /**
+ * Convenience function to count the tokens in a DMessage object
+ */
+function updateDMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number {
+  if (forceUpdate || !message.tokenCount)
+    message.tokenCount = llmId ? countModelTokens(message.text, llmId, debugFrom) : 0;
+  return message.tokenCount;
+}
+
+/**
+ * Convenience function to update a set of messages, using the current chatLLM
+ */
+function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
+  const { chatLLMId } = useModelsStore.getState();
+  return 3 + messages.reduce((sum, message) => 4 + updateDMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum, 0);
+}
+
+
+/**
  * Download a conversation as a JSON file, for backup and future restore
  * Not the best place to have this function, but we want it close to the (re)store function
  */
@@ -457,7 +464,6 @@ export const restoreConversationFromJson = (json: string): DConversation | null 
       id: restored.id,
       messages: restored.messages,
       systemPurposeId: restored.systemPurposeId || defaultSystemPurposeId,
-      llmId: restored.llmId ?? defaultLLMId(),
       // ...(restored.userTitle && { userTitle: restored.userTitle }),
       // ...(restored.autoTitle && { autoTitle: restored.autoTitle }),
       tokenCount: restored.tokenCount || 0,

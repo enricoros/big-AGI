@@ -7,7 +7,7 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
-import { findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
+import { findOpenAILlmRefOrThrow } from '~/modules/llms/llm.store';
 import { updateAutoConversationTitle } from './ai-functions';
 
 
@@ -69,7 +69,7 @@ async function streamAssistantMessage(
   abortSignal: AbortSignal,
 ) {
 
-  const openAILlmId = findOpenAILlmIdOrThrow(llmId);
+  const openAILlmId = findOpenAILlmRefOrThrow(llmId);
   const { modelTemperature, modelMaxResponseTokens, elevenLabsAutoSpeak } = useSettingsStore.getState();
   const payload: OpenAI.API.Chat.Request = {
     api: getOpenAISettings(),

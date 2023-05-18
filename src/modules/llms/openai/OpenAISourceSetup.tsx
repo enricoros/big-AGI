@@ -13,7 +13,7 @@ import { FormInputKey } from '~/common/components/FormInputKey';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { DLLM, DLLMId, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { LLMOptionsOpenAI, normalizeSetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../llm.store';
 
@@ -161,11 +161,10 @@ const knownBases = [
 
 
 function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM & { options: LLMOptionsOpenAI } {
-  const llmId: DLLMId = model.id;
-  const base = knownBases.find(base => llmId.startsWith(base.id)) || knownBases[knownBases.length - 1];
-  const suffix = llmId.slice(base.id.length).trim();
+  const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
+  const suffix = model.id.slice(base.id.length).trim();
   return {
-    id: `${source.id}-${llmId}`,
+    id: `${source.id}-${model.id}`,
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
     created: model.created,
     description: base.description,
@@ -175,7 +174,7 @@ function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: D
     sId: source.id,
     _source: source,
     options: {
-      llmId: llmId,
+      llmRef: model.id,
       llmTemperature: 0.5,
       llmResponseTokens: Math.round(base.context / 8),
     },
