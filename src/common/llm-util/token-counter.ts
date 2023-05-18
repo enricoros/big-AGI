@@ -46,5 +46,5 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
 /**
  * Convenience function to count the tokens in a DMessage object
  */
-export const updateTokenCount = (message: DMessage, llmId: DLLMId, forceUpdate: boolean, debugFrom: string): number =>
-  (!forceUpdate && message.tokenCount) ? message.tokenCount : (message.tokenCount = countModelTokens(message.text, llmId, debugFrom));
+export const updateTokenCount = (message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number =>
+  (!forceUpdate && message.tokenCount) ? message.tokenCount : llmId ? (message.tokenCount = countModelTokens(message.text, llmId, debugFrom)) : 0;
