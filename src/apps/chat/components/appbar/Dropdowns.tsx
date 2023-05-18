@@ -44,6 +44,8 @@ export function Dropdowns(props: {
   const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
     value && props.conversationId && setSystemPurposeId(props.conversationId, value);
 
+  const handleOpenLLMOptions = () => chatLLMId && openLLMOptions(chatLLMId);
+
   // filter-out hidden models
   const llmItems: DropdownItems = {};
   for (const llm of llms)
@@ -58,7 +60,8 @@ export function Dropdowns(props: {
       placeholder='Model'
       appendOption={<>
 
-        <Option onClick={() => openLLMOptions('openai-gpt-4') /* FIXME */}>
+      {chatLLMId && (
+        <Option disabled={!chatLLMId} onClick={handleOpenLLMOptions}>
           <ListItemDecorator>
             <SettingsIcon color='info' />
           </ListItemDecorator>
@@ -66,6 +69,7 @@ export function Dropdowns(props: {
             Options
           </Typography>
         </Option>
+      )}
 
         <Option onClick={openModelsSetup}>
           <ListItemDecorator>
