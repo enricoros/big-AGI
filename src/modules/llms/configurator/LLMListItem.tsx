@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItem, ListItemButton, ListItemContent, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListItem, ListItemButton, ListItemContent, Tooltip, Typography, useTheme } from '@mui/joy';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
@@ -11,6 +11,7 @@ import { useUIStore } from '~/common/state/store-ui';
 export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
 
   // external state
+  const theme = useTheme();
   const openLLMOptions = useUIStore(state => state.openLLMOptions);
 
   // derived
@@ -25,7 +26,7 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor }) {
         {/* Model Name */}
         <ListItemContent>
           <Tooltip title={tooltip}>
-            <Typography sx={{ display: 'inline', ...(llm.hidden && { opacity: 0.6 }) }}>
+            <Typography sx={{ display: 'inline', ...(llm.hidden && { color: theme.vars.palette.neutral.plainDisabledColor }) }}>
               {label}
             </Typography>
           </Tooltip>
