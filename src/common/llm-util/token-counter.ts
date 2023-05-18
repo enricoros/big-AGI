@@ -1,6 +1,8 @@
-import { encoding_for_model, get_encoding, Tiktoken } from '@dqbd/tiktoken';
+import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from '@dqbd/tiktoken';
 
-import { ChatModelId, defaultChatModelId } from '../../data';
+import { DLLMId } from '~/modules/llms/llm.types';
+import { defaultLLMId, findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
+
 import { DMessage } from '../state/store-chats';
 
 
@@ -14,26 +16,29 @@ const DEBUG_TOKEN_COUNT = false;
  * We also preload the tokenizer for the default model, so that the first time a user types
  * a message, it doesn't stall loading the tokenizer.
  */
-export const countModelTokens: (text: string, chatModelId: ChatModelId, debugFrom: string) => number = (() => {
-  //return () => 0;
+export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) => number = (() => {
+  // return () => 0;
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 
-  function tokenCount(text: string, chatModelId: ChatModelId, debugFrom: string): number {
-    if (!(chatModelId in tokenEncoders)) {
+  function tokenCount(text: string, llmId: DLLMId, debugFrom: string): number {
+    const openaiLlmId = findOpenAILlmIdOrThrow(llmId);
+    if (!(openaiLlmId in tokenEncoders)) {
       try {
-        tokenEncoders[chatModelId] = encoding_for_model(chatModelId);
+        tokenEncoders[openaiLlmId] = encoding_for_model(openaiLlmId as TiktokenModel);
       } catch (e) {
-        tokenEncoders[chatModelId] = get_encoding('cl100k_base');
+        tokenEncoders[openaiLlmId] = get_encoding('cl100k_base');
       }
     }
-    const count = tokenEncoders[chatModelId]?.encode(text)?.length || 0;
+    const count = tokenEncoders[openaiLlmId]?.encode(text)?.length || 0;
     if (DEBUG_TOKEN_COUNT)
-      console.log(`countModelTokens: ${debugFrom}, ${chatModelId}, "${text.slice(0, 10)}": ${count}`);
+      console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
     return count;
   }
 
   // preload the tokenizer for the default model
-  tokenCount('', defaultChatModelId, 'warmup');
+  const warmupId: DLLMId | null = defaultLLMId();
+  if (warmupId)
+    tokenCount('', warmupId, 'warmup');
 
   return tokenCount;
 })();
@@ -41,5 +46,5 @@ export const countModelTokens: (text: string, chatModelId: ChatModelId, debugFro
 /**
  * Convenience function to count the tokens in a DMessage object
  */
-export const updateTokenCount = (message: DMessage, chatModelId: ChatModelId, forceUpdate: boolean, debugFrom: string): number =>
-  (!forceUpdate && message.tokenCount) ? message.tokenCount : (message.tokenCount = countModelTokens(message.text, chatModelId, debugFrom));
+export const updateTokenCount = (message: DMessage, llmId: DLLMId, forceUpdate: boolean, debugFrom: string): number =>
+  (!forceUpdate && message.tokenCount) ? message.tokenCount : (message.tokenCount = countModelTokens(message.text, llmId, debugFrom));

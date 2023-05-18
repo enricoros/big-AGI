@@ -1,6 +1,7 @@
+import { DLLMId } from '~/modules/llms/llm.types';
 import { callChat } from '~/modules/openai/openai.client';
+import { fasterLLMIdOrThrow } from '~/modules/llms/llm.store';
 
-import { ChatModelId, fastChatModelId } from '../../../data';
 import { useChatStore } from '~/common/state/store-chats';
 
 
@@ -25,7 +26,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
   });
 
   // LLM
-  callChat(fastChatModelId, [
+  callChat(fasterLLMIdOrThrow(), [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:
@@ -74,9 +75,9 @@ const simpleImagineSystemPrompt = 'As an AI art prompt writer, create captivatin
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
-export async function imaginePromptFromText(messageText: string, modelId: ChatModelId): Promise<string | null> {
+export async function imaginePromptFromText(messageText: string, llmId: DLLMId): Promise<string | null> {
   try {
-    const chatResponse = await callChat(modelId, [
+    const chatResponse = await callChat(llmId, [
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
     ]);

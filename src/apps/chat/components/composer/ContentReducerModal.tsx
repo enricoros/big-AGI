@@ -2,7 +2,9 @@ import * as React from 'react';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
-import { ChatModelId, ChatModels, fastChatModelId } from '../../../../data';
+import { DLLM, DLLMId } from '~/modules/llms/llm.types';
+import { useLLMs } from '~/modules/llms/llm.store';
+
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/llm-util/token-counter';
 import { summerizeToFitContextBudget } from '~/common/llm-util/summerize';
@@ -33,18 +35,20 @@ export function ContentReducerModal(props: {
 }) {
 
   // state
-  const [reducerModelId, setReducerModelId] = React.useState<ChatModelId>(fastChatModelId);
+  const [reducerModelId, setReducerModelId] = React.useState<DLLMId>('gpt-3.5-turbo' /*FIXME:HACK*/);
   const [compressionLevel, setCompressionLevel] = React.useState(3);
   const [reducedText, setReducedText] = React.useState('');
   const [processing, setProcessing] = React.useState(false);
 
+  // external state
+  const llms = useLLMs();
 
   // derived state
   const reducedTokens = countModelTokens(reducedText, reducerModelId, 'content reducer reduce');
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 
-  const handleChatModelChange = (event: any, value: ChatModelId | null) => value && setReducerModelId(value);
+  const handleReducerModelChange = (event: any, value: DLLMId | null) => value && setReducerModelId(value);
 
   const handleCompressionLevelChange = (event: Event, newValue: number | number[]) => setCompressionLevel(newValue as number);
 
@@ -93,12 +97,12 @@ export function ContentReducerModal(props: {
             <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
               <Box sx={{ minWidth: 120 }}>
                 <FormLabel>Reducer model</FormLabel>
-                <FormHelperText>{ChatModels[reducerModelId]?.tradeoff}</FormHelperText>
+                <FormHelperText>{llms.find(llm => llm.id === reducerModelId)?.description?.slice(0, 10) ?? null}</FormHelperText>
               </Box>
-              {reducerModelId && <Select value={reducerModelId} onChange={handleChatModelChange} sx={{ minWidth: 140 }}>
-                {Object.keys(ChatModels).map((key: string) => (
-                  <Option key={key} value={key}>
-                    {ChatModels[key as ChatModelId].title}
+              {reducerModelId && <Select value={reducerModelId} onChange={handleReducerModelChange} sx={{ minWidth: 140 }}>
+                {llms.map((llm: DLLM) => (
+                  <Option key={llm.id} value={llm.id}>
+                    {llm.label}
                   </Option>
                 ))}
               </Select>}

@@ -5,9 +5,11 @@ import { ListItemDecorator, Option, Typography } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-import { ChatModelId, ChatModels, SystemPurposeId, SystemPurposes } from '../../../../data';
+import { DLLMId } from '~/modules/llms/llm.types';
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { useLLMs } from '~/modules/llms/llm.store';
 
-import { AppBarDropdown } from '~/common/layouts/appbar/AppBarDropdown';
+import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 import { useUIStore } from '~/common/state/store-ui';
@@ -18,12 +20,13 @@ export function Dropdowns(props: {
 }) {
 
   // external state
+  const llms = useLLMs();
   const { zenMode } = useSettingsStore(state => ({ zenMode: state.zenMode }), shallow);
-  const { chatModelId, setChatModelId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { llmId, setLLMId, systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      chatModelId: conversation?.chatModelId ?? null,
-      setChatModelId: state.setChatModelId,
+      llmId: conversation?.llmId ?? null,
+      setLLMId: state.setLLMId,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       setSystemPurposeId: state.setSystemPurposeId,
     };
@@ -32,41 +35,46 @@ export function Dropdowns(props: {
     openLLMOptions: state.openLLMOptions, openModelsSetup: state.openModelsSetup,
   }), shallow);
 
-  const handleChatModelChange = (event: any, value: ChatModelId | null) =>
-    value && props.conversationId && setChatModelId(props.conversationId, value);
+  const handleChatModelChange = (event: any, value: DLLMId | null) =>
+    value && props.conversationId && setLLMId(props.conversationId, value);
 
   const handleSystemPurposeChange = (event: any, value: SystemPurposeId | null) =>
     value && props.conversationId && setSystemPurposeId(props.conversationId, value);
 
+  // filter-out hidden models
+  const llmItems: DropdownItems = {};
+  for (const llm of llms)
+    if (!llm.hidden || llm.id === llmId)
+      llmItems[llm.id] = { title: llm.label };
+
   return <>
 
-    {chatModelId && (
-      <AppBarDropdown
-        items={ChatModels}
-        value={chatModelId} onChange={handleChatModelChange}
-        appendOption={<>
+    <AppBarDropdown
+      items={llmItems}
+      value={llmId} onChange={handleChatModelChange}
+      placeholder='Model'
+      appendOption={<>
 
-          <Option onClick={() => openLLMOptions('openai-gpt-4') /* FIXME */}>
-            <ListItemDecorator>
-              <SettingsIcon color='info' />
-            </ListItemDecorator>
-            <Typography>
-              Options
-            </Typography>
-          </Option>
+        <Option onClick={() => openLLMOptions('openai-gpt-4') /* FIXME */}>
+          <ListItemDecorator>
+            <SettingsIcon color='info' />
+          </ListItemDecorator>
+          <Typography>
+            Options
+          </Typography>
+        </Option>
 
-          <Option onClick={openModelsSetup}>
-            <ListItemDecorator>
-              <BuildCircleIcon color='info' />
-            </ListItemDecorator>
-            <Typography>
-              Models
-            </Typography>
-          </Option>
+        <Option onClick={openModelsSetup}>
+          <ListItemDecorator>
+            <BuildCircleIcon color='info' />
+          </ListItemDecorator>
+          <Typography>
+            Models
+          </Typography>
+        </Option>
 
-        </>}
-      />
-    )}
+      </>}
+    />
 
     {systemPurposeId && (
       <AppBarDropdown

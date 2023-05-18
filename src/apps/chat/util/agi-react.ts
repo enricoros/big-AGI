@@ -1,6 +1,7 @@
+import { DLLMId } from '~/modules/llms/llm.types';
+
 import { Agent } from '~/common/llm-util/react';
-import { ChatModelId } from '../../../data';
-import { createEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
+import { createDEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 
 import { createAssistantTypingMessage } from './agi-immediate';
 
@@ -8,19 +9,19 @@ import { createAssistantTypingMessage } from './agi-immediate';
 /**
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
-export const runReActUpdatingState = async (conversationId: string, question: string, assistantModelId: ChatModelId) => {
+export const runReActUpdatingState = async (conversationId: string, question: string, assistantLlmId: DLLMId) => {
 
   const { appendEphemeral, updateEphemeralText, updateEphemeralState, deleteEphemeral, editMessage } = useChatStore.getState();
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
-  const assistantModelStr = 'react-' + assistantModelId.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantModelStr as ChatModelId, undefined, '...');
+  const assistantModelLabel = 'react-' + assistantLlmId.slice(4, 7); // HACK: this is used to change the Avatar animation
+  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantModelLabel, undefined, '...');
   const updateAssistantMessage = (update: Partial<DMessage>) =>
     editMessage(conversationId, assistantMessageId, update, false);
 
 
   // create an ephemeral space
-  const ephemeral = createEphemeral(`Reason+Act`, 'Initializing ReAct..');
+  const ephemeral = createDEphemeral(`Reason+Act`, 'Initializing ReAct..');
   appendEphemeral(conversationId, ephemeral);
 
   let ephemeralText = '';
@@ -34,7 +35,7 @@ export const runReActUpdatingState = async (conversationId: string, question: st
 
     // react loop
     const agent = new Agent();
-    const reactResult = await agent.reAct(question, assistantModelId, 5,
+    const reactResult = await agent.reAct(question, assistantLlmId, 5,
       logToEphemeral,
       (state: object) => updateEphemeralState(conversationId, ephemeral.id, state),
     );

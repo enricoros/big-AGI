@@ -1,7 +1,8 @@
+import { DLLMId } from '~/modules/llms/llm.types';
 import { callChat } from '~/modules/openai/openai.client';
 
-import { ChatModelId, ChatModels } from '../../data';
 import { cleanupPrompt } from './prompts';
+import { findLLMOrThrow } from '~/modules/llms/llm.store';
 
 
 function breakDownChunk(chunk: string, targetWordCount: number): string[] {
@@ -15,7 +16,7 @@ function breakDownChunk(chunk: string, targetWordCount: number): string[] {
   return subChunks;
 }
 
-export async function summerizeToFitContextBudget(text: string, targetWordCount: number, modelId: ChatModelId): Promise<string> {
+export async function summerizeToFitContextBudget(text: string, targetWordCount: number, llmId: DLLMId): Promise<string> {
   if (targetWordCount < 0) {
     throw new Error('Target word count must be a non-negative number.');
   }
@@ -37,7 +38,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   const cleanedChunks = await Promise.all(subChunks.map(async chunk => {
     // being conservative, as long as targetWordCount is not reached, we will keep calling the API
     // print out the length of the chunk to be cleaned up
-    return await cleanUpContent(chunk, modelId, targetWordCount);
+    return await cleanUpContent(chunk, llmId, targetWordCount);
   }));
 
   console.log('************Finished cleaning up the chunks************');
@@ -55,22 +56,23 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   const summarizedChunks = await Promise.all(cleanedChunks.map(async chunk => {
     const chunkLength = chunk.split(' ').length;
     const chunkTargetWordCount = Math.floor(targetWordCount * (chunkLength / totalLength));
-    return await recursiveSummerize(chunk, modelId, chunkTargetWordCount, 0); // Add the initial depth value
+    return await recursiveSummerize(chunk, llmId, chunkTargetWordCount, 0); // Add the initial depth value
   }));
 
   // 4) Combine the summarized chunks and return
   return summarizedChunks.join('\n');
 }
 
-async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_targetWordCount: number): Promise<string> {
+async function cleanUpContent(chunk: string, llmId: DLLMId, ignored_was_targetWordCount: number): Promise<string> {
 
   // auto-adjust the tokens assuming the output would be half the size of the input (a bit dangerous,
   // but at this stage we are not guaranteed the input nor output would fit)
   const outputTokenShare = 1 / 3;
-  const autoResponseTokensSize = Math.floor(ChatModels[modelId].contextWindowSize * outputTokenShare);
+  const { contextTokens } = findLLMOrThrow(llmId);
+  const autoResponseTokensSize = Math.floor(contextTokens * outputTokenShare);
 
   try {
-    const chatResponse = await callChat(modelId, [
+    const chatResponse = await callChat(llmId, [
       { role: 'system', content: cleanupPrompt },
       { role: 'user', content: chunk },
     ], autoResponseTokensSize);
@@ -80,14 +82,14 @@ async function cleanUpContent(chunk: string, modelId: ChatModelId, ignored_was_t
   }
 }
 
-async function recursiveSummerize(text: string, modelId: ChatModelId, targetWordCount: number, depth: number = 0): Promise<string> {
+async function recursiveSummerize(text: string, llmId: DLLMId, targetWordCount: number, depth: number = 0): Promise<string> {
   const words = text.split(' ');
 
   if (words.length <= targetWordCount || words.length <= 1 || depth >= 2) {
     return text;
   }
 
-  const shortenedWords = await cleanUpContent(text, modelId, targetWordCount);
+  const shortenedWords = await cleanUpContent(text, llmId, targetWordCount);
 
-  return await recursiveSummerize(shortenedWords, modelId, targetWordCount, depth + 1);
+  return await recursiveSummerize(shortenedWords, llmId, targetWordCount, depth + 1);
 }

@@ -1,31 +1,33 @@
-import { ChatModelId, SystemPurposeId, SystemPurposes } from '../../../data';
+import { SystemPurposeId, SystemPurposes } from '../../../data';
 
+import { DLLMId } from '~/modules/llms/llm.types';
 import { OpenAI } from '~/modules/openai/openai.types';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
+import { findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
 import { updateAutoConversationTitle } from './ai-functions';
 
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantModel: ChatModelId, systemPurpose: SystemPurposeId) => {
+export const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) => {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
 
   // create a blank and 'typing' message for the assistant
-  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantModel, history[0].purposeId, '...');
+  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantLlmId, history[0].purposeId, '...');
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const controller = new AbortController();
   const { startTyping, editMessage } = useChatStore.getState();
   startTyping(conversationId, controller);
 
-  await streamAssistantMessage(conversationId, assistantMessageId, history, assistantModel, editMessage, controller.signal);
+  await streamAssistantMessage(conversationId, assistantMessageId, history, assistantLlmId, editMessage, controller.signal);
 
   // clear to send, again
   startTyping(conversationId, null);
@@ -47,11 +49,11 @@ export function updatePurposeInHistory(conversationId: string, history: DMessage
   return history;
 }
 
-export function createAssistantTypingMessage(conversationId: string, assistantModel: ChatModelId | 'prodia' | 'react-...', assistantPurposeId: SystemPurposeId | undefined, text: string): string {
+export function createAssistantTypingMessage(conversationId: string, assistantLlmLabel: DLLMId | 'prodia' | 'react-...' | string, assistantPurposeId: SystemPurposeId | undefined, text: string): string {
   const assistantMessage: DMessage = createDMessage('assistant', text);
   assistantMessage.typing = true;
   assistantMessage.purposeId = assistantPurposeId;
-  assistantMessage.originLLM = assistantModel;
+  assistantMessage.originLLM = assistantLlmLabel;
   useChatStore.getState().appendMessage(conversationId, assistantMessage);
   return assistantMessage.id;
 }
@@ -62,15 +64,16 @@ export function createAssistantTypingMessage(conversationId: string, assistantMo
  */
 async function streamAssistantMessage(
   conversationId: string, assistantMessageId: string, history: DMessage[],
-  chatModelId: string,
+  llmId: DLLMId,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
 ) {
 
+  const openAILlmId = findOpenAILlmIdOrThrow(llmId);
   const { modelTemperature, modelMaxResponseTokens, elevenLabsAutoSpeak } = useSettingsStore.getState();
   const payload: OpenAI.API.Chat.Request = {
     api: getOpenAISettings(),
-    model: chatModelId,
+    model: openAILlmId,
     messages: history.map(({ role, text }) => ({
       role: role,
       content: text,

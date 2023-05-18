@@ -110,6 +110,39 @@ export const useModelsStore = create<ModelsStore>()(
 );
 
 
+export function useLLMs(): DLLM[] {
+  return useModelsStore(state => state.llms, shallow);
+}
+
+export function findLLMOrThrow(llmId: DLLMId): DLLM {
+  const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
+  if (!llm) throw new Error(`LLM ${llmId} not found`);
+  return llm;
+}
+
+export function findOpenAILlmIdOrThrow(llmId: DLLMId): string {
+  const { options: { llmId: openAILLMId } } = findLLMOrThrow(llmId);
+  if (!openAILLMId) throw new Error(`LLM ${llmId} has no OpenAI LLM`);
+  return openAILLMId;
+}
+
+export function defaultLLMId(): DLLMId | null {
+  const llms = useModelsStore.getState().llms;
+  if (llms.length === 0) return null;
+  return llms[0].id;
+}
+
+export function fasterLLMIdOrThrow(): DLLMId {
+  const llms = useModelsStore.getState().llms;
+  for (const llm of llms)
+    if (llm.id.indexOf('turbo') > 0)
+      return llm.id;
+  if (llms.length > 0)
+    return llms[0].id;
+  throw new Error('No faster LLM found');
+}
+
+
 /**
  * Hook used for Source-specific setup
  */

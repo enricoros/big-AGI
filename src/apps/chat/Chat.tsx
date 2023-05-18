@@ -50,7 +50,7 @@ export function Chat() {
   const { sendModeId } = useComposerStore(state => ({
     sendModeId: state.sendModeId,
   }), shallow);
-  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, chatModelId, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, llmId, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
@@ -59,7 +59,7 @@ export function Chat() {
       importConversation: state.importConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
-      chatModelId: conversation?.chatModelId ?? null,
+      llmId: conversation?.llmId ?? null,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       setAutoTitle: state.setAutoTitle,
     };
@@ -80,9 +80,9 @@ export function Chat() {
           setMessages(conversationId, history);
           return await runImageGenerationUpdatingState(conversationId, prompt);
         }
-        if (CmdRunReact.includes(command) && chatModelId) {
+        if (CmdRunReact.includes(command) && llmId) {
           setMessages(conversationId, history);
-          return await runReActUpdatingState(conversationId, prompt, chatModelId);
+          return await runReActUpdatingState(conversationId, prompt, llmId);
         }
         // if (CmdRunSearch.includes(command))
         //   return await run...
@@ -90,14 +90,14 @@ export function Chat() {
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (sendModeId && chatModelId && systemPurposeId) {
+    if (sendModeId && llmId && systemPurposeId) {
       switch (sendModeId) {
         case 'immediate':
-          return await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, llmId, systemPurposeId);
         case 'react':
           if (lastMessage?.text) {
             setMessages(conversationId, history);
-            return await runReActUpdatingState(conversationId, lastMessage.text, chatModelId);
+            return await runReActUpdatingState(conversationId, lastMessage.text, llmId);
           }
       }
     }
@@ -117,8 +117,8 @@ export function Chat() {
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation && chatModelId) {
-      const prompt = await imaginePromptFromText(messageText, chatModelId);
+    if (conversation && llmId) {
+      const prompt = await imaginePromptFromText(messageText, llmId);
       if (prompt)
         return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
     }
