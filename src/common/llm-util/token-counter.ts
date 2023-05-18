@@ -1,9 +1,7 @@
 import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from '@dqbd/tiktoken';
 
 import { DLLMId } from '~/modules/llms/llm.types';
-import { defaultLLMId, findOpenAILlmIdOrThrow } from '~/modules/llms/llm.store';
-
-import { DMessage } from '../state/store-chats';
+import { findOpenAILlmRefOrThrow, useModelsStore } from '~/modules/llms/llm.store';
 
 
 // Do not set this to true in production, it's very verbose
@@ -21,30 +19,24 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 
   function tokenCount(text: string, llmId: DLLMId, debugFrom: string): number {
-    const openaiLlmId = findOpenAILlmIdOrThrow(llmId);
-    if (!(openaiLlmId in tokenEncoders)) {
+    const openaiModel = findOpenAILlmRefOrThrow(llmId);
+    if (!(openaiModel in tokenEncoders)) {
       try {
-        tokenEncoders[openaiLlmId] = encoding_for_model(openaiLlmId as TiktokenModel);
+        tokenEncoders[openaiModel] = encoding_for_model(openaiModel as TiktokenModel);
       } catch (e) {
-        tokenEncoders[openaiLlmId] = get_encoding('cl100k_base');
+        tokenEncoders[openaiModel] = get_encoding('cl100k_base');
       }
     }
-    const count = tokenEncoders[openaiLlmId]?.encode(text)?.length || 0;
+    const count = tokenEncoders[openaiModel]?.encode(text)?.length || 0;
     if (DEBUG_TOKEN_COUNT)
       console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
     return count;
   }
 
   // preload the tokenizer for the default model
-  const warmupId: DLLMId | null = defaultLLMId();
-  if (warmupId)
-    tokenCount('', warmupId, 'warmup');
+  const { chatLLMId } = useModelsStore.getState();
+  if (chatLLMId)
+    tokenCount('', chatLLMId, 'warmup');
 
   return tokenCount;
 })();
-
-/**
- * Convenience function to count the tokens in a DMessage object
- */
-export const updateTokenCount = (message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number =>
-  (!forceUpdate && message.tokenCount) ? message.tokenCount : llmId ? (message.tokenCount = countModelTokens(message.text, llmId, debugFrom)) : 0;

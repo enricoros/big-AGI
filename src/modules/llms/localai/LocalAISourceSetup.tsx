@@ -83,6 +83,8 @@ function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSou
     hidden: false,
     sId: source.id,
     _source: source,
-    options: {},
+    options: {
+      llmRef: model.id,
+    },
   };
 }

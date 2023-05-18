@@ -165,13 +165,12 @@ export function findLLMOrThrow(llmId: DLLMId): DLLM {
   return llm;
 }
 
-export function findOpenAILlmIdOrThrow(llmId: DLLMId): string {
-  const { options: { llmId: openAILLMId } } = findLLMOrThrow(llmId);
-  if (!openAILLMId) throw new Error(`LLM ${llmId} has no OpenAI LLM`);
-  return openAILLMId;
+export function findOpenAILlmRefOrThrow(llmId: DLLMId): string {
+  const { options: { llmRef: openAIModelRef } } = findLLMOrThrow(llmId);
+  if (!openAIModelRef) throw new Error(`LLM ${llmId} has no OpenAI LLM`);
+  return openAIModelRef;
 }
 
-export const defaultLLMId = (): DLLMId | null => useModelsStore.getState().chatLLMId;
 
 
 export function useChatLLM() {

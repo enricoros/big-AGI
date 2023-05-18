@@ -74,7 +74,7 @@ export function LLMOptions(props: { id: DLLMId }) {
           Info
         </FormLabel>
         <Typography level='body2' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmId && `id: ${llm.options.llmId} · `} context tokens: {llm.contextTokens} · {
+          [{llm.id}]: {llm.options.llmRef && `id: ${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
           llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description} · tags: {llm.tags.join(', ')}
         </Typography>
       </FormControl>
