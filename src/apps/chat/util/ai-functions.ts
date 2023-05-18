@@ -1,6 +1,6 @@
 import { DLLMId } from '~/modules/llms/llm.types';
 import { callChat } from '~/modules/openai/openai.client';
-import { fasterLLMIdOrThrow } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -11,11 +11,12 @@ import { useChatStore } from '~/common/state/store-chats';
 export async function updateAutoConversationTitle(conversationId: string) {
 
   // external state
-  const conversations = useChatStore.getState().conversations;
+  const { fastLLMId } = useModelsStore.getState();
+  const { conversations } = useChatStore.getState();
 
   // only operate on valid conversations, without any title
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
-  if (!conversation || conversation.autoTitle || conversation.userTitle) return;
+  if (!fastLLMId || !conversation || conversation.autoTitle || conversation.userTitle) return;
 
   // first line of the last 5 messages
   const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
@@ -26,7 +27,7 @@ export async function updateAutoConversationTitle(conversationId: string) {
   });
 
   // LLM
-  callChat(fasterLLMIdOrThrow(), [
+  callChat(fastLLMId, [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:

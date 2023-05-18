@@ -8,6 +8,8 @@ import { DLLM, DLLMId, DModelSource, DModelSourceId } from './llm.types';
 /// ModelsStore - a store for LLMs and their origins
 interface ModelsStore {
 
+  chatLLMId: DLLMId | null;
+  fastLLMId: DLLMId | null;
   llms: DLLM[];
   sources: DModelSource[];
 
@@ -27,20 +29,30 @@ export const useModelsStore = create<ModelsStore>()(
   persist(
     (set) => ({
 
+      chatLLMId: null,
+      fastLLMId: null,
       llms: [],
       sources: [],
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
       // this will replace existing llms with the same id
       addLLMs: (llms: DLLM[]) =>
-        set(state => ({
-          llms: state.llms.filter(llm => !llms.find(m => m.id === llm.id)).concat(llms),
-        })),
+        set(state => {
+          const newLlms = [...llms, ...state.llms.filter(llm => !llms.find(m => m.id === llm.id))];
+          return {
+            llms: newLlms,
+            ...updateSelectedIds(newLlms, state.chatLLMId, state.fastLLMId),
+          };
+        }),
 
       removeLLM: (id: DLLMId) =>
-        set(state => ({
-          llms: state.llms.filter(llm => llm.id !== id),
-        })),
+        set(state => {
+          const newLlms = state.llms.filter(llm => llm.id !== id);
+          return {
+            llms: newLlms,
+            ...updateSelectedIds(newLlms, state.chatLLMId, state.fastLLMId),
+          };
+        }),
 
       updateLLM: (id: DLLMId, partial: Partial<DLLM>) =>
         set(state => ({
@@ -67,10 +79,14 @@ export const useModelsStore = create<ModelsStore>()(
         })),
 
       removeSource: (id: DModelSourceId) =>
-        set(state => ({
-          llms: state.llms.filter(llm => llm.sId !== id),
-          sources: state.sources.filter(source => source.id !== id),
-        })),
+        set(state => {
+          const llms = state.llms.filter(llm => llm.sId !== id);
+          return {
+            llms,
+            sources: state.sources.filter(source => source.id !== id),
+            ...updateSelectedIds(llms, state.chatLLMId, state.fastLLMId),
+          };
+        }),
 
       updateSourceSetup: <T>(id: DModelSourceId, partialSetup: Partial<T>) =>
         set(state => ({
@@ -110,6 +126,30 @@ export const useModelsStore = create<ModelsStore>()(
 );
 
 
+const defaultChatSuffixPreference = ['gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
+const defaultFastSuffixPreference = ['gpt-3.5-turbo'];
+
+function findLlmIdBySuffix(llms: DLLM[], suffixes: string[]): DLLMId | null {
+  if (!llms?.length) return null;
+  for (const suffix of suffixes)
+    for (const llm of llms)
+      if (llm.id.endsWith(suffix))
+        return llm.id;
+  // otherwise return first id
+  return llms[0].id;
+}
+
+function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null): Partial<ModelsStore> {
+  if (chatLlmId && !allLlms.find(llm => llm.id === chatLlmId)) chatLlmId = null;
+  if (!chatLlmId) chatLlmId = findLlmIdBySuffix(allLlms, defaultChatSuffixPreference);
+
+  if (fastLlmId && !allLlms.find(llm => llm.id === fastLlmId)) fastLlmId = null;
+  if (!fastLlmId) fastLlmId = findLlmIdBySuffix(allLlms, defaultFastSuffixPreference);
+
+  return { chatLLMId: chatLlmId, fastLLMId: fastLlmId };
+}
+
+
 export function useLLMs(): DLLM[] {
   return useModelsStore(state => state.llms, shallow);
 }
@@ -126,21 +166,7 @@ export function findOpenAILlmIdOrThrow(llmId: DLLMId): string {
   return openAILLMId;
 }
 
-export function defaultLLMId(): DLLMId | null {
-  const llms = useModelsStore.getState().llms;
-  if (llms.length === 0) return null;
-  return llms[0].id;
-}
-
-export function fasterLLMIdOrThrow(): DLLMId {
-  const llms = useModelsStore.getState().llms;
-  for (const llm of llms)
-    if (llm.id.indexOf('turbo') > 0)
-      return llm.id;
-  if (llms.length > 0)
-    return llms[0].id;
-  throw new Error('No faster LLM found');
-}
+export const defaultLLMId = (): DLLMId | null => useModelsStore.getState().chatLLMId;
 
 
 /**
