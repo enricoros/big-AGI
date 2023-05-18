@@ -100,7 +100,7 @@ export const useSettingsStore = create<SettingsStore>()(
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
-      enterToSend: false,
+      enterToSend: true,
       setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
 
       renderMarkdown: false,
