@@ -8,6 +8,7 @@ import { CmdRunReact } from '~/modules/search/search.client';
 import { PasteGG } from '~/modules/pastegg/pastegg.types';
 import { PublishedModal } from '~/modules/pastegg/PublishedModal';
 import { callPublish } from '~/modules/pastegg/pastegg.client';
+import { useModelsStore } from '~/modules/llms/llm.store';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
@@ -50,7 +51,7 @@ export function Chat() {
   const { sendModeId } = useComposerStore(state => ({
     sendModeId: state.sendModeId,
   }), shallow);
-  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, llmId, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
@@ -59,7 +60,6 @@ export function Chat() {
       importConversation: state.importConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
-      llmId: conversation?.llmId ?? null,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       setAutoTitle: state.setAutoTitle,
     };
@@ -67,7 +67,8 @@ export function Chat() {
 
 
   const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
-    if (!conversationId) return;
+    const { chatLLMId } = useModelsStore.getState();
+    if (!conversationId || !chatLLMId) return;
 
     // Command - last user message is a cmd
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
@@ -80,9 +81,9 @@ export function Chat() {
           setMessages(conversationId, history);
           return await runImageGenerationUpdatingState(conversationId, prompt);
         }
-        if (CmdRunReact.includes(command) && llmId) {
+        if (CmdRunReact.includes(command) && chatLLMId) {
           setMessages(conversationId, history);
-          return await runReActUpdatingState(conversationId, prompt, llmId);
+          return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
         // if (CmdRunSearch.includes(command))
         //   return await run...
@@ -90,14 +91,14 @@ export function Chat() {
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (sendModeId && llmId && systemPurposeId) {
+    if (sendModeId && chatLLMId && systemPurposeId) {
       switch (sendModeId) {
         case 'immediate':
-          return await runAssistantUpdatingState(conversationId, history, llmId, systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId);
         case 'react':
           if (lastMessage?.text) {
             setMessages(conversationId, history);
-            return await runReActUpdatingState(conversationId, lastMessage.text, llmId);
+            return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
           }
       }
     }
@@ -117,8 +118,8 @@ export function Chat() {
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation && llmId) {
-      const prompt = await imaginePromptFromText(messageText, llmId);
+    if (conversation) {
+      const prompt = await imaginePromptFromText(messageText);
       if (prompt)
         return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
     }
