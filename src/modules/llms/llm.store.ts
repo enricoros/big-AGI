@@ -174,6 +174,18 @@ export function findOpenAILlmIdOrThrow(llmId: DLLMId): string {
 export const defaultLLMId = (): DLLMId | null => useModelsStore.getState().chatLLMId;
 
 
+export function useChatLLM() {
+  return useModelsStore(state => {
+    const { chatLLMId } = state;
+    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
+    return {
+      chatLLMId,
+      chatLLM,
+    };
+  }, shallow);
+}
+
+
 /**
  * Hook used for Source-specific setup
  */

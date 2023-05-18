@@ -35,7 +35,8 @@ export function EditSources(props: {
 
   // external state
   const { modelSources, addModelSource, removeModelSource } = useModelsStore(state => ({
-    modelSources: state.sources, addModelSource: state.addSource, removeModelSource: state.removeSource,
+    modelSources: state.sources,
+    addModelSource: state.addSource, removeModelSource: state.removeSource,
   }), shallow);
 
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);

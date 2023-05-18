@@ -16,7 +16,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useChatLLM } from '~/modules/llms/llm.store';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SendModeId, SendModes } from '../../../../data';
@@ -190,17 +190,10 @@ export function Composer(props: {
       stopTyping: state.stopTyping,
     };
   }, shallow);
-  const { chatLLMId, chatLLMTokens: tokenLimit } = useModelsStore(state => {
-    const chatLLMId = state.chatLLMId;
-    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) : null;
-    return {
-      chatLLMId,
-      chatLLMTokens: chatLLM ? chatLLM.contextTokens : 0,
-    };
-  }, shallow);
-
+  const { chatLLMId, chatLLM } = useChatLLM();
 
   // derived state
+  const tokenLimit = chatLLM?.contextTokens || 0;
   const directTokens = React.useMemo(() => {
     return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
   }, [chatLLMId, composeText]);

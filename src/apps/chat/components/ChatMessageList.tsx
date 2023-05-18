@@ -4,13 +4,14 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
+import { useChatLLM } from '~/modules/llms/llm.store';
+
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
 import { PurposeSelector } from './PurposeSelector';
-import { useModelsStore } from '~/modules/llms/llm.store';
 
 
 /**
@@ -22,18 +23,15 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
 
   // external state
   const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
-  const { editMessage, deleteMessage } = useChatStore(state => ({ editMessage: state.editMessage, deleteMessage: state.deleteMessage }), shallow);
-  const { messages, tokenLimit, tokenCount } = useChatStore(state => {
+  const { messages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    const llmId = conversation ? conversation.llmId : null;
-    const tokenLimit = llmId ? useModelsStore.getState().llms.find(llm => llm.id === llmId)?.contextTokens || 4096 : 0;
     return {
       messages: conversation ? conversation.messages : [],
-      tokenLimit,
-      tokenCount: conversation ? conversation.tokenCount : 0,
+      editMessage: state.editMessage, deleteMessage: state.deleteMessage,
+      historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
   }, shallow);
-
+  const { chatLLM } = useChatLLM();
 
   const handleMessageDelete = (messageId: string) =>
     props.conversationId && deleteMessage(props.conversationId, messageId);
@@ -116,19 +114,24 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
 
       {filteredMessages.map((message, idx) =>
         props.isMessageSelectionMode ? (
+
           <ChatMessageSelectable
             key={'sel-' + message.id} message={message}
-            isBottom={idx === 0} remainingTokens={tokenLimit - tokenCount}
+            isBottom={idx === 0} remainingTokens={(chatLLM ? chatLLM.contextTokens : 0) - historyTokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
           />
+
         ) : (
+
           <ChatMessage
             key={'msg-' + message.id} message={message}
             isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
             onMessageRunFrom={(offset: number) => handleRestartFromMessage(message.id, offset)}
-            onImagine={handleImagineFromText} />
+            onImagine={handleImagineFromText}
+          />
+
         ),
       )}
 
@@ -137,7 +140,7 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
         <MessagesSelectionHeader
           hasSelected={selectedMessages.size > 0}
           isBottom={filteredMessages.length === 0}
-          sumTokens={tokenCount}
+          sumTokens={historyTokenCount}
           onClose={() => props.setIsMessageSelectionMode(false)}
           onSelectAll={handleSelectAllMessages}
           onDeleteMessages={handleDeleteSelectedMessages}
