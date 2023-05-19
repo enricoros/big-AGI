@@ -16,7 +16,7 @@ import { Link } from '~/common/components/Link';
 import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
 import { extractCommands } from '~/common/util/extractCommands';
-import { useApplicationBarStore } from '~/common/layouts/appbar/useApplicationBarStore';
+import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useComposerStore } from '~/common/state/store-composer';
 import { useSettingsStore } from '~/common/state/store-settings';
 
