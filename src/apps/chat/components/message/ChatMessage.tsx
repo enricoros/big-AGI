@@ -15,8 +15,8 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
+import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { canUseProdia } from '~/modules/prodia/prodia.client';
-import { requireUserKeyElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
@@ -175,7 +175,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
   const isImaginable = canUseProdia();
   const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
-  const isSpeakable = !!useSettingsStore(state => state.elevenLabsVoiceId) || !requireUserKeyElevenLabs;
+  const isSpeakable = canUseElevenLabs();
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 

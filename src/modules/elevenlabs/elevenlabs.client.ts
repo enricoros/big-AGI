@@ -3,8 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useSettingsStore } from '~/common/state/store-settings';
 
+import { useModuleElevenlabsStore } from './store-module-elevenlabs';
+
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
+
+export const canUseElevenLabs = (): boolean => !!useModuleElevenlabsStore.getState().elevenLabsVoiceId || !requireUserKeyElevenLabs;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
@@ -14,7 +18,8 @@ export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLa
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
-  const { elevenLabsApiKey, elevenLabsVoiceId, preferredLanguage } = useSettingsStore.getState();
+  const { preferredLanguage } = useSettingsStore.getState();
+  const { elevenLabsApiKey, elevenLabsVoiceId } = useModuleElevenlabsStore.getState();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
 
   try {

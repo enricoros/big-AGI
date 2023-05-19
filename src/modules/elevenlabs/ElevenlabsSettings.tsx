@@ -10,9 +10,9 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
-import { useSettingsStore } from '~/common/state/store-settings';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
+import { useModuleElevenlabsStore } from './store-module-elevenlabs';
 
 
 export function ElevenlabsSettings() {
@@ -20,7 +20,7 @@ export function ElevenlabsSettings() {
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
 
   // external state
-  const { apiKey, setApiKey, voiceId, setVoiceId, autoSpeak, setAutoSpeak } = useSettingsStore(state => ({
+  const { apiKey, setApiKey, voiceId, setVoiceId, autoSpeak, setAutoSpeak } = useModuleElevenlabsStore(state => ({
     apiKey: state.elevenLabsApiKey, setApiKey: state.setElevenLabsApiKey,
     voiceId: state.elevenLabsVoiceId, setVoiceId: state.setElevenLabsVoiceId,
     autoSpeak: state.elevenLabsAutoSpeak, setAutoSpeak: state.setElevenLabsAutoSpeak,
