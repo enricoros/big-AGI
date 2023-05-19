@@ -3,13 +3,13 @@ import { DLLMId } from '~/modules/llms/llm.types';
 
 import { createDEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 
-import { createAssistantTypingMessage } from './chat-stream';
+import { createAssistantTypingMessage } from './editors';
 
 
 /**
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
-export const runReActUpdatingState = async (conversationId: string, question: string, assistantLlmId: DLLMId) => {
+export async function runReActUpdatingState(conversationId: string, question: string, assistantLlmId: DLLMId) {
 
   const { appendEphemeral, updateEphemeralText, updateEphemeralState, deleteEphemeral, editMessage } = useChatStore.getState();
 
@@ -48,4 +48,4 @@ export const runReActUpdatingState = async (conversationId: string, question: st
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
     updateAssistantMessage({ text: 'Issue: ReAct did not produce an answer.', typing: false });
   }
-};
+}

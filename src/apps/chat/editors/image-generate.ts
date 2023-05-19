@@ -4,13 +4,14 @@ import { useProdiaStore } from '~/modules/prodia/store-prodia';
 
 import { useChatStore } from '~/common/state/store-chats';
 
-import { createAssistantTypingMessage } from './chat-stream';
+import { createAssistantTypingMessage } from './editors';
+
 
 
 /**
  * The main 'image generation' function - for now specialized to the 'imagine' command.
  */
-export const runImageGenerationUpdatingState = async (conversationId: string, imageText: string) => {
+export async function runImageGenerationUpdatingState(conversationId: string, imageText: string) {
 
   // reference the state editing functions
   const { editMessage } = useChatStore.getState();
@@ -51,4 +52,4 @@ export const runImageGenerationUpdatingState = async (conversationId: string, im
     editMessage(conversationId, assistantMessageId, { text: `Sorry, I couldn't generate an image for that. Issue: ${error}.` }, false);
   }
   editMessage(conversationId, assistantMessageId, { typing: false }, false);
-};
+}

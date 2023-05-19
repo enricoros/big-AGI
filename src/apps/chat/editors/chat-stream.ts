@@ -1,20 +1,21 @@
-import { SystemPurposeId, SystemPurposes } from '../../../data';
-
 import { DLLMId } from '~/modules/llms/llm.types';
+import { LLMOptionsOpenAI, SourceSetupOpenAI } from '~/modules/llms/openai/vendor';
 import { OpenAI } from '~/modules/openai/openai.types';
+import { SystemPurposeId } from '../../../data';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
-import { findOpenAILlmRefOrThrow } from '~/modules/llms/store-llms';
+import { findLLMOrThrow, findOpenAILlmRefOrThrow } from '~/modules/llms/store-llms';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
-import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { DMessage, useChatStore } from '~/common/state/store-chats';
+
+import { createAssistantTypingMessage, updatePurposeInHistory } from './editors';
 
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) => {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -34,34 +35,18 @@ export const runAssistantUpdatingState = async (conversationId: string, history:
 
   // update text, if needed
   await autoTitle(conversationId);
+}
+
+
+const getOpenAISettings = ({ oaiKey, oaiOrg, oaiHost, heliKey }: Partial<SourceSetupOpenAI>): Partial<OpenAI.API.Configuration> => {
+  return {
+    ...(oaiHost ? { apiHost: oaiHost } : {}),
+    ...(oaiKey ? { apiKey: oaiKey } : {}),
+    ...(oaiOrg ? { apiOrganizationId: oaiOrg } : {}),
+    ...(heliKey ? { heliconeKey: heliKey } : {}),
+  };
 };
 
-
-export function updatePurposeInHistory(conversationId: string, history: DMessage[], purposeId: SystemPurposeId): DMessage[] {
-  const systemMessageIndex = history.findIndex(m => m.role === 'system');
-  const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
-  if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
-    systemMessage.purposeId = purposeId;
-    systemMessage.text = SystemPurposes[purposeId].systemMessage.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
-  }
-  history.unshift(systemMessage);
-  useChatStore.getState().setMessages(conversationId, history);
-  return history;
-}
-
-export function createAssistantTypingMessage(conversationId: string, assistantLlmLabel: DLLMId | 'prodia' | 'react-...' | string, assistantPurposeId: SystemPurposeId | undefined, text: string): string {
-  const assistantMessage: DMessage = createDMessage('assistant', text);
-  assistantMessage.typing = true;
-  assistantMessage.purposeId = assistantPurposeId;
-  assistantMessage.originLLM = assistantLlmLabel;
-  useChatStore.getState().appendMessage(conversationId, assistantMessage);
-  return assistantMessage.id;
-}
-
-
-/**
- * Main function to send the chat to the assistant and receive a response (streaming)
- */
 async function streamAssistantMessage(
   conversationId: string, assistantMessageId: string, history: DMessage[],
   llmId: DLLMId,
@@ -69,18 +54,26 @@ async function streamAssistantMessage(
   abortSignal: AbortSignal,
 ) {
 
+  // access params
+  const llm = findLLMOrThrow(llmId);
+  const oaiSetup: Partial<SourceSetupOpenAI> = llm._source.setup as Partial<SourceSetupOpenAI>;
+  const apiAccess: Partial<OpenAI.API.Configuration> = getOpenAISettings(oaiSetup);
+
+  const { llmRef, llmTemperature, llmResponseTokens }: Partial<LLMOptionsOpenAI> = llm.options || {};
+  if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
+    throw new Error(`Error in openAI configuration for model ${llmId}`);
+
   const openAILlmId = findOpenAILlmRefOrThrow(llmId);
-  const { modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
   const { elevenLabsAutoSpeak } = useElevenlabsStore.getState();
   const payload: OpenAI.API.Chat.Request = {
-    api: getOpenAISettings(),
+    api: apiAccess,
     model: openAILlmId,
     messages: history.map(({ role, text }) => ({
       role: role,
       content: text,
     })),
-    temperature: modelTemperature,
-    max_tokens: modelMaxResponseTokens,
+    temperature: llmTemperature,
+    max_tokens: llmResponseTokens,
   };
 
   try {
@@ -152,13 +145,3 @@ async function streamAssistantMessage(
   // finally, stop the typing animation
   editMessage(conversationId, assistantMessageId, { typing: false }, false);
 }
-
-const getOpenAISettings = (): Partial<OpenAI.API.Configuration> => {
-  const { apiHost, apiKey, apiOrganizationId, heliconeKey } = useSettingsStore.getState();
-  return {
-    ...(apiHost ? { apiHost } : {}),
-    ...(apiKey ? { apiKey } : {}),
-    ...(apiOrganizationId ? { apiOrganizationId } : {}),
-    ...(heliconeKey ? { heliconeKey } : {}),
-  };
-};
