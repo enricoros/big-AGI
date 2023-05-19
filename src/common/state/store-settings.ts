@@ -49,17 +49,6 @@ interface SettingsStore {
   modelMaxResponseTokens: number;
   setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
-  // ElevenLabs Text to Speech settings
-
-  elevenLabsApiKey: string;
-  setElevenLabsApiKey: (apiKey: string) => void;
-
-  elevenLabsVoiceId: string;
-  setElevenLabsVoiceId: (voiceId: string) => void;
-
-  elevenLabsAutoSpeak: 'off' | 'firstLine';
-  setElevenLabsAutoSpeak: (autoSpeak: 'off' | 'firstLine') => void;
-
   // Google Custom Search settings
 
   googleCloudApiKey: string;
@@ -116,18 +105,8 @@ export const useSettingsStore = create<SettingsStore>()(
       modelMaxResponseTokens: 1024,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
 
-      // ElevenLabs Text to Speech settings
-
-      elevenLabsApiKey: '',
-      setElevenLabsApiKey: (elevenLabsApiKey: string) => set({ elevenLabsApiKey }),
-
-      elevenLabsVoiceId: '',
-      setElevenLabsVoiceId: (elevenLabsVoiceId: string) => set({ elevenLabsVoiceId }),
-
-      elevenLabsAutoSpeak: 'firstLine',
-      setElevenLabsAutoSpeak: (elevenLabsAutoSpeak: 'off' | 'firstLine') => set({ elevenLabsAutoSpeak }),
-
       // Google Custom Search settings
+
       googleCloudApiKey: '',
       setGoogleCloudApiKey: (googleApiKey: string) => set({ googleCloudApiKey: googleApiKey }),
 
