@@ -3,9 +3,9 @@ import { create } from 'zustand';
 import { DLLMId } from '~/modules/llms/llm.types';
 
 
-/// UI Store (not persisted)
+// UI State - not persisted
 
-interface UIStore {
+interface UIStateStore {
 
   settingsOpen: boolean;
   openSettings: () => void;
@@ -21,7 +21,7 @@ interface UIStore {
 
 }
 
-export const useUIStore = create<UIStore>()(
+export const useUIStateStore = create<UIStateStore>()(
   (set) => ({
 
     settingsOpen: false,

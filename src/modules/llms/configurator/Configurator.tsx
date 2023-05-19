@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
 import { DModelSourceId } from '../llm.types';
 import { EditSources } from './EditSources';
@@ -21,7 +21,7 @@ export function Configurator() {
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
-  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStore();
+  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
   const { modelSources, llmCount } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,

@@ -5,14 +5,14 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
 import { DLLM, ModelVendor } from '../llm.types';
-import { useUIStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
 
 export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: boolean, chipFast?: boolean }) {
 
   // external state
   const theme = useTheme();
-  const openLLMOptions = useUIStore(state => state.openLLMOptions);
+  const openLLMOptions = useUIStateStore(state => state.openLLMOptions);
 
   // derived
   const llm = props.llm;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItem, ListItemButton, ListItemDecorator, Option, Typography } from '@mui/joy';
+import { ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -12,7 +12,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
-import { useUIStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
 
 export function Dropdowns(props: {
@@ -34,7 +34,7 @@ export function Dropdowns(props: {
       setSystemPurposeId: state.setSystemPurposeId,
     };
   }, shallow);
-  const { openLLMOptions, openModelsSetup } = useUIStore(state => ({
+  const { openLLMOptions, openModelsSetup } = useUIStateStore(state => ({
     openLLMOptions: state.openLLMOptions, openModelsSetup: state.openModelsSetup,
   }), shallow);
 
@@ -60,16 +60,16 @@ export function Dropdowns(props: {
       placeholder='Model'
       appendOption={<>
 
-      {chatLLMId && (
-        <ListItemButton onClick={handleOpenLLMOptions}>
-          <ListItemDecorator>
-            <SettingsIcon color='info' />
-          </ListItemDecorator>
-          <Typography>
-            Options
-          </Typography>
-        </ListItemButton>
-      )}
+        {chatLLMId && (
+          <ListItemButton onClick={handleOpenLLMOptions}>
+            <ListItemDecorator>
+              <SettingsIcon color='info' />
+            </ListItemDecorator>
+            <Typography>
+              Options
+            </Typography>
+          </ListItemButton>
+        )}
 
         <ListItemButton onClick={openModelsSetup}>
           <ListItemDecorator>
