@@ -12,10 +12,10 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { Section } from '~/common/components/Section';
 import { settingsGap } from '~/common/theme';
-import { useSettingsStore } from '~/common/state/store-settings';
 
 import { Prodia } from './prodia.types';
 import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from './prodia.client';
+import { useModuleProdiaStore } from './store-module-prodia';
 
 
 export function ProdiaSettings() {
@@ -23,7 +23,7 @@ export function ProdiaSettings() {
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
 
   // external state
-  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useSettingsStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useModuleProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     negativePrompt: state.prodiaNegativePrompt, setNegativePrompt: state.setProdiaNegativePrompt,

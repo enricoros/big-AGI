@@ -1,8 +1,8 @@
 import { Prodia } from '~/modules/prodia/prodia.types';
 import { prodiaDefaultModelId } from '~/modules/prodia/prodia.client';
+import { useModuleProdiaStore } from '~/modules/prodia/store-module-prodia';
 
 import { useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
 
 import { createAssistantTypingMessage } from './chat-stream';
 
@@ -20,7 +20,7 @@ export const runImageGenerationUpdatingState = async (conversationId: string, im
     `Give me a few seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`);
 
   // generate the image
-  const { prodiaApiKey: apiKey, prodiaModelId, prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale, prodiaSeed: seed } = useSettingsStore.getState();
+  const { prodiaApiKey: apiKey, prodiaModelId, prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale, prodiaSeed: seed } = useModuleProdiaStore.getState();
   const input: Prodia.API.Imagine.RequestBody = {
     ...(apiKey && { apiKey }),
     prompt: imageText,
