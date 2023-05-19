@@ -15,7 +15,7 @@ import { settingsGap } from '~/common/theme';
 
 import { Prodia } from './prodia.types';
 import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from './prodia.client';
-import { useModuleProdiaStore } from './store-module-prodia';
+import { useProdiaStore } from './store-prodia';
 
 
 export function ProdiaSettings() {
@@ -23,7 +23,7 @@ export function ProdiaSettings() {
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
 
   // external state
-  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useModuleProdiaStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     negativePrompt: state.prodiaNegativePrompt, setNegativePrompt: state.setProdiaNegativePrompt,
