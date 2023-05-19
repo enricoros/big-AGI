@@ -510,12 +510,23 @@ export function Composer(props: {
 
               {/* Send / Stop */}
               {assistantTyping
-                ? <Button fullWidth variant='soft' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId} onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
-                  Stop
-                </Button>
-                : <Button fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId} onClick={handleSendClicked} onDoubleClick={handleShowSendMode} endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}>
-                  {isReAct ? 'ReAct' : 'Chat'}
-                </Button>}
+                ? (
+                  <Button
+                    fullWidth variant='soft' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId}
+                    onClick={handleStopClicked}
+                    endDecorator={<StopOutlinedIcon />}
+                  >
+                    Stop
+                  </Button>
+                ) : (
+                  <Button
+                    fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                    onClick={handleSendClicked} onDoubleClick={handleShowSendMode}
+                    endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+                  >
+                    {isReAct ? 'ReAct' : 'Chat'}
+                  </Button>
+                )}
             </Box>
 
             {/* [desktop-only] row with Sent Messages button */}
