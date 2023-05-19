@@ -9,7 +9,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { SupportMenuItem } from './SupportMenuItem';
-import { useApplicationBarStore } from './useApplicationBarStore';
+import { useApplicationBarStore } from './store-applicationbar';
 import { useUIStore } from '../../state/store-ui';
 
 
