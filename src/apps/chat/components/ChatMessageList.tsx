@@ -7,7 +7,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
@@ -29,7 +29,7 @@ export function ChatMessageList(props: {
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
-  const showSystemMessages = useSettingsStore(state => state.showSystemMessages);
+  const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
   const { messages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {

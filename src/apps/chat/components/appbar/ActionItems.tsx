@@ -10,7 +10,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { downloadConversationJson, useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ActionItems(props: {
@@ -21,7 +21,7 @@ export function ActionItems(props: {
 }) {
 
   // external state
-  const { showSystemMessages, setShowSystemMessages } = useSettingsStore(state => ({
+  const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
 

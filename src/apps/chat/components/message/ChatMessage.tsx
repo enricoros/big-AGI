@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -25,7 +26,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { cssRainbowColorKeyframes } from '~/common/theme';
 import { prettyBaseModel } from '~/common/util/conversationToMarkdown';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -171,8 +172,11 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
   // external state
   const theme = useTheme();
-  const showAvatars = useSettingsStore(state => state.zenMode) !== 'cleaner';
-  const renderMarkdown = useSettingsStore(state => state.renderMarkdown) && !fromSystem;
+  const { showAvatars, renderMarkdown: _renderMarkdown } = useUIPreferencesStore(state => ({
+    showAvatars: state.zenMode !== 'cleaner',
+    renderMarkdown: state.renderMarkdown,
+  }), shallow);
+  const renderMarkdown = _renderMarkdown && !fromSystem;
   const isImaginable = canUseProdia();
   const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();

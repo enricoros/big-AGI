@@ -1,7 +1,7 @@
 import { ElevenLabs } from './elevenlabs.types';
 import { useQuery } from '@tanstack/react-query';
 
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { useModuleElevenlabsStore } from './store-module-elevenlabs';
 
@@ -18,7 +18,7 @@ export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLa
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
-  const { preferredLanguage } = useSettingsStore.getState();
+  const { preferredLanguage } = useUIPreferencesStore.getState();
   const { elevenLabsApiKey, elevenLabsVoiceId } = useModuleElevenlabsStore.getState();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
 
