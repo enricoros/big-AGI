@@ -1,5 +1,5 @@
 import { callChat } from '~/modules/llms/llm.client';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 const simpleImagineSystemPrompt =

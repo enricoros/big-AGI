@@ -5,7 +5,7 @@ import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperT
 
 import { DLLM, DLLMId } from '~/modules/llms/llm.types';
 import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/llm-util/token-counter';

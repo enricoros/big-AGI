@@ -8,7 +8,7 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
-import { findOpenAILlmRefOrThrow } from '~/modules/llms/llm.store';
+import { findOpenAILlmRefOrThrow } from '~/modules/llms/store-llms';
 
 
 

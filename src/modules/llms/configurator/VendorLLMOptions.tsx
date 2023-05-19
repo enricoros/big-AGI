@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { DLLMId } from '../llm.types';
 import { findVendorById } from '../vendor.registry';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 export function VendorLLMOptions(props: { id: DLLMId }) {

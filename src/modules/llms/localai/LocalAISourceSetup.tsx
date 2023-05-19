@@ -13,7 +13,7 @@ import { settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { normalizeSetup, SourceSetupLocalAI } from './vendor';
-import { useModelsStore, useSourceSetup } from '../llm.store';
+import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 const urlSchema = z.string().url().startsWith('http');

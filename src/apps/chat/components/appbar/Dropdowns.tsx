@@ -7,7 +7,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';

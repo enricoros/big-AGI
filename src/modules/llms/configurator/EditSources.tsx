@@ -14,7 +14,7 @@ import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
 import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendor.registry';
 import { hasServerKeyOpenAI } from '../openai/openai.client';
-import { useModelsStore } from '../llm.store';
+import { useModelsStore } from '../store-llms';
 
 
 function locationIcon(vendor?: ModelVendor | null) {

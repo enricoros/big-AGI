@@ -9,7 +9,7 @@ import { PasteGG } from '~/modules/pastegg/pastegg.types';
 import { PublishedModal } from '~/modules/pastegg/PublishedModal';
 import { callPublish } from '~/modules/pastegg/pastegg.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';

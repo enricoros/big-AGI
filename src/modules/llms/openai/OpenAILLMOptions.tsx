@@ -5,7 +5,7 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM } from '../llm.types';
 import { LLMOptionsOpenAI, normalizeLLMOptions } from './vendor';
-import { useModelsStore } from '../llm.store';
+import { useModelsStore } from '../store-llms';
 
 
 export function OpenAILLMOptions(props: { llm: DLLM }) {
