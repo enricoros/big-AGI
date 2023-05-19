@@ -9,14 +9,14 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Link } from '~/common/components/Link';
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
-import { useSettingsStore } from '~/common/state/store-settings';
 
 import { isValidGoogleCloudApiKey, isValidGoogleCseId, requireUserKeyGoogleCse } from './search.client';
+import { useGoogleSearchStore } from './store-google';
 
 
 export function SearchSettings() {
   // external state
-  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useSettingsStore(state => ({
+  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
   }), shallow);

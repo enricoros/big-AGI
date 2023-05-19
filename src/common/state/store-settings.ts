@@ -26,13 +26,7 @@ interface SettingsStore {
   modelMaxResponseTokens: number;
   setModelMaxResponseTokens: (modelMaxResponseTokens: number) => void;
 
-  // Google Custom Search settings
 
-  googleCloudApiKey: string;
-  setGoogleCloudApiKey: (googleApiKey: string) => void;
-
-  googleCSEId: string;
-  setGoogleCSEId: (cseId: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -58,14 +52,6 @@ export const useSettingsStore = create<SettingsStore>()(
 
       modelMaxResponseTokens: 1024,
       setModelMaxResponseTokens: (modelMaxResponseTokens: number) => set({ modelMaxResponseTokens: modelMaxResponseTokens }),
-
-      // Google Custom Search settings
-
-      googleCloudApiKey: '',
-      setGoogleCloudApiKey: (googleApiKey: string) => set({ googleCloudApiKey: googleApiKey }),
-
-      googleCSEId: '',
-      setGoogleCSEId: (cseId: string) => set({ googleCSEId: cseId }),
 
     }),
     {
