@@ -4,10 +4,10 @@ import { Box, Button, Divider } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
+import { GoodModal } from '~/common/components/GoodModal';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 import { SearchSettings } from '~/modules/search/SearchSettings';
-import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
 import { UISettings } from './UISettings';
 
@@ -17,7 +17,7 @@ import { UISettings } from './UISettings';
  */
 export function SettingsModal() {
   // external state
-  const { settingsOpen, closeSettings, openModelsSetup } = useUIStore();
+  const { settingsOpen, closeSettings, openModelsSetup } = useUIStateStore();
 
   return (
     <GoodModal title={`Preferences`} open={settingsOpen} onClose={closeSettings}

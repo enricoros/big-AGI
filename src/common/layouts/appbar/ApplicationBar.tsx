@@ -8,9 +8,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+import { useUIStateStore } from '~/common/state/store-ui';
+
 import { SupportMenuItem } from './SupportMenuItem';
 import { useApplicationBarStore } from './store-applicationbar';
-import { useUIStore } from '../../state/store-ui';
 
 
 function CommonContextItems(props: { onClose: () => void }) {
@@ -21,7 +22,7 @@ function CommonContextItems(props: { onClose: () => void }) {
 
   const handleShowSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
-    useUIStore.getState().openSettings();
+    useUIStateStore.getState().openSettings();
     props.onClose();
   };
 

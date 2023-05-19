@@ -5,7 +5,7 @@ import { Button, Divider, FormControl, FormLabel, Input, Switch, Typography } fr
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
 import { DLLMId } from '../llm.types';
 import { VendorLLMOptions } from './VendorLLMOptions';
@@ -15,7 +15,7 @@ import { useModelsStore } from '../store-llms';
 export function LLMOptions(props: { id: DLLMId }) {
 
   // external state
-  const closeLLMOptions = useUIStore(state => state.closeLLMOptions);
+  const closeLLMOptions = useUIStateStore(state => state.closeLLMOptions);
   const { llm, removeLLM, updateLLM } = useModelsStore(state => ({
     llm: state.llms.find(llm => llm.id === props.id),
     removeLLM: state.removeLLM,
