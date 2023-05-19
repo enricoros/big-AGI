@@ -9,7 +9,7 @@ import { useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { usePurposeStore } from './purposes.store';
+import { usePurposeStore } from './store-purposes';
 
 
 // Constants for tile sizes / grid width - breakpoints need to be computed here to work around

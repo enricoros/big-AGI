@@ -33,7 +33,7 @@ import { SendModeId } from '../../Chat';
 import { SendModeMenu } from './SendModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useComposerStore } from './composer.store';
+import { useComposerStore } from './store-composer';
 
 
 /// Text template helpers
