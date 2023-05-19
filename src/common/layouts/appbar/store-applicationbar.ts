@@ -8,7 +8,7 @@ import { create } from 'zustand';
 //   onClick: () => void;
 // };
 
-type ApplicationBarState = {
+type ApplicationBarStore = {
 
   centerItems: React.JSX.Element | null;
   appMenuBadge: number | null;
@@ -20,7 +20,7 @@ type ApplicationBarState = {
 
 };
 
-export const useApplicationBarStore = create<ApplicationBarState>()(
+export const useApplicationBarStore = create<ApplicationBarStore>()(
   (set) => ({
 
     centerItems: null,

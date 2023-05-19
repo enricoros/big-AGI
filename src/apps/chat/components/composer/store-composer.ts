@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 
 /// Composer Store
 
-interface ComposerStore {
+interface StoreComposer {
 
   sentMessages: {
     date: number,
@@ -16,7 +16,7 @@ interface ComposerStore {
 
 }
 
-export const useComposerStore = create<ComposerStore>()(
+export const useComposerStore = create<StoreComposer>()(
   persist((set, get) => ({
 
       sentMessages: [],
@@ -45,13 +45,13 @@ export const useComposerStore = create<ComposerStore>()(
     {
       name: 'app-composer',
       version: 1,
-      migrate: (state: any, version): ComposerStore => {
+      migrate: (state: any, version): StoreComposer => {
         // 0 -> 1: rename history to sentMessages
         if (state && version === 0) {
           state.sentMessages = state.history;
           delete state.history;
         }
-        return state as ComposerStore;
+        return state as StoreComposer;
       },
     }),
 );
