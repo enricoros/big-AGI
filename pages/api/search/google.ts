@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { Search } from '~/modules/search/search.types';
-import { objectToQueryString } from '~/modules/search/search.client';
+import { Search } from '~/modules/google/search.types';
+import { objectToQueryString } from '~/modules/google/search.client';
 
 
 export default async function handler(req: NextRequest): Promise<NextResponse> {

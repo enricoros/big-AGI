@@ -1,4 +1,4 @@
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useGoogleSearchStore } from '~/modules/google/store-google';
 
 import { Search } from './search.types';
 
@@ -17,7 +17,7 @@ export const CmdRunSearch: string[] = ['/search'];
 export async function callApiSearchGoogle(queryText: string): Promise<Search.API.Response> {
 
   // create the query with the current keys
-  const { googleCloudApiKey, googleCSEId } = useSettingsStore.getState();
+  const { googleCloudApiKey, googleCSEId } = useGoogleSearchStore.getState();
   const queryParams: Search.API.RequestParams = {
     query: queryText,
     ...(googleCloudApiKey ? { key: googleCloudApiKey } : {}),
