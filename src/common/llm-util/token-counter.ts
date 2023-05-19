@@ -1,7 +1,7 @@
 import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from '@dqbd/tiktoken';
 
 import { DLLMId } from '~/modules/llms/llm.types';
-import { findOpenAILlmRefOrThrow, useModelsStore } from '~/modules/llms/llm.store';
+import { findOpenAILlmRefOrThrow, useModelsStore } from '~/modules/llms/store-llms';
 
 
 // Do not set this to true in production, it's very verbose

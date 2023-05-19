@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { useChatLLM } from '~/modules/llms/llm.store';
+import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';

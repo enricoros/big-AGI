@@ -12,7 +12,7 @@ import { LLMList } from './LLMList';
 import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
 import { createDefaultSource } from '../vendor.registry';
-import { useModelsStore } from '../llm.store';
+import { useModelsStore } from '../store-llms';
 
 
 export function Configurator() {

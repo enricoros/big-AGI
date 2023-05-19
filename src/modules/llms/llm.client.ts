@@ -1,7 +1,7 @@
 import { DLLMId } from '~/modules/llms/llm.types';
 import { OpenAI } from '~/modules/openai/openai.types';
 import { findVendorById } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/llm.store';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 export async function callChat(llmId: DLLMId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {

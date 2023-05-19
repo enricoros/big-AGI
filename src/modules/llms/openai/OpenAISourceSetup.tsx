@@ -15,7 +15,7 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { LLMOptionsOpenAI, normalizeSetup, SourceSetupOpenAI } from './vendor';
-import { useModelsStore, useSourceSetup } from '../llm.store';
+import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {

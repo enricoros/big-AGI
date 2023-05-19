@@ -9,7 +9,7 @@ import { useUIStore } from '~/common/state/store-ui';
 
 import { DLLMId } from '../llm.types';
 import { VendorLLMOptions } from './VendorLLMOptions';
-import { useModelsStore } from '../llm.store';
+import { useModelsStore } from '../store-llms';
 
 
 export function LLMOptions(props: { id: DLLMId }) {

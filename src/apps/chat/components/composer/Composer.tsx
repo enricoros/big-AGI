@@ -17,7 +17,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
-import { useChatLLM } from '~/modules/llms/llm.store';
+import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SendModeId, SendModes } from '../../../../data';
