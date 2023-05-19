@@ -63,23 +63,3 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     symbol: '✨',
   },
 };
-
-
-export type SendModeId = 'immediate' | 'react';
-export const defaultSendModeId: SendModeId = 'immediate';
-
-type SendModeData = {
-  label: string;
-  description: string | JSX.Element;
-}
-
-export const SendModes: { [key in SendModeId]: SendModeData } = {
-  'immediate': {
-    label: 'Chat',
-    description: 'AI-powered direct responses',
-  },
-  'react': {
-    label: 'Reason+Act',
-    description: 'Answer your questions with ReAct and search',
-  },
-};

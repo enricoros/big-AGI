@@ -17,7 +17,6 @@ import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
 import { extractCommands } from '~/common/util/extractCommands';
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
-import { useComposerStore } from '~/common/state/store-composer';
 import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ActionItems } from './components/appbar/ActionItems';
@@ -34,6 +33,8 @@ import { runReActUpdatingState } from './editors/react-tangent';
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
+export type SendModeId = 'immediate' | 'react';
+
 
 export function Chat() {
 
@@ -48,9 +49,6 @@ export function Chat() {
 
   // external state
   const theme = useTheme();
-  const { sendModeId } = useComposerStore(state => ({
-    sendModeId: state.sendModeId,
-  }), shallow);
   const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
@@ -66,7 +64,7 @@ export function Chat() {
   }, shallow);
 
 
-  const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
+  const handleExecuteConversation = async (sendModeId: SendModeId, conversationId: string, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();
     if (!conversationId || !chatLLMId) return;
 
@@ -110,10 +108,10 @@ export function Chat() {
   const _findConversation = (conversationId: string) =>
     conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
-  const handleSendUserMessage = async (conversationId: string, userText: string) => {
+  const handleSendUserMessage = async (sendModeId: SendModeId, conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
     if (conversation)
-      return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', userText)]);
+      return await handleExecuteConversation(sendModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
@@ -121,7 +119,7 @@ export function Chat() {
     if (conversation) {
       const prompt = await imaginePromptFromText(messageText);
       if (prompt)
-        return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
+        return await handleExecuteConversation('immediate', conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
     }
   };
 

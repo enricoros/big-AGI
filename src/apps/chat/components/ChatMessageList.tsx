@@ -11,13 +11,20 @@ import { useSettingsStore } from '~/common/state/store-settings';
 
 import { ChatMessage } from './message/ChatMessage';
 import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
-import { PurposeSelector } from './PurposeSelector';
+import { PurposeSelector } from './purpose-selector/PurposeSelector';
+import { SendModeId } from '../Chat';
 
 
 /**
  * A list of ChatMessages
  */
-export function ChatMessageList(props: { conversationId: string | null, isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void, onExecuteConversation: (conversationId: string, history: DMessage[]) => void, onImagineFromText: (conversationId: string, userText: string) => void, sx?: SxProps }) {
+export function ChatMessageList(props: {
+  conversationId: string | null,
+  isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
+  onExecuteConversation: (sendModeId: SendModeId, conversationId: string, history: DMessage[]) => void,
+  onImagineFromText: (conversationId: string, userText: string) => void,
+  sx?: SxProps
+}) {
   // state
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
@@ -44,11 +51,11 @@ export function ChatMessageList(props: { conversationId: string | null, isMessag
 
   const handleRestartFromMessage = (messageId: string, offset: number) => {
     const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-    props.conversationId && props.onExecuteConversation(props.conversationId, truncatedHistory);
+    props.conversationId && props.onExecuteConversation('immediate', props.conversationId, truncatedHistory);
   };
 
   const handleRunExample = (text: string) =>
-    props.conversationId && props.onExecuteConversation(props.conversationId, [...messages, createDMessage('user', text)]);
+    props.conversationId && props.onExecuteConversation('immediate', props.conversationId, [...messages, createDMessage('user', text)]);
 
 
   // hide system messages if the user chooses so
