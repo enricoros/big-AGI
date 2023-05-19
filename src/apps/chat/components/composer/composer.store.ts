@@ -1,14 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { defaultSendModeId, SendModeId } from '../../data';
 
 
 /// Composer Store
 
 interface ComposerStore {
-
-  sendModeId: SendModeId;
-  setSendModeId: (sendMode: SendModeId) => void;
 
   sentMessages: {
     date: number,
@@ -22,9 +18,6 @@ interface ComposerStore {
 
 export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
-
-      sendModeId: defaultSendModeId,
-      setSendModeId: (sendMode: SendModeId) => set({ sendModeId: sendMode }),
 
       sentMessages: [],
       appendSentMessage: (text: string) => {

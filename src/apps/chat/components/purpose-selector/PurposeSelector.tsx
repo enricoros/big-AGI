@@ -5,10 +5,11 @@ import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typogr
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { SystemPurposeId, SystemPurposes } from '../../../data';
 import { useChatStore } from '~/common/state/store-chats';
-import { usePurposeStore } from '~/common/state/store-purposes';
 import { useSettingsStore } from '~/common/state/store-settings';
+
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { usePurposeStore } from './purposes.store';
 
 
 // Constants for tile sizes / grid width - breakpoints need to be computed here to work around

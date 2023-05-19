@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Radio, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -20,19 +20,20 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { SendModeId, SendModes } from '../../../../data';
 import { countModelTokens } from '~/common/llm-util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
-import { useComposerStore } from '~/common/state/store-composer';
 import { useSettingsStore } from '~/common/state/store-settings';
 import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 
+import { SendModeId } from '../../Chat';
+import { SendModeMenu } from './SendModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
+import { useComposerStore } from './composer.store';
 
 
 /// Text template helpers
@@ -97,29 +98,6 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
   </Tooltip>;
 
 
-const SendModeMenu = (props: { anchorEl: HTMLAnchorElement, sendMode: SendModeId, onSetSendMode: (sendMode: SendModeId) => void, onClose: () => void, }) =>
-  <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
-    open anchorEl={props.anchorEl} onClose={props.onClose}>
-
-    <MenuItem color='neutral' selected>Conversation Mode</MenuItem>
-
-    <ListDivider />
-
-    {Object.entries(SendModes).map(([key, data]) =>
-      <MenuItem key={'send-mode-' + key} onClick={() => props.onSetSendMode(key as SendModeId)}>
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-          <Radio checked={key === props.sendMode} />
-          <Box>
-            <Typography>{data.label}</Typography>
-            <Typography level='body2'>{data.description}</Typography>
-          </Box>
-        </Box>
-      </MenuItem>)}
-
-  </Menu>;
-
-
 const SentMessagesMenu = (props: {
   anchorEl: HTMLAnchorElement, onClose: () => void,
   messages: { date: number; text: string; count: number }[],
@@ -163,11 +141,12 @@ const SentMessagesMenu = (props: {
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
-  onSendMessage: (conversationId: string, text: string) => void;
+  onSendMessage: (sendModeId: SendModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
   const [composeText, setComposeText] = React.useState('');
+  const [sendModeId, setSendModeId] = React.useState<SendModeId>('immediate');
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
@@ -179,7 +158,7 @@ export function Composer(props: {
   // external state
   const theme = useTheme();
   const enterToSend = useSettingsStore(state => state.enterToSend);
-  const { sendModeId, setSendModeId, sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
+  const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -204,7 +183,7 @@ export function Composer(props: {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
       setComposeText('');
-      props.onSendMessage(props.conversationId, text);
+      props.onSendMessage(sendModeId, props.conversationId, text);
       appendSentMessage(text);
     }
   };
