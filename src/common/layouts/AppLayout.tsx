@@ -6,9 +6,10 @@ import { Box, Container, useTheme } from '@mui/joy';
 import { Configurator } from '~/modules/llms/configurator/Configurator';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
 import { ApplicationBar } from './appbar/ApplicationBar';
 import { NoSSR } from '../components/NoSSR';
-import { useSettingsStore } from '../state/store-settings';
 
 
 export function AppLayout(props: {
@@ -17,7 +18,7 @@ export function AppLayout(props: {
 }) {
   // external state
   const theme = useTheme();
-  const { centerMode } = useSettingsStore(state => ({ centerMode: state.centerMode }), shallow);
+  const { centerMode } = useUIPreferencesStore(state => ({ centerMode: state.centerMode }), shallow);
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth

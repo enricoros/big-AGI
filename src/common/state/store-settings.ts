@@ -6,29 +6,6 @@ import { persist } from 'zustand/middleware';
 
 interface SettingsStore {
 
-  // UI settings
-
-  preferredLanguage: string;
-  setPreferredLanguage: (preferredLanguage: string) => void;
-
-  centerMode: 'narrow' | 'wide' | 'full';
-  setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
-
-  enterToSend: boolean;
-  setEnterToSend: (enterToSend: boolean) => void;
-
-  renderMarkdown: boolean;
-  setRenderMarkdown: (renderMarkdown: boolean) => void;
-
-  showPurposeFinder: boolean;
-  setShowPurposeFinder: (showPurposeFinder: boolean) => void;
-
-  showSystemMessages: boolean;
-  setShowSystemMessages: (showSystemMessages: boolean) => void;
-
-  zenMode: 'clean' | 'cleaner';
-  setZenMode: (zenMode: 'clean' | 'cleaner') => void;
-
   // OpenAI API settings
 
   apiHost: string;
@@ -61,29 +38,6 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-
-      // UI settings
-
-      preferredLanguage: (typeof navigator !== 'undefined') && navigator.language || 'en-US',
-      setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
-
-      centerMode: 'wide',
-      setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
-
-      enterToSend: true,
-      setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
-
-      renderMarkdown: false,
-      setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
-
-      showPurposeFinder: false,
-      setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
-
-      showSystemMessages: false,
-      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
-
-      zenMode: 'clean',
-      setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
       // OpenAI API settings
 

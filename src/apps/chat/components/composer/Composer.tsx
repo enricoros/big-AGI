@@ -26,8 +26,8 @@ import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
 import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SendModeId } from '../../Chat';
 import { SendModeMenu } from './SendModeMenu';
@@ -157,7 +157,7 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
-  const enterToSend = useSettingsStore(state => state.enterToSend);
+  const enterToSend = useUIPreferencesStore(state => state.enterToSend);
   const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);

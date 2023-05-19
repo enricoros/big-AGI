@@ -11,8 +11,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
 
 export function Dropdowns(props: {
@@ -26,7 +25,7 @@ export function Dropdowns(props: {
     llms: state.llms,
   }), shallow);
 
-  const { zenMode } = useSettingsStore(state => ({ zenMode: state.zenMode }), shallow);
+  const { zenMode } = useUIPreferencesStore(state => ({ zenMode: state.zenMode }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {

@@ -8,7 +8,7 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { hideOnMobile, settingsGap } from '~/common/theme';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 // languages is defined as a JSON file
 import languages from './languages.json' assert { type: 'json' };
@@ -19,7 +19,7 @@ const SHOW_PURPOSE_FINDER = false;
 
 function LanguageSelect() {
   // external state
-  const { preferredLanguage, setPreferredLanguage } = useSettingsStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
+  const { preferredLanguage, setPreferredLanguage } = useUIPreferencesStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
 
   const handleLanguageChanged = (event: any, newValue: string | null) => {
     if (!newValue) return;
@@ -65,7 +65,7 @@ export function UISettings() {
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
-  } = useSettingsStore(state => ({
+  } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,

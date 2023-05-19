@@ -17,7 +17,7 @@ import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
 import { extractCommands } from '~/common/util/extractCommands';
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ActionItems } from './components/appbar/ActionItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -153,7 +153,7 @@ export function Chat() {
       const conversation = _findConversation(publishConversationId);
       setPublishConversationId(null);
       if (conversation) {
-        const markdownContent = conversationToMarkdown(conversation, !useSettingsStore.getState().showSystemMessages);
+        const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
         const publishResponse = await callPublish('paste.gg', markdownContent);
         setPublishResponse(publishResponse);
       }

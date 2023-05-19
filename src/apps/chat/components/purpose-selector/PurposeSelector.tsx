@@ -6,7 +6,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { useChatStore } from '~/common/state/store-chats';
-import { useSettingsStore } from '~/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
@@ -28,7 +28,7 @@ const bpTileGap = { xs: 2, md: 3 };
 
 
 // Add this utility function to get a random array element
-const getRandomElement = <T,>(array: T[]): T | undefined =>
+const getRandomElement = <T, >(array: T[]): T | undefined =>
   array.length > 0 ? array[Math.floor(Math.random() * array.length)] : undefined;
 
 
@@ -43,7 +43,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
   // external state
   const theme = useTheme();
-  const showPurposeFinder = useSettingsStore(state => state.showPurposeFinder);
+  const showPurposeFinder = useUIPreferencesStore(state => state.showPurposeFinder);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
