@@ -12,7 +12,7 @@ import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
-import { useModuleElevenlabsStore } from './store-module-elevenlabs';
+import { useElevenlabsStore } from './store-elevenlabs';
 
 
 export function ElevenlabsSettings() {
@@ -20,7 +20,7 @@ export function ElevenlabsSettings() {
   const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
 
   // external state
-  const { apiKey, setApiKey, voiceId, setVoiceId, autoSpeak, setAutoSpeak } = useModuleElevenlabsStore(state => ({
+  const { apiKey, setApiKey, voiceId, setVoiceId, autoSpeak, setAutoSpeak } = useElevenlabsStore(state => ({
     apiKey: state.elevenLabsApiKey, setApiKey: state.setElevenLabsApiKey,
     voiceId: state.elevenLabsVoiceId, setVoiceId: state.setElevenLabsVoiceId,
     autoSpeak: state.elevenLabsAutoSpeak, setAutoSpeak: state.setElevenLabsAutoSpeak,

@@ -5,7 +5,7 @@ import { OpenAI } from '~/modules/openai/openai.types';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { findOpenAILlmRefOrThrow } from '~/modules/llms/store-llms';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { useModuleElevenlabsStore } from '~/modules/elevenlabs/store-module-elevenlabs';
+import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useSettingsStore } from '~/common/state/store-settings';
@@ -71,7 +71,7 @@ async function streamAssistantMessage(
 
   const openAILlmId = findOpenAILlmRefOrThrow(llmId);
   const { modelTemperature, modelMaxResponseTokens } = useSettingsStore.getState();
-  const { elevenLabsAutoSpeak } = useModuleElevenlabsStore.getState();
+  const { elevenLabsAutoSpeak } = useElevenlabsStore.getState();
   const payload: OpenAI.API.Chat.Request = {
     api: getOpenAISettings(),
     model: openAILlmId,

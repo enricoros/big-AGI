@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
-interface ModuleProdiaStore {
+interface ProdiaStore {
 
   // Prodia Image Generation settings
 
@@ -26,7 +26,7 @@ interface ModuleProdiaStore {
 
 }
 
-export const useModuleProdiaStore = create<ModuleProdiaStore>()(
+export const useProdiaStore = create<ProdiaStore>()(
   persist(
     (set) => ({
 
