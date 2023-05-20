@@ -51,7 +51,7 @@ export function Configurator() {
   return <>
 
     {/* Sources Setup */}
-    <GoodModal title='Configure AI Models' open={modelsSetupOpen} onClose={closeModelsSetup}>
+    <GoodModal title={<>Configure <b>AI Models</b></>} open={modelsSetupOpen} onClose={closeModelsSetup}>
 
       <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
