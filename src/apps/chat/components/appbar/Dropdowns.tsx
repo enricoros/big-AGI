@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
+import { ListItemDecorator, Option, Typography } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -60,24 +60,24 @@ export function Dropdowns(props: {
       appendOption={<>
 
         {chatLLMId && (
-          <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>
+          <Option key='menu-opt' onClick={handleOpenLLMOptions}>
             <ListItemDecorator>
               <SettingsIcon color='info' />
             </ListItemDecorator>
             <Typography>
               Options
             </Typography>
-          </ListItemButton>
+          </Option>
         )}
 
-        <ListItemButton key='menu-llms' onClick={openModelsSetup}>
+        <Option key='menu-llms' onClick={openModelsSetup}>
           <ListItemDecorator>
             <BuildCircleIcon color='info' />
           </ListItemDecorator>
           <Typography>
             Models
           </Typography>
-        </ListItemButton>
+        </Option>
 
       </>}
     />
