@@ -5,6 +5,10 @@ import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { OpenAI } from '../../openai/openai.types';
 
 
+// if (!process.env.OPENAI_API_KEY)
+//   console.warn('OPENAI_API_KEY has not been provided in this deployment environment. Will need client-supplied keys, which is not recommended.');
+
+
 const accessSchema = z.object({
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
@@ -23,8 +27,42 @@ const historySchema = z.array(z.object({
   content: z.string(),
 }));
 
+export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema });
+export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
+
 
 export const openAIRouter = createTRPCRouter({
+
+  /**
+   * Chat-based message generation
+   */
+  chatGenerate: publicProcedure
+    .input(chatGenerateSchema)
+    .mutation(async ({ input }): Promise<OpenAI.API.Chat.Response> => {
+
+      const { access, model, history } = input;
+      const requestBody: OpenAI.Wire.Chat.CompletionRequest = openAICompletionRequest(model, history, false);
+      let wireCompletions: OpenAI.Wire.Chat.CompletionResponse;
+
+      try {
+        wireCompletions = await openaiPOST<OpenAI.Wire.Chat.CompletionRequest, OpenAI.Wire.Chat.CompletionResponse>(access, requestBody, '/v1/chat/completions');
+      } catch (error: any) {
+        // don't log 429 errors, they are expected
+        if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
+          console.error('api/openai/chat error:', error);
+        throw error;
+      }
+
+      if (wireCompletions?.choices?.length !== 1)
+        throw new Error(`Expected 1 choice, got ${wireCompletions?.choices?.length}`);
+
+      const singleChoice = wireCompletions.choices[0];
+      return {
+        role: singleChoice.message.role,
+        content: singleChoice.message.content,
+        finish_reason: singleChoice.finish_reason,
+      };
+    }),
 
   /**
    * List the Models available
@@ -54,36 +92,6 @@ export const openAIRouter = createTRPCRouter({
       return llms;
     }),
 
-  /**
-   * Chat generation
-   */
-  chatGenerate: publicProcedure
-    .input(z.object({ access: accessSchema, model: modelSchema, history: historySchema }))
-    .mutation(async ({ input: { access, model, history } }): Promise<OpenAI.API.Chat.Response> => {
-
-      const requestBody: OpenAI.Wire.Chat.CompletionRequest = openAICompletionRequest(model, history, false);
-      let response: OpenAI.Wire.Chat.CompletionResponse;
-
-      try {
-        response = await openaiPOST<OpenAI.Wire.Chat.CompletionRequest, OpenAI.Wire.Chat.CompletionResponse>(access, requestBody, '/v1/chat/completions');
-      } catch (error: any) {
-        // don't log 429 errors, they are expected
-        if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
-          console.error('api/openai/chat error:', error);
-        throw error;
-      }
-
-      if (response?.choices?.length !== 1)
-        throw new Error(`Expected 1 choice, got ${response?.choices?.length}`);
-
-      const singleChoice = response.choices[0];
-      return {
-        role: singleChoice.message.role,
-        content: singleChoice.message.content,
-        finish_reason: singleChoice.finish_reason,
-      };
-    }),
-
 });
 
 
@@ -103,7 +111,7 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
   return await response.json() as TOut;
 }
 
-function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
   if (!oaiKey) throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
@@ -132,7 +140,7 @@ function openAIAccess(access: AccessSchema, apiPath: string): { headers: Headers
   };
 }
 
-function openAICompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): OpenAI.Wire.Chat.CompletionRequest {
+export function openAICompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): OpenAI.Wire.Chat.CompletionRequest {
   return {
     model: model.id,
     messages: history,

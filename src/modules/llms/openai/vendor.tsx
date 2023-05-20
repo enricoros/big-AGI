@@ -36,7 +36,7 @@ export interface SourceSetupOpenAI {
   heliKey: string;  // helicone key (works in conjunction with oaiHost)
 }
 
-export function normalizeSetup(partialSetup?: Partial<SourceSetupOpenAI>): SourceSetupOpenAI {
+export function normalizeOAISetup(partialSetup?: Partial<SourceSetupOpenAI>): SourceSetupOpenAI {
   return {
     oaiKey: '',
     oaiOrg: '',
@@ -53,7 +53,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export function normalizeLLMOptions(partialOptions?: Partial<LLMOptionsOpenAI>): LLMOptionsOpenAI {
+export function normalizeOAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>): LLMOptionsOpenAI {
   return {
     llmRef: 'unknown_id',
     llmTemperature: 0.5,
