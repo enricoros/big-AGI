@@ -14,7 +14,7 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeSetup, SourceSetupOpenAI } from './vendor';
+import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -27,7 +27,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const {
     source, sourceLLMs, updateSetup,
     normSetup: { heliKey, oaiHost, oaiKey, oaiOrg },
-  } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeSetup);
+  } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeOAISetup);
 
   const hasModels = !!sourceLLMs.length;
   const keyValid = isValidOpenAIApiKey(oaiKey);

@@ -2,23 +2,8 @@ export namespace OpenAI {
 
   /// Client (Browser) -> Server (Next.js)
   export namespace API {
-
-    // the parameters are optional because they can be server-set
-    export interface Configuration {
-      apiHost: string;            // default: api.openai.com
-      apiKey: string;
-      apiOrganizationId?: string; // default: ''
-      heliconeKey?: string;       // default: missing
-    }
-
+    
     export namespace Chat {
-      export interface Request {
-        api: Partial<Configuration>;
-        model: string;
-        messages: OpenAI.Wire.Chat.Message[];
-        temperature?: number;
-        max_tokens?: number;
-      }
 
       export interface Response {
         role: 'assistant' | 'system' | 'user';

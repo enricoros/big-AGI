@@ -1,8 +1,8 @@
-import { DLLM } from '~/modules/llms/llm.types';
 import { OpenAI } from '~/modules/openai/openai.types';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { normalizeSetup, SourceSetupOpenAI } from './vendor';
+import { DLLM } from '../llm.types';
+import { normalizeOAISetup, SourceSetupOpenAI } from './vendor';
 
 
 export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
@@ -16,7 +16,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
 export async function callChat(llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
   // access params (source)
   const partialSetup = llm._source.setup as Partial<SourceSetupOpenAI>;
-  const sourceSetupOpenAI = normalizeSetup(partialSetup);
+  const sourceSetupOpenAI = normalizeOAISetup(partialSetup);
 
   // model params (llm)
   const openaiLlmRef = llm.options.llmRef!;
@@ -26,8 +26,8 @@ export async function callChat(llm: DLLM, messages: OpenAI.Wire.Chat.Message[], 
   try {
     return await apiAsync.openai.chatGenerate.mutate({
       access: sourceSetupOpenAI,
-      history: messages,
       model: { id: openaiLlmRef, temperature: modelTemperature, ...(maxTokens && { maxTokens }) },
+      history: messages,
     });
     // errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
   } catch (error: any) {

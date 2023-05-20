@@ -4,7 +4,7 @@ import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeLLMOptions } from './vendor';
+import { LLMOptionsOpenAI, normalizeOAIOptions } from './vendor';
 import { useModelsStore } from '../store-llms';
 
 
@@ -14,7 +14,7 @@ export function OpenAILLMOptions(props: { llm: DLLM }) {
   const updateLLMOptions = useModelsStore(state => state.updateLLMOptions<LLMOptionsOpenAI>);
 
   const { id: llmId } = props.llm;
-  const { llmResponseTokens, llmTemperature } = normalizeLLMOptions(props.llm.options);
+  const { llmResponseTokens, llmTemperature } = normalizeOAIOptions(props.llm.options);
 
   const maxValue = props.llm.contextTokens > 1024 ? Math.round(props.llm.contextTokens / 2) : 4096;
 
