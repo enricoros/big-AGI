@@ -1,5 +1,5 @@
 import { DLLMId } from '~/modules/llms/llm.types';
-import { OpenAI } from '~/modules/openai/openai.types';
+import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callChat } from '~/modules/llms/llm.client';
 

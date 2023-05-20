@@ -4,7 +4,6 @@ import { Box, Button, FormControl, FormHelperText, FormLabel, Input } from '@mui
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SyncIcon from '@mui/icons-material/Sync';
 
-import { OpenAI } from '~/modules/openai/openai.types';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/llms/openai/openai.client';
 
@@ -15,6 +14,7 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './vendor';
+import { OpenAI } from './openai.types';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 

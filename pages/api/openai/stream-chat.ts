@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
 import { ChatGenerateSchema, chatGenerateSchema, openAIAccess, openAICompletionRequest } from '~/modules/llms/openai/openai.router';
-import { OpenAI } from '~/modules/openai/openai.types';
+import { OpenAI } from '~/modules/llms/openai/openai.types';
 
 
 async function rethrowOpenAIError(response: Response) {

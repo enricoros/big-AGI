@@ -1,7 +1,7 @@
-import { OpenAI } from '~/modules/openai/openai.types';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { DLLM } from '../llm.types';
+import { OpenAI } from './openai.types';
 import { normalizeOAISetup, SourceSetupOpenAI } from './vendor';
 
 
