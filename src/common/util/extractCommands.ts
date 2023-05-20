@@ -1,5 +1,6 @@
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
-import { CmdRunReact, CmdRunSearch } from '~/modules/google/search.client';
+import { CmdRunReact } from '~/modules/aifn/react/react';
+import { CmdRunSearch } from '~/modules/google/search.client';
 
 export const commands = [...CmdRunProdia, ...CmdRunSearch, ...CmdRunReact];
 

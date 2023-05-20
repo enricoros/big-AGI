@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { useTheme } from '@mui/joy';
 
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
-import { CmdRunReact } from '~/modules/google/search.client';
+import { CmdRunReact } from '~/modules/aifn/react/react';
 import { PasteGG } from '~/modules/pastegg/pastegg.types';
 import { PublishedModal } from '~/modules/pastegg/PublishedModal';
 import { callPublish } from '~/modules/pastegg/pastegg.client';

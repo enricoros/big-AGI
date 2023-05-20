@@ -6,6 +6,9 @@ import { callChat } from '~/modules/llms/llm.client';
 import { currentDate, reActPrompt } from '../prompts';
 
 
+export const CmdRunReact: string[] = ['/react'];
+
+
 const actionRe = /^Action: (\w+): (.*)$/;
 
 
@@ -16,7 +19,7 @@ const actionRe = /^Action: (\w+): (.*)$/;
  *   - initialize(): will create the state with initial values
  *   - loop() is a function that will update the state (in place)
  */
-export interface State {
+interface State {
   messages: OpenAI.Wire.Chat.Message[];
   nextPrompt: string;
   lastObservation: string;
