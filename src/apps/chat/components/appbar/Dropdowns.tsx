@@ -60,7 +60,7 @@ export function Dropdowns(props: {
       appendOption={<>
 
         {chatLLMId && (
-          <ListItemButton onClick={handleOpenLLMOptions}>
+          <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>
             <ListItemDecorator>
               <SettingsIcon color='info' />
             </ListItemDecorator>
@@ -70,7 +70,7 @@ export function Dropdowns(props: {
           </ListItemButton>
         )}
 
-        <ListItemButton onClick={openModelsSetup}>
+        <ListItemButton key='menu-llms' onClick={openModelsSetup}>
           <ListItemDecorator>
             <BuildCircleIcon color='info' />
           </ListItemDecorator>
