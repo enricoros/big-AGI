@@ -2,6 +2,7 @@ import { createTRPCRouter } from './trpc.server';
 
 import { googleSearchRouter } from '~/modules/google/search.router';
 import { openAIRouter } from '~/modules/llms/openai/openai.router';
+import { prodiaRouter } from '~/modules/prodia/prodia.router';
 
 /**
  * This is the primary router for your server.
@@ -11,6 +12,7 @@ import { openAIRouter } from '~/modules/llms/openai/openai.router';
 export const appRouter = createTRPCRouter({
   googleSearch: googleSearchRouter,
   openai: openAIRouter,
+  prodia: prodiaRouter,
 });
 
 // export type definition of API
