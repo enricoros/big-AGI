@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 
-import { OpenAI } from '../../openai/openai.types';
+import { OpenAI } from './openai.types';
 
 
 // if (!process.env.OPENAI_API_KEY)

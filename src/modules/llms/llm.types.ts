@@ -1,8 +1,7 @@
 import type React from 'react';
 
-import type { OpenAI } from '~/modules/openai/openai.types';
-
 import type { LLMOptionsOpenAI, SourceSetupOpenAI } from './openai/vendor';
+import type { OpenAI } from './openai/openai.types';
 import type { SourceSetupLocalAI } from './localai/vendor';
 
 
