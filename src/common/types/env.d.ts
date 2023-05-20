@@ -18,7 +18,7 @@ declare namespace NodeJS {
     ELEVENLABS_API_HOST: string;
     ELEVENLABS_VOICE_ID: string;
 
-    // Prodia - imagine.ts
+    // Prodia
     PRODIA_API_KEY: string;
 
     // Google Custom Search

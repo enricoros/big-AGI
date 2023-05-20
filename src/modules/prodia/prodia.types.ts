@@ -1,41 +1,5 @@
 export namespace Prodia {
 
-  /// Client (Browser) -> Server (Next.js)
-  export namespace API {
-
-    export namespace Imagine {
-      export interface RequestBody {
-        apiKey?: string;
-        prodiaModelId: string;
-        prompt: string;
-        negativePrompt?: string;
-        steps?: number;
-        cfgScale?: number;
-        seed?: number;
-      }
-
-      export type Response = (
-        { status: 'success', imageUrl: string, altText: string }
-        | { status: 'error', error: string }
-        ) & { elapsed: number };
-    }
-
-    export namespace Models {
-      export interface RequestBody {
-        apiKey?: string;
-      }
-
-      export interface Response {
-        models: {
-          id: string;
-          label: string;
-          priority?: number;
-        }[];
-      }
-    }
-
-  }
-
   /// This is the upstream API [rev-eng on 2023-04-22], for Server (Next.js) -> Upstream Server
   export namespace Wire {
     export namespace Imagine {

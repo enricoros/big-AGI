@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { useQuery } from '@tanstack/react-query';
 
 import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Option, Select, Slider, Stack, Tooltip } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
@@ -10,10 +9,11 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { apiQuery } from '~/modules/trpc/trpc.client';
+
 import { Section } from '~/common/components/Section';
 import { settingsGap } from '~/common/theme';
 
-import { Prodia } from './prodia.types';
 import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from './prodia.client';
 import { useProdiaStore } from './store-prodia';
 
@@ -36,14 +36,9 @@ export function ProdiaSettings() {
   const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
 
   // load models, if the server has a key, or the user provided one
-  const { data: modelsData, isLoading: loadingModels } = useQuery(['models', apiKey], {
+  const { data: modelsData, isLoading: loadingModels } = apiQuery.prodia.models.useQuery({ prodiaKey: apiKey }, {
     enabled: isValidKey,
-    queryFn: () => fetch('/api/prodia/models', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(apiKey ? { apiKey: apiKey } : {}) }),
-    }).then(res => res.json() as Promise<Prodia.API.Models.Response>),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
 
   const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
