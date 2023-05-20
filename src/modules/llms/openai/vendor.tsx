@@ -13,7 +13,7 @@ export const ModelVendorOpenAI: ModelVendor = {
   rank: 10,
   icon: <OpenAIIcon />,
   location: 'cloud',
-  instanceLimit: 2,
+  instanceLimit: 1,
 
 
   // factories
