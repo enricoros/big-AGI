@@ -19,8 +19,6 @@ export namespace Search {
       // formattedUrl: string;
     }
 
-    export type Response = BriefResult[];
-
   }
 
   // This is the upstream API [rev-eng on 2023-04-27], for Server (Next.js) -> Upstream Server

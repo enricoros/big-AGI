@@ -1,5 +1,6 @@
 import { createTRPCRouter } from './trpc.server';
 
+import { googleSearchRouter } from '~/modules/google/search.router';
 import { openAIRouter } from '~/modules/llms/openai/openai.router';
 
 /**
@@ -8,6 +9,7 @@ import { openAIRouter } from '~/modules/llms/openai/openai.router';
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  googleSearch: googleSearchRouter,
   openai: openAIRouter,
 });
 
