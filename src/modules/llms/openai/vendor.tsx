@@ -11,13 +11,15 @@ export const ModelVendorOpenAI: ModelVendor = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,
-  icon: <OpenAIIcon />,
   location: 'cloud',
   instanceLimit: 1,
 
   // components
+  Icon: OpenAIIcon,
   SourceSetupComponent: OpenAISourceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
+
+  // functions
   callChat: callChat,
 };
 
