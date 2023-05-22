@@ -8,10 +8,12 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { apiQuery } from '~/modules/trpc/trpc.client';
+
 import { Section } from '~/common/components/Section';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { isElevenLabsEnabled, requireUserKeyElevenLabs, useElevenLabsVoices } from './elevenlabs.client';
+import { isElevenLabsEnabled, requireUserKeyElevenLabs } from './elevenlabs.client';
 import { useElevenlabsStore } from './store-elevenlabs';
 
 
@@ -29,7 +31,10 @@ export function ElevenlabsSettings() {
   const requiresKey = requireUserKeyElevenLabs;
   const isValidKey = isElevenLabsEnabled(apiKey);
 
-  const { voicesData, loadingVoices } = useElevenLabsVoices(apiKey, isValidKey);
+  const { data: voicesData, isLoading: loadingVoices } = apiQuery.elevenlabs.listVoices.useQuery({ elevenKey: apiKey }, {
+    enabled: isValidKey,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
 
