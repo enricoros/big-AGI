@@ -96,7 +96,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
 
     {/* Application-Menu Items */}
     {!!appMenuItems && <Menu
-      variant='plain' color='neutral' size='lg' placement='top-start' sx={{ minWidth: 320 }}
+      variant='plain' color='neutral' size='lg' sx={{ minWidth: 320, maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}
       open={!!applicationMenuAnchor} anchorEl={applicationMenuAnchor} onClose={closeApplicationMenu}
       disablePortal={false}
     >
@@ -105,7 +105,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
 
     {/* Context-Menu Items */}
     <Menu
-      variant='plain' color='neutral' size='lg' placement='top-end' sx={{ minWidth: 280 }}
+      variant='plain' color='neutral' size='lg' sx={{ minWidth: 280, maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}
       open={!!contextMenuAnchor} anchorEl={contextMenuAnchor} onClose={closeContextMenu}
       disablePortal={false}
     >
