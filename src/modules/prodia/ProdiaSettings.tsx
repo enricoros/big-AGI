@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, IconButton, Input, Option, Select, Slider, Stack, Tooltip } from '@mui/joy';
+import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Tooltip } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import KeyIcon from '@mui/icons-material/Key';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { FormInputKey } from '~/common/components/FormInputKey';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { settingsGap } from '~/common/theme';
 
@@ -17,9 +15,6 @@ import { useProdiaStore } from './store-prodia';
 
 
 export function ProdiaSettings() {
-  // state
-  const [showApiKeyValue, setShowApiKeyValue] = React.useState(false);
-
   // external state
   const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
@@ -39,10 +34,6 @@ export function ProdiaSettings() {
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-  const handleToggleApiKeyVisibility = () => setShowApiKeyValue(!showApiKeyValue);
-
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value);
-
   const handleModelChange = (e: any, value: string | null) => value && setModelId(value);
 
   const colWidth = 150;
@@ -51,32 +42,15 @@ export function ProdiaSettings() {
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
       <FormHelperText>
-        🎨 Turn text into pictures and /imagine. Bring your own Prodia.com API Key.
+        🎨 Turn text into pictures and /imagine anything
       </FormHelperText>
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel sx={{ minWidth: colWidth }}>
-            Prodia API Key
-          </FormLabel>
-          <FormHelperText>
-            {requiresKey ? '(required)' : '(optional)'}
-          </FormHelperText>
-        </Box>
-
-        <Input
-          variant='outlined' type={showApiKeyValue ? 'text' : 'password'} placeholder={requiresKey ? 'required' : '...'} error={!isValidKey}
-          value={apiKey} onChange={handleApiKeyChange}
-          startDecorator={<KeyIcon />}
-          endDecorator={!!apiKey && (
-            <IconButton variant='plain' color='neutral' onClick={handleToggleApiKeyVisibility}>
-              {showApiKeyValue ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </IconButton>
-          )}
-          slotProps={{ input: { sx: { width: '100%' } } }}
-          sx={{ width: '100%' }}
-        />
-      </FormControl>
+      <FormInputKey
+        label='Prodia API Key'
+        rightLabel={requiresKey ? 'required' : '✔️ already set in server'}
+        value={apiKey} onChange={setApiKey}
+        required={requiresKey} isError={!isValidKey}
+      />
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <FormLabel sx={{ minWidth: colWidth }}>

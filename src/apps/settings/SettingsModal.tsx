@@ -30,7 +30,7 @@ export function SettingsModal() {
                }
                sx={{ p: { xs: 1, sm: 2, lg: 2.5 } }}>
 
-      <Divider />
+      {/*<Divider />*/}
 
       <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab} sx={{ borderRadius: 'lg' }}>
         <TabList variant='soft' color='neutral' sx={{ mb: 2 /* gap: 3, minus 0.5 for the Tabs-gap, minus 0.5 for perception */ }}>

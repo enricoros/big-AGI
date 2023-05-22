@@ -42,12 +42,10 @@ export function ElevenlabsSettings() {
       </FormHelperText>
 
       <FormInputKey
-        label='ElevenLabs API Key' required={requiresKey} isVisible={false}
-        rightLabel={requiresKey ? '(required)' : '✔️ already set in server'}
+        label='ElevenLabs API Key'
+        rightLabel={requiresKey ? 'required' : '✔️ already set in server'}
         value={apiKey} onChange={setApiKey}
-        // value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
-        // required={!hasServerKeyOpenAI} isError={keyError}
-        placeholder='sk-...'
+        required={requiresKey} isError={!isValidKey}
       />
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>

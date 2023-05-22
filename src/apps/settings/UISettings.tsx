@@ -112,7 +112,7 @@ export function UISettings() {
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Markdown</FormLabel>
-          <FormHelperText>{renderMarkdown ? 'Render markdown' : 'Text only'}</FormHelperText>
+          <FormHelperText>{renderMarkdown ? 'Render markdown' : 'As text'}</FormHelperText>
         </Box>
         <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
                 endDecorator={renderMarkdown ? 'On' : 'Off'}
@@ -132,7 +132,7 @@ export function UISettings() {
       <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Appearance</FormLabel>
-          <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Minimal look'}</FormHelperText>
+          <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Minimal UI'}</FormHelperText>
         </Box>
         <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
           {/*<Radio value='clean' label={<Face6Icon sx={{ width: 24, height: 24, mt: -0.25 }} />} />*/}
@@ -149,7 +149,7 @@ export function UISettings() {
             </FormLabel>
           </Tooltip>
           <FormHelperText>
-            🎙️ ASR and TTS
+            ASR 🎙️ and TTS 📢
           </FormHelperText>
         </Box>
         <LanguageSelect />
