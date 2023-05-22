@@ -190,6 +190,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   };
 
   const handleMenuEdit = (e: React.MouseEvent) => {
+    if (messageTyping && !isEditing) return; // don't allow editing while typing
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
