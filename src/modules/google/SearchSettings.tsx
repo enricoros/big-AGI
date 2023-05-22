@@ -32,7 +32,7 @@ export function SearchSettings() {
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
       <FormHelperText>
-        🔍 Helps in locating up-to-date websites. Bring your own Google Keys.
+        🔍 Helps in locating up-to-date websites
       </FormHelperText>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
