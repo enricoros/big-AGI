@@ -3,17 +3,14 @@ import { useSettingsStore } from '@/common/state/store-settings';
 
 import { OpenAI } from './openai.types';
 
-
 export const requireUserKeyOpenAI = !process.env.HAS_SERVER_KEY_OPENAI;
 
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
-
 
 /**
  * This function either returns the LLM response, or throws a descriptive error string
  */
 export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
-
   // this payload contains the 'api' key, org, host
   const payload: OpenAI.API.Chat.Request = {
     api: getOpenAISettings(),
@@ -30,8 +27,7 @@ export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.
       body: JSON.stringify(payload),
     });
 
-    if (response.ok)
-      return await response.json();
+    if (response.ok) return await response.json();
 
     // decode a possible error payload, if present, but ignore if missing
     let errorPayload: any = null;
@@ -49,6 +45,39 @@ export async function callChat(modelId: ChatModelId, messages: OpenAI.Wire.Chat.
   throw new Error(errorMessage);
 }
 
+/*
+ * Gets OpenAI models - can be used to test whether the API key is valid
+ */
+
+export async function getModels(): Promise<OpenAI.API.Chat.Response> {
+  // this payload contains the 'api' key, org, host
+  const payload = {
+    api: getOpenAISettings(),
+  };
+
+  let errorMessage: string;
+  try {
+    const response = await fetch('/api/openai/models', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) return await response.json();
+
+    // decode a possible error payload, if present, but ignore if missing
+    let errorPayload: any = null;
+    try {
+      errorPayload = await response.json();
+    } catch (error: any) {
+      // ignore - it's expected there may not be a payload
+    }
+    errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
+  } catch (error: any) {
+    errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+  }
+
+  throw new Error(errorMessage);
+}
 
 export const getOpenAISettings = (): Partial<OpenAI.API.Configuration> => {
   const { apiHost, apiKey, apiOrganizationId, heliconeKey } = useSettingsStore.getState();

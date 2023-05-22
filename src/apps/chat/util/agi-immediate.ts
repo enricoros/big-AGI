@@ -8,12 +8,10 @@ import { useSettingsStore } from '@/common/state/store-settings';
 
 import { updateAutoConversationTitle } from './ai-functions';
 
-
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
 export const runAssistantUpdatingState = async (conversationId: string, history: DMessage[], assistantModel: ChatModelId, systemPurpose: SystemPurposeId) => {
-
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
 
@@ -34,9 +32,8 @@ export const runAssistantUpdatingState = async (conversationId: string, history:
   await updateAutoConversationTitle(conversationId);
 };
 
-
 export function updatePurposeInHistory(conversationId: string, history: DMessage[], purposeId: SystemPurposeId): DMessage[] {
-  const systemMessageIndex = history.findIndex(m => m.role === 'system');
+  const systemMessageIndex = history.findIndex((m) => m.role === 'system');
   const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
   if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
     systemMessage.purposeId = purposeId;
@@ -47,7 +44,12 @@ export function updatePurposeInHistory(conversationId: string, history: DMessage
   return history;
 }
 
-export function createAssistantTypingMessage(conversationId: string, assistantModel: ChatModelId | 'prodia' | 'react-...', assistantPurposeId: SystemPurposeId | undefined, text: string): string {
+export function createAssistantTypingMessage(
+  conversationId: string,
+  assistantModel: ChatModelId | 'prodia' | 'react-...',
+  assistantPurposeId: SystemPurposeId | undefined,
+  text: string,
+): string {
   const assistantMessage: DMessage = createDMessage('assistant', text);
   assistantMessage.typing = true;
   assistantMessage.purposeId = assistantPurposeId;
@@ -56,17 +58,17 @@ export function createAssistantTypingMessage(conversationId: string, assistantMo
   return assistantMessage.id;
 }
 
-
 /**
  * Main function to send the chat to the assistant and receive a response (streaming)
  */
 async function streamAssistantMessage(
-  conversationId: string, assistantMessageId: string, history: DMessage[],
+  conversationId: string,
+  assistantMessageId: string,
+  history: DMessage[],
   chatModelId: string,
   editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void,
   abortSignal: AbortSignal,
 ) {
-
   const { modelTemperature, modelMaxResponseTokens, elevenLabsAutoSpeak } = useSettingsStore.getState();
   const payload: OpenAI.API.Chat.Request = {
     api: getOpenAISettings(),
@@ -80,7 +82,6 @@ async function streamAssistantMessage(
   };
 
   try {
-
     const response = await fetch('/api/openai/stream-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -123,8 +124,7 @@ async function streamAssistantMessage(
         // if the first paragraph (after the first packet) is complete, call the callback
         if (parsedFirstPacket && elevenLabsAutoSpeak === 'firstLine' && !sentFirstParagraph) {
           let cutPoint = incrementalText.lastIndexOf('\n');
-          if (cutPoint < 0)
-            cutPoint = incrementalText.lastIndexOf('. ');
+          if (cutPoint < 0) cutPoint = incrementalText.lastIndexOf('. ');
           if (cutPoint > 100 && cutPoint < 400) {
             sentFirstParagraph = true;
             const firstParagraph = incrementalText.substring(0, cutPoint);
@@ -135,7 +135,6 @@ async function streamAssistantMessage(
         editMessage(conversationId, assistantMessageId, { text: incrementalText }, false);
       }
     }
-
   } catch (error: any) {
     if (error?.name === 'AbortError') {
       // expected, the user clicked the "stop" button
@@ -147,4 +146,80 @@ async function streamAssistantMessage(
 
   // finally, stop the typing animation
   editMessage(conversationId, assistantMessageId, { typing: false }, false);
+}
+
+/**
+ * Main function to use langchain send the chat to the assistant and receive a response (streaming)
+ */
+export async function queryPdfEndpoint(query: string, chatHistory?: string) {
+  /**
+   * This function either returns the LLM response, or throws a descriptive error string
+   */
+
+  // this payload contains the 'api' key, org, host
+
+  let errorMessage: string;
+  try {
+    const response = await fetch('/api/files/queryPdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, chatHistory }),
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      return json;
+    }
+    // decode a possible error payload, if present, but ignore if missing
+    let errorPayload: any = null;
+    try {
+      errorPayload = await response.json();
+    } catch (error: any) {
+      // ignore - it's expected there may not be a payload
+    }
+    errorMessage = `issue querying pdf: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
+  } catch (error: any) {
+    errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+  }
+
+  console.error(`query pdf error: ${errorMessage}`);
+  throw new Error(errorMessage);
+}
+
+/**
+ * Main function to use langchain send the chat to the assistant and receive a response (streaming)
+ */
+export async function embedPdf(pdfText: string, pineconeNamespace?: string, pineconeIndex?: string) {
+  /**
+   * This function either returns the LLM response, or throws a descriptive error string
+   */
+
+  // this payload contains the 'api' key, org, host
+
+  let errorMessage: string;
+  try {
+    const response = await fetch('/api/files/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdfText, pineconeIndex, pineconeNamespace }),
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      return json;
+    }
+    // decode a possible error payload, if present, but ignore if missing
+    let errorPayload: any = null;
+    try {
+      errorPayload = await response.json();
+    } catch (error: any) {
+      // ignore - it's expected there may not be a payload
+    }
+    errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
+  } catch (error: any) {
+    errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+  }
+
+  console.error(`embedPdf error: ${errorMessage}`);
+  throw new Error(errorMessage);
 }

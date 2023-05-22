@@ -6,7 +6,7 @@
     "node": "^18.0.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -18,11 +18,15 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.11.16",
     "@mui/joy": "5.0.0-alpha.75",
+    "@pinecone-database/pinecone": "0.1.5",
     "@tanstack/react-query": "^4.29.5",
     "@vercel/analytics": "^1.0.1",
+    "dotenv": "^16.0.3",
     "eventsource-parser": "^1.0.0",
+    "langchain": "^0.0.76",
     "next": "^13.4.1",
     "pdfjs-dist": "^3.6.172",
+    "pdf-parse": "1.1.1",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
@@ -40,6 +44,7 @@
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
     "@types/uuid": "^9.0.1",
+    "@types/pdf-parse": "1.1.1",
     "eslint": "^8.40.0",
     "eslint-config-next": "^13.4.1",
     "prettier": "^2.8.8",

@@ -16,6 +16,8 @@ const nextConfig = {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
+      // https://github.com/vercel/next.js/issues/43382#issuecomment-1408989720
+      topLevelAwait: true,
     };
 
     return config;

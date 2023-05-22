@@ -30,8 +30,8 @@ export interface DConversation {
   ephemerals: DEphemeral[];
 }
 
-export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, chatModelId?: ChatModelId): DConversation => ({
-  id: uuidv4(),
+export const createDefaultConversation = (systemPurposeId?: SystemPurposeId, chatModelId?: ChatModelId, conversationId?: string): DConversation => ({
+  id: conversationId || uuidv4(),
   messages: [],
   systemPurposeId: systemPurposeId || defaultSystemPurposeId,
   chatModelId: chatModelId || defaultChatModelId,
@@ -112,7 +112,7 @@ export interface ChatStore {
   activeConversationId: string | null;
 
   // store setters
-  createConversation: () => void;
+  createConversation: (conversationId?: string) => void;
   importConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
   deleteAllConversations: () => void;
@@ -147,18 +147,17 @@ export const useChatStore = create<ChatStore>()(devtools(
       conversations: defaultConversations,
       activeConversationId: defaultConversations[0].id,
 
-
-      createConversation: () =>
-        set(state => {
+        createConversation: (conversationId?: string) => 
+          set(state => {
           // inherit some values from the active conversation (matches users' expectations)
           const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
-          const conversation = createDefaultConversation(activeConversation?.systemPurposeId, activeConversation?.chatModelId);
+            const conversation = createDefaultConversation(activeConversation?.systemPurposeId, activeConversation?.chatModelId, conversationId);
           return {
-            conversations: [
-              conversation,
-              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
-            ],
-            activeConversationId: conversation.id,
+              conversations: [
+                conversation,
+                ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+              ],
+              activeConversationId: conversationId || conversation.id,
           };
         }),
 
