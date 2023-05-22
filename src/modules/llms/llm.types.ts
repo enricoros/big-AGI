@@ -53,11 +53,10 @@ export interface ModelVendor {
   icon: React.JSX.Element | null;
   location: 'local' | 'cloud';
   instanceLimit: number;
-  disabled?: boolean; // probably remove
 
-  // factories/methods
-  createSource: (sourceId: DModelSourceId, sourceCount: number) => DModelSource;
-  createSourceSetupComponent: (sourceId: DModelSourceId) => React.JSX.Element;
-  createLLMOptionsComponent: (llm: DLLM) => React.JSX.Element;
+  // components
+  SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
+  LLMOptionsComponent: React.ComponentType<{ llm: DLLM }>;
+
   callChat: (llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;
 }

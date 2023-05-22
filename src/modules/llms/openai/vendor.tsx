@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DLLM, DModelSource, DModelSourceId, ModelVendor } from '../llm.types';
+import { ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
@@ -15,16 +15,9 @@ export const ModelVendorOpenAI: ModelVendor = {
   location: 'cloud',
   instanceLimit: 1,
 
-
-  // factories
-  createSource: (sourceId: DModelSourceId, count: number): DModelSource => ({
-    id: sourceId,
-    label: 'OpenAI' + (count > 0 ? ` #${count}` : ''),
-    vId: 'openai',
-    setup: {},
-  }),
-  createSourceSetupComponent: (sourceId: DModelSourceId) => <OpenAISourceSetup sourceId={sourceId} />,
-  createLLMOptionsComponent: (llm: DLLM) => <OpenAILLMOptions llm={llm} />,
+  // components
+  SourceSetupComponent: OpenAISourceSetup,
+  LLMOptionsComponent: OpenAILLMOptions,
   callChat: callChat,
 };
 

@@ -12,7 +12,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
-import { findVendorById, getUniqueSourceId, rankedVendors } from '../vendor.registry';
+import { createModelSource, findAllVendors, findVendorById } from '../vendor.registry';
 import { hasServerKeyOpenAI } from '../openai/openai.client';
 import { useModelsStore } from '../store-llms';
 
@@ -45,11 +45,10 @@ export function EditSources(props: {
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
     const { sources: modelSources } = useModelsStore.getState();
-    const { id: sourceId, count } = getUniqueSourceId(vendorId, modelSources);
-    const source = findVendorById(vendorId)?.createSource(sourceId, count);
-    if (source) {
-      addModelSource(source);
-      props.setSelectedSourceId(sourceId);
+    const modelSource = createModelSource(vendorId, modelSources);
+    if (modelSource) {
+      addModelSource(modelSource);
+      props.setSelectedSourceId(modelSource.id);
     }
   }, [addModelSource, props]);
 
@@ -68,9 +67,9 @@ export function EditSources(props: {
 
 
   // vendor list items
-  const vendorItems = React.useMemo(() => rankedVendors().map(vendor => {
+  const vendorItems = React.useMemo(() => findAllVendors().filter(v => !!v.instanceLimit).map(vendor => {
     const sourceCount = modelSources.filter(source => source.vId === vendor.id).length;
-    const enabled = !vendor.disabled && (vendor.instanceLimit > sourceCount);
+    const enabled = vendor.instanceLimit > sourceCount;
     return {
       vendor,
       enabled,
@@ -80,7 +79,7 @@ export function EditSources(props: {
           <ListItemDecorator>
             {locationIcon(vendor)}
           </ListItemDecorator>
-          {vendor.name}
+          {vendor.name}{sourceCount > 0 && ` (added)`}
         </MenuItem>
       ),
     };
@@ -102,8 +101,9 @@ export function EditSources(props: {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
 
+      {/* Models: [Select] Add Delete */}
       <Typography sx={{ mr: 1, ...hideOnMobile }}>
-        Source
+        Models:
       </Typography>
 
       <Select
@@ -120,11 +120,10 @@ export function EditSources(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-
-      <IconButton variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} sx={{ ...hideOnDesktop }}>
+      <IconButton variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
         <AddIcon />
       </IconButton>
-      <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
+      <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
         Add
       </Button>
 
