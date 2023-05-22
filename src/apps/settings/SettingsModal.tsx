@@ -1,15 +1,17 @@
 import * as React from 'react';
 
-import { Box, Button, Divider } from '@mui/joy';
+import { Button, Divider, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
-import { GoodModal } from '~/common/components/GoodModal';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 import { SearchSettings } from '~/modules/google/SearchSettings';
+
+import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
 import { UISettings } from './UISettings';
+
 
 /**
  * Component that allows the User to modify the application settings,
@@ -17,10 +19,10 @@ import { UISettings } from './UISettings';
  */
 export function SettingsModal() {
   // external state
-  const { settingsOpen, closeSettings, openModelsSetup } = useUIStateStore();
+  const { settingsOpenTab, closeSettings, openModelsSetup } = useUIStateStore();
 
   return (
-    <GoodModal title={`Preferences`} open={settingsOpen} onClose={closeSettings}
+    <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
                startButton={
                  <Button variant='plain' color='info' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
                    Models
@@ -30,17 +32,30 @@ export function SettingsModal() {
 
       <Divider />
 
-      <Box>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab} sx={{ borderRadius: 'lg' }}>
+        <TabList variant='soft' color='neutral' sx={{ mb: 2 /* gap: 3, minus 0.5 for the Tabs-gap, minus 0.5 for perception */ }}>
+          <Tab value={1}>UI</Tab>
+          <Tab value={2}>Draw</Tab>
+          <Tab value={3}>Speak</Tab>
+          <Tab value={4}>Search</Tab>
+        </TabList>
 
-        <UISettings />
+        <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
+          <UISettings />
+        </TabPanel>
 
-        <ElevenlabsSettings />
+        <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
+          <ProdiaSettings />
+        </TabPanel>
 
-        <ProdiaSettings />
+        <TabPanel value={3} sx={{ p: 'var(--Tabs-gap)' }}>
+          <ElevenlabsSettings />
+        </TabPanel>
 
-        <SearchSettings />
-
-      </Box>
+        <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
+          <SearchSettings />
+        </TabPanel>
+      </Tabs>
 
       <Divider />
 

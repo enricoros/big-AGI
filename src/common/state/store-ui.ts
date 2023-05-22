@@ -8,8 +8,8 @@ import { DLLMId } from '~/modules/llms/llm.types';
 
 interface UIStateStore {
 
-  settingsOpen: boolean;
-  openSettings: () => void;
+  settingsOpenTab: number; // 0: closed, 1..N: tab index
+  openSettings: (tab?: number) => void;
   closeSettings: () => void;
 
   modelsSetupOpen: boolean;
@@ -25,9 +25,9 @@ interface UIStateStore {
 export const useUIStateStore = create<UIStateStore>()(
   (set) => ({
 
-    settingsOpen: false,
-    closeSettings: () => set({ settingsOpen: false }),
-    openSettings: () => set({ settingsOpen: true }),
+    settingsOpenTab: 0,
+    openSettings: (tab?: number) => set({ settingsOpenTab: tab || 1 }),
+    closeSettings: () => set({ settingsOpenTab: 0 }),
 
     modelsSetupOpen: false,
     openModelsSetup: () => set({ modelsSetupOpen: true }),
