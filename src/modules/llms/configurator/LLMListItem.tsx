@@ -4,8 +4,9 @@ import { Box, Chip, IconButton, ListItem, ListItemButton, ListItemContent, Toolt
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
-import { DLLM, ModelVendor } from '../llm.types';
 import { useUIStateStore } from '~/common/state/store-ui';
+
+import { DLLM, ModelVendor } from '../llm.types';
 
 
 export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: boolean, chipFast?: boolean }) {

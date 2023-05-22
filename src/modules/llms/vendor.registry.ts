@@ -3,30 +3,35 @@ import { ModelVendorLocalAI } from './localai/vendor';
 import { ModelVendorOpenAI } from './openai/vendor';
 
 
-export function rankedVendors(): ModelVendor[] {
+export function findAllVendors(): ModelVendor[] {
   const modelVendors = Object.values(MODEL_VENDOR_REGISTRY);
   modelVendors.sort((a, b) => a.rank - b.rank);
   return modelVendors;
 }
 
-export function findVendorById(id?: ModelVendorId): ModelVendor | null {
-  return id ? (MODEL_VENDOR_REGISTRY[id] ?? null) : null;
+export function findVendorById(vendorId?: ModelVendorId): ModelVendor | null {
+  return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] ?? null) : null;
 }
 
-export function createDefaultSource(sources: DModelSource[]): DModelSource {
-  const { id, count } = getUniqueSourceId(ModelVendorOpenAI.id, sources);
-  return ModelVendorOpenAI.createSource(id, count);
+
+export function createModelSource(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {
+  // get vendor
+  const vendor = findVendorById(vendorId);
+  if (!vendor) throw new Error(`createModelSource: Vendor not found for id ${vendorId}`);
+
+  // find an id
+  const { id: sourceId, count } = _uniqueSourceId(vendorId, otherSources);
+
+  // create the source
+  return {
+    id: sourceId,
+    label: vendor.name + (count > 0 ? ` #${count}` : ''),
+    vId: vendorId,
+    setup: {},
+  };
 }
 
-export function getUniqueSourceId(vendorId: ModelVendorId, otherSources: DModelSource[]): { id: string, count: number } {
-  let id: DModelSourceId = vendorId;
-  let count = 0;
-  while (otherSources.find(source => source.id === id)) {
-    count++;
-    id = `${vendorId}-${count}`;
-  }
-  return { id, count };
-}
+export const createDefaultModelSource = (otherSources: DModelSource[]): DModelSource => createModelSource('openai', otherSources);
 
 
 /// Internals ///
@@ -38,3 +43,14 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
   // google_vertex: { id: 'google_vertex', name: 'Google Vertex', multiple: false, location: 'cloud', rank: 40 }
   // anthropic: { id: 'anthropic', name: 'Anthropic', multiple: false, location: 'cloud', rank: 50 },
 };
+
+
+function _uniqueSourceId(vendorId: ModelVendorId, otherSources: DModelSource[]): { id: string, count: number } {
+  let id: DModelSourceId = vendorId;
+  let count = 0;
+  while (otherSources.find(source => source.id === id)) {
+    count++;
+    id = `${vendorId}-${count}`;
+  }
+  return { id, count };
+}

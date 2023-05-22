@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { DLLMId } from '../llm.types';
 import { findVendorById } from '../vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 export function VendorLLMOptions(props: { id: DLLMId }) {
@@ -13,9 +14,10 @@ export function VendorLLMOptions(props: { id: DLLMId }) {
     return <>Configuration issue: LLM not found for id {props.id}</>;
 
   // get vendor
-  const vendor = findVendorById(llm._source?.vId);
+  const vendor = findVendorById(llm._source.vId);
   if (!vendor)
     return <>Configuration issue: Vendor not found for LLM {llm.id}, source: {llm.sId}</>;
 
-  return vendor.createLLMOptionsComponent(llm);
+  const LLMOptionsComponent = vendor.LLMOptionsComponent;
+  return <LLMOptionsComponent llm={llm} />;
 }

@@ -11,7 +11,7 @@ import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
 import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
-import { createDefaultSource } from '../vendor.registry';
+import { createDefaultModelSource } from '../vendor.registry';
 import { useModelsStore } from '../store-llms';
 
 
@@ -44,7 +44,7 @@ export function Configurator() {
   React.useEffect(() => {
     const { addSource, sources } = useModelsStore.getState();
     if (!sources.length)
-      addSource(createDefaultSource(sources));
+      addSource(createDefaultModelSource(sources));
   }, []);
 
 
