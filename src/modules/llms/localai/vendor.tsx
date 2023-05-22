@@ -2,21 +2,23 @@ import * as React from 'react';
 
 import DevicesIcon from '@mui/icons-material/Devices';
 
-import { ModelVendor } from '../llm.types';
 import { LocalAISourceSetup } from './LocalAISourceSetup';
+import { ModelVendor } from '../llm.types';
 
 
 export const ModelVendorLocalAI: ModelVendor = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,
-  icon: <DevicesIcon />,
   location: 'local',
   instanceLimit: process.env.NODE_ENV === 'development' ? 2 : 0,
 
-  // factories
+  // components
+  Icon: DevicesIcon,
   SourceSetupComponent: LocalAISourceSetup,
   LLMOptionsComponent: () => <>No LocalAI Options</>,
+
+  // functions
   callChat: () => Promise.reject(new Error('LocalAI is not implemented')),
 };
 

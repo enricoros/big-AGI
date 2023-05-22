@@ -50,13 +50,16 @@ export interface ModelVendor {
   id: ModelVendorId;
   name: string;
   rank: number;
-  icon: React.JSX.Element | null;
   location: 'local' | 'cloud';
   instanceLimit: number;
 
   // components
+  Icon: React.ComponentType;
   SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
   LLMOptionsComponent: React.ComponentType<{ llm: DLLM }>;
 
-  callChat: (llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;
+  // functions
+  callChat: ModelVendorCallChatFn;
 }
+
+type ModelVendorCallChatFn = (llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;
