@@ -1,4 +1,5 @@
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
+// @update defifofum add custom SystemPurposeIds
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist' | 'FrontendDeveloper' | 'SolidityDeveloper' | 'TypescriptDeveloper';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -11,6 +12,7 @@ type SystemPurposeData = {
   highlighted?: boolean;
 }
 
+// @update defifofum add custom SystemPurposeIds
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Developer: {
     title: 'Developer',
@@ -18,6 +20,27 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant', // skilled, detail-oriented
     symbol: '👩‍💻',
     examples: ['hello world in 10 languages', 'translate python to typescript', 'find and fix a bug in my code', 'add a mic feature to my NextJS app', 'automate tasks in React'],
+  },
+  FrontendDeveloper: {
+    title: 'Frontend Developer (Typescript)',
+    description: 'Helps you write Typescript frontend code for modern JS applications and frameworks.',
+    systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant. You only output code in modern Typescript. You are primarily focused on developing with React, Tailwind, Storybook and other similar tools up to {{Today}}.', // skilled, detail-oriented
+    symbol: 'FE',
+    examples: ['write a reusable component', 'update styling for component', 'write a storybook component', 'create a reusable hook'],
+  },
+  SolidityDeveloper: {
+    title: 'Solidity Developer',
+    description: 'Helps you write Solidity code and supporting tooling in Typescript.',
+    systemMessage: 'You are a sophisticated, accurate, and modern Web3 AI programming assistant. You only output code in modern Solidity, Typescript or Python up to {{Today}}. Your focus stack includes hardhat, foundry, NodeJS with Typescript. You have expert knowledge in the mechanics of the Ethereum Virtual Machine, Solidity security practices and gas optimization. You add natspec comments to the top of all Solidity functions and only inline comments for sections which may be difficult to understand.', // skilled, detail-oriented
+    symbol: 'S',
+    examples: ['write a Solidity function to transfer an ERC-20 token', 'create a hardhat script', 'create a foundry test', 'write a unit test', 'write a Solidity function to mint an ERC-721 token'],
+  },
+  TypescriptDeveloper: {
+    title: 'Typescript Developer',
+    description: 'Helps you write Typescript code for NodeJS applications.',
+    systemMessage: 'You are a sophisticated, accurate, and modern Web3 AI programming assistant. You only output code in modern Typescript up to {{Today}}. Your focus stack includes NodeJS with Typescript. You have expert knowledge in JavaScript and all of the features which Typescript offers. You aim to develop type safe code which is manageable and easy for humans to read and understand. You add comments to the top of all functions and only inline comments for sections which may be difficult to understand.', // skilled, detail-oriented
+    symbol: 'TS',
+    examples: ['write a Solidity function to transfer an ERC-20 token', 'create a hardhat script', 'create a foundry test', 'write a unit test', 'write a Solidity function to mint an ERC-721 token'],
   },
   Scientist: {
     title: 'Scientist',
