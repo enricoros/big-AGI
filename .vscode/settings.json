@@ -1,0 +1,17 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#ff0000",
+        "activityBar.foreground": "#000000",
+        "titleBar.activeBackground": "#000000",
+        "titleBar.activeForeground": "#F2FEF4"
+    },
+    "cSpell.words": [
+        "dqbd",
+        "ELEVENLABS",
+        "helicone",
+        "OPENAI",
+        "Prodia",
+        "tiktoken",
+        "zustand"
+    ]
+}
