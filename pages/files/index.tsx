@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
-import { Box, Button, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, List, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -10,11 +10,11 @@ import { pdfToText } from '@/common/util/pdfToText';
 import { SxProps } from '@mui/joy/styles/types';
 import { AppLayout } from '@/common/layouts/AppLayout';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import TelegramIcon from '@mui/icons-material/Telegram';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import { embedPdf, queryPdfEndpoint } from 'src/apps/chat/util/agi-immediate';
 import { DMessage, createDMessage, useChatStore } from '@/common/state/store-chats';
 import { useSettingsStore } from '@/common/state/store-settings';
+import { ChatMessage } from 'src/apps/chat/components/message/ChatMessage';
 
 function sanitizePineconeNamespace(text: string) {
   if (!text) return '';
@@ -218,42 +218,38 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
   const _findConversation = (conversationId: string) =>
     conversationId ? useChatStore.getState().conversations.find((c) => c.id === conversationId) ?? null : null;
 
-  const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
-    if (!conversationId) return;
-
-    // Command - last user message is a cmd
-    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
-
-    // synchronous long-duration tasks, which update the state as they go
-
-    // export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
-    // if (sendModeId && chatModelId && systemPurposeId) {
-    //   switch (sendModeId) {
-    //     case 'immediate':
-    //       return await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
-    //   }
-    // }
-
-    // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
-    // setMessages(conversationId, history);
-  };
-
-  const { topNewConversationId, setActiveConversationId, createConversation, deleteConversation } = useChatStore(
-    (state) => ({
-      topNewConversationId: state.conversations.length ? (state.conversations[0].messages.length === 0 ? state.conversations[0].id : null) : null,
-      setActiveConversationId: state.setActiveConversationId,
+  const { createConversation, deleteConversation, setMessages, appendMessage, messages, tokenCount } = useChatStore((state) => {
+    const conversation = state.conversations.find((conversation) => conversation.id === props.conversationId);
+    return {
+      messages: conversation ? conversation.messages : [],
       createConversation: state.createConversation,
       deleteConversation: state.deleteConversation,
-    }),
-    shallow,
-  );
+      setMessages: state.setMessages,
+      appendMessage: state.appendMessage,
+      tokenCount: conversation ? conversation.tokenCount : 0,
+    };
+  }, shallow);
 
+  const [localMessages, setLocalMessages] = React.useState<DMessage[]>([]);
+
+  useEffect(() => {
+    function getMessages() {
+      console.log('messages func', messages);
+      return messages;
+    }
+    const mess = getMessages();
+    console.log('mess', mess);
+  }, [localMessages, messages]);
+
+  // create conversation on mount, delete conversation on unmount
   useEffect(() => {
     const conversation = _findConversation('files');
     if (!conversation && 'files') {
       console.log('creating conversation');
       createConversation('files');
     }
+
+    // option to store conversation in localStorage, etc. instead
     return () => {
       console.log('deleting conversation');
       if ('files') {
@@ -262,25 +258,21 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
     };
   }, []);
 
-  const handleChatClicked = () => {
-    async function sendMessage(userText: string) {
-      const conversation = _findConversation('files');
-      console.log('conversation', conversation);
-      if (conversation) return await handleExecuteConversation('files', [...conversation.messages, createDMessage('user', userText)]);
-    }
-    const text = (composeText || '').trim();
-    if (text.length) {
-      setComposeText('');
-      sendMessage(text);
-    }
-  };
   const handleSearchClicked = async () => {
     const text = (composeText || '').trim();
     if (text.length) {
       setIsSearchingDocuments(true);
+      const yourMessage: DMessage = createDMessage('user', text);
+
+      setMessages('files', [yourMessage]);
+      setLocalMessages([...localMessages, yourMessage]);
+
       const results = await queryPdfEndpoint(text);
       setIsSearchingDocuments(false);
       setComposeText('');
+
+      appendMessage('files', createDMessage('assistant', results));
+      setLocalMessages([...localMessages, yourMessage, createDMessage('assistant', results.text)]);
     }
   };
 
@@ -408,22 +400,6 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
 
         <hr />
 
-        {/* {props.conversationId && (
-          <ChatMessageList
-            conversationId={props.conversationId}
-            isMessageSelectionMode={false}
-            setIsMessageSelectionMode={() => {}}
-            onExecuteConversation={handleExecuteConversation}
-            onImagineFromText={handleImagineFromText}
-            sx={{
-              flexGrow: 1,
-              background: theme.vars.palette.background.level2,
-              overflowY: 'auto', // overflowY: 'hidden'
-              minHeight: 96,
-            }}
-          />
-        )} */}
-
         <Grid container spacing={{ xs: 1, md: 2 }}>
           {/* Left pane (buttons and Textarea) */}
           <Grid xs={12} md={9}>
@@ -504,7 +480,7 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
                     </Button>
                   ) : (
                     <>
-                      <Button
+                      {/* <Button
                         fullWidth
                         variant="solid"
                         color={'primary'}
@@ -514,7 +490,7 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
                         endDecorator={<TelegramIcon />}
                       >
                         Chat
-                      </Button>
+                      </Button> */}
                       <Button
                         fullWidth
                         variant="solid"
@@ -533,6 +509,20 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
             </Stack>
           </Grid>
         </Grid>
+
+        <div>
+          {localMessages.map((message, idx) => (
+            <ChatMessage
+              key={'msg-' + message.id}
+              message={message}
+              isBottom={idx === 0}
+              onMessageDelete={() => {}}
+              onMessageEdit={() => {}}
+              onMessageRunFrom={() => {}}
+              onImagine={() => {}}
+            />
+          ))}
+        </div>
       </div>
     </AppLayout>
   );

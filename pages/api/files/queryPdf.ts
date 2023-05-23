@@ -1,6 +1,6 @@
 import { OpenAI } from 'langchain/llms/openai';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
-import { ConversationalRetrievalQAChain, RetrievalQAChain, loadQAMapReduceChain } from 'langchain/chains';
+import { ConversationalRetrievalQAChain, RetrievalQAChain } from 'langchain/chains';
 import { initPinecone } from '@/modules/pinecone/pinecone-client';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { NextRequest, NextResponse } from 'next/server';
