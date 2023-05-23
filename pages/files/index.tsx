@@ -232,15 +232,6 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
 
   const [localMessages, setLocalMessages] = React.useState<DMessage[]>([]);
 
-  useEffect(() => {
-    function getMessages() {
-      console.log('messages func', messages);
-      return messages;
-    }
-    const mess = getMessages();
-    console.log('mess', mess);
-  }, [localMessages, messages]);
-
   // create conversation on mount, delete conversation on unmount
   useEffect(() => {
     const conversation = _findConversation('files');
@@ -380,6 +371,7 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
 
         {pineconeNamespaces?.length > 0 && (
           <>
+          {/* Maybe use a MUI joy component with a margin here? :-D */}
             <br />
             <br />
             <br />
@@ -419,7 +411,7 @@ export default function Files(props: { sx?: SxProps; conversationId: string }) {
                     maxRows={12}
                     // onKeyDown={handleKeyPress}
                     onDragEnter={handleMessageDragEnter}
-                    // placeholder={textPlaceholder}
+                    placeholder={'Enter your prompt'}
                     value={composeText}
                     onChange={(e) => setComposeText(e.target.value)}
                     slotProps={{
