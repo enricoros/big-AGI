@@ -1,3 +1,39 @@
+# PDF Upload Proof of Concept Using Langchain JS and Pinecone Vector Storage
+
+## Drag and Drop PDF Files into the browser
+
+This project allows the user to
+1. Drag and drop PDF files into the browser
+2. Create embeddings of the PDF files and upload them to Pinecone
+3. Chat with the documents and extract useful information
+
+It is meant to help developers who are familiar with Javascript/Typescript better leverage more advanced tooling and can serve as a bare-bones template or provide some useful code snippets to be reused.
+
+Create a .env file based off of .env.example.
+
+You will need `OPENAI_API_KEY`, `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT`, and `PINECONE_INDEX_NAME`
+
+`npm install`
+
+`npm run dev`
+
+Go to `localhost:3000/files`
+
+Drag and drop a PDF file (or multiple PDF files) and click Upload
+
+https://github.com/michaelcreatesstuff/big-agi-in-memory-pdf-upload-poc/assets/21146258/720bb347-3524-4194-9fc5-783c5352fb2c
+
+Wait for the upload to finish. 
+
+Ask a question about the documents you just uploaded. This chat with the documents does not seem to cost anything.
+
+
+<img width="1728" alt="chat" src="https://github.com/michaelcreatesstuff/big-agi-in-memory-pdf-upload-poc/assets/21146258/5d3ded9c-2d78-433f-acee-fdc415f1624c">
+
+
+
+
+
 # `BIG-AGI` 🤖💬
 
 Welcome to `big-AGI`, FKA `nextjs-chatgpt-app`. 👋🎉
