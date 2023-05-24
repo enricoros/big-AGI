@@ -40,8 +40,7 @@
     "zustand": "^4.3.8"
   },
   "devDependencies": {
-    "@pkgr/utils": "2.3.1",
-    "@types/node": "^20.2.1",
+    "@types/node": "^20.2.3",
     "@types/plantuml-encoder": "^1.4.0",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.2.6",
