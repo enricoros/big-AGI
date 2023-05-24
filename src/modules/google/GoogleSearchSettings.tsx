@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, FormControl, FormHelperText, FormLabel, Input, Stack, Tooltip } from '@mui/joy';
+import { Box, FormControl, FormHelperText, FormLabel, Input, Stack, Tooltip, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -13,7 +13,7 @@ import { isValidGoogleCloudApiKey, isValidGoogleCseId, requireUserKeyGoogleCse }
 import { useGoogleSearchStore } from './store-google';
 
 
-export function SearchSettings() {
+export function GoogleSearchSettings() {
   // external state
   const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
@@ -31,9 +31,12 @@ export function SearchSettings() {
   return (
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
-      <FormHelperText>
-        🔍 Helps in locating up-to-date websites
-      </FormHelperText>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+        <SearchIcon />
+        <Typography>
+          Google Search
+        </Typography>
+      </Box>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
@@ -42,8 +45,8 @@ export function SearchSettings() {
               Google Cloud API Key
             </FormLabel>
           </Tooltip>
-          <FormHelperText>
-            <Link href='https://console.cloud.google.com/apis/credentials' noLinkStyle target='_blank'>Create one here</Link>
+          <FormHelperText sx={{ display: 'block' }}>
+            Create one <Link href='https://console.cloud.google.com/apis/credentials' noLinkStyle target='_blank'>here</Link>
           </FormHelperText>
         </Box>
         <Input
@@ -62,8 +65,8 @@ export function SearchSettings() {
               Google CSE ID <InfoOutlinedIcon sx={{ mx: 0.5 }} />
             </FormLabel>
           </Tooltip>
-          <FormHelperText>
-            <Link href='https://programmablesearchengine.google.com/' noLinkStyle target='_blank'>Get it here</Link>
+          <FormHelperText sx={{ display: 'block' }}>
+            Get it <Link href='https://programmablesearchengine.google.com/' noLinkStyle target='_blank'>here</Link>
           </FormHelperText>
         </Box>
         <Input

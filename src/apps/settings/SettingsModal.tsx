@@ -5,11 +5,11 @@ import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
-import { SearchSettings } from '~/modules/google/SearchSettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
+import { ToolsSettings } from './ToolsSettings';
 import { UISettings } from './UISettings';
 
 
@@ -37,7 +37,7 @@ export function SettingsModal() {
           <Tab value={1}>UI</Tab>
           <Tab value={2}>Draw</Tab>
           <Tab value={3}>Speak</Tab>
-          <Tab value={4}>Search</Tab>
+          <Tab value={4}>Tools</Tab>
         </TabList>
 
         <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
@@ -53,7 +53,7 @@ export function SettingsModal() {
         </TabPanel>
 
         <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
-          <SearchSettings />
+          <ToolsSettings />
         </TabPanel>
       </Tabs>
 
