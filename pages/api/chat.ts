@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
-
+import { Transform, Readable } from 'stream';
 
 if (!process.env.OPENAI_API_KEY)
-  console.warn('OPENAI_API_KEY has not been provided in this deployment environment. ' +
-    'Will use the optional keys incoming from the client, which is not recommended.');
-
+  console.warn(
+    'OPENAI_API_KEY has not been provided in this deployment environment. ' + 'Will use the optional keys incoming from the client, which is not recommended.',
+  );
 
 // definition for OpenAI wire types
 
@@ -38,6 +38,40 @@ interface ChatCompletionsResponseChunked {
   }[];
 }
 
+async function queryScottsNotes(text: string): Promise<string> {
+  const data = {
+    queries: [
+      {
+        query: text,
+      },
+    ],
+  };
+  const url = 'https://scotts-notes.fly.dev/query'; // Replace this with the URL of the API you want to access
+  const headers = {
+    'Content-Type': 'application/json',
+    // Add any other headers here if needed
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const texts = result.results[0].results.map((obj: any) => obj.text);
+      return texts.join('\n');
+    } else {
+      console.error(`Request failed with status code: ${response.status}`);
+      return '';
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return '';
+  }
+}
 
 async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest, 'stream' | 'n'>): Promise<ReadableStream> {
   const encoder = new TextEncoder();
@@ -58,9 +92,10 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
     body: JSON.stringify(streamingPayload),
   });
 
+  let streamedResponse = '';
+  const actionRe = new RegExp('^Query: (.*)$');
   return new ReadableStream({
     async start(controller) {
-
       // handle errors here, to return them as custom text on the stream
       if (!res.ok) {
         let errorPayload: object = {};
@@ -82,8 +117,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
       // this ensures we properly read chunks and invoke an event for each SSE event stream
       const parser = createParser((event: ParsedEvent | ReconnectInterval) => {
         // ignore reconnect interval
-        if (event.type !== 'event')
-          return;
+        if (event.type !== 'event') return;
 
         // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
         if (event.data === '[DONE]') {
@@ -95,8 +129,7 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
           const json: ChatCompletionsResponseChunked = JSON.parse(event.data);
 
           // ignore any 'role' delta update
-          if (json.choices[0].delta?.role)
-            return;
+          if (json.choices[0].delta?.role) return;
 
           // stringify and send the first packet as a JSON object
           if (!sentFirstPacket) {
@@ -109,9 +142,16 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
 
           // transmit the text stream
           const text = json.choices[0].delta?.content || '';
-          const queue = encoder.encode(text);
+          streamedResponse += text;
+          const actions = streamedResponse
+            .split('\n')
+            .map((a) => actionRe.exec(a))
+            .filter((match) => match !== null);
+          const queryText = actions[0]?.[1];
+          const observation = queryText ? queryScottsNotes(queryText) : '';
+          const nextPrompt = `Observation: ${observation}`;
+          const queue = encoder.encode(text + '\n\n' + nextPrompt);
           controller.enqueue(queue);
-
         } catch (e) {
           // maybe parse error
           controller.error(e);
@@ -119,13 +159,10 @@ async function OpenAIStream(apiKey: string, payload: Omit<ChatCompletionsRequest
       });
 
       // https://web.dev/streams/#asynchronous-iteration
-      for await (const chunk of res.body as any)
-        parser.feed(decoder.decode(chunk));
-
+      for await (const chunk of res.body as any) parser.feed(decoder.decode(chunk));
     },
   });
 }
-
 
 // Next.js API route
 
@@ -146,8 +183,18 @@ export interface ChatApiOutputStart {
   model: string;
 }
 
-export default async function handler(req: NextRequest) {
+class MyTransformStream extends Transform {
+  _transform(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null, data?: any) => void) {
+    // Perform some processing on the data (e.g., convert to uppercase)
+    const processedChunk = chunk.toString().toUpperCase();
+    // Push the processed data to the output stream
+    this.push(processedChunk);
+    // Call the callback to indicate that the processing is complete
+    callback();
+  }
+}
 
+export default async function handler(req: NextRequest) {
   // read inputs
   const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
 
