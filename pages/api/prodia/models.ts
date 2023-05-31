@@ -23,6 +23,11 @@ const HARDCODED_MODELS: Prodia.API.Models.Response = {
     { id: 'dreamshaper_5BakedVae.safetensors [a3fbf318]', label: 'Dreamshaper 5' },
     { id: 'revAnimated_v122.safetensors [3f4fefd9]', label: 'ReV Animated V1.2.2' },
     { id: 'meinamix_meinaV9.safetensors [2ec66ab0]', label: 'MeinaMix Meina V9' },
+    { id: 'lyriel_v15.safetensors [65d547c5]', label: 'Lyriel' },
+    { id: 'anythingV5_PrtRE.safetensors [893e49b9]', label: 'Anything v5.0' },
+    { id: 'dreamshaper_6BakedVae.safetensors [114c8abb]', label: 'Dreamshaper 6' },
+    { id: 'AOM3A3_orangemixs.safetensors [9600da17]', label: 'Abyss Orange v3' },
+    { id: 'shoninsBeautiful_v10.safetensors [25d8c546]', label: 'Shonin Beautiful People' },
   ],
 };
 
