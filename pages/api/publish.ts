@@ -2,8 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { PasteGG } from '@/modules/pastegg/pastegg.types';
-import { pasteGgPost } from '@/modules/pastegg/pastegg.server';
+import { PasteGG } from '~/modules/pastegg/pastegg.types';
+import { pasteGgPost } from '~/modules/pastegg/pastegg.server';
 
 
 /**

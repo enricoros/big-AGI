@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/joy';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
-import { Link } from '@/common/components/Link';
+import { Link } from '~/common/components/Link';
 
 import { ImageBlock } from './Block';
 
@@ -15,7 +15,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: bool
       display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
       mx: 1.5,
       // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-      minWidth: 32, minHeight: 32, boxShadow: theme.vars.shadow.md,
+      minWidth: 32, minHeight: 32, boxShadow: theme.shadow.md,
       background: theme.palette.neutral.solidBg,
       '& picture': { display: 'flex' },
       '& img': { maxWidth: '100%', maxHeight: '100%' },

@@ -6,8 +6,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { MAX_CONVERSATIONS, useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
 
@@ -28,9 +28,9 @@ export function ConversationItems(props: {
     createConversation: state.createConversation,
     deleteConversation: state.deleteConversation,
   }), shallow);
-  const showSymbols = useSettingsStore(state => ({
-    zenMode: state.zenMode,
-  }), shallow).zenMode !== 'cleaner';
+  const { showSymbols } = useUIPreferencesStore(state => ({
+    showSymbols: state.zenMode !== 'cleaner',
+  }), shallow);
 
 
   const hasChats = conversationIDs.length > 0;

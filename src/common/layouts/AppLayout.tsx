@@ -3,18 +3,22 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Container, useTheme } from '@mui/joy';
 
-import { useSettingsStore } from '@/common/state/store-settings';
-
+import { Configurator } from '~/modules/llms/configurator/Configurator';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
-import { ApplicationBar } from '../components/appbar/ApplicationBar';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import { ApplicationBar } from './appbar/ApplicationBar';
 import { NoSSR } from '../components/NoSSR';
 
 
-export function AppLayout(props: { children: React.ReactNode, noAppBar?: boolean, noSettings?: boolean }) {
+export function AppLayout(props: {
+  noAppBar?: boolean, noSettings?: boolean, noModelsSetup?: boolean,
+  children: React.ReactNode,
+}) {
   // external state
   const theme = useTheme();
-  const { centerMode } = useSettingsStore(state => ({ centerMode: state.centerMode }), shallow);
+  const { centerMode } = useUIPreferencesStore(state => ({ centerMode: state.centerMode }), shallow);
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
@@ -26,8 +30,8 @@ export function AppLayout(props: { children: React.ReactNode, noAppBar?: boolean
         sx={{
           boxShadow: {
             xs: 'none',
-            md: centerMode === 'narrow' ? theme.vars.shadow.md : 'none',
-            xl: centerMode !== 'full' ? theme.vars.shadow.lg : 'none',
+            md: centerMode === 'narrow' ? theme.shadow.md : 'none',
+            xl: centerMode !== 'full' ? theme.shadow.lg : 'none',
           },
         }}>
 
@@ -45,6 +49,8 @@ export function AppLayout(props: { children: React.ReactNode, noAppBar?: boolean
       </Container>
 
       {!props.noSettings && <SettingsModal />}
+
+      {!props.noModelsSetup && <Configurator />}
 
     </NoSSR>
   );

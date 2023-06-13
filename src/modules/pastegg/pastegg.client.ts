@@ -1,6 +1,6 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { Brand } from '@/common/brand';
+import { Brand } from '~/common/brand';
 
 import { PasteGG } from './pastegg.types';
 

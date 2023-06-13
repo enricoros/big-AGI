@@ -1,9 +1,12 @@
-import { ElevenLabs } from './elevenlabs.types';
-import { useQuery } from '@tanstack/react-query';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import type { SpeechInputSchema } from './elevenlabs.router';
+import { useElevenlabsStore } from './store-elevenlabs';
 
 
 export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
+
+export const canUseElevenLabs = (): boolean => !!useElevenlabsStore.getState().elevenLabsVoiceId || !requireUserKeyElevenLabs;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
@@ -13,13 +16,14 @@ export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLa
 export async function speakText(text: string) {
   if (!(text?.trim())) return;
 
-  const { elevenLabsApiKey, elevenLabsVoiceId, preferredLanguage } = useSettingsStore.getState();
+  const { elevenLabsApiKey, elevenLabsVoiceId } = useElevenlabsStore.getState();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
 
+  const { preferredLanguage } = useUIPreferencesStore.getState();
+  const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
+
   try {
-    // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
-    const nonEnglish = !(preferredLanguage.toLowerCase().startsWith('en'));
-    const audioBuffer = await callElevenlabsSpeech(text.slice(0, 1000), elevenLabsApiKey, elevenLabsVoiceId, nonEnglish);
+    const audioBuffer = await callElevenlabsSpeech(text, elevenLabsApiKey, elevenLabsVoiceId, nonEnglish);
     const audioContext = new AudioContext();
     const bufferSource = audioContext.createBufferSource();
     bufferSource.buffer = await audioContext.decodeAudioData(audioBuffer);
@@ -30,11 +34,14 @@ export async function speakText(text: string) {
   }
 }
 
-
+/**
+ * Note: we have to use this client-side API instead of TRPC because of ArrayBuffers..
+ */
 async function callElevenlabsSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string, nonEnglish: boolean): Promise<ArrayBuffer> {
-  const payload: ElevenLabs.API.TextToSpeech.RequestBody = {
-    apiKey: elevenLabsApiKey,
-    text,
+  // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
+  const speechInput: SpeechInputSchema = {
+    elevenKey: elevenLabsApiKey,
+    text: text.slice(0, 1000),
     voiceId: elevenLabsVoiceId,
     nonEnglish,
   };
@@ -42,7 +49,7 @@ async function callElevenlabsSpeech(text: string, elevenLabsApiKey: string, elev
   const response = await fetch('/api/elevenlabs/speech', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(speechInput),
   });
 
   if (!response.ok) {
@@ -51,18 +58,4 @@ async function callElevenlabsSpeech(text: string, elevenLabsApiKey: string, elev
   }
 
   return await response.arrayBuffer();
-}
-
-
-export function useElevenLabsVoices(apiKey: string, isEnabled: boolean) {
-  const { data: voicesData, isLoading: loadingVoices } = useQuery(['elevenlabs-voices', apiKey], {
-    enabled: isEnabled,
-    queryFn: () => fetch('/api/elevenlabs/voices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(apiKey ? { apiKey } : {}) }),
-    }).then(res => res.json() as Promise<ElevenLabs.API.Voices.Response>),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-  return { voicesData, loadingVoices };
 }
