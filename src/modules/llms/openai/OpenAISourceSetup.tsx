@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { Box, Button, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
@@ -118,7 +117,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       <Button
         variant='solid' color={isError ? 'warning' : 'primary'}
         disabled={!shallFetchSucceed || isFetching}
-        endDecorator={hasModels ? <SyncIcon /> : <FileDownloadIcon />}
+        endDecorator={<SyncIcon />}
         onClick={() => refetch()}
         sx={{ minWidth: 120, ml: 'auto' }}
       >
