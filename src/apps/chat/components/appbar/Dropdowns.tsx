@@ -56,7 +56,7 @@ export function Dropdowns(props: {
     <AppBarDropdown
       items={llmItems}
       value={chatLLMId} onChange={handleChatModelChange}
-      placeholder='Model'
+      placeholder='Models…'
       appendOption={<>
 
         {chatLLMId && (
