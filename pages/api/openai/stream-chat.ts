@@ -129,6 +129,5 @@ export default async function handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const config = {
-  runtime: 'edge',
-};
+// noinspection JSUnusedGlobalSymbols
+export const config = { runtime: 'edge' };

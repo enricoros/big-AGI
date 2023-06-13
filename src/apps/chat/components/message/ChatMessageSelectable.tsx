@@ -60,7 +60,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
 
   const background = messageBackground(theme, messageRole, !!messageUpdated, isAssistantError);
 
-  const avatarEl: JSX.Element | null = React.useMemo(() =>
+  const avatarEl: React.JSX.Element | null = React.useMemo(() =>
       makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping, 'sm'),
     [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping],
   );

@@ -3,12 +3,6 @@ export namespace Search {
   /// Client (Browser) -> Server (Next.js)
   export namespace API {
 
-    export interface RequestParams {
-      query: string;
-      key?: string;
-      cx?: string;
-    }
-
     export interface BriefResult {
       title: string;
       link: string;
