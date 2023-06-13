@@ -1,10 +1,12 @@
+import * as React from 'react';
+
 export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
 type SystemPurposeData = {
   title: string;
-  description: string | JSX.Element;
+  description: string | React.JSX.Element;
   systemMessage: string;
   symbol: string;
   examples?: string[];

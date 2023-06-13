@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import { Button, Tooltip } from '@mui/joy';
 
 interface CodeBlockProps {
@@ -7,7 +9,7 @@ interface CodeBlockProps {
   };
 }
 
-export function OpenInCodepen({ codeBlock }: CodeBlockProps): JSX.Element {
+export function OpenInCodepen({ codeBlock }: CodeBlockProps): React.JSX.Element {
   const { code, language } = codeBlock;
   const hasCSS = language === 'css';
   const hasJS = ['javascript', 'json', 'typescript'].includes(language || '');
