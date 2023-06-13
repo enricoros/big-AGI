@@ -31,7 +31,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const hasModels = !!sourceLLMs.length;
   const needsUserKey = !hasServerKeyOpenAI;
   const keyValid = isValidOpenAIApiKey(oaiKey);
-  const keyError = (needsUserKey || !!oaiKey) && !keyValid;
+  const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
