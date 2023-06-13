@@ -6,6 +6,4 @@ export const canUseProdia = (): boolean => !!useProdiaStore.getState().prodiaMod
 
 export const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 36;
 
-export const prodiaDefaultModelId: string = 'v1-5-pruned-emaonly.ckpt [81761151]';
-
 export const CmdRunProdia: string[] = ['/imagine', '/img'];
