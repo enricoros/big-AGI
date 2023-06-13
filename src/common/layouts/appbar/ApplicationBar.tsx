@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, IconButton, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
+import { Badge, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Stack, Switch, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -110,6 +110,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       placement='bottom-end' disablePortal={false}
     >
       {commonContextItems}
+      <ListDivider />
       {contextMenuItems}
       <SupportMenuItem />
     </Menu>
