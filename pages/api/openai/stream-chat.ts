@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
-import { OpenAI } from '@/modules/openai/openai.types';
-import { openaiPostResponse, toApiChatRequest, toWireCompletionRequest } from '@/modules/openai/openai.server';
+import { ChatGenerateSchema, chatGenerateSchema, openAIAccess, openAICompletionRequest } from '~/modules/llms/openai/openai.router';
+import { OpenAI } from '~/modules/llms/openai/openai.types';
 
 
-async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<OpenAI.API.Chat.Request, 'api'>, signal: AbortSignal): Promise<ReadableStream> {
+async function rethrowOpenAIError(response: Response) {
+  if (!response.ok) {
+    let errorPayload: object | null = null;
+    try {
+      errorPayload = await response.json();
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
+  }
+}
+
+
+async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: ChatGenerateSchema['model'], history: ChatGenerateSchema['history'], signal: AbortSignal): Promise<ReadableStream> {
 
   // Handle the abort event when the connection is closed by the client
   signal.addEventListener('abort', () => {
@@ -13,28 +26,29 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
   });
 
   // begin event streaming from the OpenAI API
-  const encoder = new TextEncoder();
-
   let upstreamResponse: Response;
   try {
-    const request: OpenAI.Wire.Chat.CompletionRequest = toWireCompletionRequest(rest, true);
-    upstreamResponse = await openaiPostResponse(api, '/v1/chat/completions', request, signal);
+
+    // prepare request objects
+    const { headers, url } = openAIAccess(access, '/v1/chat/completions');
+    const body: OpenAI.Wire.Chat.CompletionRequest = openAICompletionRequest(model, history, true);
+
+    // perform the request
+    upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body), signal });
+    await rethrowOpenAIError(upstreamResponse);
+
   } catch (error: any) {
     console.log(error);
     const message = '[OpenAI Issue] ' + (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
-    return new ReadableStream({
-      start: controller => {
-        controller.enqueue(encoder.encode(message));
-        controller.close();
-      },
-    });
+    throw new Error(message);
   }
 
-  // decoding and re-encoding loop
 
-  const onReadableStreamStart = async (controller: ReadableStreamDefaultController) => {
+  // decoding and re-encoding loop
+  async function onReadableStreamStart(controller: ReadableStreamDefaultController) {
 
     let hasBegun = false;
+    const textEncoder = new TextEncoder();
 
     // stream response (SSE) from OpenAI is split into multiple chunks. this function
     // will parse the event into a text stream, and re-emit it to the client
@@ -63,12 +77,12 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
           const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
             model: json.model,
           };
-          controller.enqueue(encoder.encode(JSON.stringify(firstPacket)));
+          controller.enqueue(textEncoder.encode(JSON.stringify(firstPacket)));
         }
 
         // transmit the text stream
         const text = json.choices[0].delta?.content || '';
-        controller.enqueue(encoder.encode(text));
+        controller.enqueue(textEncoder.encode(text));
 
         // Workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
         if (json.choices[0].finish_reason) {
@@ -87,8 +101,7 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
     const decoder = new TextDecoder();
     for await (const upstreamChunk of upstreamResponse.body as any)
       upstreamParser.feed(decoder.decode(upstreamChunk, { stream: true }));
-
-  };
+  }
 
   return new ReadableStream({
     start: onReadableStreamStart,
@@ -99,25 +112,23 @@ async function chatStreamRepeater(api: OpenAI.API.Configuration, rest: Omit<Open
 
 export default async function handler(req: NextRequest): Promise<Response> {
   try {
-    const requestBodyJson = await req.json();
-    const { api, ...rest } = await toApiChatRequest(requestBodyJson);
-    const chatResponseStream: ReadableStream = await chatStreamRepeater(api, rest, req.signal);
+    const { access, model, history } = chatGenerateSchema.parse(await req.json());
+    const chatResponseStream: ReadableStream = await chatStreamRepeater(access, model, history, req.signal);
     return new NextResponse(chatResponseStream);
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.log('Fetch request aborted in handler');
-      return new Response('Request aborted by the user.', { status: 499 }); // Use 499 status code for client closed request
+      return new NextResponse('Request aborted by the user.', { status: 499 }); // Use 499 status code for client closed request
     } else if (error.code === 'ECONNRESET') {
       console.log('Connection reset by the client in handler');
-      return new Response('Connection reset by the client.', { status: 499 }); // Use 499 status code for client closed request
+      return new NextResponse('Connection reset by the client.', { status: 499 }); // Use 499 status code for client closed request
     } else {
       console.error('api/openai/stream-chat error:', error);
       return new NextResponse(`[Issue] ${error}`, { status: 400 });
     }
   }
-};
+}
 
-//noinspection JSUnusedGlobalSymbols
 export const config = {
   runtime: 'edge',
 };

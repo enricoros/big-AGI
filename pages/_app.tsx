@@ -6,9 +6,11 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import '@/common/styles/GithubMarkdown.css';
-import { Brand } from '@/common/brand';
-import { createEmotionCache, theme } from '@/common/theme';
+import { apiQuery } from '~/modules/trpc/trpc.client';
+
+import '~/common/styles/GithubMarkdown.css';
+import { Brand } from '~/common/brand';
+import { createEmotionCache, theme } from '~/common/theme';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.
@@ -18,7 +20,7 @@ export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
 
-export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
+function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
   const [queryClient] = React.useState(() => new QueryClient());
   return <>
     <CacheProvider value={emotionCache}>
@@ -38,3 +40,6 @@ export default function MyApp({ Component, emotionCache = clientSideEmotionCache
     <VercelAnalytics debug={false} />
   </>;
 }
+
+// enables the react-query api invocation
+export default apiQuery.withTRPC(MyApp);

@@ -1,21 +1,28 @@
-import { SxProps } from '@mui/joy/styles/types';
 import * as React from 'react';
+
 import { Box, FormHelperText, FormLabel, IconButton, Stack } from '@mui/joy';
+import { SxProps } from '@mui/joy/styles/types';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, sx?: SxProps, children: React.ReactNode }) {
+
+export function Section(props: { title?: string; collapsible?: boolean, collapsed?: boolean, disclaimer?: string, asLink?: boolean, sx?: SxProps, children: React.ReactNode }) {
   const [collapsed, setCollapsed] = React.useState(props.collapsed ?? false);
 
-  return <>
+  const labelSx: SxProps | null = props.asLink ? {
+    textDecoration: 'underline',
+    cursor: 'pointer',
+  } : null;
+
+  return <Box>
 
     <Stack direction='row' sx={{ mt: (props.title ? 1 : 0), alignItems: 'center', ...(props.sx ?? {}) }}>
       {!!props.title && (
-        <FormLabel>
+        <FormLabel onClick={() => !!props.collapsible && setCollapsed(!collapsed)} sx={labelSx}>
           {props.title}
         </FormLabel>
       )}
-      {!!props.collapsible && (
+      {!!props.collapsible && !props.asLink && (
         <IconButton size='md' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
           {!collapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </IconButton>
@@ -32,5 +39,5 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
       </FormHelperText>
     )}
 
-  </>;
+  </Box>;
 }

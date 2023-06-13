@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AppLayout } from '@/common/layouts/AppLayout';
+import { AppLayout } from '~/common/layouts/AppLayout';
 
 import { Chat } from '../src/apps/chat/Chat';
 

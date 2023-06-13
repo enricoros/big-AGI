@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
 
 /**
  * Prevents the children from being rendered on the server.
@@ -11,10 +11,10 @@ import React, { useEffect, useState } from 'react';
  *
  * Suggestion: use sparingly, to show you are aware of the root causes of hydration errors.
  */
-export const NoSSR = ({ children }: { children: any }): JSX.Element | null => {
-  const [isMounted, setIsMounted] = useState(false);
+export const NoSSR = ({ children }: { children: any }): React.JSX.Element | null => {
+  const [isMounted, setIsMounted] = React.useState(false);
 
-  useEffect(() => setIsMounted(true), []);
+  React.useEffect(() => setIsMounted(true), []);
 
   return isMounted ? children : null;
 };

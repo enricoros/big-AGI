@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { useSettingsStore } from '../state/store-settings';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
 
 interface ISpeechRecognition {
   lang: string;
@@ -34,7 +35,7 @@ export const useSpeechRecognition = (onResultCallback: (transcript: string) => v
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
   // external state (will update this function when changed)
-  const preferredLanguage = useSettingsStore(state => state.preferredLanguage);
+  const preferredLanguage = useUIPreferencesStore(state => state.preferredLanguage);
 
 
   React.useEffect(() => {

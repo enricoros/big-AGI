@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -9,8 +9,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { downloadConversationJson, useChatStore } from '@/common/state/store-chats';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { downloadConversationJson, useChatStore } from '~/common/state/store-chats';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ActionItems(props: {
@@ -21,7 +21,7 @@ export function ActionItems(props: {
 }) {
 
   // external state
-  const { showSystemMessages, setShowSystemMessages } = useSettingsStore(state => ({
+  const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
 
@@ -54,7 +54,11 @@ export function ActionItems(props: {
 
   return <>
 
-    <ListDivider />
+    <ListItem sticky>
+      <Typography level='body2'>
+        Conversation
+      </Typography>
+    </ListItem>
 
     <MenuItem onClick={handleSystemMessagesToggle}>
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
@@ -62,7 +66,14 @@ export function ActionItems(props: {
       <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
 
-    <ListDivider />
+    <ListDivider inset='startContent' />
+
+    <MenuItem disabled={disabled} onClick={handleToggleMessageSelectionMode}>
+      <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
+      <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
+        Cleanup ...
+      </span>
+    </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationPublish}>
       <ListItemDecorator>
@@ -70,7 +81,7 @@ export function ActionItems(props: {
         <ExitToAppIcon />
         {/*</Badge>*/}
       </ListItemDecorator>
-      Share via paste.gg
+      Share on paste.gg
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationDownload}>
@@ -80,18 +91,9 @@ export function ActionItems(props: {
       Export conversation
     </MenuItem>
 
-    <ListDivider />
-
-    <MenuItem disabled={disabled} onClick={handleToggleMessageSelectionMode}>
-      <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
-      <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
-        Cleanup ...
-      </span>
-    </MenuItem>
-
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      Clear conversation
+      Reset
     </MenuItem>
 
   </>;
