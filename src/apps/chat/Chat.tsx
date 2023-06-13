@@ -3,20 +3,21 @@ import { shallow } from 'zustand/shallow';
 
 import { useTheme } from '@mui/joy';
 
-import { CmdRunProdia } from '@/modules/prodia/prodia.client';
-import { CmdRunReact } from '@/modules/search/search.client';
-import { PasteGG } from '@/modules/pastegg/pastegg.types';
-import { PublishedModal } from '@/modules/pastegg/PublishedModal';
-import { callPublish } from '@/modules/pastegg/pastegg.client';
+import { CmdRunProdia } from '~/modules/prodia/prodia.client';
+import { CmdRunReact } from '~/modules/aifn/react/react';
+import { PasteGG } from '~/modules/pastegg/pastegg.types';
+import { PublishedModal } from '~/modules/pastegg/PublishedModal';
+import { callPublish } from '~/modules/pastegg/pastegg.client';
+import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { Link } from '@/common/components/Link';
-import { conversationToMarkdown } from '@/common/util/conversationToMarkdown';
-import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '@/common/state/store-chats';
-import { extractCommands } from '@/common/util/extractCommands';
-import { useApplicationBarStore } from '@/common/components/appbar/useApplicationBarStore';
-import { useComposerStore } from '@/common/state/store-composer';
-import { useSettingsStore } from '@/common/state/store-settings';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { Link } from '~/common/components/Link';
+import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
+import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
+import { extractCommands } from '~/common/util/extractCommands';
+import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ActionItems } from './components/appbar/ActionItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -25,13 +26,14 @@ import { ConversationItems } from './components/appbar/ConversationItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/ephemerals/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
-import { imaginePromptFromText } from './util/ai-functions';
-import { runAssistantUpdatingState } from './util/agi-immediate';
-import { runImageGenerationUpdatingState } from './util/imagine';
-import { runReActUpdatingState } from './util/agi-react';
+import { runAssistantUpdatingState } from './editors/chat-stream';
+import { runImageGenerationUpdatingState } from './editors/image-generate';
+import { runReActUpdatingState } from './editors/react-tangent';
 
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
+
+export type SendModeId = 'immediate' | 'react';
 
 
 export function Chat() {
@@ -47,10 +49,7 @@ export function Chat() {
 
   // external state
   const theme = useTheme();
-  const { sendModeId } = useComposerStore(state => ({
-    sendModeId: state.sendModeId,
-  }), shallow);
-  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, chatModelId, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, conversationsCount, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
@@ -59,15 +58,15 @@ export function Chat() {
       importConversation: state.importConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
-      chatModelId: conversation?.chatModelId ?? null,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       setAutoTitle: state.setAutoTitle,
     };
   }, shallow);
 
 
-  const handleExecuteConversation = async (conversationId: string, history: DMessage[]) => {
-    if (!conversationId) return;
+  const handleExecuteConversation = async (sendModeId: SendModeId, conversationId: string, history: DMessage[]) => {
+    const { chatLLMId } = useModelsStore.getState();
+    if (!conversationId || !chatLLMId) return;
 
     // Command - last user message is a cmd
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
@@ -80,9 +79,9 @@ export function Chat() {
           setMessages(conversationId, history);
           return await runImageGenerationUpdatingState(conversationId, prompt);
         }
-        if (CmdRunReact.includes(command) && chatModelId) {
+        if (CmdRunReact.includes(command) && chatLLMId) {
           setMessages(conversationId, history);
-          return await runReActUpdatingState(conversationId, prompt, chatModelId);
+          return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
         // if (CmdRunSearch.includes(command))
         //   return await run...
@@ -90,14 +89,14 @@ export function Chat() {
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (sendModeId && chatModelId && systemPurposeId) {
+    if (sendModeId && chatLLMId && systemPurposeId) {
       switch (sendModeId) {
         case 'immediate':
-          return await runAssistantUpdatingState(conversationId, history, chatModelId, systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId);
         case 'react':
           if (lastMessage?.text) {
             setMessages(conversationId, history);
-            return await runReActUpdatingState(conversationId, lastMessage.text, chatModelId);
+            return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
           }
       }
     }
@@ -109,18 +108,18 @@ export function Chat() {
   const _findConversation = (conversationId: string) =>
     conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
-  const handleSendUserMessage = async (conversationId: string, userText: string) => {
+  const handleSendUserMessage = async (sendModeId: SendModeId, conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
     if (conversation)
-      return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', userText)]);
+      return await handleExecuteConversation(sendModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation && chatModelId) {
-      const prompt = await imaginePromptFromText(messageText, chatModelId);
+    if (conversation) {
+      const prompt = await imaginePromptFromText(messageText);
       if (prompt)
-        return await handleExecuteConversation(conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
+        return await handleExecuteConversation('immediate', conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
     }
   };
 
@@ -154,7 +153,7 @@ export function Chat() {
       const conversation = _findConversation(publishConversationId);
       setPublishConversationId(null);
       if (conversation) {
-        const markdownContent = conversationToMarkdown(conversation, !useSettingsStore.getState().showSystemMessages);
+        const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
         const publishResponse = await callPublish('paste.gg', markdownContent);
         setPublishResponse(publishResponse);
       }

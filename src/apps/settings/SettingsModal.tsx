@@ -1,17 +1,15 @@
 import * as React from 'react';
 
-import { Box, Button, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
+import { Button, Divider, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
-import { ElevenlabsSettings } from '@/modules/elevenlabs/ElevenlabsSettings';
-import { OpenAIAdvancedSettings } from '@/modules/openai/OpenAIAdvancedSettings';
-import { OpenAISettings } from '@/modules/openai/OpenAISettings';
-import { ProdiaSettings } from '@/modules/prodia/ProdiaSettings';
-import { SearchSettings } from '@/modules/search/SearchSettings';
-import { isValidOpenAIApiKey, requireUserKeyOpenAI } from '@/modules/openai/openai.client';
+import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
+import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 
-import { useSettingsStore } from '@/common/state/store-settings';
-import { useUIStore } from '@/common/state/store-ui';
+import { GoodModal } from '~/common/components/GoodModal';
+import { useUIStateStore } from '~/common/state/store-ui';
 
+import { ToolsSettings } from './ToolsSettings';
 import { UISettings } from './UISettings';
 
 
@@ -21,43 +19,46 @@ import { UISettings } from './UISettings';
  */
 export function SettingsModal() {
   // external state
-  const { settingsOpen, closeSettings } = useUIStore();
-  const apiKey = useSettingsStore(state => state.apiKey);
-
-  // show the Settings Dialog at startup if the API key is required but not set
-  React.useEffect(() => {
-    if (requireUserKeyOpenAI && !isValidOpenAIApiKey(apiKey))
-      useUIStore.getState().openSettings();
-  }, [apiKey]);
+  const { settingsOpenTab, closeSettings, openModelsSetup } = useUIStateStore();
 
   return (
-    <Modal open={settingsOpen} onClose={closeSettings}>
-      <ModalOverflow>
-        <ModalDialog sx={{ maxWidth: 500, display: 'flex', p: { xs: 1, sm: 2, lg: '20px' } }}>
+    <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
+               startButton={
+                 <Button variant='plain' color='info' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
+                   Models
+                 </Button>
+               }
+               sx={{ p: { xs: 1, sm: 2, lg: 2.5 } }}>
 
-          <Typography level='h6' sx={{ mb: 2 }}>Settings</Typography>
-          <ModalClose />
+      {/*<Divider />*/}
 
-          <OpenAISettings />
+      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab} sx={{ borderRadius: 'lg' }}>
+        <TabList variant='soft' color='neutral' sx={{ mb: 2 /* gap: 3, minus 0.5 for the Tabs-gap, minus 0.5 for perception */ }}>
+          <Tab value={1}>UI</Tab>
+          <Tab value={2}>Draw</Tab>
+          <Tab value={3}>Speak</Tab>
+          <Tab value={4}>Tools</Tab>
+        </TabList>
 
+        <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
           <UISettings />
+        </TabPanel>
 
-          <ElevenlabsSettings />
-
+        <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
           <ProdiaSettings />
+        </TabPanel>
 
-          <SearchSettings />
+        <TabPanel value={3} sx={{ p: 'var(--Tabs-gap)' }}>
+          <ElevenlabsSettings />
+        </TabPanel>
 
-          <OpenAIAdvancedSettings />
+        <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
+          <ToolsSettings />
+        </TabPanel>
+      </Tabs>
 
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant='solid' onClick={closeSettings}>
-              Close
-            </Button>
-          </Box>
+      <Divider />
 
-        </ModalDialog>
-      </ModalOverflow>
-    </Modal>
+    </GoodModal>
   );
 }

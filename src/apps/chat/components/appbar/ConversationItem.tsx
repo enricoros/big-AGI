@@ -6,12 +6,16 @@ import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { InlineTextarea } from '@/common/components/InlineTextarea';
+import { DConversation, useChatStore } from '~/common/state/store-chats';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { SystemPurposes } from '../../../../data';
-import { conversationTitle, useChatStore } from '@/common/state/store-chats';
 
 
 const DEBUG_CONVERSATION_IDs = false;
+
+
+const conversationTitle = (conversation: DConversation): string =>
+  conversation.userTitle || conversation.autoTitle || 'new conversation'; // 👋💬🗨️
 
 
 export function ConversationItem(props: {

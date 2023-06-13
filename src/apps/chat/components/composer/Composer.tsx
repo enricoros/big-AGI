@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Radio, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -16,21 +16,24 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
-import { ChatModels, SendModeId, SendModes } from '../../../../data';
-import { ConfirmationModal } from '@/common/components/ConfirmationModal';
-import { countModelTokens } from '@/common/llm-util/token-counter';
-import { htmlTableToMarkdown } from '@/common/util/htmlTableToMarkdown';
-import { pdfToText } from '@/common/util/pdfToText';
-import { useChatStore } from '@/common/state/store-chats';
-import { useComposerStore } from '@/common/state/store-composer';
-import { useSettingsStore } from '@/common/state/store-settings';
-import { useSpeechRecognition } from '@/common/components/useSpeechRecognition';
+import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
+import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { ContentReducerModal } from './ContentReducerModal';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { countModelTokens } from '~/common/llm-util/token-counter';
+import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
+import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { pdfToText } from '~/common/util/pdfToText';
+import { useChatStore } from '~/common/state/store-chats';
+import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import { SendModeId } from '../../Chat';
+import { SendModeMenu } from './SendModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { hideOnDesktop, hideOnMobile } from '@/common/theme';
-// import { isValidProdiaApiKey, requireUserKeyProdia } from '@/modules/prodia/prodia.client';
+import { useComposerStore } from './store-composer';
 
 
 /// Text template helpers
@@ -95,29 +98,6 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
   </Tooltip>;
 
 
-const SendModeMenu = (props: { anchorEl: HTMLAnchorElement, sendMode: SendModeId, onSetSendMode: (sendMode: SendModeId) => void, onClose: () => void, }) =>
-  <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
-    open anchorEl={props.anchorEl} onClose={props.onClose}>
-
-    <MenuItem color='neutral' selected>Conversation Mode</MenuItem>
-
-    <ListDivider />
-
-    {Object.entries(SendModes).map(([key, data]) =>
-      <MenuItem key={'send-mode-' + key} onClick={() => props.onSetSendMode(key as SendModeId)}>
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-          <Radio checked={key === props.sendMode} />
-          <Box>
-            <Typography>{data.label}</Typography>
-            <Typography level='body2'>{data.description}</Typography>
-          </Box>
-        </Box>
-      </MenuItem>)}
-
-  </Menu>;
-
-
 const SentMessagesMenu = (props: {
   anchorEl: HTMLAnchorElement, onClose: () => void,
   messages: { date: number; text: string; count: number }[],
@@ -161,11 +141,12 @@ const SentMessagesMenu = (props: {
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
-  onSendMessage: (conversationId: string, text: string) => void;
+  onSendMessage: (sendModeId: SendModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
   const [composeText, setComposeText] = React.useState('');
+  const [sendModeId, setSendModeId] = React.useState<SendModeId>('immediate');
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
@@ -176,27 +157,25 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
-  const { sendModeId, setSendModeId, sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
-  const stopTyping = useChatStore(state => state.stopTyping);
-  const { enterToSend, modelMaxResponseTokens } = useSettingsStore(state => ({ enterToSend: state.enterToSend, modelMaxResponseTokens: state.modelMaxResponseTokens }), shallow);
-
-  const { assistantTyping, chatModelId, tokenCount: conversationTokenCount } = useChatStore(state => {
+  const enterToSend = useUIPreferencesStore(state => state.enterToSend);
+  const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
+  const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
-      chatModelId: conversation ? conversation.chatModelId : null,
       tokenCount: conversation ? conversation.tokenCount : 0,
+      stopTyping: state.stopTyping,
     };
   }, shallow);
-
+  const { chatLLMId, chatLLM } = useChatLLM();
 
   // derived state
-  const tokenLimit = chatModelId ? ChatModels[chatModelId]?.contextWindowSize || 8192 : 0;
+  const tokenLimit = chatLLM?.contextTokens || 0;
   const directTokens = React.useMemo(() => {
-    return (!composeText || !chatModelId) ? 0 : 4 + countModelTokens(composeText, chatModelId, 'composer text');
-  }, [chatModelId, composeText]);
+    return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
+  }, [chatLLMId, composeText]);
   const historyTokens = conversationTokenCount;
-  const responseTokens = modelMaxResponseTokens;
+  const responseTokens = chatLLM?.options?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
@@ -204,7 +183,7 @@ export function Composer(props: {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
       setComposeText('');
-      props.onSendMessage(props.conversationId, text);
+      props.onSendMessage(sendModeId, props.conversationId, text);
       appendSentMessage(text);
     }
   };
@@ -244,31 +223,33 @@ export function Composer(props: {
   const micColor = isSpeechError ? 'danger' : isRecordingSpeech ? 'warning' : isRecordingAudio ? 'warning' : 'neutral';
   const micVariant = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'solid' : 'plain';
 
-  async function loadAndAttachFiles(files: FileList) {
+  async function loadAndAttachFiles(files: FileList, overrideFileNames: string[]) {
 
     // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
     //       to the common root, but the files[].webkitRelativePath property is not providing that information
 
     // perform loading and expansion
     let newText = '';
-    for (let file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = overrideFileNames.length === files.length ? overrideFileNames[i] : file.name;
       let fileText = '';
       try {
         if (file.type === 'application/pdf')
           fileText = await pdfToText(file);
         else
           fileText = await file.text();
-        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: file.name, fileText })(newText);
+        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: fileName, fileText })(newText);
       } catch (error) {
         // show errors in the prompt box itself - FUTURE: show in a toast
         console.error(error);
-        newText = `${newText}\n\nError loading file ${file.name}: ${error}\n`;
+        newText = `${newText}\n\nError loading file ${fileName}: ${error}\n`;
       }
     }
 
     // see how we fare on budget
-    if (chatModelId) {
-      const newTextTokens = countModelTokens(newText, chatModelId, 'reducer trigger');
+    if (chatLLMId) {
+      const newTextTokens = countModelTokens(newText, chatLLMId, 'reducer trigger');
 
       // simple trigger for the reduction dialog
       if (newTextTokens > remainingTokens) {
@@ -296,7 +277,7 @@ export function Composer(props: {
   const handleLoadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files;
     if (files && files.length >= 1)
-      await loadAndAttachFiles(files);
+      await loadAndAttachFiles(files, []);
 
     // this is needed to allow the same file to be selected again
     e.target.value = '';
@@ -304,7 +285,7 @@ export function Composer(props: {
 
 
   const handlePasteFromClipboard = async () => {
-    for (let clipboardItem of await navigator.clipboard.read()) {
+    for (const clipboardItem of await navigator.clipboard.read()) {
 
       // find the text/html item if any
       try {
@@ -378,12 +359,19 @@ export function Composer(props: {
     setIsDragging(false);
 
     // dropped files
-    if (e.dataTransfer.files?.length >= 1)
-      return loadAndAttachFiles(e.dataTransfer.files);
+    if (e.dataTransfer.files?.length >= 1) {
+      // Workaround: as we don't have the full path in the File object, we need to get it from the text/plain data
+      let overrideFileNames: string[] = [];
+      if (e.dataTransfer.types?.includes('text/plain')) {
+        const plainText = e.dataTransfer.getData('text/plain');
+        overrideFileNames = extractFilePathsWithCommonRadix(plainText);
+      }
+      return loadAndAttachFiles(e.dataTransfer.files, overrideFileNames);
+    }
 
     // special case: detect failure of dropping from VSCode
     // VSCode: Drag & Drop does not transfer the File object: https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
-    if ('codeeditors' in e.dataTransfer.types)
+    if (e.dataTransfer.types?.includes('codeeditors'))
       return setComposeText(test => test + 'Pasting from VSCode is not supported! Fixme. Anyone?');
 
     // dropped text
@@ -522,12 +510,23 @@ export function Composer(props: {
 
               {/* Send / Stop */}
               {assistantTyping
-                ? <Button fullWidth variant='soft' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId} onClick={handleStopClicked} endDecorator={<StopOutlinedIcon />}>
-                  Stop
-                </Button>
-                : <Button fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId} onClick={handleSendClicked} onDoubleClick={handleShowSendMode} endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}>
-                  {isReAct ? 'ReAct' : 'Chat'}
-                </Button>}
+                ? (
+                  <Button
+                    fullWidth variant='soft' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId}
+                    onClick={handleStopClicked}
+                    endDecorator={<StopOutlinedIcon />}
+                  >
+                    Stop
+                  </Button>
+                ) : (
+                  <Button
+                    fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                    onClick={handleSendClicked} onDoubleClick={handleShowSendMode}
+                    endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+                  >
+                    {isReAct ? 'ReAct' : 'Chat'}
+                  </Button>
+                )}
             </Box>
 
             {/* [desktop-only] row with Sent Messages button */}
@@ -557,8 +556,8 @@ export function Composer(props: {
         )}
 
         {/* Content reducer modal */}
-        {reducerText?.length >= 1 && chatModelId &&
-          <ContentReducerModal
+        {reducerText?.length >= 1 &&
+          <ContentReducer
             initialText={reducerText} initialTokens={reducerTextTokens} tokenLimit={remainingTokens}
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
