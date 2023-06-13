@@ -1,5 +1,5 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
-import { prodiaDefaultModelId } from '~/modules/prodia/prodia.client';
+import { prodiaDefaultModelId } from '~/modules/prodia/prodia.models';
 import { useProdiaStore } from '~/modules/prodia/store-prodia';
 
 import { useChatStore } from '~/common/state/store-chats';

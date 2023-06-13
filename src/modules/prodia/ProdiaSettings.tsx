@@ -10,7 +10,8 @@ import { FormInputKey } from '~/common/components/FormInputKey';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { settingsGap } from '~/common/theme';
 
-import { isValidProdiaApiKey, prodiaDefaultModelId, requireUserKeyProdia } from './prodia.client';
+import { isValidProdiaApiKey, requireUserKeyProdia } from './prodia.client';
+import { prodiaDefaultModelId } from './prodia.models';
 import { useProdiaStore } from './store-prodia';
 
 
