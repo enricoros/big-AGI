@@ -26,18 +26,15 @@ export const AppBarDropdown = <TValue extends string>(props: {
       root: {
         sx: {
           backgroundColor: 'transparent',
+          '--Icon-color': 'rgba(255,255,255,0.5)',
         },
       },
       listbox: {
         variant: 'plain', color: 'neutral', size: 'lg',
         disablePortal: false,
         sx: {
+          maxHeight: 'calc(100dvh - 56px)',
           minWidth: 160,
-        },
-      },
-      indicator: {
-        sx: {
-          opacity: 0.5,
         },
       },
     }}
