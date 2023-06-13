@@ -11,7 +11,7 @@ export const ModelVendorLocalAI: ModelVendor = {
   name: 'LocalAI',
   rank: 20,
   location: 'local',
-  instanceLimit: process.env.NODE_ENV === 'development' ? 2 : 0,
+  instanceLimit: 0,
 
   // components
   Icon: DevicesIcon,
