@@ -38,6 +38,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
+      console.log('OpenAI models', models);
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
@@ -134,16 +135,22 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 // this will help with adding metadata to the models
 const knownBases = [
   {
-    id: 'gpt-4-32k',
-    label: 'GPT-4-32',
+    id: 'gpt-4-32k-0613',
+    label: 'GPT-4-32k (0613)',
     context: 32768,
-    description: 'Largest context window for big thinking',
+    description: 'Largest context window for big problems',
   },
   {
     id: 'gpt-4',
     label: 'GPT-4',
     context: 8192,
     description: 'Insightful, big thinker, slower, pricey',
+  },
+  {
+    id: 'gpt-3.5-turbo-16k',
+    label: '3.5-Turbo-16k',
+    context: 16384,
+    description: 'Fair speed and smarts, large context',
   },
   {
     id: 'gpt-3.5-turbo',

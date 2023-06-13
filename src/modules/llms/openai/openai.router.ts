@@ -82,11 +82,18 @@ export const openAIRouter = createTRPCRouter({
         // model that have '-0' in their name go at the end
         // if (a.id.includes('-0') && !b.id.includes('-0')) return 1;
         // if (!a.id.includes('-0') && b.id.includes('-0')) return -1;
-        const aCount = a.id.split('-').length;
-        const bCount = b.id.split('-').length;
-        if (aCount === bCount)
-          return b.id.localeCompare(a.id);
-        return aCount - bCount;
+
+        // sort by the first 5 chars of id, decreasing, then by the number of '-' in the name
+        const aId = a.id.slice(0, 5);
+        const bId = b.id.slice(0, 5);
+        if (aId === bId) {
+          const aCount = a.id.split('-').length;
+          const bCount = b.id.split('-').length;
+          if (aCount === bCount)
+            return a.id.localeCompare(b.id);
+          return aCount - bCount;
+        }
+        return bId.localeCompare(aId);
       });
 
       return llms;
