@@ -1,9 +1,9 @@
 # `BIG-AGI` 🤖💬
 
-Welcome to `big-AGI`, FKA `nextjs-chatgpt-app`. 👋🎉
-Personal AGI App, powered by `OpenAI GPT-4` and beyond. Designed for smart humans and super-heroes,
+Welcome to `big-AGI` 👋 your personal AGI application
+powered by OpenAI GPT-4 and beyond. Designed for smart humans and super-heroes,
 this responsive web app comes with Personas, Drawing, Code Execution, PDF imports, Voice support,
-data Rendering, AGI functions, chats and more. Show your friends some `#big-AGI-energy` 🚀
+data Rendering, AGI functions, chats and much more. Comes with plenty of `#big-AGI-energy` 🚀
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
 
@@ -17,11 +17,11 @@ Or fork & run on Vercel
 
 - Engaging AI Personas
 - Clean UX, w/ tokens counters
-- Privacy: user-owned API keys and localStorage
+- Private: user-owned API keys and localStorage, self-hostable if you like
 - Human I/O: Advanced voice support (TTS, STT)
 - Machine I/O: PDF import & Summarization, code execution
 - Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
-- Coming up: automatic-AGI reasoning
+- Coming up: automatic-AGI reasoning (Reason+Act) and more
 
 ## Support 🙌
 
@@ -29,9 +29,8 @@ Or fork & run on Vercel
 [![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
 
 * Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
-* [Chat with us](https://discord.gg/MkH4qj2Jp9). We just started!
-* Deploy your [fork](https://github.com/enricoros/big-agi/fork) and surprise your friends with big-GPT
-  energy!
+* [Chat with us](https://discord.gg/MkH4qj2Jp9)
+* Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family
 * send PRs! ...
   🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
   🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
@@ -42,9 +41,20 @@ Or fork & run on Vercel
 
 ## Latest Drops 🚀
 
-#### 🚨 April: more #big-agi-energy
+#### 🚨 June: scale up
 
-- 🎉 **[Google Search](docs/pixels/feature_react_google.png)** active in ReAct - add your keys to Settings > Google Search
+- 🎉 **Cleaner UI** - with rationalized Settings, Modals, and Configurators
+- 🎉 **Dynamic Models Configurator** - easy connection with different model vendors
+- 🎉 **Multiple Model Vendors Support** framework to support many LLM vendors
+- 🎉 **Per-model Options** (temperature, tokens, etc.) for fine-tuning AI behavior to your needs
+- 🎉 Support for GPT-4-32k
+- 🎉 Improved Dialogs and Messages
+- 🎉 Much Enhanced DX: TRPC integration, modularization, pluggable UI, etc
+
+#### April / May: more #big-agi-energy
+
+- 🎉 **[Google Search](docs/pixels/feature_react_google.png)** active in ReAct - add your keys to Settings > Google
+  Search
 - 🎉 **[Reason+Act](docs/pixels/feature_react_turn_on.png)** preview feature - activate with 2-taps on the 'Chat' button
 - 🎉 **[Image Generation](docs/pixels/feature_imagine_command.png)** using Prodia (BYO Keys) - /imagine - or menu option
 - 🎉 **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
@@ -89,25 +99,7 @@ with features that matter to them.
 
 ![Much features, so fun](docs/pixels/big-AGI-compo2b.png)
 
-## Docker 🐳
-
-### Pre-built image
-Add your OpenAI API key to the `.env` file, then in a terminal run:
-
-```bash
-docker-compose up
-```
-
-### Locally built image
-
-If you wish to build the image yourself, run
-
-```bash
-docker build -t big-agi .
-docker run --detach 'big-agi'
-``` 
-
-## Code 🧩
+## Develop 🧩
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black)
@@ -130,6 +122,27 @@ Now the app should be running on `http://localhost:3000`
 * [Helicone](https://www.helicone.ai/) LLM Observability Platform - Settings > Advanced > API Host: 'oai.hconeai.com'
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
+
+## Deploy with Docker 🐳
+
+Specific docker information on [docs/deploy-docker.md](docs/deploy-docker.md). In short:
+
+#### Pre-built image
+
+Add your OpenAI API key to the `.env` file, then in a terminal run:
+
+```bash
+docker-compose up
+```
+
+#### Locally built image
+
+If you wish to build the image yourself, run
+
+```bash
+docker build -t big-agi .
+docker run --detach 'big-agi'
+``` 
 
 <br/>
 
