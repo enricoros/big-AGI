@@ -27,7 +27,7 @@
     "@vercel/analytics": "^1.0.1",
     "eventsource-parser": "^1.0.0",
     "next": "^13.4.5",
-    "pdfjs-dist": "^3.6.172",
+    "pdfjs-dist": "^3.7.107",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
