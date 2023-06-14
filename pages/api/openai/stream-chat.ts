@@ -31,7 +31,7 @@ async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: C
 
     // prepare request objects
     const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-    const body: OpenAI.Wire.Chat.CompletionRequest = openAICompletionRequest(model, history, true);
+    const body: OpenAI.Wire.ChatCompletion.Request = openAICompletionRequest(model, history, true);
 
     // perform the request
     upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body), signal });
@@ -65,7 +65,7 @@ async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: C
       }
 
       try {
-        const json: OpenAI.Wire.Chat.CompletionResponseChunked = JSON.parse(event.data);
+        const json: OpenAI.Wire.ChatCompletion.ResponseStreamingChunk = JSON.parse(event.data);
 
         // ignore any 'role' delta update
         if (json.choices[0].delta?.role && !json.choices[0].delta?.content)

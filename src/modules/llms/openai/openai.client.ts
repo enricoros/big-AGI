@@ -13,7 +13,7 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
 /**
  * This function either returns the LLM response, or throws a descriptive error string
  */
-export async function callChat(llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
+export async function callChat(llm: DLLM, messages: OpenAI.Wire.ChatCompletion.RequestMessage[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
   // access params (source)
   const partialSetup = llm._source.setup as Partial<SourceSetupOpenAI>;
   const sourceSetupOpenAI = normalizeOAISetup(partialSetup);

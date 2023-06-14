@@ -20,7 +20,7 @@ const actionRe = /^Action: (\w+): (.*)$/;
  *   - loop() is a function that will update the state (in place)
  */
 interface State {
-  messages: OpenAI.Wire.Chat.Message[];
+  messages: OpenAI.Wire.ChatCompletion.RequestMessage[];
   nextPrompt: string;
   lastObservation: string;
   result: string | undefined;

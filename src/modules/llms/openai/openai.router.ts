@@ -23,9 +23,23 @@ const modelSchema = z.object({
 });
 
 const historySchema = z.array(z.object({
-  role: z.enum(['assistant', 'system', 'user']),
+  role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
   content: z.string(),
 }));
+
+/*const functionsSchema = z.array(z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  parameters: z.object({
+    type: z.literal('object'),
+    properties: z.record(z.object({
+      type: z.enum(['string', 'number', 'integer', 'boolean']),
+      description: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    })),
+    required: z.array(z.string()).optional(),
+  }).optional(),
+}));*/
 
 export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema });
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
@@ -41,11 +55,11 @@ export const openAIRouter = createTRPCRouter({
     .mutation(async ({ input }): Promise<OpenAI.API.Chat.Response> => {
 
       const { access, model, history } = input;
-      const requestBody: OpenAI.Wire.Chat.CompletionRequest = openAICompletionRequest(model, history, false);
-      let wireCompletions: OpenAI.Wire.Chat.CompletionResponse;
+      const requestBody: OpenAI.Wire.ChatCompletion.Request = openAICompletionRequest(model, history, false);
+      let wireCompletions: OpenAI.Wire.ChatCompletion.Response;
 
       try {
-        wireCompletions = await openaiPOST<OpenAI.Wire.Chat.CompletionRequest, OpenAI.Wire.Chat.CompletionResponse>(access, requestBody, '/v1/chat/completions');
+        wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(access, requestBody, '/v1/chat/completions');
       } catch (error: any) {
         // don't log 429 errors, they are expected
         if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
@@ -147,10 +161,11 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   };
 }
 
-export function openAICompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): OpenAI.Wire.Chat.CompletionRequest {
+export function openAICompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
+    // ...(functions && { functions: functions, function_call: 'auto', }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
     stream,
