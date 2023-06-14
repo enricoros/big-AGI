@@ -6,7 +6,7 @@ import type { SourceSetupLocalAI } from './localai/vendor';
 
 
 export type DLLMId = string;
-export type DLLMTags = 'stream' | 'chat';
+// export type DLLMTags = 'stream' | 'chat';
 export type DLLMOptions = LLMOptionsOpenAI; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
 export type DModelSourceId = string;
 export type DModelSourceSetup = SourceSetupOpenAI | SourceSetupLocalAI;
@@ -19,7 +19,7 @@ export interface DLLM {
   label: string;
   created: number | 0;
   description: string;
-  tags: DLLMTags[];
+  tags: string[]; // UNUSED for now
   contextTokens: number;
   hidden: boolean;
 
