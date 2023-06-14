@@ -38,7 +38,6 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
-      console.log('OpenAI models', models);
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
