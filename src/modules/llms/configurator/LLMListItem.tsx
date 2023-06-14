@@ -33,9 +33,9 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: 
           </Tooltip>
         </ListItemContent>
 
-        {!!props.chipChat && <Chip size='sm' variant='soft' sx={{ mx: 1 }}>chat</Chip>}
+        {!!props.chipChat && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>chat</Chip>}
 
-        {!!props.chipFast && <Chip size='sm' variant='soft' sx={{ mx: 1 }}>fast</Chip>}
+        {!!props.chipFast && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>fast</Chip>}
 
         {/* 'Actions' (only click -> configure in reality) */}
         <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
