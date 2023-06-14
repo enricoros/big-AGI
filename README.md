@@ -39,9 +39,9 @@ Or fork & run on Vercel
 
 <br/>
 
-## Latest Drops 🚀
+## Latest Drops 💧🎁
 
-#### 🚨 June: scale up
+#### 🚨 June: scale UP 🚀
 
 - 🎉 **[New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates) support** - 0613 models, including 16k and 32k 
 - 🎉 **Cleaner UI** - with rationalized Settings, Modals, and Configurators
