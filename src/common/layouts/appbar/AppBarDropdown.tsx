@@ -34,7 +34,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
         disablePortal: false,
         sx: {
           maxHeight: 'calc(100dvh - 56px)',
-          minWidth: 160,
+          minWidth: 200,
         },
       },
     }}
