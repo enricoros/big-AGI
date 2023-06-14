@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import DevicesIcon from '@mui/icons-material/Devices';
 
 import { LocalAISourceSetup } from './LocalAISourceSetup';

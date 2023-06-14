@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './vendor';
+import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './openai.vendor';
 import { OpenAI } from './openai.types';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 

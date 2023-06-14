@@ -2,7 +2,7 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { DLLM } from '../llm.types';
 import { OpenAI } from './openai.types';
-import { normalizeOAISetup, SourceSetupOpenAI } from './vendor';
+import { normalizeOAISetup, SourceSetupOpenAI } from './openai.vendor';
 
 
 export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;

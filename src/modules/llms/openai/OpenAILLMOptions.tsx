@@ -4,7 +4,7 @@ import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAIOptions } from './vendor';
+import { LLMOptionsOpenAI, normalizeOAIOptions } from './openai.vendor';
 import { useModelsStore } from '../store-llms';
 
 

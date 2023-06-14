@@ -1,6 +1,6 @@
 import { ChatGenerateSchema } from '~/modules/llms/openai/openai.router';
 import { DLLMId } from '~/modules/llms/llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from '~/modules/llms/openai/vendor';
+import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { SystemPurposeId } from '../../../data';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
