@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';

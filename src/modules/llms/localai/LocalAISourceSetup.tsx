@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { normalizeSetup, SourceSetupLocalAI } from './vendor';
+import { normalizeSetup, SourceSetupLocalAI } from './localai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
