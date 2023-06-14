@@ -175,7 +175,7 @@ function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: D
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
     created: model.created,
     description: base.description,
-    tags: ['stream', 'chat'],
+    tags: [], // ['stream', 'chat'],
     contextTokens: base.context,
     hidden: !!suffix,
     sId: source.id,
