@@ -34,7 +34,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
         disablePortal: false,
         sx: {
           maxHeight: 'calc(100dvh - 56px)',
-          minWidth: 200,
+          // minWidth: 200,
         },
       },
     }}
@@ -49,8 +49,8 @@ export const AppBarDropdown = <TValue extends string>(props: {
       // ISSUE: Since Joy alpha.76+, the text will not be visually refreshed
       // Opened this BUG report to JoyUI: https://github.com/mui/material-ui/issues/37235
       // When the bug closes, we can go back to the latest JoyUI version in package.json
-      <Option key={idx} value={key}>
-        {props.showSymbols ? props.items[key]?.symbol || '' : ''} {props.items[key].title}
+      <Option key={idx} value={key} sx={{ whiteSpace: 'nowrap' }}>
+        {props.showSymbols ? props.items[key]?.symbol || ' ' : ' '} {props.items[key].title}
       </Option>
     ))}
     {props.appendOption}
