@@ -43,7 +43,7 @@ Or fork & run on Vercel
 
 #### 🚨 June: scale up
 
-- 🎉 **Support for [New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates)** - 0613 models, including 16k and 32k 
+- 🎉 **[New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates) support** - 0613 models, including 16k and 32k 
 - 🎉 **Cleaner UI** - with rationalized Settings, Modals, and Configurators
 - 🎉 **Dynamic Models Configurator** - easy connection with different model vendors
 - 🎉 **Multiple Model Vendors Support** framework to support many LLM vendors
