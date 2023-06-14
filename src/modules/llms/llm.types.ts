@@ -62,4 +62,4 @@ export interface ModelVendor {
   callChat: ModelVendorCallChatFn;
 }
 
-type ModelVendorCallChatFn = (llm: DLLM, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;
+type ModelVendorCallChatFn = (llm: DLLM, messages: OpenAI.Wire.ChatCompletion.RequestMessage[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;

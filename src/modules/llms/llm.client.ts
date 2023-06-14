@@ -5,7 +5,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { OpenAI } from './openai/openai.types';
 
 
-export async function callChat(llmId: DLLMId, messages: OpenAI.Wire.Chat.Message[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
+export async function callChat(llmId: DLLMId, messages: OpenAI.Wire.ChatCompletion.RequestMessage[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
 
   // get the vendor
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
