@@ -45,7 +45,7 @@ export namespace OpenAI {
       }
 
       export interface RequestMessage {
-        role: ('assistant' | 'system' | 'user'); // | 'function';
+        role: 'assistant' | 'system' | 'user'; // | 'function';
         content: string;
         //name?: string; // when role: 'function'
       }
@@ -74,8 +74,8 @@ export namespace OpenAI {
         model: string; // can differ from the ask, e.g. 'gpt-4-0314'
         choices: {
           index: number;
-          message: ResponseMessage;
-          finish_reason: ('stop' | 'length' | null); // | 'function_call';
+          message: ResponseMessage; // | ResponseFunctionCall;
+          finish_reason: 'stop' | 'length' | null; // | 'function_call'
         }[];
         usage: {
           prompt_tokens: number;
@@ -84,14 +84,19 @@ export namespace OpenAI {
         };
       }
 
-      export interface ResponseMessage {
-        role: 'assistant' | 'system' | 'user';
-        content: string; // | null; // null for function_calls
-        // function_call?: { // if content is null and finish_reason is 'function_call'
-        //   name: string;
-        //   arguments: string; // a JSON object, to deserialize
-        // };
+      interface ResponseMessage {
+        role: 'assistant';
+        content: string;
       }
+
+      /*interface ResponseFunctionCall {
+        role: 'assistant';
+        content: null;
+        function_call: { // if content is null and finish_reason is 'function_call'
+          name: string;
+          arguments: string; // a JSON object, to deserialize
+        };
+      }*/
 
       export interface ResponseStreamingChunk {
         id: string;
