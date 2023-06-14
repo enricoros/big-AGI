@@ -16,6 +16,9 @@ import { useModelsStore } from '../store-llms';
 
 export function LLMOptions(props: { id: DLLMId }) {
 
+  // state
+  const [showDetails, setShowDetails] = React.useState(false);
+
   // external state
   const closeLLMOptions = useUIStateStore(state => state.closeLLMOptions);
   const { llm, removeLLM, updateLLM } = useModelsStore(state => ({
@@ -73,14 +76,14 @@ export function LLMOptions(props: { id: DLLMId }) {
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
-        <FormLabel sx={{ minWidth: 80 }}>
+        <FormLabel onClick={() => setShowDetails(!showDetails)} sx={{ minWidth: 80, cursor: 'pointer', textDecoration: 'underline' }}>
           Details
         </FormLabel>
-        <Typography level='body2' sx={{ display: 'block' }}>
+        {showDetails && <Typography level='body2' sx={{ display: 'block' }}>
           [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
           llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description}
           {/*· tags: {llm.tags.join(', ')}*/}
-        </Typography>
+        </Typography>}
       </FormControl>
 
     </GoodModal>
