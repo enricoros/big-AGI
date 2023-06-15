@@ -3,10 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import { useTheme } from '@mui/joy';
 
-import type { PublishedSchema } from '~/modules/pastegg/publish.router';
+import type { PublishedSchema } from '~/modules/publish/publish.router';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
-import { PublishedModal } from '~/modules/pastegg/PublishedModal';
+import { PublishedModal } from '~/modules/publish/PublishedModal';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/store-llms';
