@@ -4,15 +4,15 @@ import { Alert, Box, Button, Divider, Input, Modal, ModalDialog, Stack, Typograp
 
 import { Link } from '~/common/components/Link';
 
-import { PasteGG } from './pastegg.types';
+import type { PublishedSchema } from './publish.router';
 
 
 /**
  * Displays the result of a Paste.gg paste as a modal dialog.
  * This is to give the user the chance to write down the deletion key, mainly.
  */
-export function PublishedModal(props: { onClose: () => void, response: PasteGG.API.Publish.Response, open: boolean }) {
-  if (!props.response || props.response.type !== 'success')
+export function PublishedModal(props: { onClose: () => void, response: PublishedSchema, open: boolean }) {
+  if (!props.response || !props.response.url)
     return null;
 
   const { url, deletionKey, expires } = props.response;
