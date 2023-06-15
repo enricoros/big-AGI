@@ -36,7 +36,7 @@ export const publishRouter = createTRPCRouter({
   publish: publicProcedure
     .input(inputSchema)
     .output(outputSuccessSchema)
-    .query(async ({ input }) => {
+    .mutation(async ({ input }) => {
 
       const { to, title, fileContent, fileName, origin } = input;
       if (to !== 'paste.gg' || !title || !fileContent || !fileName)

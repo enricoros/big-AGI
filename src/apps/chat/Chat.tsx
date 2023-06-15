@@ -168,7 +168,7 @@ export function Chat() {
       if (conversation) {
         const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
         try {
-          const paste = await apiAsync.publish.publish.query({
+          const paste = await apiAsync.publish.publish.mutate({
             to: 'paste.gg',
             title: '🤖💬 Chat Conversation',
             fileContent: markdownContent,
