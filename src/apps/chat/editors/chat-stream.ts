@@ -72,6 +72,44 @@ async function streamAssistantMessage(
   // other params
   const shallSpeakFirstLine = useElevenlabsStore.getState().elevenLabsAutoSpeak === 'firstLine';
 
+  if(input.access.moderationCheck) {
+    try {
+      const moderationResult: OpenAI.API.Moderation.Response = await (await fetch('/api/openai/moderation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({access: input.access, text: input.history.at(-1)?.content}),
+      })).json();
+
+      if(moderationResult.results.some(res => res.flagged)) {
+        const categories = moderationResult.results.reduce((acc, result) => {
+          if(result.flagged) {
+            Object
+              .entries(result.categories)
+              .filter(([_, value]) => value)
+              .forEach(([key, _]) => acc.add(key));
+          }
+          return acc;
+        }, new Set<string>());
+
+        const categoriesText = [...categories].map(c => `\`${c}\``).join(', ');
+
+        editMessage(
+          conversationId,
+          assistantMessageId,
+          {
+            text: `I am sorry, but I cannot answer this question because it violated following categories of the OpenAI Moderation Rules: ${categoriesText}\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`,
+            typing: false,
+          },
+          false
+        );
+        return;
+      }
+    } catch (error) {
+      // TODO: show an error to the UI
+      console.error('Fetch request error:', error);
+    }
+  }
+
   try {
 
     const response = await fetch('/api/openai/stream-chat', {
