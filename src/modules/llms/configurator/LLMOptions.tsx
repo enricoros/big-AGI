@@ -71,9 +71,15 @@ export function LLMOptions(props: { id: DLLMId }) {
                 endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
                 sx={{ ml: 0, mr: 'auto' }} />
-        {/*<Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
-        {/*<Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
       </FormControl>
+
+      {/*<FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>*/}
+      {/*  <FormLabel sx={{ minWidth: 80 }}>*/}
+      {/*    Flags*/}
+      {/*  </FormLabel>*/}
+      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
+      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
+      {/*</FormControl>*/}
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabel onClick={() => setShowDetails(!showDetails)} sx={{ minWidth: 80, cursor: 'pointer', textDecoration: 'underline' }}>
