@@ -14,6 +14,7 @@ const accessSchema = z.object({
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
+  moderationCheck: z.boolean(),
 });
 
 const modelSchema = z.object({
@@ -43,6 +44,9 @@ const historySchema = z.array(z.object({
 
 export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema });
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
+
+export const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
+export type ChatModerationSchema = z.infer<typeof chatModerationSchema>;
 
 
 export const openAIRouter = createTRPCRouter({
