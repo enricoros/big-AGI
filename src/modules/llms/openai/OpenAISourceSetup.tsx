@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
@@ -25,7 +25,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg },
+    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeOAISetup);
 
   const hasModels = !!sourceLLMs.length;
@@ -35,7 +35,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
@@ -104,6 +104,24 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       <Input
         variant='outlined' placeholder='sk-...'
         value={heliKey} onChange={event => updateSetup({ heliKey: event.target.value })}
+        sx={{ flexGrow: 1 }}
+      />
+    </FormControl>}
+
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <Box sx={{ minWidth: settingsCol1Width }}>
+        <FormLabel>
+          Moderation
+        </FormLabel>
+        <FormHelperText sx={{ display: 'block' }}>
+          <Link level='body2' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+          {' '}<Link level='body2' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
+        </FormHelperText>
+      </Box>
+      <Switch
+        checked={moderationCheck}
+        onChange={event => updateSetup({ moderationCheck: event.target.checked })}
+        endDecorator={moderationCheck ? 'Enabled' : 'Off'}
         sx={{ flexGrow: 1 }}
       />
     </FormControl>}

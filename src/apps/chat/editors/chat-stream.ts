@@ -3,6 +3,7 @@ import { DLLMId } from '~/modules/llms/llm.types';
 import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { SystemPurposeId } from '../../../data';
+import { apiAsync } from '~/modules/trpc/trpc.client';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { findLLMOrThrow } from '~/modules/llms/store-llms';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
@@ -71,6 +72,45 @@ async function streamAssistantMessage(
 
   // other params
   const shallSpeakFirstLine = useElevenlabsStore.getState().elevenLabsAutoSpeak === 'firstLine';
+
+  // check for harmful content
+  const lastMessage = input.history.at(-1) ?? null;
+  const useModeration = input.access.moderationCheck && lastMessage && lastMessage.role === 'user';
+  if (useModeration) {
+    try {
+      const moderationResult: OpenAI.Wire.Moderation.Response = await apiAsync.openai.moderation.mutate({ access: input.access, text: lastMessage.content });
+
+      const issues = moderationResult.results.reduce((acc, result) => {
+        if (result.flagged) {
+          Object
+            .entries(result.categories)
+            .filter(([_, value]) => value)
+            .forEach(([key, _]) => acc.add(key));
+        }
+        return acc;
+      }, new Set<string>());
+
+      // if there's any perceived violation, we stop here
+      if (issues.size) {
+        const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
+        editMessage(
+          conversationId,
+          assistantMessageId,
+          {
+            text: `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`,
+            typing: false,
+          },
+          false,
+        );
+        // do not proceed with the streaming request
+        return;
+      }
+    } catch (error: any) {
+      editMessage(conversationId, assistantMessageId, { text: `[Issue] There was an error while checking for harmful content. ${error?.toString()}`, typing: false }, false);
+      // as the moderation check was requested, we cannot proceed in case of error
+      return;
+    }
+  }
 
   try {
 
