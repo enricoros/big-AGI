@@ -36,7 +36,7 @@ export function normalizeOAISetup(partialSetup?: Partial<SourceSetupOpenAI>): So
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
-    moderationCheck: true,
+    moderationCheck: false,
     ...partialSetup,
   };
 }
