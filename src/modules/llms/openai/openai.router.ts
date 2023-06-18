@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 
@@ -46,7 +47,6 @@ export const chatGenerateSchema = z.object({ access: accessSchema, model: modelS
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
 
 export const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
-export type ChatModerationSchema = z.infer<typeof chatModerationSchema>;
 
 
 export const openAIRouter = createTRPCRouter({
@@ -80,6 +80,29 @@ export const openAIRouter = createTRPCRouter({
         content: singleChoice.message.content,
         finish_reason: singleChoice.finish_reason,
       };
+    }),
+
+  /**
+   * Check for content policy violations
+   */
+  moderation: publicProcedure
+    .input(chatModerationSchema)
+      .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+      const { access, text, } = input;
+      try {
+
+        return await openaiPOST<OpenAI.Wire.Moderation.Request, OpenAI.Wire.Moderation.Response>(access, {
+          input: text,
+          model: 'text-moderation-latest',
+        }, '/v1/moderations');
+
+      } catch (error: any) {
+        if (error.code === 'ECONNRESET')
+          throw new TRPCError({ code: 'CLIENT_CLOSED_REQUEST', message: 'Connection reset by the client.' });
+
+        console.error('api/openai/moderation error:', error);
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Error: ${error?.message || error?.toString() || 'Unknown error'}` });
+      }
     }),
 
   /**
@@ -133,6 +156,9 @@ async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?
 async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
   const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
+  // FIXME: We're handling this on the 'stream' (non-edge) function -shall we do it here too?
+  //        Not sure we can expect !response.ok in our use-cases
+  // rethrowOpenAIError(response);
   return await response.json() as TOut;
 }
 

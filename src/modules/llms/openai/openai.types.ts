@@ -20,34 +20,10 @@ export namespace OpenAI {
         model: string;
       }
     }
-
-    export namespace Moderation {
-
-      export enum ModerationCategory {
-        hate = 'hate',
-        'hate/threatening' = 'hate/threatening',
-        'self-harm' = 'self-harm',
-        sexual = 'sexual',
-        'sexual/minors' = 'sexual/minors',
-        violence = 'violence',
-        'violence/graphic' = 'violence/graphic',
-      }
-        
-      export interface Response {
-        "id": string,
-        "model": string,
-        "results": [
-          {
-            "categories": {[key in ModerationCategory]: boolean},
-            "category_scores": {[key in ModerationCategory]: number},
-            "flagged": boolean
-          }
-        ]
-      }
-    }
   }
 
-  /// This is the upstream API, for Server (Next.js) -> Upstream Server
+
+  /// OpenAI API types - https://platform.openai.com/docs/api-reference/
   export namespace Wire {
     export namespace ChatCompletion {
 
@@ -132,6 +108,36 @@ export namespace OpenAI {
           delta: Partial<ResponseMessage>;
           finish_reason: 'stop' | 'length' | null;
         }[];
+      }
+    }
+
+
+    export namespace Moderation {
+      export interface Request {
+        input: string | string[];
+        model?: 'text-moderation-stable' | 'text-moderation-latest';
+      }
+
+      export enum ModerationCategory {
+        hate = 'hate',
+        'hate/threatening' = 'hate/threatening',
+        'self-harm' = 'self-harm',
+        sexual = 'sexual',
+        'sexual/minors' = 'sexual/minors',
+        violence = 'violence',
+        'violence/graphic' = 'violence/graphic',
+      }
+
+      export interface Response {
+        id: string;
+        model: string;
+        results: [
+          {
+            categories: { [key in ModerationCategory]: boolean };
+            category_scores: { [key in ModerationCategory]: number };
+            flagged: boolean;
+          }
+        ]
       }
     }
 
