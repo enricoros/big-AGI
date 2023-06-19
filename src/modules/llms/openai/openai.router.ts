@@ -158,8 +158,18 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
   const { headers, url } = openAIAccess(access, apiPath);
   const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
   if (!response.ok) {
-    const error = await response.json();
-    throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}` });
+    let error: any | null = null;
+    try {
+      error = await response.json();
+    } catch (e) {
+      // ignore
+    }
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: error
+        ? `[OpenAI Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}`
+        : `[Issue] ${response.statusText}`,
+    });
   }
   return await response.json() as TOut;
 }
