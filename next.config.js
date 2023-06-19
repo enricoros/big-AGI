@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+let nextConfig = {
   reactStrictMode: true,
   env: {
     // defaults to TRUE, unless API Keys are set at build time; this flag is used by the UI
@@ -21,5 +21,9 @@ const nextConfig = {
     return config;
   },
 };
+
+// conditionally enable the nextjs bundle analyzer
+if (process.env.ANALYZE_BUNDLE)
+  nextConfig = require('@next/bundle-analyzer')()(nextConfig);
 
 module.exports = nextConfig;
