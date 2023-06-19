@@ -69,8 +69,10 @@ async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: C
 
         // handle errors here
         if (json.error) {
-          console.error('stream-chat: unexpected error from upstream', json.error);
-          controller.enqueue(textEncoder.encode(`[OpenAI Error] ${json.error.message}`));
+          // suppress this new error that popped up on 2023-06-19
+          if (json.error.message !== 'The server had an error while processing your request. Sorry about that!')
+            console.error('stream-chat: unexpected error from upstream', json.error);
+          controller.enqueue(textEncoder.encode(`[OpenAI Issue] ${json.error.message}`));
           controller.close();
           return;
         }

@@ -73,7 +73,7 @@ export const openAIRouter = createTRPCRouter({
       // }
 
       if (wireCompletions?.choices?.length !== 1)
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `OpenAI Issue: Expected 1 completion, got ${wireCompletions?.choices?.length}` });
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
 
       const singleChoice = wireCompletions.choices[0];
       return {
@@ -159,7 +159,7 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
   const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
   if (!response.ok) {
     const error = await response.json();
-    throw new TRPCError({ code: 'BAD_REQUEST', message: `OpenAI Error: ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}` });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}` });
   }
   return await response.json() as TOut;
 }
