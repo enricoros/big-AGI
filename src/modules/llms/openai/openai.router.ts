@@ -62,17 +62,18 @@ export const openAIRouter = createTRPCRouter({
       const requestBody: OpenAI.Wire.ChatCompletion.Request = openAICompletionRequest(model, history, false);
       let wireCompletions: OpenAI.Wire.ChatCompletion.Response;
 
-      try {
-        wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(access, requestBody, '/v1/chat/completions');
-      } catch (error: any) {
-        // don't log 429 errors, they are expected
-        if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
-          console.error('api/openai/chat error:', error);
-        throw error;
-      }
+      // try {
+      wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(access, requestBody, '/v1/chat/completions');
+      // } catch (error: any) {
+      //   // NOTE: disabled on 2023-06-19: show all errors, 429 is not that common now, and could explain issues
+      //   // don't log 429 errors on the server-side, they are expected
+      //   if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
+      //     console.error('api/openai/chat error:', error);
+      //   throw error;
+      // }
 
       if (wireCompletions?.choices?.length !== 1)
-        throw new Error(`Expected 1 choice, got ${wireCompletions?.choices?.length}`);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `OpenAI Issue: Expected 1 completion, got ${wireCompletions?.choices?.length}` });
 
       const singleChoice = wireCompletions.choices[0];
       return {
@@ -156,9 +157,10 @@ async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?
 async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
   const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
-  // FIXME: We're handling this on the 'stream' (non-edge) function -shall we do it here too?
-  //        Not sure we can expect !response.ok in our use-cases
-  // rethrowOpenAIError(response);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `OpenAI Error: ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}` });
+  }
   return await response.json() as TOut;
 }
 

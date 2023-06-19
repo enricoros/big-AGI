@@ -31,7 +31,7 @@ export async function callChat(llm: DLLM, messages: OpenAI.Wire.ChatCompletion.R
     });
     // errorMessage = `issue fetching: ${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`;
   } catch (error: any) {
-    const errorMessage = `fetch error: ${error?.message || error?.toString() || 'Unknown error'}`;
+    const errorMessage = error?.message || error?.toString() || 'OpenAI Chat Fetch Error';
     console.error(`callChat: ${errorMessage}`);
     throw new Error(errorMessage);
   }
