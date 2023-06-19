@@ -8,7 +8,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
  * A confirmation dialog (Joy Modal)
  * Pass the question and the positive answer, and get called when it's time to close the dialog, or when the positive action is taken
  */
-export function ConfirmationModal(props: { open: boolean, onClose: () => void, onPositive: () => void, confirmationText: string | JSX.Element, positiveActionText: string }) {
+export function ConfirmationModal(props: { open: boolean, onClose: () => void, onPositive: () => void, confirmationText: string | React.JSX.Element, positiveActionText: string }) {
   return (
     <Modal open={props.open} onClose={props.onClose}>
       <ModalDialog variant='outlined' color='neutral'>

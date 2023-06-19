@@ -3,6 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { Button, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
@@ -13,6 +15,9 @@ import { useModelsStore } from '../store-llms';
 
 
 export function LLMOptions(props: { id: DLLMId }) {
+
+  // state
+  const [showDetails, setShowDetails] = React.useState(false);
 
   // external state
   const closeLLMOptions = useUIStateStore(state => state.closeLLMOptions);
@@ -60,23 +65,31 @@ export function LLMOptions(props: { id: DLLMId }) {
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabel sx={{ minWidth: 80 }}>
-          Visibility
+          Visible
         </FormLabel>
         <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
-                endDecorator={!llm.hidden ? 'Show' : 'Hide'}
-                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-        {/*<Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
-        {/*<Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
+                endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+                sx={{ ml: 0, mr: 'auto' }} />
       </FormControl>
 
+      {/*<FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>*/}
+      {/*  <FormLabel sx={{ minWidth: 80 }}>*/}
+      {/*    Flags*/}
+      {/*  </FormLabel>*/}
+      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
+      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
+      {/*</FormControl>*/}
+
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
-        <FormLabel sx={{ minWidth: 80 }}>
-          Info
+        <FormLabel onClick={() => setShowDetails(!showDetails)} sx={{ minWidth: 80, cursor: 'pointer', textDecoration: 'underline' }}>
+          Details
         </FormLabel>
-        <Typography level='body2' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmRef && `id: ${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
-          llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description} · tags: {llm.tags.join(', ')}
-        </Typography>
+        {showDetails && <Typography level='body2' sx={{ display: 'block' }}>
+          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
+          llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description}
+          {/*· tags: {llm.tags.join(', ')}*/}
+        </Typography>}
       </FormControl>
 
     </GoodModal>

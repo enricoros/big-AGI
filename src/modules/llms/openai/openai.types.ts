@@ -2,7 +2,7 @@ export namespace OpenAI {
 
   /// Client (Browser) -> Server (Next.js)
   export namespace API {
-    
+
     export namespace Chat {
 
       export interface Response {
@@ -20,20 +20,16 @@ export namespace OpenAI {
         model: string;
       }
     }
-
   }
 
-  /// This is the upstream API, for Server (Next.js) -> Upstream Server
-  export namespace Wire {
-    export namespace Chat {
-      export interface Message {
-        role: 'assistant' | 'system' | 'user';
-        content: string;
-      }
 
-      export interface CompletionRequest {
+  /// OpenAI API types - https://platform.openai.com/docs/api-reference/
+  export namespace Wire {
+    export namespace ChatCompletion {
+
+      export interface Request {
         model: string;
-        messages: Message[];
+        messages: RequestMessage[];
         temperature?: number;
         top_p?: number;
         frequency_penalty?: number;
@@ -41,17 +37,45 @@ export namespace OpenAI {
         max_tokens?: number;
         stream: boolean;
         n: number;
+        // only 2023-06-13 and later Chat models
+        // functions?: RequestFunction[],
+        // function_call?: 'auto' | 'none' | {
+        //   name: string;
+        // },
       }
 
-      export interface CompletionResponse {
+      export interface RequestMessage {
+        role: 'assistant' | 'system' | 'user'; // | 'function';
+        content: string;
+        //name?: string; // when role: 'function'
+      }
+
+      /*export interface RequestFunction {
+        name: string;
+        description?: string;
+        parameters?: {
+          type: 'object';
+          properties: {
+            [key: string]: {
+              type: 'string' | 'number' | 'integer' | 'boolean';
+              description?: string;
+              enum?: string[];
+            }
+          }
+          required?: string[];
+        };
+      }*/
+
+
+      export interface Response {
         id: string;
         object: 'chat.completion';
         created: number; // unix timestamp in seconds
         model: string; // can differ from the ask, e.g. 'gpt-4-0314'
         choices: {
           index: number;
-          message: Message;
-          finish_reason: 'stop' | 'length' | null;
+          message: ResponseMessage; // | ResponseFunctionCall;
+          finish_reason: 'stop' | 'length' | null; // | 'function_call'
         }[];
         usage: {
           prompt_tokens: number;
@@ -60,18 +84,63 @@ export namespace OpenAI {
         };
       }
 
-      export interface CompletionResponseChunked {
+      interface ResponseMessage {
+        role: 'assistant';
+        content: string;
+      }
+
+      /*interface ResponseFunctionCall {
+        role: 'assistant';
+        content: null;
+        function_call: { // if content is null and finish_reason is 'function_call'
+          name: string;
+          arguments: string; // a JSON object, to deserialize
+        };
+      }*/
+
+      export interface ResponseStreamingChunk {
         id: string;
         object: 'chat.completion.chunk';
         created: number;
         model: string;
         choices: {
           index: number;
-          delta: Partial<Message>;
+          delta: Partial<ResponseMessage>;
           finish_reason: 'stop' | 'length' | null;
         }[];
       }
     }
+
+
+    export namespace Moderation {
+      export interface Request {
+        input: string | string[];
+        model?: 'text-moderation-stable' | 'text-moderation-latest';
+      }
+
+      export enum ModerationCategory {
+        hate = 'hate',
+        'hate/threatening' = 'hate/threatening',
+        'self-harm' = 'self-harm',
+        sexual = 'sexual',
+        'sexual/minors' = 'sexual/minors',
+        violence = 'violence',
+        'violence/graphic' = 'violence/graphic',
+      }
+
+      export interface Response {
+        id: string;
+        model: string;
+        results: [
+          {
+            categories: { [key in ModerationCategory]: boolean };
+            category_scores: { [key in ModerationCategory]: number };
+            flagged: boolean;
+          }
+        ]
+      }
+    }
+
 
     export namespace Models {
       export interface ModelDescription {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './vendor';
+import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './openai.vendor';
 import { OpenAI } from './openai.types';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
@@ -25,7 +25,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg },
+    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
   } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeOAISetup);
 
   const hasModels = !!sourceLLMs.length;
@@ -35,10 +35,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey }, {
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
-      console.log('OpenAI models', models);
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
@@ -109,6 +108,24 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       />
     </FormControl>}
 
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <Box sx={{ minWidth: settingsCol1Width }}>
+        <FormLabel>
+          Moderation
+        </FormLabel>
+        <FormHelperText sx={{ display: 'block' }}>
+          <Link level='body2' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+          {' '}<Link level='body2' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
+        </FormHelperText>
+      </Box>
+      <Switch
+        checked={moderationCheck}
+        onChange={event => updateSetup({ moderationCheck: event.target.checked })}
+        endDecorator={moderationCheck ? 'Enabled' : 'Off'}
+        sx={{ flexGrow: 1 }}
+      />
+    </FormControl>}
+
 
     <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
 
@@ -170,14 +187,15 @@ const knownBases = [
 function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM & { options: LLMOptionsOpenAI } {
   const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
   const suffix = model.id.slice(base.id.length).trim();
+  const hidden = !!suffix && suffix.startsWith('-03');
   return {
     id: `${source.id}-${model.id}`,
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
     created: model.created,
     description: base.description,
-    tags: ['stream', 'chat'],
+    tags: [], // ['stream', 'chat'],
     contextTokens: base.context,
-    hidden: !!suffix,
+    hidden,
     sId: source.id,
     _source: source,
     options: {

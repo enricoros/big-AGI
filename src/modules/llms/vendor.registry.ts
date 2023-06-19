@@ -1,6 +1,6 @@
 import { DModelSource, DModelSourceId, ModelVendor, ModelVendorId } from './llm.types';
-import { ModelVendorLocalAI } from './localai/vendor';
-import { ModelVendorOpenAI } from './openai/vendor';
+import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorOpenAI } from './openai/openai.vendor';
 
 
 export function findAllVendors(): ModelVendor[] {

@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import { Button, Tooltip } from '@mui/joy';
 
 interface CodeBlockProps {
@@ -7,7 +9,7 @@ interface CodeBlockProps {
   };
 }
 
-export function OpenInReplit({ codeBlock }: CodeBlockProps): JSX.Element {
+export function OpenInReplit({ codeBlock }: CodeBlockProps): React.JSX.Element {
   const { language } = codeBlock;
 
   const replitLanguageMap: { [key: string]: string } = {

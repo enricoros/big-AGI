@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 // @update defifofum add custom SystemPurposeIds
 export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist' | 'FrontendDeveloper' | 'SolidityDeveloper' | 'TypescriptDeveloper';
 
@@ -5,7 +7,7 @@ export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
 type SystemPurposeData = {
   title: string;
-  description: string | JSX.Element;
+  description: string | React.JSX.Element;
   systemMessage: string;
   symbol: string;
   examples?: string[];

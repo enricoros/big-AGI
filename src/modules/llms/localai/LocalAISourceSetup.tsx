@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { normalizeSetup, SourceSetupLocalAI } from './vendor';
+import { normalizeSetup, SourceSetupLocalAI } from './localai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -31,7 +31,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
   const hasModels = !!sourceLLMs.length;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '' }, {
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '', moderationCheck: false }, {
     enabled: false, //!sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => localAIToDLLM(model, source)) : [];
@@ -78,7 +78,7 @@ function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSou
     label,
     created: 0,
     description: 'Local model',
-    tags: ['stream', 'chat'],
+    tags: [], // ['stream', 'chat'],
     contextTokens,
     hidden: false,
     sId: source.id,

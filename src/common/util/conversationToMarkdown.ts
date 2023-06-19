@@ -4,8 +4,9 @@ import { SystemPurposes } from '../../data';
 
 export function prettyBaseModel(model: string | undefined): string {
   if (!model) return '';
-  if (model.startsWith('gpt-4')) return 'gpt-4';
-  if (model.startsWith('gpt-3.5-turbo')) return '3.5 Turbo';
+  if (model.includes('gpt-4-32k')) return 'gpt-4-32k';
+  if (model.includes('gpt-4')) return 'gpt-4';
+  if (model.includes('gpt-3.5-turbo')) return '3.5 Turbo';
   return model;
 }
 
@@ -28,8 +29,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;
-        // TODO: remove the "modelId" hack soon, once we let this percolate through the system (modelId was the former name of originLLM)
-        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || (message as any)['modelId'] || '')}*`.trim();
+        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
           sender = `${SystemPurposes[purpose]?.symbol || ''} ${sender}`.trim();
         break;

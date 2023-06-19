@@ -23,8 +23,8 @@ export const googleSearchRouter = createTRPCRouter({
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
-        cx: (input.cx || process.env.GOOGLE_CSE_ID).trim(),
-        key: (input.key || process.env.GOOGLE_CLOUD_API_KEY).trim(),
+        cx: (input.cx || process.env.GOOGLE_CSE_ID || '').trim(),
+        key: (input.key || process.env.GOOGLE_CLOUD_API_KEY || '').trim(),
         num: 5,
       };
 

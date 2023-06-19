@@ -17,7 +17,7 @@ function DiscordIcon(props: { sx?: SxProps }) {
   </SvgIcon>;
 }
 
-function BringTheLove(props: { text: string, link: string, icon: JSX.Element }) {
+function BringTheLove(props: { text: string, link: string, icon: React.JSX.Element }) {
   const [loved, setLoved] = React.useState(false);
   const icon = loved ? '❤️' : props.icon; // '❤️' : '🤍';
   return <Button

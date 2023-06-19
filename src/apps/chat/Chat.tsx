@@ -3,14 +3,15 @@ import { shallow } from 'zustand/shallow';
 
 import { useTheme } from '@mui/joy';
 
+import type { PublishedSchema } from '~/modules/publish/publish.router';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
-import { PasteGG } from '~/modules/pastegg/pastegg.types';
-import { PublishedModal } from '~/modules/pastegg/PublishedModal';
-import { callPublish } from '~/modules/pastegg/pastegg.client';
+import { PublishedModal } from '~/modules/publish/PublishedModal';
+import { apiAsync } from '~/modules/trpc/trpc.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
@@ -36,6 +37,18 @@ const SPECIAL_ID_ALL_CHATS = 'all-chats';
 export type SendModeId = 'immediate' | 'react';
 
 
+/// Returns a pretty link to the current page, for promo
+function linkToOrigin() {
+  let origin = (typeof window !== 'undefined') ? window.location.href : '';
+  if (!origin || origin.includes('//localhost'))
+    origin = Brand.URIs.OpenRepo;
+  origin = origin.replace('https://', '');
+  if (origin.endsWith('/'))
+    origin = origin.slice(0, -1);
+  return origin;
+}
+
+
 export function Chat() {
 
   // state
@@ -43,7 +56,7 @@ export function Chat() {
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
-  const [publishResponse, setPublishResponse] = React.useState<PasteGG.API.Publish.Response | null>(null);
+  const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
   const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
   const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -154,8 +167,19 @@ export function Chat() {
       setPublishConversationId(null);
       if (conversation) {
         const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
-        const publishResponse = await callPublish('paste.gg', markdownContent);
-        setPublishResponse(publishResponse);
+        try {
+          const paste = await apiAsync.publish.publish.mutate({
+            to: 'paste.gg',
+            title: '🤖💬 Chat Conversation',
+            fileContent: markdownContent,
+            fileName: 'my-chat.md',
+            origin: linkToOrigin(),
+          });
+          setPublishResponse(paste);
+        } catch (error: any) {
+          alert(`Failed to publish conversation: ${error?.message ?? error?.toString() ?? 'unknown error'}`);
+          setPublishResponse(null);
+        }
       }
     }
   };

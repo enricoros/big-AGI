@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
@@ -29,6 +27,7 @@ export interface SourceSetupOpenAI {
   oaiOrg: string;
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
   heliKey: string;  // helicone key (works in conjunction with oaiHost)
+  moderationCheck: boolean;
 }
 
 export function normalizeOAISetup(partialSetup?: Partial<SourceSetupOpenAI>): SourceSetupOpenAI {
@@ -37,6 +36,7 @@ export function normalizeOAISetup(partialSetup?: Partial<SourceSetupOpenAI>): So
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
+    moderationCheck: false,
     ...partialSetup,
   };
 }

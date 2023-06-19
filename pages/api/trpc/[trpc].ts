@@ -22,6 +22,7 @@ export default createNextApiHandler({
 */
 
 // Vercel Edge API handler
+// noinspection JSUnusedGlobalSymbols
 export const config = { runtime: 'edge' };
 
 export default async function handler(req: NextRequest) {
