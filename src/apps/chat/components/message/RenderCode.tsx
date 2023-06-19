@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { encode as plantUmlEncode } from 'plantuml-encoder';
-
 import { Box, IconButton, Tooltip } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -30,6 +28,9 @@ export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
     queryKey: ['plantuml', props.codeBlock.code],
     queryFn: async () => {
       try {
+        // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
+        const { encode: plantUmlEncode } = await import('plantuml-encoder');
+
         // retrieve and manually adapt the SVG, to remove the background
         const encodedPlantUML: string = plantUmlEncode(props.codeBlock.code);
         const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
