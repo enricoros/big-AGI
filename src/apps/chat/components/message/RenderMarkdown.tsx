@@ -34,8 +34,10 @@ export const RenderMarkdown = ({ textBlock }: { textBlock: TextBlock }) => {
         lineHeight: '1.75 !important',                        // line-height: 1.75 like the text block
       }}>
 
-      {/* Using React.Lazy loading this - omit React.Suspense as this is fast */}
-      <ReactMarkdown>{textBlock.content}</ReactMarkdown>
+      {/* Using React.Suspense / React.Lazy loading this */}
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <ReactMarkdown>{textBlock.content}</ReactMarkdown>
+      </React.Suspense>
     </Box>
   );
 };
