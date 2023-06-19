@@ -6,6 +6,7 @@ import { Box, Container, useTheme } from '@mui/joy';
 import { Configurator } from '~/modules/llms/configurator/Configurator';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
+import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ApplicationBar } from './appbar/ApplicationBar';
@@ -19,6 +20,13 @@ export function AppLayout(props: {
   // external state
   const theme = useTheme();
   const { centerMode } = useUIPreferencesStore(state => ({ centerMode: state.centerMode }), shallow);
+
+  // Usage++ (for progressive disclosure of features)
+  const incrementUsage = useAppStateStore((state) => state.incrementUsage);
+  React.useEffect(() => incrementUsage(), [incrementUsage]);
+
+  // Updates Dialog
+  // TODO
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
