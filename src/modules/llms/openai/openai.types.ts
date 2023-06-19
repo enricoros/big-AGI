@@ -108,6 +108,13 @@ export namespace OpenAI {
           delta: Partial<ResponseMessage>;
           finish_reason: 'stop' | 'length' | null;
         }[];
+        // this could also be an error - first experienced on 2023-06-19 on streaming APIs (undocumented)
+        error?: {
+          message: string;
+          type: 'server_error' | string;
+          param: string | null;
+          code: string | null;
+        }
       }
     }
 
