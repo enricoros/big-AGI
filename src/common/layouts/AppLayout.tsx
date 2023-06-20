@@ -6,6 +6,7 @@ import { Box, Container, useTheme } from '@mui/joy';
 import { Configurator } from '~/modules/llms/configurator/Configurator';
 import { SettingsModal } from '../../apps/settings/SettingsModal';
 
+import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -19,7 +20,7 @@ export function AppLayout(props: {
 }) {
   // external state
   const theme = useTheme();
-  const { centerMode } = useUIPreferencesStore(state => ({ centerMode: state.centerMode }), shallow);
+  const { centerMode } = useUIPreferencesStore(state => ({ centerMode: isPwa() ? 'full' : state.centerMode }), shallow);
 
   // Usage++ (for progressive disclosure of features)
   const incrementUsage = useAppStateStore((state) => state.incrementUsage);
