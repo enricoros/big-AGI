@@ -13,6 +13,33 @@ type SystemPurposeData = {
   highlighted?: boolean;
 }
 
+
+function validateSystemPurposes(jsonData: any): { [key in SystemPurposeId]: SystemPurposeData } | null {
+  if (typeof jsonData !== 'object' || jsonData === null) {
+    return null;
+  }
+
+  for (const key in jsonData) {
+    if (!jsonData.hasOwnProperty(key)) {
+      continue;
+    }
+
+    const data = jsonData[key];
+    if (
+        typeof data.title !== 'string' ||
+        typeof data.description !== 'string' ||
+        typeof data.systemMessage !== 'string' ||
+        typeof data.symbol !== 'string' ||
+        (data.examples && !Array.isArray(data.examples)) ||
+        (data.highlighted && typeof data.highlighted !== 'boolean')
+    ) {
+      return null;
+    }
+  }
+
+  return jsonData;
+}
+
 let SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Developer: {
     title: 'Developer',
@@ -67,10 +94,15 @@ let SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 };
 
 try {
-  const systemPurposes = require('../systemPurposes.json');
-  SystemPurposes = { ...SystemPurposes, ...systemPurposes };
+  const systemPurposesJson = require('../systemPurposes.json');
+  const validatedSystemPurposes = validateSystemPurposes(systemPurposesJson);
+
+  if (validatedSystemPurposes) {
+    SystemPurposes = { ...SystemPurposes, ...validatedSystemPurposes };
+  } else {
+    console.error('Failed to validate systemPurposes.json: Invalid structure');
+  }
 } catch (error) {
   console.error('Failed to load systemPurposes.json:', error);
 }
-
 export { SystemPurposes };
