@@ -158,7 +158,7 @@ export function Composer(props: {
   // external state
   const theme = useTheme();
   const enterToSend = useUIPreferencesStore(state => state.enterToSend);
-  const { sentMessages, appendSentMessage, clearSentMessages } = useComposerStore();
+  const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -168,6 +168,14 @@ export function Composer(props: {
     };
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
+
+  // Effect: load initial text if queued up (e.g. by /share)
+  React.useEffect(() => {
+    if (startupText) {
+      setStartupText(null);
+      setComposeText(startupText);
+    }
+  }, [startupText, setStartupText]);
 
   // derived state
   const tokenLimit = chatLLM?.contextTokens || 0;
