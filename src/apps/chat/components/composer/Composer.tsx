@@ -194,7 +194,7 @@ export function Composer(props: {
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       const shiftOrAlt = e.shiftKey || e.altKey;
       if (enterToSend ? !shiftOrAlt : shiftOrAlt) {
@@ -284,10 +284,10 @@ export function Composer(props: {
   };
 
 
-  const handlePasteFromClipboard = async () => {
+  const handlePasteButtonClicked = async () => {
     for (const clipboardItem of await navigator.clipboard.read()) {
 
-      // find the text/html item if any
+      // when pasting html, only process tables as markdown (e.g. from Excel), or fallback to text
       try {
         const htmlItem = await clipboardItem.getType('text/html');
         const htmlString = await htmlItem.text();
@@ -299,7 +299,7 @@ export function Composer(props: {
         }
         // TODO: paste html to markdown (tried Turndown, but the gfm plugin is not good - need to find another lib with minimal footprint)
       } catch (error) {
-        // ignore missing html
+        // ignore missing html: fallback to text/plain
       }
 
       // find the text/plain item if any
@@ -315,6 +315,18 @@ export function Composer(props: {
       // no text/html or text/plain item found
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
+  };
+
+  const handleTextareaCtrlV = async (e: React.ClipboardEvent) => {
+
+    // paste local files
+    if (e.clipboardData.files.length > 0) {
+      e.preventDefault();
+      await loadAndAttachFiles(e.clipboardData.files, []);
+      return;
+    }
+
+    // paste not intercepted, continue with default behavior
   };
 
 
@@ -339,7 +351,7 @@ export function Composer(props: {
     e.stopPropagation();
   };
 
-  const handleMessageDragEnter = (e: React.DragEvent) => {
+  const handleTextareaDragEnter = (e: React.DragEvent) => {
     eatDragEvent(e);
     setIsDragging(true);
   };
@@ -419,13 +431,13 @@ export function Composer(props: {
               </Button>
             </Tooltip>
 
-            <IconButton variant='plain' color='neutral' onClick={handlePasteFromClipboard} sx={{ ...hideOnDesktop }}>
+            <IconButton variant='plain' color='neutral' onClick={handlePasteButtonClicked} sx={{ ...hideOnDesktop }}>
               <ContentPasteGoIcon />
             </IconButton>
             <Tooltip
               variant='solid' placement='top-start'
               title={pasteClipboardLegend}>
-              <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={handlePasteFromClipboard}
+              <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={handlePasteButtonClicked}
                       sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
                 {props.isDeveloperMode ? 'Paste code' : 'Paste'}
               </Button>
@@ -444,10 +456,12 @@ export function Composer(props: {
                 variant='outlined' color={isReAct ? 'info' : 'neutral'}
                 autoFocus
                 minRows={4} maxRows={12}
-                onKeyDown={handleKeyPress}
-                onDragEnter={handleMessageDragEnter}
                 placeholder={textPlaceholder}
-                value={composeText} onChange={(e) => setComposeText(e.target.value)}
+                value={composeText}
+                onChange={(e) => setComposeText(e.target.value)}
+                onDragEnter={handleTextareaDragEnter}
+                onKeyDown={handleTextareaKeyDown}
+                onPasteCapture={handleTextareaCtrlV}
                 slotProps={{
                   textarea: {
                     enterKeyHint: enterToSend ? 'send' : 'enter',
