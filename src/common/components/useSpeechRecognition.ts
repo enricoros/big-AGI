@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { isChromeOnDesktopWindows } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -64,7 +65,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
         const instance = new Speech();
         instance.lang = preferredLanguage;
-        instance.interimResults = true;
+        instance.interimResults = isChromeOnDesktopWindows();
         instance.maxAlternatives = 1;
         instance.continuous = true;
 

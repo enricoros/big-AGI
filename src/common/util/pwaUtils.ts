@@ -17,3 +17,11 @@ export const isPwa = (): boolean => {
     return window.matchMedia(`(min-width: ${width}px)`).matches;
   return true;
 };*/
+
+export const isChromeOnDesktopWindows = (): boolean => {
+  if (typeof window !== 'undefined') {
+    const agent = window.navigator.userAgent;
+    return agent.indexOf('Windows') > -1 && agent.indexOf('Chrome') > -1 && agent.indexOf('Mobile') === -1;
+  }
+  return false;
+}
