@@ -20,12 +20,12 @@ import { extractCommands } from '~/common/util/extractCommands';
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ActionItems } from './components/appbar/ActionItems';
+import { ChatContextItems } from './components/appbar/ChatContextItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
 import { ConversationItems } from './components/appbar/ConversationItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
-import { Ephemerals } from './components/ephemerals/Ephemerals';
+import { Ephemerals } from './components/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
@@ -237,7 +237,7 @@ export function Chat() {
   );
 
   const actionItems = React.useMemo(() =>
-      <ActionItems
+      <ChatContextItems
         conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onClearConversation={handleClearConversation}
@@ -247,8 +247,8 @@ export function Chat() {
   );
 
   React.useEffect(() => {
-    useApplicationBarStore.getState().register(dropdowns, conversationsBadge, conversationItems, actionItems);
-    return () => useApplicationBarStore.getState().unregister();
+    useApplicationBarStore.getState().registerClientComponents(dropdowns, conversationsBadge, conversationItems, actionItems);
+    return () => useApplicationBarStore.getState().unregisterClientComponents();
   }, [dropdowns, conversationsBadge, conversationItems, actionItems]);
 
   return <>

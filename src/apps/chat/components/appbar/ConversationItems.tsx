@@ -7,6 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
+import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
@@ -37,17 +38,21 @@ export function ConversationItems(props: {
   const singleChat = conversationIDs.length === 1;
   const maxReached = conversationIDs.length >= MAX_CONVERSATIONS;
 
+  const closeAppMenu = () => useApplicationBarStore.getState().setAppMenuAnchor(null);
+
   const handleNew = () => {
     // if the first in the stack is a new conversation, just activate it
     if (topNewConversationId)
       setActiveConversationId(topNewConversationId);
     else
       createConversation();
-    /// FIXME props.onClose();
+    closeAppMenu();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string) => {
     setActiveConversationId(conversationId);
+    // Disabled, because otherwise the menu disappears when trying to delete...
+    // closeAppMenu();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {

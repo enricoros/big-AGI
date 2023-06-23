@@ -10,10 +10,11 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { downloadConversationJson, useChatStore } from '~/common/state/store-chats';
+import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function ActionItems(props: {
+export function ChatContextItems(props: {
   conversationId: string | null, isConversationEmpty: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
@@ -24,6 +25,8 @@ export function ActionItems(props: {
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
+
+  const closeContextMenu = () => useApplicationBarStore.getState().setContextMenuAnchor(null);
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
@@ -41,7 +44,7 @@ export function ActionItems(props: {
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    /// FIXME closeActionsMenu();
+    closeContextMenu();
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 

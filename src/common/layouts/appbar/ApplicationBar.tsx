@@ -48,23 +48,27 @@ function CommonContextItems(props: { onClose: () => void }) {
  */
 export function ApplicationBar(props: { sx?: SxProps }) {
 
-  // state
-  const [applicationMenuAnchor, setApplicationMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
-
   // external state
-  const { centerItems, appMenuBadge, appMenuItems, contextMenuItems } = useApplicationBarStore(state => ({
-    centerItems: state.centerItems,
+  const {
+    centerItems, appMenuBadge, appMenuItems, contextMenuItems,
+    appMenuAnchor: applicationMenuAnchor, setAppMenuAnchor: setApplicationMenuAnchor,
+    contextMenuAnchor, setContextMenuAnchor,
+  } = useApplicationBarStore(state => ({
     appMenuBadge: state.appMenuBadge,
     appMenuItems: state.appMenuItems,
+    centerItems: state.centerItems,
     contextMenuItems: state.contextMenuItems,
+    appMenuAnchor: state.appMenuAnchor, setAppMenuAnchor: state.setAppMenuAnchor,
+    contextMenuAnchor: state.contextMenuAnchor, setContextMenuAnchor: state.setContextMenuAnchor,
   }), shallow);
 
   const closeApplicationMenu = () => setApplicationMenuAnchor(null);
 
-  const closeContextMenu = () => setContextMenuAnchor(null);
+  const closeContextMenu = React.useCallback(() => setContextMenuAnchor(null), [setContextMenuAnchor]);
 
-  const commonContextItems = React.useMemo(() => <CommonContextItems onClose={closeContextMenu} />, []);
+  const commonContextItems = React.useMemo(() =>
+      <CommonContextItems onClose={closeContextMenu} />
+    , [closeContextMenu]);
 
   return <>
 
