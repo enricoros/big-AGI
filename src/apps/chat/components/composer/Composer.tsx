@@ -20,13 +20,13 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/llm-util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
-import { useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SendModeId } from '../../Chat';
@@ -151,6 +151,7 @@ export function Composer(props: {
   // state
   const [composeText, setComposeText] = React.useState('');
   const [sendModeId, setSendModeId] = React.useState<SendModeId>('immediate');
+  const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
@@ -218,14 +219,15 @@ export function Composer(props: {
   };
 
 
-  const onSpeechResultCallback = React.useCallback((transcript: string) => {
-    setComposeText(current => {
-      current = current.trim();
-      transcript = transcript.trim();
-      if ((!current || current.endsWith('.') || current.endsWith('!') || current.endsWith('?')) && transcript.length)
-        transcript = transcript[0].toUpperCase() + transcript.slice(1);
-      return current ? current + ' ' + transcript : transcript;
-    });
+  const onSpeechResultCallback = React.useCallback((result: SpeechResult) => {
+    setSpeechInterimResult(result.done ? null : { ...result });
+    if (result.done) {
+      setComposeText(prevText => {
+        prevText = prevText.trim();
+        const transcript = result.transcript.trim();
+        return prevText ? prevText + ' ' + transcript : transcript;
+      });
+    }
   }, []);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 'm');
@@ -493,9 +495,35 @@ export function Composer(props: {
 
             </Box>
 
-            {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{ ...hideOnMobile, position: 'absolute', top: 0, right: 0, margin: 1 }} />}
+            {isSpeechEnabled && (
+              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{
+                ...hideOnMobile,
+                position: 'absolute', top: 0, right: 0,
+                zIndex: 21,
+                m: 1,
+              }} />
+            )}
 
             {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
+
+            {!!speechInterimResult && (
+              <Card
+                color='primary' invertedColors variant='soft'
+                sx={{
+                  display: 'flex',
+                  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+                  // alignItems: 'center', justifyContent: 'center',
+                  border: `1px solid ${theme.vars.palette.primary.solidBg}`,
+                  borderRadius: theme.radius.xs,
+                  zIndex: 20,
+                  px: 1.5, py: 1,
+                }}>
+                <Typography>
+                  {speechInterimResult.transcript}{' '}
+                  <span style={{ opacity: 0.5 }}>{speechInterimResult.interimTranscript}</span>
+                </Typography>
+              </Card>
+            )}
 
             <Card
               color='primary' invertedColors variant='soft'
@@ -504,6 +532,7 @@ export function Composer(props: {
                 position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
                 alignItems: 'center', justifyContent: 'space-evenly',
                 border: '2px dashed',
+                borderRadius: theme.radius.xs,
                 zIndex: 10,
               }}
               onDragLeave={handleOverlayDragLeave}
