@@ -22,12 +22,9 @@ export function AppLayout(props: {
   const theme = useTheme();
   const { centerMode } = useUIPreferencesStore(state => ({ centerMode: isPwa() ? 'full' : state.centerMode }), shallow);
 
-  // Usage++ (for progressive disclosure of features)
-  const incrementUsage = useAppStateStore((state) => state.incrementUsage);
-  React.useEffect(() => incrementUsage(), [incrementUsage]);
-
-  // Updates Dialog
-  // TODO
+  // usage counter, for progressive disclosure of features
+  // noinspection JSUnusedLocalSymbols
+  const usageCount = useAppStateStore(state => state.usageCount);
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
