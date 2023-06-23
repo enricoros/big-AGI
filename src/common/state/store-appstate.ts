@@ -11,7 +11,6 @@ interface AppStateData {
 }
 
 interface AppStateActions {
-  incrementUsage: () => void;
   setLastSeenChangelogVersion: (version: number) => void;
   suppressItem: (key: string) => void;
   unSuppressItem: (key: string) => void;
@@ -22,13 +21,13 @@ interface AppStateActions {
 export const useAppStateStore = create<AppStateData & AppStateActions>()(
   persist(
     (set) => ({
-      usageCount: 0,
-      incrementUsage: () => set((state) => ({ usageCount: state.usageCount + 1 })),
 
+      usageCount: 0,
       lastSeenChangelogVersion: 0,
+      suppressedItems: {},
+
       setLastSeenChangelogVersion: (version: number) => set({ lastSeenChangelogVersion: version }),
 
-      suppressedItems: {},
       suppressItem: (key: string) => set((state) => ({
         suppressedItems: {
           ...state.suppressedItems,
@@ -42,7 +41,6 @@ export const useAppStateStore = create<AppStateData & AppStateActions>()(
         } = state.suppressedItems;
         return { suppressedItems: rest };
       }),
-
       resetSuppressedItems: () => set({ suppressedItems: {} }),
     }),
     {
@@ -50,3 +48,6 @@ export const useAppStateStore = create<AppStateData & AppStateActions>()(
     },
   ),
 );
+
+// increment the usage count
+useAppStateStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
