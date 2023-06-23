@@ -268,7 +268,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: 1, px: { xs: 1, md: 2 }, py: 2,
+      gap: { xs: 0, md: 1}, px: { xs: 1, md: 2 }, py: 2,
       background,
       borderBottom: `1px solid ${theme.vars.palette.divider}`,
       // borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
@@ -293,10 +293,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
         {fromAssistant && (
           <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
-            <Typography level='body2' sx={messageTyping
-              ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite`, fontWeight: 500 }
-              : { fontWeight: 500 }
-            }>
+            <Typography level='body2' sx={{
+              fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
+              ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
+            }}>
               {prettyBaseModel(messageOriginLLM)}
             </Typography>
           </Tooltip>
@@ -332,7 +332,9 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             </Tooltip>
           )}
 
-          {isCollapsed && <Button variant='plain' onClick={handleExpand}>... expand ...</Button>}
+          {isCollapsed && (
+            <Button variant='plain' onClick={handleExpand}>... expand ...</Button>
+          )}
 
           {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
           {/*<br />*/}
