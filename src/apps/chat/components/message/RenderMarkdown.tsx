@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Typography, useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 
 import { TextBlock } from './Block';
 
