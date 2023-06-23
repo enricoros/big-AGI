@@ -32,7 +32,7 @@ export class Agent {
   async reAct(question: string, llmId: DLLMId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
-    const S: State = await this.initialize(`Question: ${question}`);
+    const S: State = this.initialize(`Question: ${question}`);
     show(S);
     while (i < maxTurns && S.result === undefined) {
       i++;
