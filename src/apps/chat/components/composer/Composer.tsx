@@ -3,9 +3,9 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
-import ClearIcon from '@mui/icons-material/Clear';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -105,7 +105,7 @@ const SentMessagesMenu = (props: {
   onClear: () => void,
 }) =>
   <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, maxWidth: '100dvw', overflow: 'hidden' }}
+    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, maxWidth: '100dvw', maxHeight: 'calc(100dvh - 56px)', overflowY: 'auto' }}
     open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}>
 
     <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
@@ -120,8 +120,8 @@ const SentMessagesMenu = (props: {
     <ListDivider />
 
     <MenuItem onClick={props.onClear}>
-      <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      Clear all
+      <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+      Clear sent messages history
     </MenuItem>
 
   </Menu>;

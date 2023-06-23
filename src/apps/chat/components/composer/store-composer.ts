@@ -19,6 +19,8 @@ interface ComposerStore {
 
 }
 
+const MAX_SENT_MESSAGES_HISTORY = 16;
+
 export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
 
@@ -40,7 +42,7 @@ export const useComposerStore = create<ComposerStore>()(
         list.unshift(item);
 
         // update the store (limiting max items)
-        set({ sentMessages: list.slice(0, 20) });
+        set({ sentMessages: list.slice(0, MAX_SENT_MESSAGES_HISTORY) });
       },
       clearSentMessages: () => set({ sentMessages: [] }),
 
