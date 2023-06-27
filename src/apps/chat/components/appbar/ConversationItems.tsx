@@ -70,7 +70,7 @@ export function ConversationItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem disabled={!!topNewConversationId && topNewConversationId === props.conversationId} onClick={handleNew}>
+    <MenuItem disabled={maxReached || (!!topNewConversationId && topNewConversationId === props.conversationId)} onClick={handleNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       {NewPrefix}New
     </MenuItem>
