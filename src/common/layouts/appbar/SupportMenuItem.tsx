@@ -58,7 +58,7 @@ export function SupportMenuItem() {
       {/*  }}>*/}
       {/*  {Brand.Meta.SiteName}*/}
       {/*</Box>*/}
-      <BringTheLove text={Brand.Meta.SiteName} link={Brand.URIs.Home} sx={{ color: fadedColor }} />
+      <BringTheLove text={Brand.Title.Base} link={Brand.URIs.Home} sx={{ color: fadedColor }} />
       <BringTheLove text='Discord' icon={<DiscordIcon sx={{ color: iconColor }} />} link={Brand.URIs.SupportInvite} />
       <BringTheLove text='GitHub' icon={<GitHubIcon sx={{ color: iconColor }} />} link={Brand.URIs.OpenRepo} />
     </ListItem>
