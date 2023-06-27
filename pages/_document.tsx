@@ -20,7 +20,6 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
       <Head>
         {/* Meta (missing Title, set by the App or Page) */}
         <meta name='description' content={Brand.Meta.Description} />
-        <meta name='keywords' content={Brand.Meta.Keywords} />
         <meta name='theme-color' content={Brand.Meta.ThemeColor} />
 
         {/* Favicons & PWA */}
@@ -33,7 +32,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta name='apple-mobile-web-app-status-bar-style' content='black' />
 
         {/* Opengraph */}
-        <meta property='og:title' content={Brand.Meta.Title} />
+        <meta property='og:title' content={Brand.Title.Common} />
         <meta property='og:description' content={Brand.Meta.Description} />
         {Brand.URIs.CardImage && <meta property='og:image' content={Brand.URIs.CardImage} />}
         <meta property='og:url' content={Brand.URIs.Home} />
@@ -43,7 +42,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {/* Twitter */}
         <meta property='twitter:card' content='summary_large_image' />
         <meta property='twitter:url' content={Brand.URIs.Home} />
-        <meta property='twitter:title' content={Brand.Meta.Title} />
+        <meta property='twitter:title' content={Brand.Title.Common} />
         <meta property='twitter:description' content={Brand.Meta.Description} />
         {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
         <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
