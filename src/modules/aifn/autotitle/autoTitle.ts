@@ -9,13 +9,14 @@ import { useChatStore } from '~/common/state/store-chats';
  */
 export async function autoTitle(conversationId: string) {
 
-  // external state
+  // use valid fast model
   const { fastLLMId } = useModelsStore.getState();
-  const { conversations } = useChatStore.getState();
+  if (!fastLLMId) return;
 
   // only operate on valid conversations, without any title
+  const { conversations } = useChatStore.getState();
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
-  if (!fastLLMId || !conversation || conversation.autoTitle || conversation.userTitle) return;
+  if (!conversation || conversation.autoTitle || conversation.userTitle) return;
 
   // first line of the last 5 messages
   const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
