@@ -1,11 +1,25 @@
 import * as React from 'react';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
 import { Box, useTheme } from '@mui/joy';
 
 import { TextBlock } from './Block';
+
+
+// Dynamically import ReactMarkdown using React.lazy
+const ReactMarkdown = React.lazy(async () => {
+  const [markdownModule, remarkGfmModule] = await Promise.all([
+    import('react-markdown'),
+    import('remark-gfm')
+  ]);
+
+  // Pass the dynamically imported remarkGfm as children
+  const ReactMarkdownWithRemarkGfm = (props: any) => (
+    <markdownModule.default remarkPlugins={[remarkGfmModule.default]} {...props} />
+  );
+
+  return { default: ReactMarkdownWithRemarkGfm };
+});
+
 
 export const RenderMarkdown = ({ textBlock }: { textBlock: TextBlock }) => {
   const theme = useTheme();
@@ -19,7 +33,11 @@ export const RenderMarkdown = ({ textBlock }: { textBlock: TextBlock }) => {
         fontFamily: `inherit !important`,                     // use the default font family
         lineHeight: '1.75 !important',                        // line-height: 1.75 like the text block
       }}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{textBlock.content}</ReactMarkdown>
+
+      {/* Using React.Suspense / React.Lazy loading this */}
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <ReactMarkdown>{textBlock.content}</ReactMarkdown>
+      </React.Suspense>
     </Box>
   );
 };

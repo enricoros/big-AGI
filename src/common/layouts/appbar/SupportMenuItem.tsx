@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, ListItem, SvgIcon, useTheme } from '@mui/joy';
+import { Button, ListItem, SvgIcon, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
@@ -17,9 +17,9 @@ function DiscordIcon(props: { sx?: SxProps }) {
   </SvgIcon>;
 }
 
-function BringTheLove(props: { text: string, link: string, icon: React.JSX.Element }) {
+function BringTheLove(props: { text: string, link: string, icon?: React.JSX.Element, sx?: SxProps }) {
   const [loved, setLoved] = React.useState(false);
-  const icon = loved ? '❤️' : props.icon; // '❤️' : '🤍';
+  const icon = loved ? '❤️' : props.icon ?? null; // '❤️' : '🤍';
   return <Button
     color='neutral'
     component={Link} noLinkStyle href={props.link} target='_blank'
@@ -29,6 +29,7 @@ function BringTheLove(props: { text: string, link: string, icon: React.JSX.Eleme
       background: 'transparent',
       // '&:hover': { background: props.theme.palette.neutral.solidBg },
       '&:hover': { animation: `${cssRainbowColorKeyframes} 5s linear infinite` },
+      ...(props.sx ? props.sx : {}),
     }}>
     {props.text}
   </Button>;
@@ -49,14 +50,15 @@ export function SupportMenuItem() {
         display: 'flex', flexDirection: 'row', gap: 1,
         justifyContent: 'space-between',
       }}>
-      <Box
-        sx={{
-          mx: { xs: 1, sm: 2 },
-          fontWeight: 600,
-          color: fadedColor,
-        }}>
-        {Brand.Meta.SiteName}
-      </Box>
+      {/*<Box*/}
+      {/*  sx={{*/}
+      {/*    mx: { xs: 1, sm: 2 },*/}
+      {/*    fontWeight: 600,*/}
+      {/*    color: fadedColor,*/}
+      {/*  }}>*/}
+      {/*  {Brand.Meta.SiteName}*/}
+      {/*</Box>*/}
+      <BringTheLove text={Brand.Title.Base} link={Brand.URIs.Home} sx={{ color: fadedColor }} />
       <BringTheLove text='Discord' icon={<DiscordIcon sx={{ color: iconColor }} />} link={Brand.URIs.SupportInvite} />
       <BringTheLove text='GitHub' icon={<GitHubIcon sx={{ color: iconColor }} />} link={Brand.URIs.OpenRepo} />
     </ListItem>

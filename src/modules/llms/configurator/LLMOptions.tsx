@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Button, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
+import { Button, ButtonGroup, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -21,10 +21,22 @@ export function LLMOptions(props: { id: DLLMId }) {
 
   // external state
   const closeLLMOptions = useUIStateStore(state => state.closeLLMOptions);
-  const { llm, removeLLM, updateLLM } = useModelsStore(state => ({
+  const {
+    llm,
+    removeLLM, updateLLM,
+    isChatLLM, setChatLLMId,
+    isFastLLM, setFastLLMId,
+    isFuncLLM, setFuncLLMId,
+  } = useModelsStore(state => ({
     llm: state.llms.find(llm => llm.id === props.id),
     removeLLM: state.removeLLM,
     updateLLM: state.updateLLM,
+    isChatLLM: state.chatLLMId === props.id,
+    isFastLLM: state.fastLLMId === props.id,
+    isFuncLLM: state.funcLLMId === props.id,
+    setChatLLMId: state.setChatLLMId,
+    setFastLLMId: state.setFastLLMId,
+    setFuncLLMId: state.setFuncLLMId,
   }), shallow);
 
   if (!llm)
@@ -61,6 +73,17 @@ export function LLMOptions(props: { id: DLLMId }) {
           Name
         </FormLabel>
         <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+        <FormLabel sx={{ minWidth: 80 }}>
+          Defaults
+        </FormLabel>
+        <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
+          <Button variant={isChatLLM ? 'solid' : undefined} onClick={() => setChatLLMId(isChatLLM ? null : props.id)}>Chat</Button>
+          <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
+          <Button variant={isFuncLLM ? 'solid' : undefined} onClick={() => setFuncLLMId(isFuncLLM ? null : props.id)}>Func</Button>
+        </ButtonGroup>
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>

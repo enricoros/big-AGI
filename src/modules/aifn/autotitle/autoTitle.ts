@@ -1,4 +1,4 @@
-import { callChat } from '~/modules/llms/llm.client';
+import { callChatGenerate } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
@@ -9,13 +9,14 @@ import { useChatStore } from '~/common/state/store-chats';
  */
 export async function autoTitle(conversationId: string) {
 
-  // external state
+  // use valid fast model
   const { fastLLMId } = useModelsStore.getState();
-  const { conversations } = useChatStore.getState();
+  if (!fastLLMId) return;
 
   // only operate on valid conversations, without any title
+  const { conversations } = useChatStore.getState();
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
-  if (!fastLLMId || !conversation || conversation.autoTitle || conversation.userTitle) return;
+  if (!conversation || conversation.autoTitle || conversation.userTitle) return;
 
   // first line of the last 5 messages
   const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
@@ -26,7 +27,7 @@ export async function autoTitle(conversationId: string) {
   });
 
   // LLM
-  callChat(fastLLMId, [
+  callChatGenerate(fastLLMId, [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:

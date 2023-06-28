@@ -1,12 +1,11 @@
 import type React from 'react';
 
 import type { LLMOptionsOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
-import type { OpenAI } from './openai/openai.types';
+import type { ModelVendorCallChatFn, ModelVendorCallChatWithFunctionsFn } from './llm.client';
 import type { SourceSetupLocalAI } from './localai/localai.vendor';
 
 
 export type DLLMId = string;
-// export type DLLMTags = 'stream' | 'chat';
 export type DLLMOptions = LLMOptionsOpenAI; //DLLMValuesOpenAI | DLLMVaLocalAIDLLMValues;
 export type DModelSourceId = string;
 export type DModelSourceSetup = SourceSetupOpenAI | SourceSetupLocalAI;
@@ -60,6 +59,5 @@ export interface ModelVendor {
 
   // functions
   callChat: ModelVendorCallChatFn;
+  callChatWithFunctions: ModelVendorCallChatWithFunctionsFn;
 }
-
-type ModelVendorCallChatFn = (llm: DLLM, messages: OpenAI.Wire.ChatCompletion.RequestMessage[], maxTokens?: number) => Promise<OpenAI.API.Chat.Response>;

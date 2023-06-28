@@ -8,6 +8,7 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { hideOnMobile, settingsGap } from '~/common/theme';
+import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 // languages is defined as a JSON file
@@ -87,7 +88,7 @@ export function UISettings() {
 
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
-      <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
+      {!isPwa() && <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Centering</FormLabel>
           <FormHelperText>{centerMode === 'full' ? 'Full screen chat' : centerMode === 'narrow' ? 'Narrow chat' : 'Wide'}</FormHelperText>
@@ -97,7 +98,7 @@ export function UISettings() {
           <Radio value='wide' label={<WidthWideIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
           <Radio value='full' label='Full' />
         </RadioGroup>
-      </FormControl>
+      </FormControl>}
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>

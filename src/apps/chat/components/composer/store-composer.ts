@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 
 /// Composer Store
 
-interface StoreComposer {
+interface ComposerStore {
 
   sentMessages: {
     date: number,
@@ -14,9 +14,14 @@ interface StoreComposer {
   appendSentMessage: (text: string) => void;
   clearSentMessages: () => void;
 
+  startupText: string | null;
+  setStartupText: (text: string | null) => void;
+
 }
 
-export const useComposerStore = create<StoreComposer>()(
+const MAX_SENT_MESSAGES_HISTORY = 16;
+
+export const useComposerStore = create<ComposerStore>()(
   persist((set, get) => ({
 
       sentMessages: [],
@@ -37,21 +42,24 @@ export const useComposerStore = create<StoreComposer>()(
         list.unshift(item);
 
         // update the store (limiting max items)
-        set({ sentMessages: list.slice(0, 20) });
+        set({ sentMessages: list.slice(0, MAX_SENT_MESSAGES_HISTORY) });
       },
       clearSentMessages: () => set({ sentMessages: [] }),
+
+      startupText: null,
+      setStartupText: (text: string | null) => set({ startupText: text }),
 
     }),
     {
       name: 'app-composer',
       version: 1,
-      migrate: (state: any, version): StoreComposer => {
+      migrate: (state: any, version): ComposerStore => {
         // 0 -> 1: rename history to sentMessages
         if (state && version === 0) {
           state.sentMessages = state.history;
           delete state.history;
         }
-        return state as StoreComposer;
+        return state as ComposerStore;
       },
     }),
 );
