@@ -415,6 +415,7 @@ export function Composer(props: {
     ? 'Tell me what you need, and drop source files...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
+  const isFollowUp = props.chatModeId === 'immediate-follow-up';
   const isReAct = props.chatModeId === 'react';
 
   return (
@@ -573,11 +574,11 @@ export function Composer(props: {
                   </Button>
                 ) : (
                   <Button
-                    fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                    fullWidth variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
                     onClick={handleSendClicked} onDoubleClick={handleShowChatMode}
                     endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
-                    {isReAct ? 'ReAct' : 'Chat'}
+                    {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat' }
                   </Button>
                 )}
             </Box>
