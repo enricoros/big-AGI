@@ -9,7 +9,7 @@ import { useUIStateStore } from '~/common/state/store-ui';
 import { DLLM, ModelVendor } from '../llm.types';
 
 
-export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: boolean, chipFast?: boolean }) {
+export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat: boolean, chipFast: boolean, chipFunc: boolean }) {
 
   // external state
   const theme = useTheme();
@@ -33,9 +33,9 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat?: 
           </Tooltip>
         </ListItemContent>
 
-        {!!props.chipChat && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>chat</Chip>}
-
-        {!!props.chipFast && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>fast</Chip>}
+        {props.chipChat && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>chat</Chip>}
+        {props.chipFast && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>fast</Chip>}
+        {props.chipFunc && <Chip size='sm' variant='solid' sx={{ mx: 1 }}>𝑓n</Chip>}
 
         {/* 'Actions' (only click -> configure in reality) */}
         <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>

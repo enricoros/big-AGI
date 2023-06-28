@@ -11,9 +11,10 @@ import { useModelsStore } from '../store-llms';
 export function LLMList() {
 
   // external state
-  const { chatLLMId, fastLLMId, llms } = useModelsStore(state => ({
+  const { chatLLMId, fastLLMId, funcLLMId, llms } = useModelsStore(state => ({
     chatLLMId: state.chatLLMId,
     fastLLMId: state.fastLLMId,
+    funcLLMId: state.funcLLMId,
     llms: state.llms,
   }), shallow);
 
@@ -36,7 +37,7 @@ export function LLMList() {
     // for safety, ensure the vendor exists
     const vendor = findVendorById(llm._source.vId);
     if (vendor)
-      items.push(<LLMListItem key={'llm-' + llm.id} llm={llm} vendor={vendor} chipChat={llm.id === chatLLMId} chipFast={llm.id === fastLLMId} />);
+      items.push(<LLMListItem key={'llm-' + llm.id} llm={llm} vendor={vendor} chipChat={llm.id === chatLLMId} chipFast={llm.id === fastLLMId} chipFunc={llm.id === funcLLMId} />);
   }
 
   return (
