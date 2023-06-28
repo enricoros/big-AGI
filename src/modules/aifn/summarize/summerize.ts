@@ -1,5 +1,5 @@
 import { DLLMId } from '~/modules/llms/llm.types';
-import { callChat } from '~/modules/llms/llm.client';
+import { callChatGenerate } from '~/modules/llms/llm.client';
 import { findLLMOrThrow } from '~/modules/llms/store-llms';
 
 import { cleanupPrompt } from '../prompts';
@@ -72,7 +72,7 @@ async function cleanUpContent(chunk: string, llmId: DLLMId, ignored_was_targetWo
   const autoResponseTokensSize = Math.floor(contextTokens * outputTokenShare);
 
   try {
-    const chatResponse = await callChat(llmId, [
+    const chatResponse = await callChatGenerate(llmId, [
       { role: 'system', content: cleanupPrompt },
       { role: 'user', content: chunk },
     ], autoResponseTokensSize);

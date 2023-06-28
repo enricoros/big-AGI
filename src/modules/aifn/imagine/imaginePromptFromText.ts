@@ -1,4 +1,4 @@
-import { callChat } from '~/modules/llms/llm.client';
+import { callChatGenerate } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 
@@ -14,7 +14,7 @@ export async function imaginePromptFromText(messageText: string): Promise<string
   const { fastLLMId } = useModelsStore.getState();
   if (!fastLLMId) return null;
   try {
-    const chatResponse = await callChat(fastLLMId, [
+    const chatResponse = await callChatGenerate(fastLLMId, [
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
     ]);
