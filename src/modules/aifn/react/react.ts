@@ -127,7 +127,7 @@ async function search(query: string): Promise<string> {
     return JSON.stringify(data);
   } catch (error) {
     console.error('Error fetching search results:', error);
-    return 'An error occurred while searching the internet. Missing API Key?';
+    return 'An error occurred while searching the internet. Missing Google API Key?';
   }
 }
 
