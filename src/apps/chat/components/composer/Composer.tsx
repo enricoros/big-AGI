@@ -29,8 +29,8 @@ import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { SendModeId } from '../../Chat';
-import { SendModeMenu } from './SendModeMenu';
+import { ChatModeId } from '../../Chat';
+import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
 import { useComposerStore } from './store-composer';
@@ -144,18 +144,18 @@ const SentMessagesMenu = (props: {
  */
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
+  chatModeId: ChatModeId, setChatModeId: (chatModeId: ChatModeId) => void;
   isDeveloperMode: boolean;
-  onSendMessage: (sendModeId: SendModeId, conversationId: string, text: string) => void;
+  onSendMessage: (conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
   const [composeText, setComposeText] = React.useState('');
-  const [sendModeId, setSendModeId] = React.useState<SendModeId>('immediate');
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
-  const [sendModeMenuAnchor, setSendModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [confirmClearSent, setConfirmClearSent] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -196,14 +196,14 @@ export function Composer(props: {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
       setComposeText('');
-      props.onSendMessage(sendModeId, props.conversationId, text);
+      props.onSendMessage(props.conversationId, text);
       appendSentMessage(text);
     }
   };
 
-  const handleShowSendMode = (event: React.MouseEvent<HTMLAnchorElement>) => setSendModeMenuAnchor(event.currentTarget);
+  const handleShowChatMode = (event: React.MouseEvent<HTMLAnchorElement>) => setChatModeMenuAnchor(event.currentTarget);
 
-  const handleHideSendMode = () => setSendModeMenuAnchor(null);
+  const handleHideChatMode = () => setChatModeMenuAnchor(null);
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
@@ -415,7 +415,7 @@ export function Composer(props: {
     ? 'Tell me what you need, and drop source files...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
-  const isReAct = sendModeId === 'react';
+  const isReAct = props.chatModeId === 'react';
 
   return (
     <Box sx={props.sx}>
@@ -574,7 +574,7 @@ export function Composer(props: {
                 ) : (
                   <Button
                     fullWidth variant='solid' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId || !chatLLM}
-                    onClick={handleSendClicked} onDoubleClick={handleShowSendMode}
+                    onClick={handleSendClicked} onDoubleClick={handleShowChatMode}
                     endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
                     {isReAct ? 'ReAct' : 'Chat'}
@@ -596,8 +596,8 @@ export function Composer(props: {
 
 
         {/* Mode selector */}
-        {!!sendModeMenuAnchor && (
-          <SendModeMenu anchorEl={sendModeMenuAnchor} sendMode={sendModeId} onSetSendMode={setSendModeId} onClose={handleHideSendMode} />
+        {!!chatModeMenuAnchor && (
+          <ChatModeMenu anchorEl={chatModeMenuAnchor} chatModeId={props.chatModeId} onSetChatModeId={props.setChatModeId} onClose={handleHideChatMode} />
         )}
 
         {/* Sent messages menu */}
