@@ -122,7 +122,7 @@ export function Chat() {
       switch (chatModeId) {
         case 'immediate':
         case 'immediate-follow-up':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
         case 'react':
           if (lastMessage?.text) {
             setMessages(conversationId, history);

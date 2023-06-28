@@ -17,7 +17,7 @@ import { createAssistantTypingMessage, updatePurposeInHistory } from './editors'
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, _autoSuggestions: boolean) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -36,7 +36,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   startTyping(conversationId, null);
 
   // update text, if needed
-  await autoTitle(conversationId);
+  if (_autoTitle)
+    await autoTitle(conversationId);
 }
 
 
