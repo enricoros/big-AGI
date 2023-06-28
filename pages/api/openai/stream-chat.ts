@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser } from 'eventsource-parser';
 
-import { ChatGenerateSchema, chatGenerateSchema, openAIAccess, openAICompletionRequest } from '~/modules/llms/openai/openai.router';
+import { ChatGenerateSchema, chatGenerateSchema, openAIAccess, openAIChatCompletionRequest } from '~/modules/llms/openai/openai.router';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 
 
@@ -31,7 +31,7 @@ async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: C
 
     // prepare request objects
     const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-    const body: OpenAI.Wire.ChatCompletion.Request = openAICompletionRequest(model, history, true);
+    const body: OpenAI.Wire.ChatCompletion.Request = openAIChatCompletionRequest(model, history, null, true);
 
     // perform the request
     upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body), signal });

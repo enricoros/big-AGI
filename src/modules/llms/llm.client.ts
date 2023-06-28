@@ -1,17 +1,49 @@
-import { DLLMId } from '~/modules/llms/llm.types';
-import { findVendorById } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
-
+import { DLLM, DLLMId } from './llm.types';
 import { OpenAI } from './openai/openai.types';
+import { findVendorById } from './vendor.registry';
+import { useModelsStore } from './store-llms';
 
 
-export async function callChatGenerate(llmId: DLLMId, messages: OpenAI.Wire.ChatCompletion.RequestMessage[], maxTokens?: number): Promise<OpenAI.API.Chat.Response> {
+export type ModelVendorCallChatFn = (llm: DLLM, messages: VChatMessageIn[], maxTokens?: number) => Promise<VChatMessageOut>;
+export type ModelVendorCallChatWithFunctionsFn = (llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) => Promise<VChatMessageOrFunctionCallOut>;
 
-  // get the vendor
+export interface VChatMessageIn {
+  role: 'assistant' | 'system' | 'user'; // | 'function';
+  content: string;
+  //name?: string; // when role: 'function'
+}
+
+export type VChatFunctionIn = OpenAI.Wire.ChatCompletion.RequestFunctionDef;
+
+export interface VChatMessageOut {
+  role: 'assistant' | 'system' | 'user';
+  content: string;
+  finish_reason: 'stop' | 'length' | null;
+}
+
+export interface VChatFunctionCallOut {
+  function_name: string;
+  function_arguments: object | null;
+}
+
+export type VChatMessageOrFunctionCallOut = VChatMessageOut | VChatFunctionCallOut;
+
+
+
+export async function callChatGenerate(llmId: DLLMId, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
+  const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
+  return await vendor.callChat(llm, messages, maxTokens);
+}
+
+export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
+  const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
+  return await vendor.callChatWithFunctions(llm, messages, functions, maxTokens);
+}
+
+
+function getLLMAndVendorOrThrow(llmId: string) {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
   const vendor = findVendorById(llm?._source.vId);
   if (!llm || !vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
-
-  // go for it
-  return await vendor.callChat(llm, messages, maxTokens);
+  return { llm, vendor };
 }

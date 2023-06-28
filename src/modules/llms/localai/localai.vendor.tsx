@@ -17,7 +17,8 @@ export const ModelVendorLocalAI: ModelVendor = {
   LLMOptionsComponent: () => <>No LocalAI Options</>,
 
   // functions
-  callChat: () => Promise.reject(new Error('LocalAI is not implemented')),
+  callChat: () => Promise.reject(new Error('LocalAI chat is not implemented')),
+  callChatWithFunctions: () => Promise.reject(new Error('LocalAI chatWithFunctions is not implemented')),
 };
 
 

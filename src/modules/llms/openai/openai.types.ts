@@ -5,12 +5,6 @@ export namespace OpenAI {
 
     export namespace Chat {
 
-      export interface Response {
-        role: 'assistant' | 'system' | 'user';
-        content: string;
-        finish_reason: 'stop' | 'length' | null;
-      }
-
       /**
        * The client will be sent a stream of words. As an extra (an totally optional) 'data channel' we send a
        * string JSON object with the few initial variables. We hope in the future to adopt a better
@@ -23,7 +17,12 @@ export namespace OpenAI {
   }
 
 
-  /// OpenAI API types - https://platform.openai.com/docs/api-reference/
+  /**
+   * OpenAI API types - https://platform.openai.com/docs/api-reference/
+   *
+   * Notes:
+   *  - [FN0613]: function calling capability - only 2023-06-13 and later Chat models
+   */
   export namespace Wire {
     export namespace ChatCompletion {
 
@@ -37,11 +36,11 @@ export namespace OpenAI {
         max_tokens?: number;
         stream: boolean;
         n: number;
-        // only 2023-06-13 and later Chat models
-        // functions?: RequestFunction[],
-        // function_call?: 'auto' | 'none' | {
-        //   name: string;
-        // },
+        // [FN0613]
+        functions?: RequestFunctionDef[],
+        function_call?: 'auto' | 'none' | {
+          name: string;
+        },
       }
 
       export interface RequestMessage {
@@ -50,7 +49,7 @@ export namespace OpenAI {
         //name?: string; // when role: 'function'
       }
 
-      /*export interface RequestFunction {
+      export interface RequestFunctionDef { // [FN0613]
         name: string;
         description?: string;
         parameters?: {
@@ -64,7 +63,7 @@ export namespace OpenAI {
           }
           required?: string[];
         };
-      }*/
+      }
 
 
       export interface Response {
@@ -74,8 +73,8 @@ export namespace OpenAI {
         model: string; // can differ from the ask, e.g. 'gpt-4-0314'
         choices: {
           index: number;
-          message: ResponseMessage; // | ResponseFunctionCall;
-          finish_reason: 'stop' | 'length' | null; // | 'function_call'
+          message: ResponseMessage | ResponseFunctionCall; // [FN0613]
+          finish_reason: 'stop' | 'length' | null | 'function_call'; // [FN0613]
         }[];
         usage: {
           prompt_tokens: number;
@@ -84,19 +83,19 @@ export namespace OpenAI {
         };
       }
 
-      interface ResponseMessage {
+      export interface ResponseMessage {
         role: 'assistant';
         content: string;
       }
 
-      /*interface ResponseFunctionCall {
+      export interface ResponseFunctionCall { // [FN0613]
         role: 'assistant';
         content: null;
         function_call: { // if content is null and finish_reason is 'function_call'
           name: string;
           arguments: string; // a JSON object, to deserialize
         };
-      }*/
+      }
 
       export interface ResponseStreamingChunk {
         id: string;

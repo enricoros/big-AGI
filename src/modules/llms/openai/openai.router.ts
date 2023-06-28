@@ -10,6 +10,8 @@ import { OpenAI } from './openai.types';
 //   console.warn('OPENAI_API_KEY has not been provided in this deployment environment. Will need client-supplied keys, which is not recommended.');
 
 
+// Input Schemas
+
 const accessSchema = z.object({
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
@@ -29,7 +31,7 @@ const historySchema = z.array(z.object({
   content: z.string(),
 }));
 
-/*const functionsSchema = z.array(z.object({
+const functionsSchema = z.array(z.object({
   name: z.string(),
   description: z.string().optional(),
   parameters: z.object({
@@ -41,12 +43,29 @@ const historySchema = z.array(z.object({
     })),
     required: z.array(z.string()).optional(),
   }).optional(),
-}));*/
+}));
 
-export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema });
+export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
 
-export const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
+const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
+
+
+// Output Schemas
+
+const chatGenerateWithFunctionsOutputSchema = z.union([
+  z.object({
+    role: z.enum(['assistant', 'system', 'user']),
+    content: z.string(),
+    finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
+  }),
+  z.object({
+    function_name: z.string(),
+    function_arguments: z.record(z.any()),
+  }),
+]);
+
+
 
 
 export const openAIRouter = createTRPCRouter({
@@ -54,33 +73,29 @@ export const openAIRouter = createTRPCRouter({
   /**
    * Chat-based message generation
    */
-  chatGenerate: publicProcedure
+  chatGenerateWithFunctions: publicProcedure
     .input(chatGenerateSchema)
-    .mutation(async ({ input }): Promise<OpenAI.API.Chat.Response> => {
+    .output(chatGenerateWithFunctionsOutputSchema)
+    .mutation(async ({ input }) => {
 
-      const { access, model, history } = input;
-      const requestBody: OpenAI.Wire.ChatCompletion.Request = openAICompletionRequest(model, history, false);
-      let wireCompletions: OpenAI.Wire.ChatCompletion.Response;
+      const { access, model, history, functions } = input;
+      const isFunctionsCall = !!functions && functions.length > 0;
 
-      // try {
-      wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(access, requestBody, '/v1/chat/completions');
-      // } catch (error: any) {
-      //   // NOTE: disabled on 2023-06-19: show all errors, 429 is not that common now, and could explain issues
-      //   // don't log 429 errors on the server-side, they are expected
-      //   if (!error || !(typeof error.startsWith === 'function') || !error.startsWith('Error: 429 · Too Many Requests'))
-      //     console.error('api/openai/chat error:', error);
-      //   throw error;
-      // }
+      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(
+        access,
+        openAIChatCompletionRequest(model, history, isFunctionsCall ? functions : null, false),
+        '/v1/chat/completions',
+      );
 
+      // expect a single output
       if (wireCompletions?.choices?.length !== 1)
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
+      const { message, finish_reason } = wireCompletions.choices[0];
 
-      const singleChoice = wireCompletions.choices[0];
-      return {
-        role: singleChoice.message.role,
-        content: singleChoice.message.content,
-        finish_reason: singleChoice.finish_reason,
-      };
+      // check for a function output
+      return finish_reason === 'function_call'
+        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
+        : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
     }),
 
   /**
@@ -147,6 +162,7 @@ export const openAIRouter = createTRPCRouter({
 type AccessSchema = z.infer<typeof accessSchema>;
 type ModelSchema = z.infer<typeof modelSchema>;
 type HistorySchema = z.infer<typeof historySchema>;
+type FunctionsSchema = z.infer<typeof functionsSchema>;
 
 async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
@@ -171,7 +187,11 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
         : `[Issue] ${response.statusText}`,
     });
   }
-  return await response.json() as TOut;
+  try {
+    return await response.json();
+  } catch (error: any) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] ${error?.message || error}` });
+  }
 }
 
 export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
@@ -203,14 +223,71 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   };
 }
 
-export function openAICompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionRequest(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
-    // ...(functions && { functions: functions, function_call: 'auto', }),
+    ...(functions && { functions: functions, function_call: 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
     stream,
     n: 1,
+  };
+}
+
+function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wire.ChatCompletion.ResponseFunctionCall) {
+  // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
+  if (!isFunctionsCall)
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[OpenAI Issue] Received a function call without a function call request`,
+    });
+
+  // parse the function call
+  const fcMessage = message as any as OpenAI.Wire.ChatCompletion.ResponseFunctionCall;
+  if (fcMessage.content !== null)
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[OpenAI Issue] Expected a function call, got a message`,
+    });
+
+  // got a function call, so parse it
+  const fc = fcMessage.function_call;
+  if (!fc || !fc.name || !fc.arguments)
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[OpenAI Issue] Issue with the function call, missing name or arguments`,
+    });
+
+  // decode the function call
+  const fcName = fc.name;
+  let fcArgs: object;
+  try {
+    fcArgs = JSON.parse(fc.arguments);
+  } catch (error: any) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[OpenAI Issue] Issue with the function call, arguments are not valid JSON`,
+    });
+  }
+
+  return {
+    function_name: fcName,
+    function_arguments: fcArgs,
+  };
+}
+
+function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
+  // validate the message
+  if (message.content === null)
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[OpenAI Issue] Expected a message, got a null message`,
+    });
+
+  return {
+    role: message.role,
+    content: message.content,
+    finish_reason: finish_reason,
   };
 }
