@@ -75,6 +75,7 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
             if (close)
               controller.terminate();
           } catch (error: any) {
+            // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
             controller.enqueue(textEncoder.encode(` - [AI ISSUE] ${error?.message || error}`));
             controller.terminate();
           }
