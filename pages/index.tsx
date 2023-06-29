@@ -5,7 +5,7 @@ import { AppLayout } from '~/common/layouts/AppLayout';
 import { Chat } from '../src/apps/chat/Chat';
 
 
-export default function Home() {
+export default function HomePage() {
   // const router = useRouter();
   // React.useEffect(() => {
   //   // noinspection JSIgnoredPromiseFromCall
