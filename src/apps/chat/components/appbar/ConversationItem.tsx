@@ -123,6 +123,7 @@ export function ConversationItem(props: {
 
       )}
 
+      {/* // TODO: Commented code */}
       {/* Edit */}
       {/*<IconButton*/}
       {/*  variant='plain' color='neutral'*/}
