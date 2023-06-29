@@ -115,7 +115,7 @@ async function streamAssistantMessage(
 
   try {
 
-    const response = await fetch('/api/openai/stream-chat', {
+    const response = await fetch('/api/llms/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
