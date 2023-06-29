@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
@@ -204,9 +205,15 @@ export function Composer(props: {
     }
   };
 
-  const handleShowChatMode = (event: React.MouseEvent<HTMLAnchorElement>) => setChatModeMenuAnchor(event.currentTarget);
+  const handleToggleChatMode = (event: React.MouseEvent<HTMLAnchorElement>) =>
+    setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
 
   const handleHideChatMode = () => setChatModeMenuAnchor(null);
+
+  const handleSetChatModeId = (chatModeId: ChatModeId) => {
+    handleHideChatMode();
+    props.setChatModeId(chatModeId);
+  };
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
@@ -418,8 +425,18 @@ export function Composer(props: {
     ? 'Tell me what you need, and drop source files...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
+  const isImmediate = props.chatModeId === 'immediate';
   const isFollowUp = props.chatModeId === 'immediate-follow-up';
   const isReAct = props.chatModeId === 'react';
+
+  const chatButton = (
+    <Button
+      fullWidth variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode} endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+    >
+      {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
+    </Button>
+  );
 
   return (
     <Box sx={props.sx}>
@@ -575,14 +592,13 @@ export function Composer(props: {
                   >
                     Stop
                   </Button>
-                ) : (
-                  <Button
-                    fullWidth variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-                    onClick={handleSendClicked} onDoubleClick={handleShowChatMode}
-                    endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
-                  >
-                    {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
-                  </Button>
+                ) : isImmediate ? chatButton : (
+                  <ButtonGroup variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                    {chatButton}
+                    <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
+                      <ExpandLessIcon />
+                    </IconButton>
+                  </ButtonGroup>
                 )}
             </Box>
 
@@ -601,7 +617,7 @@ export function Composer(props: {
 
         {/* Mode selector */}
         {!!chatModeMenuAnchor && (
-          <ChatModeMenu anchorEl={chatModeMenuAnchor} chatModeId={props.chatModeId} onSetChatModeId={props.setChatModeId} onClose={handleHideChatMode} />
+          <ChatModeMenu anchorEl={chatModeMenuAnchor} chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId} onClose={handleHideChatMode} />
         )}
 
         {/* Sent messages menu */}
