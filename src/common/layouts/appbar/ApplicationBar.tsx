@@ -42,8 +42,12 @@ function CommonContextItems(props: { onClose: () => void }) {
     <MenuItem onClick={handleShowSettings}>
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
-      <IconButton variant='outlined' color='neutral' sx={{ ml: 'auto' }} onClick={handleToggleDarkMode}>
-        {colorMode === 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
+      <IconButton
+        variant='outlined' color='neutral'
+        onClick={handleToggleDarkMode}
+        sx={{ ml: 'auto' }}
+      >
+        {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
       </IconButton>
     </MenuItem>
 
