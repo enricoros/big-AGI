@@ -36,6 +36,4 @@ export default async function handler(req: NextRequest) {
 }
 
 // noinspection JSUnusedGlobalSymbols
-export const config = {
-  runtime: 'edge',
-};
+export const runtime = 'edge';

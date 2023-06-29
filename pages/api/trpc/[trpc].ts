@@ -21,10 +21,6 @@ export default createNextApiHandler({
 });
 */
 
-// Vercel Edge API handler
-// noinspection JSUnusedGlobalSymbols
-export const config = { runtime: 'edge' };
-
 export default async function handler(req: NextRequest) {
   return fetchRequestHandler({
     endpoint: '/api/trpc',
@@ -37,3 +33,6 @@ export default async function handler(req: NextRequest) {
         : undefined,
   });
 }
+
+// noinspection JSUnusedGlobalSymbols
+export const runtime = 'edge';
