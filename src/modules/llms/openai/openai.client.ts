@@ -20,7 +20,7 @@ export const callChatWithFunctions = async (llm: DLLM, messages: VChatMessageIn[
 /**
  * This function either returns the LLM message, or function calls, or throws a descriptive error string
  */
-async function callChatOverloaded<TOut extends VChatMessageOrFunctionCallOut>(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number): Promise<TOut> {
+async function callChatOverloaded<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number): Promise<TOut> {
   // access params (source)
   const partialSetup = llm._source.setup as Partial<SourceSetupOpenAI>;
   const sourceSetupOpenAI = normalizeOAISetup(partialSetup);
