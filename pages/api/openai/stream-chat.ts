@@ -1,11 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createParser } from 'eventsource-parser';
+import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { ChatGenerateSchema, chatGenerateSchema, openAIAccess, openAIChatCompletionRequest } from '~/modules/llms/openai/openai.router';
+import { chatGenerateSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 
 
-async function rethrowOpenAIError(response: Response) {
+/**
+ * Vendor stream parsers
+ * - The vendor can decide to terminate the connection (close: true), transmitting anything in 'text' before doing so
+ * - The vendor can also throw from this function, which will error and terminate the connection
+ */
+type AIStreamParser = (data: string) => { text: string, close: boolean };
+
+
+// The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
+// communicate parameters before the text starts flowing to the client.
+function parseOpenAIStream(): AIStreamParser {
+  let hasBegun = false;
+
+  return data => {
+
+    const json: OpenAI.Wire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+
+    // an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
+    if (json.error)
+      return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
+
+    let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+        model: json.model,
+      };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    // workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
+    const close = !!json.choices[0].finish_reason;
+    return { text, close };
+  };
+}
+
+
+/**
+ * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
+ * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
+ */
+export function createEventStreamTransformer(vendorTextParser: AIStreamParser): TransformStream<Uint8Array, Uint8Array> {
+  const textDecoder = new TextDecoder();
+  const textEncoder = new TextEncoder();
+  let eventSourceParser: EventSourceParser;
+
+  return new TransformStream({
+    start: async (controller): Promise<void> => {
+      eventSourceParser = createEventsourceParser(
+        (event: ParsedEvent | ReconnectInterval) => {
+
+          // ignore 'reconnect-interval' and events with no data
+          if (event.type !== 'event' || !('data' in event))
+            return;
+
+          // event stream termination, close our transformed stream
+          if (event.data === '[DONE]') {
+            controller.terminate();
+            return;
+          }
+
+          try {
+            const { text, close } = vendorTextParser(event.data);
+            if (text)
+              controller.enqueue(textEncoder.encode(text));
+            if (close)
+              controller.terminate();
+          } catch (error: any) {
+            controller.enqueue(textEncoder.encode(` - [AI ISSUE] ${error?.message || error}`));
+            controller.terminate();
+          }
+        },
+      );
+    },
+
+    // stream=true is set because the data is not guaranteed to be final and un-chunked
+    transform: (chunk: Uint8Array) => {
+      eventSourceParser.feed(textDecoder.decode(chunk, { stream: true }));
+    },
+  });
+}
+
+async function throwOpenAINotOkay(response: Response) {
   if (!response.ok) {
     let errorPayload: object | null = null;
     try {
@@ -17,127 +101,52 @@ async function rethrowOpenAIError(response: Response) {
   }
 }
 
-
-async function chatStreamRepeater(access: ChatGenerateSchema['access'], model: ChatGenerateSchema['model'], history: ChatGenerateSchema['history'], signal: AbortSignal): Promise<ReadableStream> {
-
-  // Handle the abort event when the connection is closed by the client
-  signal.addEventListener('abort', () => {
-    console.log('Client closed the connection.');
-  });
-
-  // begin event streaming from the OpenAI API
-  let upstreamResponse: Response;
-  try {
-
-    // prepare request objects
-    const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-    const body: OpenAI.Wire.ChatCompletion.Request = openAIChatCompletionRequest(model, history, null, true);
-
-    // perform the request
-    upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body), signal });
-    await rethrowOpenAIError(upstreamResponse);
-
-  } catch (error: any) {
-    console.log(error);
-    const message = '[OpenAI Issue] ' + (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
-    throw new Error(message);
-  }
-
-
-  // decoding and re-encoding loop
-  async function onReadableStreamStart(controller: ReadableStreamDefaultController) {
-
-    let hasBegun = false;
-    const textEncoder = new TextEncoder();
-
-    // stream response (SSE) from OpenAI is split into multiple chunks. this function
-    // will parse the event into a text stream, and re-emit it to the client
-    const upstreamParser = createParser(event => {
-
-      // ignore reconnect interval
-      if (event.type !== 'event')
-        return;
-
-      // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
-      if (event.data === '[DONE]') {
-        controller.close();
-        return;
-      }
-
-      try {
-        const json: OpenAI.Wire.ChatCompletion.ResponseStreamingChunk = JSON.parse(event.data);
-
-        // handle errors here
-        if (json.error) {
-          // suppress this new error that popped up on 2023-06-19
-          if (json.error.message !== 'The server had an error while processing your request. Sorry about that!')
-            console.error('stream-chat: unexpected error from upstream', json.error);
-          controller.enqueue(textEncoder.encode(`[OpenAI Issue] ${json.error.message}`));
-          controller.close();
-          return;
-        }
-
-        // ignore any 'role' delta update
-        if (json.choices[0].delta?.role && !json.choices[0].delta?.content)
-          return;
-
-        // stringify and send the first packet as a JSON object
-        if (!hasBegun) {
-          hasBegun = true;
-          const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
-            model: json.model,
-          };
-          controller.enqueue(textEncoder.encode(JSON.stringify(firstPacket)));
-        }
-
-        // transmit the text stream
-        const text = json.choices[0].delta?.content || '';
-        controller.enqueue(textEncoder.encode(text));
-
-        // Workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
-        if (json.choices[0].finish_reason) {
-          controller.close();
-          return;
-        }
-
-      } catch (error) {
-        // maybe parse error
-        console.error('stream-chat: error parsing chunked response', error, event);
-        controller.error(error);
-      }
-    });
-
-    // https://web.dev/streams/#asynchronous-iteration
-    const decoder = new TextDecoder();
-    for await (const upstreamChunk of upstreamResponse.body as any)
-      upstreamParser.feed(decoder.decode(upstreamChunk, { stream: true }));
-  }
-
+function createEmptyReadableStream(): ReadableStream {
   return new ReadableStream({
-    start: onReadableStreamStart,
-    cancel: (reason) => console.log('chatStreamRepeater cancelled', reason),
+    start: (controller) => controller.close(),
   });
 }
 
 
 export default async function handler(req: NextRequest): Promise<Response> {
+
+  // inputs - reuse the tRPC schema
+  const { access, model, history } = chatGenerateSchema.parse(await req.json());
+
+  // prepare the API request data
+  const { headers, url } = openAIAccess(access, '/v1/chat/completions');
+  const body = openAIChatCompletionPayload(model, history, null, true);
+
+  // begin event streaming from the OpenAI API
+  let upstreamResponse: Response;
   try {
-    const { access, model, history } = chatGenerateSchema.parse(await req.json());
-    const chatResponseStream: ReadableStream = await chatStreamRepeater(access, model, history, req.signal);
-    return new NextResponse(chatResponseStream);
+    upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
+    await throwOpenAINotOkay(upstreamResponse);
   } catch (error: any) {
-    if (error.name === 'AbortError') {
-      console.log('Fetch request aborted in handler');
-      return new NextResponse('Request aborted by the user.', { status: 499 }); // Use 499 status code for client closed request
-    } else if (error.code === 'ECONNRESET') {
-      console.log('Connection reset by the client in handler');
-      return new NextResponse('Connection reset by the client.', { status: 499 }); // Use 499 status code for client closed request
-    } else {
-      console.error('api/openai/stream-chat error:', error);
-      return new NextResponse(`[Issue] ${error}`, { status: 400 });
-    }
+    const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
+    console.log(`/api/llms/stream: fetch issue: ${fetchOrVendorError}`);
+    throw new Error('[OpenAI Issue] ' + fetchOrVendorError);
   }
+
+  /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
+   * This replaces the former (custom) implementation that used to return a ReadableStream directly, and upon start,
+   * it was blindly fetching the upstream response and piping it to the client.
+   *
+   * We now use backpressure, as explained on: https://sdk.vercel.ai/docs/concepts/backpressure-and-cancellation
+   *
+   * NOTE: we have not benchmarked to see if there is performance impact by using this approach - we do want to have
+   * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
+   */
+  const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
+    .pipeThrough(createEventStreamTransformer(parseOpenAIStream()));
+
+  return new NextResponse(chatResponseStream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
 
 // noinspection JSUnusedGlobalSymbols
-export const config = { runtime: 'edge' };
+export const runtime = 'edge';
