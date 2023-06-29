@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Switch, useColorScheme } from '@mui/joy';
+import { Badge, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
@@ -18,25 +19,32 @@ function CommonContextItems(props: { onClose: () => void }) {
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const handleToggleDarkMode = () => setColorMode(colorMode === 'dark' ? 'light' : 'dark');
+  const handleToggleDarkMode = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setColorMode(colorMode === 'dark' ? 'light' : 'dark');
+  };
 
-  const handleShowSettings = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleShowSettings = (event: React.MouseEvent) => {
+    event.stopPropagation();
     useUIStateStore.getState().openSettings();
     props.onClose();
   };
 
   return <>
 
-    <MenuItem onClick={handleToggleDarkMode}>
-      <ListItemDecorator><DarkModeIcon /></ListItemDecorator>
-      Dark
-      <Switch checked={colorMode === 'dark'} onChange={handleToggleDarkMode} sx={{ ml: 'auto' }} />
-    </MenuItem>
+    {/*<MenuItem onClick={handleToggleDarkMode}>*/}
+    {/*  <ListItemDecorator><DarkModeIcon /></ListItemDecorator>*/}
+    {/*  Dark*/}
+    {/*  <Switch checked={colorMode === 'dark'} onChange={handleToggleDarkMode} sx={{ ml: 'auto' }} />*/}
+    {/*</MenuItem>*/}
 
+    {/* Preferences |...| Dark Mode Toggle */}
     <MenuItem onClick={handleShowSettings}>
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
+      <IconButton variant='outlined' color='neutral' sx={{ ml: 'auto' }} onClick={handleToggleDarkMode}>
+        {colorMode === 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
+      </IconButton>
     </MenuItem>
 
   </>;
