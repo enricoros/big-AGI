@@ -115,7 +115,10 @@ const SentMessagesMenu = (props: {
     {props.messages.map((item, index) =>
       <MenuItem
         key={'composer-sent-' + index}
-        onClick={() => { props.onPaste(item.text); props.onClose(); }}
+        onClick={() => {
+          props.onPaste(item.text);
+          props.onClose();
+        }}
         sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline', overflow: 'hidden' }}
       >
         {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
@@ -578,7 +581,7 @@ export function Composer(props: {
                     onClick={handleSendClicked} onDoubleClick={handleShowChatMode}
                     endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
-                    {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat' }
+                    {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
                   </Button>
                 )}
             </Box>

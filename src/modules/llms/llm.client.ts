@@ -21,13 +21,10 @@ export interface VChatMessageOut {
   finish_reason: 'stop' | 'length' | null;
 }
 
-export interface VChatFunctionCallOut {
+export interface VChatMessageOrFunctionCallOut extends VChatMessageOut {
   function_name: string;
   function_arguments: object | null;
 }
-
-export type VChatMessageOrFunctionCallOut = VChatMessageOut | VChatFunctionCallOut;
-
 
 
 export async function callChatGenerate(llmId: DLLMId, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
