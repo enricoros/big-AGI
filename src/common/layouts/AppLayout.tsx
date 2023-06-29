@@ -15,7 +15,7 @@ import { NoSSR } from '../components/NoSSR';
 
 
 export function AppLayout(props: {
-  noAppBar?: boolean, noSettings?: boolean, noModelsSetup?: boolean,
+  noAppBar?: boolean, suspendAutoModelsSetup?: boolean,
   children: React.ReactNode,
 }) {
   // external state
@@ -41,7 +41,10 @@ export function AppLayout(props: {
           },
         }}>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+        <Box sx={{
+          display: 'flex', flexDirection: 'column',
+          height: '100dvh',
+        }}>
 
           {!props.noAppBar && <ApplicationBar sx={{
             zIndex: 20, // position: 'sticky', top: 0,
@@ -54,9 +57,9 @@ export function AppLayout(props: {
 
       </Container>
 
-      {!props.noSettings && <SettingsModal />}
+      <SettingsModal />
 
-      {!props.noModelsSetup && <Configurator />}
+      <Configurator suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     </NoSSR>
   );

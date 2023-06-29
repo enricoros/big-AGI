@@ -1,18 +1,42 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, useColorScheme } from '@mui/joy';
+import { Badge, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+import { Brand } from '~/common/brand';
+import { Link } from '~/common/components/Link';
+import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { useUIStateStore } from '~/common/state/store-ui';
 
 import { SupportMenuItem } from './SupportMenuItem';
 import { useApplicationBarStore } from './store-applicationbar';
+
+
+function AppBarTitle() {
+  return (
+    <Link href='/'>
+      <LogoSquircle sx={{
+        width: 32,
+        height: 32,
+        color: 'white',
+        // filter: 'invert(1)',
+      }} />
+      <Typography sx={{
+        ml: { xs: 1, md: 2 },
+        color: 'white',
+      }}>
+        {Brand.Title.Base}
+      </Typography>
+    </Link>
+  );
+};
 
 
 function CommonContextItems(props: { onClose: () => void }) {
@@ -93,18 +117,26 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       }}>
 
       {/* Application-Menu Button */}
-      <IconButton disabled={!!applicationMenuAnchor || !appMenuItems} variant='plain' onClick={event => setApplicationMenuAnchor(event.currentTarget)}>
-        <Badge variant='solid' size='sm' badgeContent={appMenuBadge ? appMenuBadge : 0}>
-          <MenuIcon />
-        </Badge>
-      </IconButton>
+      {!!centerItems ? (
+        <IconButton disabled={!!applicationMenuAnchor || !appMenuItems} variant='plain' onClick={event => setApplicationMenuAnchor(event.currentTarget)}>
+          <Badge variant='solid' size='sm' badgeContent={appMenuBadge ? appMenuBadge : 0}>
+            <MenuIcon />
+          </Badge>
+        </IconButton>
+      ) : (
+        <IconButton component={Link} href='/' noLinkStyle variant='plain'>
+          <Badge variant='solid' size='sm' badgeContent={appMenuBadge ? appMenuBadge : 0}>
+            <ArrowBackIcon />
+          </Badge>
+        </IconButton>
+      )}
 
-      {centerItems && <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
-        {centerItems}
-      </Box>}
+      <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
+        {!!centerItems ? centerItems : <AppBarTitle />}
+      </Box>
 
       {/* Context-Menu Button */}
-      <IconButton disabled={!!contextMenuAnchor || !contextMenuItems} variant='plain' onClick={event => setContextMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!contextMenuAnchor /*|| !contextMenuItems*/} variant='plain' onClick={event => setContextMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
@@ -126,7 +158,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       placement='bottom-end' disablePortal={false}
     >
       {commonContextItems}
-      <ListDivider />
+      {!!contextMenuItems && <ListDivider />}
       {contextMenuItems}
       <SupportMenuItem />
     </Menu>

@@ -15,7 +15,7 @@ import { createDefaultModelSource } from '../vendor.registry';
 import { useModelsStore } from '../store-llms';
 
 
-export function Configurator() {
+export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
 
   // local state
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
@@ -36,9 +36,9 @@ export function Configurator() {
 
   // if no sources at startup, open the modal
   React.useEffect(() => {
-    if (!selectedSourceId)
+    if (!selectedSourceId && !props.suspendAutoModelsSetup)
       openModelsSetup();
-  }, [selectedSourceId, openModelsSetup]);
+  }, [selectedSourceId, openModelsSetup, props.suspendAutoModelsSetup]);
 
   // add the default source on cold - will require setup
   React.useEffect(() => {

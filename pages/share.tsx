@@ -2,7 +2,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
-import { Alert, Box, Button, CircularProgress, Typography } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Typography, useTheme } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { useComposerStore } from '../src/apps/chat/components/composer/store-composer';
@@ -42,6 +42,7 @@ export default function SharePage() {
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   // external state
+  const theme = useTheme();
   const { query, push: routerPush, replace: routerReplace } = useRouter();
 
 
@@ -87,7 +88,7 @@ export default function SharePage() {
       setIsDownloading(true);
       // TEMP: until the Browse module is ready, just use the URL, verbatim
       queueComposerTextAndLaunchApp(intentURL);
-      setIsDownloading(false)
+      setIsDownloading(false);
       /*callBrowseFetchSinglePage(intentURL)
         .then(pageContent => {
           if (pageContent)
@@ -102,14 +103,12 @@ export default function SharePage() {
 
 
   return (
-    <AppLayout noSettings noModelsSetup>
+    <AppLayout suspendAutoModelsSetup>
 
       <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
+        background: theme.vars.palette.background.level2,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        flexGrow: 1,
       }}>
 
         {/* Logo with Circular Progress  */}
