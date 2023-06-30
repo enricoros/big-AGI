@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Switch, Tooltip } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import ScienceIcon from '@mui/icons-material/Science';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -163,7 +164,7 @@ export function UISettings() {
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Goofy labs</FormLabel>
-          <FormHelperText>{goofyLabs ? 'Experiment' : 'Disabled'}</FormHelperText>
+          <FormHelperText>{goofyLabs ? <>Experiment<ScienceIcon /></> : 'Disabled'}</FormHelperText>
         </Box>
         <Switch checked={goofyLabs} onChange={handleGoofyLabsChange}
                 endDecorator={goofyLabs ? 'On' : 'Off'}
