@@ -1,10 +1,9 @@
 import * as React from 'react';
 
 import { Chat } from '../src/apps/chat/Chat';
+import { useShowNewsOnUpdate } from '../src/apps/news/news.hooks';
 
 import { AppLayout } from '~/common/layouts/AppLayout';
-
-import { useShowNewsOnUpdate } from './news';
 
 
 export default function HomePage() {
