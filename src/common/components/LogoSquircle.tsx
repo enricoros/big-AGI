@@ -7,7 +7,7 @@ export const LogoSquircle = (props: {
   sx?: SxProps
 }) =>
   <SvgIcon
-    titleAccess='big-AGI logo'
+    titleAccess='Application logo'
     viewBox='0 0 6.3500006 6.3499996' width='24' height='24'
     fill='currentColor'
     stroke='none' strokeWidth={0.691986} strokeLinecap='round' strokeLinejoin='round'
