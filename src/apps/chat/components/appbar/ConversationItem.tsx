@@ -8,6 +8,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DConversation, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { SystemPurposes } from '../../../../data';
 
 
@@ -28,6 +29,7 @@ export function ConversationItem(props: {
   // state
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [deleteArmed, setDeleteArmed] = React.useState(false);
+  const doubleClickToEdit = useUIPreferencesStore(state => state.doubleClickToEdit);
 
   // bind to conversation
   const cState = useChatStore(state => {
@@ -111,7 +113,7 @@ export function ConversationItem(props: {
       {/* Text */}
       {!isEditingTitle ? (
 
-        <Box onDoubleClick={handleEditBegin} sx={{ flexGrow: 1 }}>
+        <Box onDoubleClick={(e) => doubleClickToEdit ? handleEditBegin() : null } sx={{ flexGrow: 1 }}>
           {DEBUG_CONVERSATION_IDs ? props.conversationId.slice(0, 10) : title}{assistantTyping && '...'}
         </Box>
 
@@ -121,6 +123,7 @@ export function ConversationItem(props: {
 
       )}
 
+      {/* // TODO: Commented code */}
       {/* Edit */}
       {/*<IconButton*/}
       {/*  variant='plain' color='neutral'*/}
