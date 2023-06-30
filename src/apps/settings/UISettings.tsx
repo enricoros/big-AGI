@@ -63,6 +63,7 @@ export function UISettings() {
   // external state
   const {
     centerMode, setCenterMode,
+    doubleClickToEdit, setDoubleClickToEdit,
     enterToSend, setEnterToSend,
     goofyLabs, setGoofyLabs,
     renderMarkdown, setRenderMarkdown,
@@ -70,6 +71,7 @@ export function UISettings() {
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
+    doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
     goofyLabs: state.goofyLabs, setGoofyLabs: state.setGoofyLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
@@ -80,6 +82,8 @@ export function UISettings() {
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
   const handleEnterToSendChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterToSend(event.target.checked);
+
+  const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
@@ -112,6 +116,16 @@ export function UISettings() {
         </Box>
         <Switch checked={enterToSend} onChange={handleEnterToSendChange}
                 endDecorator={enterToSend ? 'On' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <FormLabel>Double click to edit</FormLabel>
+          <FormHelperText>{doubleClickToEdit ? 'Double click' : 'Three dots'}</FormHelperText>
+        </Box>
+        <Switch checked={doubleClickToEdit} onChange={handleDoubleClickToEditChange}
+                endDecorator={doubleClickToEdit ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
