@@ -54,6 +54,9 @@ interface UIPreferencesStore {
   enterToSend: boolean;
   setEnterToSend: (enterToSend: boolean) => void;
 
+  goofyLabs: boolean;
+  setGoofyLabs: (goofyLabs: boolean) => void;
+
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
@@ -80,6 +83,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       enterToSend: true,
       setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
+
+      goofyLabs: false,
+      setGoofyLabs: (goofyLabs: boolean) => set({ goofyLabs }),
 
       renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),

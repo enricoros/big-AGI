@@ -63,12 +63,14 @@ export function UISettings() {
   const {
     centerMode, setCenterMode,
     enterToSend, setEnterToSend,
+    goofyLabs, setGoofyLabs,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
+    goofyLabs: state.goofyLabs, setGoofyLabs: state.setGoofyLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
@@ -81,6 +83,8 @@ export function UISettings() {
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
+  const handleGoofyLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setGoofyLabs(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
@@ -154,6 +158,16 @@ export function UISettings() {
           </FormHelperText>
         </Box>
         <LanguageSelect />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <FormLabel>Goofy labs</FormLabel>
+          <FormHelperText>{goofyLabs ? 'Experiment' : 'Disabled'}</FormHelperText>
+        </Box>
+        <Switch checked={goofyLabs} onChange={handleGoofyLabsChange}
+                endDecorator={goofyLabs ? 'On' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
     </Stack>
