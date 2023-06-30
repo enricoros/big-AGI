@@ -1,3 +1,5 @@
+import { Brand } from '~/common/brand';
+
 /**
  * Returns 'true' if the application is been executed as a 'pwa' (e.g. installed, stand-alone)
  */
@@ -24,4 +26,18 @@ export const isChromeOnDesktopWindows = (): boolean => {
     return agent.indexOf('Windows') > -1 && agent.indexOf('Chrome') > -1 && agent.indexOf('Mobile') === -1;
   }
   return false;
-}
+};
+
+
+export const clientHostName = (): string => {
+  if (typeof window !== 'undefined')
+    return window.location.host;
+  return '';
+};
+
+export const clientUtmSource = (campaign?: string): string => {
+  const host = clientHostName();
+  if (!host)
+    return '';
+  return '?utm_source=' + host + '&utm_medium=' + Brand.Title.Base.toLowerCase() + (campaign ? `&utm_campaign=${campaign}` : '');
+};

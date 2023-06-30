@@ -1,6 +1,6 @@
 {
   "name": "big-agi",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "engines": {
     "node": "^18.0.0"

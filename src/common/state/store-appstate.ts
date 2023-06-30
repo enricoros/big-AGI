@@ -6,12 +6,12 @@ import { persist } from 'zustand/middleware';
 
 interface AppStateData {
   usageCount: number;
-  lastSeenChangelogVersion: number;
+  lastSeenNewsVersion: number;
   suppressedItems: Record<string, boolean>;
 }
 
 interface AppStateActions {
-  setLastSeenChangelogVersion: (version: number) => void;
+  setLastSeenNewsVersion: (version: number) => void;
   suppressItem: (key: string) => void;
   unSuppressItem: (key: string) => void;
   resetSuppressedItems: () => void;
@@ -23,10 +23,10 @@ export const useAppStateStore = create<AppStateData & AppStateActions>()(
     (set) => ({
 
       usageCount: 0,
-      lastSeenChangelogVersion: 0,
+      lastSeenNewsVersion: 0,
       suppressedItems: {},
 
-      setLastSeenChangelogVersion: (version: number) => set({ lastSeenChangelogVersion: version }),
+      setLastSeenNewsVersion: (version: number) => set({ lastSeenNewsVersion: version }),
 
       suppressItem: (key: string) => set((state) => ({
         suppressedItems: {

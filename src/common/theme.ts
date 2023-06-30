@@ -34,6 +34,14 @@ export const theme = extendTheme({
     body: inter.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
+  /*typography: {
+    display1: {
+      fontSize: 'var(--joy-fontSize-xl5, 3rem)',
+      background: 'linear-gradient(-30deg, var(--joy-palette-primary-plainColor), var(--joy-palette-primary-solidBg))',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+    },
+  },*/
   colorSchemes: {
     light: {
       palette: {
