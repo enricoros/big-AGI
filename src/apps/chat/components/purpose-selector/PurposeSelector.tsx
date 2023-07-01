@@ -5,7 +5,9 @@ import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typogr
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { Link } from '~/common/components/Link';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -181,6 +183,20 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
               </Button>
             </Grid>
           ))}
+          <Grid>
+            <Button
+              variant='soft' color='danger'
+              component={Link} href='/personas'
+              sx={{
+                height: bpTileSize,
+                width: bpTileSize,
+                background: 'background.level2',
+                border: `1px dashed`,
+              }}
+            >
+              <YouTubeIcon sx={{ fontSize: 'xl5' }} />
+            </Button>
+          </Grid>
         </Grid>
 
         <Typography
