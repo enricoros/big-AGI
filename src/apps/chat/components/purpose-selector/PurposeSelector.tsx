@@ -16,7 +16,7 @@ import { usePurposeStore } from './store-purposes';
 //
 // Absolutely dislike this workaround, but it's the only way I found to make it work
 
-const bpTileSize = { xs: 150, md: 160, xl: 170 };
+const bpTileSize = { xs: 140, md: 150, xl: 170 };
 const tileCols = [3, 4, 6];
 const tileSpacing = 1;
 const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) => {
