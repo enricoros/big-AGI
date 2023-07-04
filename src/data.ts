@@ -79,7 +79,7 @@ let SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     examples: ['minimalist logo for a tech startup', 'infographic on climate change', 'suggest color schemes for a website'],
   },
   Generic: {
-    title: 'Default',
+    title: 'Generic',
     description: 'Helps you think',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
     symbol: '🧠',
@@ -94,8 +94,8 @@ let SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 };
 
 try {
-  const systemPurposesJson = require('../customization/systemPurposes.json');
-  const validatedSystemPurposes = validateSystemPurposes(systemPurposesJson);
+  const systemPurposesJson = require('../customization/system-purposes.json');
+  const validatedSystemPurposes = validateSystemPurposes(systemPurposesJson.Purposes);
 
   if (validatedSystemPurposes) {
     SystemPurposes = { ...SystemPurposes, ...validatedSystemPurposes };

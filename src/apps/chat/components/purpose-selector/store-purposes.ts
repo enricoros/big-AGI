@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
+import systemPurposesJson from './../../../../../customization/system-purposes.json';
 
 interface PurposeStore {
 
@@ -18,7 +18,7 @@ export const usePurposeStore = create<PurposeStore>()(
     (set) => ({
 
       // default state
-      hiddenPurposeIDs: ['Designer'],
+      hiddenPurposeIDs: systemPurposesJson.Settings.hiddenPurposeIDs || ['Designer'],
 
       toggleHiddenPurposeId: (purposeId: string) => {
         set(state => {
