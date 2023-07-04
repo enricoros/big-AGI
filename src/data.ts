@@ -94,7 +94,7 @@ let SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 };
 
 try {
-  const systemPurposesJson = require('../systemPurposes.json');
+  const systemPurposesJson = require('../customization/systemPurposes.json');
   const validatedSystemPurposes = validateSystemPurposes(systemPurposesJson);
 
   if (validatedSystemPurposes) {
