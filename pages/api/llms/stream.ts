@@ -17,6 +17,7 @@ type AIStreamParser = (data: string) => { text: string, close: boolean };
 // communicate parameters before the text starts flowing to the client.
 function parseOpenAIStream(): AIStreamParser {
   let hasBegun = false;
+  let hasWarned = false;
 
   return data => {
 
@@ -26,6 +27,12 @@ function parseOpenAIStream(): AIStreamParser {
     if (json.error)
       return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
 
+    if (json.choices.length !== 1)
+      throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
+
+    const index = json.choices[0].index;
+    if (index !== 0)
+      throw new Error(`[OpenAI Issue] Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
     // hack: prepend the model name to the first packet
@@ -35,6 +42,12 @@ function parseOpenAIStream(): AIStreamParser {
         model: json.model,
       };
       text = JSON.stringify(firstPacket) + text;
+    }
+
+    // if there's a warning, log it once
+    if (json.warning && !hasWarned) {
+      hasWarned = true;
+      console.log('/api/llms/stream: OpenAI stream warning:', json.warning);
     }
 
     // workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
@@ -116,7 +129,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
 
   // prepare the API request data
   const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-  const body = openAIChatCompletionPayload(model, history, null, true);
+  const body = openAIChatCompletionPayload(model, history, null, 1, true);
 
   // begin event streaming from the OpenAI API
   let upstreamResponse: Response;
