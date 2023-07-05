@@ -107,6 +107,8 @@ export namespace OpenAI {
           delta: Partial<ResponseMessage>;
           finish_reason: 'stop' | 'length' | null;
         }[];
+        // undocumented, but can be present, e.g. "This model version is deprecated and a newer version \'gpt-4-0613\' is available. Migrate before..."
+        warning?: string;
         // this could also be an error - first experienced on 2023-06-19 on streaming APIs (undocumented)
         error?: {
           message: string;

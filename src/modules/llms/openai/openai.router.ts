@@ -83,7 +83,7 @@ export const openAIRouter = createTRPCRouter({
 
       const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(
         access,
-        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, false),
+        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, 1, false),
         '/v1/chat/completions',
       );
 
@@ -223,15 +223,15 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   };
 }
 
-export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
     ...(functions && { functions: functions, function_call: 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
+    n,
     stream,
-    n: 1,
   };
 }
 
