@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, ListDivider, Menu, MenuItem, Radio, Typography } from '@mui/joy';
 
-import { ChatModeId, ChatModeItems } from '../../Chat';
+import { ChatModeId, ChatModeItems } from '../../AppChat';
 
 
 export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void, onClose: () => void, }) =>

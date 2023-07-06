@@ -65,7 +65,7 @@ function linkToOrigin() {
 }
 
 
-export function Chat() {
+export function AppChat() {
 
   // state
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');

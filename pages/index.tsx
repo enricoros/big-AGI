@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Chat } from '../src/apps/chat/Chat';
+import { AppChat } from '../src/apps/chat/AppChat';
 import { useShowNewsOnUpdate } from '../src/apps/news/news.hooks';
 
 import { AppLayout } from '~/common/layouts/AppLayout';
@@ -12,7 +12,7 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <Chat />
+      <AppChat />
     </AppLayout>
   );
 }
