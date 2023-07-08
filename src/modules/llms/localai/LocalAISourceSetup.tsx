@@ -31,7 +31,9 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
   const hasModels = !!sourceLLMs.length;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '', moderationCheck: false }, {
+  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({
+    access: { oaiKey: '', oaiHost: hostUrl, oaiOrg: '', heliKey: '', moderationCheck: false },
+  }, {
     enabled: false, //!sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => localAIToDLLM(model, source)) : [];
