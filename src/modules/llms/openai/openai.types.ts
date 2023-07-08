@@ -115,7 +115,7 @@ export namespace OpenAI {
           type: 'server_error' | string;
           param: string | null;
           code: string | null;
-        }
+        };
       }
     }
 
@@ -145,7 +145,7 @@ export namespace OpenAI {
             category_scores: { [key in ModerationCategory]: number };
             flagged: boolean;
           }
-        ]
+        ];
       }
     }
 

@@ -10,11 +10,13 @@ export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 
-export const callChat = async (llm: DLLM, messages: VChatMessageIn[], maxTokens?: number) =>
-  callChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
+export async function callChat(llm: DLLM, messages: VChatMessageIn[], maxTokens?: number) {
+  return callChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
+}
 
-export const callChatWithFunctions = async (llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) =>
-  callChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, maxTokens);
+export async function callChatWithFunctions(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) {
+  return callChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, maxTokens);
+}
 
 
 /**

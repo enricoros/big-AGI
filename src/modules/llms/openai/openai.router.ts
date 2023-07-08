@@ -48,6 +48,8 @@ const functionsSchema = z.array(z.object({
 export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
 
+const listModelsSchema = z.object({ access: accessSchema, filterGpt: z.boolean().optional() });
+
 const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
 
 
@@ -64,8 +66,6 @@ const chatGenerateWithFunctionsOutputSchema = z.union([
     function_arguments: z.record(z.any()),
   }),
 ]);
-
-
 
 
 export const openAIRouter = createTRPCRouter({
@@ -103,8 +103,8 @@ export const openAIRouter = createTRPCRouter({
    */
   moderation: publicProcedure
     .input(chatModerationSchema)
-      .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
-      const { access, text, } = input;
+    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+      const { access, text } = input;
       try {
 
         return await openaiPOST<OpenAI.Wire.Moderation.Request, OpenAI.Wire.Moderation.Response>(access, {
@@ -125,14 +125,20 @@ export const openAIRouter = createTRPCRouter({
    * List the Models available
    */
   listModels: publicProcedure
-    .input(accessSchema)
+    .input(listModelsSchema)
     .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
 
-      let wireModels: OpenAI.Wire.Models.Response;
-      wireModels = await openaiGET<OpenAI.Wire.Models.Response>(input, '/v1/models');
+      const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
 
-      // filter out the non-gpt models
-      const llms = wireModels.data?.filter(model => model.id.includes('gpt')) ?? [];
+      // filter out the non-gpt models, if requested
+      let llms = (wireModels.data || [])
+        .filter(model => !input.filterGpt || model.id.includes('gpt'));
+
+      // remove models with duplicate ids (can happen for local servers)
+      const preFilterCount = llms.length;
+      llms = llms.filter((model, index) => llms.findIndex(m => m.id === model.id) === index);
+      if (preFilterCount !== llms.length)
+        console.warn(`openai.router.listModels: Duplicate model ids found, removed ${preFilterCount - llms.length} models`);
 
       // sort by which model has the least number of '-' in the name, and then by id, decreasing
       llms.sort((a, b) => {

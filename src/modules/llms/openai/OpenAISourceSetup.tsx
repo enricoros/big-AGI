@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
+import { Alert, Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch, Typography } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
@@ -35,7 +35,10 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck }, {
+  const { isFetching, refetch, isError, error } = apiQuery.openai.listModels.useQuery({
+    access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
+    filterGpt: true,
+  }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
@@ -144,6 +147,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       </Button>
 
     </Box>
+
+    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
 
   </Box>;
 }
