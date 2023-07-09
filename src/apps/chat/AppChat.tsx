@@ -36,8 +36,8 @@ import { runReActUpdatingState } from './editors/react-tangent';
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 // definition of chat modes
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react';
-export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; } } = {
+export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react' | 'write-user';
+export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
   'immediate': {
     label: 'Chat',
     description: 'AI-powered direct responses',
@@ -45,10 +45,15 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
   'immediate-follow-up': {
     label: 'Chat & Follow-up',
     description: 'Chat with follow-up questions',
+    experimental: true,
   },
   'react': {
     label: 'Reason+Act',
     description: 'Answer your questions with ReAct and search',
+  },
+  'write-user': {
+    label: 'Write',
+    description: 'No AI response',
   },
 };
 
@@ -98,7 +103,7 @@ export function AppChat() {
     const { chatLLMId } = useModelsStore.getState();
     if (!conversationId || !chatLLMId) return;
 
-    // Command - last user message is a cmd
+    // /command: overrides the chat mode
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
     if (lastMessage?.role === 'user') {
       const pieces = extractCommands(lastMessage.text);
@@ -113,8 +118,6 @@ export function AppChat() {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
-        // if (CmdRunSearch.includes(command))
-        //   return await run...
       }
     }
 
@@ -125,10 +128,13 @@ export function AppChat() {
         case 'immediate-follow-up':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
         case 'react':
-          if (lastMessage?.text) {
-            setMessages(conversationId, history);
-            return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
-          }
+          if (!lastMessage?.text)
+            break;
+          setMessages(conversationId, history);
+          return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
+        case 'write-user':
+          setMessages(conversationId, history);
+          return;
       }
     }
 

@@ -13,6 +13,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -428,16 +429,18 @@ export function Composer(props: {
     ? 'Tell me what you need, and drop source files...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
-  const isImmediate = props.chatModeId === 'immediate';
+  // const isImmediate = props.chatModeId === 'immediate';
   const isFollowUp = props.chatModeId === 'immediate-follow-up';
   const isReAct = props.chatModeId === 'react';
+  const isWriteUser = props.chatModeId === 'write-user';
 
   const chatButton = (
     <Button
       fullWidth variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode} endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode}
+      endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
     >
-      {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
+      {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
     </Button>
   );
 
@@ -595,7 +598,7 @@ export function Composer(props: {
                   >
                     Stop
                   </Button>
-                ) : (!goofyLabs && isImmediate) ? chatButton : (
+                ) : /*(!goofyLabs && isImmediate) ? chatButton :*/ (
                   <ButtonGroup variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     {chatButton}
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
@@ -620,7 +623,11 @@ export function Composer(props: {
 
         {/* Mode selector */}
         {!!chatModeMenuAnchor && (
-          <ChatModeMenu anchorEl={chatModeMenuAnchor} chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId} onClose={handleHideChatMode} />
+          <ChatModeMenu
+            anchorEl={chatModeMenuAnchor} onClose={handleHideChatMode}
+            experimental={goofyLabs}
+            chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId}
+          />
         )}
 
         {/* Sent messages menu */}
