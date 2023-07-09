@@ -84,7 +84,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 const NotChatModels: string[] = [
-  'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2',
+  'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'gpt-3.5-turbo',
 ];
 
 
