@@ -155,7 +155,7 @@ export namespace OpenAI {
         id: string;
         object: 'model';
         created: number;
-        owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string;
+        owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string; // 'user' for Oobabooga models
         permission: any[];
         root: string;
         parent: null;

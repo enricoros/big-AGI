@@ -10,19 +10,19 @@ export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 
-export async function callChat(llm: DLLM, messages: VChatMessageIn[], maxTokens?: number) {
-  return callChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
+export async function openAICallChat(llm: DLLM, messages: VChatMessageIn[], maxTokens?: number) {
+  return openAICallChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
 }
 
-export async function callChatWithFunctions(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) {
-  return callChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, maxTokens);
+export async function openAICallChatWithFunctions(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) {
+  return openAICallChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, maxTokens);
 }
 
 
 /**
  * This function either returns the LLM message, or function calls, or throws a descriptive error string
  */
-async function callChatOverloaded<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number): Promise<TOut> {
+async function openAICallChatOverloaded<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(llm: DLLM, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number): Promise<TOut> {
   // access params (source)
   const partialSetup = llm._source.setup as Partial<SourceSetupOpenAI>;
   const sourceSetupOpenAI = normalizeOAISetup(partialSetup);
