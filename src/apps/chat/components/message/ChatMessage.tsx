@@ -280,7 +280,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Avatar */}
       {showAvatars && <Stack
-        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
+        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, maxWidth: 80, textAlign: 'center' }}
         onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
         onClick={event => setMenuAnchor(event.currentTarget)}>
 
@@ -296,7 +296,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
             <Typography level='body2' sx={{
               fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
-              lineBreak: 'anywhere',
+              overflowWrap: 'anywhere',
               ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
             }}>
               {prettyBaseModel(messageOriginLLM)}
