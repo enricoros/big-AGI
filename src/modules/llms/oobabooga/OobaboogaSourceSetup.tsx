@@ -18,7 +18,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, sourceLLMs, updateSetup, normSetup,
+    source, updateSetup, normSetup,
   } = useSourceSetup<SourceSetupOobabooga>(props.sourceId, normalizeOobaboogaSetup);
 
 
@@ -38,9 +38,9 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
-    <Typography>
+    <Typography level='body2'>
       You can use a running <Link href='https://github.com/oobabooga/text-generation-webui' target='_blank'>
-      text-generation-webui</Link> instance as a source for models.
+      text-generation-webui</Link> instance as a source for local models.
       Follow <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>
       the instructions</Link> to set up the server.
     </Typography>
@@ -61,6 +61,11 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       />
     </FormControl>
 
+    <Alert variant='soft' color='info'>
+      Note: The active model must be selected on the Oobabooga server, as it does not support switching models via API. Concurrent
+      model execution is also not supported.
+    </Alert>
+
     <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
       <Button
         variant='solid' color={isError ? 'warning' : 'primary'}
@@ -79,7 +84,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 const NotChatModels: string[] = [
-  'text-curie-001', 'text-davinci-002',
+  'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2',
 ];
 
 
