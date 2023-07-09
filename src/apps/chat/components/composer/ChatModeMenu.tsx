@@ -7,12 +7,14 @@ import { ChatModeId, ChatModeItems } from '../../AppChat';
 
 export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) =>
   <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
+    variant='outlined' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
     open anchorEl={props.anchorEl} onClose={props.onClose}>
 
-    <MenuItem color='neutral' selected>Conversation Mode</MenuItem>
-
-    <ListDivider />
+    {/*<MenuItem color='neutral' selected>*/}
+    {/*  Conversation Mode*/}
+    {/*</MenuItem>*/}
+    {/**/}
+    {/*<ListDivider />*/}
 
     {Object.entries(ChatModeItems).filter(([, { experimental }]) => props.experimental || !experimental).map(([key, data]) =>
       <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>

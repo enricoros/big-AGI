@@ -40,7 +40,7 @@ export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react' | 'write-
 export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
   'immediate': {
     label: 'Chat',
-    description: 'AI-powered direct responses',
+    description: 'AI-powered responses',
   },
   'immediate-follow-up': {
     label: 'Chat & Follow-up',
@@ -53,7 +53,7 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
   },
   'write-user': {
     label: 'Write',
-    description: 'No AI response',
+    description: 'No AI responses',
   },
 };
 
