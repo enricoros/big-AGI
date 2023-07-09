@@ -18,7 +18,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, updateSetup, normSetup,
+    source, sourceLLMs, updateSetup, normSetup,
   } = useSourceSetup<SourceSetupOobabooga>(props.sourceId, normalizeOobaboogaSetup);
 
 
@@ -27,9 +27,15 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
     access: normalizeOAISetup(normSetup),
   }, {
     enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),
-    onSuccess: models => {
-      console.log('OobaboogaSourceSetup: models', models);
-      const llms = source ? models.map(model => oobaboogaModelToDLLM(model, source)).filter(model => !!model) : [];
+    onSuccess: (models) => {
+      const llms: DLLM[] = [];
+      if (source && models) {
+        for (const model of models) {
+          const llm = oobaboogaModelToDLLM(model, source);
+          if (llm)
+            llms.push(llm);
+        }
+      }
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
@@ -61,10 +67,10 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       />
     </FormControl>
 
-    <Alert variant='soft' color='info'>
+    {sourceLLMs.length > 0 && <Alert variant='solid' color='warning'>
       Note: The active model must be selected on the Oobabooga server, as it does not support switching models via API. Concurrent
       model execution is also not supported.
-    </Alert>
+    </Alert>}
 
     <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
       <Button
@@ -88,8 +94,13 @@ const NotChatModels: string[] = [
 ];
 
 
-function oobaboogaModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): (DLLM & { options: LLMOptionsOpenAI }) {
-  const label = model.id.replaceAll(/[_-]/g, ' ').split(' ').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+function oobaboogaModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): (DLLM & { options: LLMOptionsOpenAI }) | null {
+  // if the model id is one of NotChatModels, we don't want to show it
+  if (NotChatModels.includes(model.id))
+    return null;
+  let label = model.id.replaceAll(/[_-]/g, ' ').split(' ').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+  if (label.endsWith('.bin'))
+    label = label.slice(0, -4);
   // TODO - figure out how to the context window size from Oobabooga
   const contextTokens = 4096;
   return {
