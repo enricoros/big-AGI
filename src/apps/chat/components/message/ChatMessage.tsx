@@ -296,6 +296,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
             <Typography level='body2' sx={{
               fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
+              lineBreak: 'anywhere',
               ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
             }}>
               {prettyBaseModel(messageOriginLLM)}
