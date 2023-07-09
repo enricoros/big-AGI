@@ -23,6 +23,11 @@ function locationIcon(vendor?: ModelVendor | null) {
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }
 
+function vendorIcon(vendor?: ModelVendor | null) {
+  const Icon = !vendor ? null : vendor.Icon;
+  return Icon ? <Icon /> : null;
+}
+
 
 export function EditSources(props: {
   selectedSourceId: DModelSourceId | null, setSelectedSourceId: (sourceId: DModelSourceId | null) => void,
@@ -77,9 +82,9 @@ export function EditSources(props: {
       component: (
         <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
           <ListItemDecorator>
-            {locationIcon(vendor)}
+            {vendorIcon(vendor)}
           </ListItemDecorator>
-          {vendor.name}{sourceCount > 0 && ` (added)`}
+          {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
         </MenuItem>
       ),
     };
