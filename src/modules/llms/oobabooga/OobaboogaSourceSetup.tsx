@@ -67,9 +67,9 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       />
     </FormControl>
 
-    {sourceLLMs.length > 0 && <Alert variant='solid' color='warning'>
-      Note: The active model must be selected on the Oobabooga server, as it does not support switching models via API. Concurrent
-      model execution is also not supported.
+    {sourceLLMs.length > 0 && <Alert variant='soft' color='warning'>
+      Success! Note The active model must be selected on the Oobabooga server, as it does not support switching models via API.
+      Concurrent model execution is also not supported.
     </Alert>}
 
     <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
