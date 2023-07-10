@@ -203,7 +203,6 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
 export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
-  if (!oaiKey) throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // Organization ID
   const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
@@ -218,9 +217,13 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // Helicone key
   const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
 
+  // warn if no key - only for OpenAI hosts
+  if (!oaiKey && oaiHost.indexOf('api.openai.com') !== -1)
+    throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+
   return {
     headers: {
-      Authorization: `Bearer ${oaiKey}`,
+      ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
       'Content-Type': 'application/json',
       ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
