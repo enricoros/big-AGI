@@ -122,9 +122,10 @@ async function streamAssistantMessage(
       signal: abortSignal,
     });
 
-    if (!response.body) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new Error('No response body');
+    if (!response.ok || !response.body) {
+      const errorMessage = response.body ? await response.text() : 'No response from server';
+      editMessage(conversationId, assistantMessageId, { text: errorMessage, typing: false }, false);
+      return;
     }
 
     const responseReader = response.body.getReader();

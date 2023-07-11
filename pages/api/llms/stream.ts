@@ -127,19 +127,22 @@ export default async function handler(req: NextRequest): Promise<Response> {
   // inputs - reuse the tRPC schema
   const { access, model, history } = chatGenerateSchema.parse(await req.json());
 
-  // prepare the API request data
-  const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-  const body = openAIChatCompletionPayload(model, history, null, 1, true);
-
   // begin event streaming from the OpenAI API
   let upstreamResponse: Response;
   try {
+
+    // prepare the API request data
+    const { headers, url } = openAIAccess(access, '/v1/chat/completions');
+    const body = openAIChatCompletionPayload(model, history, null, 1, true);
+
+    // POST to the API
     upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
     await throwOpenAINotOkay(upstreamResponse);
+
   } catch (error: any) {
     const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
     console.log(`/api/llms/stream: fetch issue: ${fetchOrVendorError}`);
-    throw new Error('[OpenAI Issue] ' + fetchOrVendorError);
+    return new NextResponse('[OpenAI Issue] ' + fetchOrVendorError, { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
