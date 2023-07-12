@@ -1,6 +1,5 @@
 import { DLLMId } from '~/modules/llms/llm.types';
-import { callChatGenerate } from '~/modules/llms/llm.client';
-import { findLLMOrThrow } from '~/modules/llms/store-llms';
+import { callChatGenerate, findLLMOrThrow } from '~/modules/llms/llm.client';
 
 import { cleanupPrompt } from '../prompts';
 

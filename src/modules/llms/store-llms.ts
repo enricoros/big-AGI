@@ -169,20 +169,6 @@ function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId:
 }
 
 
-export function findLLMOrThrow(llmId: DLLMId): DLLM {
-  const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
-  if (!llm) throw new Error(`LLM ${llmId} not found`);
-  if (!llm._source) throw new Error(`LLM ${llmId} has no source`);
-  return llm;
-}
-
-export function findOpenAILlmRefOrThrow(llmId: DLLMId): string {
-  const { options: { llmRef: openAIModelRef } } = findLLMOrThrow(llmId);
-  if (!openAIModelRef) throw new Error(`LLM ${llmId} has no OpenAI LLM`);
-  return openAIModelRef;
-}
-
-
 export function useChatLLM() {
   return useModelsStore(state => {
     const { chatLLMId } = state;

@@ -5,10 +5,14 @@ declare namespace NodeJS {
   // available to the server-side
   interface ProcessEnv {
 
-    // OpenAI - chat.ts
+    // LLM: OpenAI
     OPENAI_API_KEY: string;
     OPENAI_API_ORG_ID: string;
     OPENAI_API_HOST: string;
+
+    // LLM: Anthropic
+    ANTHROPIC_API_KEY: string;
+    ANTHROPIC_API_HOST: string;
 
     // Helicone
     HELICONE_API_KEY: string;

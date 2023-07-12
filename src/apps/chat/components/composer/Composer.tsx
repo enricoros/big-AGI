@@ -19,6 +19,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
+import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -196,7 +197,7 @@ export function Composer(props: {
     return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
   }, [chatLLMId, composeText]);
   const historyTokens = conversationTokenCount;
-  const responseTokens = chatLLM?.options?.llmResponseTokens || 0;
+  const responseTokens = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
