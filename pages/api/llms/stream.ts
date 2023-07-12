@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { chatGenerateSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
+import { AnthropicWire } from '~/modules/llms/anthropic/anthropic.types';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
+import { anthropicAccess, anthropicCompletionRequest } from '~/modules/llms/anthropic/anthropic.router';
+import { chatStreamSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
 
 
 /**
@@ -57,6 +59,29 @@ function parseOpenAIStream(): AIStreamParser {
 }
 
 
+// Anthropic event stream parser
+function parseAnthropicStream(): AIStreamParser {
+  let hasBegun = false;
+
+  return data => {
+
+    const json: AnthropicWire.Complete.Response = JSON.parse(data);
+    let text = json.completion;
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+        model: json.model,
+      };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    return { text, close: false };
+  };
+}
+
+
 /**
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
@@ -103,14 +128,9 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
   });
 }
 
-async function throwOpenAINotOkay(response: Response) {
+async function throwResponseNotOk(response: Response) {
   if (!response.ok) {
-    let errorPayload: object | null = null;
-    try {
-      errorPayload = await response.json();
-    } catch (e) {
-      // ignore
-    }
+    const errorPayload: object | null = await response.json().catch(() => null);
     throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
 }
@@ -125,19 +145,37 @@ function createEmptyReadableStream(): ReadableStream {
 export default async function handler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { access, model, history } = chatGenerateSchema.parse(await req.json());
+  const { vendorId, access, model, history } = chatStreamSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
   let upstreamResponse: Response;
+  let vendorStreamParser: AIStreamParser;
   try {
 
     // prepare the API request data
-    const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-    const body = openAIChatCompletionPayload(model, history, null, 1, true);
+    let headersUrl: { headers: HeadersInit, url: string };
+    let body: object;
+    switch (vendorId) {
+      case 'anthropic':
+        headersUrl = anthropicAccess(access as any, '/v1/complete');
+        body = anthropicCompletionRequest(model, history, true);
+        vendorStreamParser = parseAnthropicStream();
+        break;
 
-    // POST to the API
-    upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
-    await throwOpenAINotOkay(upstreamResponse);
+      case 'openai':
+        headersUrl = openAIAccess(access as any, '/v1/chat/completions');
+        body = openAIChatCompletionPayload(model, history, null, 1, true);
+        vendorStreamParser = parseOpenAIStream();
+        break;
+    }
+
+    // POST to our API route
+    upstreamResponse = await fetch(headersUrl.url, {
+      method: 'POST',
+      headers: headersUrl.headers,
+      body: JSON.stringify(body),
+    });
+    await throwResponseNotOk(upstreamResponse);
 
   } catch (error: any) {
     const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
@@ -155,7 +193,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(createEventStreamTransformer(parseOpenAIStream()));
+    .pipeThrough(createEventStreamTransformer(vendorStreamParser));
 
   return new NextResponse(chatResponseStream, {
     status: 200,

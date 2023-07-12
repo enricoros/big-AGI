@@ -1,0 +1,85 @@
+import * as React from 'react';
+
+import { Alert, Box, Button, Typography } from '@mui/joy';
+import SyncIcon from '@mui/icons-material/Sync';
+
+import { apiQuery } from '~/modules/trpc/trpc.client';
+
+import { FormInputKey } from '~/common/components/FormInputKey';
+import { settingsGap } from '~/common/theme';
+
+import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+
+import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { ModelVendorAnthropic } from './anthropic.vendor';
+import { useModelsStore, useSourceSetup } from '../store-llms';
+
+
+export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
+
+  // external state
+  const {
+    source, sourceLLMs, updateSetup,
+    normSetup: { anthropicKey, anthropicHost },
+  } = useSourceSetup(props.sourceId, ModelVendorAnthropic.normalizeSetup);
+
+  const hasModels = !!sourceLLMs.length;
+  const keyValid = anthropicKey?.startsWith('sk-') || false;
+  const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
+  const shallFetchSucceed = anthropicKey ? keyValid : false;
+
+  // fetch models
+  const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
+    access: { anthropicKey, anthropicHost },
+  }, {
+    enabled: !hasModels && shallFetchSucceed,
+    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => anthropicModelToDLLM(model, source))),
+    staleTime: Infinity,
+    refetchOnMount: 'always',
+  });
+
+  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+
+    <FormInputKey
+      label={'API Key'}
+      value={anthropicKey} onChange={value => updateSetup({ anthropicKey: value })}
+      required isError={keyError}
+      placeholder='sk-...'
+    />
+
+    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
+      <Button
+        variant='solid' color={isError ? 'warning' : 'primary'}
+        disabled={!shallFetchSucceed || isFetching}
+        endDecorator={<SyncIcon />}
+        onClick={() => refetch()}
+        sx={{ minWidth: 120, ml: 'auto' }}
+      >
+        Models
+      </Button>
+    </Box>
+
+    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+
+  </Box>;
+}
+
+
+function anthropicModelToDLLM(model: { id: string, created: number, description: string, name: string, contextWindow: number, hidden?: boolean }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+  return {
+    id: `${source.id}-${model.id}`,
+    label: model.name,
+    created: model.created,
+    description: model.description,
+    tags: [], // ['stream', 'chat'],
+    contextTokens: model.contextWindow,
+    hidden: !!model.hidden,
+    sId: source.id,
+    _source: source,
+    options: {
+      llmRef: model.id,
+      llmTemperature: 0.5,
+      llmResponseTokens: Math.round(model.contextWindow / 8),
+    },
+  };
+}

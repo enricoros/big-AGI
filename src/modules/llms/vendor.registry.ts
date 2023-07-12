@@ -1,4 +1,5 @@
 import { DModelSource, DModelSourceId, ModelVendor, ModelVendorId } from './llm.types';
+import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
@@ -7,6 +8,7 @@ import { ModelVendorOpenAI } from './openai/openai.vendor';
 /// Internal - Main Vendor Registry ///
 
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
+  anthropic: ModelVendorAnthropic,
   localai: ModelVendorLocalAI,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,

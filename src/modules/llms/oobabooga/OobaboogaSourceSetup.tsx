@@ -4,13 +4,15 @@ import { Alert, Box, Button, FormControl, FormHelperText, FormLabel, Input, Typo
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
+
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { OpenAI } from '~/modules/llms/openai/openai.types';
+
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup } from '../openai/openai.vendor';
-import { OpenAI } from '../openai/openai.types';
-import { normalizeOobaboogaSetup, SourceSetupOobabooga } from './oobabooga.vendor';
+import { ModelVendorOoobabooga } from './oobabooga.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -19,12 +21,11 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, sourceLLMs, updateSetup, normSetup,
-  } = useSourceSetup<SourceSetupOobabooga>(props.sourceId, normalizeOobaboogaSetup);
-
+  } = useSourceSetup(props.sourceId, ModelVendorOoobabooga.normalizeSetup);
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: normalizeOAISetup(normSetup),
+    access: ModelVendorOpenAI.normalizeSetup(normSetup),
   }, {
     enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),
     onSuccess: (models) => {
@@ -94,7 +95,7 @@ const NotChatModels: string[] = [
 ];
 
 
-function oobaboogaModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): (DLLM & { options: LLMOptionsOpenAI }) | null {
+function oobaboogaModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> | null {
   // if the model id is one of NotChatModels, we don't want to show it
   if (NotChatModels.includes(model.id))
     return null;

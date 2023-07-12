@@ -8,12 +8,13 @@ import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+import { hasServerKeyOpenAI } from '~/modules/llms/openai/openai.vendor';
+
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
 import { createModelSourceForVendor, findAllVendors, findVendorById } from '../vendor.registry';
-import { hasServerKeyOpenAI } from '../openai/openai.client';
 import { useModelsStore } from '../store-llms';
 
 
@@ -115,7 +116,7 @@ export function EditSources(props: {
         variant='outlined'
         value={props.selectedSourceId}
         disabled={noSources}
-        onChange={(event, value) => value && props.setSelectedSourceId(value)}
+        onChange={(_event, value) => value && props.setSelectedSourceId(value)}
         startDecorator={selectedSourceItem?.icon}
         slotProps={{
           root: { sx: { minWidth: 190 } },

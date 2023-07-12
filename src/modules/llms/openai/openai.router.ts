@@ -20,18 +20,18 @@ const accessSchema = z.object({
   moderationCheck: z.boolean(),
 });
 
-const modelSchema = z.object({
+export const modelSchema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(1).optional(),
-  maxTokens: z.number().min(1).max(100000).optional(),
+  maxTokens: z.number().min(1).max(1000000),
 });
 
-const historySchema = z.array(z.object({
+export const historySchema = z.array(z.object({
   role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
   content: z.string(),
 }));
 
-const functionsSchema = z.array(z.object({
+export const functionsSchema = z.array(z.object({
   name: z.string(),
   description: z.string().optional(),
   parameters: z.object({
@@ -45,12 +45,19 @@ const functionsSchema = z.array(z.object({
   }).optional(),
 }));
 
-export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
-export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
+export const chatStreamSchema = z.object({
+  vendorId: z.enum(['anthropic', 'openai']),
+  // shall clean this up a bit
+  access: z.union([accessSchema, z.object({ anthropicKey: z.string().trim(), anthropicHost: z.string().trim() })]),
+  model: modelSchema, history: historySchema, functions: functionsSchema.optional(),
+});
+export type ChatStreamSchema = z.infer<typeof chatStreamSchema>;
 
-const listModelsSchema = z.object({ access: accessSchema, filterGpt: z.boolean().optional() });
+const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
 
 const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
+
+const listModelsSchema = z.object({ access: accessSchema, filterGpt: z.boolean().optional() });
 
 
 // Output Schemas
@@ -182,27 +189,34 @@ async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?
 
 async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
-  const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
+  return await httpPOSTorTRPCError<TBody, TOut>(url, headers, body, 'OpenAI');
+}
+
+/**
+ * Post from TRPC
+ */
+export async function httpPOSTorTRPCError<TBody, TOut>(url: string, headers: HeadersInit, body: TBody, moduleName: string): Promise<TOut> {
+  const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
   if (!response.ok) {
-    let error: any | null = null;
-    try {
-      error = await response.json();
-    } catch (e) {
-      // ignore
-    }
+    const error: any | null = await response.json().catch(() => null);
+    console.log('httpPOSTorTRPCError', error);
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: error
-        ? `[OpenAI Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown error'}`
+        ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown POST error'}`
         : `[Issue] ${response.statusText}`,
     });
   }
   try {
     return await response.json();
   } catch (error: any) {
-    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] ${error?.message || error}` });
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown POST json error'}`,
+    });
   }
 }
+
 
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 

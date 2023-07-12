@@ -11,9 +11,10 @@ import { FormInputKey } from '~/common/components/FormInputKey';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { normalizeLocalAISetup, SourceSetupLocalAI } from './localai.vendor';
-import { normalizeOAISetup } from '../openai/openai.vendor';
+import { ModelVendorLocalAI } from './localai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -25,7 +26,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, normSetup: { oaiHost }, updateSetup, sourceLLMs,
-  } = useSourceSetup<SourceSetupLocalAI>(props.sourceId, normalizeLocalAISetup);
+  } = useSourceSetup(props.sourceId, ModelVendorLocalAI.normalizeSetup);
 
   // validate if url is a well formed proper url with zod
   const { success: isValidHost } = urlSchema.safeParse(oaiHost);
@@ -35,7 +36,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: normalizeOAISetup({ oaiHost }),
+    access: ModelVendorOpenAI.normalizeSetup({ oaiHost }),
   }, {
     enabled: false, //!sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
@@ -84,7 +85,7 @@ const ModelHeuristics: { [key: string]: { label: string, contextTokens: number }
 };
 
 
-function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSource): DLLM {
+function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   const h = ModelHeuristics[model.id] || {
     label: model.id
       .replace('ggml-', '')

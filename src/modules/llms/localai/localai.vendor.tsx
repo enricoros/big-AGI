@@ -1,14 +1,16 @@
-import DevicesIcon from '@mui/icons-material/Devices';
-
 import { ModelVendor } from '../llm.types';
 
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
-import { openAICallChat, openAICallChatWithFunctions } from '~/modules/llms/openai/openai.client';
 
+import DevicesIcon from '@mui/icons-material/Devices';
 import { LocalAISourceSetup } from './LocalAISourceSetup';
 
+export interface SourceSetupLocalAI {
+  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+}
 
-export const ModelVendorLocalAI: ModelVendor = {
+export const ModelVendorLocalAI: ModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,
@@ -21,17 +23,10 @@ export const ModelVendorLocalAI: ModelVendor = {
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  callChat: openAICallChat,
-  callChatWithFunctions: openAICallChatWithFunctions,
-};
-
-export interface SourceSetupLocalAI {
-  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
-}
-
-export function normalizeLocalAISetup(partialSetup?: Partial<SourceSetupLocalAI>): SourceSetupLocalAI {
-  return {
+  normalizeSetup: (partialSetup?: Partial<SourceSetupLocalAI>) => ({
     oaiHost: '',
     ...partialSetup,
-  };
-}
+  }),
+  callChat: ModelVendorOpenAI.callChat,
+  callChatWithFunctions: ModelVendorOpenAI.callChatWithFunctions,
+};
