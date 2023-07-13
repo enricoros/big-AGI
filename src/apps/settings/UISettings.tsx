@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Switch, Tooltip } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import ScienceIcon from '@mui/icons-material/Science';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -62,15 +63,17 @@ export function UISettings() {
   // external state
   const {
     centerMode, setCenterMode,
-    enterToSend, setEnterToSend,
     doubleClickToEdit, setDoubleClickToEdit,
+    enterToSend, setEnterToSend,
+    goofyLabs, setGoofyLabs,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
-    enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
+    enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
+    goofyLabs: state.goofyLabs, setGoofyLabs: state.setGoofyLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
@@ -85,6 +88,8 @@ export function UISettings() {
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.value as 'clean' | 'cleaner');
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
+  const handleGoofyLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setGoofyLabs(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
@@ -168,6 +173,16 @@ export function UISettings() {
           </FormHelperText>
         </Box>
         <LanguageSelect />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <FormLabel>Goofy labs</FormLabel>
+          <FormHelperText>{goofyLabs ? <>Experiment<ScienceIcon /></> : 'Disabled'}</FormHelperText>
+        </Box>
+        <Switch checked={goofyLabs} onChange={handleGoofyLabsChange}
+                endDecorator={goofyLabs ? 'On' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
     </Stack>

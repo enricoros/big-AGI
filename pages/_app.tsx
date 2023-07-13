@@ -21,7 +21,16 @@ export interface MyAppProps extends AppProps {
 }
 
 function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  }));
   return <>
     <CacheProvider value={emotionCache}>
       <Head>

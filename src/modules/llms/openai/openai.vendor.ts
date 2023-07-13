@@ -2,7 +2,7 @@ import { ModelVendor } from '../llm.types';
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
-import { callChat, callChatWithFunctions } from './openai.client';
+import { openAICallChat, openAICallChatWithFunctions } from './openai.client';
 
 
 export const ModelVendorOpenAI: ModelVendor = {
@@ -18,8 +18,8 @@ export const ModelVendorOpenAI: ModelVendor = {
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  callChat: callChat,
-  callChatWithFunctions: callChatWithFunctions,
+  callChat: openAICallChat,
+  callChatWithFunctions: openAICallChatWithFunctions,
 };
 
 

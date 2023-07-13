@@ -48,6 +48,8 @@ const functionsSchema = z.array(z.object({
 export const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
 export type ChatGenerateSchema = z.infer<typeof chatGenerateSchema>;
 
+const listModelsSchema = z.object({ access: accessSchema, filterGpt: z.boolean().optional() });
+
 const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
 
 
@@ -66,8 +68,6 @@ const chatGenerateWithFunctionsOutputSchema = z.union([
 ]);
 
 
-
-
 export const openAIRouter = createTRPCRouter({
 
   /**
@@ -83,7 +83,7 @@ export const openAIRouter = createTRPCRouter({
 
       const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(
         access,
-        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, false),
+        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, 1, false),
         '/v1/chat/completions',
       );
 
@@ -103,8 +103,8 @@ export const openAIRouter = createTRPCRouter({
    */
   moderation: publicProcedure
     .input(chatModerationSchema)
-      .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
-      const { access, text, } = input;
+    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+      const { access, text } = input;
       try {
 
         return await openaiPOST<OpenAI.Wire.Moderation.Request, OpenAI.Wire.Moderation.Response>(access, {
@@ -125,14 +125,20 @@ export const openAIRouter = createTRPCRouter({
    * List the Models available
    */
   listModels: publicProcedure
-    .input(accessSchema)
+    .input(listModelsSchema)
     .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
 
-      let wireModels: OpenAI.Wire.Models.Response;
-      wireModels = await openaiGET<OpenAI.Wire.Models.Response>(input, '/v1/models');
+      const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
 
-      // filter out the non-gpt models
-      const llms = wireModels.data?.filter(model => model.id.includes('gpt')) ?? [];
+      // filter out the non-gpt models, if requested
+      let llms = (wireModels.data || [])
+        .filter(model => !input.filterGpt || model.id.includes('gpt'));
+
+      // remove models with duplicate ids (can happen for local servers)
+      const preFilterCount = llms.length;
+      llms = llms.filter((model, index) => llms.findIndex(m => m.id === model.id) === index);
+      if (preFilterCount !== llms.length)
+        console.warn(`openai.router.listModels: Duplicate model ids found, removed ${preFilterCount - llms.length} models`);
 
       // sort by which model has the least number of '-' in the name, and then by id, decreasing
       llms.sort((a, b) => {
@@ -197,7 +203,6 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
 export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
-  if (!oaiKey) throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // Organization ID
   const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
@@ -212,9 +217,13 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // Helicone key
   const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
 
+  // warn if no key - only for OpenAI hosts
+  if (!oaiKey && oaiHost.indexOf('api.openai.com') !== -1)
+    throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+
   return {
     headers: {
-      Authorization: `Bearer ${oaiKey}`,
+      ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
       'Content-Type': 'application/json',
       ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
@@ -223,15 +232,15 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   };
 }
 
-export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
     ...(functions && { functions: functions, function_call: 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
+    n,
     stream,
-    n: 1,
   };
 }
 

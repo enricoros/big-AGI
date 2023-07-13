@@ -15,7 +15,7 @@ import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
-import { createDMessage, DMessage, restoreConversationFromJson, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { extractCommands } from '~/common/util/extractCommands';
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -27,6 +27,7 @@ import { ConversationItems } from './components/appbar/ConversationItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
+import { restoreConversationFromJson } from './exportImport';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
@@ -35,19 +36,24 @@ import { runReActUpdatingState } from './editors/react-tangent';
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 // definition of chat modes
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react';
-export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; } } = {
+export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react' | 'write-user';
+export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
   'immediate': {
     label: 'Chat',
-    description: 'AI-powered direct responses',
+    description: 'AI-powered responses',
   },
   'immediate-follow-up': {
     label: 'Chat & Follow-up',
     description: 'Chat with follow-up questions',
+    experimental: true,
   },
   'react': {
     label: 'Reason+Act',
     description: 'Answer your questions with ReAct and search',
+  },
+  'write-user': {
+    label: 'Write',
+    description: 'No AI responses',
   },
 };
 
@@ -64,7 +70,7 @@ function linkToOrigin() {
 }
 
 
-export function Chat() {
+export function AppChat() {
 
   // state
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
@@ -97,7 +103,7 @@ export function Chat() {
     const { chatLLMId } = useModelsStore.getState();
     if (!conversationId || !chatLLMId) return;
 
-    // Command - last user message is a cmd
+    // /command: overrides the chat mode
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
     if (lastMessage?.role === 'user') {
       const pieces = extractCommands(lastMessage.text);
@@ -112,8 +118,6 @@ export function Chat() {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
-        // if (CmdRunSearch.includes(command))
-        //   return await run...
       }
     }
 
@@ -124,10 +128,13 @@ export function Chat() {
         case 'immediate-follow-up':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
         case 'react':
-          if (lastMessage?.text) {
-            setMessages(conversationId, history);
-            return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
-          }
+          if (!lastMessage?.text)
+            break;
+          setMessages(conversationId, history);
+          return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
+        case 'write-user':
+          setMessages(conversationId, history);
+          return;
       }
     }
 

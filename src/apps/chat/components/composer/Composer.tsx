@@ -13,6 +13,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -30,7 +31,7 @@ import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatModeId } from '../../Chat';
+import { ChatModeId } from '../../AppChat';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
@@ -166,7 +167,10 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
-  const enterToSend = useUIPreferencesStore(state => state.enterToSend);
+  const { enterToSend, goofyLabs } = useUIPreferencesStore(state => ({
+    enterToSend: state.enterToSend,
+    goofyLabs: state.goofyLabs,
+  }), shallow);
   const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -425,16 +429,18 @@ export function Composer(props: {
     ? 'Tell me what you need, and drop source files...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
-  const isImmediate = props.chatModeId === 'immediate';
+  // const isImmediate = props.chatModeId === 'immediate';
   const isFollowUp = props.chatModeId === 'immediate-follow-up';
   const isReAct = props.chatModeId === 'react';
+  const isWriteUser = props.chatModeId === 'write-user';
 
   const chatButton = (
     <Button
-      fullWidth variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode} endDecorator={isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode}
+      endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
     >
-      {isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
+      {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
     </Button>
   );
 
@@ -592,8 +598,8 @@ export function Composer(props: {
                   >
                     Stop
                   </Button>
-                ) : isImmediate ? chatButton : (
-                  <ButtonGroup variant='solid' color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                ) : /*(!goofyLabs && isImmediate) ? chatButton :*/ (
+                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     {chatButton}
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
                       <ExpandLessIcon />
@@ -617,7 +623,11 @@ export function Composer(props: {
 
         {/* Mode selector */}
         {!!chatModeMenuAnchor && (
-          <ChatModeMenu anchorEl={chatModeMenuAnchor} chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId} onClose={handleHideChatMode} />
+          <ChatModeMenu
+            anchorEl={chatModeMenuAnchor} onClose={handleHideChatMode}
+            experimental={goofyLabs}
+            chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId}
+          />
         )}
 
         {/* Sent messages menu */}

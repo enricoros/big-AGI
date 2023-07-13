@@ -1,6 +1,6 @@
 {
   "name": "big-agi",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "engines": {
     "node": "^18.0.0"
@@ -17,18 +17,18 @@
     "@emotion/react": "^11.11.1",
     "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.11.16",
-    "@mui/joy": "^5.0.0-alpha.85",
-    "@next/bundle-analyzer": "^13.4.7",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/joy": "^5.0.0-alpha.87",
+    "@next/bundle-analyzer": "^13.4.9",
     "@tanstack/react-query": "^4.29.19",
-    "@trpc/client": "^10.33.0",
-    "@trpc/next": "^10.33.0",
-    "@trpc/react-query": "^10.33.0",
-    "@trpc/server": "^10.33.0",
+    "@trpc/client": "^10.34.0",
+    "@trpc/next": "^10.34.0",
+    "@trpc/react-query": "^10.34.0",
+    "@trpc/server": "^10.34.0",
     "@vercel/analytics": "^1.0.1",
     "eventsource-parser": "^1.0.0",
-    "next": "^13.4.7",
-    "pdfjs-dist": "^3.7.107",
+    "next": "^13.4.9",
+    "pdfjs-dist": "3.8.162",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
@@ -38,18 +38,18 @@
     "superjson": "^1.12.4",
     "uuid": "^9.0.0",
     "zod": "^3.21.4",
-    "zustand": "^4.3.8"
+    "zustand": "^4.3.9"
   },
   "devDependencies": {
-    "@types/node": "^20.3.2",
+    "@types/node": "^20.4.1",
     "@types/plantuml-encoder": "^1.4.0",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.2.13",
+    "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "@types/uuid": "^9.0.2",
-    "eslint": "^8.43.0",
-    "eslint-config-next": "^13.4.7",
-    "prettier": "^2.8.8",
+    "eslint": "^8.44.0",
+    "eslint-config-next": "^13.4.9",
+    "prettier": "^3.0.0",
     "typescript": "^5.1.6"
   }
 }
