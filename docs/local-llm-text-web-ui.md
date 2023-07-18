@@ -34,7 +34,7 @@ This guide presumes that `big-AGI` is already installed on your system.
 5. Open `big-AGI`, and configure as follows:
     - Add a source of type `Oobabooga`
     - Enter the address `http://127.0.0.1:5001` if running on localhost (if `text-web-ui` server is operating on a
-      different networked computer, change the address from `0.0.0.0` to the server's IP)
+      different networked computer, change the address from `0.0.0.0` to the server's IP). The format is `IP:Port`
 6. Update the models, and start chatting
 
 Experience the privacy and flexibility of local LLM integration with `text-web-ui` and `big-AGI`! :tada:
