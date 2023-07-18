@@ -12,6 +12,12 @@ export const incrementalVersion: number = 1;
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
+  // {
+  //   versionName: '1.3.0',
+  //   items: [
+  //     { text: '/s and /a to add a System or Assistant message' },
+  //   ],
+  // },
   {
     versionName: '1.2.1',
     // text: '',
