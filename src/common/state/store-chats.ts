@@ -312,13 +312,16 @@ export const useChatStore = create<ChatStore>()(devtools(
       editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
         get()._editConversation(conversationId, conversation => {
 
+          const chatLLMId = useModelsStore.getState().chatLLMId;
           const messages = conversation.messages.map((message: DMessage): DMessage =>
             message.id === messageId
               ? {
                 ...message,
                 ...updatedMessage,
                 ...(setUpdated && { updated: Date.now() }),
-                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateDMessageTokenCount(message, useModelsStore.getState().chatLLMId, true, 'editMessage(typing=false)') })),
+                ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
+                  tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)'),
+                })),
               }
               : message);
 
