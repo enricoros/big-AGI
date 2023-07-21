@@ -10,7 +10,7 @@ import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
 
 // configuration
-export const MAX_CONVERSATIONS = 20;
+export const MAX_CONVERSATIONS = 60;
 
 
 /**
