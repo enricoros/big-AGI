@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
+import {Box, Typography} from '@mui/joy';
 
 import { Brand } from '~/common/brand';
 import { Link } from '~/common/components/Link';
@@ -8,17 +8,20 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 1;
+export const incrementalVersion: number = 2;
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
-  // {
-  //   versionName: '1.3.0',
-  //   items: [
-  //     { text: '[tool] Flatten Conversation - 4 summary modes!' },
-  //     { text: '/s and /a to add a System or Assistant message' },
-  //   ],
-  // },
+  {
+    versionName: '1.3.1',
+    items: [
+      { text: <><Typography color='info'>Flattener</Typography> - 4-mode conversations summarizer</> },
+      { text: <><Typography color='info'>Forking</Typography> - branch your conversations</> },
+      { text: <><Typography color='info'>/s</Typography> and <Typography color='info'>/a</Typography> to append a <i>system</i> or <i>assistant</i> message</> },
+      { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>Oogabooga server</Link></> },
+      { text: 'NextJS STOP bug.. squashed, with Vercel!' },
+    ],
+  },
   {
     versionName: '1.2.1',
     // text: '',
