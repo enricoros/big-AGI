@@ -16,12 +16,12 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { extractCommands } from '~/common/util/extractCommands';
 import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatContextItems } from './components/appbar/ChatContextItems';
 import { ChatMessageList } from './components/ChatMessageList';
+import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
 import { ConversationItems } from './components/appbar/ConversationItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
@@ -118,6 +118,12 @@ export function AppChat() {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
+        if (CmdAddRoleMessage.includes(command)) {
+          lastMessage.role = command.startsWith('/s') ? 'system' : command.startsWith('/a') ? 'assistant' : 'user';
+          lastMessage.sender = 'Bot';
+          lastMessage.text = prompt;
+          return setMessages(conversationId, history);
+        }
       }
     }
 
@@ -139,6 +145,7 @@ export function AppChat() {
     }
 
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
+    console.log('handleExecuteConversation: issue running', conversationId, lastMessage);
     setMessages(conversationId, history);
   };
 

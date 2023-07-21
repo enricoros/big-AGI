@@ -131,7 +131,8 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
           onResultCallback(speechResult);
 
           // auto-stop
-          reloadInactivityTimeout(SOFT_INACTIVITY_TIMEOUT);
+          if (instance.interimResults)
+            reloadInactivityTimeout(SOFT_INACTIVITY_TIMEOUT);
         };
 
         instance.onaudiostart = () => setIsRecordingAudio(true);
@@ -147,7 +148,8 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
           speechResult.interimTranscript = 'Listening...';
           speechResult.done = false;
           onResultCallback(speechResult);
-          reloadInactivityTimeout(2 * SOFT_INACTIVITY_TIMEOUT);
+          if (instance.interimResults)
+            reloadInactivityTimeout(2 * SOFT_INACTIVITY_TIMEOUT);
         };
 
         instance.onend = () => {
