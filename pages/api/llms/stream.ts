@@ -31,7 +31,7 @@ function parseOpenAIStream(): AIStreamParser {
       throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
 
     const index = json.choices[0].index;
-    if (index !== 0)
+    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
       throw new Error(`[OpenAI Issue] Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
@@ -89,7 +89,7 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
               controller.terminate();
           } catch (error: any) {
             // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
-            controller.enqueue(textEncoder.encode(` - [AI ISSUE] ${error?.message || error}`));
+            controller.enqueue(textEncoder.encode(`[Stream Issue] ${error?.message || error}`));
             controller.terminate();
           }
         },

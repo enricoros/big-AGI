@@ -90,7 +90,11 @@ export const openAIRouter = createTRPCRouter({
       // expect a single output
       if (wireCompletions?.choices?.length !== 1)
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
-      const { message, finish_reason } = wireCompletions.choices[0];
+      let { message, finish_reason } = wireCompletions.choices[0];
+
+      // LocalAI hack/workaround, until https://github.com/go-skynet/LocalAI/issues/788 is fixed
+      if (finish_reason === undefined)
+        finish_reason = 'stop';
 
       // check for a function output
       return finish_reason === 'function_call'
