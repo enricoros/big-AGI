@@ -41,7 +41,17 @@ Or fork & run on Vercel
 
 ## Latest Drops 💧🎁
 
-#### 🚨 June: scale UP 🚀
+#### 🚨 July: Back with the Cool features 🧠
+
+- 🎉 **[Local model support with Oogabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
+- 🎉 **Flatten conversations** - conversations summarizer with 4 modes
+- 🎉 **Fork conversations** - create a new chat, to expriment with different endings
+- 🎉 New commands: /s to add a System message, and /a for an Assistant message
+- 🎉 New Chat modes: Write-only - just appends the message, without assistant response
+- 🎉 Fix STOP generation - in sync with the Vercel team to fix a long-standing NextJS issue
+- 🎉 Fixes on the HTML block - particularly useful to see error pages
+
+#### June: scale UP 🚀
 
 - 🎉 **[New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates) support** - 0613 models, including 16k and 32k 
 - 🎉 **Cleaner UI** - with rationalized Settings, Modals, and Configurators
