@@ -13,7 +13,7 @@ export const ModelVendorLocalAI: ModelVendor = {
   name: 'LocalAI',
   rank: 20,
   location: 'local',
-  instanceLimit: 2,
+  instanceLimit: 1,
 
   // components
   Icon: DevicesIcon,
