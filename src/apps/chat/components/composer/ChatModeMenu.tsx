@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, ListDivider, Menu, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, Menu, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { ChatModeId, ChatModeItems } from '../../AppChat';
 

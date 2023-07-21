@@ -47,6 +47,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
         return;
       }
 
+      // noinspection JSUnresolvedReference
       const Speech = (
         (window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition ||

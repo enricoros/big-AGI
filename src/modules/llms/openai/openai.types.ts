@@ -127,6 +127,7 @@ export namespace OpenAI {
       }
 
       export enum ModerationCategory {
+        // noinspection JSUnusedGlobalSymbols
         hate = 'hate',
         'hate/threatening' = 'hate/threatening',
         'self-harm' = 'self-harm',
