@@ -12,7 +12,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
-import { createModelSource, findAllVendors, findVendorById } from '../vendor.registry';
+import { createModelSourceForVendor, findAllVendors, findVendorById } from '../vendor.registry';
 import { hasServerKeyOpenAI } from '../openai/openai.client';
 import { useModelsStore } from '../store-llms';
 
@@ -50,7 +50,7 @@ export function EditSources(props: {
   const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
     const { sources: modelSources } = useModelsStore.getState();
-    const modelSource = createModelSource(vendorId, modelSources);
+    const modelSource = createModelSourceForVendor(vendorId, modelSources);
     if (modelSource) {
       addModelSource(modelSource);
       props.setSelectedSourceId(modelSource.id);

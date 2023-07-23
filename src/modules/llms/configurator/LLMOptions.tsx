@@ -109,7 +109,7 @@ export function LLMOptions(props: { id: DLLMId }) {
           Details
         </FormLabel>
         {showDetails && <Typography level='body2' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
+          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens?.toLocaleString()} · {
           llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description}
           {/*· tags: {llm.tags.join(', ')}*/}
         </Typography>}
