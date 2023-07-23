@@ -204,6 +204,8 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
   }
 }
 
+const DEFAULT_OPENAI_HOST = 'api.openai.com';
+
 export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
@@ -212,7 +214,7 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
 
   // API host
-  let oaiHost = access.oaiHost || process.env.OPENAI_API_HOST || 'https://api.openai.com';
+  let oaiHost = access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
   if (!oaiHost.startsWith('http'))
     oaiHost = `https://${oaiHost}`;
   if (oaiHost.endsWith('/') && apiPath.startsWith('/'))
@@ -221,8 +223,8 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // Helicone key
   const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
 
-  // warn if no key - only for OpenAI hosts
-  if (!oaiKey && oaiHost.indexOf('api.openai.com') !== -1)
+  // warn if no key - only for default (unoverridden) hosts
+  if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
     throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   return {
