@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {Box, Typography} from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { Brand } from '~/common/brand';
 import { Link } from '~/common/components/Link';
@@ -8,10 +8,16 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 2;
+export const incrementalVersion: number = 3;
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
+  {
+    versionName: '1.3.5',
+    items: [
+      { text: <><Typography color='info'>Anthropic</Typography> models full support</> },
+    ],
+  },
   {
     versionName: '1.3.1',
     items: [
