@@ -43,7 +43,7 @@ Or fork & run on Vercel
 
 #### 🚨 July: Back with the Cool features 🧠
 
-- 🎉 **[Local model support with Oogabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
+- 🎉 **[Local model support with Oobabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
 - 🎉 **Flatten conversations** - conversations summarizer with 4 modes
 - 🎉 **Fork conversations** - create a new chat, to expriment with different endings
 - 🎉 New commands: /s to add a System message, and /a for an Assistant message
