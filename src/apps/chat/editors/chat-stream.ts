@@ -79,7 +79,7 @@ async function streamAssistantMessage(
   const useModeration = input.access.moderationCheck && lastMessage && lastMessage.role === 'user';
   if (useModeration) {
     try {
-      const moderationResult: OpenAI.Wire.Moderation.Response = await apiAsync.openai.moderation.mutate({ access: input.access, text: lastMessage.content });
+      const moderationResult: OpenAI.Wire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({ access: input.access, text: lastMessage.content });
 
       const issues = moderationResult.results.reduce((acc, result) => {
         if (result.flagged) {

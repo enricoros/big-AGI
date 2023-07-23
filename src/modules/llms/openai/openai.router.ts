@@ -68,7 +68,7 @@ const chatGenerateWithFunctionsOutputSchema = z.union([
 ]);
 
 
-export const openAIRouter = createTRPCRouter({
+export const llmOpenAIRouter = createTRPCRouter({
 
   /**
    * Chat-based message generation

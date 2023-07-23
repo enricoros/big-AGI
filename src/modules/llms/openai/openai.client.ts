@@ -32,7 +32,7 @@ async function openAICallChatOverloaded<TOut = VChatMessageOut | VChatMessageOrF
   const modelTemperature = llm.options.llmTemperature || 0.5;
 
   try {
-    return await apiAsync.openai.chatGenerateWithFunctions.mutate({
+    return await apiAsync.llmOpenAI.chatGenerateWithFunctions.mutate({
       access: sourceSetupOpenAI,
       model: {
         id: openaiLlmRef,
