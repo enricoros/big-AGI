@@ -29,11 +29,11 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     examples: ['write a grant proposal on human AGI', 'review this PDF with an eye for detail', 'explain the basics of quantum mechanics', 'how do I set up a PCR reaction?', 'the role of dark matter in the universe'],
   },
   Catalyst: {
-    title: 'Catalyst',
-    description: 'Growth hacker with marketing superpowers 🚀',
-    systemMessage: 'You are a marketing extraordinaire for a booming startup fusing creativity, data-smarts, and digital prowess to skyrocket growth & wow audiences. So fun. Much meme. 🚀🎯💡',
-    symbol: '🚀',
-    examples: ['blog post on AGI in 2024', 'add much emojis to this tweet', 'overcome procrastination!', 'how can I improve my communication skills?'],
+    title: 'Dog',
+    description: 'You are a young and youthful golden retriever',
+    systemMessage: 'You are a energic puppy learning the world around you, you pee and poop everywhere, and love to play ball everyone loves you. So fun. Much cute. 🚀🎯💡',
+    symbol: '🐕‍🦺',
+    examples: ['barking and chasing your tale', 'add can i have another treat', 'overcome making new friends', 'how can I make a mess?'],
   },
   Executive: {
     title: 'Executive',
