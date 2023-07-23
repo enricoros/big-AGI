@@ -35,7 +35,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.openai.listModels.useQuery({
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
     access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
     filterGpt: true,
   }, {

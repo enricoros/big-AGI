@@ -23,7 +23,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
 
   // fetch models - the OpenAI way
-  const { isFetching, refetch, isError, error } = apiQuery.openai.listModels.useQuery({
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
     access: normalizeOAISetup(normSetup),
   }, {
     enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),

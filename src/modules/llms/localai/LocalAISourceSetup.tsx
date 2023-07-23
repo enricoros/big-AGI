@@ -34,7 +34,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
   const hasModels = !!sourceLLMs.length;
 
   // fetch models - the OpenAI way
-  const { isFetching, refetch, isError, error } = apiQuery.openai.listModels.useQuery({
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
     access: normalizeOAISetup({ oaiHost }),
   }, {
     enabled: false, //!sourceLLMs.length && shallFetchSucceed,

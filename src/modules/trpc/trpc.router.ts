@@ -2,7 +2,7 @@ import { createTRPCRouter } from './trpc.server';
 
 import { elevenlabsRouter } from '~/modules/elevenlabs/elevenlabs.router';
 import { googleSearchRouter } from '~/modules/google/search.router';
-import { openAIRouter } from '~/modules/llms/openai/openai.router';
+import { llmOpenAIRouter } from '~/modules/llms/openai/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
 import { publishRouter } from '~/modules/publish/publish.router';
 
@@ -14,7 +14,7 @@ import { publishRouter } from '~/modules/publish/publish.router';
 export const appRouter = createTRPCRouter({
   elevenlabs: elevenlabsRouter,
   googleSearch: googleSearchRouter,
-  openai: openAIRouter,
+  llmOpenAI: llmOpenAIRouter,
   prodia: prodiaRouter,
   publish: publishRouter,
 });
