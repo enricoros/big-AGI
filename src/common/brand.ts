@@ -19,10 +19,10 @@ export const Brand = {
   },
   URIs: {
     Home: 'https://shittyai.com,
-    // App: 'https://get.big-agi.com',
-  //  CardImage: 'https://big-agi.com/icons/card-dark-1200.png',
-  // OpenRepo: 'https://github.com/enricoros/big-agi',
-  //  SupportInvite: 'https://discord.gg/MkH4qj2Jp9',
-    // Twitter: 'https://www.twitter.com/enricoros',
+     App: 'https://get.big-agi.com',
+    CardImage: 'https://big-agi.com/icons/card-dark-1200.png',
+   OpenRepo: 'https://github.com/enricoros/big-agi',
+    SupportInvite: 'https://discord.gg/MkH4qj2Jp9',
+     Twitter: 'https://www.twitter.com/enricoros',
   },
 };
