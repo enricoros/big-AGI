@@ -3,11 +3,16 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 import { DLLM, ModelVendor } from '../llm.types';
 import { VChatMessageIn, VChatMessageOut } from '../llm.client';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
 
 import { AnthropicIcon } from './AnthropicIcon';
 import { AnthropicSourceSetup } from './AnthropicSourceSetup';
+
+// special symbols
+export const hasServerKeyAnthropic = !!process.env.HAS_SERVER_KEY_ANTHROPIC;
+export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
+
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;

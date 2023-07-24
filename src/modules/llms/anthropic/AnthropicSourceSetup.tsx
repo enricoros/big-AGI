@@ -6,12 +6,13 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
 import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { ModelVendorAnthropic } from './anthropic.vendor';
+import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -24,9 +25,10 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   } = useSourceSetup(props.sourceId, ModelVendorAnthropic.normalizeSetup);
 
   const hasModels = !!sourceLLMs.length;
-  const keyValid = anthropicKey?.startsWith('sk-') || false;
+  const needsUserKey = !hasServerKeyAnthropic;
+  const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
-  const shallFetchSucceed = anthropicKey ? keyValid : false;
+  const shallFetchSucceed = anthropicKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
@@ -41,9 +43,14 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormInputKey
-      label={'API Key'}
+      label={'Anthropic API Key'}
+      rightLabel={<>{needsUserKey
+        ? !anthropicKey && <Link level='body2' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
+        : '✔️ already set in server'
+      } {anthropicKey && keyValid && <Link level='body2' href='https://console.anthropic.com/' target='_blank'>check usage</Link>}
+      </>}
       value={anthropicKey} onChange={value => updateSetup({ anthropicKey: value })}
-      required isError={keyError}
+      required={needsUserKey} isError={keyError}
       placeholder='sk-...'
     />
 
