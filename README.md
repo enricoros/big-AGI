@@ -28,7 +28,7 @@ Or fork & run on Vercel
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
 [![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
 
-* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
+* Enjoy the hosted open-source app on [big-AGI.com](https://big-agi.com)
 * [Chat with us](https://discord.gg/MkH4qj2Jp9)
 * Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family
 * send PRs! ...
