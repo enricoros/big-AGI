@@ -36,26 +36,21 @@ export function createModelSourceForDefaultVendor(otherSources: DModelSource[]):
 export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {
   // get vendor
   const vendor = findVendorById(vendorId);
-  if (!vendor) throw new Error(`createModelSource: Vendor not found for id ${vendorId}`);
+  if (!vendor) throw new Error(`createModelSourceForVendor: Vendor not found for id ${vendorId}`);
 
-  // find an id
-  const { id: sourceId, count } = _uniqueSourceId(vendorId, otherSources);
+  // make a unique sourceId
+  let sourceId: DModelSourceId = vendorId;
+  let sourceN = 0;
+  while (otherSources.find(source => source.id === sourceId)) {
+    sourceN++;
+    sourceId = `${vendorId}-${sourceN}`;
+  }
 
   // create the source
   return {
     id: sourceId,
-    label: vendor.name + (count > 0 ? ` #${count}` : ''),
+    label: vendor.name + (sourceN > 0 ? ` #${sourceN}` : ''),
     vId: vendorId,
-    setup: {},
+    setup: vendor.initalizeSetup?.() || {},
   };
-}
-
-function _uniqueSourceId(vendorId: ModelVendorId, otherSources: DModelSource[]): { id: string, count: number } {
-  let id: DModelSourceId = vendorId;
-  let count = 0;
-  while (otherSources.find(source => source.id === id)) {
-    count++;
-    id = `${vendorId}-${count}`;
-  }
-  return { id, count };
 }
