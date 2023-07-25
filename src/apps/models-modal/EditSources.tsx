@@ -108,7 +108,7 @@ export function EditSources(props: {
 
       {/* Models: [Select] Add Delete */}
       <Typography sx={{ mr: 1, ...hideOnMobile }}>
-        Models:
+        Vendor:
       </Typography>
 
       <Select

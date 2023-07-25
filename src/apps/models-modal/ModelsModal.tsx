@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Divider } from '@mui/joy';
+import { Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
@@ -20,6 +20,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // local state
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
+  const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
   const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
@@ -34,6 +35,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   const activeSource = modelSources.find(source => source.id === selectedSourceId);
 
+  const multiSource = modelSources.length > 1;
 
   // if no sources at startup, open the modal
   React.useEffect(() => {
@@ -52,7 +54,16 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   return <>
 
     {/* Sources Setup */}
-    <GoodModal title={<>Configure <b>AI Models</b></>} open={modelsSetupOpen} onClose={closeModelsSetup}>
+    <GoodModal
+      title={<>Configure <b>AI Models</b></>}
+      startButton={
+        multiSource ? <Checkbox
+          label='all vendors' sx={{ my: 'auto' }}
+          checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
+        /> : undefined
+      }
+      open={modelsSetupOpen} onClose={closeModelsSetup}
+    >
 
       <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
@@ -62,7 +73,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <LLMList />}
+      {!!llmCount && <LLMList filterSourceId={showAllSources ? null : selectedSourceId} />}
 
       <Divider />
 
