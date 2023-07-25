@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DLLMId } from '~/modules/llms/llm.types';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { countModelTokens } from '../llm-util/token-counter';
+import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
 

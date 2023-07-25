@@ -8,7 +8,7 @@ import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize'
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Section } from '~/common/components/Section';
-import { countModelTokens } from '~/common/llm-util/token-counter';
+import { countModelTokens } from '~/common/util/token-counter';
 
 import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
 
