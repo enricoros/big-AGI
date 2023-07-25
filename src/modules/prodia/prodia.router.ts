@@ -12,6 +12,7 @@ const imagineInputSchema = z.object({
   negativePrompt: z.string().optional(),
   steps: z.number().optional(),
   cfgScale: z.number().optional(),
+  apectRatio: z.enum(['square', 'portrait', 'landscape']).optional(),
   upscale: z.boolean().optional(),
   seed: z.number().optional(),
 });
@@ -41,6 +42,7 @@ export const prodiaRouter = createTRPCRouter({
         ...(!!input.negativePrompt && { negative_prompt: input.negativePrompt }),
         ...(!!input.steps && { steps: input.steps }),
         ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
+        ...(!!input.apectRatio && input.apectRatio !== 'square' && { aspect_ratio: input.apectRatio }),
         ...(!!input.upscale && { upscale: input.upscale }),
         ...(!!input.seed && { seed: input.seed }),
       };
@@ -112,6 +114,7 @@ export interface JobRequest {
   cfg_scale?: number;
   steps?: number;
   negative_prompt?: string;
+  aspect_ratio?: 'square' | 'portrait' | 'landscape';
   upscale?: boolean;
   seed?: number;
 }
@@ -152,7 +155,7 @@ async function getJobStatus(apiKey: string | undefined, jobId: string): Promise<
 async function throwIfNot200(response: Response, scope: string) {
   if (response.status !== 200) {
     const errorMessage = await response.text().catch(() => null) || response.statusText || '' + response.status || 'Unknown Error';
-    console.log(`Bad Prodia ${scope} response: ${errorMessage}`)
+    console.log(`Bad Prodia ${scope} response: ${errorMessage}`);
     throw new TRPCError({ code: 'BAD_REQUEST', message: errorMessage });
   }
 }
