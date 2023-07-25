@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, Container, useTheme } from '@mui/joy';
 
 import { ModelsModal } from '../../apps/models-modal/ModelsModal';
-import { SettingsModal } from '../../apps/settings/SettingsModal';
+import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
 
 import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
