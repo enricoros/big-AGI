@@ -11,6 +11,7 @@ const imagineInputSchema = z.object({
   negativePrompt: z.string().optional(),
   steps: z.number().optional(),
   cfgScale: z.number().optional(),
+  upscale: z.boolean().optional(),
   seed: z.number().optional(),
 });
 
@@ -40,9 +41,10 @@ export const prodiaRouter = createTRPCRouter({
       const jobRequest: JobRequest = {
         model: input.prodiaModel,
         prompt: input.prompt,
-        ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
-        ...(!!input.steps && { steps: input.steps }),
         ...(!!input.negativePrompt && { negative_prompt: input.negativePrompt }),
+        ...(!!input.steps && { steps: input.steps }),
+        ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
+        ...(!!input.upscale && { upscale: input.upscale }),
         ...(!!input.seed && { seed: input.seed }),
       };
       let j: JobResponse = await createGenerationJob(prodiaKey, jobRequest);
