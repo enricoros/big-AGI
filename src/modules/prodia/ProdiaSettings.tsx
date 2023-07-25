@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Switch, Tooltip } from '@mui/joy';
+import { Alert, Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -31,7 +31,7 @@ export function ProdiaSettings() {
   const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
 
   // load models, if the server has a key, or the user provided one
-  const { data: modelsData, isLoading: loadingModels } = apiQuery.prodia.models.useQuery({ prodiaKey: apiKey }, {
+  const { data: modelsData, isLoading: loadingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
     enabled: isValidKey,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -53,6 +53,8 @@ export function ProdiaSettings() {
         value={apiKey} onChange={setApiKey}
         required={requiresKey} isError={!isValidKey}
       />
+
+      {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <FormLabel sx={{ minWidth: colWidth }}>
