@@ -24,7 +24,7 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
     const {
       prodiaApiKey: prodiaKey, prodiaModelId,
       prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale,
-      prodiaUpscale: upscale,
+      prodiaAspectRatio: aspectRatio, prodiaUpscale: upscale,
       prodiaSeed: seed,
     } = useProdiaStore.getState();
 
@@ -35,6 +35,7 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
       ...(!!negativePrompt && { negativePrompt }),
       ...(!!steps && { steps }),
       ...(!!cfgScale && { cfgScale }),
+      ...(!!aspectRatio && aspectRatio !== 'square' && { apectRatio: aspectRatio }),
       ...(!!upscale && { upscale }),
       ...(!!seed && { seed }),
     });
