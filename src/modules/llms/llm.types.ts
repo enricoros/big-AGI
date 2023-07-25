@@ -1,9 +1,4 @@
 import type React from 'react';
-
-import type { SourceSetupAnthropic } from './anthropic/anthropic.vendor';
-import type { SourceSetupLocalAI } from './localai/localai.vendor';
-import type { SourceSetupOobabooga } from './oobabooga/oobabooga.vendor';
-import type { SourceSetupOpenAI } from './openai/openai.vendor';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from './llm.client';
 
 
@@ -32,7 +27,7 @@ export interface DLLM<TLLMOptions = unknown> {
 
 
 /// An origin of models - has enough parameters to list models and invoke generation
-export interface DModelSource<TModelSetup = SourceSetupAnthropic | SourceSetupLocalAI | SourceSetupOobabooga | SourceSetupOpenAI> {
+export interface DModelSource<TModelSetup = unknown> {
   id: DModelSourceId;
   label: string;
 
@@ -58,6 +53,7 @@ export interface ModelVendor<TSourceSetup = unknown, TLLMOptions = unknown> {
   LLMOptionsComponent: React.ComponentType<{ llm: DLLM }>;
 
   // functions
+  initalizeSetup?: () => Partial<TSourceSetup>;
   normalizeSetup: (partialSetup?: Partial<TSourceSetup>) => TSourceSetup;
   callChat: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], maxTokens?: number) => Promise<VChatMessageOut>;
   callChatWithFunctions: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) => Promise<VChatMessageOrFunctionCallOut>;
