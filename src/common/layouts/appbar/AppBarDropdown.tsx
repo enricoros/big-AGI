@@ -61,7 +61,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
         : <Option variant='plain' value={key} sx={{ whiteSpace: 'nowrap' }}>
           {props.showSymbols ? props.items[key]?.symbol || ' ' : ' '} {props.items[key].title}
           {/*{key === props.value && (*/}
-          {/*  <IconButton variant='plain' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
+          {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
           {/*    <SettingsIcon color='info' />*/}
           {/*  </IconButton>*/}
           {/*)}*/}
