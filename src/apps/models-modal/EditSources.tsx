@@ -8,14 +8,13 @@ import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
 import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+import { DModelSourceId, ModelVendor, ModelVendorId } from '~/modules/llms/llm.types';
+import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendor.registry';
 import { hasServerKeyOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
-
-import { DModelSourceId, ModelVendor, ModelVendorId } from '../llm.types';
-import { createModelSourceForVendor, findAllVendors, findVendorById } from '../vendor.registry';
-import { useModelsStore } from '../store-llms';
 
 
 function locationIcon(vendor?: ModelVendor | null) {
