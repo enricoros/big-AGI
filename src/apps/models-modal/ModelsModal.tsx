@@ -6,16 +6,17 @@ import { Divider } from '@mui/joy';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
-import { DModelSourceId } from '../llm.types';
+import { DModelSourceId } from '~/modules/llms/llm.types';
+import { createModelSourceForDefaultVendor } from '~/modules/llms/vendor.registry';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
 import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
-import { createModelSourceForDefaultVendor } from '../vendor.registry';
-import { useModelsStore } from '../store-llms';
 
 
-export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
+export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // local state
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);

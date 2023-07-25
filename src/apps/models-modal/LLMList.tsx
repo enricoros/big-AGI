@@ -3,9 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import { List, ListItem, Typography } from '@mui/joy';
 
+import { findVendorById } from '~/modules/llms/vendor.registry';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { LLMListItem } from './LLMListItem';
-import { findVendorById } from '../vendor.registry';
-import { useModelsStore } from '../store-llms';
 
 
 export function LLMList() {
