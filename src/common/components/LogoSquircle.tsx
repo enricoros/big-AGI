@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { SvgIcon } from '@mui/material';
+import { SvgIcon } from '@mui/joy';
 import { SxProps } from '@mui/system';
 
 export const LogoSquircle = (props: {
