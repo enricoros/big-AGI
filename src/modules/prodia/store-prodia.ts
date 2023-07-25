@@ -21,6 +21,9 @@ interface ProdiaStore {
   prodiaCfgScale: number;
   setProdiaCfgScale: (cfgScale: number) => void;
 
+  prodiaUpscale: boolean;
+  setProdiaUpscale: (upscale: boolean) => void;
+
   prodiaSeed: number | null;
   setProdiaSeed: (seed: string) => void;
 
@@ -46,6 +49,9 @@ export const useProdiaStore = create<ProdiaStore>()(
 
       prodiaCfgScale: 7,
       setProdiaCfgScale: (prodiaCfgScale: number) => set({ prodiaCfgScale }),
+
+      prodiaUpscale: false,
+      setProdiaUpscale: (prodiaUpscale: boolean) => set({ prodiaUpscale }),
 
       prodiaSeed: null,
       setProdiaSeed: (prodiaSeed: string) => set({ prodiaSeed: (prodiaSeed === '' || prodiaSeed === '-1') ? null : parseInt(prodiaSeed) ?? null }),

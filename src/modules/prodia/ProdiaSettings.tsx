@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Tooltip } from '@mui/joy';
+import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Switch, Tooltip } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -17,12 +17,13 @@ import { useProdiaStore } from './store-prodia';
 
 export function ProdiaSettings() {
   // external state
-  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useProdiaStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed, upscale, setUpscale } = useProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     negativePrompt: state.prodiaNegativePrompt, setNegativePrompt: state.setProdiaNegativePrompt,
-    cfgScale: state.prodiaCfgScale, setCfgScale: state.setProdiaCfgScale,
     steps: state.prodiaSteps, setSteps: state.setProdiaSteps,
+    cfgScale: state.prodiaCfgScale, setCfgScale: state.setProdiaCfgScale,
+    upscale: state.prodiaUpscale, setUpscale: state.setProdiaUpscale,
     seed: state.prodiaSeed, setSeed: state.setProdiaSeed,
   }), shallow);
 
@@ -132,6 +133,22 @@ export function ProdiaSettings() {
           min={1} max={15} step={0.5} defaultValue={7}
           sx={{ width: '100%' }}
         />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <Tooltip title='Upscale the image (2x) after generation if enabled. Will cost twice the credits.'>
+            <FormLabel sx={{ minWidth: colWidth }}>
+              Upscale <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+            </FormLabel>
+          </Tooltip>
+          <FormHelperText>
+            {upscale ? '1024px' : 'Default'}
+          </FormHelperText>
+        </Box>
+        <Switch checked={upscale} onChange={(e) => setUpscale(e.target.checked)}
+                endDecorator={upscale ? '2x' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
