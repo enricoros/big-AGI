@@ -75,20 +75,22 @@ export function ConversationItems(props: {
       {NewPrefix}New
     </MenuItem>
 
-    <ListDivider />
+    <ListDivider sx={{ mb: 0 }} />
 
-    {conversationIDs.map(conversationId =>
-      <ConversationItem
-        key={'c-id-' + conversationId}
-        conversationId={conversationId}
-        isActive={conversationId === props.conversationId}
-        isSingle={singleChat}
-        showSymbols={showSymbols}
-        conversationActivate={handleConversationActivate}
-        conversationDelete={handleConversationDelete}
-      />)}
+    <Box sx={{ flex: 1, overflowY: 'auto' }}>
+      {conversationIDs.map(conversationId =>
+        <ConversationItem
+          key={'c-id-' + conversationId}
+          conversationId={conversationId}
+          isActive={conversationId === props.conversationId}
+          isSingle={singleChat}
+          showSymbols={showSymbols}
+          conversationActivate={handleConversationActivate}
+          conversationDelete={handleConversationDelete}
+        />)}
+    </Box>
 
-    <ListDivider />
+    <ListDivider sx={{ mt: 0 }} />
 
     <MenuItem onClick={props.onImportConversation}>
       <ListItemDecorator>

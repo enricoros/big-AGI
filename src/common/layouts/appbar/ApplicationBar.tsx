@@ -175,7 +175,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       placement='bottom-end' disablePortal={false}
     >
       {commonContextItems}
-      {!!contextMenuItems && <ListDivider />}
+      {!!contextMenuItems && <ListDivider sx={{ mb: 0 }} />}
       {contextMenuItems}
       <SupportMenuItem />
     </Menu>
