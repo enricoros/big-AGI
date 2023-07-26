@@ -94,7 +94,7 @@ export function Dropdowns(props: {
     {/* Persona selector */}
     {systemPurposeId && (
       <AppBarDropdown
-        items={SystemPurposes} showSymbols={zenMode === 'clean'}
+        items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
         value={systemPurposeId} onChange={handleSystemPurposeChange}
       />
     )}
