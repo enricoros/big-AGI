@@ -13,11 +13,16 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { ConversationItem } from './ConversationItem';
 
 
-export function ConversationItems(props: {
+type ListGrouping = 'off' | 'persona';
+
+export function ConversationsList(props: {
   conversationId: string | null
   onDeleteAllConversations: () => void,
   onImportConversation: () => void,
 }) {
+
+  // local state
+  const [grouping, setGrouping] = React.useState<ListGrouping>('off');
 
   // external state
   const conversationIDs = useChatStore(state => state.conversations.map(
@@ -62,6 +67,26 @@ export function ConversationItems(props: {
 
   const NewPrefix = maxReached && <Tooltip title={`Maximum limit: ${MAX_CONVERSATIONS} chats. Proceeding will remove the oldest chat.`}><Box sx={{ mr: 2 }}>⚠️</Box></Tooltip>;
 
+  // grouping
+  let sortedIds = conversationIDs;
+  if (grouping === 'persona') {
+    const conversations = useChatStore.getState().conversations;
+
+    // group conversations by persona
+    const groupedConversations: { [personaId: string]: string[] } = {};
+    conversations.forEach(conversation => {
+      const persona = conversation.systemPurposeId;
+      if (persona) {
+        if (!groupedConversations[persona])
+          groupedConversations[persona] = [];
+        groupedConversations[persona].push(conversation.id);
+      }
+    });
+
+    // flatten grouped conversations
+    sortedIds = Object.values(groupedConversations).flat();
+  }
+
   return <>
 
     {/*<ListItem>*/}
@@ -78,7 +103,21 @@ export function ConversationItems(props: {
     <ListDivider sx={{ mb: 0 }} />
 
     <Box sx={{ flex: 1, overflowY: 'auto' }}>
-      {conversationIDs.map(conversationId =>
+      {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
+      {/*  <Typography level='body2'>*/}
+      {/*    Conversations*/}
+      {/*  </Typography>*/}
+      {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
+      {/*    <IconButton value='off'>*/}
+      {/*      <AccessTimeIcon />*/}
+      {/*    </IconButton>*/}
+      {/*    <IconButton value='persona'>*/}
+      {/*      <PersonIcon />*/}
+      {/*    </IconButton>*/}
+      {/*  </ToggleButtonGroup>*/}
+      {/*</ListItem>*/}
+
+      {sortedIds.map(conversationId =>
         <ConversationItem
           key={'c-id-' + conversationId}
           conversationId={conversationId}
