@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -91,18 +91,18 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
-        <Badge size='sm' color='info'>
-          <ForkRightIcon color='info' />
-        </Badge>
+        {/*<Badge size='sm' color='info'>*/}
+        <ForkRightIcon color='info' />
+        {/*</Badge>*/}
       </ListItemDecorator>
       Duplicate
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
       <ListItemDecorator>
-        <Badge size='sm' color='info'>
-          <CompressIcon color='info' />
-        </Badge>
+        {/*<Badge size='sm' color='info'>*/}
+        <CompressIcon color='info' />
+        {/*</Badge>*/}
       </ListItemDecorator>
       Flatten
     </MenuItem>
