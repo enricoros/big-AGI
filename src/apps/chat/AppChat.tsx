@@ -24,7 +24,7 @@ import { ChatContextItems } from './components/appbar/ChatContextItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
-import { ConversationItems } from './components/appbar/ConversationItems';
+import { ConversationsList } from './components/appbar/ConversationsList';
 import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
@@ -267,7 +267,7 @@ export function AppChat() {
   const conversationsBadge = conversationsCount < 2 ? 0 : conversationsCount;
 
   const conversationItems = React.useMemo(() =>
-      <ConversationItems
+      <ConversationsList
         conversationId={activeConversationId}
         onImportConversation={handleImportConversation}
         onDeleteAllConversations={handleDeleteAllConversations}
