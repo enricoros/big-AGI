@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { recognize } from 'tesseract.js';
 
 import { Box, Button, CircularProgress, IconButton, LinearProgress, Modal, ModalClose, Option, Select, Sheet, Slider, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
@@ -61,7 +60,7 @@ export function CameraCaptureButton(props: { onOCR: (ocrText: string) => void })
             const control = <Box sx={{ display: 'flex', mx: 3 }}><Slider
               color='neutral'
               min={min} max={max} step={step} defaultValue={1}
-              onChange={(event, value) => track.applyConstraints({ advanced: [{ zoom: value as number }] } as any)}
+              onChange={(_event, value) => track.applyConstraints({ advanced: [{ zoom: value as number }] } as any)}
             /></Box>;
             setZoomControl(control);
           }
@@ -121,7 +120,7 @@ export function CameraCaptureButton(props: { onOCR: (ocrText: string) => void })
     setOpen(false);
   };
 
-  const handleDeviceSelected = (event: any, value: number | null) => setSelectedDeviceIdx(value);
+  const handleDeviceSelected = (_event: any, value: number | null) => setSelectedDeviceIdx(value);
 
 
   const renderVideoFrameToCanvas = (): HTMLCanvasElement => {
@@ -139,8 +138,10 @@ export function CameraCaptureButton(props: { onOCR: (ocrText: string) => void })
     const renderedFrame = renderVideoFrameToCanvas();
 
     setOCRProgress(0);
+    const { recognize } = await import('tesseract.js');
     const result = await recognize(renderedFrame, undefined, {
       logger: m => {
+        // noinspection SuspiciousTypeOfGuard
         if (typeof m.progress === 'number')
           setOCRProgress(m.progress);
       },
