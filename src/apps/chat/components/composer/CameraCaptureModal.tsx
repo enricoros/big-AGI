@@ -110,7 +110,7 @@ export function CameraCaptureModal(props: { onCloseModal: () => void, onOCR: (oc
             ref={videoRef} autoPlay playsInline
             style={{
               display: 'block', width: '100%', maxHeight: 'calc(100vh - 200px)',
-              background: '#8888',
+              background: '#8888', opacity: ocrProgress !== null ? 0.5 : 1,
             }}
           />
 
