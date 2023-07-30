@@ -7,7 +7,7 @@ import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 import { CameraCaptureModal } from './CameraCaptureModal';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const showOnDesktop = false; // process.env.NODE_ENV === 'development';
 
 
 export function CameraCaptureButton(props: { onOCR: (ocrText: string) => void }) {
@@ -22,7 +22,7 @@ export function CameraCaptureButton(props: { onOCR: (ocrText: string) => void })
     </IconButton>
 
     {/* Also show a button on desktop while in development */}
-    {isDevelopment && <Button
+    {showOnDesktop && <Button
       fullWidth variant='plain' color='neutral' onClick={() => setOpen(true)} startDecorator={<AddAPhotoIcon />}
       sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
       OCR

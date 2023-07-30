@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -466,12 +467,12 @@ export function Composer(props: {
             <CameraCaptureButton onOCR={handleCameraOCR} />
 
             <IconButton variant='plain' color='neutral' onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
-              <UploadFileIcon />
+              <AttachFileOutlinedIcon />
             </IconButton>
             <Tooltip
               variant='solid' placement='top-start'
               title={attachFileLegend}>
-              <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<UploadFileIcon />}
+              <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<AttachFileOutlinedIcon />}
                       sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
                 Attach
               </Button>
