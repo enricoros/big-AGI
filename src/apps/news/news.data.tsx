@@ -8,13 +8,14 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 3;
+export const incrementalVersion: number = 4;
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
+      { text: <>bring AI to the real world with <Typography color='info' sx={{fontWeight:600}}>camera OCR</Typography> - MOBILE ONLY</> },
       { text: <><Typography color='info'>Anthropic</Typography> models full support</> },
     ],
   },
