@@ -1,34 +1,35 @@
-import DevicesIcon from '@mui/icons-material/Devices';
-
-import { LocalAISourceSetup } from './LocalAISourceSetup';
 import { ModelVendor } from '../llm.types';
 
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
 
-export const ModelVendorLocalAI: ModelVendor = {
+import DevicesIcon from '@mui/icons-material/Devices';
+import { LocalAISourceSetup } from './LocalAISourceSetup';
+
+export interface SourceSetupLocalAI {
+  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+}
+
+export const ModelVendorLocalAI: ModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,
   location: 'local',
-  instanceLimit: 0,
+  instanceLimit: 1,
 
   // components
   Icon: DevicesIcon,
   SourceSetupComponent: LocalAISourceSetup,
-  LLMOptionsComponent: () => <>No LocalAI Options</>,
+  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  callChat: () => Promise.reject(new Error('LocalAI chat is not implemented')),
-  callChatWithFunctions: () => Promise.reject(new Error('LocalAI chatWithFunctions is not implemented')),
-};
-
-
-export interface SourceSetupLocalAI {
-  hostUrl: string;
-}
-
-export function normalizeSetup(partialSetup?: Partial<SourceSetupLocalAI>): SourceSetupLocalAI {
-  return {
-    hostUrl: '',
+  initalizeSetup: () => ({
+    oaiHost: 'http://localhost:8080',
+  }),
+  normalizeSetup: (partialSetup?: Partial<SourceSetupLocalAI>) => ({
+    oaiHost: '',
     ...partialSetup,
-  };
-}
+  }),
+  callChat: ModelVendorOpenAI.callChat,
+  callChatWithFunctions: ModelVendorOpenAI.callChatWithFunctions,
+};

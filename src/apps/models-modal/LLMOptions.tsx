@@ -6,12 +6,13 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import { DLLMId } from '~/modules/llms/llm.types';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
-import { DLLMId } from '../llm.types';
 import { VendorLLMOptions } from './VendorLLMOptions';
-import { useModelsStore } from '../store-llms';
 
 
 export function LLMOptions(props: { id: DLLMId }) {
@@ -109,7 +110,7 @@ export function LLMOptions(props: { id: DLLMId }) {
           Details
         </FormLabel>
         {showDetails && <Typography level='body2' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens} · {
+          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens?.toLocaleString()} · {
           llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description}
           {/*· tags: {llm.tags.join(', ')}*/}
         </Typography>}

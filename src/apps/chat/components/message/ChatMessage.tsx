@@ -181,6 +181,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const isImaginable = canUseProdia();
   const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
+  const isSpeakableEnabled = isImaginableEnabled;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
@@ -269,7 +270,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: { xs: 0, md: 1}, px: { xs: 1, md: 2 }, py: 2,
+      gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
       background,
       borderBottom: `1px solid ${theme.vars.palette.divider}`,
       // borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
@@ -310,7 +311,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       {/* Edit / Blocks */}
       {!isEditing ? (
 
-        <Box sx={{ ...cssBlock, flexGrow: 0 }} onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null }>
+        <Box sx={{ ...cssBlock, flexGrow: 0 }} onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}>
 
           {fromSystem && wasEdited && (
             <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
@@ -373,40 +374,35 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
         <Menu
           variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
           open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
-          <MenuItem onClick={handleMenuCopy}>
-            <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy
-          </MenuItem>
-          <MenuItem onClick={handleMenuEdit}>
-            <ListItemDecorator><EditIcon /></ListItemDecorator>
-            {isEditing ? 'Discard' : 'Edit'}
-            {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <MenuItem variant='plain' onClick={handleMenuEdit} sx={{ flex: 1 }}>
+              <ListItemDecorator><EditIcon /></ListItemDecorator>
+              {isEditing ? 'Discard' : 'Edit'}
+              {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
+            </MenuItem>
+            <MenuItem onClick={handleMenuCopy} sx={{ flex: 1 }}>
+              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+              Copy
+            </MenuItem>
+          </Box>
+          <ListDivider />
+          <MenuItem onClick={handleMenuRunAgain}>
+            <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
+            {fromAssistant ? 'Retry' : 'Run from here'}
           </MenuItem>
           {isImaginable && isImaginableEnabled && (
             <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
-              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon />}</ListItemDecorator>
+              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='info' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
-          {isSpeakable && (
+          {isSpeakable && isSpeakableEnabled && (
             <MenuItem onClick={handleMenuSpeak} disabled={isSpeaking}>
-              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon />}</ListItemDecorator>
+              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='info' />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
           <ListDivider />
-          {fromAssistant && (
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
-              Retry
-            </MenuItem>
-          )}
-          {fromUser && (
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-              Run Again
-            </MenuItem>
-          )}
           <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete

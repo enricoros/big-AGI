@@ -1,13 +1,16 @@
 import { ModelVendor } from '../llm.types';
 
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
-import { openAICallChat, openAICallChatWithFunctions } from '~/modules/llms/openai/openai.client';
 
 import { OobaboogaIcon } from './OobaboogaIcon';
 import { OobaboogaSourceSetup } from './OobaboogaSourceSetup';
 
+export interface SourceSetupOobabooga {
+  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+}
 
-export const ModelVendorOoobabooga: ModelVendor = {
+export const ModelVendorOoobabooga: ModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga (Alpha)',
   rank: 15,
@@ -20,17 +23,13 @@ export const ModelVendorOoobabooga: ModelVendor = {
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  callChat: openAICallChat,
-  callChatWithFunctions: openAICallChatWithFunctions,
-};
-
-export interface SourceSetupOobabooga {
-  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
-}
-
-export function normalizeOobaboogaSetup(partialSetup?: Partial<SourceSetupOobabooga>): SourceSetupOobabooga {
-  return {
+  initalizeSetup: () => ({
+    oaiHost: 'http://127.0.0.1:5001',
+  }),
+  normalizeSetup: (partialSetup?: Partial<SourceSetupOobabooga>) => ({
     oaiHost: '',
     ...partialSetup,
-  };
-}
+  }),
+  callChat: ModelVendorOpenAI.callChat,
+  callChatWithFunctions: ModelVendorOpenAI.callChatWithFunctions,
+};

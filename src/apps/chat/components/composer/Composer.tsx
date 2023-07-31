@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -19,11 +20,12 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
+import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
-import { countModelTokens } from '~/common/llm-util/token-counter';
+import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
@@ -31,6 +33,7 @@ import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { CameraCaptureButton } from './CameraCaptureButton';
 import { ChatModeId } from '../../AppChat';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
@@ -196,7 +199,7 @@ export function Composer(props: {
     return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
   }, [chatLLMId, composeText]);
   const historyTokens = conversationTokenCount;
-  const responseTokens = chatLLM?.options?.llmResponseTokens || 0;
+  const responseTokens = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
@@ -311,6 +314,7 @@ export function Composer(props: {
     e.target.value = '';
   };
 
+  const handleCameraOCR = (text: string) => text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
 
   const handlePasteButtonClicked = async () => {
     for (const clipboardItem of await navigator.clipboard.read()) {
@@ -460,13 +464,15 @@ export function Composer(props: {
               <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
+            <CameraCaptureButton onOCR={handleCameraOCR} />
+
             <IconButton variant='plain' color='neutral' onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
-              <UploadFileIcon />
+              <AttachFileOutlinedIcon />
             </IconButton>
             <Tooltip
               variant='solid' placement='top-start'
               title={attachFileLegend}>
-              <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<UploadFileIcon />}
+              <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<AttachFileOutlinedIcon />}
                       sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
                 Attach
               </Button>
@@ -496,7 +502,7 @@ export function Composer(props: {
               <Textarea
                 variant='outlined' color={isReAct ? 'info' : 'neutral'}
                 autoFocus
-                minRows={4} maxRows={12}
+                minRows={5} maxRows={12}
                 placeholder={textPlaceholder}
                 value={composeText}
                 onChange={(e) => setComposeText(e.target.value)}

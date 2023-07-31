@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import { HARDCODED_MODELS } from '~/modules/prodia/prodia.models';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
@@ -11,6 +12,8 @@ const imagineInputSchema = z.object({
   negativePrompt: z.string().optional(),
   steps: z.number().optional(),
   cfgScale: z.number().optional(),
+  apectRatio: z.enum(['square', 'portrait', 'landscape']).optional(),
+  upscale: z.boolean().optional(),
   seed: z.number().optional(),
 });
 
@@ -28,30 +31,28 @@ export const prodiaRouter = createTRPCRouter({
     .input(imagineInputSchema)
     .query(async ({ input }) => {
 
-      const prodiaKey = (input.prodiaKey || process.env.PRODIA_API_KEY || '').trim();
-      if (!prodiaKey)
-        throw new Error('A Prodia API Key is required.');
-
       // timeout, in seconds
-      const timeout = 15;
+      const timeout = 20;
       const tStart = Date.now();
 
       // crate the job, getting back a job ID
       const jobRequest: JobRequest = {
         model: input.prodiaModel,
         prompt: input.prompt,
-        ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
-        ...(!!input.steps && { steps: input.steps }),
         ...(!!input.negativePrompt && { negative_prompt: input.negativePrompt }),
+        ...(!!input.steps && { steps: input.steps }),
+        ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
+        ...(!!input.apectRatio && input.apectRatio !== 'square' && { aspect_ratio: input.apectRatio }),
+        ...(!!input.upscale && { upscale: input.upscale }),
         ...(!!input.seed && { seed: input.seed }),
       };
-      let j: JobResponse = await createGenerationJob(prodiaKey, jobRequest);
+      let j: JobResponse = await createGenerationJob(input.prodiaKey, jobRequest);
 
       // poll the job status until it's done
       let sleepDelay = 2000;
       while (j.status !== 'succeeded' && j.status !== 'failed' && (Date.now() - tStart) < (timeout * 1000)) {
         await new Promise(resolve => setTimeout(resolve, sleepDelay));
-        j = await getJobStatus(prodiaKey, j.job);
+        j = await getJobStatus(input.prodiaKey, j.job);
         if (sleepDelay > 250)
           sleepDelay /= 2;
       }
@@ -72,10 +73,35 @@ export const prodiaRouter = createTRPCRouter({
   /**
    * List models - for now just hardcode the list, as there's no endpoint
    */
-  models: publicProcedure
+  listModels: publicProcedure
     .input(modelsInputSchema)
-    .query(async () => {
-      return HARDCODED_MODELS;
+    .query(async ({ input }) => {
+
+      const { headers, url } = prodiaAccess(input.prodiaKey, `/v1/models/list`);
+      const response = await fetch(url, { headers });
+      await throwIfNot200(response, 'models/list');
+      const modelIds: string[] = await response.json();
+
+      // filter and print the hardcoded models that are not in the API list
+      const hardcodedModels = HARDCODED_MODELS.models.filter(m => modelIds.includes(m.id));
+      const missingHardcoded = HARDCODED_MODELS.models.filter(m => !modelIds.includes(m.id));
+      if (missingHardcoded.length)
+        console.warn(`Prodia models missing from the API list: ${missingHardcoded.map(m => m.id).join(', ')}`);
+
+      // add and print the models that are not in the hardcoded list
+      const missingHardcodedIds = modelIds.filter(id => !HARDCODED_MODELS.models.find(m => m.id === id));
+      if (missingHardcodedIds.length) {
+        hardcodedModels.push(...missingHardcodedIds.map(id => ({
+          id, label: id.split('[')[0]
+            .replaceAll('_', ' ')
+            .replaceAll('.safetensors', '')
+            .trim(),
+        })));
+        console.log(`Prodia models missing from the hardcoded list: ${missingHardcodedIds.join(', ')}`);
+      }
+
+      // return the hardcoded models
+      return { models: hardcodedModels };
     }),
 
 });
@@ -88,6 +114,8 @@ export interface JobRequest {
   cfg_scale?: number;
   steps?: number;
   negative_prompt?: string;
+  aspect_ratio?: 'square' | 'portrait' | 'landscape';
+  upscale?: boolean;
   seed?: number;
 }
 
@@ -110,31 +138,43 @@ export interface JobResponse {
 }
 
 
-async function createGenerationJob(apiKey: string, jobRequest: JobRequest): Promise<JobResponse> {
-  const response = await fetch('https://api.prodia.com/v1/job', {
-    method: 'POST',
-    headers: {
-      'X-Prodia-Key': apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(jobRequest),
-  });
-  if (response.status !== 200) {
-    const errorMessage = await response.text() || response.statusText || '' + response.status || 'Unknown Error';
-    throw new Error(`Bad Prodia response: ${errorMessage}`);
-  }
+async function createGenerationJob(apiKey: string | undefined, jobRequest: JobRequest): Promise<JobResponse> {
+  const { headers, url } = prodiaAccess(apiKey, '/v1/job');
+  const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(jobRequest) });
+  await throwIfNot200(response, 'job');
   return await response.json();
 }
 
-async function getJobStatus(apiKey: string, jobId: string): Promise<JobResponse> {
-  const response = await fetch(`https://api.prodia.com/v1/job/${jobId}`, {
-    headers: {
-      'X-Prodia-Key': apiKey,
-    },
-  });
-  if (response.status !== 200) {
-    const errorMessage = await response.text() || response.statusText || '' + response.status || 'Unknown Error';
-    throw new Error(`Bad Prodia status response: ${errorMessage}`);
-  }
+async function getJobStatus(apiKey: string | undefined, jobId: string): Promise<JobResponse> {
+  const { headers, url } = prodiaAccess(apiKey, `/v1/job/${jobId}`);
+  const response = await fetch(url, { headers });
+  await throwIfNot200(response, 'job/status');
   return await response.json();
+}
+
+async function throwIfNot200(response: Response, scope: string) {
+  if (response.status !== 200) {
+    const errorMessage = await response.text().catch(() => null) || response.statusText || '' + response.status || 'Unknown Error';
+    console.log(`Bad Prodia ${scope} response: ${errorMessage}`);
+    throw new TRPCError({ code: 'BAD_REQUEST', message: errorMessage });
+  }
+}
+
+
+function prodiaAccess(_prodiaKey: string | undefined, apiPath: string): { headers: HeadersInit, url: string } {
+  // API key
+  const prodiaKey = (_prodiaKey || process.env.PRODIA_API_KEY || '').trim();
+  if (!prodiaKey)
+    throw new Error('Missing Prodia API Key. Add it on the UI (Setup) or server side (your deployment).');
+
+  // API host
+  let prodiaHost = 'https://api.prodia.com';
+
+  return {
+    headers: {
+      'X-Prodia-Key': prodiaKey,
+      'Content-Type': 'application/json',
+    },
+    url: prodiaHost + apiPath,
+  };
 }

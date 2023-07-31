@@ -4,7 +4,6 @@ import { Alert, Box, Button, FormControl, FormHelperText, FormLabel, Input, Swit
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/llms/openai/openai.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';
@@ -12,8 +11,8 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './openai.vendor';
 import { OpenAI } from './openai.types';
+import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -26,7 +25,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const {
     source, sourceLLMs, updateSetup,
     normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
-  } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeOAISetup);
+  } = useSourceSetup(props.sourceId, ModelVendorOpenAI.normalizeSetup);
 
   const hasModels = !!sourceLLMs.length;
   const needsUserKey = !hasServerKeyOpenAI;
@@ -35,7 +34,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.openai.listModels.useQuery({
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
     access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
     filterGpt: true,
   }, {
@@ -189,10 +188,10 @@ const knownBases = [
 ];
 
 
-function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM & { options: LLMOptionsOpenAI } {
+function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
   const suffix = model.id.slice(base.id.length).trim();
-  const hidden = !!suffix && suffix.startsWith('-03');
+  const hidden = !suffix || suffix.startsWith('-03');
   return {
     id: `${source.id}-${model.id}`,
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),

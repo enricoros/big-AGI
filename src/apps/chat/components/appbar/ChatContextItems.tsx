@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
+import CompressIcon from '@mui/icons-material/Compress';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
@@ -21,11 +22,12 @@ export function ChatContextItems(props: {
   conversationId: string | null, isConversationEmpty: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
+  onDuplicateConversation: (conversationId: string) => void,
+  onFlattenConversation: (conversationId: string) => void,
   onPublishConversation: (conversationId: string) => void
 }) {
 
   // external state
-  const { duplicateConversation } = useChatStore(state => ({ duplicateConversation: state.duplicateConversation }), shallow);
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -49,7 +51,13 @@ export function ChatContextItems(props: {
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     closeContextMenu();
-    props.conversationId && duplicateConversation(props.conversationId);
+    props.conversationId && props.onDuplicateConversation(props.conversationId);
+  };
+
+  const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    closeContextMenu();
+    props.conversationId && props.onFlattenConversation(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
@@ -83,11 +91,20 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
-        <Badge size='sm' color='info'>
-          <ForkRightIcon color='info' />
-        </Badge>
+        {/*<Badge size='sm' color='info'>*/}
+        <ForkRightIcon color='info' />
+        {/*</Badge>*/}
       </ListItemDecorator>
       Duplicate
+    </MenuItem>
+
+    <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
+      <ListItemDecorator>
+        {/*<Badge size='sm' color='info'>*/}
+        <CompressIcon color='info' />
+        {/*</Badge>*/}
+      </ListItemDecorator>
+      Flatten
     </MenuItem>
 
     <ListDivider inset='startContent' />

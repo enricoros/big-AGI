@@ -5,7 +5,7 @@ import { ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-import { DLLMId } from '~/modules/llms/llm.types';
+import { DLLMId, DModelSourceId } from '~/modules/llms/llm.types';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
@@ -45,14 +45,23 @@ export function Dropdowns(props: {
 
   const handleOpenLLMOptions = () => chatLLMId && openLLMOptions(chatLLMId);
 
-  // filter-out hidden models
+  // build model menu items, filtering-out hidden models, and add Source separators
   const llmItems: DropdownItems = {};
-  for (const llm of llms)
-    if (!llm.hidden || llm.id === chatLLMId)
+  let prevSourceId: DModelSourceId | null = null;
+  for (const llm of llms) {
+    if (!llm.hidden || llm.id === chatLLMId) {
+      if (!prevSourceId || llm.sId !== prevSourceId) {
+        if (prevSourceId)
+          llmItems[`sep-${llm.id}`] = { type: 'separator', title: llm.sId };
+        prevSourceId = llm.sId;
+      }
       llmItems[llm.id] = { title: llm.label };
+    }
+  }
 
   return <>
 
+    {/* Model selector */}
     <AppBarDropdown
       items={llmItems}
       value={chatLLMId} onChange={handleChatModelChange}
@@ -82,9 +91,10 @@ export function Dropdowns(props: {
       </>}
     />
 
+    {/* Persona selector */}
     {systemPurposeId && (
       <AppBarDropdown
-        items={SystemPurposes} showSymbols={zenMode === 'clean'}
+        items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
         value={systemPurposeId} onChange={handleSystemPurposeChange}
       />
     )}

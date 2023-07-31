@@ -3,23 +3,28 @@ import { shallow } from 'zustand/shallow';
 
 import { List, ListItem, Typography } from '@mui/joy';
 
+import { DModelSourceId } from '~/modules/llms/llm.types';
+import { findVendorById } from '~/modules/llms/vendor.registry';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { LLMListItem } from './LLMListItem';
-import { findVendorById } from '../vendor.registry';
-import { useModelsStore } from '../store-llms';
 
 
-export function LLMList() {
+export function LLMList(props: {
+  filterSourceId: DModelSourceId | null
+}) {
 
   // external state
   const { chatLLMId, fastLLMId, funcLLMId, llms } = useModelsStore(state => ({
     chatLLMId: state.chatLLMId,
     fastLLMId: state.fastLLMId,
     funcLLMId: state.funcLLMId,
-    llms: state.llms,
+    llms: state.llms.filter(llm => !props.filterSourceId || llm.sId === props.filterSourceId),
   }), shallow);
 
   // find out if there's more than 1 sourceLabel in the llms array
-  const singleOrigin = llms.length < 2 || !llms.find(llm => llm._source !== llms[0]._source);
+  const multiSources = llms.length >= 2 && llms.find(llm => llm._source !== llms[0]._source);
+  const showAllSources = !props.filterSourceId;
   let lastGroupLabel = '';
 
   // generate the list items, prepending headers when necessary
@@ -28,11 +33,11 @@ export function LLMList() {
 
     // prepend label if changing source
     const groupLabel = llm._source.label;
-    if (!singleOrigin && groupLabel !== lastGroupLabel) {
+    if ((multiSources || showAllSources) && groupLabel !== lastGroupLabel) {
       lastGroupLabel = groupLabel;
       items.push(
         <ListItem key={'lab-' + llm._source.id} sx={{ justifyContent: 'center' }}>
-          <Typography level='body2'>
+          <Typography level='body1'>
             {groupLabel}
           </Typography>
         </ListItem>,

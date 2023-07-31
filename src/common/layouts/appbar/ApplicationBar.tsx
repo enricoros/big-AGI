@@ -13,7 +13,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { Brand } from '~/common/brand';
 import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
 import { SupportMenuItem } from './SupportMenuItem';
 import { useApplicationBarStore } from './store-applicationbar';
@@ -112,6 +112,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
     appMenuAnchor: state.appMenuAnchor, setAppMenuAnchor: state.setAppMenuAnchor,
     contextMenuAnchor: state.contextMenuAnchor, setContextMenuAnchor: state.setContextMenuAnchor,
   }), shallow);
+  const { zenMode } = useUIPreferencesStore(state => ({ zenMode: state.zenMode }), shallow);
 
   const closeApplicationMenu = () => setApplicationMenuAnchor(null);
 
@@ -120,6 +121,9 @@ export function ApplicationBar(props: { sx?: SxProps }) {
   const commonContextItems = React.useMemo(() =>
       <CommonContextItems onClose={closeContextMenu} />
     , [closeContextMenu]);
+
+  // for now, this will hide it all the time
+  const showAppMenuBadge = zenMode !== 'clean' && zenMode !== 'cleaner';
 
   return <>
 
@@ -134,15 +138,13 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       {/* Application-Menu Button */}
       {!!centerItems ? (
         <IconButton disabled={!!applicationMenuAnchor || !appMenuItems} variant='plain' onClick={event => setApplicationMenuAnchor(event.currentTarget)}>
-          <Badge variant='solid' size='sm' badgeContent={appMenuBadge ? appMenuBadge : 0}>
+          <Badge variant='solid' size='sm' badgeContent={(showAppMenuBadge && appMenuBadge) ? appMenuBadge : 0}>
             <MenuIcon />
           </Badge>
         </IconButton>
       ) : (
         <IconButton component={Link} href='/' noLinkStyle variant='plain'>
-          <Badge variant='solid' size='sm' badgeContent={appMenuBadge ? appMenuBadge : 0}>
-            <ArrowBackIcon />
-          </Badge>
+          <ArrowBackIcon />
         </IconButton>
       )}
 
@@ -173,7 +175,7 @@ export function ApplicationBar(props: { sx?: SxProps }) {
       placement='bottom-end' disablePortal={false}
     >
       {commonContextItems}
-      {!!contextMenuItems && <ListDivider />}
+      {!!contextMenuItems && <ListDivider sx={{ mb: 0 }} />}
       {contextMenuItems}
       <SupportMenuItem />
     </Menu>

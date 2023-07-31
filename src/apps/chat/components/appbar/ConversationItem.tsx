@@ -113,7 +113,7 @@ export function ConversationItem(props: {
       {/* Text */}
       {!isEditingTitle ? (
 
-        <Box onDoubleClick={(e) => doubleClickToEdit ? handleEditBegin() : null } sx={{ flexGrow: 1 }}>
+        <Box onDoubleClick={() => doubleClickToEdit ? handleEditBegin() : null } sx={{ flexGrow: 1 }}>
           {DEBUG_CONVERSATION_IDs ? props.conversationId.slice(0, 10) : title}{assistantTyping && '...'}
         </Box>
 

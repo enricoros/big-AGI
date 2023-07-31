@@ -1,24 +1,26 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Divider } from '@mui/joy';
+import { Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
-import { DModelSourceId } from '../llm.types';
+import { DModelSourceId } from '~/modules/llms/llm.types';
+import { createModelSourceForDefaultVendor } from '~/modules/llms/vendor.registry';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { EditSources } from './EditSources';
 import { LLMList } from './LLMList';
 import { LLMOptions } from './LLMOptions';
 import { VendorSourceSetup } from './VendorSourceSetup';
-import { createDefaultModelSource } from '../vendor.registry';
-import { useModelsStore } from '../store-llms';
 
 
-export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
+export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // local state
   const [_selectedSourceId, setSelectedSourceId] = React.useState<DModelSourceId | null>(null);
+  const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
   const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
@@ -33,6 +35,7 @@ export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
 
   const activeSource = modelSources.find(source => source.id === selectedSourceId);
 
+  const multiSource = modelSources.length > 1;
 
   // if no sources at startup, open the modal
   React.useEffect(() => {
@@ -44,14 +47,23 @@ export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
   React.useEffect(() => {
     const { addSource, sources } = useModelsStore.getState();
     if (!sources.length)
-      addSource(createDefaultModelSource(sources));
+      addSource(createModelSourceForDefaultVendor(sources));
   }, []);
 
 
   return <>
 
     {/* Sources Setup */}
-    <GoodModal title={<>Configure <b>AI Models</b></>} open={modelsSetupOpen} onClose={closeModelsSetup}>
+    <GoodModal
+      title={<>Configure <b>AI Models</b></>}
+      startButton={
+        multiSource ? <Checkbox
+          label='all vendors' sx={{ my: 'auto' }}
+          checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
+        /> : undefined
+      }
+      open={modelsSetupOpen} onClose={closeModelsSetup}
+    >
 
       <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
@@ -61,7 +73,7 @@ export function Configurator(props: { suspendAutoModelsSetup?: boolean }) {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <LLMList />}
+      {!!llmCount && <LLMList filterSourceId={showAllSources ? null : selectedSourceId} />}
 
       <Divider />
 

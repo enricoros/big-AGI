@@ -3,8 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Container, useTheme } from '@mui/joy';
 
-import { Configurator } from '~/modules/llms/configurator/Configurator';
-import { SettingsModal } from '../../apps/settings/SettingsModal';
+import { ModelsModal } from '../../apps/models-modal/ModelsModal';
+import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
 
 import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
@@ -59,7 +59,7 @@ export function AppLayout(props: {
 
       <SettingsModal />
 
-      <Configurator suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+      <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     </NoSSR>
   );

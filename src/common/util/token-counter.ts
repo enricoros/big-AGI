@@ -1,7 +1,8 @@
 import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from '@dqbd/tiktoken';
 
 import { DLLMId } from '~/modules/llms/llm.types';
-import { findOpenAILlmRefOrThrow, useModelsStore } from '~/modules/llms/store-llms';
+import { findLLMOrThrow } from '~/modules/llms/llm.client';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 // Do not set this to true in production, it's very verbose
@@ -19,7 +20,8 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 
   function tokenCount(text: string, llmId: DLLMId, debugFrom: string): number {
-    const openaiModel = findOpenAILlmRefOrThrow(llmId);
+    const { options: { llmRef: openaiModel } } = findLLMOrThrow(llmId);
+    if (!openaiModel) throw new Error(`LLM ${llmId} has no LLM reference id`);
     if (!(openaiModel in tokenEncoders)) {
       try {
         tokenEncoders[openaiModel] = encoding_for_model(openaiModel as TiktokenModel);
