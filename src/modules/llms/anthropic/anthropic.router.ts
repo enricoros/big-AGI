@@ -86,7 +86,7 @@ export const llmAnthropicRouter = createTRPCRouter({
   listModels: publicProcedure
     .input(listModelsSchema)
     .output(listModelsOutputSchema)
-    .query(async ({ input }) => {
+    .query(async () => {
       const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
       return {
         models: [
