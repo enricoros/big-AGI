@@ -40,7 +40,6 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
-    refetchOnMount: 'always',
   });
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
