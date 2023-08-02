@@ -198,7 +198,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
   return new NextResponse(chatResponseStream, {
     status: 200,
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
+      'Content-Type': 'text/event-stream; charset=utf-8',
     },
   });
 }
