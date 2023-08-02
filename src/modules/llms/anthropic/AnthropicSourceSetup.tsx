@@ -37,7 +37,6 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => anthropicModelToDLLM(model, source))),
     staleTime: Infinity,
-    refetchOnMount: 'always',
   });
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
