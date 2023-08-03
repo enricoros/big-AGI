@@ -3,6 +3,7 @@ import { createTRPCRouter } from './trpc.server';
 import { elevenlabsRouter } from '~/modules/elevenlabs/elevenlabs.router';
 import { googleSearchRouter } from '~/modules/google/search.router';
 import { llmAnthropicRouter } from '~/modules/llms/anthropic/anthropic.router';
+import { llmAzureRouter } from '~/modules/llms/azure/azure.router';
 import { llmOpenAIRouter } from '~/modules/llms/openai/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
 import { sharingRouter } from '~/modules/sharing/sharing.router';
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   elevenlabs: elevenlabsRouter,
   googleSearch: googleSearchRouter,
   llmAnthropic: llmAnthropicRouter,
+  llmAzure: llmAzureRouter,
   llmOpenAI: llmOpenAIRouter,
   prodia: prodiaRouter,
   sharing: sharingRouter,

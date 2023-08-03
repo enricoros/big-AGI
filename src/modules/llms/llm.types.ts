@@ -4,7 +4,7 @@ import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VC
 
 export type DLLMId = string;
 export type DModelSourceId = string;
-export type ModelVendorId = 'anthropic' | 'localai' | 'oobabooga' | 'openai' | 'openrouter';
+export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'oobabooga' | 'openai' | 'openrouter';
 
 
 /// Large Language Model - a model that can generate text
