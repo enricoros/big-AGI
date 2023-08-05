@@ -6,39 +6,39 @@
 
 code[class*="language-"],
 pre[class*="language-"] {
-	color: black;
-	background: none;
-	text-shadow: 0 1px white;
-	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-	font-size: 1em;
-	text-align: left;
-	white-space: pre;
-	word-spacing: normal;
-	word-break: normal;
-	word-wrap: normal;
-	line-height: 1.5;
+	/*color: black;*/
+	/*background: none;*/
+	/*text-shadow: 0 1px white;*/
+	/*font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;*/
+	/*font-size: 1em;*/
+	/*text-align: left;*/
+	/*white-space: pre;*/
+	/*word-spacing: normal;*/
+	/*word-break: normal;*/
+	/*word-wrap: normal;*/
+	/*line-height: 1.5;*/
 
-	-moz-tab-size: 4;
-	-o-tab-size: 4;
-	tab-size: 4;
+	/*-moz-tab-size: 4;*/
+	/*-o-tab-size: 4;*/
+	/*tab-size: 4;*/
 
-	-webkit-hyphens: none;
-	-moz-hyphens: none;
-	-ms-hyphens: none;
-	hyphens: none;
+	/*-webkit-hyphens: none;*/
+	/*-moz-hyphens: none;*/
+	/*-ms-hyphens: none;*/
+	/*hyphens: none;*/
 }
 
-pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
-code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
-	text-shadow: none;
-	background: #b3d4fc;
-}
+/*pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,*/
+/*code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {*/
+/*	text-shadow: none;*/
+/*	background: #b3d4fc;*/
+/*}*/
 
-pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
-code[class*="language-"]::selection, code[class*="language-"] ::selection {
-	text-shadow: none;
-	background: #b3d4fc;
-}
+/*pre[class*="language-"]::selection, pre[class*="language-"] ::selection,*/
+/*code[class*="language-"]::selection, code[class*="language-"] ::selection {*/
+/*	text-shadow: none;*/
+/*	background: #b3d4fc;*/
+/*}*/
 
 @media print {
 	code[class*="language-"],
@@ -48,23 +48,23 @@ code[class*="language-"]::selection, code[class*="language-"] ::selection {
 }
 
 /* Code blocks */
-pre[class*="language-"] {
-	padding: 1em;
-	margin: .5em 0;
-	overflow: auto;
-}
+/*pre[class*="language-"] {*/
+/*	padding: 1em;*/
+/*	margin: .5em 0;*/
+/*	overflow: auto;*/
+/*}*/
 
-:not(pre) > code[class*="language-"],
-pre[class*="language-"] {
-	background: #f5f2f0;
-}
+/*:not(pre) > code[class*="language-"],*/
+/*pre[class*="language-"] {*/
+/*	background: #f5f2f0;*/
+/*}*/
 
-/* Inline code */
-:not(pre) > code[class*="language-"] {
-	padding: .1em;
-	border-radius: .3em;
-	white-space: normal;
-}
+/*!* Inline code *!*/
+/*:not(pre) > code[class*="language-"] {*/
+/*	padding: .1em;*/
+/*	border-radius: .3em;*/
+/*	white-space: normal;*/
+/*}*/
 
 .token.comment,
 .token.prolog,
@@ -107,7 +107,7 @@ pre[class*="language-"] {
 .style .token.string {
 	color: #9a6e3a;
 	/* This background color was intended by the author of this theme. */
-	background: hsla(0, 0%, 100%, .5);
+	/*background: hsla(0, 0%, 100%, .5);*/
 }
 
 .token.atrule,
