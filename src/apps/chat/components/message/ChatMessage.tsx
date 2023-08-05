@@ -314,7 +314,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
         <Box
           onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}
           sx={{
-            ...blockSx,
+            ...cssBlock,
             flexGrow: 0,
             overflowX: 'auto',
         }} >
