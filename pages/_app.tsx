@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
+import '~/common/styles/CodePrism.css'
 import '~/common/styles/GithubMarkdown.css';
 import { Brand } from '~/common/brand';
 import { createEmotionCache, theme } from '~/common/theme';
