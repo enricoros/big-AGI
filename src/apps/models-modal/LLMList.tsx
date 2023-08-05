@@ -37,7 +37,7 @@ export function LLMList(props: {
       lastGroupLabel = groupLabel;
       items.push(
         <ListItem key={'lab-' + llm._source.id} sx={{ justifyContent: 'center' }}>
-          <Typography level='body1'>
+          <Typography>
             {groupLabel}
           </Typography>
         </ListItem>,

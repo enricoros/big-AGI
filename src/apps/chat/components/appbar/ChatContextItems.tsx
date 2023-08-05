@@ -76,7 +76,7 @@ export function ChatContextItems(props: {
   return <>
 
     <ListItem sticky>
-      <Typography level='body2'>
+      <Typography level='body-sm'>
         Conversation
       </Typography>
     </ListItem>
@@ -91,8 +91,8 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
-        {/*<Badge size='sm' color='info'>*/}
-        <ForkRightIcon color='info' />
+        {/*<Badge size='sm' color='success'>*/}
+        <ForkRightIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
       Duplicate
@@ -100,8 +100,8 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
       <ListItemDecorator>
-        {/*<Badge size='sm' color='info'>*/}
-        <CompressIcon color='info' />
+        {/*<Badge size='sm' color='success'>*/}
+        <CompressIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
       Flatten

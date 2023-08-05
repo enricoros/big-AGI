@@ -21,7 +21,7 @@ export function PublishedModal(props: { onClose: () => void, response: Published
     <Modal open={props.open} onClose={props.onClose}>
       <ModalDialog variant='outlined' color='neutral' sx={{ maxWidth: '100vw' }}>
 
-        <Typography level='h5'>
+        <Typography level='title-lg'>
           Your conversation is live!
         </Typography>
 
@@ -38,11 +38,11 @@ export function PublishedModal(props: { onClose: () => void, response: Published
 
         <Alert variant='soft' color='neutral' sx={{ mt: 3, mb: 1 }}>
           <Stack>
-            <Typography level='body2'>
+            <Typography level='body-sm'>
               <b>Deletion key</b>
             </Typography>
             <Input readOnly variant='plain' value={deletionKey} sx={{ mt: 1, mb: 2 }} />
-            <Typography level='body2' sx={{ mb: 1 }}>
+            <Typography level='body-sm' sx={{ mb: 1 }}>
               IMPORTANT - Keep this key safe! You will need it if you decide to delete the paste, and it will not appear again once you close this dialog.
             </Typography>
           </Stack>

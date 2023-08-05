@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -42,7 +43,6 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const theme = useTheme();
   const showPurposeFinder = useUIPreferencesStore(state => state.showPurposeFinder);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -128,7 +128,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
           </IconButton>
         )}
         sx={{
-          boxShadow: theme.shadow.sm,
+          boxShadow: 'sm',
         }}
       />
     </Box>}
@@ -138,8 +138,8 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
       <Box sx={{ maxWidth: bpMaxWidth }}>
 
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1 }}>
-          <Typography level='body2' color='neutral'>
-            Select an AI purpose
+          <Typography level='title-sm'>
+            Persona
           </Typography>
           <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
@@ -160,14 +160,14 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
                   height: bpTileSize,
                   width: bpTileSize,
                   ...((editMode || systemPurposeId !== spId) ? {
-                    boxShadow: theme.shadow.md,
-                    ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { background: theme.vars.palette.background.level1 }),
+                    boxShadow: 'md',
+                    ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { backgroundColor: 'background.surface' }),
                   } : {}),
                 }}
               >
                 {editMode && (
                   <Checkbox
-                    label={<Typography level='body2'>show</Typography>}
+                    label={<Typography level='body-sm'>show</Typography>}
                     checked={!hiddenPurposeIDs.includes(spId)} onChange={() => toggleHiddenPurposeId(spId)}
                     sx={{ alignSelf: 'flex-start' }}
                   />
@@ -184,7 +184,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
         </Grid>
 
         <Typography
-          level='body2'
+          level='body-sm'
           sx={{
             mt: selectedExample ? 1 : 3,
             display: 'flex', alignItems: 'center', gap: 1,
@@ -192,16 +192,16 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
             '&:hover > button': { opacity: 1 },
           }}>
           {!selectedPurpose
-            ? 'Oops! No AI purposes found for your search.'
+            ? 'Oops! No AI persona found for your search.'
             : (selectedExample
                 ? <>
-                  <i>{selectedExample}</i>
+                  Example: {selectedExample}
                   <IconButton
                     variant='plain' color='neutral' size='md'
                     onClick={() => props.runExample(selectedExample)}
                     sx={{ opacity: 0, transition: 'opacity 0.3s' }}
                   >
-                    💬
+                    <TelegramIcon />
                   </IconButton>
                 </>
                 : selectedPurpose.description
@@ -214,7 +214,10 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
             minRows={3}
             defaultValue={SystemPurposes['Custom']?.systemMessage} onChange={handleCustomSystemMessageChange}
             sx={{
-              background: theme.vars.palette.background.level1,
+              backgroundColor: 'background.level1',
+              '&:focus-within': {
+                backgroundColor: 'background.popup',
+              },
               lineHeight: 1.75,
               mt: 1,
             }} />

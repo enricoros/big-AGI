@@ -37,14 +37,14 @@ import { parseBlocks } from './Block';
 
 
 export function messageBackground(theme: Theme, messageRole: DMessage['role'], wasEdited: boolean, unknownAssistantIssue: boolean): string {
-  const defaultBackground = theme.vars.palette.background.surface;
+  const defaultBackground = theme.palette.background.surface;
   switch (messageRole) {
     case 'system':
-      return wasEdited ? theme.vars.palette.warning.plainHoverBg : defaultBackground;
+      return wasEdited ? theme.palette.warning.softHoverBg : defaultBackground;
     case 'user':
-      return theme.vars.palette.primary.plainHoverBg; // .background.level1
+      return theme.palette.primary.plainHoverBg; // was .background.level1
     case 'assistant':
-      return unknownAssistantIssue ? theme.vars.palette.danger.softBg : defaultBackground;
+      return unknownAssistantIssue ? theme.palette.danger.softBg : defaultBackground;
   }
   return defaultBackground;
 }
@@ -243,11 +243,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   );
 
   // per-blocks css
-  const cssBlock: SxProps = {
+  const blockSx: SxProps = {
     my: 'auto',
   };
-  const cssCode: SxProps = {
-    background: fromAssistant ? theme.vars.palette.background.level1 : theme.vars.palette.primary.softDisabledBg,
+  const codeSx: SxProps = {
+    backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
+    // boxShadow: 'md',
     fontFamily: theme.fontFamily.code,
     fontSize: '14px',
     fontVariantLigatures: 'none',
@@ -272,8 +273,8 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
       gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
       background,
-      borderBottom: `1px solid ${theme.vars.palette.divider}`,
-      // borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
+      borderBottom: '1px solid',
+      borderBottomColor: 'divider',
       position: 'relative',
       ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
@@ -293,9 +294,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           avatarEl
         )}
 
+        {/* Assistant model name */}
         {fromAssistant && (
           <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
-            <Typography level='body2' sx={{
+            <Typography level='body-sm' sx={{
               fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
               overflowWrap: 'anywhere',
               ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
@@ -319,15 +321,16 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             overflowX: 'auto',
         }} >
 
+          {/* Warn about user-edited system message */}
           {fromSystem && wasEdited && (
-            <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
+            <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
           {!errorMessage && parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'html'
-              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={cssCode} />
+              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
               : block.type === 'code'
-                ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
+                ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
                   : renderMarkdown
@@ -347,7 +350,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
           {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
           {/*<br />*/}
-          {/*<Chip variant='outlined' size='lg' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
+          {/*<Chip variant='outlined' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
           {/*  BlockAction*/}
           {/*</Chip>*/}
 
@@ -355,7 +358,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       ) : (
 
-        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlock, lineHeight: 1.75, flexGrow: 1 }} />
+        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
 
       )}
 
@@ -378,7 +381,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       {/* Message Operations menu */}
       {!!menuAnchor && (
         <Menu
-          variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
+          variant='plain' color='neutral' placement='bottom-end' sx={{ minWidth: 280 }}
           open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <MenuItem variant='plain' onClick={handleMenuEdit} sx={{ flex: 1 }}>
@@ -398,13 +401,13 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           </MenuItem>
           {isImaginable && isImaginableEnabled && (
             <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
-              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='info' />}</ListItemDecorator>
+              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
           {isSpeakable && isSpeakableEnabled && (
             <MenuItem onClick={handleMenuSpeak} disabled={isSpeaking}>
-              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='info' />}</ListItemDecorator>
+              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}

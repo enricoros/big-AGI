@@ -34,50 +34,35 @@ export const theme = extendTheme({
     body: inter.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
-  /*typography: {
-    display1: {
-      fontSize: 'var(--joy-fontSize-xl5, 3rem)',
-      background: 'linear-gradient(-30deg, var(--joy-palette-primary-plainColor), var(--joy-palette-primary-solidBg))',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-    },
-  },*/
   colorSchemes: {
     light: {
       palette: {
-        background: {
-          body: 'var(--joy-palette-neutral-300, #B9B9C6)', // background.level4
-        },
-        primary: {
-          // 50: '#F4FAFF', // softBg
-          100: '#f0f8ff', // plainHoverBg  -  #DDF1FF | #f0f4ff | #f0f8ff (aliceblue)
-          // 200: '#ADDBFF',
-          // 300: '#6FB6FF',
-          // 400: '#3990FF',
-          // 500: '#096BDE', // solidBg [Button.solid]  -  #096BDE | #0D46D7 (suggested)
-          // 600: '#054DA7', // solidHoverBg [IconButton.plain (fg)]
-          // 700: '#02367D',
-          // 800: '#072859',
-          // 900: '#00153C',
-        },
         neutral: {
-          solidBg: 'var(--joy-palette-neutral-700, #434356)',
-          solidHoverBg: 'var(--joy-palette-neutral-800, #25252D)', // hover Neutral buttons (App Bar)
-          // 50: '#F7F7F8',
-          // 100: '#EBEBEF',
-          // 200: '#D8D8DF',
-          // 300: '#B9B9C6',
-          // 400: '#8F8FA3',
-          // 500: '#73738C',
-          // 600: '#5A5A72', // solidBg [Button.solid]
-          // 700: '#434356', // solidHoverBg
-          // 800: '#25252D',
-          // 900: '#131318',
+          solidBg: 'var(--joy-palette-neutral-700)',        // AppBar: background
+          solidHoverBg: 'var(--joy-palette-neutral-800)',   // AppBar: buttons background on hover
         },
+        text: {
+          // Text: increase the contrast a bit
+          secondary: 'var(--joy-palette-neutral-800, #23272B)',
+          // tertiary: 'var(--joy-palette-neutral-700)',
+        },
+        background: {
+          // popup | surface > level1 > level2 > level3 > body
+          body: 'var(--joy-palette-neutral-400, #9FA6AD)',  // Body: background
+          popup: '#fff',
+        },
+        // common: {
+        //   white: '#fff',
+        // },
       },
     },
     dark: {
       palette: {
+        text: {
+          // do not increase contrast - text.primary would scream at you
+          // secondary: 'var(--joy-palette-neutral-100, #EAEEF6)',
+          // tertiary: 'var(--joy-palette-neutral-400, #9FA6AD)',
+        },
         background: {
           surface: 'var(--joy-palette-neutral-900, #131318)',
           level1: 'var(--joy-palette-common-black, #09090D)',
@@ -86,7 +71,6 @@ export const theme = extendTheme({
         },
       },
     },
-
   },
 });
 

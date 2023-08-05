@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { useTheme } from '@mui/joy';
-
 import type { PublishedSchema } from '~/modules/publish/publish.router';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
@@ -85,7 +83,6 @@ export function AppChat() {
   const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
-  const theme = useTheme();
   const { activeConversationId, isConversationEmpty, conversationsCount, duplicateConversation, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
@@ -301,7 +298,7 @@ export function AppChat() {
       onImagineFromText={handleImagineFromText}
       sx={{
         flexGrow: 1,
-        background: theme.vars.palette.background.level2,
+        backgroundColor: 'background.level1',
         overflowY: 'auto', // overflowY: 'hidden'
         minHeight: 96,
       }} />
@@ -322,8 +319,9 @@ export function AppChat() {
       onSendMessage={handleSendUserMessage}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
-        background: theme.vars.palette.background.surface,
-        borderTop: `1px solid ${theme.vars.palette.divider}`,
+        backgroundColor: 'background.surface',
+        borderTop: `1px solid`,
+        borderTopColor: 'divider',
         p: { xs: 1, md: 2 },
       }} />
 

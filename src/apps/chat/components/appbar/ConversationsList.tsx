@@ -90,7 +90,7 @@ export function ConversationsList(props: {
   return <>
 
     {/*<ListItem>*/}
-    {/*  <Typography level='body2'>*/}
+    {/*  <Typography level='body-sm'>*/}
     {/*    Active chats*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}
@@ -104,7 +104,7 @@ export function ConversationsList(props: {
 
     <Box sx={{ flex: 1, overflowY: 'auto' }}>
       {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
-      {/*  <Typography level='body2'>*/}
+      {/*  <Typography level='body-sm'>*/}
       {/*    Conversations*/}
       {/*  </Typography>*/}
       {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
@@ -146,7 +146,7 @@ export function ConversationsList(props: {
     </MenuItem>
 
     {/*<ListItem>*/}
-    {/*  <Typography level='body2'>*/}
+    {/*  <Typography level='body-sm'>*/}
     {/*    Scratchpad*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}
