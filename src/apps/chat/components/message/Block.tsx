@@ -10,9 +10,6 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
-// theme
-import 'prismjs/themes/prism.css';
-
 
 export type Block = TextBlock | CodeBlock | ImageBlock | HtmlBlock;
 export type TextBlock = { type: 'text'; content: string; };
