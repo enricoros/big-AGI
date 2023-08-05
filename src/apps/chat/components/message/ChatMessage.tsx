@@ -311,7 +311,13 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       {/* Edit / Blocks */}
       {!isEditing ? (
 
-        <Box sx={{ ...cssBlock, flexGrow: 0 }} onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}>
+        <Box
+          onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}
+          sx={{
+            ...blockSx,
+            flexGrow: 0,
+            overflowX: 'auto',
+        }} >
 
           {fromSystem && wasEdited && (
             <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
