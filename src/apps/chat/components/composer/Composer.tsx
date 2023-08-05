@@ -17,7 +17,6 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
@@ -58,26 +57,26 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 
 
 const attachFileLegend =
-  <Stack sx={{ p: 1, gap: 1, fontSize: '16px', fontWeight: 400 }}>
+  <Stack sx={{ p: 1, gap: 1 }}>
     <Box sx={{ mb: 1, textAlign: 'center' }}>
-      Attach a file to the message
+      <b>Attach a file to the message</b>
     </Box>
     <table>
       <tbody>
       <tr>
-        <td width={36}><PictureAsPdfIcon sx={{ width: 24, height: 24 }} /></td>
+        <td width={32}><PictureAsPdfIcon /></td>
         <td><b>PDF</b></td>
         <td width={36} align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📝 Text (split manually)</td>
+        <td>📝 Text (summarized)</td>
       </tr>
       <tr>
-        <td><DataArrayIcon sx={{ width: 24, height: 24 }} /></td>
+        <td><DataArrayIcon /></td>
         <td><b>Code</b></td>
         <td align='center' style={{ opacity: 0.5 }}>→</td>
         <td>📚 Markdown</td>
       </tr>
       <tr>
-        <td><FormatAlignCenterIcon sx={{ width: 24, height: 24 }} /></td>
+        <td><FormatAlignCenterIcon /></td>
         <td><b>Text</b></td>
         <td align='center' style={{ opacity: 0.5 }}>→</td>
         <td>📝 As-is</td>
@@ -90,7 +89,7 @@ const attachFileLegend =
   </Stack>;
 
 const pasteClipboardLegend =
-  <Box sx={{ p: 1, fontSize: '14px', fontWeight: 400 }}>
+  <Box sx={{ p: 1 }}>
     Converts Code and Tables to 📚 Markdown
   </Box>;
 
@@ -430,7 +429,7 @@ export function Composer(props: {
   // const prodiaApiKey = isValidProdiaApiKey(useSettingsStore(state => state.prodiaApiKey));
   // const isProdiaConfigured = !requireUserKeyProdia || prodiaApiKey;
   const textPlaceholder: string = props.isDeveloperMode
-    ? 'Tell me what you need, and drop source files...'
+    ? 'Chat with me · drop source files · attach code...'
     : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
   // const isImmediate = props.chatModeId === 'immediate';
@@ -440,7 +439,7 @@ export function Composer(props: {
 
   const chatButton = (
     <Button
-      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
       onClick={handleSendClicked} onDoubleClick={handleToggleChatMode}
       endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
     >
@@ -458,7 +457,7 @@ export function Composer(props: {
           {/* Vertical Buttons Bar */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
-            {/*<Typography level='body3' sx={{mb: 2}}>Context</Typography>*/}
+            {/*<Typography level='body-xs' sx={{mb: 2}}>Context</Typography>*/}
 
             {isSpeechEnabled && <Box sx={hideOnDesktop}>
               <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
@@ -500,7 +499,7 @@ export function Composer(props: {
             <Box sx={{ position: 'relative' }}>
 
               <Textarea
-                variant='outlined' color={isReAct ? 'info' : 'neutral'}
+                variant='outlined' color={isReAct ? 'success' : 'neutral'}
                 autoFocus
                 minRows={5} maxRows={12}
                 placeholder={textPlaceholder}
@@ -519,8 +518,11 @@ export function Composer(props: {
                   },
                 }}
                 sx={{
-                  background: theme.vars.palette.background.level1,
-                  fontSize: '16px',
+                  backgroundColor: 'background.level1',
+                  '&:focus-within': {
+                    backgroundColor: 'background.popup',
+                  },
+                  // fontSize: '16px',
                   lineHeight: 1.75,
                 }} />
 
@@ -546,7 +548,7 @@ export function Composer(props: {
                   display: 'flex',
                   position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
                   // alignItems: 'center', justifyContent: 'center',
-                  border: `1px solid ${theme.vars.palette.primary.solidBg}`,
+                  border: `1px solid ${theme.palette.primary.solidBg}`,
                   borderRadius: theme.radius.xs,
                   zIndex: 20,
                   px: 1.5, py: 1,
@@ -572,7 +574,7 @@ export function Composer(props: {
               onDragOver={handleOverlayDragOver}
               onDrop={handleOverlayDrop}>
               <PanToolIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />
-              <Typography level='body2' sx={{ pointerEvents: 'none' }}>
+              <Typography level='body-sm' sx={{ pointerEvents: 'none' }}>
                 I will hold on to this for you
               </Typography>
             </Card>
@@ -598,14 +600,14 @@ export function Composer(props: {
               {assistantTyping
                 ? (
                   <Button
-                    fullWidth variant='soft' color={isReAct ? 'info' : 'primary'} disabled={!props.conversationId}
+                    fullWidth variant='soft' color={isReAct ? 'success' : 'primary'} disabled={!props.conversationId}
                     onClick={handleStopClicked}
                     endDecorator={<StopOutlinedIcon />}
                   >
                     Stop
                   </Button>
                 ) : /*(!goofyLabs && isImmediate) ? chatButton :*/ (
-                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'info' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     {chatButton}
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
                       <ExpandLessIcon />

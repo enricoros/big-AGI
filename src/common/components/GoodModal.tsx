@@ -20,7 +20,7 @@ export function GoodModal(props: { title: string | React.JSX.Element, open: bool
           }}>
 
           <Box sx={{ mb: -1, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography level='h6'>
+            <Typography level='title-md'>
               {props.title}
             </Typography>
             <ModalClose sx={{ position: 'static', mr: -1 }} />

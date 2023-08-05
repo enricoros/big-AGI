@@ -142,7 +142,7 @@ export function EditSources(props: {
 
       {/* vendors popup, for adding */}
       <Menu
-        variant='outlined' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 280, zIndex: 10000 }}
+        variant='outlined' color='neutral' placement='bottom-start' sx={{ minWidth: 280, zIndex: 10000 }}
         open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
         disablePortal={false}
       >

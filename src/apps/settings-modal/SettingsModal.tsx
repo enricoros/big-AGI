@@ -24,7 +24,7 @@ export function SettingsModal() {
   return (
     <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
                startButton={
-                 <Button variant='plain' color='info' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
+                 <Button variant='plain' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
                    Models
                  </Button>
                }

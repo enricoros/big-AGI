@@ -16,13 +16,14 @@ export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement, onClose: () =
     {/**/}
     {/*<ListDivider />*/}
 
+    {/* ChatMode items */}
     {Object.entries(ChatModeItems).filter(([, { experimental }]) => props.experimental || !experimental).map(([key, data]) =>
       <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
           <Radio checked={key === props.chatModeId} />
           <Box>
             <Typography>{data.label}</Typography>
-            <Typography level='body2'>{data.description}</Typography>
+            <Typography level='body-sm'>{data.description}</Typography>
           </Box>
         </Box>
       </MenuItem>)}

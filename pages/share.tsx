@@ -2,7 +2,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
-import { Alert, Box, Button, CircularProgress, Typography, useTheme } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { useComposerStore } from '../src/apps/chat/components/composer/store-composer';
@@ -42,7 +42,6 @@ export default function SharePage() {
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   // external state
-  const theme = useTheme();
   const { query, push: routerPush, replace: routerReplace } = useRouter();
 
 
@@ -106,7 +105,7 @@ export default function SharePage() {
     <AppLayout suspendAutoModelsSetup>
 
       <Box sx={{
-        background: theme.vars.palette.background.level2,
+        backgroundColor: 'background.level2',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         flexGrow: 1,
       }}>
@@ -115,7 +114,7 @@ export default function SharePage() {
         <LogoProgress showProgress={isDownloading} />
 
         {/* Title */}
-        <Typography level='h5' sx={{ mt: 2, mb: 1 }}>
+        <Typography level='title-lg' sx={{ mt: 2, mb: 1 }}>
           {isDownloading ? 'Loading...' : errorMessage ? '' : intentURL ? 'Done' : 'Receiving...'}
         </Typography>
 
@@ -135,7 +134,7 @@ export default function SharePage() {
         </>}
 
         {/* URL under analysis */}
-        <Typography level='body3'>
+        <Typography level='body-xs'>
           {intentURL}
         </Typography>
       </Box>

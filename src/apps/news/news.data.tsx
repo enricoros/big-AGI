@@ -15,16 +15,16 @@ export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
-      { text: <>bring AI to the real world with <Typography color='info' sx={{fontWeight:600}}>camera OCR</Typography> - MOBILE ONLY</> },
-      { text: <><Typography color='info'>Anthropic</Typography> models full support</> },
+      { text: <>bring AI to the real world with <Typography color='success' sx={{fontWeight:600}}>camera OCR</Typography> - MOBILE ONLY</> },
+      { text: <><Typography color='success'>Anthropic</Typography> models full support</> },
     ],
   },
   {
     versionName: '1.3.1',
     items: [
-      { text: <><Typography color='info'>Flattener</Typography> - 4-mode conversations summarizer</> },
-      { text: <><Typography color='info'>Forking</Typography> - branch your conversations</> },
-      { text: <><Typography color='info'>/s</Typography> and <Typography color='info'>/a</Typography> to append a <i>system</i> or <i>assistant</i> message</> },
+      { text: <><Typography color='success'>Flattener</Typography> - 4-mode conversations summarizer</> },
+      { text: <><Typography color='success'>Forking</Typography> - branch your conversations</> },
+      { text: <><Typography color='success'>/s</Typography> and <Typography color='success'>/a</Typography> to append a <i>system</i> or <i>assistant</i> message</> },
       { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>Oobabooga server</Link></> },
       { text: 'NextJS STOP bug.. squashed, with Vercel!' },
     ],

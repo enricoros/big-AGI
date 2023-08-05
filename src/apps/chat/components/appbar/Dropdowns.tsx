@@ -70,22 +70,12 @@ export function Dropdowns(props: {
 
         {chatLLMId && (
           <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>
-            <ListItemDecorator>
-              <SettingsIcon color='info' />
-            </ListItemDecorator>
-            <Typography>
-              Options
-            </Typography>
+            <ListItemDecorator><SettingsIcon color='success' /></ListItemDecorator><Typography>Options</Typography>
           </ListItemButton>
         )}
 
         <ListItemButton key='menu-llms' onClick={openModelsSetup}>
-          <ListItemDecorator>
-            <BuildCircleIcon color='info' />
-          </ListItemDecorator>
-          <Typography>
-            Models
-          </Typography>
+          <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator><Typography>Models</Typography>
         </ListItemButton>
 
       </>}

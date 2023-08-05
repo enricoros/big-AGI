@@ -27,7 +27,7 @@ export function LLMListItem(props: { llm: DLLM, vendor: ModelVendor, chipChat: b
         {/* Model Name */}
         <ListItemContent sx={{ display: 'flex', alignItems: 'center' }}>
           <Tooltip title={tooltip}>
-            <Typography sx={{ display: 'inline', ...(llm.hidden && { color: theme.vars.palette.neutral.plainDisabledColor }) }}>
+            <Typography sx={{ display: 'inline', ...(llm.hidden && { color: theme.palette.neutral.plainDisabledColor }) }}>
               {label}
             </Typography>
           </Tooltip>

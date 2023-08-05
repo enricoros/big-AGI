@@ -37,7 +37,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
         },
       },
       listbox: {
-        variant: 'plain', color: 'neutral', size: 'lg',
+        variant: 'plain', color: 'neutral',
         disablePortal: false,
         sx: {
           maxHeight: 'calc(100dvh - 56px)',
@@ -47,7 +47,6 @@ export const AppBarDropdown = <TValue extends string>(props: {
     }}
     sx={{
       mx: 0,
-      /*fontFamily: theme.vars.fontFamily.code,*/
       fontWeight: 500,
       ...(props.sx || {}),
     }}
@@ -62,7 +61,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
           {props.showSymbols ? props.items[key]?.symbol || ' ' : ' '} {props.items[key].title}
           {/*{key === props.value && (*/}
           {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
-          {/*    <SettingsIcon color='info' />*/}
+          {/*    <SettingsIcon color='success' />*/}
           {/*  </IconButton>*/}
           {/*)}*/}
         </Option>

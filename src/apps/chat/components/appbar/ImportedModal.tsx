@@ -31,7 +31,7 @@ export function ImportedModal(props: { open: boolean, outcome: ImportedOutcome, 
     <Modal open={props.open} onClose={props.onClose}>
       <ModalDialog variant='outlined' color='neutral' sx={{ maxWidth: '100vw' }}>
 
-        <Typography level='h5'>
+        <Typography level='title-lg'>
           {hasAnyResults ? hasAnyFailures ? 'Import issues' : 'Import successful' : 'Import failed'}
         </Typography>
 

@@ -97,15 +97,15 @@ export function ChatMessageList(props: {
   //   '&::-webkit-scrollbar': {
   //     md: {
   //       width: 8,
-  //       background: theme.vars.palette.neutral.plainHoverBg,
+  //       background: theme.palette.neutral.plainHoverBg,
   //     },
   //   },
   //   '&::-webkit-scrollbar-thumb': {
-  //     background: theme.vars.palette.neutral.solidBg,
+  //     background: theme.palette.neutral.solidBg,
   //     borderRadius: 6,
   //   },
   //   '&::-webkit-scrollbar-thumb:hover': {
-  //     background: theme.vars.palette.neutral.solidHoverBg,
+  //     background: theme.palette.neutral.solidHoverBg,
   //   },
   // };
 
