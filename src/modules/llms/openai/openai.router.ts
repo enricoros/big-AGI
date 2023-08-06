@@ -203,7 +203,7 @@ export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' |
       code: 'BAD_REQUEST',
       message: error
         ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown POST error'}`
-        : `[Issue] ${response.statusText} (${response.status})`,
+        : `[Issue] ${response.statusText} (${response.status})` + (response.status === 403 ? ` - Is url (${url}) accessible?` : ''),
     });
   }
   try {
