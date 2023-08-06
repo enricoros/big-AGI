@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 
-import { historySchema, httpPOSTorTRPCError, modelSchema } from '~/modules/llms/openai/openai.router';
+import { historySchema, fetchOrTRPCError, modelSchema } from '~/modules/llms/openai/openai.router';
 
 import { AnthropicWire } from './anthropic.types';
 import { TRPCError } from '@trpc/server';
@@ -132,7 +132,7 @@ type HistorySchema = z.infer<typeof historySchema>;
 
 async function anthropicPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
-  return await httpPOSTorTRPCError<TBody, TOut>(url, headers, body, 'Anthropic');
+  return await fetchOrTRPCError<TBody, TOut>(url, 'POST', headers, body, 'Anthropic');
 }
 
 

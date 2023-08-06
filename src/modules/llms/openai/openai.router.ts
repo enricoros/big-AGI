@@ -183,23 +183,22 @@ type FunctionsSchema = z.infer<typeof functionsSchema>;
 
 async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
-  const response = await fetch(url, { headers });
-  return await response.json() as TOut;
+  return await fetchOrTRPCError<undefined, TOut>(url, 'GET', headers, undefined, 'OpenAI');
 }
 
 async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
-  return await httpPOSTorTRPCError<TBody, TOut>(url, headers, body, 'OpenAI');
+  return await fetchOrTRPCError<TBody, TOut>(url, 'POST', headers, body, 'OpenAI');
 }
 
 /**
  * Post from TRPC
  */
-export async function httpPOSTorTRPCError<TBody, TOut>(url: string, headers: HeadersInit, body: TBody, moduleName: string): Promise<TOut> {
-  const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: TBody | undefined, moduleName: string): Promise<TOut> {
+  const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
   if (!response.ok) {
     const error: any | null = await response.json().catch(() => null);
-    console.log('httpPOSTorTRPCError', error);
+    console.log('fetchOrTRPCError', error);
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: error
@@ -208,7 +207,7 @@ export async function httpPOSTorTRPCError<TBody, TOut>(url: string, headers: Hea
     });
   }
   try {
-    return await response.json();
+    return await response.json() as TOut;
   } catch (error: any) {
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
