@@ -198,12 +198,12 @@ export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' |
   const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
   if (!response.ok) {
     const error: any | null = await response.json().catch(() => null);
-    console.log('fetchOrTRPCError', error);
+    // console.log('fetchOrTRPCError', url, error);
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: error
-        ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown POST error'}`
-        : `[Issue] ${response.statusText} (${response.status})` + (response.status === 403 ? ` - Is url (${url}) accessible?` : ''),
+        ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown http error'}`
+        : `[Issue] ${response.statusText} (${response.status})` + (response.status === 403 ? ` - is ${url} accessible by the server?` : ''),
     });
   }
   try {
@@ -211,7 +211,7 @@ export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' |
   } catch (error: any) {
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
-      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown POST json error'}`,
+      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown json error'}`,
     });
   }
 }
