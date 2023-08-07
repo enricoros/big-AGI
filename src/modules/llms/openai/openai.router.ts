@@ -195,7 +195,16 @@ async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPat
  * Post from TRPC
  */
 export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: TBody | undefined, moduleName: string): Promise<TOut> {
-  const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  let response: Response;
+  try {
+    response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  } catch (error: any) {
+    console.error(`[${moduleName} Fetch Error]:`, error);
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown fetch error'} - ${error?.cause}`,
+    });
+  }
   if (!response.ok) {
     const error: any | null = await response.json().catch(() => null);
     // console.log('fetchOrTRPCError', url, error);
