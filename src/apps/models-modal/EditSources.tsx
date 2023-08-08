@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, IconButton, ListItemDecorator, Menu, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
@@ -13,6 +13,7 @@ import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/mo
 import { hasServerKeyOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
@@ -141,13 +142,12 @@ export function EditSources(props: {
 
 
       {/* vendors popup, for adding */}
-      <Menu
-        variant='outlined' color='neutral' placement='bottom-start' sx={{ minWidth: 280, zIndex: 10000 }}
+      <CloseableMenu
+        placement='bottom-start' zIndex={10000} sx={{ minWidth: 280 }}
         open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
-        disablePortal={false}
       >
         {vendorItems.map(item => item.component)}
-      </Menu>
+      </CloseableMenu>
 
       {/* source delete confirmation */}
       <ConfirmationModal

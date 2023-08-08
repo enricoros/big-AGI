@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
+import { Badge, Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -11,6 +11,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { Brand } from '~/common/brand';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
@@ -160,25 +161,25 @@ export function ApplicationBar(props: { sx?: SxProps }) {
 
 
     {/* Application-Menu Items */}
-    {!!appMenuItems && <Menu
-      variant='plain' color='neutral' sx={{ minWidth: 320, maxHeight: 'calc(100dvh - 56px)', overflowY: 'auto' }}
+    {!!appMenuItems && <CloseableMenu
+      maxHeightGapPx={56} sx={{ minWidth: 320 }}
       open={!!applicationMenuAnchor} anchorEl={applicationMenuAnchor} onClose={closeApplicationMenu}
-      placement='bottom-start' disablePortal={false}
+      placement='bottom-start'
     >
       {appMenuItems}
-    </Menu>}
+    </CloseableMenu>}
 
     {/* Context-Menu Items */}
-    <Menu
-      variant='plain' color='neutral' sx={{ minWidth: 280, maxHeight: 'calc(100dvh - 56px)', overflowY: 'auto' }}
+    <CloseableMenu
+      maxHeightGapPx={56} noBottomPadding sx={{ minWidth: 280 }}
       open={!!contextMenuAnchor} anchorEl={contextMenuAnchor} onClose={closeContextMenu}
-      placement='bottom-end' disablePortal={false}
+      placement='bottom-end'
     >
       {commonContextItems}
       {!!contextMenuItems && <ListDivider sx={{ mb: 0 }} />}
       {contextMenuItems}
       <SupportMenuItem />
-    </Menu>
+    </CloseableMenu>
 
   </>;
 }

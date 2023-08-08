@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -19,6 +19,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { canUseProdia } from '~/modules/prodia/prodia.client';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { Link } from '~/common/components/Link';
@@ -316,10 +317,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
         <Box
           onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}
           sx={{
-            ...cssBlock,
+            ...blockSx,
             flexGrow: 0,
             overflowX: 'auto',
-        }} >
+          }}>
 
           {/* Warn about user-edited system message */}
           {fromSystem && wasEdited && (
@@ -380,9 +381,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Message Operations menu */}
       {!!menuAnchor && (
-        <Menu
-          variant='plain' color='neutral' placement='bottom-end' sx={{ minWidth: 280 }}
-          open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
+        <CloseableMenu
+          placement='bottom-end' sx={{ minWidth: 280 }}
+          open anchorEl={menuAnchor} onClose={closeOperationsMenu}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <MenuItem variant='plain' onClick={handleMenuEdit} sx={{ flex: 1 }}>
               <ListItemDecorator><EditIcon /></ListItemDecorator>
@@ -416,7 +418,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
           </MenuItem>
-        </Menu>
+        </CloseableMenu>
       )}
 
     </ListItem>
