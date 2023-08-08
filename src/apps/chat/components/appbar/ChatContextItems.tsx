@@ -75,7 +75,7 @@ export function ChatContextItems(props: {
 
   return <>
 
-    <ListItem sticky>
+    <ListItem sticky sx={{ '--ListItem-stickyBackground': 'transparent' }}>
       <Typography level='body-sm'>
         Conversation
       </Typography>

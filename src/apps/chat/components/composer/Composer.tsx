@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, Menu, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
@@ -22,6 +22,7 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
@@ -108,25 +109,28 @@ const SentMessagesMenu = (props: {
   onPaste: (text: string) => void,
   onClear: () => void,
 }) =>
-  <Menu
-    variant='plain' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, maxWidth: '100dvw', maxHeight: 'calc(100dvh - 56px)', overflowY: 'auto' }}
-    open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}>
+  <CloseableMenu
+    placement='top-end' maxHeightGapPx={56 * 3} noTopPadding sx={{ minWidth: 320, maxWidth: '100dvw' }}
+    open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}
+  >
 
-    <MenuItem color='neutral' selected>Reuse messages 💬</MenuItem>
+    <MenuItem variant='solid' selected>
+      Reuse messages 💬
+    </MenuItem>
 
-    <ListDivider />
-
-    {props.messages.map((item, index) =>
-      <MenuItem
-        key={'composer-sent-' + index}
-        onClick={() => {
-          props.onPaste(item.text);
-          props.onClose();
-        }}
-        sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline', overflow: 'hidden' }}
-      >
-        {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
-      </MenuItem>)}
+    <Box sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      {props.messages.map((item, index) =>
+        <MenuItem
+          key={'composer-sent-' + index}
+          onClick={() => {
+            props.onPaste(item.text);
+            props.onClose();
+          }}
+          sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', overflowX: 'hidden' }}
+        >
+          {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
+        </MenuItem>)}
+    </Box>
 
     <ListDivider />
 
@@ -135,7 +139,7 @@ const SentMessagesMenu = (props: {
       Clear sent messages history
     </MenuItem>
 
-  </Menu>;
+  </CloseableMenu>;
 
 
 /**
@@ -465,7 +469,7 @@ export function Composer(props: {
 
             <CameraCaptureButton onOCR={handleCameraOCR} />
 
-            <IconButton variant='plain' color='neutral' onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
+            <IconButton onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
               <AttachFileOutlinedIcon />
             </IconButton>
             <Tooltip
@@ -477,7 +481,7 @@ export function Composer(props: {
               </Button>
             </Tooltip>
 
-            <IconButton variant='plain' color='neutral' onClick={handlePasteButtonClicked} sx={{ ...hideOnDesktop }}>
+            <IconButton onClick={handlePasteButtonClicked} sx={{ ...hideOnDesktop }}>
               <ContentPasteGoIcon />
             </IconButton>
             <Tooltip
@@ -591,7 +595,7 @@ export function Composer(props: {
 
               {/* [mobile-only] Sent messages arrow */}
               {sentMessages.length > 0 && (
-                <IconButton disabled={!!sentMessagesAnchor} variant='plain' color='neutral' onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+                <IconButton disabled={!!sentMessagesAnchor} onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
                   <KeyboardArrowUpIcon />
                 </IconButton>
               )}

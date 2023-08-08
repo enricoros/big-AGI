@@ -1,14 +1,17 @@
 import * as React from 'react';
 
-import { Box, Menu, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { ChatModeId, ChatModeItems } from '../../AppChat';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 
-export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) =>
-  <Menu
-    variant='outlined' color='neutral' size='md' placement='top-end' sx={{ minWidth: 320, overflow: 'auto' }}
-    open anchorEl={props.anchorEl} onClose={props.onClose}>
+
+export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) =>
+  <CloseableMenu
+    placement='top-end' sx={{ minWidth: 320 }}
+    open anchorEl={props.anchorEl} onClose={props.onClose}
+  >
 
     {/*<MenuItem color='neutral' selected>*/}
     {/*  Conversation Mode*/}
@@ -28,4 +31,4 @@ export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement, onClose: () =
         </Box>
       </MenuItem>)}
 
-  </Menu>;
+  </CloseableMenu>;

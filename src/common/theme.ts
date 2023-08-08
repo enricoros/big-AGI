@@ -38,12 +38,13 @@ export const theme = extendTheme({
     light: {
       palette: {
         neutral: {
+          plainColor: 'var(--joy-palette-neutral-800)',     // increase contrast a bit - Menu text
           solidBg: 'var(--joy-palette-neutral-700)',        // AppBar: background
           solidHoverBg: 'var(--joy-palette-neutral-800)',   // AppBar: buttons background on hover
         },
         text: {
-          // Text: increase the contrast a bit
-          secondary: 'var(--joy-palette-neutral-800, #23272B)',
+          icon: 'var(--joy-palette-neutral-700)',           // <IconButton color='neutral' /> icon color
+          secondary: 'var(--joy-palette-neutral-800)',      // increase contrast a bit
           // tertiary: 'var(--joy-palette-neutral-700)',
         },
         background: {

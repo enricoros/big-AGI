@@ -44,8 +44,6 @@ export function SupportMenuItem() {
     <ListItem
       variant='solid' color='neutral'
       sx={{
-        mb: -1, // absorb the bottom margin of the list
-        mt: 1,
         // background: theme.palette.neutral.solidActiveBg,
         display: 'flex', flexDirection: 'row', gap: 1,
         justifyContent: 'space-between',
