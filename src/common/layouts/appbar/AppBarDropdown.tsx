@@ -45,6 +45,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
         variant: 'outlined', color: 'neutral',
         disablePortal: false,
         sx: {
+          '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
           '--ListItem-minHeight': '3rem',
           '--ListItemDecorator-size': props.showSymbols ? '2.2rem' : '2.75rem',
           maxHeight: 'calc(100dvh - 56px)',
