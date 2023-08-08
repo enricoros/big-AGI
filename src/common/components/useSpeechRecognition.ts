@@ -4,7 +4,7 @@ import { isChromeOnDesktopWindows } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-const SOFT_INACTIVITY_TIMEOUT = 3000;
+const SOFT_INACTIVITY_TIMEOUT = 2000;
 
 export interface SpeechResult {
   transcript: string;
