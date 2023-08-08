@@ -248,8 +248,9 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     my: 'auto',
   };
   const codeSx: SxProps = {
-    backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
-    // boxShadow: 'md',
+    // backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
+    backgroundColor: fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    boxShadow: 'xs',
     fontFamily: theme.fontFamily.code,
     fontSize: '14px',
     fontVariantLigatures: 'none',
