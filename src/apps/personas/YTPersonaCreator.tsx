@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, ListDivider, Radio, RadioGroup, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, Radio, RadioGroup, Typography } from '@mui/joy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
@@ -102,8 +102,8 @@ export function YTPersonaCreator() {
 
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-      <YouTubeIcon sx={{ fontSize: 'xl3', color: '#f00' }} />
+    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+      <YouTubeIcon sx={{ color: '#f00' }} />
       <Typography level='title-lg'>
         YouTube -&gt; AI persona
       </Typography>
