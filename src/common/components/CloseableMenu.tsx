@@ -52,6 +52,7 @@ export function CloseableMenu(props: {
 
   return (
     <Popup
+      role={undefined}
       open={props.open && props.anchorEl !== null}
       anchorEl={props.anchorEl}
       placement={props.placement}
