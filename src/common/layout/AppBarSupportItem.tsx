@@ -21,7 +21,7 @@ export function BringTheLove(props: { text: string, link: string, icon?: React.J
   const [loved, setLoved] = React.useState(false);
   const icon = loved ? '❤️' : props.icon ?? null; // '❤️' : '🤍';
   return <Tooltip title={props.text}><Button
-    variant='solid' color='primary' size='md'
+    variant='solid' color='neutral' size='md'
     component={Link} noLinkStyle href={props.link} target='_blank'
     onClick={() => setLoved(true)}
     // endDecorator={icon}

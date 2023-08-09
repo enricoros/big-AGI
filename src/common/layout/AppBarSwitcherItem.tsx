@@ -53,7 +53,7 @@ export function AppBarSwitcherItem() {
 
   return (
     <ListItem
-      variant='solid' color='primary'
+      variant='solid' color='neutral'
       sx={{
         '--ListItem-minHeight': '52px',
         gap: 1,
@@ -71,7 +71,7 @@ export function AppBarSwitcherItem() {
         {AppItems.map((app: ContainedAppType) => (
           <Button
             key={'app-' + app}
-            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'primary' : 'primary'}
+            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'neutral' : 'neutral'}
             onClick={() => switchApp(app)}
           >
             {AppRouteMap[app].name}
