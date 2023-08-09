@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Container, Sheet, Typography } from '@mui/joy';
+import { Container, ListDivider, Sheet, Typography } from '@mui/joy';
 
 import { YTPersonaCreator } from './YTPersonaCreator';
 
@@ -17,8 +17,10 @@ export function AppPersonas() {
       <Container disableGutters maxWidth='md' sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
         <Typography level='title-lg' sx={{ textAlign: 'center' }}>
-          Persona Editor
+          Advanced AI Personas
         </Typography>
+
+        <ListDivider sx={{ my: 3 }} />
 
         <YTPersonaCreator />
 
