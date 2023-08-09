@@ -102,10 +102,8 @@ export function YTPersonaCreator() {
 
   return <>
 
-    <ListDivider />
-
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mt: 2 }}>
-      <YouTubeIcon sx={{ fontSize: 'xl6', color: '#f00' }} />
+    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      <YouTubeIcon sx={{ fontSize: 'xl3', color: '#f00' }} />
       <Typography level='title-lg'>
         YouTube -&gt; AI persona
       </Typography>
@@ -118,7 +116,7 @@ export function YTPersonaCreator() {
           type='url'
           fullWidth
           variant='outlined'
-          placeholder='Enter a YouTube video URL'
+          placeholder='YouTube Video URL'
           value={videoURL} onChange={handleVideoIdChange}
           endDecorator={
             <IconButton

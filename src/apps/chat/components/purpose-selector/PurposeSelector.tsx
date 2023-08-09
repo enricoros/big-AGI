@@ -3,9 +3,9 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
-import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { Link } from '~/common/components/Link';
 import { useChatStore } from '~/common/state/store-chats';
@@ -45,7 +45,10 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const showPurposeFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const { goofyLabs, showPurposeFinder } = useUIPreferencesStore(state => ({
+    goofyLabs: state.goofyLabs,
+    showPurposeFinder: state.showPurposeFinder,
+  }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -183,15 +186,16 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
               </Button>
             </Grid>
           ))}
-          <Grid>
+          {/* Button to start the YouTube persona creator */}
+          {goofyLabs && <Grid>
             <Button
-              variant='soft' color='danger'
+              variant='soft' color='neutral'
               component={Link} noLinkStyle href='/personas'
               sx={{
                 '--Icon-fontSize': '2rem',
                 flexDirection: 'column',
                 fontWeight: 500,
-                gap: bpTileGap,
+                // gap: bpTileGap,
                 height: bpTileSize,
                 width: bpTileSize,
                 border: `1px dashed`,
@@ -200,13 +204,13 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
               }}
             >
               <div>
-                <YouTubeIcon />
+                <ScienceIcon />
               </div>
               <div>
-                YouTuber
+                YouTube persona creator
               </div>
             </Button>
-          </Grid>
+          </Grid>}
         </Grid>
 
         <Typography
