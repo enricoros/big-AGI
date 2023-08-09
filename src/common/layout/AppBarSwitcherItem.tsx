@@ -2,8 +2,9 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
+import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { BringTheLove } from '~/common/layout/AppBarSupportItem';
+import { BringTheLove, DiscordIcon } from '~/common/layout/AppBarSupportItem';
 import { Brand } from '~/common/brand';
 
 import { setLayoutMenuAnchor } from './store-applayout';
@@ -52,7 +53,7 @@ export function AppBarSwitcherItem() {
 
   return (
     <ListItem
-      variant='solid' color='neutral'
+      variant='solid' color='primary'
       sx={{
         '--ListItem-minHeight': '52px',
         gap: 1,
@@ -70,7 +71,7 @@ export function AppBarSwitcherItem() {
         {AppItems.map((app: ContainedAppType) => (
           <Button
             key={'app-' + app}
-            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'neutral' : 'neutral'}
+            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'primary' : 'primary'}
             onClick={() => switchApp(app)}
           >
             {AppRouteMap[app].name}
@@ -86,11 +87,11 @@ export function AppBarSwitcherItem() {
         sx={{
           '--ButtonGroup-separatorSize': '0px',
           '--ButtonGroup-connected': '0',
-          gap: 1,
+          gap: 0,
         }}
       >
-        <BringTheLove text='Discord' link={Brand.URIs.SupportInvite} />
-        <BringTheLove text='GitHub' link={Brand.URIs.OpenRepo} />
+        <BringTheLove text='Discord' icon={<DiscordIcon />} link={Brand.URIs.SupportInvite} />
+        <BringTheLove text='GitHub' icon={<GitHubIcon />} link={Brand.URIs.OpenRepo} />
       </ButtonGroup>
 
     </ListItem>
