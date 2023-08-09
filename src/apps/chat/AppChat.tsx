@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import type { PublishedSchema } from '~/modules/publish/publish.router';
+import type { PublishedSchema } from '~/modules/sharing/sharing.router';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
-import { PublishedModal } from '~/modules/publish/PublishedModal';
+import { PublishedModal } from '~/modules/sharing/PublishedModal';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/store-llms';
@@ -204,7 +204,7 @@ export function AppChat() {
       if (conversation) {
         const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
         try {
-          const paste = await apiAsync.publish.publish.mutate({
+          const paste = await apiAsync.sharing.publishTo.mutate({
             to: 'paste.gg',
             title: '🤖💬 Chat Conversation',
             fileContent: markdownContent,
