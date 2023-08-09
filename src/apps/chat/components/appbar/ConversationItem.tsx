@@ -137,7 +137,7 @@ export function ConversationItem(props: {
       {/* Delete Arming */}
       {!props.isSingle && !deleteArmed && (
         <IconButton
-          variant='outlined' color='neutral'
+          variant={props.isActive ? 'solid' : 'outlined'} color='neutral'
           size='sm' sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.3s', ...buttonSx }}
           onClick={handleDeleteBegin}>
           <DeleteOutlineIcon />
@@ -149,7 +149,7 @@ export function ConversationItem(props: {
         <IconButton size='sm' variant='solid' color='danger' sx={buttonSx} onClick={handleDeleteConfirm}>
           <DeleteOutlineIcon />
         </IconButton>
-        <IconButton size='sm' variant='plain' color='neutral' sx={buttonSx} onClick={handleDeleteCancel}>
+        <IconButton size='sm' variant='solid' color='neutral' sx={buttonSx} onClick={handleDeleteCancel}>
           <CloseIcon />
         </IconButton>
       </>}

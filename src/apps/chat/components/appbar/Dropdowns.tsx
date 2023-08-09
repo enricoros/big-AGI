@@ -9,7 +9,7 @@ import { DLLMId, DModelSourceId } from '~/modules/llms/llm.types';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
+import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
@@ -70,22 +70,12 @@ export function Dropdowns(props: {
 
         {chatLLMId && (
           <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>
-            <ListItemDecorator>
-              <SettingsIcon color='info' />
-            </ListItemDecorator>
-            <Typography>
-              Options
-            </Typography>
+            <ListItemDecorator><SettingsIcon color='success' /></ListItemDecorator><Typography>Options</Typography>
           </ListItemButton>
         )}
 
         <ListItemButton key='menu-llms' onClick={openModelsSetup}>
-          <ListItemDecorator>
-            <BuildCircleIcon color='info' />
-          </ListItemDecorator>
-          <Typography>
-            Models
-          </Typography>
+          <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator><Typography>Models</Typography>
         </ListItemButton>
 
       </>}

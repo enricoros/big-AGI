@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Divider, ListDivider, Option, Select } from '@mui/joy';
+import { Box, Divider, ListDivider, ListItemDecorator, Option, Select } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -25,7 +25,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
   sx?: SxProps
 }) =>
   <Select
-    variant='solid' color='neutral' size='md'
+    variant='solid' color='neutral'
     value={props.value} onChange={props.onChange}
     placeholder={props.placeholder}
     indicator={<KeyboardArrowDownIcon />}
@@ -33,21 +33,28 @@ export const AppBarDropdown = <TValue extends string>(props: {
       root: {
         sx: {
           backgroundColor: 'transparent',
-          '--Icon-color': 'rgba(255,255,255,0.5)',
+          maxWidth: 'calc(100dvw - 100px)',
+        },
+      },
+      indicator: {
+        sx: {
+          '--Icon-color': 'rgba(255,255,255, 0.5)',
         },
       },
       listbox: {
-        variant: 'plain', color: 'neutral', size: 'lg',
+        variant: 'outlined', color: 'neutral',
         disablePortal: false,
         sx: {
+          '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+          '--ListItem-minHeight': '3rem',
+          '--ListItemDecorator-size': props.showSymbols ? '2.2rem' : '2.75rem',
           maxHeight: 'calc(100dvh - 56px)',
-          // minWidth: 200,
+          maxWidth: '90dvw',
         },
       },
     }}
     sx={{
       mx: 0,
-      /*fontFamily: theme.vars.fontFamily.code,*/
       fontWeight: 500,
       ...(props.sx || {}),
     }}
@@ -55,19 +62,22 @@ export const AppBarDropdown = <TValue extends string>(props: {
     {props.prependOption}
     {!!props.prependOption && Object.keys(props.items).length >= 1 && <Divider />}
 
-    {Object.keys(props.items).map((key: string, idx: number) => <React.Fragment key={'key-' + idx}>
-      {props.items[key].type === 'separator'
-        ? <ListDivider sx={{ my: 0 }} />
-        : <Option variant='plain' value={key} sx={{ whiteSpace: 'nowrap' }}>
-          {props.showSymbols ? props.items[key]?.symbol || ' ' : ' '} {props.items[key].title}
-          {/*{key === props.value && (*/}
-          {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
-          {/*    <SettingsIcon color='info' />*/}
-          {/*  </IconButton>*/}
-          {/*)}*/}
-        </Option>
-      }
-    </React.Fragment>)}
+    <Box sx={{ overflowY: 'auto' }}>
+      {Object.keys(props.items).map((key: string, idx: number) => <React.Fragment key={'key-' + idx}>
+        {props.items[key].type === 'separator'
+          ? <ListDivider sx={{ my: 0 }} />
+          : <Option variant='plain' value={key} sx={{ whiteSpace: 'nowrap' }}>
+            {props.showSymbols && <ListItemDecorator>{props.items[key]?.symbol + ' '}</ListItemDecorator>}
+            {props.items[key].title}
+            {/*{key === props.value && (*/}
+            {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
+            {/*    <SettingsIcon color='success' />*/}
+            {/*  </IconButton>*/}
+            {/*)}*/}
+          </Option>
+        }
+      </React.Fragment>)}
+    </Box>
 
     {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}
     {props.appendOption}

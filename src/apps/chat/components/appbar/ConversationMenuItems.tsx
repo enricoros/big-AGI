@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
-import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
+import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
@@ -15,7 +15,7 @@ import { ConversationItem } from './ConversationItem';
 
 type ListGrouping = 'off' | 'persona';
 
-export function ConversationsList(props: {
+export function ConversationMenuItems(props: {
   conversationId: string | null
   onDeleteAllConversations: () => void,
   onImportConversation: () => void,
@@ -43,7 +43,7 @@ export function ConversationsList(props: {
   const singleChat = conversationIDs.length === 1;
   const maxReached = conversationIDs.length >= MAX_CONVERSATIONS;
 
-  const closeAppMenu = () => useApplicationBarStore.getState().setAppMenuAnchor(null);
+  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
 
   const handleNew = () => {
     // if the first in the stack is a new conversation, just activate it
@@ -51,13 +51,13 @@ export function ConversationsList(props: {
       setActiveConversationId(topNewConversationId);
     else
       createConversation();
-    closeAppMenu();
+    closeDrawerMenu();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string) => {
     setActiveConversationId(conversationId);
     // Disabled, because otherwise the menu disappears when trying to delete...
-    // closeAppMenu();
+    // closeDrawerMenu();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {
@@ -90,7 +90,7 @@ export function ConversationsList(props: {
   return <>
 
     {/*<ListItem>*/}
-    {/*  <Typography level='body2'>*/}
+    {/*  <Typography level='body-sm'>*/}
     {/*    Active chats*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}
@@ -104,7 +104,7 @@ export function ConversationsList(props: {
 
     <Box sx={{ flex: 1, overflowY: 'auto' }}>
       {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
-      {/*  <Typography level='body2'>*/}
+      {/*  <Typography level='body-sm'>*/}
       {/*    Conversations*/}
       {/*  </Typography>*/}
       {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
@@ -146,7 +146,7 @@ export function ConversationsList(props: {
     </MenuItem>
 
     {/*<ListItem>*/}
-    {/*  <Typography level='body2'>*/}
+    {/*  <Typography level='body-sm'>*/}
     {/*    Scratchpad*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}

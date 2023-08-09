@@ -133,7 +133,7 @@ export function CameraCaptureModal(props: { onCloseModal: () => void, onOCR: (oc
 
           {zoomControl}
 
-          {ocrProgress !== null && <LinearProgress color='success' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}
+          {ocrProgress !== null && <LinearProgress color='primary' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
             <IconButton disabled={!info} variant='soft' color='neutral' size='lg' onClick={() => setShowInfo(info => !info)} sx={{ zIndex: 30 }}>

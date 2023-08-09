@@ -74,7 +74,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
       display: 'flex', flexDirection: !fromAssistant ? 'row' : 'row', alignItems: 'center',
       gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 2,
       background,
-      borderBottom: `1px solid ${theme.vars.palette.divider}`,
+      borderBottom: `1px solid ${theme.palette.divider}`,
       // position: 'relative',
       ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
@@ -88,7 +88,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
         {avatarEl}
       </Box>
 
-      <Typography level='body2' sx={{ minWidth: 64 }}>
+      <Typography level='body-sm' sx={{ minWidth: 64 }}>
         {messageRole}
       </Typography>
 
@@ -96,7 +96,7 @@ export function ChatMessageSelectable(props: { message: DMessage, isBottom: bool
         <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
       </Box>
 
-      <Typography level='body1' sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+      <Typography sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         {messageText}
       </Typography>
 

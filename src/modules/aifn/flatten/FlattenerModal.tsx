@@ -17,7 +17,7 @@ function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedS
   const readonly = !!props.selectedStyle;
   const items = FLATTEN_PROFILES.filter(style => !readonly || style.type === props.selectedStyle);
   return (
-    <List size='lg' sx={{ p: 0 }}>
+    <List sx={{ p: 0 }}>
       {items.map((style, idx) => (
         <React.Fragment key={style.type}>
           <ListItem>
@@ -29,7 +29,7 @@ function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedS
                 <Typography>
                   {style.name}
                 </Typography>
-                <Typography level='body2'>
+                <Typography level='body-sm'>
                   {style.description}
                 </Typography>
               </ListItemContent>
@@ -49,10 +49,10 @@ function FlatteningProgress(props: { llmLabel: string }) {
       <Typography>
         Flattening...
       </Typography>
-      <Typography level='body2'>
+      <Typography level='body-sm'>
         This may take up to a minute.
       </Typography>
-      <Typography level='body3'>
+      <Typography level='body-xs'>
         Using: {props.llmLabel}
       </Typography>
     </Box>
@@ -136,7 +136,7 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
           }}>
 
           <Box sx={{ mb: -1, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography level='h6'>
+            <Typography level='title-md'>
               {!selectedStyle ? 'Compression Style' : 'Flattening...'}
             </Typography>
             <ModalClose sx={{ position: 'static', mr: -1 }} />
