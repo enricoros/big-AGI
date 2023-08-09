@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { Button, IconButton, ListItem, SvgIcon, useTheme } from '@mui/joy';
+import { Button, SvgIcon } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import GitHubIcon from '@mui/icons-material/GitHub';
+// import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { Brand } from '../brand';
+// import { Brand } from '../brand';
 import { Link } from '../components/Link';
 import { cssRainbowColorKeyframes } from '../theme';
 
@@ -21,10 +21,10 @@ export function BringTheLove(props: { text: string, link: string, icon?: React.J
   const [loved, setLoved] = React.useState(false);
   const icon = loved ? '❤️' : props.icon ?? null; // '❤️' : '🤍';
   return <Button
-    color='neutral'
+    color='neutral' size='sm'
     component={Link} noLinkStyle href={props.link} target='_blank'
     onClick={() => setLoved(true)}
-    endDecorator={icon}
+    // endDecorator={icon}
     sx={{
       background: 'transparent',
       // '&:hover': { background: props.theme.palette.neutral.solidBg },
@@ -35,7 +35,7 @@ export function BringTheLove(props: { text: string, link: string, icon?: React.J
   </Button>;
 }
 
-
+/*
 export function AppBarItemSupport() {
   const theme = useTheme();
   const fadedColor = theme.palette.neutral.plainDisabledColor;
@@ -48,17 +48,10 @@ export function AppBarItemSupport() {
         display: 'flex', flexDirection: 'row', gap: 1,
         justifyContent: 'space-between',
       }}>
-      {/*<Box*/}
-      {/*  sx={{*/}
-      {/*    mx: { xs: 1, sm: 2 },*/}
-      {/*    fontWeight: 600,*/}
-      {/*    color: fadedColor,*/}
-      {/*  }}>*/}
-      {/*  {Brand.Meta.SiteName}*/}
-      {/*</Box>*/}
       <BringTheLove text={Brand.Title.Base} link={Brand.URIs.Home} sx={{ color: fadedColor }} />
       <BringTheLove text='Discord' icon={<DiscordIcon sx={{ color: iconColor }} />} link={Brand.URIs.SupportInvite} />
       <BringTheLove text='GitHub' icon={<GitHubIcon sx={{ color: iconColor }} />} link={Brand.URIs.OpenRepo} />
     </ListItem>
   );
 }
+*/

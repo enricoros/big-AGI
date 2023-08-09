@@ -15,7 +15,8 @@ import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { useUIStateStore } from '~/common/state/store-ui';
 
-import { AppBarItemSupport } from './AppBarItemSupport';
+// import { AppBarItemSupport } from './AppBarItemSupport';
+import { AppBarItemSwitcher } from './AppBarItemSwitcher';
 import { setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
 
 
@@ -168,8 +169,8 @@ export function AppBar(props: { sx?: SxProps }) {
       {commonMenuItems}
       {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
       {menuItems}
-      {/*<AppBarItemSwitcher />*/}
-      <AppBarItemSupport />
+      <AppBarItemSwitcher />
+      {/*<AppBarItemSupport />*/}
     </CloseableMenu>
 
   </>;
