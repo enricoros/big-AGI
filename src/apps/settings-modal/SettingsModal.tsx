@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Button, Divider, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
+import { Button, Divider, Tab, TabList, TabPanel, Tabs, useTheme } from '@mui/joy';
+import { tabClasses } from '@mui/joy/Tab';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
@@ -19,7 +20,10 @@ import { UISettings } from './UISettings';
  */
 export function SettingsModal() {
   // external state
+  const theme = useTheme();
   const { settingsOpenTab, closeSettings, openModelsSetup } = useUIStateStore();
+
+  const tabFixSx = { fontFamily: theme.fontFamily.body, p: 0, m: 0 };
 
   return (
     <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
@@ -32,12 +36,29 @@ export function SettingsModal() {
 
       {/*<Divider />*/}
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab} sx={{ borderRadius: 'lg' }}>
-        <TabList variant='soft' color='neutral' sx={{ mb: 2 /* gap: 3, minus 0.5 for the Tabs-gap, minus 0.5 for perception */ }}>
-          <Tab value={1}>UI</Tab>
-          <Tab value={2}>Draw</Tab>
-          <Tab value={3}>Speak</Tab>
-          <Tab value={4}>Tools</Tab>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab}>
+        <TabList
+          variant='soft'
+          disableUnderline tabFlex={1}
+          sx={{
+            '--ListItem-minHeight': '2.4rem',
+            mb: 2,
+            p: 0.5,
+            borderRadius: 'lg',
+            fontSize: 'md',
+            gap: 1,
+            overflow: 'hidden',
+            [`& .${tabClasses.root}[aria-selected="true"]`]: {
+              bgcolor: 'background.surface',
+              boxShadow: 'sm',
+              fontWeight: 'lg',
+            },
+          }}
+        >
+          <Tab disableIndicator value={1} sx={tabFixSx}>Chat</Tab>
+          <Tab disableIndicator value={2} sx={tabFixSx}>Draw</Tab>
+          <Tab disableIndicator value={3} sx={tabFixSx}>Speak</Tab>
+          <Tab disableIndicator value={4} sx={tabFixSx}>Tools</Tab>
         </TabList>
 
         <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
