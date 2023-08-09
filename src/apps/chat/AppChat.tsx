@@ -25,7 +25,7 @@ import { Composer } from './components/composer/Composer';
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { Ephemerals } from './components/Ephemerals';
-import { ImportedModal, ImportedOutcome } from './components/ImportedModal';
+import { ImportOutcomeModal, ImportedOutcome } from './components/ImportOutcomeModal';
 import { restoreConversationFromJson } from './exportImport';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
@@ -327,7 +327,7 @@ export function AppChat() {
     {/* Import */}
     <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleImportConversationFromFiles} />
     {!!conversationImportOutcome && (
-      <ImportedModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
+      <ImportOutcomeModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
     )}
 
     {/* Publish */}

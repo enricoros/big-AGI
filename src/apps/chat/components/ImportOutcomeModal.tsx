@@ -19,7 +19,7 @@ export interface ImportedOutcome {
  * Import operations supported:
  *  - JSON Chat
  */
-export function ImportedModal(props: { open: boolean, outcome: ImportedOutcome, onClose: () => void, }) {
+export function ImportOutcomeModal(props: { open: boolean, outcome: ImportedOutcome, onClose: () => void, }) {
   const { conversations } = props.outcome;
 
   const successes = conversations.filter(c => c.success);
