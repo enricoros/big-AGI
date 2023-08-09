@@ -11,7 +11,7 @@ import { setLayoutMenuAnchor } from './store-applayout';
 
 // routes for the quick switcher menu item
 
-type ContainedAppType = 'chat' | 'data' | 'news';
+type ContainedAppType = 'chat' | /*'data' |*/ 'news' /*| 'share'*/;
 
 const AppItems: ContainedAppType[] = ['chat', 'news'];
 
@@ -20,10 +20,14 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
     name: 'Chat',
     route: '/',
   },
-  'data': {
-    name: 'Data',
-    route: '/data',
-  },
+  // 'data': {
+  //   name: 'Data',
+  //   route: '/data',
+  // },
+  // 'share': {
+  //   name: 'Share',
+  //   route: '/share',
+  // },
   'news': {
     name: 'News',
     route: '/news',
@@ -66,7 +70,7 @@ export function AppBarSwitcherItem() {
         {AppItems.map((app: ContainedAppType) => (
           <Button
             key={'app-' + app}
-            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'primary' : 'neutral'}
+            size='sm' variant={app == currentApp ? 'soft' : 'solid'} color={app == currentApp ? 'neutral' : 'neutral'}
             onClick={() => switchApp(app)}
           >
             {AppRouteMap[app].name}
