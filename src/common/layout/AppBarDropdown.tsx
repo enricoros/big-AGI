@@ -11,10 +11,11 @@ export type DropdownItems = Record<string, {
   type?: 'separator'
 }>;
 
+
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-export const AppBarDropdown = <TValue extends string>(props: {
+export function AppBarDropdown<TValue extends string>(props: {
   items: DropdownItems,
   prependOption?: React.JSX.Element,
   appendOption?: React.JSX.Element,
@@ -23,8 +24,8 @@ export const AppBarDropdown = <TValue extends string>(props: {
   placeholder?: string,
   showSymbols?: boolean,
   sx?: SxProps
-}) =>
-  <Select
+}) {
+  return <Select
     variant='solid' color='neutral'
     value={props.value} onChange={props.onChange}
     placeholder={props.placeholder}
@@ -65,7 +66,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
     <Box sx={{ overflowY: 'auto' }}>
       {Object.keys(props.items).map((key: string, idx: number) => <React.Fragment key={'key-' + idx}>
         {props.items[key].type === 'separator'
-          ? <ListDivider sx={{ my: 0 }} />
+          ? <ListDivider />
           : <Option variant='plain' value={key} sx={{ whiteSpace: 'nowrap' }}>
             {props.showSymbols && <ListItemDecorator>{props.items[key]?.symbol + ' '}</ListItemDecorator>}
             {props.items[key].title}
@@ -79,6 +80,7 @@ export const AppBarDropdown = <TValue extends string>(props: {
       </React.Fragment>)}
     </Box>
 
-    {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}
+    {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider />}
     {props.appendOption}
   </Select>;
+}
