@@ -30,7 +30,7 @@ function vendorIcon(vendor?: ModelVendor | null) {
 }
 
 
-export function EditSources(props: {
+export function ModelsSourceSelector(props: {
   selectedSourceId: DModelSourceId | null, setSelectedSourceId: (sourceId: DModelSourceId | null) => void,
 }) {
 
@@ -126,7 +126,7 @@ export function EditSources(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-      <IconButton variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
+      <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
         <AddIcon />
       </IconButton>
       <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>

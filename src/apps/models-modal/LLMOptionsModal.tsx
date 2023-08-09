@@ -15,7 +15,7 @@ import { useUIStateStore } from '~/common/state/store-ui';
 import { VendorLLMOptions } from './VendorLLMOptions';
 
 
-export function LLMOptions(props: { id: DLLMId }) {
+export function LLMOptionsModal(props: { id: DLLMId }) {
 
   // state
   const [showDetails, setShowDetails] = React.useState(false);
