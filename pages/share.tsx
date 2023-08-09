@@ -9,7 +9,7 @@ import { useComposerStore } from '../src/apps/chat/components/composer/store-com
 
 // import { callBrowseFetchSinglePage } from '~/modules/browse/browse.client';
 
-import { AppLayout } from '~/common/layouts/AppLayout';
+import { AppLayout } from '~/common/layout/AppLayout';
 import { asValidURL } from '~/common/util/urlUtils';
 
 

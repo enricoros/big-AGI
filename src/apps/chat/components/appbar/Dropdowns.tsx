@@ -9,7 +9,7 @@ import { DLLMId, DModelSourceId } from '~/modules/llms/llm.types';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { AppBarDropdown, DropdownItems } from '~/common/layouts/appbar/AppBarDropdown';
+import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 

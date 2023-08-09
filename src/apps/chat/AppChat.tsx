@@ -15,14 +15,14 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
+import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatContextItems } from './components/appbar/ChatContextItems';
+import { ChatMenuItems } from './components/appbar/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
-import { ConversationsList } from './components/appbar/ConversationsList';
+import { ConversationMenuItems } from './components/appbar/ConversationMenuItems';
 import { Dropdowns } from './components/appbar/Dropdowns';
 import { Ephemerals } from './components/Ephemerals';
 import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
@@ -83,12 +83,12 @@ export function AppChat() {
   const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, conversationsCount, duplicateConversation, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, duplicateConversation, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
       isConversationEmpty: conversation ? !conversation.messages.length : true,
-      conversationsCount: state.conversations.length,
+      // conversationsCount: state.conversations.length,
       duplicateConversation: state.duplicateConversation,
       importConversation: state.importConversation,
       deleteAllConversations: state.deleteAllConversations,
@@ -256,15 +256,13 @@ export function AppChat() {
 
   // Pluggable ApplicationBar components
 
-  const dropdowns = React.useMemo(() =>
+  const centerItems = React.useMemo(() =>
       <Dropdowns conversationId={activeConversationId} />,
     [activeConversationId],
   );
 
-  const conversationsBadge = conversationsCount < 2 ? 0 : conversationsCount;
-
-  const conversationItems = React.useMemo(() =>
-      <ConversationsList
+  const drawerItems = React.useMemo(() =>
+      <ConversationMenuItems
         conversationId={activeConversationId}
         onImportConversation={handleImportConversation}
         onDeleteAllConversations={handleDeleteAllConversations}
@@ -272,8 +270,8 @@ export function AppChat() {
     [activeConversationId],
   );
 
-  const actionItems = React.useMemo(() =>
-      <ChatContextItems
+  const menuItems = React.useMemo(() =>
+      <ChatMenuItems
         conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onClearConversation={handleClearConversation}
@@ -284,10 +282,7 @@ export function AppChat() {
     [activeConversationId, duplicateConversation, isConversationEmpty, isMessageSelectionMode],
   );
 
-  React.useEffect(() => {
-    useApplicationBarStore.getState().registerClientComponents(dropdowns, conversationsBadge, conversationItems, actionItems);
-    return () => useApplicationBarStore.getState().unregisterClientComponents();
-  }, [dropdowns, conversationsBadge, conversationItems, actionItems]);
+  useLayoutPluggable(centerItems, drawerItems, menuItems);
 
   return <>
 
@@ -326,33 +321,16 @@ export function AppChat() {
       }} />
 
 
-    {/* Import Chat */}
+    {/* Flatten */}
+    {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
+
+    {/* Import */}
     <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleImportConversationFromFiles} />
     {!!conversationImportOutcome && (
       <ImportedModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
     )}
 
-    {/* Clear */}
-    <ConfirmationModal
-      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
-      confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
-    />
-
-    {/* Deletion */}
-    <ConfirmationModal
-      open={!!deleteConfirmationId} onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
-      confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
-        ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
-        : 'Are you sure you want to delete this conversation?'}
-      positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
-        ? 'Yes, delete all'
-        : 'Delete conversation'}
-    />
-
-    {/* Flatten */}
-    {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
-
-    {/* Publishing */}
+    {/* Publish */}
     <ConfirmationModal
       open={!!publishConversationId} onClose={() => setPublishConversationId(null)} onPositive={handleConfirmedPublishConversation}
       confirmationText={<>
@@ -364,6 +342,23 @@ export function AppChat() {
     {!!publishResponse && (
       <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
     )}
+
+    {/* [confirmation] Reset Conversation */}
+    <ConfirmationModal
+      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+      confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+    />
+
+    {/* [confirmation] Delete All */}
+    <ConfirmationModal
+      open={!!deleteConfirmationId} onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
+      confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
+        : 'Are you sure you want to delete this conversation?'}
+      positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+        ? 'Yes, delete all'
+        : 'Delete conversation'}
+    />
 
   </>;
 }
