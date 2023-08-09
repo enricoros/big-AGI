@@ -10,6 +10,7 @@ export function AppPersonas() {
     <Sheet sx={{
       flexGrow: 1,
       overflowY: 'auto',
+      backgroundColor: 'background.level1',
       p: { xs: 3, md: 6 },
     }}>
 
