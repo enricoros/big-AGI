@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 
-import { BringTheLove } from '~/common/layout/AppBarItemSupport';
+import { BringTheLove } from '~/common/layout/AppBarSupportItem';
 import { Brand } from '~/common/brand';
 
 import { setLayoutMenuAnchor } from './store-applayout';
@@ -31,7 +31,7 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
 };
 
 
-export function AppBarItemSwitcher() {
+export function AppBarSwitcherItem() {
   // external state
   const { route, push: routerPush } = useRouter();
 

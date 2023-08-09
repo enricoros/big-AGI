@@ -36,7 +36,7 @@ export function BringTheLove(props: { text: string, link: string, icon?: React.J
 }
 
 /*
-export function AppBarItemSupport() {
+export function AppBarSupportItem() {
   const theme = useTheme();
   const fadedColor = theme.palette.neutral.plainDisabledColor;
   const iconColor = '';
