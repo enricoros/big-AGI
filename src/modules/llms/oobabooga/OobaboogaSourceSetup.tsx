@@ -44,7 +44,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
-    <Typography level='body2'>
+    <Typography level='body-sm'>
       You can use a running <Link href='https://github.com/oobabooga/text-generation-webui' target='_blank'>
       text-generation-webui</Link> instance as a source for local models.
       Follow <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>

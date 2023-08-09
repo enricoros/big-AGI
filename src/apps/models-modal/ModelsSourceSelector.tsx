@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, IconButton, ListItemDecorator, Menu, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
@@ -13,6 +13,7 @@ import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/mo
 import { hasServerKeyOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
@@ -29,7 +30,7 @@ function vendorIcon(vendor?: ModelVendor | null) {
 }
 
 
-export function EditSources(props: {
+export function ModelsSourceSelector(props: {
   selectedSourceId: DModelSourceId | null, setSelectedSourceId: (sourceId: DModelSourceId | null) => void,
 }) {
 
@@ -125,7 +126,7 @@ export function EditSources(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-      <IconButton variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
+      <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
         <AddIcon />
       </IconButton>
       <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
@@ -141,13 +142,12 @@ export function EditSources(props: {
 
 
       {/* vendors popup, for adding */}
-      <Menu
-        variant='outlined' color='neutral' size='lg' placement='bottom-start' sx={{ minWidth: 280, zIndex: 10000 }}
+      <CloseableMenu
+        placement='bottom-start' zIndex={10000} sx={{ minWidth: 280 }}
         open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
-        disablePortal={false}
       >
         {vendorItems.map(item => item.component)}
-      </Menu>
+      </CloseableMenu>
 
       {/* source delete confirmation */}
       <ConfirmationModal

@@ -11,14 +11,14 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { useApplicationBarStore } from '~/common/layouts/appbar/store-applicationbar';
+import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { downloadConversationJson } from '../../exportImport';
 
 
-export function ChatContextItems(props: {
+export function ChatMenuItems(props: {
   conversationId: string | null, isConversationEmpty: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
@@ -32,7 +32,7 @@ export function ChatContextItems(props: {
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
 
-  const closeContextMenu = () => useApplicationBarStore.getState().setContextMenuAnchor(null);
+  const closeContextMenu = () => setLayoutMenuAnchor(null);
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
@@ -75,8 +75,8 @@ export function ChatContextItems(props: {
 
   return <>
 
-    <ListItem sticky>
-      <Typography level='body2'>
+    <ListItem sticky sx={{ '--ListItem-stickyBackground': 'transparent' }}>
+      <Typography level='body-sm'>
         Conversation
       </Typography>
     </ListItem>
@@ -91,8 +91,8 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
-        {/*<Badge size='sm' color='info'>*/}
-        <ForkRightIcon color='info' />
+        {/*<Badge size='sm' color='success'>*/}
+        <ForkRightIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
       Duplicate
@@ -100,8 +100,8 @@ export function ChatContextItems(props: {
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
       <ListItemDecorator>
-        {/*<Badge size='sm' color='info'>*/}
-        <CompressIcon color='info' />
+        {/*<Badge size='sm' color='success'>*/}
+        <CompressIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
       Flatten

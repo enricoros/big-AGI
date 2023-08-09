@@ -3,6 +3,7 @@ import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
+import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
 
 /// Internal - Main Vendor Registry ///
@@ -12,6 +13,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
   localai: ModelVendorLocalAI,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
+  openrouter: ModelVendorOpenRouter,
   // azure_openai: { id: 'azure_openai', name: 'Azure OpenAI', instanceLimit: 1, location: 'cloud', rank: 30 },
   // google_vertex: { id: 'google_vertex', name: 'Google Vertex', instanceLimit: 1, location: 'cloud', rank: 40 },
   // anthropic: { id: 'anthropic', name: 'Anthropic', instanceLimit: 1, location: 'cloud', rank: 50 },

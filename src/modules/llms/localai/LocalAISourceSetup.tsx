@@ -48,14 +48,14 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
-    <Typography level='body2'>
+    <Typography level='body-sm'>
       You can use a running <Link href='https://localai.io' target='_blank'>LocalAI</Link> instance as a source for local models.
       Please refer to the LocalAI website for how to get it setup and running with models, and then enter the URL below.
     </Typography>
 
     <FormInputKey
       required noKey
-      label='LocalAI URL' rightLabel={<Link level='body2' href='https://localai.io' target='_blank'>Learn more</Link>}
+      label='LocalAI URL' rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
       placeholder='e.g., http://127.0.0.1:8080'
       value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
     />
