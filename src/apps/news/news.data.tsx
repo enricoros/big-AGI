@@ -15,8 +15,8 @@ export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
-      { text: <>bring AI to the real world with <Typography color='success' sx={{fontWeight:600}}>camera OCR</Typography> - MOBILE ONLY</> },
-      { text: <><Typography color='success'>Anthropic</Typography> models full support</> },
+      { text: <>bring AI to the real world with <Typography color='success' sx={{ fontWeight: 600 }}>camera OCR</Typography> - MOBILE-ONLY</> },
+      { text: <><Typography color='success' sx={{ fontWeight: 600 }}>Anthropic</Typography> models full support</> },
     ],
   },
   {
