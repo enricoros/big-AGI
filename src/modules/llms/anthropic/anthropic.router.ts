@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
-import { historySchema, fetchOrTRPCError, modelSchema } from '~/modules/llms/openai/openai.router';
+import { historySchema, modelSchema } from '~/modules/llms/openai/openai.router';
 
 import { AnthropicWire } from './anthropic.types';
 import { TRPCError } from '@trpc/server';
@@ -22,7 +23,7 @@ const listModelsSchema = z.object({ access: anthropicAccessSchema });
 
 // Output Schemas
 
-const chatGeneratOutputSchema = z.object({
+const chatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
   content: z.string(),
   finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
@@ -47,7 +48,7 @@ export const llmAnthropicRouter = createTRPCRouter({
    */
   chatGenerate: publicProcedure
     .input(chatGenerateSchema)
-    .output(chatGeneratOutputSchema)
+    .output(chatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;
@@ -56,7 +57,7 @@ export const llmAnthropicRouter = createTRPCRouter({
       if (history.length === 0 || history[0].role === 'assistant')
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[Anthropic Issue] Need one human character at least` });
 
-      const wireCompletions = await anthropicPOST<AnthropicWire.Complete.Request, AnthropicWire.Complete.Response>(
+      const wireCompletions = await anthropicPOST<AnthropicWire.Complete.Response, AnthropicWire.Complete.Request>(
         access,
         anthropicCompletionRequest(model, history, false),
         '/v1/complete',
@@ -130,9 +131,9 @@ type AccessSchema = z.infer<typeof anthropicAccessSchema>;
 type ModelSchema = z.infer<typeof modelSchema>;
 type HistorySchema = z.infer<typeof historySchema>;
 
-async function anthropicPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function anthropicPOST<TOut, TPostBody>(access: AccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
-  return await fetchOrTRPCError<TBody, TOut>(url, 'POST', headers, body, 'Anthropic');
+  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
 }
 
 

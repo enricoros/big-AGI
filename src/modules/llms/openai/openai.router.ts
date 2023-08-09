@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { OpenAI } from './openai.types';
 
@@ -88,7 +89,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, model, history, functions } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
-      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Request, OpenAI.Wire.ChatCompletion.Response>(
+      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
         access,
         openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, 1, false),
         '/v1/chat/completions',
@@ -118,7 +119,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, text } = input;
       try {
 
-        return await openaiPOST<OpenAI.Wire.Moderation.Request, OpenAI.Wire.Moderation.Response>(access, {
+        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -183,46 +184,12 @@ type FunctionsSchema = z.infer<typeof functionsSchema>;
 
 async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
-  return await fetchOrTRPCError<undefined, TOut>(url, 'GET', headers, undefined, 'OpenAI');
+  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'OpenAI');
 }
 
-async function openaiPOST<TBody, TOut>(access: AccessSchema, body: TBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function openaiPOST<TOut, TPostBody>(access: AccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, apiPath);
-  return await fetchOrTRPCError<TBody, TOut>(url, 'POST', headers, body, 'OpenAI');
-}
-
-/**
- * Post from TRPC
- */
-export async function fetchOrTRPCError<TBody, TOut>(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: TBody | undefined, moduleName: string): Promise<TOut> {
-  let response: Response;
-  try {
-    response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
-  } catch (error: any) {
-    console.error(`[${moduleName} Fetch Error]:`, error);
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown fetch error'} - ${error?.cause}`,
-    });
-  }
-  if (!response.ok) {
-    const error: any | null = await response.json().catch(() => null);
-    // console.log('fetchOrTRPCError', url, error);
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: error
-        ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown http error'}`
-        : `[Issue] ${response.statusText} (${response.status})` + (response.status === 403 ? ` - is ${url} accessible by the server?` : ''),
-    });
-  }
-  try {
-    return await response.json() as TOut;
-  } catch (error: any) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown json error'}`,
-    });
-  }
+  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'OpenAI');
 }
 
 
