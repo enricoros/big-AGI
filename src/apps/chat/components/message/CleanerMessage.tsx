@@ -39,7 +39,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
  *
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
-export function ChatMessageSelectable(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens: number, onToggleSelected: (messageId: string, selected: boolean) => void }) {
+export function CleanerMessage(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens: number, onToggleSelected: (messageId: string, selected: boolean) => void }) {
   // external state
   const theme = useTheme();
 

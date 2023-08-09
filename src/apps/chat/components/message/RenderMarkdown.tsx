@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, useTheme } from '@mui/joy';
 
-import { TextBlock } from './Block';
+import { TextBlock } from './blocks';
 
 
 // Dynamically import ReactMarkdown using React.lazy

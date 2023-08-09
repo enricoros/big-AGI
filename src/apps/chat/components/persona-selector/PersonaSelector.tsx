@@ -36,14 +36,14 @@ const getRandomElement = <T, >(array: T[]): T | undefined =>
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PurposeSelector(props: { conversationId: string, runExample: (example: string) => void }) {
+export function PersonaSelector(props: { conversationId: string, runExample: (example: string) => void }) {
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const showPurposeFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -106,7 +106,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
 
   // we show them all if the filter is clear (null)
-  const unfilteredPurposeIDs = (filteredIDs && showPurposeFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
   const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
 
   const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
@@ -114,7 +114,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
   return <>
 
-    {showPurposeFinder && <Box sx={{ p: 2 * tileSpacing }}>
+    {showFinder && <Box sx={{ p: 2 * tileSpacing }}>
       <Input
         fullWidth
         variant='outlined' color='neutral'

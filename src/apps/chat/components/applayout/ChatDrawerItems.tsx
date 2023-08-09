@@ -15,7 +15,7 @@ import { ConversationItem } from './ConversationItem';
 
 type ListGrouping = 'off' | 'persona';
 
-export function ConversationMenuItems(props: {
+export function ChatDrawerItems(props: {
   conversationId: string | null
   onDeleteAllConversations: () => void,
   onImportConversation: () => void,

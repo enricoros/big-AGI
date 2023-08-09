@@ -6,7 +6,7 @@ import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { Link } from '~/common/components/Link';
 
-import { ImageBlock } from './Block';
+import { ImageBlock } from './blocks';
 
 
 export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) => {

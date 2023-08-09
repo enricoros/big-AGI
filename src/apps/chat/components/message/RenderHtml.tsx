@@ -4,7 +4,7 @@ import { Box, Button, IconButton, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import WebIcon from '@mui/icons-material/Web';
 
-import { HtmlBlock } from './Block';
+import { HtmlBlock } from './blocks';
 
 
 const IFrameComponent = (props: { htmlString: string }) => {

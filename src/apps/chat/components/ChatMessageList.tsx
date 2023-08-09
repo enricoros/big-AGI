@@ -10,8 +10,8 @@ import { createDMessage, DMessage, useChatStore } from '~/common/state/store-cha
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatMessage } from './message/ChatMessage';
-import { ChatMessageSelectable, MessagesSelectionHeader } from './message/ChatMessageSelectable';
-import { PurposeSelector } from './purpose-selector/PurposeSelector';
+import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
+import { PersonaSelector } from './persona-selector/PersonaSelector';
 
 
 /**
@@ -65,7 +65,7 @@ export function ChatMessageList(props: {
   if (!filteredMessages.length)
     return props.conversationId ? (
       <Box sx={props.sx || {}}>
-        <PurposeSelector conversationId={props.conversationId} runExample={handleRunExample} />
+        <PersonaSelector conversationId={props.conversationId} runExample={handleRunExample} />
       </Box>
     ) : null;
 
@@ -121,7 +121,7 @@ export function ChatMessageList(props: {
       {filteredMessages.map((message, idx) =>
         props.isMessageSelectionMode ? (
 
-          <ChatMessageSelectable
+          <CleanerMessage
             key={'sel-' + message.id} message={message}
             isBottom={idx === 0} remainingTokens={(chatLLM ? chatLLM.contextTokens : 0) - historyTokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
