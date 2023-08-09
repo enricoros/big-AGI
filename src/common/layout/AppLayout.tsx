@@ -10,7 +10,7 @@ import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ApplicationBar } from './appbar/ApplicationBar';
+import { AppBar } from './AppBar';
 import { NoSSR } from '../components/NoSSR';
 
 
@@ -46,7 +46,7 @@ export function AppLayout(props: {
           height: '100dvh',
         }}>
 
-          {!props.noAppBar && <ApplicationBar sx={{
+          {!props.noAppBar && <AppBar sx={{
             zIndex: 20, // position: 'sticky', top: 0,
             // ...(process.env.NODE_ENV === 'development' ? { background: theme.palette.danger.solidBg } : {}),
           }} />}

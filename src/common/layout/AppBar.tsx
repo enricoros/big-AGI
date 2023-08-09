@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -14,10 +13,10 @@ import { Brand } from '~/common/brand';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
-import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
+import { useUIStateStore } from '~/common/state/store-ui';
 
-import { SupportMenuItem } from './SupportMenuItem';
-import { useApplicationBarStore } from './store-applicationbar';
+import { AppBarItemSupport } from './AppBarItemSupport';
+import { setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
 
 
 function AppBarTitle() {
@@ -40,7 +39,7 @@ function AppBarTitle() {
 }
 
 
-function CommonContextItems(props: { onClose: () => void }) {
+function CommonMenuItems(props: { onClose: () => void }) {
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
   // const { goofyLabs, setGoofyLabs } = useUIPreferencesStore(state => ({
@@ -95,39 +94,31 @@ function CommonContextItems(props: { onClose: () => void }) {
 }
 
 
+// type ContainedAppType = 'chat' | 'data' | 'news';
+
+
 /**
  * The top bar of the application, with the model and purpose selection, and menu/settings icons
  */
-export function ApplicationBar(props: { sx?: SxProps }) {
+export function AppBar(props: { sx?: SxProps }) {
+
+  // state
+  // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  const {
-    centerItems, appMenuBadge, appMenuItems, contextMenuItems,
-    appMenuAnchor: applicationMenuAnchor, setAppMenuAnchor: setApplicationMenuAnchor,
-    contextMenuAnchor, setContextMenuAnchor,
-  } = useApplicationBarStore(state => ({
-    appMenuBadge: state.appMenuBadge,
-    appMenuItems: state.appMenuItems,
-    centerItems: state.centerItems,
-    contextMenuItems: state.contextMenuItems,
-    appMenuAnchor: state.appMenuAnchor, setAppMenuAnchor: state.setAppMenuAnchor,
-    contextMenuAnchor: state.contextMenuAnchor, setContextMenuAnchor: state.setContextMenuAnchor,
-  }), shallow);
-  const { zenMode } = useUIPreferencesStore(state => ({ zenMode: state.zenMode }), shallow);
+  // const { push } = useRouter();
+  const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
 
-  const closeApplicationMenu = () => setApplicationMenuAnchor(null);
+  const closeApplicationMenu = () => setLayoutDrawerAnchor(null);
 
-  const closeContextMenu = React.useCallback(() => setContextMenuAnchor(null), [setContextMenuAnchor]);
+  const closeContextMenu = () => setLayoutMenuAnchor(null);
 
-  const commonContextItems = React.useMemo(() =>
-      <CommonContextItems onClose={closeContextMenu} />
-    , [closeContextMenu]);
-
-  // for now, this will hide it all the time
-  const showAppMenuBadge = zenMode !== 'clean' && zenMode !== 'cleaner';
+  const commonMenuItems = React.useMemo(() =>
+    <CommonMenuItems onClose={closeContextMenu} />, []);
 
   return <>
 
+    {/* Top Bar */}
     <Sheet
       variant='solid' color='neutral' invertedColors
       sx={{
@@ -136,49 +127,49 @@ export function ApplicationBar(props: { sx?: SxProps }) {
         ...(props.sx || {}),
       }}>
 
-      {/* Application-Menu Button */}
-      {!!centerItems ? (
-        <IconButton disabled={!!applicationMenuAnchor || !appMenuItems} variant='plain' onClick={event => setApplicationMenuAnchor(event.currentTarget)}>
-          <Badge variant='solid' size='sm' badgeContent={(showAppMenuBadge && appMenuBadge) ? appMenuBadge : 0}>
-            <MenuIcon />
-          </Badge>
-        </IconButton>
-      ) : (
+      {/* Drawer Anchor */}
+      {!centerItems ? (
         <IconButton component={Link} href='/' noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
+      ) : (
+        <IconButton disabled={!!drawerAnchor || !drawerItems} variant='plain' onClick={event => setLayoutDrawerAnchor(event.currentTarget)}>
+          <MenuIcon />
+        </IconButton>
       )}
 
+      {/* Center Items */}
       <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
         {!!centerItems ? centerItems : <AppBarTitle />}
       </Box>
 
-      {/* Context-Menu Button */}
-      <IconButton disabled={!!contextMenuAnchor /*|| !contextMenuItems*/} variant='plain' onClick={event => setContextMenuAnchor(event.currentTarget)}>
+      {/* Menu Anchor */}
+      <IconButton disabled={!!menuAnchor /*|| !menuItems*/} variant='plain' onClick={event => setLayoutMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
 
 
-    {/* Application-Menu Items */}
-    {!!appMenuItems && <CloseableMenu
+    {/* Drawer Menu */}
+    {!!drawerItems && <CloseableMenu
       maxHeightGapPx={56} sx={{ minWidth: 320 }}
-      open={!!applicationMenuAnchor} anchorEl={applicationMenuAnchor} onClose={closeApplicationMenu}
+      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeApplicationMenu}
       placement='bottom-start'
     >
-      {appMenuItems}
+      {drawerItems}
     </CloseableMenu>}
 
-    {/* Context-Menu Items */}
+    {/* Menu Menu */}
     <CloseableMenu
-      maxHeightGapPx={56} noBottomPadding sx={{ minWidth: 280 }}
-      open={!!contextMenuAnchor} anchorEl={contextMenuAnchor} onClose={closeContextMenu}
+      maxHeightGapPx={56} noBottomPadding sx={{ minWidth: 320 }}
+      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeContextMenu}
       placement='bottom-end'
     >
-      {commonContextItems}
-      {!!contextMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {contextMenuItems}
-      <SupportMenuItem />
+      {commonMenuItems}
+      {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
+      {menuItems}
+      {/*<AppBarItemSwitcher />*/}
+      <AppBarItemSupport />
     </CloseableMenu>
 
   </>;
