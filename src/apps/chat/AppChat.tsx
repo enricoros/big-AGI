@@ -18,14 +18,14 @@ import { createDMessage, DMessage, useChatStore } from '~/common/state/store-cha
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatMenuItems } from './components/appbar/ChatMenuItems';
+import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
-import { ConversationMenuItems } from './components/appbar/ConversationMenuItems';
-import { Dropdowns } from './components/appbar/Dropdowns';
+import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
+import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { Ephemerals } from './components/Ephemerals';
-import { ImportedModal, ImportedOutcome } from './components/appbar/ImportedModal';
+import { ImportedModal, ImportedOutcome } from './components/ImportedModal';
 import { restoreConversationFromJson } from './exportImport';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
@@ -257,12 +257,12 @@ export function AppChat() {
   // Pluggable ApplicationBar components
 
   const centerItems = React.useMemo(() =>
-      <Dropdowns conversationId={activeConversationId} />,
+      <ChatDropdowns conversationId={activeConversationId} />,
     [activeConversationId],
   );
 
   const drawerItems = React.useMemo(() =>
-      <ConversationMenuItems
+      <ChatDrawerItems
         conversationId={activeConversationId}
         onImportConversation={handleImportConversation}
         onDeleteAllConversations={handleDeleteAllConversations}

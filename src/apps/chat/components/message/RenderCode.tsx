@@ -9,7 +9,7 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
 import { copyToClipboard } from '~/common/util/copyToClipboard';
 
-import { CodeBlock } from './Block';
+import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
 

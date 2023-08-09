@@ -14,7 +14,7 @@ import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
 
-export function Dropdowns(props: {
+export function ChatDropdowns(props: {
   conversationId: string | null
 }) {
 
