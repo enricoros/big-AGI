@@ -186,15 +186,25 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
           <Grid>
             <Button
               variant='soft' color='danger'
-              component={Link} href='/personas'
+              component={Link} noLinkStyle href='/personas'
               sx={{
+                '--Icon-fontSize': '2rem',
+                flexDirection: 'column',
+                fontWeight: 500,
+                gap: bpTileGap,
                 height: bpTileSize,
                 width: bpTileSize,
-                background: 'background.level2',
                 border: `1px dashed`,
+                boxShadow: 'md',
+                backgroundColor: 'background.surface',
               }}
             >
-              <YouTubeIcon sx={{ fontSize: 'xl5' }} />
+              <div>
+                <YouTubeIcon />
+              </div>
+              <div>
+                YouTuber
+              </div>
             </Button>
           </Grid>
         </Grid>

@@ -50,6 +50,11 @@ const YouTubePersonaSteps: LLMChainStep[] = [
     addPrevAssistant: true,
     addUser: 'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
   },
+  // {
+  //   name: 'Shrink',
+  //   addPrevAssistant: true,
+  //   addUser: 'Now remove all the uncertain information, omit unknown information, Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and serves as a go-to guide for a recreating the persona.',
+  // },
 ];
 
 
@@ -68,7 +73,7 @@ export function YTPersonaCreator() {
     const fastLLM = state.llms.find(llm => llm.id === fastLLMId) ?? null;
     return {
       chatLLM: chatLLM,
-      fastLLM: chatLLM === fastLLM ? null : fastLLM,
+      fastLLM: /*chatLLM === fastLLM ? null :*/ fastLLM,
     };
   }, shallow);
 
@@ -126,7 +131,7 @@ export function YTPersonaCreator() {
         />
         <Button
           type='submit'
-          variant='solid' disabled={videoURL == videoID} loading={isFetching}
+          variant='solid' disabled={isFetching || isTransforming} loading={isFetching}
           sx={{ minWidth: 120 }}>
           Create
         </Button>
@@ -157,12 +162,23 @@ export function YTPersonaCreator() {
       </Alert>
     )}
 
+    {/* Transform Progress */}
+    {isTransforming && <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
+      <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
+      <Typography color='primary' level='title-lg' sx={{ mt: 1 }}>
+        Embodying your persona...
+      </Typography>
+      <Typography level='title-sm' sx={{ mb: 1 }}>
+        This may require 1-2 minutes
+      </Typography>
+    </Box>}
+
     {/* Transcript*/}
     {personaTransacript && (
       <Card>
         <CardContent>
-          <Typography sx={{ whiteSpace: 'break-spaces' }}>
-            Transcript:
+          <Typography level='title-md' sx={{ mb: 1 }}>
+            YouTube Video Text
           </Typography>
           <Typography level='body-sm'>
             {personaTransacript.slice(0, 280)}...
@@ -171,28 +187,19 @@ export function YTPersonaCreator() {
       </Card>
     )}
 
-    {/* Transform Progress */}
-    {isTransforming && <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Typography level='title-lg' sx={{ mt: 1 }}>
-        Transforming...
-      </Typography>
-      <CircularProgress determinate value={Math.max(10, 100 * chainProgress)} />
-      {!!chainStepName && <Typography sx={{ mt: 1 }}>
-        {chainStepName}
-      </Typography>}
-    </Box>}
-
-
     {/* Intermediate outputs rendered as cards in a grid */}
     {chainIntermediates && chainIntermediates.length > 0 && <Box sx={{ mt: 2 }}>
       <Typography level='title-lg'>
-        Intermediate Outputs
+        Working...
       </Typography>
       <Grid container spacing={2}>
         {chainIntermediates.map((intermediate, i) =>
           <Grid xs={12} sm={6} md={4} key={i}>
             <Card>
               <CardContent>
+                <Typography level='title-sm' sx={{ mb: 1 }}>
+                  {i + 1}. {YouTubePersonaSteps[i].name}
+                </Typography>
                 <Typography level='body-sm'>
                   {intermediate?.slice(0, 140)}...
                 </Typography>
@@ -204,18 +211,18 @@ export function YTPersonaCreator() {
     </Box>}
 
     {/* Character Sheet */}
-    {chainOutput && (
+    {chainOutput && <Box sx={{ mt: 2 }}>
+      <Typography level='title-lg'>
+        YouTuber Persona System Prompt
+      </Typography>
       <Card>
         <CardContent>
-          <Typography sx={{ whiteSpace: 'break-spaces' }}>
-            Character Sheet:
-          </Typography>
           <Typography level='body-sm'>
             {chainOutput}
           </Typography>
         </CardContent>
       </Card>
-    )}
+    </Box>}
 
   </>;
 }
