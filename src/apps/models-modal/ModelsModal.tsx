@@ -10,9 +10,9 @@ import { DModelSourceId } from '~/modules/llms/llm.types';
 import { createModelSourceForDefaultVendor } from '~/modules/llms/vendor.registry';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { EditSources } from './EditSources';
-import { LLMList } from './LLMList';
-import { LLMOptions } from './LLMOptions';
+import { LLMOptionsModal } from './LLMOptionsModal';
+import { ModelsList } from './ModelsList';
+import { ModelsSourceSelector } from './ModelsSourceSelector';
 import { VendorSourceSetup } from './VendorSourceSetup';
 
 
@@ -54,7 +54,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   return <>
 
     {/* Sources Setup */}
-    <GoodModal
+    {modelsSetupOpen && <GoodModal
       title={<>Configure <b>AI Models</b></>}
       startButton={
         multiSource ? <Checkbox
@@ -65,7 +65,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       open={modelsSetupOpen} onClose={closeModelsSetup}
     >
 
-      <EditSources selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
+      <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
       {!!activeSource && <Divider />}
 
@@ -73,14 +73,14 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <LLMList filterSourceId={showAllSources ? null : selectedSourceId} />}
+      {!!llmCount && <ModelsList filterSourceId={showAllSources ? null : selectedSourceId} />}
 
       <Divider />
 
-    </GoodModal>
+    </GoodModal>}
 
     {/* per-LLM options */}
-    {!!llmOptionsId && <LLMOptions id={llmOptionsId} />}
+    {!!llmOptionsId && <LLMOptionsModal id={llmOptionsId} />}
 
   </>;
 }
