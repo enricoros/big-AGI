@@ -139,7 +139,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
 
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Typography level='title-sm'>
-            Persona
+            AI Persona
           </Typography>
           <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
@@ -197,7 +197,7 @@ export function PurposeSelector(props: { conversationId: string, runExample: (ex
                 ? <>
                   Example: {selectedExample}
                   <IconButton
-                    variant='plain' color='neutral' size='md'
+                    variant='plain' color='primary' size='md'
                     onClick={() => props.runExample(selectedExample)}
                     sx={{ opacity: 0, transition: 'opacity 0.3s' }}
                   >
