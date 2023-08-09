@@ -162,13 +162,14 @@ export function AppBar(props: { sx?: SxProps }) {
 
     {/* Menu Menu */}
     <CloseableMenu
-      maxHeightGapPx={56} noBottomPadding sx={{ minWidth: 320 }}
+      maxHeightGapPx={56} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
       open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeContextMenu}
       placement='bottom-end'
     >
       {commonMenuItems}
-      {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
+      {!!menuItems && <ListDivider sx={{ mt: 0 }} />}
       {menuItems}
+      {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
       <AppBarSwitcherItem />
       {/*<AppBarSupportItem />*/}
     </CloseableMenu>

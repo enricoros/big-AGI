@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, SvgIcon } from '@mui/joy';
+import { Button, SvgIcon, Tooltip } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 // import GitHubIcon from '@mui/icons-material/GitHub';
 
@@ -20,8 +20,8 @@ export function DiscordIcon(props: { sx?: SxProps }) {
 export function BringTheLove(props: { text: string, link: string, icon?: React.JSX.Element, sx?: SxProps }) {
   const [loved, setLoved] = React.useState(false);
   const icon = loved ? '❤️' : props.icon ?? null; // '❤️' : '🤍';
-  return <Button
-    color='neutral' size='sm'
+  return <Tooltip title={props.text}><Button
+    variant='solid' color='primary' size='md'
     component={Link} noLinkStyle href={props.link} target='_blank'
     onClick={() => setLoved(true)}
     // endDecorator={icon}
@@ -31,8 +31,9 @@ export function BringTheLove(props: { text: string, link: string, icon?: React.J
       '&:hover': { animation: `${cssRainbowColorKeyframes} 5s linear infinite` },
       ...(props.sx ? props.sx : {}),
     }}>
-    {props.text || icon}
-  </Button>;
+    {/*{props.text || icon}*/}
+    {icon}
+  </Button></Tooltip>;
 }
 
 /*
