@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-import { Container, ListDivider, Sheet, Typography } from '@mui/joy';
+import { Box, Container, ListDivider, Sheet, Typography } from '@mui/joy';
 
 import { YTPersonaCreator } from './YTPersonaCreator';
+import ScienceIcon from '@mui/icons-material/Science';
 
 
 export function AppPersonas() {
@@ -20,7 +21,14 @@ export function AppPersonas() {
           Advanced AI Personas
         </Typography>
 
-        <ListDivider sx={{ my: 3 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+          <Typography>
+            Experimental
+          </Typography>
+          <ScienceIcon color='primary' />
+        </Box>
+
+        <ListDivider sx={{ my: 2 }} />
 
         <YTPersonaCreator />
 
