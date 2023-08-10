@@ -17,7 +17,7 @@ const chatGptMessageSchema = z.object({
   end_turn: z.optional(z.boolean()),
   weight: z.number(),
   metadata: z.record(z.unknown()),
-  recipient: z.enum(['all', 'python']),
+  recipient: z.string(), // wazs: z.enum(['all', 'python']), but can be a plugin full name too
 });
 
 const chatGptNodeSchema = z.object({
