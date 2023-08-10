@@ -4,18 +4,13 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchTextOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
-import { openaiChatDataSchema, openAIImportSharedConversation } from './import.openai';
+import { chatGptImportConversation, chatGptSharedChatSchema } from './import.chatgpt';
 import { postToPasteGGOrThrow } from './publish.pastegg';
 
 
-// OpenAI import
-
-const openAIImportInputSchema = z.object({
+const chatGptImportInputSchema = z.object({
   url: z.string().url().startsWith('https://chat.openai.com/share/'),
 });
-
-
-// publishTo
 
 const publishToInputSchema = z.object({
   to: z.enum(['paste.gg']),
@@ -38,14 +33,14 @@ export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
 export const sharingRouter = createTRPCRouter({
 
   /**
-   * OpenAI Shared Chats Importer
+   * ChatGPT Shared Chats Importer
    */
-  importOpenAIShare: publicProcedure
-    .input(openAIImportInputSchema)
-    .output(z.object({ data: openaiChatDataSchema, conversationId: z.string() }))
+  importChatGptShare: publicProcedure
+    .input(chatGptImportInputSchema)
+    .output(z.object({ data: chatGptSharedChatSchema, conversationId: z.string() }))
     .query(async ({ input: { url } }) => {
-      const htmlPage = await fetchTextOrTRPCError(url, 'GET', {}, undefined, 'OpenAI Importer');
-      const data = await openAIImportSharedConversation(htmlPage);
+      const htmlPage = await fetchTextOrTRPCError(url, 'GET', {}, undefined, 'ChatGPT Importer');
+      const data = await chatGptImportConversation(htmlPage);
       return {
         data: data.props.pageProps.serverResponse.data,
         conversationId: data.props.pageProps.sharedConversationId,

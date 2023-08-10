@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, Divider, FormControl, FormLabel, Input, Sheet, Typography } from '@mui/joy';
 
-import type { OpenAISharedChatSchema } from '~/modules/sharing/import.openai';
+import type { ChatGptSharedChatSchema } from '~/modules/sharing/import.chatgpt';
 import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
@@ -17,21 +17,18 @@ import { restoreConversationFromJson } from '../exportImport';
 export type ImportExportMode = 'import' | 'export';
 
 
-const isValidOpenAIShareURL = (url?: string) => !!url && url.startsWith('https://chat.openai.com/share/') && url.length > 40;
-
-
 export function ImportExportModal(props: { mode: ImportExportMode, onClose: () => void }) {
 
   // state
   const importFilesInputRef = React.useRef<HTMLInputElement>(null);
-  const [importOpenAIShow, setImportOpenAIShow] = React.useState(false);
-  const [importOpenAIUrl, setImportOpenAIUrl] = React.useState('');
+  const [importChatGptShow, setImportChatGptShow] = React.useState(false);
+  const [importChatGptUrl, setImportChatGptUrl] = React.useState('');
   const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
 
 
   // derived
 
-  const openaiImportValid = isValidOpenAIShareURL(importOpenAIUrl);
+  const chatGptUrlValid = importChatGptUrl.startsWith('https://chat.openai.com/share/') && importChatGptUrl.length > 40;
 
 
   // imports
@@ -74,22 +71,22 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
     props.onClose();
   };
 
-  const handleOpenAIToggleParams = () => setImportOpenAIShow(!importOpenAIShow);
+  const handleChatGptToggleShown = () => setImportChatGptShow(!importChatGptShow);
 
-  const handleOpenAILoadFromURL = async () => {
+  const handleChatGptLoadFromURL = async () => {
     // validate url
-    if (!openaiImportValid)
+    if (!chatGptUrlValid)
       return;
 
     // init outcomes
     const outcomes: ImportedOutcome = { conversations: [] };
 
     // load the conversation
-    let conversationId: string, data: OpenAISharedChatSchema;
+    let conversationId: string, data: ChatGptSharedChatSchema;
     try {
-      ({ conversationId, data } = await apiAsync.sharing.importOpenAIShare.query({ url: importOpenAIUrl }));
+      ({ conversationId, data } = await apiAsync.sharing.importChatGptShare.query({ url: importChatGptUrl }));
     } catch (error) {
-      outcomes.conversations.push({ fileName: 'openai-share', success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+      outcomes.conversations.push({ fileName: 'chatgpt', success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
       setConversationImportOutcome(outcomes);
       return;
     }
@@ -108,7 +105,8 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
           const dMessage = createDMessage(role, joinedText);
           dMessage.id = message.id;
-          dMessage.created = Math.round(message.create_time * 1000);
+          if (message.create_time)
+            dMessage.created = Math.round(message.create_time * 1000);
           return dMessage;
         }
       }
@@ -118,9 +116,9 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
     // create the outcome
     if (conversation.messages.length >= 1) {
       useChatStore.getState().importConversation(conversation);
-      outcomes.conversations.push({ fileName: 'openai-share', success: true, conversationId: conversation.id });
+      outcomes.conversations.push({ fileName: 'chatgpt', success: true, conversationId: conversation.id });
     } else {
-      outcomes.conversations.push({ fileName: 'openai-share', success: false, error: `Empty conversation` });
+      outcomes.conversations.push({ fileName: 'chatgpt', success: false, error: `Empty conversation` });
     }
 
     // show the outcome of the import
@@ -149,17 +147,17 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
           Select where to import from
         </Typography>
 
+        {!importChatGptShow && <Button variant='soft' size='md' color={importChatGptShow ? 'neutral' : 'primary'} onClick={handleChatGptToggleShown} sx={{ minWidth: 260 }}>
+          ChatGPT Shared Links
+        </Button>}
+
         <Button variant='soft' size='md' onClick={handleImportFromFiles} sx={{ minWidth: 260 }}>
           {Brand.Title.Base} JSON Files
         </Button>
-
-        {!importOpenAIShow && <Button variant='soft' size='md' color={importOpenAIShow ? 'neutral' : 'primary'} onClick={handleOpenAIToggleParams} sx={{ minWidth: 260 }}>
-          OpenAI Shared Chats
-        </Button>}
       </Box>}
 
-      {/* OpenAI Import: data & controls */}
-      {importOpenAIShow && <Sheet variant='soft' color='primary' sx={{ display: 'flex', flexDirection: 'column', borderRadius: 'md', p: 1, gap: 1 }}>
+      {/* ChatGPT Import: data & controls */}
+      {importChatGptShow && <Sheet variant='soft' color='primary' sx={{ display: 'flex', flexDirection: 'column', borderRadius: 'md', p: 1, gap: 1 }}>
 
         <OpenAIIcon sx={{ mx: 'auto', my: 1 }} />
 
@@ -169,16 +167,16 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
           </FormLabel>
           <Input
             variant='outlined' placeholder='https://chat.openai.com/share/...'
-            required error={!openaiImportValid}
-            value={importOpenAIUrl} onChange={event => setImportOpenAIUrl(event.target.value)}
+            required error={!chatGptUrlValid}
+            value={importChatGptUrl} onChange={event => setImportChatGptUrl(event.target.value)}
           />
         </FormControl>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant='soft' color='primary' onClick={handleOpenAIToggleParams} sx={{ mr: 'auto' }}>
+          <Button variant='soft' color='primary' onClick={handleChatGptToggleShown} sx={{ mr: 'auto' }}>
             Cancel
           </Button>
-          <Button color='primary' disabled={!openaiImportValid} onClick={handleOpenAILoadFromURL} sx={{ minWidth: 150 }}>
+          <Button color='primary' disabled={!chatGptUrlValid} onClick={handleChatGptLoadFromURL} sx={{ minWidth: 150 }}>
             Import Chat
           </Button>
         </Box>

@@ -11,6 +11,7 @@ import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
+import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 
 
 type ListGrouping = 'off' | 'persona';
@@ -135,7 +136,8 @@ export function ChatDrawerItems(props: {
       <ListItemDecorator>
         <FileUploadIcon />
       </ListItemDecorator>
-      Import conversation
+      Import chats
+      <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
     </MenuItem>
 
     <MenuItem disabled={!hasChats} onClick={props.onDeleteAllConversations}>

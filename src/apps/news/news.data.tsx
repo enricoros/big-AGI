@@ -15,8 +15,10 @@ export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
-      // { text: <>Import ChatGPT shared conversations - share from there, continue here</> },
-      { text: <>bring AI to the real world with <Typography color='success' sx={{ fontWeight: 600 }}>camera OCR</Typography> - MOBILE-ONLY</> },
+      { text: <>Import ChatGPT shared chats</> },
+      { text: <>Cleaner, better, newer UI</> },
+      // -- version separator --
+      { text: <>AI in the real world with <Typography color='success' sx={{ fontWeight: 600 }}>camera OCR</Typography> - MOBILE-ONLY</> },
       { text: <><Typography color='success' sx={{ fontWeight: 600 }}>Anthropic</Typography> models full support</> },
     ],
   },

@@ -2,15 +2,13 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 
-// OpenAI shared chat - wire
-
-const openaiMessageSchema = z.object({
+const chatGptMessageSchema = z.object({
   id: z.string(),
   author: z.object({
     role: z.enum(['user', 'assistant', 'system', 'tool']),
     metadata: z.record(z.unknown()),
   }),
-  create_time: z.number(),
+  create_time: z.optional(z.number()),
   content: z.object({
     content_type: z.enum(['text', 'code', 'execution_output']),
     parts: z.optional(z.array(z.string())), // [''] if author.role === 'system', optional if content_type === 'code'
@@ -22,22 +20,22 @@ const openaiMessageSchema = z.object({
   recipient: z.enum(['all', 'python']),
 });
 
-const openaiNodeSchema = z.object({
+const chatGptNodeSchema = z.object({
   id: z.string(),
-  message: openaiMessageSchema.optional(),
+  message: chatGptMessageSchema.optional(),
   parent: z.optional(z.string()),
   children: z.array(z.string()),
 });
 
-export const openaiChatDataSchema = z.object({
+export const chatGptSharedChatSchema = z.object({
   title: z.string(),
   create_time: z.number(),
   update_time: z.number(),
-  // mapping: z.record(openaiNodeSchema), // comment out, to reduce the data transfer - 'duplicate' of linear_conversation
+  // mapping: z.record(chatGptNodeSchema), // comment out, to reduce the data transfer - 'duplicate' of linear_conversation
   moderation_results: z.array(z.unknown()),
   current_node: z.string(),
   is_public: z.boolean(),
-  linear_conversation: z.array(openaiNodeSchema),
+  linear_conversation: z.array(chatGptNodeSchema),
   has_user_editable_context: z.boolean(),
   continue_conversation_url: z.string(),
   model: z.object({
@@ -50,9 +48,9 @@ export const openaiChatDataSchema = z.object({
   moderation_state: z.record(z.unknown()),
 });
 
-export type OpenAISharedChatSchema = z.infer<typeof openaiChatDataSchema>;
+export type ChatGptSharedChatSchema = z.infer<typeof chatGptSharedChatSchema>;
 
-const openaiShallowSharePageContent = z.object({
+const chatGptSharedChatPage = z.object({
   props: z.object({
     // [... omit ...]
     pageProps: z.object({
@@ -60,7 +58,7 @@ const openaiShallowSharePageContent = z.object({
       continueMode: z.boolean(),
       moderationMode: z.boolean(),
       serverResponse: z.object({
-        data: openaiChatDataSchema,
+        data: chatGptSharedChatSchema,
       }),
       sharedConversationId: z.string(),
     }),
@@ -68,7 +66,7 @@ const openaiShallowSharePageContent = z.object({
 });
 
 
-export async function openAIImportSharedConversation(htmlPage: string) {
+export async function chatGptImportConversation(htmlPage: string) {
   // extract embedded JSON string
   const jsonString = htmlPage.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/)?.[1];
   if (!jsonString)
@@ -89,7 +87,7 @@ export async function openAIImportSharedConversation(htmlPage: string) {
   }
 
   // validate the JSON object
-  const safeJson = openaiShallowSharePageContent.safeParse(jsonObject);
+  const safeJson = chatGptSharedChatPage.safeParse(jsonObject);
   if (!safeJson.success)
     throw new TRPCError({
       code: 'BAD_REQUEST',
