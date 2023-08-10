@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import { Box, Button, Divider, List, ListItem, Modal, ModalDialog, Typography } from '@mui/joy';
+import { Alert, Box, Divider, List, ListItem, Typography } from '@mui/joy';
+
+import { GoodModal } from '~/common/components/GoodModal';
 
 
 export interface ImportedOutcome {
@@ -19,7 +21,7 @@ export interface ImportedOutcome {
  * Import operations supported:
  *  - JSON Chat
  */
-export function ImportOutcomeModal(props: { open: boolean, outcome: ImportedOutcome, onClose: () => void, }) {
+export function ImportOutcomeModal(props: { outcome: ImportedOutcome, onClose: () => void, }) {
   const { conversations } = props.outcome;
 
   const successes = conversations.filter(c => c.success);
@@ -28,41 +30,35 @@ export function ImportOutcomeModal(props: { open: boolean, outcome: ImportedOutc
   const hasAnyFailures = failures.length > 0;
 
   return (
-    <Modal open={props.open} onClose={props.onClose}>
-      <ModalDialog variant='outlined' color='neutral' sx={{ maxWidth: '100vw' }}>
+    <GoodModal open title={hasAnyResults ? hasAnyFailures ? 'Import issues' : 'Import successful' : 'Import failed'} strongerTitle onClose={props.onClose}>
 
-        <Typography level='title-lg'>
-          {hasAnyResults ? hasAnyFailures ? 'Import issues' : 'Import successful' : 'Import failed'}
-        </Typography>
+      <Divider />
 
-        <Divider sx={{ my: 2 }} />
-
-        {successes.length >= 1 && <>
+      {successes.length >= 1 && <>
+        <Alert variant='soft' color='success'>
           <Typography>
             Imported {successes.length} conversation{successes.length === 1 ? '' : 's'}.
           </Typography>
-          <Typography>
-            {successes.length === 1 ? 'It' : 'They'} can be found in the Pages menu. Opening {successes.length === 1 ? 'it' : 'the last one'}.
-          </Typography>
-        </>}
+        </Alert>
+        <Typography>
+          The conversation{successes.length === 1 ? '' : 's'} can be found in the menu,
+          and {successes.length === 1 ? 'it' : 'the last one'} is now active.
+        </Typography>
+      </>}
 
-        {failures.length >= 1 && <>
-          <Typography variant='soft' color='danger'>
+      {failures.length >= 1 && <Box>
+        <Alert variant='soft' color='danger'>
+          <Typography>
             Issues importing {failures.length} conversation{failures.length === 1 ? '' : 's'}:
           </Typography>
-          <List>
-            {failures.map((f, idx) =>
-              <ListItem color='warning' key={'fail-' + idx}>{f.fileName}: {f.error}</ListItem>,
-            )}
-          </List>
-        </>}
+        </Alert>
+        <List>
+          {failures.map((f, idx) =>
+            <ListItem variant='soft' color='warning' key={'fail-' + idx}><b>{f.fileName}</b>: {f.error}</ListItem>,
+          )}
+        </List>
+      </Box>}
 
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
-          <Button variant='soft' color='neutral' onClick={props.onClose}>
-            Close
-          </Button>
-        </Box>
-      </ModalDialog>
-    </Modal>
+    </GoodModal>
   );
 }
