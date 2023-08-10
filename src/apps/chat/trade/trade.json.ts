@@ -1,4 +1,4 @@
-import { defaultSystemPurposeId } from '../../data';
+import { defaultSystemPurposeId } from '../../../data';
 
 import { DConversation } from '~/common/state/store-chats';
 
@@ -6,7 +6,7 @@ import { DConversation } from '~/common/state/store-chats';
  * Download a conversation as a JSON file, for backup and future restore
  * Not the best place to have this function, but we want it close to the (re)store function
  */
-export const downloadConversationJson = (_conversation: DConversation) => {
+export const downloadDConversationJson = (_conversation: DConversation) => {
   if (typeof window === 'undefined') return;
 
   // payload to be downloaded
@@ -30,7 +30,7 @@ export const downloadConversationJson = (_conversation: DConversation) => {
 /**
  * Restore a conversation from a JSON string
  */
-export const restoreConversationFromJson = (json: string): DConversation | null => {
+export const restoreDConversationFromJson = (json: string): DConversation | null => {
   const restored: Partial<DConversation> = JSON.parse(json);
   if (restored && restored.id && restored.messages) {
     return {

@@ -6,16 +6,12 @@ import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlin
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import CompressIcon from '@mui/icons-material/Compress';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
-import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-
-import { downloadConversationJson } from '../../exportImport';
 
 
 export function ChatMenuItems(props: {
@@ -23,8 +19,8 @@ export function ChatMenuItems(props: {
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
   onDuplicateConversation: (conversationId: string) => void,
+  onExportConversation: (conversationId: string) => void,
   onFlattenConversation: (conversationId: string) => void,
-  onPublishConversation: (conversationId: string) => void
 }) {
 
   // external state
@@ -36,16 +32,10 @@ export function ChatMenuItems(props: {
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
-  const handleConversationPublish = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    props.conversationId && props.onPublishConversation(props.conversationId);
-  };
-
-  const handleConversationDownload = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    const conversation = useChatStore.getState().conversations.find(conversation => conversation.id === props.conversationId);
-    if (conversation)
-      downloadConversationJson(conversation);
+    closeContextMenu();
+    props.conversationId && props.onExportConversation(props.conversationId);
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -116,20 +106,11 @@ export function ChatMenuItems(props: {
       </span>
     </MenuItem>
 
-    <MenuItem disabled={disabled} onClick={handleConversationPublish}>
-      <ListItemDecorator>
-        {/*<Badge size='sm' color='primary'>*/}
-        <ExitToAppIcon />
-        {/*</Badge>*/}
-      </ListItemDecorator>
-      Share on paste.gg
-    </MenuItem>
-
-    <MenuItem disabled={disabled} onClick={handleConversationDownload}>
+    <MenuItem disabled={disabled} onClick={handleConversationExport}>
       <ListItemDecorator>
         <FileDownloadIcon />
       </ListItemDecorator>
-      Export conversation
+      Export
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>

@@ -17,9 +17,6 @@ export interface ImportedOutcome {
 
 /**
  * Displays the result of an import operation as a modal dialog.
- *
- * Import operations supported:
- *  - JSON Chat
  */
 export function ImportOutcomeModal(props: { outcome: ImportedOutcome, onClose: () => void, }) {
   const { conversations } = props.outcome;
