@@ -120,7 +120,7 @@ export function ImportConversations(props: { onClose: () => void }) {
 
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 1 }}>
       <Typography level='body-sm'>
         Select where to import from
       </Typography>
