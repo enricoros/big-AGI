@@ -1,22 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import type { PublishedSchema } from '~/modules/sharing/sharing.router';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
-import { PublishedModal } from '~/modules/sharing/PublishedModal';
-import { apiAsync } from '~/modules/trpc/trpc.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { Link } from '~/common/components/Link';
-import { conversationToMarkdown } from '~/common/util/conversationToMarkdown';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
@@ -25,7 +18,7 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
-import { ImportExportModal, ImportExportMode } from './components/ImportExportModal';
+import { TradeConfig, TradeModal } from './trade/TradeModal';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
@@ -56,29 +49,15 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
 };
 
 
-/// Returns a pretty link to the current page, for promo
-function linkToOrigin() {
-  let origin = (typeof window !== 'undefined') ? window.location.href : '';
-  if (!origin || origin.includes('//localhost'))
-    origin = Brand.URIs.OpenRepo;
-  origin = origin.replace('https://', '');
-  if (origin.endsWith('/'))
-    origin = origin.slice(0, -1);
-  return origin;
-}
-
-
 export function AppChat() {
 
   // state
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
-  const [importExportMode, setInputExportMode] = React.useState<ImportExportMode | null>(null);
+  const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
-  const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
-  const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
 
   // external state
   const { activeConversationId, isConversationEmpty, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
@@ -190,36 +169,12 @@ export function AppChat() {
     }
   };
 
+
+  const handleImportConversation = () => setTradeConfig({ dir: 'import' });
+
+  const handleExportConversation = (conversationId: string) => setTradeConfig({ dir: 'export', conversationId });
+
   const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
-
-  const handlePublishConversation = (conversationId: string) => setPublishConversationId(conversationId);
-
-  const handleConfirmedPublishConversation = async () => {
-    if (publishConversationId) {
-      const conversation = _findConversation(publishConversationId);
-      setPublishConversationId(null);
-      if (conversation) {
-        const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
-        try {
-          const paste = await apiAsync.sharing.publishTo.mutate({
-            to: 'paste.gg',
-            title: '🤖💬 Chat Conversation',
-            fileContent: markdownContent,
-            fileName: 'my-chat.md',
-            origin: linkToOrigin(),
-          });
-          setPublishResponse(paste);
-        } catch (error: any) {
-          alert(`Failed to publish conversation: ${error?.message ?? error?.toString() ?? 'unknown error'}`);
-          setPublishResponse(null);
-        }
-      }
-    }
-  };
-
-  const handleShowImportDialog = () => setInputExportMode('import');
-
-  const handleCloseImportDialog = () => setInputExportMode(null);
 
 
   // Pluggable ApplicationBar components
@@ -232,7 +187,7 @@ export function AppChat() {
   const drawerItems = React.useMemo(() =>
       <ChatDrawerItems
         conversationId={activeConversationId}
-        onImportConversation={handleShowImportDialog}
+        onImportConversation={handleImportConversation}
         onDeleteAllConversations={handleDeleteAllConversations}
       />,
     [activeConversationId],
@@ -244,8 +199,8 @@ export function AppChat() {
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onClearConversation={handleClearConversation}
         onDuplicateConversation={duplicateConversation}
+        onExportConversation={handleExportConversation}
         onFlattenConversation={handleFlattenConversation}
-        onPublishConversation={handlePublishConversation}
       />,
     [activeConversationId, duplicateConversation, isConversationEmpty, isMessageSelectionMode],
   );
@@ -290,40 +245,27 @@ export function AppChat() {
 
 
     {/* Import / Export  */}
-    {!!importExportMode && <ImportExportModal mode={importExportMode} onClose={handleCloseImportDialog} />}
+    {!!tradeConfig && <TradeModal config={tradeConfig} onClose={() => setTradeConfig(null)} />}
 
     {/* Flatten */}
     {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
 
-    {/* Publish */}
-    <ConfirmationModal
-      open={!!publishConversationId} onClose={() => setPublishConversationId(null)} onPositive={handleConfirmedPublishConversation}
-      confirmationText={<>
-        Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
-        It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
-        Are you sure you want to proceed?
-      </>} positiveActionText={'Understood, upload to paste.gg'}
-    />
-    {!!publishResponse && (
-      <PublishedModal open onClose={() => setPublishResponse(null)} response={publishResponse} />
-    )}
-
     {/* [confirmation] Reset Conversation */}
-    <ConfirmationModal
-      open={!!clearConfirmationId} onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+    {!!clearConfirmationId && <ConfirmationModal
+      open onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
-    />
+    />}
 
     {/* [confirmation] Delete All */}
-    <ConfirmationModal
-      open={!!deleteConfirmationId} onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
+    {!!deleteConfirmationId && <ConfirmationModal
+      open onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
       confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
         ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
         : 'Are you sure you want to delete this conversation?'}
       positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
         ? 'Yes, delete all'
         : 'Delete conversation'}
-    />
+    />}
 
   </>;
 }
