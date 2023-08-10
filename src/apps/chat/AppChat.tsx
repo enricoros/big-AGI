@@ -18,15 +18,14 @@ import { createDMessage, DMessage, useChatStore } from '~/common/state/store-cha
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
+import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
-import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
-import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { Ephemerals } from './components/Ephemerals';
-import { ImportOutcomeModal, ImportedOutcome } from './components/ImportOutcomeModal';
-import { restoreConversationFromJson } from './exportImport';
+import { ImportExportModal, ImportExportMode } from './components/ImportExportModal';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
@@ -74,23 +73,21 @@ export function AppChat() {
   // state
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
+  const [importExportMode, setInputExportMode] = React.useState<ImportExportMode | null>(null);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
-  const [conversationImportOutcome, setConversationImportOutcome] = React.useState<ImportedOutcome | null>(null);
-  const conversationFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, duplicateConversation, importConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     return {
       activeConversationId: state.activeConversationId,
       isConversationEmpty: conversation ? !conversation.messages.length : true,
       // conversationsCount: state.conversations.length,
       duplicateConversation: state.duplicateConversation,
-      importConversation: state.importConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
       systemPurposeId: conversation?.systemPurposeId ?? null,
@@ -220,38 +217,9 @@ export function AppChat() {
     }
   };
 
-  const handleImportConversation = () => conversationFileInputRef.current?.click();
+  const handleShowImportDialog = () => setInputExportMode('import');
 
-  const handleImportConversationFromFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target?.files;
-    if (!files || files.length < 1)
-      return;
-
-    // try to restore conversations from the selected files
-    const outcomes: ImportedOutcome = { conversations: [] };
-    for (const file of files) {
-      const fileName = file.name || 'unknown file';
-      try {
-        const conversation = restoreConversationFromJson(await file.text());
-        if (conversation) {
-          importConversation(conversation);
-          outcomes.conversations.push({ fileName, success: true, conversationId: conversation.id });
-        } else {
-          const fileDesc = `(${file.type}) ${file.size.toLocaleString()} bytes`;
-          outcomes.conversations.push({ fileName, success: false, error: `Invalid file: ${fileDesc}` });
-        }
-      } catch (error) {
-        console.error(error);
-        outcomes.conversations.push({ fileName, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
-      }
-    }
-
-    // show the outcome of the import
-    setConversationImportOutcome(outcomes);
-
-    // this is needed to allow the same file to be selected again
-    e.target.value = '';
-  };
+  const handleCloseImportDialog = () => setInputExportMode(null);
 
 
   // Pluggable ApplicationBar components
@@ -264,7 +232,7 @@ export function AppChat() {
   const drawerItems = React.useMemo(() =>
       <ChatDrawerItems
         conversationId={activeConversationId}
-        onImportConversation={handleImportConversation}
+        onImportConversation={handleShowImportDialog}
         onDeleteAllConversations={handleDeleteAllConversations}
       />,
     [activeConversationId],
@@ -321,14 +289,11 @@ export function AppChat() {
       }} />
 
 
+    {/* Import / Export  */}
+    {!!importExportMode && <ImportExportModal mode={importExportMode} onClose={handleCloseImportDialog} />}
+
     {/* Flatten */}
     {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
-
-    {/* Import */}
-    <input type='file' multiple hidden accept='.json' ref={conversationFileInputRef} onChange={handleImportConversationFromFiles} />
-    {!!conversationImportOutcome && (
-      <ImportOutcomeModal open outcome={conversationImportOutcome} onClose={() => setConversationImportOutcome(null)} />
-    )}
 
     {/* Publish */}
     <ConfirmationModal
