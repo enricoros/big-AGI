@@ -147,13 +147,13 @@ export function ImportExportModal(props: { mode: ImportExportMode, onClose: () =
           Select where to import from
         </Typography>
 
-        {!importChatGptShow && <Button variant='soft' size='md' color={importChatGptShow ? 'neutral' : 'primary'} onClick={handleChatGptToggleShown} sx={{ minWidth: 260 }}>
-          ChatGPT Shared Links
-        </Button>}
-
         <Button variant='soft' size='md' onClick={handleImportFromFiles} sx={{ minWidth: 260 }}>
           {Brand.Title.Base} JSON Files
         </Button>
+
+        {!importChatGptShow && <Button variant='soft' size='md' color={importChatGptShow ? 'neutral' : 'primary'} onClick={handleChatGptToggleShown} sx={{ minWidth: 260 }}>
+          ChatGPT Shared Links
+        </Button>}
       </Box>}
 
       {/* ChatGPT Import: data & controls */}
