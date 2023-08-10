@@ -15,10 +15,10 @@ import { conversationToMarkdown } from './trade.markdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { downloadDConversationJson } from './trade.json';
+import { downloadDAllJson, downloadDConversationJson } from './trade.json';
 
 
-export type ExportConfig = { dir: 'export', conversationId: string };
+export type ExportConfig = { dir: 'export', conversationId: string | null };
 
 /// Returns a pretty link to the current page, for promo
 function linkToOrigin() {
@@ -46,6 +46,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
   const [hasDownloaded, setHasDownloaded] = React.useState(false);
+  const [hasDownloadedAll, setHasDownloadedAll] = React.useState(false);
+
 
   // publish
 
@@ -82,29 +84,45 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   // download
 
   const handleDownloadConversation = () => {
+    if (!props.config.conversationId) return;
     const conversation = findConversation(props.config.conversationId);
     if (!conversation) return;
     downloadDConversationJson(conversation);
     setHasDownloaded(true);
   };
 
+  const handleDownloadAllConversations = () => {
+    downloadDAllJson();
+    setHasDownloadedAll(true);
+  };
+
+  const hasConversation = !!props.config.conversationId;
 
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 1 }}>
       <Typography level='body-sm'>
-        Share your conversations with others, or download them for yourself
+        Share or download this conversation
       </Typography>
 
-      <Button variant='soft' size='md' endDecorator={<ExitToAppIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+      <Button variant='soft' size='md' disabled={!hasConversation} endDecorator={<ExitToAppIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handlePublishConversation}>
         Share to Paste.gg
       </Button>
 
-      <Button variant='soft' size='md' endDecorator={hasDownloaded ? '✔' : <FileDownloadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+      <Button variant='soft' size='md' disabled={!hasConversation} endDecorator={hasDownloaded ? '✔' : <FileDownloadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
               color={hasDownloaded ? 'success' : 'primary'}
               onClick={handleDownloadConversation}>
         Download JSON
+      </Button>
+
+      <Typography level='body-sm' sx={{ mt: 2 }}>
+        Store or transfer between devices
+      </Typography>
+      <Button variant='soft' size='md' endDecorator={hasDownloadedAll ? '✔' : <FileDownloadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              color={hasDownloadedAll ? 'success' : 'primary'}
+              onClick={handleDownloadAllConversations}>
+        Backup all
       </Button>
     </Box>
 

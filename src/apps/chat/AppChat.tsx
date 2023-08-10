@@ -172,7 +172,7 @@ export function AppChat() {
 
   const handleImportConversation = () => setTradeConfig({ dir: 'import' });
 
-  const handleExportConversation = (conversationId: string) => setTradeConfig({ dir: 'export', conversationId });
+  const handleExportConversation = (conversationId: string | null) => setTradeConfig({ dir: 'export', conversationId });
 
   const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
 

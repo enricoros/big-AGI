@@ -19,7 +19,7 @@ export function ChatMenuItems(props: {
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
   onDuplicateConversation: (conversationId: string) => void,
-  onExportConversation: (conversationId: string) => void,
+  onExportConversation: (conversationId: string | null) => void,
   onFlattenConversation: (conversationId: string) => void,
 }) {
 
@@ -28,6 +28,9 @@ export function ChatMenuItems(props: {
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
 
+  // derived state
+  const disabled = !props.conversationId || props.isConversationEmpty;
+
   const closeContextMenu = () => setLayoutMenuAnchor(null);
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
@@ -35,7 +38,7 @@ export function ChatMenuItems(props: {
   const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     closeContextMenu();
-    props.conversationId && props.onExportConversation(props.conversationId);
+    props.onExportConversation(!disabled ? props.conversationId : null);
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -60,8 +63,6 @@ export function ChatMenuItems(props: {
     e.stopPropagation();
     props.conversationId && props.onClearConversation(props.conversationId);
   };
-
-  const disabled = !props.conversationId || props.isConversationEmpty;
 
   return <>
 
@@ -106,7 +107,7 @@ export function ChatMenuItems(props: {
       </span>
     </MenuItem>
 
-    <MenuItem disabled={disabled} onClick={handleConversationExport}>
+    <MenuItem onClick={handleConversationExport}>
       <ListItemDecorator>
         <FileDownloadIcon />
       </ListItemDecorator>
