@@ -153,7 +153,7 @@ export function AppBar(props: { sx?: SxProps }) {
 
     {/* Drawer Menu */}
     {!!drawerItems && <CloseableMenu
-      maxHeightGapPx={56} sx={{ minWidth: 320 }}
+      maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
       open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeApplicationMenu}
       placement='bottom-start'
     >
@@ -162,7 +162,7 @@ export function AppBar(props: { sx?: SxProps }) {
 
     {/* Menu Menu */}
     <CloseableMenu
-      maxHeightGapPx={56} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
+      maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
       open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeContextMenu}
       placement='bottom-end'
     >
