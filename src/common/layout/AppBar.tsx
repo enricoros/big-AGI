@@ -124,7 +124,7 @@ export function AppBar(props: { sx?: SxProps }) {
       variant='solid' color='neutral' invertedColors
       sx={{
         p: 1,
-        display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
+        display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         ...(props.sx || {}),
       }}>
 
