@@ -33,7 +33,7 @@ export interface DConversation {
   ephemerals: DEphemeral[];
 }
 
-function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
+export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
   return {
     id: uuidv4(),
     messages: [],
@@ -198,6 +198,7 @@ export const useChatStore = create<ChatStore>()(devtools(
       importConversation: (conversation: DConversation) => {
         get().deleteConversation(conversation.id);
         set(state => {
+          conversation.tokenCount = updateTokenCounts(conversation.messages, true, 'importConversation');
           return {
             // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
             conversations: [
