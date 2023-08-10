@@ -168,7 +168,7 @@ export function AppBar(props: { sx?: SxProps }) {
     >
       {commonMenuItems}
       {!!menuItems && <ListDivider sx={{ mt: 0 }} />}
-      {menuItems}
+      {!!menuItems && <Box sx={{ overflowY: 'auto' }}>{menuItems}</Box>}
       {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
       <AppBarSwitcherItem />
       {/*<AppBarSupportItem />*/}

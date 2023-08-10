@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -75,11 +75,11 @@ export function ChatMenuItems(props: {
 
   return <>
 
-    <ListItem sticky sx={{ '--ListItem-stickyBackground': 'transparent' }}>
-      <Typography level='body-sm'>
-        Conversation
-      </Typography>
-    </ListItem>
+    {/*<ListItem>*/}
+    {/*  <Typography level='body-sm'>*/}
+    {/*    Conversation*/}
+    {/*  </Typography>*/}
+    {/*</ListItem>*/}
 
     <MenuItem onClick={handleSystemMessagesToggle}>
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
