@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Modal, ModalDialog, Radio, RadioGroup, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Modal, ModalDialog, Radio, RadioGroup, Tooltip, Typography } from '@mui/joy';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
+
+import { copyToClipboard } from '~/common/util/copyToClipboard';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
 
@@ -48,7 +51,7 @@ const YouTubePersonaSteps: LLMChainStep[] = [
     addUser: 'Craft your documented analysis into a draft of the \'You are a...\' character sheet. It should encapsulate all crucial personality dimensions, along with the motivations and aspirations of the persona. Keep in mind to balance succinctness and depth of detail for each dimension. The deliverable here is a comprehensive draft of the character sheet that captures the speaker\'s unique essence.',
   },
   {
-    name: 'Crossing the t&rsquo;s',
+    name: 'Crossing the t\'s',
     addPrevAssistant: true,
     addUser: 'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
   },
@@ -180,6 +183,37 @@ export function YTPersonaCreator() {
       </Alert>
     )}
 
+
+    {/* Persona! */}
+    {chainOutput && <Box sx={{ mt: 2 }}>
+      <Typography level='title-lg'>
+        YouTuber Persona System Prompt
+      </Typography>
+      <Card sx={{ boxShadow: 'md' }}>
+        <CardContent sx={{
+          position: 'relative',
+          '&:hover > button': { opacity: 1 },
+        }}>
+          <Alert variant='soft' color='success' sx={{ mb: 1 }}>
+            You can now copy the following text and use it as Custom prompt!
+          </Alert>
+          <Tooltip title='Copy system prompt' variant='solid'>
+            <IconButton
+              variant='outlined' color='neutral' onClick={() => copyToClipboard(chainOutput)}
+              sx={{
+                position: 'absolute', right: 0, zIndex: 10,
+                // opacity: 0, transition: 'opacity 0.3s',
+              }}>
+              <ContentCopyIcon />
+            </IconButton>
+          </Tooltip>
+          <Typography level='body-sm'>
+            {chainOutput}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>}
+
     {/* Intermediate outputs rendered as cards in a grid */}
     {chainIntermediates && chainIntermediates.length > 0 && <Box sx={{ mt: 2 }}>
       <Typography level='title-lg'>
@@ -201,20 +235,6 @@ export function YTPersonaCreator() {
           </Grid>,
         )}
       </Grid>
-    </Box>}
-
-    {/* Character Sheet */}
-    {chainOutput && <Box sx={{ mt: 2 }}>
-      <Typography level='title-lg'>
-        YouTuber Persona System Prompt
-      </Typography>
-      <Card>
-        <CardContent>
-          <Typography level='body-sm'>
-            {chainOutput}
-          </Typography>
-        </CardContent>
-      </Card>
     </Box>}
 
 
