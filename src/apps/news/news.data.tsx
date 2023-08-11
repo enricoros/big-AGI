@@ -15,6 +15,7 @@ export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
+      { text: <>Backup chats (export all)</> },
       { text: <>Import ChatGPT shared chats</> },
       { text: <>Cleaner, better, newer UI</> },
       // -- version separator --

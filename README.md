@@ -44,6 +44,7 @@ Or fork & run on Vercel
 #### 🚨 July/Aug: Back with the Cool features 🧠
 
 - 🎉 **Camera OCR** - real-world AI - take a picture of a text, and chat with it
+- 🎉 **Backup/Restore** - save chats, and restore them later
 - 🎉 **[Local model support with Oobabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
 - 🎉 **Flatten conversations** - conversations summarizer with 4 modes
 - 🎉 **Fork conversations** - create a new chat, to expriment with different endings
