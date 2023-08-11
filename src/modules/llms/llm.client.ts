@@ -5,6 +5,7 @@ import type { DMessage } from '~/common/state/store-chats';
 import type { ChatStreamSchema } from './openai/openai.router';
 import type { DLLM, DLLMId, ModelVendor } from './llm.types';
 import type { OpenAI } from './openai/openai.types';
+import { ModelVendorAnthropic, SourceSetupAnthropic } from '~/modules/llms/anthropic/anthropic.vendor';
 import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
 import { findVendorById } from './vendor.registry';
 import { useModelsStore } from './store-llms';
@@ -131,7 +132,9 @@ async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatM
     body: JSON.stringify({
       // map all to OpenAI, apart from Anthropic
       vendorId: vendor.id === 'anthropic' ? 'anthropic' : 'openai',
-      access: ModelVendorOpenAI.normalizeSetup(sourceSetup as any),
+      access: vendor.id === 'anthropic'
+        ? ModelVendorAnthropic.normalizeSetup(sourceSetup as SourceSetupAnthropic)
+        : ModelVendorOpenAI.normalizeSetup(sourceSetup as SourceSetupOpenAI),
       model: {
         id: llmRef,
         temperature: llmTemperature,

@@ -99,11 +99,19 @@ export const llmAnthropicRouter = createTRPCRouter({
             contextWindow: 100000,
           },
           {
+            id: 'claude-instant-1.2',
+            name: 'Claude Instant 1.2',
+            created: roundTime('2023-08-09'),
+            description: 'Precise and faster',
+            contextWindow: 100000,
+          },
+          {
             id: 'claude-instant-1.1',
             name: 'Claude Instant 1.1',
             created: roundTime('2023-03-14'),
             description: 'Precise and fast',
             contextWindow: 100000,
+            hidden: true,
           },
           {
             id: 'claude-1.3',
