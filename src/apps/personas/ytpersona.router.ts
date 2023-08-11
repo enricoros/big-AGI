@@ -42,12 +42,10 @@ export const ytPersonaRouter = createTRPCRouter({
         // 1. find the cpations URL within the video HTML page
         const data = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
         const html = await data.text();
-        const indexStart = html.indexOf('https://www.youtube.com/api/timedtext');
-        const indexEnd = html.indexOf('"', indexStart);
-        if (indexStart < 0 || indexEnd <= indexStart)
-          throw new TRPCError({ code: 'BAD_REQUEST', message: '[YouTube API Issue] Could not find the default captions track' });
-        const captionsUrlEnc = html.substring(indexStart, indexEnd);
-        let captionsUrl = decodeURIComponent(captionsUrlEnc.replaceAll('\\u0026', '&'));
+        const captionsUrlEnc = extractFromTo(html, 'https://www.youtube.com/api/timedtext', '"', 'Captions URL');
+        const captionsUrl = decodeURIComponent(captionsUrlEnc.replaceAll('\\u0026', '&'));
+        const thumbnailUrl = extractFromTo(html, 'https://i.ytimg.com/vi/', '"', 'Thumbnail URL').replaceAll('maxres', 'hq');
+        const videoTitle = extractFromTo(html, '<title>', '</title>', 'Video Title').slice(7).replaceAll(' - YouTube', '').trim();
 
         // 2. fetch the captions
         // note: the desktop player appends this much: &fmt=json3&xorb=2&xobt=3&xovt=3&cbr=Chrome&cbrver=114.0.0.0&c=WEB&cver=2.20230628.07.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP
@@ -67,16 +65,26 @@ export const ytPersonaRouter = createTRPCRouter({
 
         return {
           videoId,
+          videoTitle,
+          thumbnailUrl,
           transcript,
         };
 
       } catch (error: any) {
         throw error instanceof TRPCError ? error
-          : new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[YouTube Captions Issue] Error: ${error?.message || error?.toString() || 'unknown'}` });
+          : new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[YouTube Transcript Issue] Error: ${error?.message || error?.toString() || 'unknown'}` });
       }
     }),
 
 });
+
+function extractFromTo(html: string, from: string, to: string, label: string): string {
+  const indexStart = html.indexOf(from);
+  const indexEnd = html.indexOf(to, indexStart);
+  if (indexStart < 0 || indexEnd <= indexStart)
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `[YouTube API Issue] Could not find ${label}` });
+  return html.substring(indexStart, indexEnd);
+}
 
 
 /*
