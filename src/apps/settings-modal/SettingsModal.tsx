@@ -23,7 +23,7 @@ export function SettingsModal() {
   const theme = useTheme();
   const { settingsOpenTab, closeSettings, openModelsSetup } = useUIStateStore();
 
-  const tabFixSx = { fontFamily: theme.fontFamily.body, p: 0, m: 0 };
+  const tabFixSx = { fontFamily: theme.fontFamily.body, flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
@@ -39,7 +39,7 @@ export function SettingsModal() {
       <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab}>
         <TabList
           variant='soft'
-          disableUnderline tabFlex={1}
+          disableUnderline
           sx={{
             '--ListItem-minHeight': '2.4rem',
             mb: 2,
