@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, Radio, RadioGroup, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Modal, ModalDialog, Radio, RadioGroup, Typography } from '@mui/joy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
@@ -26,6 +26,8 @@ function useTranscriptFromVideo(videoID: string | null) {
       staleTime: Infinity,
     });
   return {
+    title: data?.videoTitle ?? null,
+    thumbnailUrl: data?.thumbnailUrl ?? null,
     transcript: data?.transcript?.trim() ?? null,
     isFetching,
     isError, error,
@@ -35,18 +37,18 @@ function useTranscriptFromVideo(videoID: string | null) {
 
 const YouTubePersonaSteps: LLMChainStep[] = [
   {
-    name: 'Analyze the Transcript',
+    name: 'Analyzing the transcript',
     setSystem: 'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
     addUserInput: true,
     addUser: 'Conduct comprehensive research on the provided transcript. Identify key characteristics of the speaker, including age, professional field, distinct personality traits, style of communication, narrative context, and self-awareness. Additionally, consider any unique aspects such as their use of humor, their cultural background, core values, passions, fears, personal history, and social interactions. Your output for this stage is an in-depth written analysis that exhibits an understanding of both the superficial and more profound aspects of the speaker\'s persona.',
   },
   {
-    name: 'Draft Character Sheet',
+    name: 'Defining the character',
     addPrevAssistant: true,
     addUser: 'Craft your documented analysis into a draft of the \'You are a...\' character sheet. It should encapsulate all crucial personality dimensions, along with the motivations and aspirations of the persona. Keep in mind to balance succinctness and depth of detail for each dimension. The deliverable here is a comprehensive draft of the character sheet that captures the speaker\'s unique essence.',
   },
   {
-    name: 'Validate and Refine',
+    name: 'Crossing the t&rsquo;s',
     addPrevAssistant: true,
     addUser: 'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
   },
@@ -62,9 +64,9 @@ export function YTPersonaCreator() {
   // state
   const [videoURL, setVideoURL] = React.useState('');
   const [selectedModelType, setSelectedModelType] = React.useState<'chat' | 'fast'>('fast');
-  const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
+  // const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
   const [videoID, setVideoID] = React.useState('');
-  const [personaTransacript, setPersonaTransacript] = React.useState<string | null>(null);
+  const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
 
   // external state
   const { chatLLM, fastLLM } = useModelsStore(state => {
@@ -78,14 +80,14 @@ export function YTPersonaCreator() {
   }, shallow);
 
   // fetch transcript when the Video ID is ready, then store it
-  const { transcript, isFetching, isError, error: transcriptError } = useTranscriptFromVideo(videoID);
-  React.useEffect(() => setPersonaTransacript(transcript), [transcript]);
+  const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
+    useTranscriptFromVideo(videoID);
+  React.useEffect(() => setPersonaTranscript(transcript), [transcript]);
 
   // use the transformation sequence to create a persona
   const llm = selectedModelType === 'chat' ? chatLLM : fastLLM;
-  const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError } =
-    useLLMChain(YouTubePersonaSteps, llm?.id, personaTransacript ?? undefined);
-  React.useEffect(() => setPersonaTransacript(transcript), [chainOutput, transcript]);
+  const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
+    useLLMChain(YouTubePersonaSteps, llm?.id, personaTranscript ?? undefined);
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -95,7 +97,7 @@ export function YTPersonaCreator() {
     if (!videoId) {
       setVideoURL('Invalid');
     } else {
-      setPersonaTransacript(null);
+      setPersonaTranscript(null);
       setVideoID(videoId);
     }
   };
@@ -121,7 +123,7 @@ export function YTPersonaCreator() {
           endDecorator={
             <IconButton
               variant='outlined' color='neutral'
-              onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc&t=2s')}
+              onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}
             >
               <WhatshotIcon />
             </IconButton>
@@ -148,7 +150,25 @@ export function YTPersonaCreator() {
       </RadioGroup>
     )}
 
-    {/* After the first roundtrip */}
+
+    {/* 1. Transcript*/}
+    {personaTranscript && (
+      <Card sx={{ mt: 2, boxShadow: 'md' }}>
+        <CardContent>
+          <Typography level='title-md' sx={{ mb: 1 }}>
+            {title || 'Transcript'}
+          </Typography>
+          <Box>
+            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Image' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
+            <Typography level='body-sm'>
+              {personaTranscript.slice(0, 280)}...
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Errors */}
     {isError && (
       <Alert color='warning' sx={{ mt: 1 }}>
         <Typography component='div'>{transcriptError?.message || 'Unknown error'}</Typography>
@@ -160,35 +180,10 @@ export function YTPersonaCreator() {
       </Alert>
     )}
 
-    {/* Transform Progress */}
-    {isTransforming && <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
-      <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
-      <Typography color='primary' level='title-lg' sx={{ mt: 1 }}>
-        Embodying your persona...
-      </Typography>
-      <Typography level='title-sm' sx={{ mb: 1 }}>
-        This may require 1-2 minutes
-      </Typography>
-    </Box>}
-
-    {/* Transcript*/}
-    {personaTransacript && (
-      <Card>
-        <CardContent>
-          <Typography level='title-md' sx={{ mb: 1 }}>
-            YouTube Video Text
-          </Typography>
-          <Typography level='body-sm'>
-            {personaTransacript.slice(0, 280)}...
-          </Typography>
-        </CardContent>
-      </Card>
-    )}
-
     {/* Intermediate outputs rendered as cards in a grid */}
     {chainIntermediates && chainIntermediates.length > 0 && <Box sx={{ mt: 2 }}>
       <Typography level='title-lg'>
-        Working...
+        {isTransforming ? 'Working...' : 'Intermediate Work'}
       </Typography>
       <Grid container spacing={2}>
         {chainIntermediates.map((intermediate, i) =>
@@ -221,6 +216,31 @@ export function YTPersonaCreator() {
         </CardContent>
       </Card>
     </Box>}
+
+
+    {/* Embodiment Progress */}
+    {isTransforming && <Modal open>
+      <ModalDialog>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
+          <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
+        </Box>
+        <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
+          Embodying Persona ...
+        </Typography>
+        <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
+          {chainStepName}
+        </Typography>
+        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
+        <Typography level='title-sm'>
+          This may take 1-2 minutes. Do not close this window or the progress will be lost.
+          If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
+          please try again with faster/smaller models.
+        </Typography>
+        <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
+          Cancel
+        </Button>
+      </ModalDialog>
+    </Modal>}
 
   </>;
 }
