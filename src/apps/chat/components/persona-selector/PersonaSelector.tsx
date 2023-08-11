@@ -3,9 +3,11 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { Link } from '~/common/components/Link';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -43,7 +45,10 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const { goofyLabs, showFinder } = useUIPreferencesStore(state => ({
+    goofyLabs: state.goofyLabs,
+    showFinder: state.showPurposeFinder,
+  }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -181,6 +186,31 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
               </Button>
             </Grid>
           ))}
+          {/* Button to start the YouTube persona creator */}
+          {goofyLabs && <Grid>
+            <Button
+              variant='soft' color='neutral'
+              component={Link} noLinkStyle href='/personas'
+              sx={{
+                '--Icon-fontSize': '2rem',
+                flexDirection: 'column',
+                fontWeight: 500,
+                // gap: bpTileGap,
+                height: bpTileSize,
+                width: bpTileSize,
+                border: `1px dashed`,
+                boxShadow: 'md',
+                backgroundColor: 'background.surface',
+              }}
+            >
+              <div>
+                <ScienceIcon />
+              </div>
+              <div>
+                YouTube persona creator
+              </div>
+            </Button>
+          </Grid>}
         </Grid>
 
         <Typography
