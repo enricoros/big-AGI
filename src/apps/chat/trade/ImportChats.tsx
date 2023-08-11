@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
 import { Box, Button, FormControl, FormLabel, Input, Sheet, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
@@ -6,10 +7,12 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import type { ChatGptSharedChatSchema } from '~/modules/sharing/import.chatgpt';
 import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 import { apiAsync } from '~/modules/trpc/trpc.client';
+
+import { Brand } from '~/common/brand';
 import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
-import { restoreDConversationFromJson } from './trade.json';
+import { restoreDConversationsFromJSON } from './trade.json';
 
 
 export type ImportConfig = { dir: 'import' };
@@ -21,7 +24,6 @@ export type ImportConfig = { dir: 'import' };
 export function ImportConversations(props: { onClose: () => void }) {
 
   // state
-  const importFilesInputRef = React.useRef<HTMLInputElement>(null);
   const [chatGptEdit, setChatGptEdit] = React.useState(false);
   const [chatGptUrl, setChatGptUrl] = React.useState('');
   const [importOutcome, setImportOutcome] = React.useState<ImportedOutcome | null>(null);
@@ -29,37 +31,38 @@ export function ImportConversations(props: { onClose: () => void }) {
   // derived state
   const chatGptUrlValid = chatGptUrl.startsWith('https://chat.openai.com/share/') && chatGptUrl.length > 40;
 
-  const handleImportFromFiles = () => importFilesInputRef.current?.click();
-
-  const handleImportLoadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target?.files;
-    if (!files || files.length < 1)
+  const handleImportFromFiles = async () => {
+    // pick file(s)
+    let blobs: FileWithHandle[];
+    try {
+      blobs = await fileOpen({ description: `${Brand.Title.Base} JSON`, mimeTypes: ['application/json'], multiple: true, startIn: 'downloads' });
+    } catch (error) {
       return;
+    }
 
-    // restore conversations from the selected files
+    // begin
     const outcome: ImportedOutcome = { conversations: [] };
-    for (const file of files) {
-      const fileName = file.name || 'unknown file';
+
+    // unroll files to conversations
+    for (const blob of blobs) {
+      const fileName = blob.name || 'unknown file';
       try {
-        const conversation = restoreDConversationFromJson(await file.text());
-        if (conversation) {
-          useChatStore.getState().importConversation(conversation);
-          outcome.conversations.push({ fileName, success: true, conversationId: conversation.id });
-        } else {
-          const fileDesc = `(${file.type}) ${file.size.toLocaleString()} bytes`;
-          outcome.conversations.push({ fileName, success: false, error: `Invalid file: ${fileDesc}` });
-        }
-      } catch (error) {
-        console.error(error);
-        outcome.conversations.push({ fileName, success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
+        const fileString = await blob.text();
+        const fileObject = JSON.parse(fileString);
+        restoreDConversationsFromJSON(fileName, fileObject, outcome);
+      } catch (error: any) {
+        outcome.conversations.push({ success: false, fileName, error: `Invalid file: ${error?.message || error?.toString() || 'unknown error'}` });
       }
+    }
+
+    // import conversations (warning - will overwrite things)
+    for (let conversation of [...outcome.conversations].reverse()) {
+      if (conversation.success)
+        useChatStore.getState().importConversation(conversation.conversation);
     }
 
     // show the outcome of the import
     setImportOutcome(outcome);
-
-    // this is needed to allow the same file to be selected again
-    e.target.value = '';
   };
 
   const handleChatGptToggleShown = () => setChatGptEdit(!chatGptEdit);
@@ -106,9 +109,9 @@ export function ImportConversations(props: { onClose: () => void }) {
     const success = conversation.messages.length >= 1;
     if (success) {
       useChatStore.getState().importConversation(conversation);
-      outcome.conversations.push({ fileName: 'chatgpt', success: true, conversationId: conversation.id });
+      outcome.conversations.push({ success: true, fileName: 'chatgpt', conversation });
     } else
-      outcome.conversations.push({ fileName: 'chatgpt', success: false, error: `Empty conversation` });
+      outcome.conversations.push({ success: false, fileName: 'chatgpt', error: `Empty conversation` });
     setImportOutcome(outcome);
   };
 
@@ -138,9 +141,6 @@ export function ImportConversations(props: { onClose: () => void }) {
         </Button>
       )}
     </Box>
-
-    {/* [file] file-picker trigger */}
-    <input type='file' multiple hidden accept='.json' ref={importFilesInputRef} onChange={handleImportLoadFiles} />
 
     {/* [chatgpt] data & controls */}
     {chatGptEdit && <Sheet variant='soft' color='primary' sx={{ display: 'flex', flexDirection: 'column', borderRadius: 'md', p: 1, gap: 1 }}>

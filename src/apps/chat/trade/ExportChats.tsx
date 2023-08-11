@@ -45,8 +45,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   // state
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
-  const [hasDownloaded, setHasDownloaded] = React.useState(false);
-  const [hasDownloadedAll, setHasDownloadedAll] = React.useState(false);
+  const [downloadedState, setDownloadedState] = React.useState<'ok' | 'fail' | null>(null);
+  const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
 
 
   // publish
@@ -87,13 +87,15 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     if (!props.config.conversationId) return;
     const conversation = findConversation(props.config.conversationId);
     if (!conversation) return;
-    downloadDConversationJson(conversation);
-    setHasDownloaded(true);
+    downloadDConversationJson(conversation)
+      .then(() => setDownloadedState('ok'))
+      .catch(() => setDownloadedState('fail'));
   };
 
   const handleDownloadAllConversations = () => {
-    downloadDAllJson();
-    setHasDownloadedAll(true);
+    downloadDAllJson()
+      .then(() => setDownloadedAllState('ok'))
+      .catch(() => setDownloadedAllState('fail'));
   };
 
   const hasConversation = !!props.config.conversationId;
@@ -110,8 +112,9 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         Share to Paste.gg
       </Button>
 
-      <Button variant='soft' size='md' disabled={!hasConversation} endDecorator={hasDownloaded ? '✔' : <FileDownloadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              color={hasDownloaded ? 'success' : 'primary'}
+      <Button variant='soft' size='md' disabled={!hasConversation} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedState === 'ok' ? '✔' : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
               onClick={handleDownloadConversation}>
         Download JSON
       </Button>
@@ -119,8 +122,9 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       <Typography level='body-sm' sx={{ mt: 2 }}>
         Store or transfer between devices
       </Typography>
-      <Button variant='soft' size='md' endDecorator={hasDownloadedAll ? '✔' : <FileDownloadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              color={hasDownloadedAll ? 'success' : 'primary'}
+      <Button variant='soft' size='md' sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedAllState === 'ok' ? '✔' : downloadedAllState === 'fail' ? '✘' : <FileDownloadIcon />}
               onClick={handleDownloadAllConversations}>
         Backup all
       </Button>
