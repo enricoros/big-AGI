@@ -77,39 +77,43 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     // monitor for cleanup before the result
     let stepDone = false;
     const stepAbortController = new AbortController();
+    const globalToStepListener = () => stepAbortController.abort('chain aborted');
+    _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
     // LLM call
     callChatGenerate(llmId, llmChatInput, chain.overrideResponseTokens)
       .then(({ content }) => {
         stepDone = true;
-        if (stepAbortController.signal.aborted)
-          return;
-        setChain(updateChainState(chain, llmChatInput, stepIdx, content));
+        if (!stepAbortController.signal.aborted)
+          setChain(updateChainState(chain, llmChatInput, stepIdx, content));
       })
       .catch((err) => {
-        if (err.name === 'AbortError') {
-          console.log('Transformation aborted');
-        } else {
+        stepDone = true;
+        if (!stepAbortController.signal.aborted)
           setError(`Transformation Error: ${err?.message || err?.toString() || err || 'unknown'}`);
-        }
       });
 
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted
     return () => {
-      if (!stepDone || _chainAbortController.signal.aborted)
-        stepAbortController.abort();
+      if (!stepDone)
+        stepAbortController.abort('step aborted');
+      _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
   }, [chain, llmId]);
 
 
   return {
     isFinished: !!chain?.output,
-    isTransforming: !!chain?.steps?.length && !chain?.output,
+    isTransforming: !!chain?.steps?.length && !chain?.output && !error,
     chainOutput: chain?.output ?? null,
     chainProgress: chain?.progress ?? 0,
     chainStepName: chain?.steps?.find((step) => !step.isComplete)?.ref.name ?? null,
     chainIntermediates: chain?.steps?.map((step) => step.output ?? null)?.filter(out => out) ?? [],
     chainError: error,
+    abortChain: () => {
+      chainAbortController.current.abort('user canceled');
+      setError('Canceled');
+    },
   };
 }
 
