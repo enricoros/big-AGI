@@ -17,40 +17,50 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId?: DLLMId, chainInput?: string) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined) {
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const abortController = React.useRef(new AbortController());
+  const chainAbortController = React.useRef(new AbortController());
 
-
-  // start/stop when conditions change
+  // restart Chain on inputs change
   React.useEffect(() => {
-    if (!chainInput) {
-      setChain(null);
-      abortController.current.abort(); // cancel any ongoing transformation
-      abortController.current = new AbortController(); // create a new abort controller for the next transformation
+    // abort any ongoing chain, if any
+    chainAbortController.current.abort();
+    chainAbortController.current = new AbortController();
+    setChain(null);
+
+    // error if no LLM
+    setError(!llmId ? 'LLM not provided' : null);
+
+    // abort if no input
+    if (!chainInput || !llmId)
       return;
-    }
-    setError(llmId ? null : 'LLM not provided');
-    if (llmId)
-      setChain(initChainState(llmId, chainInput, steps));
+
+    // start the chain
+    setChain(initChainState(llmId, chainInput, steps));
+    return () => chainAbortController.current.abort();
   }, [chainInput, llmId, steps]);
 
 
-  // perform the next step
+  // perform Step on Chain update
   React.useEffect(() => {
+    // skip step if the chain has been aborted
+    const _chainAbortController = chainAbortController.current;
+    if (_chainAbortController.signal.aborted) return;
+
+    // skip if there is no chain
     if (!chain || !llmId) return;
 
+    // skip if no next unprocessed step
     const stepIdx = chain.steps.findIndex((step) => !step.isComplete);
     if (stepIdx === -1) return;
 
+    // safety check (re-processing the same step shall never happen)
     const chainStep = chain.steps[stepIdx];
-    if (chainStep.output) {
-      console.log('WARNING - Output not clear - why is this happening?', chainStep);
-      return;
-    }
+    if (chainStep.output)
+      return console.log('WARNING - Output overlap - why is this happening?', chainStep);
 
-    // execute the step
+    // execute step instructions
     let llmChatInput: VChatMessageIn[] = [...chain.chatHistory];
     const instruction = chainStep.ref;
     if (instruction.setSystem) {
@@ -64,21 +74,31 @@ export function useLLMChain(steps: LLMChainStep[], llmId?: DLLMId, chainInput?: 
     if (instruction.addUser)
       llmChatInput.push({ role: 'user', content: instruction.addUser });
 
-    // perform the LLM transformation
+    // monitor for cleanup before the result
+    let stepDone = false;
+    const stepAbortController = new AbortController();
+
+    // LLM call
     callChatGenerate(llmId, llmChatInput, chain.overrideResponseTokens)
       .then(({ content }) => {
-        // TODO: figure out how to handle the abort signal
+        stepDone = true;
+        if (stepAbortController.signal.aborted)
+          return;
         setChain(updateChainState(chain, llmChatInput, stepIdx, content));
       })
       .catch((err) => {
         if (err.name === 'AbortError') {
           console.log('Transformation aborted');
         } else {
-          console.error('callChatGenerate', err);
           setError(`Transformation Error: ${err?.message || err?.toString() || err || 'unknown'}`);
         }
       });
 
+    // abort if unmounted before the LLM call ends, or if the full chain has been aborted
+    return () => {
+      if (!stepDone || _chainAbortController.signal.aborted)
+        stepAbortController.abort();
+    };
   }, [chain, llmId]);
 
 
@@ -119,7 +139,7 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
     throw new Error(`LLM ${llmId} not found`);
 
   const maxTokens = llm.contextTokens;
-  const overrideResponseTokens = Math.floor(maxTokens * 1 / 3);
+  const overrideResponseTokens = Math.floor(maxTokens / 3);
   const inputTokens = maxTokens - overrideResponseTokens;
   const safeInputLength = Math.floor(inputTokens * 2); // it's deemed around 4
 
