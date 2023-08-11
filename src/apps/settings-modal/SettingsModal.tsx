@@ -28,7 +28,9 @@ export function SettingsModal() {
   return (
     <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
                startButton={
-                 <Button variant='plain' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />}>
+                 <Button variant='soft' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />} sx={{
+                   '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+                 }}>
                    Models
                  </Button>
                }
