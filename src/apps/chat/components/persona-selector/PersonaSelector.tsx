@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, Grid, IconButton, Stack, Typography } from '@mui/joy';
 import ScienceIcon from '@mui/icons-material/Science';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -65,13 +65,6 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
     if (purposeId)
       setSystemPurposeId(props.conversationId, purposeId);
   };
-
-  const handleCustomSystemMessageChange = (v: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    // TODO: persist this change? Right now it's reset every time.
-    //       maybe we shall have a "save" button just save on a state to persist between sessions
-    SystemPurposes['Custom'].systemMessage = v.target.value;
-  };
-
 
   // we show them all if the filter is clear (null)
   const unfilteredPurposeIDs = Object.keys(SystemPurposes);
@@ -181,21 +174,6 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
                 : selectedPurpose.description
             )}
         </Typography>
-
-        {systemPurposeId === 'Custom' && (
-          <Textarea
-            variant='outlined' autoFocus placeholder={'Craft your custom system message here…'}
-            minRows={3}
-            defaultValue={SystemPurposes['Custom']?.systemMessage} onChange={handleCustomSystemMessageChange}
-            sx={{
-              backgroundColor: 'background.level1',
-              '&:focus-within': {
-                backgroundColor: 'background.popup',
-              },
-              lineHeight: 1.75,
-              mt: 1,
-            }} />
-        )}
 
       </Box>
 
