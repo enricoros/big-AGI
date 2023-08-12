@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, Grid, IconButton, Stack, Typography } from '@mui/joy';
+import { Box, Button, Grid, IconButton, Stack, Typography } from '@mui/joy';
 import ScienceIcon from '@mui/icons-material/Science';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -10,7 +10,6 @@ import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { usePurposeStore } from './store-purposes';
 
 
 // Constants for tile sizes / grid width - breakpoints need to be computed here to work around
@@ -38,7 +37,8 @@ const getRandomElement = <T, >(array: T[]): T | undefined =>
  */
 export function PersonaSelector(props: { conversationId: string, runExample: (example: string) => void }) {
   // state
-  const [editMode, setEditMode] = React.useState(false);
+  // const [editMode, setEditMode] = React.useState(false);
+  const editMode = false;
 
   // external state
   const { experimentalLabs } = useUIPreferencesStore(state => ({
@@ -51,15 +51,10 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
       setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
     };
   }, shallow);
-  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
 
   // safety check - shouldn't happen
   if (!systemPurposeId || !setSystemPurposeId)
     return null;
-
-
-  const toggleEditMode = () => setEditMode(!editMode);
-
 
   const handlePurposeChanged = (purposeId: SystemPurposeId | null) => {
     if (purposeId)
@@ -67,8 +62,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   };
 
   // we show them all if the filter is clear (null)
-  const unfilteredPurposeIDs = Object.keys(SystemPurposes);
-  const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
+  const purposeIDs = Object.keys(SystemPurposes);
 
   const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
   const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
@@ -83,9 +77,9 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
           <Typography level='title-sm'>
             AI Persona
           </Typography>
-          <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
-            {editMode ? 'Done' : 'Edit'}
-          </Button>
+          {/*<Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>*/}
+          {/*  {editMode ? 'Done' : 'Edit'}*/}
+          {/*</Button>*/}
         </Box>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
@@ -107,13 +101,13 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
                   } : {}),
                 }}
               >
-                {editMode && (
-                  <Checkbox
-                    label={<Typography level='body-sm'>show</Typography>}
-                    checked={!hiddenPurposeIDs.includes(spId)} onChange={() => toggleHiddenPurposeId(spId)}
-                    sx={{ alignSelf: 'flex-start' }}
-                  />
-                )}
+                {/*{editMode && (*/}
+                {/*  <Checkbox*/}
+                {/*    label={<Typography level='body-sm'>show</Typography>}*/}
+                {/*    checked={!hiddenPurposeIDs.includes(spId)} onChange={() => toggleHiddenPurposeId(spId)}*/}
+                {/*    sx={{ alignSelf: 'flex-start' }}*/}
+                {/*  />*/}
+                {/*)}*/}
                 <div style={{ fontSize: '2rem' }}>
                   {SystemPurposes[spId as SystemPurposeId]?.symbol}
                 </div>
