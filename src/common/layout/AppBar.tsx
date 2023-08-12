@@ -99,7 +99,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
 
 
 /**
- * The top bar of the application, with the model and purpose selection, and menu/settings icons
+ * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
 export function AppBar(props: { sx?: SxProps }) {
 
@@ -110,12 +110,12 @@ export function AppBar(props: { sx?: SxProps }) {
   // const { push } = useRouter();
   const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
 
-  const closeApplicationMenu = () => setLayoutDrawerAnchor(null);
+  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
 
-  const closeContextMenu = () => setLayoutMenuAnchor(null);
+  const closeMenuMenu = () => setLayoutMenuAnchor(null);
 
   const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeContextMenu} />, []);
+    <CommonMenuItems onClose={closeMenuMenu} />, []);
 
   return <>
 
@@ -154,7 +154,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Drawer Menu */}
     {!!drawerItems && <CloseableMenu
       maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeApplicationMenu}
+      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeDrawerMenu}
       placement='bottom-start'
     >
       {drawerItems}
@@ -163,7 +163,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Menu Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeContextMenu}
+      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeMenuMenu}
       placement='bottom-end'
     >
       {commonMenuItems}
