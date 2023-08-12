@@ -1,10 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
-import ClearIcon from '@mui/icons-material/Clear';
+import { Box, Button, Checkbox, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
 import ScienceIcon from '@mui/icons-material/Science';
-import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { Link } from '~/common/components/Link';
@@ -40,14 +38,11 @@ const getRandomElement = <T, >(array: T[]): T | undefined =>
  */
 export function PersonaSelector(props: { conversationId: string, runExample: (example: string) => void }) {
   // state
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { experimentalLabs, showFinder } = useUIPreferencesStore(state => ({
+  const { experimentalLabs } = useUIPreferencesStore(state => ({
     experimentalLabs: state.experimentalLabs,
-    showFinder: state.showPurposeFinder,
   }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -61,38 +56,6 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   // safety check - shouldn't happen
   if (!systemPurposeId || !setSystemPurposeId)
     return null;
-
-
-  const handleSearchClear = () => {
-    setSearchQuery('');
-    setFilteredIDs(null);
-  };
-
-  const handleSearchOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    if (!query)
-      return handleSearchClear();
-    setSearchQuery(query);
-
-    // Filter results based on search term
-    const ids = Object.keys(SystemPurposes)
-      .filter(key => SystemPurposes.hasOwnProperty(key))
-      .filter(key => {
-        const purpose = SystemPurposes[key as SystemPurposeId];
-        return purpose.title.toLowerCase().includes(query.toLowerCase())
-          || (typeof purpose.description === 'string' && purpose.description.toLowerCase().includes(query.toLowerCase()));
-      });
-    setFilteredIDs(ids as SystemPurposeId[]);
-
-    // If there's a search term, activate the first item
-    if (ids.length && !ids.includes(systemPurposeId))
-      handlePurposeChanged(ids[0] as SystemPurposeId);
-  };
-
-  const handleSearchOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key == 'Escape')
-      handleSearchClear();
-  };
 
 
   const toggleEditMode = () => setEditMode(!editMode);
@@ -111,32 +74,13 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
 
 
   // we show them all if the filter is clear (null)
-  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const unfilteredPurposeIDs = Object.keys(SystemPurposes);
   const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
 
   const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
   const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
 
   return <>
-
-    {showFinder && <Box sx={{ p: 2 * tileSpacing }}>
-      <Input
-        fullWidth
-        variant='outlined' color='neutral'
-        value={searchQuery} onChange={handleSearchOnChange}
-        onKeyDown={handleSearchOnKeyDown}
-        placeholder='Search for purpose…'
-        startDecorator={<SearchIcon />}
-        endDecorator={searchQuery && (
-          <IconButton variant='plain' color='neutral' onClick={handleSearchClear}>
-            <ClearIcon />
-          </IconButton>
-        )}
-        sx={{
-          boxShadow: 'sm',
-        }}
-      />
-    </Box>}
 
     <Stack direction='column' sx={{ minHeight: '60vh', justifyContent: 'center', alignItems: 'center' }}>
 

@@ -14,9 +14,6 @@ import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
 
-// configuration
-const SHOW_PURPOSE_FINDER = false;
-
 
 export function UISettings() {
   // external state
@@ -26,7 +23,6 @@ export function UISettings() {
     enterToSend, setEnterToSend,
     experimentalLabs, setExperimentalLabs,
     renderMarkdown, setRenderMarkdown,
-    showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
@@ -34,7 +30,6 @@ export function UISettings() {
     enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
     experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
   const { closeSettings } = useUIStateStore(state => ({ closeSettings: state.closeSettings }), shallow);
@@ -50,8 +45,6 @@ export function UISettings() {
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleExperimentalLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setExperimentalLabs(event.target.checked);
-
-  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
   return (
 
@@ -98,16 +91,6 @@ export function UISettings() {
                 endDecorator={renderMarkdown ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
-
-      {SHOW_PURPOSE_FINDER && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Purpose finder</FormLabel>
-          <FormHelperText>{showPurposeFinder ? 'Show search bar' : 'Hide search bar'}</FormHelperText>
-        </Box>
-        <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
-                endDecorator={showPurposeFinder ? 'On' : 'Off'}
-                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-      </FormControl>}
 
       <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
