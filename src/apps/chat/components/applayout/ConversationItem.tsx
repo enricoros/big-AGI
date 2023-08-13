@@ -22,7 +22,7 @@ const conversationTitle = (conversation: DConversation): string =>
 export function ConversationItem(props: {
   conversationId: string,
   isActive: boolean, isSingle: boolean, showSymbols: boolean,
-  conversationActivate: (conversationId: string) => void,
+  conversationActivate: (conversationId: string, closeMenu: boolean) => void,
   conversationDelete: (conversationId: string) => void,
 }) {
 
@@ -55,7 +55,7 @@ export function ConversationItem(props: {
   if (!cState) return null;
   const { isNew, assistantTyping, setUserTitle, systemPurposeId, title } = cState;
 
-  const handleActivate = () => props.conversationActivate(props.conversationId);
+  const handleActivate = () => props.conversationActivate(props.conversationId, true);
 
   const handleEditBegin = () => setIsEditingTitle(true);
 
@@ -64,7 +64,13 @@ export function ConversationItem(props: {
     setUserTitle(props.conversationId, text);
   };
 
-  const handleDeleteBegin = () => setDeleteArmed(true);
+  const handleDeleteBegin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!props.isActive)
+      props.conversationActivate(props.conversationId, false)
+    else
+      setDeleteArmed(true);
+  }
 
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     if (deleteArmed) {

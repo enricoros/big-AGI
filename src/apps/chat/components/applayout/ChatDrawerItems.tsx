@@ -55,10 +55,10 @@ export function ChatDrawerItems(props: {
     closeDrawerMenu();
   };
 
-  const handleConversationActivate = React.useCallback((conversationId: string) => {
+  const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
-    // Disabled, because otherwise the menu disappears when trying to delete...
-    // closeDrawerMenu();
+    if (closeMenu)
+      closeDrawerMenu();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {
