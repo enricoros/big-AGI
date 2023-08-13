@@ -505,7 +505,7 @@ export function Composer(props: {
               <Textarea
                 variant='outlined' color={isReAct ? 'success' : 'neutral'}
                 autoFocus
-                minRows={5} maxRows={12}
+                minRows={5} maxRows={10}
                 placeholder={textPlaceholder}
                 value={composeText}
                 onChange={(e) => setComposeText(e.target.value)}
