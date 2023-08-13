@@ -2,8 +2,6 @@ import * as React from 'react';
 
 export type SystemPurposeId = 'Catalyst' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist';
 
-export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
-
 type SystemPurposeData = {
   title: string;
   description: string | React.JSX.Element;

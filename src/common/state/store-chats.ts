@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { DLLMId } from '~/modules/llms/llm.types';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { SystemPurposeId } from '../../data';
 import { countModelTokens } from '../util/token-counter';
-import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
 
 // configuration
@@ -22,7 +22,7 @@ export const MAX_CONVERSATIONS = 20;
 export interface DConversation {
   id: string;
   messages: DMessage[];
-  systemPurposeId: SystemPurposeId;
+  systemPurposeId: SystemPurposeId | undefined;
   userTitle?: string;
   autoTitle?: string;
   tokenCount: number;                 // f(messages, llmId)
@@ -37,7 +37,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
   return {
     id: uuidv4(),
     messages: [],
-    systemPurposeId: systemPurposeId || defaultSystemPurposeId,
+    systemPurposeId: systemPurposeId || undefined,
     tokenCount: 0,
     created: Date.now(),
     updated: Date.now(),
@@ -46,7 +46,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
   };
 }
 
-const defaultConversations: DConversation[] = [createDConversation()];
+const defaultConversations: DConversation[] = [createDConversation('INVALID_FIXME' as any)];
 
 /**
  * Message, sent or received, by humans or bots

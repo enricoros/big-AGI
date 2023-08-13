@@ -1,7 +1,5 @@
 import { fileSave } from 'browser-fs-access';
 
-import { defaultSystemPurposeId } from '../../../data';
-
 import { DModelSource } from '~/modules/llms/llm.types';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
@@ -56,7 +54,7 @@ function restoreDConversationFromJson(fileName: string, part: Partial<DConversat
   const restored: DConversation = {
     id: part.id,
     messages: part.messages,
-    systemPurposeId: part.systemPurposeId || defaultSystemPurposeId,
+    systemPurposeId: part.systemPurposeId || undefined,
     ...(part.userTitle && { userTitle: part.userTitle }),
     ...(part.autoTitle && { autoTitle: part.autoTitle }),
     tokenCount: part.tokenCount || 0,

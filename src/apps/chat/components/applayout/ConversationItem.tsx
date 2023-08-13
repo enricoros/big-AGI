@@ -83,7 +83,7 @@ export function ConversationItem(props: {
 
   const handleDeleteCancel = () => setDeleteArmed(false);
 
-  const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
+  const textSymbol = (systemPurposeId && SystemPurposes[systemPurposeId]?.symbol) || '❓';
   const buttonSx: SxProps = { ml: 1, ...(props.isActive ? { color: 'white' } : {}) };
 
   const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
