@@ -74,6 +74,11 @@ export function AppChat() {
     };
   }, shallow);
 
+  // [0 to 1] create a conversation if there's none active
+  React.useEffect(() => {
+    if (!activeConversationId)
+      useChatStore.getState().conversations.length === 0 && useChatStore.getState().createConversation();
+  }, [activeConversationId]);
 
   const handleExecuteConversation = async (chatModeId: ChatModeId, conversationId: string, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();

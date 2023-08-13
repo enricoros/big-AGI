@@ -46,8 +46,6 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
   };
 }
 
-const defaultConversations: DConversation[] = [createDConversation('INVALID_FIXME' as any)];
-
 /**
  * Message, sent or received, by humans or bots
  *
@@ -148,8 +146,8 @@ export const useChatStore = create<ChatStore>()(devtools(
     (set, get) => ({
 
       // default state
-      conversations: defaultConversations,
-      activeConversationId: defaultConversations[0].id,
+      conversations: [],
+      activeConversationId: null,
 
 
       createConversation: () =>
