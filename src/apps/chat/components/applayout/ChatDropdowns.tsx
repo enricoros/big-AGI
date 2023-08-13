@@ -26,10 +26,10 @@ export function ChatDropdowns(props: {
   }), shallow);
 
   const { zenMode } = useUIPreferencesStore(state => ({ zenMode: state.zenMode }), shallow);
-  const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { systemPurposeValue, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      systemPurposeId: conversation?.systemPurposeId ?? null,
+      systemPurposeValue: conversation?.systemPurposeId ?? null,
       setSystemPurposeId: state.setSystemPurposeId,
     };
   }, shallow);
@@ -82,12 +82,11 @@ export function ChatDropdowns(props: {
     />
 
     {/* Persona selector */}
-    {systemPurposeId && (
-      <AppBarDropdown
-        items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
-        value={systemPurposeId} onChange={handleSystemPurposeChange}
-      />
-    )}
+    <AppBarDropdown
+      items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
+      value={systemPurposeValue} onChange={handleSystemPurposeChange}
+      placeholder='Personas …'
+    />
 
   </>;
 }

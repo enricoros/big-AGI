@@ -48,13 +48,9 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       systemPurposeId: conversation ? conversation.systemPurposeId : null,
-      setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
+      setSystemPurposeId: state.setSystemPurposeId,
     };
   }, shallow);
-
-  // safety check - shouldn't happen
-  if (!systemPurposeId || !setSystemPurposeId)
-    return null;
 
   const handlePurposeChanged = (purposeId: SystemPurposeId | null) => {
     if (purposeId)
@@ -64,7 +60,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   // we show them all if the filter is clear (null)
   const purposeIDs = Object.keys(SystemPurposes);
 
-  const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
+  const selectedPurpose = (purposeIDs.length && systemPurposeId) ? (SystemPurposes[systemPurposeId] ?? null) : null;
   const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
 
   return <>
