@@ -9,7 +9,7 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
 import { copyToClipboard } from '~/common/util/copyToClipboard';
 
-import { CodeBlock } from './Block';
+import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
 
@@ -63,10 +63,12 @@ export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
   return (
     <Box
       component='code'
+      className={`language-${props.codeBlock.language}`}
       sx={{
         position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
         display: 'block', fontWeight: 500,
-        whiteSpace: 'break-spaces',
+        whiteSpace: 'pre', // was 'break-spaces' before we implmented per-block scrolling
+        overflowX: 'auto',
         '&:hover > .code-buttons': { opacity: 1 },
         ...(props.sx || {}),
       }}>

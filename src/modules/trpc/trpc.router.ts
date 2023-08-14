@@ -5,7 +5,8 @@ import { googleSearchRouter } from '~/modules/google/search.router';
 import { llmAnthropicRouter } from '~/modules/llms/anthropic/anthropic.router';
 import { llmOpenAIRouter } from '~/modules/llms/openai/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
-import { publishRouter } from '~/modules/publish/publish.router';
+import { sharingRouter } from '~/modules/sharing/sharing.router';
+import { ytPersonaRouter } from '../../apps/personas/ytpersona.router';
 
 /**
  * This is the primary router for your server.
@@ -18,7 +19,8 @@ export const appRouter = createTRPCRouter({
   llmAnthropic: llmAnthropicRouter,
   llmOpenAI: llmOpenAIRouter,
   prodia: prodiaRouter,
-  publish: publishRouter,
+  sharing: sharingRouter,
+  ytpersona: ytPersonaRouter,
 });
 
 // export type definition of API
