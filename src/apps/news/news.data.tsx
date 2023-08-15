@@ -15,9 +15,10 @@ export const NewsItems: NewsItem[] = [
   {
     versionName: '1.3.5',
     items: [
+      // { text: <>(Labs mode) YouTube personas creator</> },
       { text: <>Backup chats (export all)</> },
       { text: <>Import ChatGPT shared chats</> },
-      { text: <>Cleaner, better, newer UI</> },
+      { text: <>Cleaner, better, newer UI, including relative chats size</> },
       // -- version separator --
       { text: <>AI in the real world with <Typography color='success' sx={{ fontWeight: 600 }}>camera OCR</Typography> - MOBILE-ONLY</> },
       { text: <><Typography color='success' sx={{ fontWeight: 600 }}>Anthropic</Typography> models full support</> },
@@ -39,7 +40,7 @@ export const NewsItems: NewsItem[] = [
     items: [
       { text: <>New home page: <b><Link href={Brand.URIs.Home + clientUtmSource()} target='_blank'>{Brand.URIs.Home.replace('https://', '')}</Link></b></> },
       { text: 'Support 𝑓unction models' }, // (n)
-      { text: <Box sx={{ display: 'flex', alignItems: 'center' }}>Goofy labs: experiments</Box> }, // ⚗️🧬🔬🥼 🥽🧪 <ScienceIcon sx={{ fontSize: 24, opacity: 0.5 }} />
+      { text: <Box sx={{ display: 'flex', alignItems: 'center' }}>Labs: experiments</Box> }, // ⚗️🧬🔬🥼 🥽🧪 <ScienceIcon sx={{ fontSize: 24, opacity: 0.5 }} />
     ],
   },
 ];
