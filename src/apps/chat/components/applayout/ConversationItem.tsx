@@ -21,7 +21,7 @@ const conversationTitle = (conversation: DConversation): string =>
 
 export function ConversationItem(props: {
   conversationId: string,
-  isActive: boolean, isSingle: boolean, showSymbols: boolean,
+  isActive: boolean, isSingle: boolean, showSymbols: boolean, maxChatMessages: number,
   conversationActivate: (conversationId: string, closeMenu: boolean) => void,
   conversationDelete: (conversationId: string) => void,
 }) {
@@ -36,6 +36,7 @@ export function ConversationItem(props: {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation && {
       isNew: conversation.messages.length === 0,
+      messageCount: conversation.messages.length,
       assistantTyping: !!conversation.abortController,
       systemPurposeId: conversation.systemPurposeId,
       title: conversationTitle(conversation),
@@ -53,7 +54,7 @@ export function ConversationItem(props: {
 
   // sanity check: shouldn't happen, but just in case
   if (!cState) return null;
-  const { isNew, assistantTyping, setUserTitle, systemPurposeId, title } = cState;
+  const { isNew, messageCount, assistantTyping, setUserTitle, systemPurposeId, title } = cState;
 
   const handleActivate = () => props.conversationActivate(props.conversationId, true);
 
@@ -67,10 +68,10 @@ export function ConversationItem(props: {
   const handleDeleteBegin = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!props.isActive)
-      props.conversationActivate(props.conversationId, false)
+      props.conversationActivate(props.conversationId, false);
     else
       setDeleteArmed(true);
-  }
+  };
 
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     if (deleteArmed) {
@@ -85,6 +86,8 @@ export function ConversationItem(props: {
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
   const buttonSx: SxProps = { ml: 1, ...(props.isActive ? { color: 'white' } : {}) };
 
+  const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
+
   return (
     <MenuItem
       variant={props.isActive ? 'solid' : 'plain'} color='neutral'
@@ -92,9 +95,19 @@ export function ConversationItem(props: {
       onClick={handleActivate}
       sx={{
         // py: 0,
+        position: 'relative',
+        border: 'none', // note, there's a default border of 1px and invisible.. hmm
         '&:hover > button': { opacity: 1 },
       }}
     >
+
+      {/* Optional prgoress bar */}
+      {progress > 0 && (
+        <Box sx={{
+          backgroundColor: 'neutral.softActiveBg',
+          position: 'absolute', left: 0, bottom: 0, width: progress + '%', height: 4,
+        }} />
+      )}
 
       {/* Icon */}
       {props.showSymbols && <ListItemDecorator>
@@ -119,7 +132,7 @@ export function ConversationItem(props: {
       {/* Text */}
       {!isEditingTitle ? (
 
-        <Box onDoubleClick={() => doubleClickToEdit ? handleEditBegin() : null } sx={{ flexGrow: 1 }}>
+        <Box onDoubleClick={() => doubleClickToEdit ? handleEditBegin() : null} sx={{ flexGrow: 1 }}>
           {DEBUG_CONVERSATION_IDs ? props.conversationId.slice(0, 10) : title}{assistantTyping && '...'}
         </Box>
 
@@ -160,5 +173,6 @@ export function ConversationItem(props: {
         </IconButton>
       </>}
     </MenuItem>
+
   );
 }
