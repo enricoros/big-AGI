@@ -10,7 +10,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { NewsItems } from './news.data';
 
 
-export default function AppNews() {
+export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(0);
 

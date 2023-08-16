@@ -8,7 +8,7 @@ import { Link } from '~/common/components/Link';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export default function AppLabs() {
+export function AppLabs() {
 
   // external state
   const { experimentalLabs, setExperimentalLabs } = useUIPreferencesStore(state => ({
