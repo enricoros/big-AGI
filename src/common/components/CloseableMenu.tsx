@@ -2,7 +2,7 @@ import * as React from 'react';
 import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
-import { ColorPaletteProp, MenuList, styled, VariantProp } from '@mui/joy';
+import { MenuList, styled, VariantProp } from '@mui/joy';
 import { SxProps } from '@mui/system';
 
 
@@ -38,7 +38,7 @@ export function CloseableMenu(props: {
   const handleClose = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
     event.stopPropagation();
     props.onClose();
-  }
+  };
 
   const handleListKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Tab') {

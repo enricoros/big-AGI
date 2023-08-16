@@ -23,7 +23,7 @@ export function ChatDrawerItems(props: {
 }) {
 
   // local state
-  const [grouping, setGrouping] = React.useState<ListGrouping>('off');
+  const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
   const conversationIDs = useChatStore(state => state.conversations.map(
