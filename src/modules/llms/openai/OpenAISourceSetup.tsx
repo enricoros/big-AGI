@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch, Typography } from '@mui/joy';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
@@ -146,7 +147,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
     </Box>
 
-    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+    {isError && <InlineError error={error} />}
 
   </Box>;
 }

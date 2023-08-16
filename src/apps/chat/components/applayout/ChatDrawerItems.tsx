@@ -36,8 +36,8 @@ export function ChatDrawerItems(props: {
     createConversation: state.createConversation,
     deleteConversation: state.deleteConversation,
   }), shallow);
-  const { goofyLabs, showSymbols } = useUIPreferencesStore(state => ({
-    goofyLabs: state.goofyLabs,
+  const { experimentalLabs, showSymbols } = useUIPreferencesStore(state => ({
+    experimentalLabs: state.experimentalLabs,
     showSymbols: state.zenMode !== 'cleaner',
   }), shallow);
 
@@ -127,7 +127,7 @@ export function ChatDrawerItems(props: {
           isActive={conversationId === props.conversationId}
           isSingle={singleChat}
           showSymbols={showSymbols}
-          maxChatMessages={goofyLabs ? maxChatMessages : 0}
+          maxChatMessages={experimentalLabs ? maxChatMessages : 0}
           conversationActivate={handleConversationActivate}
           conversationDelete={handleConversationDelete}
         />)}

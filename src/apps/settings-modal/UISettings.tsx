@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Switch, Tooltip } from '@mui/joy';
+import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Switch } from '@mui/joy';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ScienceIcon from '@mui/icons-material/Science';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
@@ -12,53 +11,11 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 import { Link } from '~/common/components/Link';
 import { hideOnMobile, settingsGap } from '~/common/theme';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
-// languages is defined as a JSON file
-import languages from './languages.json' assert { type: 'json' };
 
 // configuration
 const SHOW_PURPOSE_FINDER = false;
-
-
-function LanguageSelect() {
-  // external state
-  const { preferredLanguage, setPreferredLanguage } = useUIPreferencesStore(state => ({ preferredLanguage: state.preferredLanguage, setPreferredLanguage: state.setPreferredLanguage }), shallow);
-
-  const handleLanguageChanged = (_event: any, newValue: string | null) => {
-    if (!newValue) return;
-    setPreferredLanguage(newValue as string);
-
-    // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
-    //if (typeof window !== 'undefined')
-    //  window.location.reload();
-  };
-
-  const languageOptions = React.useMemo(() => Object.entries(languages).map(([language, localesOrCode]) =>
-    typeof localesOrCode === 'string'
-      ? (
-        <Option key={localesOrCode} value={localesOrCode}>
-          {language}
-        </Option>
-      ) : (
-        Object.entries(localesOrCode).map(([country, code]) => (
-          <Option key={code} value={code}>
-            {`${language} (${country})`}
-          </Option>
-        ))
-      )), []);
-
-  return (
-    <Select value={preferredLanguage} onChange={handleLanguageChanged}
-            indicator={<KeyboardArrowDownIcon />}
-            slotProps={{
-              root: { sx: { minWidth: 200 } },
-              indicator: { sx: { opacity: 0.5 } },
-            }}>
-      {languageOptions}
-    </Select>
-  );
-}
 
 
 export function UISettings() {
@@ -67,7 +24,7 @@ export function UISettings() {
     centerMode, setCenterMode,
     doubleClickToEdit, setDoubleClickToEdit,
     enterToSend, setEnterToSend,
-    goofyLabs, setGoofyLabs,
+    experimentalLabs, setExperimentalLabs,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
@@ -75,11 +32,12 @@ export function UISettings() {
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
-    goofyLabs: state.goofyLabs, setGoofyLabs: state.setGoofyLabs,
+    experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
+  const { closeSettings } = useUIStateStore(state => ({ closeSettings: state.closeSettings }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
@@ -91,7 +49,7 @@ export function UISettings() {
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
-  const handleGoofyLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setGoofyLabs(event.target.checked);
+  const handleExperimentalLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setExperimentalLabs(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
@@ -163,29 +121,16 @@ export function UISettings() {
         </RadioGroup>
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
-            <FormLabel>
-              Audio language
-            </FormLabel>
-          </Tooltip>
-          <FormHelperText>
-            ASR 🎙️ &amp; TTS 📢
-          </FormHelperText>
-        </Box>
-        <LanguageSelect />
-      </FormControl>
-
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
-          <FormLabel component={Link} href='/labs'>
-            Labs <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+          <FormLabel component={Link} href='/labs' onClick={closeSettings}>
+            <u>Experiments</u>
+            <InfoOutlinedIcon sx={{ mx: 0.5 }} />
           </FormLabel>
-          <FormHelperText>{goofyLabs ? <>UI Experiments <ScienceIcon /></> : <>Disabled <ScienceIcon /></>}</FormHelperText>
+          <FormHelperText>{experimentalLabs ? <>Enabled <ScienceIcon /></> : 'Disabled'}</FormHelperText>
         </Box>
-        <Switch checked={goofyLabs} onChange={handleGoofyLabsChange}
-                endDecorator={goofyLabs ? 'On' : 'Off'}
+        <Switch checked={experimentalLabs} onChange={handleExperimentalLabsChange}
+                endDecorator={experimentalLabs ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 

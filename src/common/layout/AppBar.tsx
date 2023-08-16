@@ -43,10 +43,6 @@ function AppBarTitle() {
 function CommonMenuItems(props: { onClose: () => void }) {
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-  // const { goofyLabs, setGoofyLabs } = useUIPreferencesStore(state => ({
-  //   goofyLabs: state.goofyLabs,
-  //   setGoofyLabs: state.setGoofyLabs,
-  // }), shallow);
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -58,11 +54,6 @@ function CommonMenuItems(props: { onClose: () => void }) {
     event.stopPropagation();
     setColorMode(colorMode === 'dark' ? 'light' : 'dark');
   };
-
-  // const handleToggleGoofyLabs = (event: React.ChangeEvent | React.MouseEvent) => {
-  //   event.stopPropagation();
-  //   setGoofyLabs(!goofyLabs);
-  // };
 
   return <>
 
@@ -84,12 +75,6 @@ function CommonMenuItems(props: { onClose: () => void }) {
         {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
       </IconButton>
     </MenuItem>
-
-    {/*<MenuItem onClick={handleToggleGoofyLabs}>*/}
-    {/*  <ListItemDecorator><ScienceIcon /></ListItemDecorator>*/}
-    {/*  Goofy Labs*/}
-    {/*  <Switch checked={goofyLabs} onChange={handleToggleGoofyLabs} sx={{ ml: 'auto' }} />*/}
-    {/*</MenuItem>*/}
 
   </>;
 }

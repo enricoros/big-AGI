@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip } from '@mui/joy';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -10,6 +10,7 @@ import StayPrimaryLandscapeIcon from '@mui/icons-material/StayPrimaryLandscape';
 import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { settingsGap } from '~/common/theme';
 
@@ -58,7 +59,7 @@ export function ProdiaSettings() {
         required={requiresKey} isError={!isValidKey}
       />
 
-      {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+      {isError && <InlineError error={error} />}
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <FormLabel sx={{ minWidth: colWidth }}>

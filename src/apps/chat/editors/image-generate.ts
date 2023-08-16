@@ -44,7 +44,7 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
           ...(!!negativePrompt && { negativePrompt }),
           ...(!!steps && { steps }),
           ...(!!cfgScale && { cfgScale }),
-          ...(!!aspectRatio && aspectRatio !== 'square' && { apectRatio: aspectRatio }),
+          ...(!!aspectRatio && aspectRatio !== 'square' && { aspectRatio }),
           ...((upscale && { upscale })),
           ...(!!seed && { seed }),
         });

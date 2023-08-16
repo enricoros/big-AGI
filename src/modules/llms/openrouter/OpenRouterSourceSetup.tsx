@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Typography } from '@mui/joy';
+import { Box, Button } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
@@ -70,7 +71,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       </Button>
     </Box>
 
-    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+    {isError && <InlineError error={error} />}
 
   </Box>;
 }

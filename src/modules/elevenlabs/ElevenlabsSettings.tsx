@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack } from '@mui/joy';
+import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack, Tooltip } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs } from './elevenlabs.client';
@@ -30,16 +31,31 @@ export function ElevenlabsSettings() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const handleVoiceChange = (e: any, value: string | null) => setVoiceId(value || '');
+  const handleVoiceChange = (_event: any, value: string | null) => setVoiceId(value || '');
 
   const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as 'off' | 'firstLine');
 
   return (
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
-      <FormHelperText>
-        📢 Hear AI responses, even in your own voice
-      </FormHelperText>
+      {/*<FormHelperText>*/}
+      {/*  📢 Hear AI responses, even in your own voice*/}
+      {/*</FormHelperText>*/}
+
+      {/* LanguageSelect: moved from the UI settings (where it logically belongs), just to group things better from an UX perspective */}
+      <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
+            <FormLabel>
+              Language
+            </FormLabel>
+          </Tooltip>
+          <FormHelperText>
+            ASR and TTS
+          </FormHelperText>
+        </Box>
+        <LanguageSelect />
+      </FormControl>
 
       <FormInputKey
         label='ElevenLabs API Key'

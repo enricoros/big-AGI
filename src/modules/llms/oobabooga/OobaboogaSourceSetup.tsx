@@ -5,6 +5,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
+import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
@@ -84,13 +85,13 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       </Button>
     </Box>
 
-    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+    {isError && <InlineError error={error} />}
 
   </Box>;
 }
 
 const NotChatModels: string[] = [
-  'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'gpt-3.5-turbo', 'text-embedding-ada-002'
+  'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'gpt-3.5-turbo', 'text-embedding-ada-002',
 ];
 
 
