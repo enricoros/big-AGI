@@ -11,9 +11,11 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 export default function AppLabs() {
 
   // external state
-  const { goofyLabs, setGoofyLabs } = useUIPreferencesStore(state => ({ goofyLabs: state.goofyLabs, setGoofyLabs: state.setGoofyLabs }), shallow);
+  const { experimentalLabs, setExperimentalLabs } = useUIPreferencesStore(state => ({
+    experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
+  }), shallow);
 
-  const handleGoofyLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setGoofyLabs(event.target.checked);
+  const handleLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setExperimentalLabs(event.target.checked);
 
   return (
 
@@ -31,8 +33,8 @@ export default function AppLabs() {
         Labs <ScienceIcon sx={{ fontSize: '3.3rem' }} />
       </Typography>
 
-      <Switch checked={goofyLabs} onChange={handleGoofyLabsChange}
-              endDecorator={goofyLabs ? 'On' : 'Off'}
+      <Switch checked={experimentalLabs} onChange={handleLabsChange}
+              endDecorator={experimentalLabs ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
 
       <Container disableGutters maxWidth='sm'>
@@ -42,7 +44,7 @@ export default function AppLabs() {
               The Labs section is where we experiment with new features and ideas.
             </Typography>
             <Typography level='title-md' sx={{ mt: 2 }}>
-              Features {goofyLabs ? 'enabled' : 'disabled'}:
+              Features {experimentalLabs ? 'enabled' : 'disabled'}:
             </Typography>
             <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 32 }}>
               <li><b>YouTube persona synthesizer</b> - 90% complete</li>

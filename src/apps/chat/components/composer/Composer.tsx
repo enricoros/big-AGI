@@ -173,9 +173,9 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
-  const { enterToSend, goofyLabs } = useUIPreferencesStore(state => ({
+  const { enterToSend, experimentalLabs } = useUIPreferencesStore(state => ({
     enterToSend: state.enterToSend,
-    goofyLabs: state.goofyLabs,
+    experimentalLabs: state.experimentalLabs,
   }), shallow);
   const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
@@ -610,7 +610,7 @@ export function Composer(props: {
                   >
                     Stop
                   </Button>
-                ) : /*(!goofyLabs && isImmediate) ? chatButton :*/ (
+                ) : (
                   <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     {chatButton}
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
@@ -637,7 +637,7 @@ export function Composer(props: {
         {!!chatModeMenuAnchor && (
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleHideChatMode}
-            experimental={goofyLabs}
+            experimental={experimentalLabs}
             chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId}
           />
         )}

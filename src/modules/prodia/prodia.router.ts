@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
 
 import { HARDCODED_MODELS } from '~/modules/prodia/prodia.models';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 
 const imagineInputSchema = z.object({
@@ -12,7 +12,7 @@ const imagineInputSchema = z.object({
   negativePrompt: z.string().optional(),
   steps: z.number().optional(),
   cfgScale: z.number().optional(),
-  apectRatio: z.enum(['square', 'portrait', 'landscape']).optional(),
+  aspectRatio: z.enum(['square', 'portrait', 'landscape']).optional(),
   upscale: z.boolean().optional(),
   seed: z.number().optional(),
 });
@@ -42,7 +42,7 @@ export const prodiaRouter = createTRPCRouter({
         ...(!!input.negativePrompt && { negative_prompt: input.negativePrompt }),
         ...(!!input.steps && { steps: input.steps }),
         ...(!!input.cfgScale && { cfg_scale: input.cfgScale }),
-        ...(!!input.apectRatio && input.apectRatio !== 'square' && { aspect_ratio: input.apectRatio }),
+        ...(!!input.aspectRatio && input.aspectRatio !== 'square' && { aspect_ratio: input.aspectRatio }),
         ...(!!input.upscale && { upscale: input.upscale }),
         ...(!!input.seed && { seed: input.seed }),
       };
@@ -78,9 +78,7 @@ export const prodiaRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       const { headers, url } = prodiaAccess(input.prodiaKey, `/v1/models/list`);
-      const response = await fetch(url, { headers });
-      await throwIfNot200(response, 'models/list');
-      const modelIds: string[] = await response.json();
+      const modelIds = await fetchJsonOrTRPCError<string[]>(url, 'GET', headers, undefined, 'Prodia');
 
       // filter and print the hardcoded models that are not in the API list
       const hardcodedModels = HARDCODED_MODELS.models.filter(m => modelIds.includes(m.id));
@@ -140,24 +138,12 @@ export interface JobResponse {
 
 async function createGenerationJob(apiKey: string | undefined, jobRequest: JobRequest): Promise<JobResponse> {
   const { headers, url } = prodiaAccess(apiKey, '/v1/job');
-  const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(jobRequest) });
-  await throwIfNot200(response, 'job');
-  return await response.json();
+  return await fetchJsonOrTRPCError<JobResponse, JobRequest>(url, 'POST', headers, jobRequest, 'Prodia Job Create');
 }
 
 async function getJobStatus(apiKey: string | undefined, jobId: string): Promise<JobResponse> {
   const { headers, url } = prodiaAccess(apiKey, `/v1/job/${jobId}`);
-  const response = await fetch(url, { headers });
-  await throwIfNot200(response, 'job/status');
-  return await response.json();
-}
-
-async function throwIfNot200(response: Response, scope: string) {
-  if (response.status !== 200) {
-    const errorMessage = await response.text().catch(() => null) || response.statusText || '' + response.status || 'Unknown Error';
-    console.log(`Bad Prodia ${scope} response: ${errorMessage}`);
-    throw new TRPCError({ code: 'BAD_REQUEST', message: errorMessage });
-  }
+  return await fetchJsonOrTRPCError<JobResponse>(url, 'GET', headers, undefined, 'Prodia Job Status');
 }
 
 
