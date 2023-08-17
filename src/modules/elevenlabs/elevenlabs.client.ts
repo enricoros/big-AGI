@@ -1,3 +1,4 @@
+import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { SpeechInputSchema } from './elevenlabs.router';
@@ -24,11 +25,7 @@ export async function speakText(text: string) {
 
   try {
     const audioBuffer = await callElevenlabsSpeech(text, elevenLabsApiKey, elevenLabsVoiceId, nonEnglish);
-    const audioContext = new AudioContext();
-    const bufferSource = audioContext.createBufferSource();
-    bufferSource.buffer = await audioContext.decodeAudioData(audioBuffer);
-    bufferSource.connect(audioContext.destination);
-    bufferSource.start();
+    await playSoundBuffer(audioBuffer);
   } catch (error) {
     console.error('Error playing first text:', error);
   }
