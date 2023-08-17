@@ -1,0 +1,122 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-big-agi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: big-agi
+  name: deployment-big-agi
+  namespace: ns-big-agi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: big-agi
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: big-agi
+    spec:
+      containers:
+        - image: ghcr.io/enricoros/big-agi:main
+          name: big-agi
+          ports:
+            - containerPort: 3000
+          args:
+            - next
+            - start
+            - -p
+            - "3000"
+          env:
+            - name: OPENAI_API_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: OPENAI_API_HOST
+                  name: env
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: OPENAI_API_KEY
+                  name: env
+            - name: OPENAI_API_ORG_ID
+              valueFrom:
+                secretKeyRef:
+                  key: OPENAI_API_ORG_ID
+                  name: env
+            - name: HELICONE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: HELICONE_API_KEY
+                  name: env
+            - name: AZURE_OPENAI_API_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_OPENAI_API_ENDPOINT
+                  name: env
+            - name: AZURE_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: AZURE_OPENAI_API_KEY
+                  name: env
+            - name: ANTHROPIC_API_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: ANTHROPIC_API_HOST
+                  name: env
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: ANTHROPIC_API_KEY
+                  name: env
+            - name: ELEVENLABS_API_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: ELEVENLABS_API_HOST
+                  name: env
+            - name: ELEVENLABS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: ELEVENLABS_API_KEY
+                  name: env
+            - name: ELEVENLABS_VOICE_ID
+              valueFrom:
+                secretKeyRef:
+                  key: ELEVENLABS_VOICE_ID
+                  name: env
+            - name: PRODIA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: PRODIA_API_KEY
+                  name: env
+            - name: GOOGLE_CLOUD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: GOOGLE_CLOUD_API_KEY
+                  name: env
+            - name: GOOGLE_CSE_ID
+              valueFrom:
+                secretKeyRef:
+                  key: GOOGLE_CSE_ID
+                  name: env
+          resources: {}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: big-agi
+  name: svc-big-agi
+  namespace: ns-big-agi
+spec:
+  ports:
+    - name: "http"
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: big-agi
