@@ -48,7 +48,7 @@ export function AppBarDropdown<TValue extends string>(props: {
         sx: {
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
           '--ListItem-minHeight': '3rem',
-          '--ListItemDecorator-size': props.showSymbols ? '2.2rem' : '2.75rem',
+          '--ListItemDecorator-size': (props.showSymbols && !props.appendOption) ? '2.2rem' : '2.75rem',
           maxHeight: 'calc(100dvh - 56px)',
           maxWidth: '90dvw',
         },
