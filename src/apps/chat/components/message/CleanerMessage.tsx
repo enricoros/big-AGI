@@ -39,7 +39,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
  *
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
-export function CleanerMessage(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens: number, onToggleSelected: (messageId: string, selected: boolean) => void }) {
+export function CleanerMessage(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens?: number, onToggleSelected?: (messageId: string, selected: boolean) => void }) {
   // external state
   const theme = useTheme();
 
@@ -67,7 +67,8 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
     [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping],
   );
 
-  const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => props.onToggleSelected(messageId, event.target.checked);
+  const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) =>
+    props.onToggleSelected && props.onToggleSelected(messageId, event.target.checked);
 
   return (
     <ListItem sx={{
@@ -80,9 +81,9 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
       '&:hover > button': { opacity: 1 },
     }}>
 
-      <Box sx={{ display: 'flex', minWidth: 24, justifyContent: 'center' }}>
+      {!!props.onToggleSelected && <Box sx={{ display: 'flex', minWidth: 24, justifyContent: 'center' }}>
         <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} />
-      </Box>
+      </Box>}
 
       <Box sx={{ display: 'flex', minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
         {avatarEl}
@@ -92,9 +93,9 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
         {messageRole}
       </Typography>
 
-      <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
+      {props.remainingTokens !== undefined && <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
         <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
-      </Box>
+      </Box>}
 
       <Typography sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         {messageText}
