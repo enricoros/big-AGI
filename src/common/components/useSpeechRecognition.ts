@@ -4,21 +4,20 @@ import { isChromeOnDesktopWindows } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-const SOFT_INACTIVITY_TIMEOUT = 2000;
-
 export interface SpeechResult {
-  transcript: string;
-  interimTranscript: string;
-  done: boolean;
+  transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
+  interimTranscript: string;  // for the conitnuous (interim) listening, this is the current transcript
+  done: boolean;              // true if the recognition is done - no more updates after this
 }
 
 
 /**
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
  * @param onResultCallback - the callback to invoke when a result is received
+ * @param softStopTimeout - FOR INTERIM LISTENING, on desktop: delay since the last word before sending the final result
  * @param useShortcutCtrlKey - the key to use as a shortcut to start/stop the speech recognition (e.g. 'm' for "Ctrl + M")
  */
-export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, useShortcutCtrlKey?: string) => {
+export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey?: string) => {
   // enablers
   const [recognition, setRecognition] = React.useState<ISpeechRecognition | null>(null);
 
@@ -66,7 +65,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
         const instance = new Speech();
         instance.lang = preferredLanguage;
-        instance.interimResults = isChromeOnDesktopWindows();
+        instance.interimResults = isChromeOnDesktopWindows() && softStopTimeout > 0;
         instance.maxAlternatives = 1;
         instance.continuous = true;
 
@@ -88,6 +87,30 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
           }, timeoutMs);
         };
 
+        instance.onaudiostart = () => setIsRecordingAudio(true);
+
+        instance.onaudioend = () => setIsRecordingAudio(false);
+
+        instance.onspeechstart = () => setIsRecordingSpeech(true);
+
+        instance.onspeechend = () => setIsRecordingSpeech(false);
+
+        instance.onstart = () => {
+          speechResult.transcript = '';
+          speechResult.interimTranscript = 'Listening...';
+          speechResult.done = false;
+          onResultCallback(speechResult);
+          if (instance.interimResults)
+            reloadInactivityTimeout(2 * softStopTimeout);
+        };
+
+        instance.onend = () => {
+          clearInactivityTimeout();
+          speechResult.interimTranscript = '';
+          speechResult.done = true;
+          onResultCallback(speechResult);
+        };
+
         instance.onerror = event => {
           if (event.error !== 'no-speech') {
             console.error('Error occurred during speech recognition:', event.error);
@@ -106,7 +129,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
             if (!chunk)
               continue;
 
-            // spoken punctuation marks -> actual characters
+            // [EN] spoken punctuation marks -> actual characters
             chunk = chunk
               .replaceAll(' comma', ',')
               .replaceAll(' exclamation mark', '!')
@@ -114,14 +137,13 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
               .replaceAll(' question mark', '?');
 
             // capitalize
-            if (chunk.length > 2)
+            if (chunk.length >= 2 && (result.isFinal || !speechResult.interimTranscript))
               chunk = chunk.charAt(0).toUpperCase() + chunk.slice(1);
 
             // add ending
-            if (!chunk.endsWith('.') && !chunk.endsWith('!') && !chunk.endsWith('?') && !chunk.endsWith(':') && !chunk.endsWith(';') && !chunk.endsWith(','))
+            if (result.isFinal && !chunk.endsWith('.') && !chunk.endsWith('!') && !chunk.endsWith('?') && !chunk.endsWith(':') && !chunk.endsWith(';') && !chunk.endsWith(','))
               chunk += '.';
 
-            // NOTE: in the future we can visualize the interim results
             if (result.isFinal)
               speechResult.transcript += chunk + ' ';
             else
@@ -133,37 +155,14 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
           // auto-stop
           if (instance.interimResults)
-            reloadInactivityTimeout(SOFT_INACTIVITY_TIMEOUT);
+            reloadInactivityTimeout(softStopTimeout);
         };
 
-        instance.onaudiostart = () => setIsRecordingAudio(true);
-
-        instance.onaudioend = () => setIsRecordingAudio(false);
-
-        instance.onspeechstart = () => setIsRecordingSpeech(true);
-
-        instance.onspeechend = () => setIsRecordingSpeech(false);
-
-        instance.onstart = () => {
-          speechResult.transcript = '';
-          speechResult.interimTranscript = 'Listening...';
-          speechResult.done = false;
-          onResultCallback(speechResult);
-          if (instance.interimResults)
-            reloadInactivityTimeout(2 * SOFT_INACTIVITY_TIMEOUT);
-        };
-
-        instance.onend = () => {
-          clearInactivityTimeout();
-          speechResult.interimTranscript = '';
-          speechResult.done = true;
-          onResultCallback(speechResult);
-        };
 
         setRecognition(instance);
       }
     }
-  }, [onResultCallback, preferredLanguage, recognition]);
+  }, [onResultCallback, preferredLanguage, recognition, softStopTimeout]);
 
 
   const toggleRecording = React.useCallback(() => {
@@ -183,6 +182,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   }, [recognition, isRecordingAudio]);
 
   React.useEffect(() => {
+    if (!useShortcutCtrlKey) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (useShortcutCtrlKey && event.ctrlKey && event.key === useShortcutCtrlKey)
         toggleRecording();
