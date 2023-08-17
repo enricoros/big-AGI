@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { isChromeOnDesktopWindows } from '~/common/util/pwaUtils';
+import { isChromeOnDesktopWindows, isSafariOriPhone } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -10,6 +10,10 @@ export interface SpeechResult {
   done: boolean;              // true if the recognition is done - no more updates after this
 }
 
+
+export function maySpeechRecognitionWork() {
+  return !isSafariOriPhone() && !!getSpeechRecognition();
+}
 
 /**
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
@@ -39,22 +43,13 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       }
 
       // disable speech recognition on iPhones and Safari browsers - because of sub-par quality
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isiPhone = /iPhone|iPod/.test(navigator.userAgent);
-      if (isSafari || isiPhone) {
+      if (isSafariOriPhone()) {
         console.log('Speech recognition is disabled on iPhones and Safari browsers.');
         return;
       }
 
-      // noinspection JSUnresolvedReference
-      const Speech = (
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition ||
-        (window as any).mozSpeechRecognition ||
-        (window as any).msSpeechRecognition
-      ) as ISpeechRecognition;
-
-      if (typeof Speech !== 'undefined') {
+      const webSpeechAPI = getSpeechRecognition();
+      if (webSpeechAPI) {
 
         // local memory within a session
         const speechResult: SpeechResult = {
@@ -63,7 +58,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
           done: false,
         };
 
-        const instance = new Speech();
+        const instance = new webSpeechAPI();
         instance.lang = preferredLanguage;
         instance.interimResults = isChromeOnDesktopWindows() && softStopTimeout > 0;
         instance.maxAlternatives = 1;
@@ -200,6 +195,19 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   };
 };
 
+
+function getSpeechRecognition(): ISpeechRecognition | null {
+  if (typeof window !== 'undefined') {
+    // noinspection JSUnresolvedReference
+    return (
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition ||
+      (window as any).mozSpeechRecognition ||
+      (window as any).msSpeechRecognition
+    ) ?? null;
+  }
+  return null;
+}
 
 interface ISpeechRecognition extends EventTarget {
   new(): ISpeechRecognition;
