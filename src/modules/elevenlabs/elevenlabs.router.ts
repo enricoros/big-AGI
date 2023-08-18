@@ -9,6 +9,8 @@ export const speechInputSchema = z.object({
   text: z.string(),
   voiceId: z.string().optional(),
   nonEnglish: z.boolean(),
+  streaming: z.boolean().optional(),
+  streamOptimization: z.number().optional(),
 });
 
 export type SpeechInputSchema = z.infer<typeof speechInputSchema>;
