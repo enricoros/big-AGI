@@ -14,7 +14,7 @@ export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.t
 export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLabsApiKey(apiKey) : !requireUserKeyElevenLabs;
 
 
-export async function speakText(text: string) {
+export async function speakText(text: string, voiceId?: string) {
   if (!(text?.trim())) return;
 
   const { elevenLabsApiKey, elevenLabsVoiceId } = useElevenlabsStore.getState();
@@ -24,7 +24,7 @@ export async function speakText(text: string) {
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
   try {
-    const audioBuffer = await callElevenlabsSpeech(text, elevenLabsApiKey, elevenLabsVoiceId, nonEnglish);
+    const audioBuffer = await callElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish);
     await playSoundBuffer(audioBuffer);
   } catch (error) {
     console.error('Error playing first text:', error);
