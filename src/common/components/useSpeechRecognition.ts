@@ -28,6 +28,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   // session
   const [isSpeechEnabled, setIsSpeechEnabled] = React.useState<boolean>(false);
   const refStarted = React.useRef<boolean>(false);
+  const [isRecording, setIsRecording] = React.useState<boolean>(false);
   const [isRecordingAudio, setIsRecordingAudio] = React.useState<boolean>(false);
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
@@ -96,6 +97,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     instance.onstart = () => {
       refStarted.current = true;
+      setIsRecording(true);
       speechResult.transcript = '';
       speechResult.interimTranscript = 'Listening...';
       speechResult.done = false;
@@ -107,6 +109,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     instance.onend = () => {
       refStarted.current = false;
+      setIsRecording(false);
       clearInactivityTimeout();
       speechResult.interimTranscript = '';
       speechResult.done = true;
@@ -212,10 +215,11 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   }, [toggleRecording, useShortcutCtrlKey]);
 
   return {
-    isSpeechEnabled,
-    isSpeechError,
+    isRecording,
     isRecordingAudio,
     isRecordingSpeech,
+    isSpeechEnabled,
+    isSpeechError,
     startRecording,
     stopRecording,
     toggleRecording,
