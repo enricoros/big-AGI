@@ -15,8 +15,23 @@ export const speechInputSchema = z.object({
 
 export type SpeechInputSchema = z.infer<typeof speechInputSchema>;
 
-const voicesInputSchema = z.object({
+const listVoicesInputSchema = z.object({
   elevenKey: z.string().optional(),
+});
+
+const voiceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  previewUrl: z.string().nullable(),
+  category: z.string(),
+  default: z.boolean(),
+});
+
+export type VoiceSchema = z.infer<typeof voiceSchema>;
+
+const listVoicesOutputSchema = z.object({
+  voices: z.array(voiceSchema),
 });
 
 
@@ -26,7 +41,8 @@ export const elevenlabsRouter = createTRPCRouter({
    * List Voices available to this api key
    */
   listVoices: publicProcedure
-    .input(voicesInputSchema)
+    .input(listVoicesInputSchema)
+    .output(listVoicesOutputSchema)
     .query(async ({ input }) => {
 
       const { elevenKey } = input;
