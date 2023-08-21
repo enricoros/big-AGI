@@ -6,7 +6,7 @@ import { useShowNewsOnUpdate } from '../src/apps/news/news.hooks';
 import { AppLayout } from '~/common/layout/AppLayout';
 
 
-export default function HomePage() {
+export default function ChatPage() {
   // show the News page on updates
   useShowNewsOnUpdate();
 

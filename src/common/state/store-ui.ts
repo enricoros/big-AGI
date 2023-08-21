@@ -52,13 +52,13 @@ interface UIPreferencesStore {
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
   doubleClickToEdit: boolean;
-  setDoubleClickToEdit: (enterToSend: boolean) => void;
+  setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
   enterToSend: boolean;
   setEnterToSend: (enterToSend: boolean) => void;
 
-  goofyLabs: boolean;
-  setGoofyLabs: (goofyLabs: boolean) => void;
+  experimentalLabs: boolean;
+  setExperimentalLabs: (experimentalLabs: boolean) => void;
 
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
@@ -90,8 +90,8 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       enterToSend: true,
       setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
 
-      goofyLabs: false,
-      setGoofyLabs: (goofyLabs: boolean) => set({ goofyLabs }),
+      experimentalLabs: false,
+      setExperimentalLabs: (experimentalLabs: boolean) => set({ experimentalLabs }),
 
       renderMarkdown: false,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),

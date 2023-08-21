@@ -128,14 +128,14 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
   });
 }
 
-async function throwResponseNotOk(response: Response) {
+export async function throwResponseNotOk(response: Response) {
   if (!response.ok) {
     const errorPayload: object | null = await response.json().catch(() => null);
     throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
 }
 
-function createEmptyReadableStream(): ReadableStream {
+export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
   return new ReadableStream({
     start: (controller) => controller.close(),
   });

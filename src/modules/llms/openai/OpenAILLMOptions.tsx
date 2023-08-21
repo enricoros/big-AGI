@@ -14,7 +14,7 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
     llmResponseTokens: 1024,
     ...partialOptions,
   };
-};
+}
 
 
 export function OpenAILLMOptions(props: { llm: DLLM<LLMOptionsOpenAI> }) {

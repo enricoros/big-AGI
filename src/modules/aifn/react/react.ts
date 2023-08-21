@@ -172,9 +172,9 @@ async function search(query: string): Promise<string> {
   try {
     const data = await callApiSearchGoogle(query);
     return JSON.stringify(data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching search results:', error);
-    return 'An error occurred while searching the internet. Missing Google API Key?';
+    return 'An error occurred while searching the internet. Missing Google API Key? Google error: ' + (error?.message || error?.toString() || 'Unknown error');
   }
 }
 

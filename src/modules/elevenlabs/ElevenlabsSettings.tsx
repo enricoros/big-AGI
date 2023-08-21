@@ -1,45 +1,53 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Option, Radio, RadioGroup, Select, Stack } from '@mui/joy';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Tooltip } from '@mui/joy';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs } from './elevenlabs.client';
 import { useElevenlabsStore } from './store-elevenlabs';
+import { useVoiceDropdown } from './useVoiceDropdown';
 
 
 export function ElevenlabsSettings() {
   // external state
-  const { apiKey, setApiKey, voiceId, setVoiceId, autoSpeak, setAutoSpeak } = useElevenlabsStore(state => ({
+  const { apiKey, setApiKey, autoSpeak, setAutoSpeak } = useElevenlabsStore(state => ({
     apiKey: state.elevenLabsApiKey, setApiKey: state.setElevenLabsApiKey,
-    voiceId: state.elevenLabsVoiceId, setVoiceId: state.setElevenLabsVoiceId,
     autoSpeak: state.elevenLabsAutoSpeak, setAutoSpeak: state.setElevenLabsAutoSpeak,
   }), shallow);
 
   const requiresKey = requireUserKeyElevenLabs;
   const isValidKey = isElevenLabsEnabled(apiKey);
 
-  const { data: voicesData, isLoading: loadingVoices } = apiQuery.elevenlabs.listVoices.useQuery({ elevenKey: apiKey }, {
-    enabled: isValidKey,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { hasVoices, voicesDropdown } = useVoiceDropdown(true);
 
-  const handleVoiceChange = (e: any, value: string | null) => setVoiceId(value || '');
 
   const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as 'off' | 'firstLine');
 
   return (
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
-      <FormHelperText>
-        📢 Hear AI responses, even in your own voice
-      </FormHelperText>
+      {/*<FormHelperText>*/}
+      {/*  📢 Hear AI responses, even in your own voice*/}
+      {/*</FormHelperText>*/}
+
+      {/* LanguageSelect: moved from the UI settings (where it logically belongs), just to group things better from an UX perspective */}
+      <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
+            <FormLabel>
+              Language
+            </FormLabel>
+          </Tooltip>
+          <FormHelperText>
+            ASR and TTS
+          </FormHelperText>
+        </Box>
+        <LanguageSelect />
+      </FormControl>
 
       <FormInputKey
         label='ElevenLabs API Key'
@@ -52,23 +60,7 @@ export function ElevenlabsSettings() {
         <FormLabel sx={{ minWidth: settingsCol1Width }}>
           Assistant Voice
         </FormLabel>
-        <Select
-          variant='outlined' placeholder={isValidKey ? 'Select a voice' : 'Enter valid API Key'}
-          value={voiceId} onChange={handleVoiceChange}
-          startDecorator={<RecordVoiceOverIcon />}
-          endDecorator={isValidKey && loadingVoices && <CircularProgress size='sm' />}
-          indicator={<KeyboardArrowDownIcon />}
-          slotProps={{
-            root: { sx: { width: '100%' } },
-            indicator: { sx: { opacity: 0.5 } },
-          }}
-        >
-          {voicesData && voicesData.voices?.map(voice => (
-            <Option key={voice.id} value={voice.id}>
-              {voice.name}
-            </Option>
-          ))}
-        </Select>
+        {voicesDropdown}
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -77,8 +69,8 @@ export function ElevenlabsSettings() {
           <FormHelperText>{autoSpeak === 'off' ? 'Off' : 'First paragraph'}</FormHelperText>
         </Box>
         <RadioGroup orientation='horizontal' value={autoSpeak} onChange={handleAutoSpeakChange}>
-          <Radio disabled={!voicesData?.voices} value='off' label='Off' />
-          <Radio disabled={!voicesData?.voices} value='firstLine' label='Start' />
+          <Radio disabled={!hasVoices} value='off' label='Off' />
+          <Radio disabled={!hasVoices} value='firstLine' label='Start' />
           <Radio disabled={true} value='all' label='Full' />
         </RadioGroup>
       </FormControl>
