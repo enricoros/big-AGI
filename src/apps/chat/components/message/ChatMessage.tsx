@@ -388,7 +388,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           open anchorEl={menuAnchor} onClose={closeOperationsMenu}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <MenuItem variant='plain' onClick={handleMenuEdit} sx={{ flex: 1 }}>
+            <MenuItem variant='plain' disabled={messageTyping} onClick={handleMenuEdit} sx={{ flex: 1 }}>
               <ListItemDecorator><EditIcon /></ListItemDecorator>
               {isEditing ? 'Discard' : 'Edit'}
               {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
