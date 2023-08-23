@@ -1,6 +1,6 @@
 import Prism from 'prismjs';
 
-// per-language plugins
+// per-language JS plugins
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-java';
