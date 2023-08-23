@@ -92,7 +92,7 @@ export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
         className='code-buttons'
         sx={{
           backdropFilter: 'blur(8px)', // '... grayscale(0.8)
-          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 1,
+          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
           display: 'flex', flexDirection: 'row', gap: 1,
           opacity: 0, transition: 'opacity 0.3s',
           // '& > button': { backdropFilter: 'blur(6px)' },
