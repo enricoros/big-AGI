@@ -189,7 +189,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           return {
             conversations: [
               duplicate,
-              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations, // DISABLED: can inadvertendly lose data - check upstream instead - .slice(0, MAX_CONVERSATIONS - 1),
             ],
             activeConversationId: duplicate.id,
           };
