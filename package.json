@@ -19,8 +19,8 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.3",
     "@mui/joy": "^5.0.0-beta.2",
-    "@next/bundle-analyzer": "^13.4.16",
-    "@tanstack/react-query": "4.32.6",
+    "@next/bundle-analyzer": "^13.4.19",
+    "@tanstack/react-query": "^4.33.0",
     "@trpc/client": "^10.37.1",
     "@trpc/next": "^10.37.1",
     "@trpc/react-query": "^10.37.1",
@@ -28,7 +28,7 @@
     "@vercel/analytics": "^1.0.2",
     "browser-fs-access": "^0.34.1",
     "eventsource-parser": "^1.0.0",
-    "next": "^13.4.16",
+    "next": "^13.4.19",
     "pdfjs-dist": "3.9.179",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
@@ -43,15 +43,15 @@
     "zustand": "4.3.9"
   },
   "devDependencies": {
-    "@types/node": "^20.4.10",
+    "@types/node": "^20.5.3",
     "@types/plantuml-encoder": "^1.4.0",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.2.20",
+    "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@types/uuid": "^9.0.2",
     "eslint": "^8.47.0",
-    "eslint-config-next": "^13.4.16",
-    "prettier": "^3.0.1",
+    "eslint-config-next": "^13.4.19",
+    "prettier": "^3.0.2",
     "typescript": "^5.1.6"
   }
 }
