@@ -12,16 +12,19 @@ import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
-import { highlightCode, inferCodeLanguage } from './codePrism';
 
 
-export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
+function RenderCodeImpl(props: {
+  codeBlock: CodeBlock, sx?: SxProps,
+  highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
+  inferCodeLanguage: (blockTitle: string, code: string) => string | null,
+}) {
   // state
   const [showSVG, setShowSVG] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
 
   // derived props
-  const { blockTitle, blockCode } = props.codeBlock;
+  const { codeBlock: { blockTitle, blockCode }, highlightCode, inferCodeLanguage } = props;
 
   const isSVG = blockCode.startsWith('<svg') && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
@@ -60,7 +63,7 @@ export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
       const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
       const highlightedCode = highlightCode(inferredCodeLanguage, blockCode);
       return { highlightedCode, inferredCodeLanguage };
-    }, [blockTitle, blockCode]);
+    }, [inferCodeLanguage, blockTitle, blockCode, highlightCode]);
 
 
   const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
@@ -144,3 +147,20 @@ export function RenderCode(props: { codeBlock: CodeBlock, sx?: SxProps }) {
     </Box>
   );
 }
+
+// Dynamically import the heavy prism functions
+const RenderCodeDynamic = React.lazy(async () => {
+
+  // Dynamically import the code highlight functions
+  const { highlightCode, inferCodeLanguage } = await import('./codePrism');
+
+  return {
+    default: (props: { codeBlock: CodeBlock, sx?: SxProps }) =>
+      <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
+  };
+});
+
+export const RenderCode = (props: { codeBlock: CodeBlock, sx?: SxProps }) =>
+  <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...(props.sx || {}) }} />}>
+    <RenderCodeDynamic {...props} />
+  </React.Suspense>;
