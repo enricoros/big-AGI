@@ -5,10 +5,7 @@ export type ImageBlock = { type: 'image'; url: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
 
-/**
- * TODO: expensive function, especially as it's not been used in incremental fashion
- */
-export const parseBlocks = (forceText: boolean, text: string): Block[] => {
+export function parseBlocks(forceText: boolean, text: string): Block[] {
   if (forceText)
     return [{ type: 'text', content: text }];
 
@@ -20,22 +17,22 @@ export const parseBlocks = (forceText: boolean, text: string): Block[] => {
     return [{ type: 'html', html: text }];
 
   const codeBlockRegex = /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}|$)/g;
-  const result: Block[] = [];
+  const blocks: Block[] = [];
 
   let lastIndex = 0;
   let match;
 
   while ((match = codeBlockRegex.exec(text)) !== null) {
-    result.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    blocks.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     const blockTitle: string = (match[1] || '').trim();
     const blockCode: string = match[2].trim();
     const blockEnd: string = match[3];
-    result.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
+    blocks.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
     lastIndex = match.index + match[0].length;
   }
 
   if (lastIndex < text.length)
-    result.push({ type: 'text', content: text.slice(lastIndex) });
+    blocks.push({ type: 'text', content: text.slice(lastIndex) });
 
-  return result;
-};
+  return blocks;
+}
