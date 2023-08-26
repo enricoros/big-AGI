@@ -33,6 +33,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
+import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown } from './RenderMarkdown';
 import { RenderText } from './RenderText';
 import { parseBlocks } from './blocks';
@@ -336,9 +337,11 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
                 ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
-                  : renderMarkdown
-                    ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                    : <RenderText key={'text-' + index} textBlock={block} />,
+                  : block.type === 'latex'
+                    ? <RenderLatex key={'latex-' + index} latexBlock={block} />
+                    : renderMarkdown
+                      ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                      : <RenderText key={'text-' + index} textBlock={block} />,
           )}
 
           {errorMessage && (
