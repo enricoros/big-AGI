@@ -1,8 +1,8 @@
-type Block = CodeBlock | HtmlBlock | ImageBlock | /*LatexBlock |*/ TextBlock;
+type Block = CodeBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
 export type HtmlBlock = { type: 'html'; html: string; };
 export type ImageBlock = { type: 'image'; url: string; };
-// export type LatexBlock = { type: 'latex'; latex: string; };
+export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
 
@@ -56,7 +56,7 @@ export function parseBlocks(forceText: boolean, text: string): Block[] {
 
       case 'latexBlock':
         const latex: string = match[1];
-        blocks.push({ type: 'text', content: latex });
+        blocks.push({ type: 'latex', latex });
         break;
     }
 
