@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
@@ -12,9 +12,9 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { OpenAI } from './openai.types';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
+import { OpenAI } from './openai.types';
+import { LLMOptionsOpenAI, ModelVendorOpenAI, hasServerKeyOpenAI, isValidOpenAIApiKey } from './openai.vendor';
 
 
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
@@ -25,7 +25,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
+    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck, userId },
   } = useSourceSetup(props.sourceId, ModelVendorOpenAI.normalizeSetup);
 
   const hasModels = !!sourceLLMs.length;
@@ -106,6 +106,23 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       <Input
         variant='outlined' placeholder='sk-...'
         value={heliKey} onChange={event => updateSetup({ heliKey: event.target.value })}
+        sx={{ flexGrow: 1 }}
+      />
+    </FormControl>}
+
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <Box sx={{ minWidth: settingsCol1Width }}>
+        <FormLabel>
+          User ID
+        </FormLabel>
+        <FormHelperText sx={{ display: 'block' }}>
+            <Link level='body-sm' href='https://docs.helicone.ai/features/advanced-usage/user-metrics' target='_blank'>helicone</Link>, 
+            <Link level='body-sm' href='https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids' target='_blank'>OpenAI</Link>
+        </FormHelperText>
+      </Box>
+      <Input
+        variant='outlined' placeholder='big-agi'
+        value={userId} onChange={event => updateSetup({ userId: event.target.value })}
         sx={{ flexGrow: 1 }}
       />
     </FormControl>}

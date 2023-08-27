@@ -1,7 +1,7 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { DLLM, ModelVendor } from '../llm.types';
 import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import { DLLM, ModelVendor } from '../llm.types';
 
 import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
@@ -19,6 +19,7 @@ export interface SourceSetupOpenAI {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
   heliKey: string;  // helicone key (works in conjunction with oaiHost)
   moderationCheck: boolean;
+  userId: string; // user id for OpenAi and helicone if heliKey is present 
 }
 
 export interface LLMOptionsOpenAI {
@@ -45,6 +46,7 @@ export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI>
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
+    userId: '',
     moderationCheck: false,
     ...partialSetup,
   }),

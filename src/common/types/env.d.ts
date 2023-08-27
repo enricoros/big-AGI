@@ -4,6 +4,8 @@ declare namespace NodeJS {
 
   // available to the server-side
   interface ProcessEnv {
+    // OpenAI and Helicone
+    USER_ID: string;
 
     // LLM: OpenAI
     OPENAI_API_KEY: string;

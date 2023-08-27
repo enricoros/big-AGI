@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
@@ -19,12 +19,14 @@ const accessSchema = z.object({
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
   moderationCheck: z.boolean(),
+  userId: z.string().trim().optional(),
 });
 
 export const modelSchema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(1).optional(),
   maxTokens: z.number().min(1).max(1000000),
+  userId: z.string().optional()
 });
 
 export const historySchema = z.array(z.object({
@@ -202,6 +204,9 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // Organization ID
   const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
 
+  // User ID
+  const userId = access.userId || process.env.USER_ID || '';
+
   // API host
   let oaiHost = access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
   if (!oaiHost.startsWith('http'))
@@ -221,19 +226,23 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
       ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
       'Content-Type': 'application/json',
       ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
-      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
+      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}`, 'Helicone-User-Id': userId }),
     },
     url: oaiHost + apiPath,
   };
 }
 
 export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+  // User ID
+  const userId = model.userId || process.env.USER_ID || '';
+
   return {
     model: model.id,
     messages: history,
     ...(functions && { functions: functions, function_call: 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
+    ...(userId && { user: userId }),
     n,
     stream,
   };
