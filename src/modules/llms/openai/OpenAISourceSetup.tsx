@@ -4,16 +4,16 @@ import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } fr
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey } from '~/modules/llms/openai/openai.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI, normalizeOAISetup, SourceSetupOpenAI } from './openai.vendor';
 import { OpenAI } from './openai.types';
+import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
@@ -26,7 +26,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const {
     source, sourceLLMs, updateSetup,
     normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
-  } = useSourceSetup<SourceSetupOpenAI>(props.sourceId, normalizeOAISetup);
+  } = useSourceSetup(props.sourceId, ModelVendorOpenAI.normalizeSetup);
 
   const hasModels = !!sourceLLMs.length;
   const needsUserKey = !hasServerKeyOpenAI;
@@ -35,14 +35,16 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError } = apiQuery.openai.listModels.useQuery({ oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck }, {
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
+    access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
+    filterGpt: true,
+  }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
-    refetchOnMount: 'always',
   });
 
 
@@ -51,9 +53,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     <FormInputKey
       label={'API Key'}
       rightLabel={<>{needsUserKey
-        ? !oaiKey && <><Link level='body2' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body2' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
+        ? !oaiKey && <><Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body-sm' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
         : '✔️ already set in server'
-      } {oaiKey && keyValid && <Link level='body2' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
+      } {oaiKey && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
       required={needsUserKey} isError={keyError}
@@ -66,7 +68,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
           Organization ID
         </FormLabel>
         <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body2' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
+          <Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
         </FormHelperText>
       </Box>
       <Input
@@ -82,7 +84,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
           API Host
         </FormLabel>
         <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body2' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...
+          <Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...
         </FormHelperText>
       </Box>
       <Input
@@ -98,7 +100,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
           Helicone Key
         </FormLabel>
         <FormHelperText sx={{ display: 'block' }}>
-          Generate <Link level='body2' href='https://www.helicone.ai/keys' target='_blank'>here</Link>
+          Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link>
         </FormHelperText>
       </Box>
       <Input
@@ -114,8 +116,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
           Moderation
         </FormLabel>
         <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body2' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
-          {' '}<Link level='body2' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
+          <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+          {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
         </FormHelperText>
       </Box>
       <Switch
@@ -144,6 +146,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       </Button>
 
     </Box>
+
+    {isError && <InlineError error={error} />}
 
   </Box>;
 }
@@ -184,10 +188,10 @@ const knownBases = [
 ];
 
 
-function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM & { options: LLMOptionsOpenAI } {
+function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
   const suffix = model.id.slice(base.id.length).trim();
-  const hidden = !!suffix && suffix.startsWith('-03');
+  const hidden = !suffix || suffix.startsWith('-03');
   return {
     id: `${source.id}-${model.id}`,
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),

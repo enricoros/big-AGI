@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
+import { createEmptyReadableStream, throwResponseNotOk } from '../llms/stream';
 
 
 /* NOTE: Why does this file even exist?
@@ -15,23 +16,38 @@ and client-side vs. the TRPC implementation. So at lease we recycle the input st
 
 export default async function handler(req: NextRequest) {
   try {
+
     // construct the upstream request
-    const { elevenKey, text, voiceId, nonEnglish } = speechInputSchema.parse(await req.json());
-    const { headers, url } = elevenlabsAccess(elevenKey, `/v1/text-to-speech/${elevenlabsVoiceId(voiceId)}`);
+    const {
+      elevenKey, text, voiceId, nonEnglish,
+      streaming, streamOptimization,
+    } = speechInputSchema.parse(await req.json());
+    const path = `/v1/text-to-speech/${elevenlabsVoiceId(voiceId)}` + (streaming ? `/stream?optimize_streaming_latency=${streamOptimization || 1}` : '');
+    const { headers, url } = elevenlabsAccess(elevenKey, path);
     const body: ElevenlabsWire.TTSRequest = {
       text: text,
       ...(nonEnglish && { model_id: 'eleven_multilingual_v1' }),
     };
 
     // elevenlabs POST
-    const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
-    const audioArrayBuffer = await response.arrayBuffer();
+    const upstreamResponse: Response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    await throwResponseNotOk(upstreamResponse);
 
-    // return the audio
-    return new NextResponse(audioArrayBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
-  } catch (error) {
-    console.error('api/elevenlabs/speech error:', error);
-    return new NextResponse(JSON.stringify(`textToSpeech error: ${error?.toString() || 'Network issue'}`), { status: 500 });
+    // NOTE: this is disabled, as we pass-through what we get upstream for speed, as it is not worthy
+    //       to wait for the entire audio to be downloaded before we send it to the client
+    // if (!streaming) {
+    //   const audioArrayBuffer = await upstreamResponse.arrayBuffer();
+    //   return new NextResponse(audioArrayBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
+    // }
+
+    // stream the data to the client
+    const audioReadableStream = upstreamResponse.body || createEmptyReadableStream();
+    return new NextResponse(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
+
+  } catch (error: any) {
+    const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
+    console.log(`api/elevenlabs/speech: fetch issue: ${fetchOrVendorError}`);
+    return new NextResponse('[ElevenLabs Issue] ' + fetchOrVendorError, { status: 500 });
   }
 }
 

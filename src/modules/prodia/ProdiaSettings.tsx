@@ -1,12 +1,16 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Select, Slider, Stack, Tooltip } from '@mui/joy';
+import { Box, CircularProgress, FormControl, FormHelperText, FormLabel, Input, Option, Radio, RadioGroup, Select, Slider, Stack, Switch, Tooltip } from '@mui/joy';
+import CropSquareIcon from '@mui/icons-material/CropSquare';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import StayPrimaryLandscapeIcon from '@mui/icons-material/StayPrimaryLandscape';
+import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
+import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 import { settingsGap } from '~/common/theme';
 
@@ -17,12 +21,14 @@ import { useProdiaStore } from './store-prodia';
 
 export function ProdiaSettings() {
   // external state
-  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, cfgScale, setCfgScale, steps, setSteps, seed, setSeed } = useProdiaStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, seed, setSeed } = useProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     negativePrompt: state.prodiaNegativePrompt, setNegativePrompt: state.setProdiaNegativePrompt,
-    cfgScale: state.prodiaCfgScale, setCfgScale: state.setProdiaCfgScale,
     steps: state.prodiaSteps, setSteps: state.setProdiaSteps,
+    cfgScale: state.prodiaCfgScale, setCfgScale: state.setProdiaCfgScale,
+    prodiaAspectRatio: state.prodiaAspectRatio, setProdiaAspectRatio: state.setProdiaAspectRatio,
+    upscale: state.prodiaUpscale, setUpscale: state.setProdiaUpscale,
     seed: state.prodiaSeed, setSeed: state.setProdiaSeed,
   }), shallow);
 
@@ -30,7 +36,7 @@ export function ProdiaSettings() {
   const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
 
   // load models, if the server has a key, or the user provided one
-  const { data: modelsData, isLoading: loadingModels } = apiQuery.prodia.models.useQuery({ prodiaKey: apiKey }, {
+  const { data: modelsData, isLoading: loadingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
     enabled: isValidKey,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -52,6 +58,8 @@ export function ProdiaSettings() {
         value={apiKey} onChange={setApiKey}
         required={requiresKey} isError={!isValidKey}
       />
+
+      {isError && <InlineError error={error} />}
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <FormLabel sx={{ minWidth: colWidth }}>
@@ -132,6 +140,36 @@ export function ProdiaSettings() {
           min={1} max={15} step={0.5} defaultValue={7}
           sx={{ width: '100%' }}
         />
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <FormLabel sx={{ minWidth: colWidth }}>
+            Aspect Ratio
+          </FormLabel>
+          <FormHelperText>
+            {prodiaAspectRatio === 'square' ? 'Square' : prodiaAspectRatio === 'portrait' ? 'Portrait' : 'Landscape'}
+          </FormHelperText>
+        </Box>
+        <RadioGroup orientation='horizontal' value={prodiaAspectRatio} onChange={(e) => setProdiaAspectRatio(e.target.value as 'square' | 'portrait' | 'landscape')}>
+          <Radio value='square' label={<CropSquareIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+          <Radio value='portrait' label={<StayPrimaryPortraitIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+          <Radio value='landscape' label={<StayPrimaryLandscapeIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+        </RadioGroup>
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <Box>
+          <FormLabel sx={{ minWidth: colWidth }}>
+            Upscale <InfoOutlinedIcon sx={{ mx: 0.5 }} />
+          </FormLabel>
+          <FormHelperText>
+            {upscale ? '1024px' : 'Default'}
+          </FormHelperText>
+        </Box>
+        <Switch checked={upscale} onChange={(e) => setUpscale(e.target.checked)}
+                endDecorator={upscale ? '2x' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>

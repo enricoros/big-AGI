@@ -10,9 +10,11 @@ type SystemPurposeData = {
   description: string | React.JSX.Element;
   systemMessage: string;
   symbol: string;
+  imageUri?: string;
   examples?: string[];
   highlighted?: boolean;
-}
+  voices?: { elevenLabs?: { voiceId: string } };
+};
 
 // @update defifofum add custom SystemPurposeIds
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {

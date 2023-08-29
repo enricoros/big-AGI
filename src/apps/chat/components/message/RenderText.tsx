@@ -3,9 +3,9 @@ import * as React from 'react';
 import { Chip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { extractCommands } from '~/common/util/extractCommands';
+import { extractCommands } from '../../commands';
 
-import { TextBlock } from './Block';
+import { TextBlock } from './blocks';
 
 
 export const RenderText = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxProps; }) => {

@@ -31,9 +31,8 @@ export const googleSearchRouter = createTRPCRouter({
       if (!customSearchParams.key || !customSearchParams.cx)
         throw new Error('Missing API Key or Custom Search Engine ID');
 
-      const url = `https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`;
-      const wireResponse = await fetch(url);
-      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await wireResponse.json();
+      const response = await fetch(`https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`);
+      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await response.json();
 
       if (data.error)
         throw new Error(`Google Custom Search API error: ${data.error?.message}`);

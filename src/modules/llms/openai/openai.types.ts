@@ -107,13 +107,15 @@ export namespace OpenAI {
           delta: Partial<ResponseMessage>;
           finish_reason: 'stop' | 'length' | null;
         }[];
+        // undocumented, but can be present, e.g. "This model version is deprecated and a newer version \'gpt-4-0613\' is available. Migrate before..."
+        warning?: string;
         // this could also be an error - first experienced on 2023-06-19 on streaming APIs (undocumented)
         error?: {
           message: string;
           type: 'server_error' | string;
           param: string | null;
           code: string | null;
-        }
+        };
       }
     }
 
@@ -125,6 +127,7 @@ export namespace OpenAI {
       }
 
       export enum ModerationCategory {
+        // noinspection JSUnusedGlobalSymbols
         hate = 'hate',
         'hate/threatening' = 'hate/threatening',
         'self-harm' = 'self-harm',
@@ -143,7 +146,7 @@ export namespace OpenAI {
             category_scores: { [key in ModerationCategory]: number };
             flagged: boolean;
           }
-        ]
+        ];
       }
     }
 
@@ -153,7 +156,7 @@ export namespace OpenAI {
         id: string;
         object: 'model';
         created: number;
-        owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string;
+        owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string; // 'user' for Oobabooga models
         permission: any[];
         root: string;
         parent: null;

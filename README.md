@@ -28,7 +28,7 @@ Or fork & run on Vercel
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
 [![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
 
-* Enjoy the hosted open-source app on [big-AGI.com](https://get.big-agi.com)
+* Enjoy the hosted open-source app on [big-AGI.com](https://big-agi.com)
 * [Chat with us](https://discord.gg/MkH4qj2Jp9)
 * Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family
 * send PRs! ...
@@ -41,7 +41,19 @@ Or fork & run on Vercel
 
 ## Latest Drops 💧🎁
 
-#### 🚨 June: scale UP 🚀
+#### 🚨 July/Aug: Back with the Cool features 🧠
+
+- 🎉 **Camera OCR** - real-world AI - take a picture of a text, and chat with it
+- 🎉 **Backup/Restore** - save chats, and restore them later
+- 🎉 **[Local model support with Oobabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
+- 🎉 **Flatten conversations** - conversations summarizer with 4 modes
+- 🎉 **Fork conversations** - create a new chat, to expriment with different endings
+- 🎉 New commands: /s to add a System message, and /a for an Assistant message
+- 🎉 New Chat modes: Write-only - just appends the message, without assistant response
+- 🎉 Fix STOP generation - in sync with the Vercel team to fix a long-standing NextJS issue
+- 🎉 Fixes on the HTML block - particularly useful to see error pages
+
+#### June: scale UP 🚀
 
 - 🎉 **[New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates) support** - 0613 models, including 16k and 32k 
 - 🎉 **Cleaner UI** - with rationalized Settings, Modals, and Configurators

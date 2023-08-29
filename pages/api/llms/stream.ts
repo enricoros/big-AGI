@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { chatGenerateSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
+import { AnthropicWire } from '~/modules/llms/anthropic/anthropic.types';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
+import { anthropicAccess, anthropicCompletionRequest } from '~/modules/llms/anthropic/anthropic.router';
+import { chatStreamSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
 
 
 /**
@@ -17,6 +19,7 @@ type AIStreamParser = (data: string) => { text: string, close: boolean };
 // communicate parameters before the text starts flowing to the client.
 function parseOpenAIStream(): AIStreamParser {
   let hasBegun = false;
+  let hasWarned = false;
 
   return data => {
 
@@ -26,6 +29,12 @@ function parseOpenAIStream(): AIStreamParser {
     if (json.error)
       return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
 
+    if (json.choices.length !== 1)
+      throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
+
+    const index = json.choices[0].index;
+    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
+      throw new Error(`[OpenAI Issue] Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
     // hack: prepend the model name to the first packet
@@ -37,9 +46,38 @@ function parseOpenAIStream(): AIStreamParser {
       text = JSON.stringify(firstPacket) + text;
     }
 
+    // if there's a warning, log it once
+    if (json.warning && !hasWarned) {
+      hasWarned = true;
+      console.log('/api/llms/stream: OpenAI stream warning:', json.warning);
+    }
+
     // workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
     const close = !!json.choices[0].finish_reason;
     return { text, close };
+  };
+}
+
+
+// Anthropic event stream parser
+function parseAnthropicStream(): AIStreamParser {
+  let hasBegun = false;
+
+  return data => {
+
+    const json: AnthropicWire.Complete.Response = JSON.parse(data);
+    let text = json.completion;
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+        model: json.model,
+      };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    return { text, close: false };
   };
 }
 
@@ -76,7 +114,7 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
               controller.terminate();
           } catch (error: any) {
             // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
-            controller.enqueue(textEncoder.encode(` - [AI ISSUE] ${error?.message || error}`));
+            controller.enqueue(textEncoder.encode(`[Stream Issue] ${error?.message || error}`));
             controller.terminate();
           }
         },
@@ -90,19 +128,14 @@ export function createEventStreamTransformer(vendorTextParser: AIStreamParser): 
   });
 }
 
-async function throwOpenAINotOkay(response: Response) {
+export async function throwResponseNotOk(response: Response) {
   if (!response.ok) {
-    let errorPayload: object | null = null;
-    try {
-      errorPayload = await response.json();
-    } catch (e) {
-      // ignore
-    }
+    const errorPayload: object | null = await response.json().catch(() => null);
     throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
 }
 
-function createEmptyReadableStream(): ReadableStream {
+export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
   return new ReadableStream({
     start: (controller) => controller.close(),
   });
@@ -112,21 +145,42 @@ function createEmptyReadableStream(): ReadableStream {
 export default async function handler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { access, model, history } = chatGenerateSchema.parse(await req.json());
-
-  // prepare the API request data
-  const { headers, url } = openAIAccess(access, '/v1/chat/completions');
-  const body = openAIChatCompletionPayload(model, history, null, true);
+  const { vendorId, access, model, history } = chatStreamSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
   let upstreamResponse: Response;
+  let vendorStreamParser: AIStreamParser;
   try {
-    upstreamResponse = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
-    await throwOpenAINotOkay(upstreamResponse);
+
+    // prepare the API request data
+    let headersUrl: { headers: HeadersInit, url: string };
+    let body: object;
+    switch (vendorId) {
+      case 'anthropic':
+        headersUrl = anthropicAccess(access as any, '/v1/complete');
+        body = anthropicCompletionRequest(model, history, true);
+        vendorStreamParser = parseAnthropicStream();
+        break;
+
+      case 'openai':
+        headersUrl = openAIAccess(access as any, '/v1/chat/completions');
+        body = openAIChatCompletionPayload(model, history, null, 1, true);
+        vendorStreamParser = parseOpenAIStream();
+        break;
+    }
+
+    // POST to our API route
+    upstreamResponse = await fetch(headersUrl.url, {
+      method: 'POST',
+      headers: headersUrl.headers,
+      body: JSON.stringify(body),
+    });
+    await throwResponseNotOk(upstreamResponse);
+
   } catch (error: any) {
     const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
     console.log(`/api/llms/stream: fetch issue: ${fetchOrVendorError}`);
-    throw new Error('[OpenAI Issue] ' + fetchOrVendorError);
+    return new NextResponse('[OpenAI Issue] ' + fetchOrVendorError, { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
@@ -139,12 +193,12 @@ export default async function handler(req: NextRequest): Promise<Response> {
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(createEventStreamTransformer(parseOpenAIStream()));
+    .pipeThrough(createEventStreamTransformer(vendorStreamParser));
 
   return new NextResponse(chatResponseStream, {
     status: 200,
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
+      'Content-Type': 'text/event-stream; charset=utf-8',
     },
   });
 }

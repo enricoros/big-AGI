@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 
 export const speechInputSchema = z.object({
@@ -8,12 +9,29 @@ export const speechInputSchema = z.object({
   text: z.string(),
   voiceId: z.string().optional(),
   nonEnglish: z.boolean(),
+  streaming: z.boolean().optional(),
+  streamOptimization: z.number().optional(),
 });
 
 export type SpeechInputSchema = z.infer<typeof speechInputSchema>;
 
-const voicesInputSchema = z.object({
+const listVoicesInputSchema = z.object({
   elevenKey: z.string().optional(),
+});
+
+const voiceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  previewUrl: z.string().nullable(),
+  category: z.string(),
+  default: z.boolean(),
+});
+
+export type VoiceSchema = z.infer<typeof voiceSchema>;
+
+const listVoicesOutputSchema = z.object({
+  voices: z.array(voiceSchema),
 });
 
 
@@ -23,15 +41,14 @@ export const elevenlabsRouter = createTRPCRouter({
    * List Voices available to this api key
    */
   listVoices: publicProcedure
-    .input(voicesInputSchema)
+    .input(listVoicesInputSchema)
+    .output(listVoicesOutputSchema)
     .query(async ({ input }) => {
 
       const { elevenKey } = input;
       const { headers, url } = elevenlabsAccess(elevenKey, '/v1/voices');
 
-      const response = await fetch(url, { headers });
-      await rethrowElevenLabsError(response);
-      const voicesList = await response.json() as ElevenlabsWire.VoicesList;
+      const voicesList = await fetchJsonOrTRPCError<ElevenlabsWire.VoicesList>(url, 'GET', headers, undefined, 'ElevenLabs');
 
       // bring category != 'premade' to the top
       voicesList.voices.sort((a, b) => {
@@ -101,19 +118,6 @@ export function elevenlabsAccess(elevenKey: string | undefined, apiPath: string)
 
 export function elevenlabsVoiceId(voiceId?: string): string {
   return voiceId?.trim() || process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
-}
-
-async function rethrowElevenLabsError(response: Response) {
-  if (!response.ok) {
-    let errorPayload: object | null = null;
-    try {
-      errorPayload = await response.json();
-    } catch (e) {
-      // ignore
-    }
-    // console.error('Error in ElevenLabs API:', errorPayload);
-    throw new Error('ElevenLabs error: ' + JSON.stringify(errorPayload));
-  }
 }
 
 

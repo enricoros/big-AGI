@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -19,13 +19,15 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { canUseProdia } from '~/modules/prodia/prodia.client';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
+import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { cssRainbowColorKeyframes } from '~/common/theme';
-import { prettyBaseModel } from '~/common/util/conversationToMarkdown';
+import { prettyBaseModel } from '../../trade/trade.markdown';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { RenderCode } from './RenderCode';
@@ -33,18 +35,18 @@ import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderMarkdown } from './RenderMarkdown';
 import { RenderText } from './RenderText';
-import { parseBlocks } from './Block';
+import { parseBlocks } from './blocks';
 
 
 export function messageBackground(theme: Theme, messageRole: DMessage['role'], wasEdited: boolean, unknownAssistantIssue: boolean): string {
-  const defaultBackground = theme.vars.palette.background.surface;
+  const defaultBackground = theme.palette.background.surface;
   switch (messageRole) {
     case 'system':
-      return wasEdited ? theme.vars.palette.warning.plainHoverBg : defaultBackground;
+      return wasEdited ? theme.palette.warning.softHoverBg : defaultBackground;
     case 'user':
-      return theme.vars.palette.primary.plainHoverBg; // .background.level1
+      return theme.palette.primary.plainHoverBg; // was .background.level1
     case 'assistant':
-      return unknownAssistantIssue ? theme.vars.palette.danger.softBg : defaultBackground;
+      return unknownAssistantIssue ? theme.palette.danger.softBg : defaultBackground;
   }
   return defaultBackground;
 }
@@ -181,6 +183,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   const isImaginable = canUseProdia();
   const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
+  const isSpeakableEnabled = isImaginableEnabled;
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
@@ -242,11 +245,13 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   );
 
   // per-blocks css
-  const cssBlock: SxProps = {
+  const blockSx: SxProps = {
     my: 'auto',
   };
-  const cssCode: SxProps = {
-    background: fromAssistant ? theme.vars.palette.background.level1 : theme.vars.palette.primary.softDisabledBg,
+  const codeSx: SxProps = {
+    // backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
+    backgroundColor: fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    boxShadow: 'xs',
     fontFamily: theme.fontFamily.code,
     fontSize: '14px',
     fontVariantLigatures: 'none',
@@ -269,10 +274,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   return (
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: { xs: 0, md: 1}, px: { xs: 1, md: 2 }, py: 2,
+      gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
       background,
-      borderBottom: `1px solid ${theme.vars.palette.divider}`,
-      // borderBottomColor: `rgba(${theme.vars.palette.neutral.mainChannel} / 0.2)`,
+      borderBottom: '1px solid',
+      borderBottomColor: 'divider',
       position: 'relative',
       ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
@@ -280,7 +285,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Avatar */}
       {showAvatars && <Stack
-        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, textAlign: 'center' }}
+        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, maxWidth: 80, textAlign: 'center' }}
         onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
         onClick={event => setMenuAnchor(event.currentTarget)}>
 
@@ -292,10 +297,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
           avatarEl
         )}
 
+        {/* Assistant model name */}
         {fromAssistant && (
           <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
-            <Typography level='body2' sx={{
+            <Typography level='body-sm' sx={{
               fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
+              overflowWrap: 'anywhere',
               ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
             }}>
               {prettyBaseModel(messageOriginLLM)}
@@ -309,17 +316,24 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       {/* Edit / Blocks */}
       {!isEditing ? (
 
-        <Box sx={{ ...cssBlock, flexGrow: 0 }} onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null }>
+        <Box
+          onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}
+          sx={{
+            ...blockSx,
+            flexGrow: 0,
+            overflowX: 'auto',
+          }}>
 
+          {/* Warn about user-edited system message */}
           {fromSystem && wasEdited && (
-            <Typography level='body2' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
+            <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
           {!errorMessage && parseBlocks(fromSystem, collapsedText).map((block, index) =>
             block.type === 'html'
-              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={cssCode} />
+              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
               : block.type === 'code'
-                ? <RenderCode key={'code-' + index} codeBlock={block} sx={cssCode} />
+                ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
                   : renderMarkdown
@@ -329,7 +343,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
           {errorMessage && (
             <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
-              <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>{errorMessage}</Typography></Alert>
+              <InlineError error={errorMessage} />
             </Tooltip>
           )}
 
@@ -339,7 +353,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
           {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
           {/*<br />*/}
-          {/*<Chip variant='outlined' size='lg' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
+          {/*<Chip variant='outlined' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
           {/*  BlockAction*/}
           {/*</Chip>*/}
 
@@ -347,7 +361,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       ) : (
 
-        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...cssBlock, lineHeight: 1.75, flexGrow: 1 }} />
+        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
 
       )}
 
@@ -369,48 +383,44 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
       {/* Message Operations menu */}
       {!!menuAnchor && (
-        <Menu
-          variant='plain' color='neutral' size='lg' placement='bottom-end' sx={{ minWidth: 280 }}
-          open anchorEl={menuAnchor} onClose={closeOperationsMenu}>
-          <MenuItem onClick={handleMenuCopy}>
-            <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy
-          </MenuItem>
-          <MenuItem onClick={handleMenuEdit}>
-            <ListItemDecorator><EditIcon /></ListItemDecorator>
-            {isEditing ? 'Discard' : 'Edit'}
-            {!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}
+        <CloseableMenu
+          placement='bottom-end' sx={{ minWidth: 280 }}
+          open anchorEl={menuAnchor} onClose={closeOperationsMenu}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <MenuItem variant='plain' onClick={handleMenuEdit} sx={{ flex: 1 }}>
+              <ListItemDecorator><EditIcon /></ListItemDecorator>
+              {isEditing ? 'Discard' : 'Edit'}
+              {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
+            </MenuItem>
+            <MenuItem onClick={handleMenuCopy} sx={{ flex: 1 }}>
+              <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+              Copy
+            </MenuItem>
+          </Box>
+          <ListDivider />
+          <MenuItem onClick={handleMenuRunAgain}>
+            <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
+            {fromAssistant ? 'Retry' : 'Run from here'}
           </MenuItem>
           {isImaginable && isImaginableEnabled && (
             <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
-              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon />}</ListItemDecorator>
+              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
-          {isSpeakable && (
+          {isSpeakable && isSpeakableEnabled && (
             <MenuItem onClick={handleMenuSpeak} disabled={isSpeaking}>
-              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon />}</ListItemDecorator>
+              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
           <ListDivider />
-          {fromAssistant && (
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><ReplayIcon /></ListItemDecorator>
-              Retry
-            </MenuItem>
-          )}
-          {fromUser && (
-            <MenuItem onClick={handleMenuRunAgain}>
-              <ListItemDecorator><FastForwardIcon /></ListItemDecorator>
-              Run Again
-            </MenuItem>
-          )}
           <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
           </MenuItem>
-        </Menu>
+        </CloseableMenu>
       )}
 
     </ListItem>

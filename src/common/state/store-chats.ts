@@ -5,12 +5,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { DLLMId } from '~/modules/llms/llm.types';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { countModelTokens } from '../llm-util/token-counter';
+import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
 
 // configuration
-export const MAX_CONVERSATIONS = 20;
+export const MAX_CONVERSATIONS = 60;
 
 
 /**
@@ -33,7 +33,7 @@ export interface DConversation {
   ephemerals: DEphemeral[];
 }
 
-function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
+export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
   return {
     id: uuidv4(),
     messages: [],
@@ -117,6 +117,7 @@ export interface ChatStore {
 
   // store setters
   createConversation: () => void;
+  duplicateConversation: (conversationId: string) => void;
   importConversation: (conversation: DConversation) => void;
   deleteConversation: (conversationId: string) => void;
   deleteAllConversations: () => void;
@@ -165,9 +166,39 @@ export const useChatStore = create<ChatStore>()(devtools(
           };
         }),
 
+      duplicateConversation: (conversationId: string) =>
+        set(state => {
+          const conversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === conversationId);
+          if (!conversation)
+            return {};
+
+          // create a deep copy of the conversation
+          const deepCopy: DConversation = JSON.parse(JSON.stringify(conversation));
+          const duplicate: DConversation = {
+            ...deepCopy,
+            id: uuidv4(),
+            messages: deepCopy.messages.map((message: DMessage): DMessage => ({
+              ...message,
+              id: uuidv4(),
+            })),
+            updated: Date.now(),
+            abortController: null,
+            ephemerals: [],
+          };
+
+          return {
+            conversations: [
+              duplicate,
+              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+            ],
+            activeConversationId: duplicate.id,
+          };
+        }),
+
       importConversation: (conversation: DConversation) => {
         get().deleteConversation(conversation.id);
         set(state => {
+          conversation.tokenCount = updateTokenCounts(conversation.messages, true, 'importConversation');
           return {
             // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
             conversations: [
@@ -282,13 +313,16 @@ export const useChatStore = create<ChatStore>()(devtools(
       editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
         get()._editConversation(conversationId, conversation => {
 
+          const chatLLMId = useModelsStore.getState().chatLLMId;
           const messages = conversation.messages.map((message: DMessage): DMessage =>
             message.id === messageId
               ? {
                 ...message,
                 ...updatedMessage,
                 ...(setUpdated && { updated: Date.now() }),
-                ...(((updatedMessage.typing === false || !message.typing) && { tokenCount: updateDMessageTokenCount(message, useModelsStore.getState().chatLLMId, true, 'editMessage(typing=false)') })),
+                ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
+                  tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)'),
+                })),
               }
               : message);
 
@@ -427,51 +461,3 @@ function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom
   const { chatLLMId } = useModelsStore.getState();
   return 3 + messages.reduce((sum, message) => 4 + updateDMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum, 0);
 }
-
-
-/**
- * Download a conversation as a JSON file, for backup and future restore
- * Not the best place to have this function, but we want it close to the (re)store function
- */
-export const downloadConversationJson = (_conversation: DConversation) => {
-  if (typeof window === 'undefined') return;
-
-  // payload to be downloaded
-  const { abortController, ephemerals, ...conversation } = _conversation;
-  const json = JSON.stringify(conversation, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const filename = `conversation-${conversation.id}.json`;
-
-  // link to begin the download
-  const tempUrl = URL.createObjectURL(blob);
-  const tempLink = document.createElement('a');
-  tempLink.href = tempUrl;
-  tempLink.download = filename;
-  tempLink.style.display = 'none';
-  document.body.appendChild(tempLink);
-  tempLink.click();
-  document.body.removeChild(tempLink);
-  URL.revokeObjectURL(tempUrl);
-};
-
-/**
- * Restore a conversation from a JSON string
- */
-export const restoreConversationFromJson = (json: string): DConversation | null => {
-  const restored: Partial<DConversation> = JSON.parse(json);
-  if (restored && restored.id && restored.messages) {
-    return {
-      id: restored.id,
-      messages: restored.messages,
-      systemPurposeId: restored.systemPurposeId || defaultSystemPurposeId,
-      // ...(restored.userTitle && { userTitle: restored.userTitle }),
-      // ...(restored.autoTitle && { autoTitle: restored.autoTitle }),
-      tokenCount: restored.tokenCount || 0,
-      created: restored.created || Date.now(),
-      updated: restored.updated || Date.now(),
-      abortController: null,
-      ephemerals: [],
-    } satisfies DConversation;
-  }
-  return null;
-};

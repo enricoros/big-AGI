@@ -8,7 +8,7 @@ import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize'
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Section } from '~/common/components/Section';
-import { countModelTokens } from '~/common/llm-util/token-counter';
+import { countModelTokens } from '~/common/util/token-counter';
 
 import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
 
@@ -82,7 +82,7 @@ export function ContentReducer(props: {
 
         <ModalClose />
 
-        <Typography level='h5'>Content Reducer (preview)</Typography>
+        <Typography level='title-lg'>Content Reducer (preview)</Typography>
 
         <Divider sx={{ my: 2 }} />
 
@@ -91,7 +91,7 @@ export function ContentReducer(props: {
         <Section>
           <Stack direction='column' sx={{ gap: 2 }}>
 
-            <Typography level='body2'>
+            <Typography level='body-sm'>
               Input: <b>{props.initialTokens.toLocaleString()}</b> tokens · Limit: <b>{props.tokenLimit.toLocaleString()}</b> tokens
               <br />
               compression needed ≥ <b>{props.tokenLimit ? Math.round(100 * props.initialTokens / props.tokenLimit) : 0}</b> %
@@ -157,8 +157,8 @@ export function ContentReducer(props: {
             {processing && (
               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                 <CircularProgress />
-                <Typography level='body2' sx={{ mt: 1 }}>Reduction in progress.</Typography>
-                <Typography level='body3'>This can take a few minutes</Typography>
+                <Typography level='body-sm' sx={{ mt: 1 }}>Reduction in progress.</Typography>
+                <Typography level='body-xs'>This can take a few minutes</Typography>
               </Box>
             )}
 

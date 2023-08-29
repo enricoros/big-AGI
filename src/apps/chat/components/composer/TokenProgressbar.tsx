@@ -32,10 +32,10 @@ export function TokenProgressbar(props: { history: number, response: number, dir
   }
 
   // bar colors
-  const historyColor = theme.vars.palette.neutral.softHoverBg;
-  const directColor = theme.vars.palette.primary.solidBg;
-  const responseColor = theme.vars.palette.neutral.softHoverBg;
-  const overflowColor = theme.vars.palette.danger.solidBg;
+  const historyColor = theme.palette.neutral.softHoverBg;
+  const directColor = theme.palette.primary.solidBg;
+  const responseColor = theme.palette.neutral.softHoverBg;
+  const overflowColor = theme.palette.danger.solidBg;
 
   // tooltip message/color
   const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history + props.response);

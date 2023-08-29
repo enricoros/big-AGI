@@ -55,11 +55,11 @@ function StateRenderer(props: { state: object }) {
 
   return (
     <Stack>
-      <Typography level='body2' sx={{ mb: 1 }}>
+      <Typography level='body-sm' sx={{ mb: 1 }}>
         Internal State
       </Typography>
       <Sheet>
-        {!entries && <Typography level='body2'>No state variables</Typography>}
+        {!entries && <Typography level='body-sm'>No state variables</Typography>}
         {entries.map(([key, value]) =>
           isPrimitive(value)
             ? <PrimitiveRender key={'state-' + key} name={key} value={value} />
@@ -67,7 +67,7 @@ function StateRenderer(props: { state: object }) {
               ? <ListRenderer key={'state-' + key} name={key} list={value} />
               : typeof value === 'object'
                 ? <ObjectRenderer key={'state-' + key} name={key} />
-                : <Typography key={'state-' + key} level='body2'>{key}: {value}</Typography>,
+                : <Typography key={'state-' + key} level='body-sm'>{key}: {value}</Typography>,
         )}
       </Sheet>
     </Stack>
@@ -81,7 +81,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     sx={{
       p: { xs: 1, md: 2 },
       position: 'relative',
-      // border: (i < ephemerals.length - 1) ? `2px solid ${theme.vars.palette.divider}` : undefined,
+      // border: (i < ephemerals.length - 1) ? `2px solid ${theme.palette.divider}` : undefined,
       '&:hover > button': { opacity: 1 },
     }}>
 
@@ -138,10 +138,9 @@ export function Ephemerals(props: { conversationId: string | null, sx?: SxProps 
 
   return (
     <Sheet
-      variant='soft' color='info' invertedColors
+      variant='soft' color='success' invertedColors
       sx={{
-        border: `4px dashed ${theme.vars.palette.divider}`,
-        boxShadow: `inset 0 0 12px ${theme.vars.palette.background.popup}`,
+        border: `4px dashed ${theme.palette.divider}`,
         ...(props.sx || {}),
       }}>
 

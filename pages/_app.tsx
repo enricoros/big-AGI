@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
+import '~/common/styles/CodePrism.css'
 import '~/common/styles/GithubMarkdown.css';
 import { Brand } from '~/common/brand';
 import { createEmotionCache, theme } from '~/common/theme';
@@ -21,7 +22,16 @@ export interface MyAppProps extends AppProps {
 }
 
 function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  }));
   return <>
     <CacheProvider value={emotionCache}>
       <Head>
