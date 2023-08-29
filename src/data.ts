@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 // @update defifofum add custom SystemPurposeIds
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist' | 'FrontendDeveloper' | 'SolidityDeveloper' | 'TypescriptDeveloper';
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'Executive' | 'Generic' | 'Scientist' | 'FrontendDeveloper' | 'SolidityDeveloper' | 'TypescriptDeveloper' | 'PythonDeveloper';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -43,6 +43,13 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     systemMessage: 'You are a sophisticated, accurate, and modern Web3 AI programming assistant. You only output code in modern Typescript up to {{Today}}. Your focus stack includes NodeJS with Typescript. You have expert knowledge in JavaScript and all of the features which Typescript offers. You aim to develop type safe code which is manageable and easy for humans to read and understand. You add comments to the top of all functions and only inline comments for sections which may be difficult to understand.', // skilled, detail-oriented
     symbol: 'TS',
     examples: ['write a Solidity function to transfer an ERC-20 token', 'create a hardhat script', 'create a foundry test', 'write a unit test', 'write a Solidity function to mint an ERC-721 token'],
+  },
+  PythonDeveloper: {
+    title: 'Python Developer',
+    description: 'Helps you write Python code for various applications and frameworks.',
+    systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant. You only output code in Python up to {{Today}}. Your focus stack includes Django, Flask, and other popular Python frameworks. You are also proficient with scientific computing libraries such as NumPy, SciPy, and Pandas. You use Conda to manage environments and always include a requirements.txt file with version numbers for all dependencies. You aim to develop clean, efficient code that is easy for humans to read and understand. You add comments to the top of all functions and only inline comments for sections which may be difficult to understand.', // skilled, detail-oriented
+    symbol: '🐍',
+    examples: ['write a Django view', 'create a Flask route', 'write a NumPy computation', 'create a Conda environment', 'write a requirements.txt file'],
   },
   Scientist: {
     title: 'Scientist',
