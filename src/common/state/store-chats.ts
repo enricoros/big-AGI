@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage, StateStorage } from 'zustand/middleware';
+import { get, set, del } from 'idb-keyval'
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId } from '~/modules/llms/llm.types';
@@ -7,10 +8,6 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
-
-
-// configuration
-export const MAX_CONVERSATIONS = 20;
 
 
 /**
@@ -107,6 +104,17 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
   };
 }
 
+const storage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    return (await get(name)) || null
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    await set(name, value)
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await del(name)
+  },
+}
 
 /// Conversations Store
 
@@ -160,7 +168,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           return {
             conversations: [
               conversation,
-              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations,
             ],
             activeConversationId: conversation.id,
           };
@@ -189,7 +197,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           return {
             conversations: [
               duplicate,
-              ...state.conversations, // DISABLED: can inadvertendly lose data - check upstream instead - .slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations,
             ],
             activeConversationId: duplicate.id,
           };
@@ -203,7 +211,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
             conversations: [
               conversation,
-              ...state.conversations.filter(other => other.id !== conversation.id).slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations.filter(other => other.id !== conversation.id),
             ],
             activeConversationId: conversation.id,
           };
@@ -406,7 +414,9 @@ export const useChatStore = create<ChatStore>()(devtools(
       // version history:
       //  - 1: [2023-03-18] app launch, single chat
       //  - 2: [2023-04-10] multi-chat version - invalidating data to be sure
-      version: 2,
+      //  - 3: [2023-08-30] switch to IndexedDB
+      version: 3,
+      storage: createJSONStorage(() => storage),
 
       // omit the transient property from the persisted state
       partialize: (state) => ({
