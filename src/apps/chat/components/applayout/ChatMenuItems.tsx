@@ -10,7 +10,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/state/store-chats';
 import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -28,7 +28,6 @@ export function ChatMenuItems(props: {
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
-  const maxConversationsReached: boolean = useChatStore(state => state.conversations.length >= MAX_CONVERSATIONS);
 
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
@@ -82,13 +81,13 @@ export function ChatMenuItems(props: {
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled || maxConversationsReached} onClick={handleConversationDuplicate}>
+    <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
         {/*<Badge size='sm' color='success'>*/}
         <ForkRightIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
-      Duplicate{maxConversationsReached && ' (max reached)'}
+      Duplicate
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
