@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { parse, stringify } from 'yaml'
-import ymlPurposes from './purposes.yml'
+const ymlPurposes = require('./purposes.yml')
 
 export type SystemPurposeId = string;
 
