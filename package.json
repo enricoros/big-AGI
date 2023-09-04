@@ -40,6 +40,7 @@
     "superjson": "^1.13.1",
     "tesseract.js": "^4.1.1",
     "uuid": "^9.0.0",
+    "yaml": "^2.3.2",
     "zod": "3.21.4",
     "zustand": "4.3.9"
   },
@@ -54,6 +55,7 @@
     "eslint": "^8.47.0",
     "eslint-config-next": "^13.4.19",
     "prettier": "^3.0.2",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "yaml-loader": "^0.8.0"
   }
 }
