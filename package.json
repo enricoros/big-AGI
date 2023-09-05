@@ -12,6 +12,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.23.4",
     "@dqbd/tiktoken": "^1.0.7",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.1",
