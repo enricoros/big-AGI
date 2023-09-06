@@ -122,6 +122,9 @@ purposes:
   #   symbol: 📚
   #   examples:
   #   systemMessage:
+  # TODO: add summarizer and LMGTFY
+  # TODO: test ReAct mode
+  # TODO: add Operator to delegate to other personas
   # LMGTFY:
   #   title:
   #   description:

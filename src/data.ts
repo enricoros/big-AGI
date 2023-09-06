@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { parse, stringify } from 'yaml'
 import ymlPurposes from './purposes.yml'
 
 export type SystemPurposeId = string;
@@ -31,6 +30,8 @@ type SystemPurposeData = {
   voices?: { elevenLabs?: { voiceId: string } };
 };
 
+// TODO: update default system purpose to Carson assistant
+// TODO: update Logo and Favicon
 const innatePurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Developer: {
     title: 'Developer',
