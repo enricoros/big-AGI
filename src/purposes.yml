@@ -208,7 +208,6 @@ purposes:
       
       You should only respond in text format as described below
       Response Format:
-        Thoughts:
         <<your reasoning>>
         
         Suggestions:
@@ -216,4 +215,4 @@ purposes:
         - at least two in the following format
         - SEARCH ENGINE: query
 
-      Do not vary from this format. All explanations and elaborations should be in the Thoughts: section.
+      Do not vary from this format. All explanations and elaborations should be in the section containing <<your reasoning>>.
