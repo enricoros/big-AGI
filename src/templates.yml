@@ -1,0 +1,13 @@
+templates:
+  Summarizer:
+    name: Summarizer
+    description: Summarize text
+    template: |
+      Rewrite the following text, including all the same concepts and points,
+      but using as concise language as possible. Fix typographic and grammatical errors.
+      Begin with a summary of the key points: 
+      {{.Text}}
+    vars:
+      - Text:
+        type: string
+        placeholder: text to summarize
