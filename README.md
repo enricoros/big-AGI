@@ -82,8 +82,7 @@ Or fork & run on Vercel
 - 🎉 Integrations: OpenAI organization ID
 - 🎉 [Cloudflare deployment instructions](docs/deploy-cloudflare.md),
   [awesome-agi](https://github.com/enricoros/awesome-agi)
-- 🎉 [Typing Avatars](docs/pixels/gif_typing_040123.gif) ⌨️
-  <!-- p><a href="docs/pixels/gif_typing_040123.gif"><img src="docs/pixels/gif_typing_040123.gif" width='700' alt="New Typing Avatars"/></a></p -->
+- 🎉 [Typing Avatars](https://media.giphy.com/media/Q2W4hziDOyzu0/giphy.gif) ⌨️
 
 #### March: first release
 

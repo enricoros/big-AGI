@@ -7,5 +7,5 @@
 ## Tasks
 
 * [x] Add all of my SystemPurposes
-* [ ] Change goddamned GIFs
+* [x] Change goddamned GIFs
 * [ ] Load configs for API keys from the environment
