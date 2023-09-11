@@ -116,6 +116,23 @@ const storage: StateStorage = {
   },
 }
 
+function _migrateLocalStorageToIndexedDB(state: ChatStore) {
+  const key = "app-chats"
+  const value = localStorage.getItem(key);
+
+  // Check if migration has already been done
+  if (!value) return state;
+
+  // Mark migration as done
+  localStorage.removeItem(key);
+
+  // Migrate data to IndexedDB
+  const localStorageState = JSON.parse(value)?.state;
+
+  state.conversations = localStorageState?.conversations;
+  state.activeConversationId = localStorageState?.activeConversationId;
+}
+
 /// Conversations Store
 
 
@@ -211,7 +228,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
             conversations: [
               conversation,
-              ...state.conversations.filter(other => other.id !== conversation.id),
+              ...state.conversations.filter((other: DConversation) => other.id !== conversation.id),
             ],
             activeConversationId: conversation.id,
           };
@@ -432,6 +449,7 @@ export const useChatStore = create<ChatStore>()(devtools(
 
       onRehydrateStorage: () => (state) => {
         if (state) {
+          _migrateLocalStorageToIndexedDB(state);
           // if nothing is selected, select the first conversation
           if (!state.activeConversationId && state.conversations.length)
             state.activeConversationId = state.conversations[0].id;
