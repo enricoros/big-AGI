@@ -160,6 +160,9 @@ export namespace OpenAI {
         permission: any[];
         root: string;
         parent: null;
+
+        // non-standard properties
+        //context_length?: number; // Openrouter-only models, non-standard - commented because dynamically added by the Openrouter vendor code
       }
 
       export interface Response {
