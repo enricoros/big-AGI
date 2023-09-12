@@ -18,19 +18,19 @@ export interface SourceSetupOpenRouter extends Pick<SourceSetupOpenAI, 'oaiHost'
  * NOTE: the support is just started and incomplete - in particular it depends on some code that
  * hasn't been merged yet.
  *
- * TODO:
- *  - raise instanceLimit from 0 to 1 to continue development
- *  - add support to the OpenAI Router and Streaming function to add the headers required by OpenRouter
- *  - merge the server-side models remapping from Azure OpenAI
- *  - decide whether to do UI work to improve the appearance
- *  - shall work
+ * Completion:
+ *  [x] raise instanceLimit from 0 to 1 to continue development
+ *  [x] add support to the OpenAI Router and Streaming function to add the headers required by OpenRouter (done in the access function)
+ *  [ ] merge the server-side models remapping from Azure OpenAI - not needed, using client-side remapping for now
+ *  [x] decide whether to do UI work to improve the appearance - prioritized models
+ *  [x] works!
  */
 export const ModelVendorOpenRouter: ModelVendor<SourceSetupOpenRouter, LLMOptionsOpenAI> = {
   id: 'openrouter',
   name: 'OpenRouter',
   rank: 25,
   location: 'cloud',
-  instanceLimit: 0,
+  instanceLimit: 1,
 
   // components
   Icon: OpenRouterIcon,
