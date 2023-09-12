@@ -4,6 +4,8 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
+import { Brand } from '~/common/brand';
+
 import { OpenAI } from './openai.types';
 
 
@@ -216,12 +218,19 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
     throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
+  // [Openrouter-specific] lame detection, but works great for now (unless we get requests for non-standard hosts)
+  const isOpenrouter = oaiHost.indexOf('openrouter.ai') !== -1;
+
   return {
     headers: {
       ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
       'Content-Type': 'application/json',
       ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
+      ...(isOpenrouter && {
+        'HTTP-Referer': Brand.URIs.Home,
+        'X-Title': Brand.Title.Base,
+      }),
     },
     url: oaiHost + apiPath,
   };
