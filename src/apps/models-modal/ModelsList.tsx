@@ -20,7 +20,7 @@ function ModelItem(props: { llm: DLLM, vendor: ModelVendor, chipChat: boolean, c
   // derived
   const llm = props.llm;
   const label = llm.label;
-  const tooltip = `${llm._source.label} - ${llm.description}`;
+  const tooltip = `${llm._source.label}${llm.description ? ' - ' + llm.description : ''} - ${llm.contextTokens?.toLocaleString() || 'unknown tokens size'}`;
 
   return (
     <ListItem>
