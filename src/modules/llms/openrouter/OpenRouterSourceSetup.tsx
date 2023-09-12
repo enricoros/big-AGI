@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
@@ -10,7 +10,6 @@ import { apiQuery } from '~/modules/trpc/trpc.client';
 import { FormInputKey } from '~/common/components/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { settingsGap } from '~/common/theme';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
@@ -18,21 +17,6 @@ import { useModelsStore, useSourceSetup } from '../store-llms';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
 
-
-// adjust as Openrouter adds big model families - but keep a good SNR
-const knownModelFamilies = ['openai/', 'anthropic/', 'google/', 'meta-llama/'];
-
-function prioritizeLLMs(a: OpenAI.Wire.Models.ModelDescription, b: OpenAI.Wire.Models.ModelDescription): number {
-  const aPrefixIndex = knownModelFamilies.findIndex(prefix => a.id.startsWith(prefix));
-  const bPrefixIndex = knownModelFamilies.findIndex(prefix => b.id.startsWith(prefix));
-
-  // If both have a prefix, sort by prefix first, and then alphabetically
-  if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
-    return aPrefixIndex !== bPrefixIndex ? aPrefixIndex - bPrefixIndex : a.id.localeCompare(b.id);
-
-  // If one has a prefix and the other doesn't, prioritize the one with prefix
-  return aPrefixIndex !== -1 ? -1 : 1;
-}
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
@@ -55,13 +39,23 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
   }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => {
-      const llms = source ? models.sort(prioritizeLLMs).map(model => openRouterModelToDLLM(model, source)) : [];
+      const llms = source ? models.sort(orFamilySortFn).map(model => openRouterModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
     },
     staleTime: Infinity,
   });
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+
+    {/*<Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>*/}
+    {/*<OpenRouterIcon />*/}
+    <Typography level='body-sm'>
+      <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent, premium service
+      granting access to <Link href='https://openrouter.ai/docs#models' target='_blank'>exclusive models</Link> such
+      as GPT-4 32k, Claude, and more, typically unavailable to the public.
+      Simply sign in, top-up your account, and generate your unique API key to start using the models.
+    </Typography>
+    {/*</Box>*/}
 
     <FormInputKey
       label={'OpenRouter API Key'}
@@ -93,17 +87,61 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
+// created to reflect the doc page: https://openrouter.ai/docs
+const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isOld: boolean; } } = {
+  'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', contextWindowSize: 4095, isOld: false },
+  'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', contextWindowSize: 16383, isOld: false },
+  'openai/gpt-4': { name: 'OpenAI: GPT-4', contextWindowSize: 8191, isOld: false },
+  'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', contextWindowSize: 32767, isOld: false },
+  'anthropic/claude-2': { name: 'Anthropic: Claude v2', contextWindowSize: 100000, isOld: false },
+  'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', contextWindowSize: 100000, isOld: false },
+  'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Bison', contextWindowSize: 8000, isOld: false },
+  'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Bison (Code Chat)', contextWindowSize: 8000, isOld: false },
+  'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat (beta)', contextWindowSize: 4096, isOld: false },
+  'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat (beta)', contextWindowSize: 4096, isOld: false },
+  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', contextWindowSize: 16000, isOld: false },
+  'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', contextWindowSize: 4096, isOld: false },
+  'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', contextWindowSize: 8000, isOld: false },
+  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 8192, isOld: false },
+  'jondurbin/airoboros-l2-70b-2.1': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 4096, isOld: false },
+  'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', contextWindowSize: 6144, isOld: false },
+  'pygmalionai/mythalion-13b': { name: 'Mythalion 13B (NEW)', contextWindowSize: 2560, isOld: false },
+  'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', contextWindowSize: 4095, isOld: true },
+  'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', contextWindowSize: 8191, isOld: true },
+  'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', contextWindowSize: 32767, isOld: true },
+  'openai/text-davinci-002': { name: 'OpenAI: Davinci (No RL)', contextWindowSize: 4095, isOld: true },
+  'anthropic/claude-v1': { name: 'Anthropic: Claude v1', contextWindowSize: 9000, isOld: true },
+  'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', contextWindowSize: 9000, isOld: true },
+  'anthropic/claude-instant-v1-100k': { name: 'Anthropic: Claude Instant 100k v1', contextWindowSize: 100000, isOld: true },
+  'anthropic/claude-v1-100k': { name: 'Anthropic: Claude 100k v1', contextWindowSize: 100000, isOld: true },
+  'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', contextWindowSize: 9000, isOld: true },
+};
+
+const orModelFamilyOrder = ['openai/', 'anthropic/', 'google/', 'meta-llama/'];
+
+function orFamilySortFn(a: OpenAI.Wire.Models.ModelDescription, b: OpenAI.Wire.Models.ModelDescription): number {
+  const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
+  const bPrefixIndex = orModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
+
+  // If both have a prefix, sort by prefix first, and then alphabetically
+  if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
+    return aPrefixIndex !== bPrefixIndex ? aPrefixIndex - bPrefixIndex : a.id.localeCompare(b.id);
+
+  // If one has a prefix and the other doesn't, prioritize the one with prefix
+  return aPrefixIndex !== -1 ? -1 : 1;
+}
+
+
 function openRouterModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> {
-  // label: highlight the family name
-  const knownModelFamily = knownModelFamilies.find(family => model.id.startsWith(family));
-  const label = (knownModelFamily ? model.id.replace(knownModelFamily, capitalizeFirstLetter(knownModelFamily)) : model.id).replace('/', ' · ');
+  // label: use the known name if available, otherwise format the model id
+  const orModel = orModelMap[model.id] ?? null;
+  const label = orModel?.name || model.id.replace('/', ' · ');
 
-  // context: Openrouter provides the lenght; using it
-  const contextWindow = (model as any)?.['context_length'] || 4096;
+  // context: use the known size if available, otherwise fallback to the (undocumneted) provided length or fallback again to 4096
+  const contextWindow = orModel?.contextWindowSize || (model as any)?.['context_length'] || 4096;
 
-  // hidden: hide older models
-  const suffixesToHide = ['0301', '0314', 'davinci-002', 'instant-1.0'];
-  const hidden = suffixesToHide.some(suffix => model.id.endsWith(suffix)) || !knownModelFamily;
+  // hidden: hide by default older models or models not in known families
+  const hidden = orModel?.isOld || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
   return {
     id: `${source.id}-${model.id}`,
