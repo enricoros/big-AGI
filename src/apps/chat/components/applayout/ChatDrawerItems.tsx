@@ -127,7 +127,7 @@ export function ChatDrawerItems(props: {
           isActive={conversationId === props.conversationId}
           isSingle={singleChat}
           showSymbols={showSymbols}
-          maxChatMessages={experimentalLabs ? maxChatMessages : 0}
+          maxChatMessages={(experimentalLabs || maxReached) ? maxChatMessages : 0}
           conversationActivate={handleConversationActivate}
           conversationDelete={handleConversationDelete}
         />)}
