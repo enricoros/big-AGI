@@ -180,6 +180,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             messages: deepCopy.messages.map((message: DMessage): DMessage => ({
               ...message,
               id: uuidv4(),
+              typing: false,
             })),
             updated: Date.now(),
             abortController: null,
