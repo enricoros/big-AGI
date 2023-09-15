@@ -44,6 +44,7 @@ export function ChatDrawerItems(props: {
 
   const hasChats = conversationIDs.length > 0;
   const singleChat = conversationIDs.length === 1;
+  const softMaxReached = conversationIDs.length >= 50;
 
   const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
 
@@ -124,7 +125,7 @@ export function ChatDrawerItems(props: {
           isActive={conversationId === props.conversationId}
           isSingle={singleChat}
           showSymbols={showSymbols}
-          maxChatMessages={(experimentalLabs || maxReached) ? maxChatMessages : 0}
+          maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
           conversationActivate={handleConversationActivate}
           conversationDelete={handleConversationDelete}
         />)}

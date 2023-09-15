@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage, StateStorage } from 'zustand/middleware';
-import { get, set, del } from 'idb-keyval'
+import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId } from '~/modules/llms/llm.types';
@@ -8,6 +7,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
+import { idbStateStorage } from '../util/idbUtils';
 
 
 /**
@@ -104,37 +104,8 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
   };
 }
 
-const storage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    return (await get(name)) || null
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value)
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await del(name)
-  },
-}
-
-function _migrateLocalStorageToIndexedDB(state: ChatStore) {
-  const key = "app-chats"
-  const value = localStorage.getItem(key);
-
-  // Check if migration has already been done
-  if (!value) return state;
-
-  // Mark migration as done
-  localStorage.removeItem(key);
-
-  // Migrate data to IndexedDB
-  const localStorageState = JSON.parse(value)?.state;
-
-  state.conversations = localStorageState?.conversations;
-  state.activeConversationId = localStorageState?.activeConversationId;
-}
 
 /// Conversations Store
-
 
 export interface ChatStore {
   conversations: DConversation[];
@@ -434,7 +405,7 @@ export const useChatStore = create<ChatStore>()(devtools(
       //  - 2: [2023-04-10] multi-chat version - invalidating data to be sure
       //  - 3: [2023-08-30] switch to IndexedDB
       version: 3,
-      storage: createJSONStorage(() => storage),
+      storage: createJSONStorage(() => idbStateStorage),
 
       // omit the transient property from the persisted state
       partialize: (state) => ({
@@ -450,7 +421,9 @@ export const useChatStore = create<ChatStore>()(devtools(
 
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // one-time: move localStorage data (version: 2) to the 'state'
           _migrateLocalStorageToIndexedDB(state);
+
           // if nothing is selected, select the first conversation
           if (!state.activeConversationId && state.conversations.length)
             state.activeConversationId = state.conversations[0].id;
@@ -473,6 +446,30 @@ export const useChatStore = create<ChatStore>()(devtools(
   }),
 );
 
+/**
+ * Migrate data from localStorage (version=2) to IndexedDB (version=3+)
+ * This is a one-time migration, and should be removed in the future
+ */
+function _migrateLocalStorageToIndexedDB(state: ChatStore) {
+  const key = 'app-chats';
+  const value = localStorage.getItem(key);
+
+  // Check if migration has already been done
+  if (!value) return;
+
+  // Migrate data to IndexedDB
+  try {
+    const localStorageState = JSON.parse(value)?.state;
+
+    // Mark migration as done
+    localStorage.removeItem(key);
+
+    state.conversations = localStorageState?.conversations ?? [];
+    state.activeConversationId = localStorageState?.activeConversationId ?? null;
+  } catch (e) {
+    console.error('Failed to migrate localStorage to IndexedDB', e);
+  }
+}
 
 /**
  * Convenience function to count the tokens in a DMessage object
