@@ -52,8 +52,8 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     <Typography level='body-sm'>
       <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent, premium service
       granting access to <Link href='https://openrouter.ai/docs#models' target='_blank'>exclusive models</Link> such
-      as GPT-4 32k, Claude, and more, typically unavailable to the public.
-      Simply sign in, top-up your account, and generate your unique API key to start using the models.
+      as GPT-4 32k, Claude, and more, typically unavailable to the public. <Link
+      href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md'>Configuration &amp; documentation</Link>.
     </Typography>
     {/*</Box>*/}
 
