@@ -43,7 +43,8 @@ Or fork & run on Vercel
 
 #### 🚨 Sept: Back with the Cool features 🧠
 
-- 🎉 **OpenRouter models** support
+- 🎉 **[OpenRouter models](https://openrouter.ai/docs#models)** support, incl. GPT4-32k
+- 🎉 **Unlimited chats** - removed the 20 chats limit by switching to IndexedDB ([Ashesh3](https://github.com/enricoros/big-agi/pull/158))
 
 #### 🚨 July/Aug: More Beter Faster 🚀
 

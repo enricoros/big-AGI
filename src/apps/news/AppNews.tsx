@@ -39,28 +39,28 @@ export function AppNews() {
       </Typography>
 
       {!!news && <Container disableGutters maxWidth='sm'>
-        {news?.map((item, idx) => {
+        {news?.map((ni, idx) => {
           const firstCard = idx === 0;
           const hasCardAfter = news.length < NewsItems.length;
           const showExpander = hasCardAfter && (idx === news.length - 1);
           const addPadding = !firstCard || showExpander;
           return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
             <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-              {!!item.text && <Typography component='div'>
-                {item.text}
+              {!!ni.text && <Typography component='div'>
+                {ni.text}
               </Typography>}
 
-              {!!item.items && (item.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 32 }}>
-                {item.items.map((item, idx) => <li key={idx}>
+              {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
+                {ni.items.map((item, idx) => <li key={idx}>
                   <Typography component='div'>
                     {item.text}
                   </Typography>
                 </li>)}
               </ul>}
 
-              {!firstCard && (
+              {/*!firstCard &&*/ (
                 <Typography level='body-sm' sx={{ position: 'absolute', right: 0, top: 0 }}>
-                  {item.versionName}
+                  {ni.versionName}
                 </Typography>
               )}
 
