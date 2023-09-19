@@ -20,10 +20,11 @@ export function isPwa(): boolean {
 //   return true;
 // };
 
-export function isSafariOriPhone(): boolean {
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+export function isIPhone(): boolean {
+  // const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  // noinspection UnnecessaryLocalVariableJS
   const isiPhone = /iPhone|iPod/.test(navigator.userAgent);
-  return isSafari || isiPhone;
+  return /*isSafari ||*/ isiPhone;
 }
 
 export const isChromeOnDesktopWindows = (): boolean => {
