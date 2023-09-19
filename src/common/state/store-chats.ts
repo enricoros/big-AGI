@@ -108,9 +108,9 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
 /// Conversations Store
 
 interface ChatState {
-    conversations: DConversation[];
+  conversations: DConversation[];
   activeConversationId: string | null;
-  }
+}
 
 interface ChatActions {
   // store setters
