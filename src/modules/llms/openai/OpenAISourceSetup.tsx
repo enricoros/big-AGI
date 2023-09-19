@@ -168,6 +168,12 @@ const knownBases = [
     description: 'Insightful, big thinker, slower, pricey',
   },
   {
+    id: 'gpt-3.5-turbo-instruct',
+    label: '3.5-Turbo-Instruct',
+    context: 4097,
+    description: 'Not for Chat',
+  },
+  {
     id: 'gpt-3.5-turbo-16k',
     label: '3.5-Turbo-16k',
     context: 16384,
@@ -191,7 +197,7 @@ const knownBases = [
 function openAIModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
   const suffix = model.id.slice(base.id.length).trim();
-  const hidden = !suffix || suffix.startsWith('-03');
+  const hidden = !suffix || suffix.startsWith('-03') || model.id.indexOf('-instruct') !== -1;
   return {
     id: `${source.id}-${model.id}`,
     label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
