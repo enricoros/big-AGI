@@ -42,9 +42,10 @@ export function ChatDrawerItems(props: {
   }), shallow);
 
 
-  const hasChats = conversationIDs.length > 0;
-  const singleChat = conversationIDs.length === 1;
-  const softMaxReached = conversationIDs.length >= 50;
+  const totalConversations = conversationIDs.length;
+  const hasChats = totalConversations > 0;
+  const singleChat = totalConversations === 1;
+  const softMaxReached = totalConversations >= 50;
 
   const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
 
@@ -144,7 +145,7 @@ export function ChatDrawerItems(props: {
     <MenuItem disabled={!hasChats} onClick={props.onDeleteAllConversations}>
       <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
       <Typography>
-        Delete all
+        Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
       </Typography>
     </MenuItem>
 
