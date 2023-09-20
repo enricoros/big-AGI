@@ -1,6 +1,6 @@
 import { ModelVendor } from '../llm.types';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
 
 import { OpenRouterIcon } from './OpenRouterIcon';
@@ -9,8 +9,10 @@ import { OpenRouterSourceSetup } from './OpenRouterSourceSetup';
 // special symbols
 export const isValidOpenRouterKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-or-') && apiKey.length > 40;
 
-// user OpenAI-compatible host and key
-export interface SourceSetupOpenRouter extends Pick<SourceSetupOpenAI, 'oaiHost' | 'oaiKey'> {
+// use OpenAI-compatible host and key
+export interface SourceSetupOpenRouter {
+  oaiKey: string;
+  oaiHost: string;
 }
 
 
@@ -38,8 +40,9 @@ export const ModelVendorOpenRouter: ModelVendor<SourceSetupOpenRouter, LLMOption
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  initalizeSetup: () => ({
+  initalizeSetup: (): SourceSetupOpenRouter => ({
     oaiHost: 'https://openrouter.ai/api',
+    oaiKey: '',
   }),
   normalizeSetup: (partialSetup?: Partial<SourceSetupOpenRouter>) => ({
     oaiHost: '',
