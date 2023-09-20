@@ -13,7 +13,8 @@ export function parseBlocks(forceText: boolean, text: string): Block[] {
   const regexPatterns = {
     codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     imageBlock: /(https:\/\/images\.prodia\.xyz\/.*?\.png)/g, // NOTE: only Prodia for now - but this shall be expanded to markdown images ![alt](url) or any png/jpeg
-    latexBlock: /\$\$(.*?)\$\$\n?/g,
+    latexBlock: /\$\$([\s\S]*?)\$\$/g,
+    // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
 
   const blocks: Block[] = [];
