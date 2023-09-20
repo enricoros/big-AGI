@@ -18,6 +18,7 @@ function VoicesDropdown(props: {
   isValidKey: boolean,
   isLoadingVoices: boolean,
   isErrorVoices: boolean,
+  disabled?: boolean,
   voices: VoiceSchema[],
   voiceId: string | null,
   setVoiceId: (voiceId: string) => void,
@@ -28,7 +29,7 @@ function VoicesDropdown(props: {
   return (
     <Select
       value={props.voiceId} onChange={handleVoiceChange}
-      variant='outlined'
+      variant='outlined' disabled={props.disabled}
       // color={props.isErrorVoices ? 'danger' : undefined}
       placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Enter valid API Key'}
       startDecorator={<RecordVoiceOverIcon />}
@@ -49,7 +50,7 @@ function VoicesDropdown(props: {
 }
 
 
-export function useVoiceDropdown(autoSpeak: boolean) {
+export function useVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
 
   // external state
   const { apiKey, voiceId } = useElevenlabsStore(state => ({
@@ -78,11 +79,11 @@ export function useVoiceDropdown(autoSpeak: boolean) {
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
-        isValidKey={isValidKey} isLoadingVoices={isLoading} isErrorVoices={isError}
+        isValidKey={isValidKey} isLoadingVoices={isLoading} isErrorVoices={isError} disabled={disabled}
         voices={data?.voices || []}
         voiceId={voiceId} setVoiceId={(voiceId) => useElevenlabsStore.getState().setElevenLabsVoiceId(voiceId)}
       />,
-    [data?.voices, isError, isLoading, isValidKey, voiceId],
+    [data?.voices, disabled, isError, isLoading, isValidKey, voiceId],
   );
 
   return {
