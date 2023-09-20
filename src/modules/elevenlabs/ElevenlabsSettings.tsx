@@ -50,7 +50,7 @@ export function ElevenlabsSettings() {
       </FormControl>
 
       <FormInputKey
-        label='ElevenLabs API Key'
+        id='elevenlabs-key' label='ElevenLabs API Key'
         rightLabel={requiresKey ? 'required' : '✔️ already set in server'}
         value={apiKey} onChange={setApiKey}
         required={requiresKey} isError={!isValidKey}

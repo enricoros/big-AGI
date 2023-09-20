@@ -53,7 +53,7 @@ export function ProdiaSettings() {
       </FormHelperText>
 
       <FormInputKey
-        label='Prodia API Key'
+        id='prodia-key' label='Prodia API Key'
         rightLabel={requiresKey ? 'required' : '✔️ already set in server'}
         value={apiKey} onChange={setApiKey}
         required={requiresKey} isError={!isValidKey}

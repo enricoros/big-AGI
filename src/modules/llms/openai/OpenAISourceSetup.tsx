@@ -51,7 +51,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormInputKey
-      label={'API Key'}
+      id='openai-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <><Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body-sm' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
         : '✔️ already set in server'

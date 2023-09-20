@@ -58,7 +58,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     {/*</Box>*/}
 
     <FormInputKey
-      label={'OpenRouter API Key'}
+      id='openrouter-key' label='OpenRouter API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>create key</Link>
         : '✔️ already set in server'
