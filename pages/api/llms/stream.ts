@@ -164,7 +164,7 @@ export default async function handler(req: NextRequest): Promise<Response> {
 
       case 'openai':
         headersUrl = openAIAccess(access as any, '/v1/chat/completions');
-        body = openAIChatCompletionPayload(model, history, null, 1, true);
+        body = openAIChatCompletionPayload(model, history, null, null, 1, true);
         vendorStreamParser = parseOpenAIStream();
         break;
     }

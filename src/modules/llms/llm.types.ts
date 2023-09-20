@@ -56,5 +56,5 @@ export interface ModelVendor<TSourceSetup = unknown, TLLMOptions = unknown> {
   initalizeSetup?: () => Partial<TSourceSetup>;
   normalizeSetup: (partialSetup?: Partial<TSourceSetup>) => TSourceSetup;
   callChat: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], maxTokens?: number) => Promise<VChatMessageOut>;
-  callChatWithFunctions: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) => Promise<VChatMessageOrFunctionCallOut>;
+  callChatWithFunctions: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number) => Promise<VChatMessageOrFunctionCallOut>;
 }

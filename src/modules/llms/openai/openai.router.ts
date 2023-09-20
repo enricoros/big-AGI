@@ -56,7 +56,7 @@ export const chatStreamSchema = z.object({
 });
 export type ChatStreamSchema = z.infer<typeof chatStreamSchema>;
 
-const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional() });
+const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional(), forceFunctionName: z.string().optional() });
 
 const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
 
@@ -88,12 +88,12 @@ export const llmOpenAIRouter = createTRPCRouter({
     .output(chatGenerateWithFunctionsOutputSchema)
     .mutation(async ({ input }) => {
 
-      const { access, model, history, functions } = input;
+      const { access, model, history, functions, forceFunctionName } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
         access,
-        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, 1, false),
+        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
         '/v1/chat/completions',
       );
 
@@ -107,7 +107,8 @@ export const llmOpenAIRouter = createTRPCRouter({
         finish_reason = 'stop';
 
       // check for a function output
-      return finish_reason === 'function_call'
+      // NOTE: this includes a workaround for when we requested a function but the model could not deliver
+      return (finish_reason === 'function_call' || 'function_call' in message)
         ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
         : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
     }),
@@ -236,11 +237,11 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   };
 }
 
-export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
-    ...(functions && { functions: functions, function_call: 'auto' }),
+    ...(functions && { functions: functions, function_call: forceFunctionName ? { name: forceFunctionName } : 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
     n,
