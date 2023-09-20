@@ -9,3 +9,4 @@
 * [x] Add all of my SystemPurposes
 * [x] Change goddamned GIFs
 * [ ] Load configs for API keys from the environment
+* [ ] Show selected persona near chat composer

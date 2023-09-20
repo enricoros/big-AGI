@@ -11,7 +11,6 @@ import { apiQuery } from '~/modules/trpc/trpc.client';
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css'
 import '~/common/styles/GithubMarkdown.css';
-import { Brand } from '~/common/brand';
 import { createEmotionCache, theme } from '~/common/theme';
 
 
@@ -36,7 +35,7 @@ function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: 
   return <>
     <CacheProvider value={emotionCache}>
       <Head>
-        <title>{Brand.Title.Common}</title>
+        <title>Carson</title>
         <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
       </Head>
       {/* Rect-query provider */}
