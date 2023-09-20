@@ -43,7 +43,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormInputKey
-      label={'Anthropic API Key'}
+      id='anthropic-key' label='Anthropic API Key'
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
         : '✔️ already set in server'

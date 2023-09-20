@@ -55,8 +55,9 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <FormInputKey
+      id='localai-key' label='LocalAI URL'
       required noKey
-      label='LocalAI URL' rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
       placeholder='e.g., http://127.0.0.1:8080'
       value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
     />
