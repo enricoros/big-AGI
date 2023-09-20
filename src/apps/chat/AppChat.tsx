@@ -34,7 +34,7 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
     description: 'AI-powered responses',
   },
   'immediate-follow-up': {
-    label: 'Chat & Follow-up',
+    label: 'Augmented Chat',
     description: 'Chat with follow-up questions',
     experimental: true,
   },

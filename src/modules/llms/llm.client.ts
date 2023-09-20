@@ -41,9 +41,9 @@ export async function callChatGenerate(llmId: DLLMId, messages: VChatMessageIn[]
   return await vendor.callChat(llm, messages, maxTokens);
 }
 
-export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
+export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
   const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
-  return await vendor.callChatWithFunctions(llm, messages, functions, maxTokens);
+  return await vendor.callChatWithFunctions(llm, messages, functions, forceFunctionName, maxTokens);
 }
 
 
