@@ -16,6 +16,8 @@ export const NewsItems: NewsItem[] = [
     versionName: '1.3.5',
     items: [
       // { text: <>(Labs mode) YouTube personas creator</> },
+      // { text: <>Latex Rendering</>},
+      // { text: <><Typography color='success'>Augmented Chat</Typography> modes</> },
       { text: <>Removed the 20 chats hard limit</>},
       { text: <><Typography color='success' sx={{ fontWeight: 600 }}>OpenRouter</Typography> models full support, incl. GPT4-32k</> },
       { text: <>Backup chats (export all)</> },
