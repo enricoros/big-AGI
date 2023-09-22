@@ -1,12 +1,12 @@
-import { DLLM, ModelVendor } from '../llm.types';
+import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
+import { DLLM, ModelVendor } from '../llm.types';
+import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
 import { AzureIcon } from './AzureIcon';
 import { AzureSourceSetup } from './AzureSourceSetup';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '~/modules/llms/llm.client';
-import { apiAsync } from '~/modules/trpc/trpc.client';
 
 
 // special symbols
@@ -15,8 +15,8 @@ export const isValidAzureApiKey = (apiKey?: string) => !!apiKey && apiKey.length
 
 
 export interface SourceSetupAzure {
+  azureEndpoint: string;
   azureKey: string;
-  azureHost: string;
 }
 
 /** Implementation Notes for the Azure Vendor
@@ -40,7 +40,7 @@ export const ModelVendorAzure: ModelVendor<SourceSetupAzure, LLMOptionsOpenAI> =
   name: 'Azure',
   rank: 14,
   location: 'cloud',
-  instanceLimit: 1,
+  instanceLimit: 2,
 
   // components
   Icon: AzureIcon,
@@ -49,8 +49,8 @@ export const ModelVendorAzure: ModelVendor<SourceSetupAzure, LLMOptionsOpenAI> =
 
   // functions
   normalizeSetup: (partialSetup?: Partial<SourceSetupAzure>): SourceSetupAzure => ({
+    azureEndpoint: '',
     azureKey: '',
-    azureHost: '',
     ...partialSetup,
   }),
   callChat: (llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], maxTokens?: number) => {

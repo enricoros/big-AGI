@@ -10,12 +10,11 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { ModelDescriptionSchema } from '../llm.router';
+import { DModelSourceId } from '../llm.types';
+import { modelDescriptionToDLLM } from '../llm.router';
+import { useModelsStore, useSourceSetup } from '../store-llms';
 
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -70,25 +69,4 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     {isError && <InlineError error={error} />}
 
   </Box>;
-}
-
-
-export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
-  return {
-    id: `${source.id}-${model.id}`,
-    label: model.label,
-    created: model.created || 0,
-    updated: model.updated || 0,
-    description: model.description,
-    tags: [], // ['stream', 'chat'],
-    contextTokens: model.contextWindow,
-    hidden: !!model.hidden,
-    sId: source.id,
-    _source: source,
-    options: {
-      llmRef: model.id,
-      llmTemperature: 0.5,
-      llmResponseTokens: Math.round(model.contextWindow / 8),
-    },
-  };
 }
