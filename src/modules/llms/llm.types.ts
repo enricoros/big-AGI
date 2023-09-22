@@ -8,7 +8,7 @@ export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'oobabooga' | 'o
 
 
 /// Large Language Model - a model that can generate text
-export interface DLLM<TLLMOptions = unknown> {
+export interface DLLM<TLLMOptions = unknown, TModelSource = DModelSource> {
   id: DLLMId;
   label: string;
   created: number | 0;
@@ -20,7 +20,7 @@ export interface DLLM<TLLMOptions = unknown> {
 
   // llm -> source
   sId: DModelSourceId;
-  _source: DModelSource;
+  _source: TModelSource;
 
   // llm-specific
   options: Partial<{ llmRef: string } & TLLMOptions>;

@@ -4,7 +4,6 @@ import { Alert, Box, Button, FormControl, FormLabel, Input, Typography } from '@
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/modules/trpc/trpc.client';
-import { modelDescriptionToDLLM } from '~/modules/llms/anthropic/AnthropicSourceSetup';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
 import { Link } from '~/common/components/Link';
@@ -12,32 +11,31 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId } from '../llm.types';
+import { modelDescriptionToDLLM } from '../llm.router';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
 import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 
 
-export function AzureSourceSetup(props: {
-  sourceId: DModelSourceId
-}) {
+export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
     source, sourceLLMs, updateSetup,
-    normSetup: { azureKey, azureHost },
+    normSetup: { azureEndpoint, azureKey },
   } = useSourceSetup(props.sourceId, ModelVendorAzure.normalizeSetup);
 
   const hasModels = !!sourceLLMs.length;
   const needsUserKey = !hasServerKeyAzure;
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
-  const hostValid = !!asValidURL(azureHost);
-  const hostError = !!azureHost && !hostValid;
+  const hostValid = !!asValidURL(azureEndpoint);
+  const hostError = !!azureEndpoint && !hostValid;
   const shallFetchSucceed = azureKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmAzure.listModels.useQuery({
-    access: { azureHost, azureKey },
+    access: { azureEndpoint, azureKey },
   }, {
     enabled: !hasModels && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
@@ -53,8 +51,8 @@ export function AzureSourceSetup(props: {
       </Box>
       <Input
         variant='outlined'
-        value={azureHost} onChange={event => updateSetup({ azureHost: event.target.value })}
-        placeholder='required: https://...'
+        value={azureEndpoint} onChange={event => updateSetup({ azureEndpoint: event.target.value })}
+        placeholder='https://your-resource-name.openai.azure.com/'
         error={hostError}
       />
     </FormControl>

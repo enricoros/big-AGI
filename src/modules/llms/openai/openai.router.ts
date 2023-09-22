@@ -291,7 +291,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
   };
 }
 
-function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
+export function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({

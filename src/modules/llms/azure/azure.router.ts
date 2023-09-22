@@ -1,18 +1,19 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { historySchema, modelSchema, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
-import { OpenAI } from '~/modules/llms/openai/openai.types';
-import { TRPCError } from '@trpc/server';
-import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '~/modules/llms/llm.router';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+
+import { OpenAI } from '../openai/openai.types';
+import { historySchema, modelSchema, openAIChatCompletionPayload } from '../openai/openai.router';
+import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '../llm.router';
 
 
 // input schemas
 
 const azureAccessSchema = z.object({
+  azureEndpoint: z.string().trim(),
   azureKey: z.string().trim(),
-  azureHost: z.string().trim(),
 });
 
 const chatGenerateSchema = z.object({ access: azureAccessSchema, model: modelSchema, history: historySchema });
@@ -60,7 +61,7 @@ export const llmAzureRouter = createTRPCRouter({
       // fetch the Azure OpenAI models
       // HACK: this method may stop working soon - see: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835,
       const azureModels = await azureOpenaiGET(
-        input.access.azureKey, input.access.azureHost,
+        input.access.azureEndpoint, input.access.azureKey,
         `/openai/deployments?api-version=2023-03-15-preview`,
       );
 
@@ -80,10 +81,14 @@ export const llmAzureRouter = createTRPCRouter({
 
       const { access, model, history } = input;
 
+      // https://eoai1uc1.openai.azure.com/openai/deployments/my-gpt-35-turbo-1/chat/completions?api-version=2023-07-01-preview
+      // https://eoai1uc1.openai.azure.com/openai/deployments?api-version=2023-03-15-preview
+
       const wireCompletions = await azureOpenAIPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
-        access.azureKey, access.azureHost,
+        access.azureEndpoint, access.azureKey,
         openAIChatCompletionPayload(model, history, null, null, 1, false),
-        '/v1/chat/completions',
+        //  '/v1/chat/completions',
+        `/openai/deployments/${input.model.id}/chat/completions?api-version=2023-09-01-preview`,
       );
 
       // expect a single output
@@ -99,7 +104,7 @@ export const llmAzureRouter = createTRPCRouter({
       // return parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
       return {
         role: 'assistant',
-        content: 'TESTXXX',
+        content: message.content || '',
         finish_reason: finish_reason as 'stop' | 'length',
       };
     }),
@@ -149,29 +154,29 @@ const knownAzureModels: Partial<ModelDescriptionSchema>[] = [
 ];
 
 
-async function azureOpenaiGET<TOut>(key: string, endpoint: string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = azureOpenAIAccess(key, endpoint, apiPath);
+async function azureOpenaiGET<TOut>(endpoint: string, key: string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = azureOpenAIAccess(endpoint, key, apiPath);
   return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Azure OpenAI');
 }
 
-async function azureOpenAIPOST<TOut, TPostBody>(key: string, endpoint: string, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = azureOpenAIAccess(key, endpoint, apiPath);
+async function azureOpenAIPOST<TOut, TPostBody>(endpoint: string, key: string, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = azureOpenAIAccess(endpoint, key, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Azure OpenAI');
 }
 
-function azureOpenAIAccess(key: string, endpoint: string, apiPath: string): { headers: HeadersInit, url: string } {
+function azureOpenAIAccess(endpoint: string, key: string, apiPath: string): { headers: HeadersInit, url: string } {
+  // API endpoint
+  let azureEndpoint = endpoint || process.env.AZURE_OPENAI_API_ENDPOINT || '';
+  if (!azureEndpoint.startsWith('http'))
+    azureEndpoint = `https://${azureEndpoint}`;
+  if (azureEndpoint.endsWith('/') && apiPath.startsWith('/'))
+    azureEndpoint = azureEndpoint.slice(0, -1);
+
   // API key
   const azureKey = key || process.env.AZURE_OPENAI_API_KEY || '';
 
-  // API endpoint
-  let azureHost = endpoint || process.env.AZURE_OPENAI_API_ENDPOINT || '';
-  if (!azureHost.startsWith('http'))
-    azureHost = `https://${azureHost}`;
-  if (azureHost.endsWith('/') && apiPath.startsWith('/'))
-    azureHost = azureHost.slice(0, -1);
-
   // warn if no key - only for default (non-overridden) hosts
-  if (!azureKey || !azureHost)
+  if (!azureKey || !azureEndpoint)
     throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
   return {
@@ -179,6 +184,6 @@ function azureOpenAIAccess(key: string, endpoint: string, apiPath: string): { he
       ...(azureKey && { 'api-key': azureKey }),
       'Content-Type': 'application/json',
     },
-    url: azureHost + apiPath,
+    url: azureEndpoint + apiPath,
   };
 }
