@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { historySchema, modelSchema } from '~/modules/llms/openai/openai.router';
-import { listModelsOutputSchema, LLM_IF_OAI_Chat } from '~/modules/llms/llm.router';
+import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '~/modules/llms/llm.router';
 
 import { AnthropicWire } from './anthropic.types';
 
@@ -77,58 +77,57 @@ export const llmAnthropicRouter = createTRPCRouter({
   listModels: publicProcedure
     .input(listModelsSchema)
     .output(listModelsOutputSchema)
-    .query(async () => {
-      const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
-      return {
-        models: [
-          {
-            id: 'claude-2.0',
-            label: 'Claude 2',
-            created: roundTime('2023-07-11'),
-            description: 'Claude-2 is the latest version of Claude',
-            interfaces: [LLM_IF_OAI_Chat],
-            contextWindow: 100000,
-          },
-          {
-            id: 'claude-instant-1.2',
-            label: 'Claude Instant 1.2',
-            created: roundTime('2023-08-09'),
-            description: 'Precise and faster',
-            interfaces: [LLM_IF_OAI_Chat],
-            contextWindow: 100000,
-          },
-          {
-            id: 'claude-instant-1.1',
-            label: 'Claude Instant 1.1',
-            created: roundTime('2023-03-14'),
-            description: 'Precise and fast',
-            contextWindow: 100000,
-            interfaces: [LLM_IF_OAI_Chat],
-            hidden: true,
-          },
-          {
-            id: 'claude-1.3',
-            label: 'Claude 1.3',
-            created: roundTime('2023-03-14'),
-            description: 'Claude 1.3 is the latest version of Claude v1',
-            contextWindow: 100000,
-            interfaces: [LLM_IF_OAI_Chat],
-            hidden: true,
-          },
-          {
-            id: 'claude-1.0',
-            label: 'Claude 1',
-            created: roundTime('2023-03-14'),
-            description: 'Claude 1.0 is the first version of Claude',
-            contextWindow: 9000,
-            interfaces: [LLM_IF_OAI_Chat],
-            hidden: true,
-          },
-        ],
-      };
-    }),
+    .query(async () => ({ models: hardcodedAnthropicModels })),
 
 });
+
+const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
+
+const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
+  {
+    id: 'claude-2.0',
+    label: 'Claude 2',
+    created: roundTime('2023-07-11'),
+    description: 'Claude-2 is the latest version of Claude',
+    interfaces: [LLM_IF_OAI_Chat],
+    contextWindow: 100000,
+  },
+  {
+    id: 'claude-instant-1.2',
+    label: 'Claude Instant 1.2',
+    created: roundTime('2023-08-09'),
+    description: 'Precise and faster',
+    interfaces: [LLM_IF_OAI_Chat],
+    contextWindow: 100000,
+  },
+  {
+    id: 'claude-instant-1.1',
+    label: 'Claude Instant 1.1',
+    created: roundTime('2023-03-14'),
+    description: 'Precise and fast',
+    contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  {
+    id: 'claude-1.3',
+    label: 'Claude 1.3',
+    created: roundTime('2023-03-14'),
+    description: 'Claude 1.3 is the latest version of Claude v1',
+    contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  {
+    id: 'claude-1.0',
+    label: 'Claude 1',
+    created: roundTime('2023-03-14'),
+    description: 'Claude 1.0 is the first version of Claude',
+    contextWindow: 9000,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+];
 
 type AccessSchema = z.infer<typeof anthropicAccessSchema>;
 type ModelSchema = z.infer<typeof modelSchema>;
