@@ -1,12 +1,13 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { historySchema, modelSchema } from '~/modules/llms/openai/openai.router';
+import { listModelsOutputSchema, LLM_IF_OAI_Chat } from '~/modules/llms/llm.router';
 
 import { AnthropicWire } from './anthropic.types';
-import { TRPCError } from '@trpc/server';
 
 
 // Input Schemas
@@ -27,17 +28,6 @@ const chatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
   content: z.string(),
   finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
-});
-
-const listModelsOutputSchema = z.object({
-  models: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    created: z.number(),
-    description: z.string(),
-    contextWindow: z.number(),
-    hidden: z.boolean().optional(),
-  })),
 });
 
 
@@ -93,40 +83,45 @@ export const llmAnthropicRouter = createTRPCRouter({
         models: [
           {
             id: 'claude-2.0',
-            name: 'Claude 2',
+            label: 'Claude 2',
             created: roundTime('2023-07-11'),
             description: 'Claude-2 is the latest version of Claude',
+            interfaces: [LLM_IF_OAI_Chat],
             contextWindow: 100000,
           },
           {
             id: 'claude-instant-1.2',
-            name: 'Claude Instant 1.2',
+            label: 'Claude Instant 1.2',
             created: roundTime('2023-08-09'),
             description: 'Precise and faster',
+            interfaces: [LLM_IF_OAI_Chat],
             contextWindow: 100000,
           },
           {
             id: 'claude-instant-1.1',
-            name: 'Claude Instant 1.1',
+            label: 'Claude Instant 1.1',
             created: roundTime('2023-03-14'),
             description: 'Precise and fast',
             contextWindow: 100000,
+            interfaces: [LLM_IF_OAI_Chat],
             hidden: true,
           },
           {
             id: 'claude-1.3',
-            name: 'Claude 1.3',
+            label: 'Claude 1.3',
             created: roundTime('2023-03-14'),
             description: 'Claude 1.3 is the latest version of Claude v1',
             contextWindow: 100000,
+            interfaces: [LLM_IF_OAI_Chat],
             hidden: true,
           },
           {
             id: 'claude-1.0',
-            name: 'Claude 1',
+            label: 'Claude 1',
             created: roundTime('2023-03-14'),
             description: 'Claude 1.0 is the first version of Claude',
             contextWindow: 9000,
+            interfaces: [LLM_IF_OAI_Chat],
             hidden: true,
           },
         ],
