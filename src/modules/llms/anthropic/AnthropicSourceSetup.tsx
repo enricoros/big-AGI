@@ -73,7 +73,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   return {
     id: `${source.id}-${model.id}`,
     label: model.label,
