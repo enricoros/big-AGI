@@ -47,8 +47,9 @@ export function AzureSourceSetup(props: {
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormControl>
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1, alignItems: 'baseline', justifyContent: 'space-between' }}>
         <FormLabel>Azure Endpoint</FormLabel>
+        <Link level='body-sm' href='https://oai.azure.com/portal/deployment' target='_blank'>deployments</Link>
       </Box>
       <Input
         variant='outlined'

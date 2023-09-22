@@ -11,8 +11,8 @@ declare namespace NodeJS {
     OPENAI_API_HOST: string;
 
     // LLM: Azure OpenAI
+    AZURE_OPENAI_API_ENDPOINT: string;
     AZURE_OPENAI_API_KEY: string;
-    AZURE_OPENAI_API_HOST: string;
 
     // LLM: Anthropic
     ANTHROPIC_API_KEY: string;

@@ -48,9 +48,31 @@ const wireAzureListDeploymentsSchema = z.object({
 
 export const llmAzureRouter = createTRPCRouter({
 
-  /**
-   * Chat-based message generation
+  /* List the Azure models
+   * Small complexity arises here as the models are called 'deployments' within allocated Azure 'endpoints'.
+   * We use an unofficial API to list the deployments, and map them to models descriptions.
    */
+  listModels: publicProcedure
+    .input(listModelsSchema)
+    .output(listModelsOutputSchema)
+    .query(async ({ input }) => {
+
+      // fetch the Azure OpenAI models
+      // HACK: this method may stop working soon - see: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835,
+      const azureModels = await azureOpenaiGET(
+        input.access.azureKey, input.access.azureHost,
+        `/openai/deployments?api-version=2023-03-15-preview`,
+      );
+
+      // parse and validate output, and take the GPT models only (e.g. no 'whisper')
+      const models = wireAzureListDeploymentsSchema.parse(azureModels).data;
+      return {
+        models: models.filter(m => m.model.includes('gpt')).map(azureModelToModelDescription),
+      };
+    }),
+
+
+  /* Chat-based message generation */
   chatGenerate: publicProcedure
     .input(chatGenerateSchema)
     .output(chatGenerateOutputSchema)
@@ -82,80 +104,50 @@ export const llmAzureRouter = createTRPCRouter({
       };
     }),
 
-
-  /**
-   * List the Azure models
-   */
-  listModels: publicProcedure
-    .input(listModelsSchema)
-    .output(listModelsOutputSchema)
-    .query(async ({ input }) => {
-
-      // fetch the Azure OpenAI models
-      // HACK: this method may stop working soon - see: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835,
-      const azureModels = await azureOpenaiGET(
-        input.access.azureKey, input.access.azureHost,
-        `/openai/deployments?api-version=2023-03-15-preview`,
-      );
-
-      // take the GPT models only (e.g. no whisper)
-      const models = wireAzureListDeploymentsSchema.parse(azureModels).data;
-      for (const model of models) {
-        if (model.model.includes('gpt'))
-          console.log('model', model);
-      }
-
-      // output
-      return {
-        models: [], //models.map(azureModelToModelDescription),
-      };
-    }),
-
 });
 
 
-// this will help with adding metadata to the models
-const knownAzureModels = [
-  {
-    id: 'gpt-35-turbo',
-    label: '3.5-Turbo',
-    context: 4097,
-    description: 'Fair speed and smarts',
-  },
-  {
-    id: 'gpt-35-turbo-16k',
-    label: '3.5-Turbo-16k',
-    context: 16384,
-    description: 'Fair speed and smarts, large context',
-  },
-  {
-    id: 'gpt-4',
-    label: 'GPT-4',
-    context: 8192,
-    description: 'Insightful, big thinker, slower, pricey',
-  },
-  {
-    id: 'gpt-4-32k',
-    label: 'GPT-4-32k',
-    context: 32768,
-    description: 'Largest context window for big problems',
-  },
-];
-
-
-function azureModelToModelDescription(model: { id: string, created_at: number, updated_at: number }): ModelDescriptionSchema {
-  const knownModel = knownAzureModels.find(m => m.id === model.id);
+function azureModelToModelDescription(model: { id: string, model: string, created_at: number, updated_at: number }): ModelDescriptionSchema {
+  const knownModel = knownAzureModels.find(m => m.id === model.model);
   return {
     id: model.id,
     label: knownModel?.label || model.id,
     created: model.created_at,
     updated: model.updated_at || model.created_at,
     description: knownModel?.description || 'Unknown model type, please let us know',
-    contextWindow: knownModel?.context || 2048,
+    contextWindow: knownModel?.contextWindow || 2048,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: !knownModel,
   };
 }
+
+const knownAzureModels: Partial<ModelDescriptionSchema>[] = [
+  {
+    id: 'gpt-35-turbo',
+    label: '3.5-Turbo',
+    contextWindow: 4097,
+    description: 'Fair speed and smarts',
+  },
+  {
+    id: 'gpt-35-turbo-16k',
+    label: '3.5-Turbo-16k',
+    contextWindow: 16384,
+    description: 'Fair speed and smarts, large context',
+  },
+  {
+    id: 'gpt-4',
+    label: 'GPT-4',
+    contextWindow: 8192,
+    description: 'Insightful, big thinker, slower, pricey',
+  },
+  {
+    id: 'gpt-4-32k',
+    label: 'GPT-4-32k',
+    contextWindow: 32768,
+    description: 'Largest context window for big problems',
+  },
+];
+
 
 async function azureOpenaiGET<TOut>(key: string, endpoint: string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = azureOpenAIAccess(key, endpoint, apiPath);
@@ -172,7 +164,7 @@ function azureOpenAIAccess(key: string, endpoint: string, apiPath: string): { he
   const azureKey = key || process.env.AZURE_OPENAI_API_KEY || '';
 
   // API endpoint
-  let azureHost = endpoint || process.env.AZURE_OPENAI_API_HOST || '';
+  let azureHost = endpoint || process.env.AZURE_OPENAI_API_ENDPOINT || '';
   if (!azureHost.startsWith('http'))
     azureHost = `https://${azureHost}`;
   if (azureHost.endsWith('/') && apiPath.startsWith('/'))
