@@ -54,7 +54,7 @@ export interface ModelVendor<TSourceSetup = unknown, TLLMOptions = unknown> {
   LLMOptionsComponent: React.ComponentType<{ llm: DLLM }>;
 
   // functions
-  initalizeSetup?: () => Partial<TSourceSetup>;
+  initializeSetup?: () => TSourceSetup;
   normalizeSetup: (partialSetup?: Partial<TSourceSetup>) => TSourceSetup;
   callChat: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], maxTokens?: number) => Promise<VChatMessageOut>;
   callChatWithFunctions: (llm: DLLM<TLLMOptions>, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number) => Promise<VChatMessageOrFunctionCallOut>;

@@ -40,7 +40,7 @@ export const ModelVendorOpenRouter: ModelVendor<SourceSetupOpenRouter, LLMOption
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  initalizeSetup: (): SourceSetupOpenRouter => ({
+  initializeSetup: () => ({
     oaiHost: 'https://openrouter.ai/api',
     oaiKey: '',
   }),

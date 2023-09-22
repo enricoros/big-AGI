@@ -5,7 +5,7 @@ import type { DMessage } from '~/common/state/store-chats';
 import type { ChatStreamSchema } from './openai/openai.router';
 import type { DLLM, DLLMId, ModelVendor } from './llm.types';
 import type { OpenAI } from './openai/openai.types';
-import { ModelVendorAnthropic, SourceSetupAnthropic } from '~/modules/llms/anthropic/anthropic.vendor';
+import { ModelVendorAnthropic, SourceSetupAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
 import { findVendorById } from './vendor.registry';
 import { useModelsStore } from './store-llms';
