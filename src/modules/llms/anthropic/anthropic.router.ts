@@ -17,7 +17,7 @@ const anthropicAccessSchema = z.object({
   anthropicHost: z.string().trim(),
 });
 
-export const chatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
+const chatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
 
 const listModelsSchema = z.object({ access: anthropicAccessSchema });
 
