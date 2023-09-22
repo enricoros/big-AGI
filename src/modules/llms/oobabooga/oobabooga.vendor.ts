@@ -23,7 +23,7 @@ export const ModelVendorOoobabooga: ModelVendor<SourceSetupOobabooga, LLMOptions
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  initalizeSetup: () => ({
+  initializeSetup: () => ({
     oaiHost: 'http://127.0.0.1:5001',
   }),
   normalizeSetup: (partialSetup?: Partial<SourceSetupOobabooga>) => ({

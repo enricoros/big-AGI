@@ -1,6 +1,6 @@
 import { DModelSource, DModelSourceId, ModelVendor, ModelVendorId } from './llm.types';
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
-import { ModelVendorAzure } from '~/modules/llms/azure/azure.vendor';
+import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
@@ -16,9 +16,6 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
-  // azure_openai: { id: 'azure_openai', name: 'Azure OpenAI', instanceLimit: 1, location: 'cloud', rank: 30 },
-  // google_vertex: { id: 'google_vertex', name: 'Google Vertex', instanceLimit: 1, location: 'cloud', rank: 40 },
-  // anthropic: { id: 'anthropic', name: 'Anthropic', instanceLimit: 1, location: 'cloud', rank: 50 },
 };
 
 const DEFAULT_MODEL_VENDOR: ModelVendorId = 'openai';
@@ -55,6 +52,6 @@ export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources
     id: sourceId,
     label: vendor.name + (sourceN > 0 ? ` #${sourceN}` : ''),
     vId: vendorId,
-    setup: vendor.initalizeSetup?.() || {},
+    setup: vendor.initializeSetup?.() || {},
   };
 }
