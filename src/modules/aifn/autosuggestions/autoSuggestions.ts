@@ -25,7 +25,7 @@ const suggestUserFollowUpFn: VChatFunctionIn = {
 
 const suggestPlantUMLFn: VChatFunctionIn = {
   name: 'draw_plantuml_diagram',
-  description: 'Generates a PlantUML diagram from the last message, if applicable, relevant, and no other diagrams are present.',
+  description: 'Generates a PlantUML diagram or mindmap from the last message, if applicable, relevant, and no other diagrams are present.',
   parameters: {
     type: 'object',
     properties: {
@@ -35,7 +35,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
       },
       code: {
         type: 'string',
-        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram, or an empty string. Quotations should be used, external references and spaces in participants/actors should be avoided.',
+        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap, or an empty string. Quotations should be used, external references and spaces in participants/actors should be avoided.',
       },
     },
     required: ['type', 'code'],
@@ -97,7 +97,7 @@ export async function autoSuggestions(conversationId: string, assistantMessageId
 
         // validate the code
         const plantUML = code.trim();
-        if (!plantUML.startsWith('@startuml') || !plantUML.endsWith('@enduml')) return;
+        if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) return;
 
         // append the PlantUML diagram to the assistant response
         assistantMessageText += `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`;

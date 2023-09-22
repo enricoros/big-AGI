@@ -29,7 +29,13 @@ function RenderCodeImpl(props: {
   const isSVG = blockCode.startsWith('<svg') && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
 
-  const isPlantUML = blockCode.startsWith('@startuml') && blockCode.endsWith('@enduml');
+  const isPlantUML =
+    (blockCode.startsWith('@startuml') && blockCode.endsWith('@enduml'))
+    || (blockCode.startsWith('@startmindmap') && blockCode.endsWith('@endmindmap'))
+    || (blockCode.startsWith('@startsalt') && blockCode.endsWith('@endsalt'))
+    || (blockCode.startsWith('@startwbs') && blockCode.endsWith('@endwbs'))
+    || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
+
   let renderPlantUML = isPlantUML && showPlantUML;
   const { data: plantUmlHtmlData } = useQuery({
     enabled: renderPlantUML,
