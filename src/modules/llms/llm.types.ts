@@ -12,6 +12,7 @@ export interface DLLM<TLLMOptions = unknown> {
   id: DLLMId;
   label: string;
   created: number | 0;
+  updated?: number | 0;
   description: string;
   tags: string[]; // UNUSED for now
   contextTokens: number;

@@ -10,9 +10,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
-
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { ModelDescriptionSchema } from '../llm.router';
+
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 import { useModelsStore, useSourceSetup } from '../store-llms';
 
@@ -36,7 +37,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     access: { anthropicKey, anthropicHost },
   }, {
     enabled: !hasModels && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => anthropicModelToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
 
@@ -72,11 +73,12 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function anthropicModelToDLLM(model: { id: string, created: number, description: string, name: string, contextWindow: number, hidden?: boolean }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   return {
     id: `${source.id}-${model.id}`,
-    label: model.name,
-    created: model.created,
+    label: model.label,
+    created: model.created || 0,
+    updated: model.updated || 0,
     description: model.description,
     tags: [], // ['stream', 'chat'],
     contextTokens: model.contextWindow,

@@ -73,9 +73,13 @@ function getLLMAndVendorOrThrow(llmId: DLLMId) {
  * @param llm the LLM model
  * @param messages the history of messages to send to the API endpoint
  * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
- * @param editMessage callback when a piece of a message (text, model name, typing..) is received
+ * @param updateMessage callback when a piece of a message (text, model name, typing..) is received
  */
-async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatMessageIn[], abortSignal: AbortSignal, editMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void) {
+async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
+  vendor: ModelVendor<TSourceSetup>, llm: DLLM<TLLMOptions>, messages: VChatMessageIn[],
+  abortSignal: AbortSignal,
+  updateMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void,
+) {
 
   // access params (source)
   const sourceSetup = vendor.normalizeSetup(llm._source.setup);
@@ -105,14 +109,14 @@ async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatM
         if (issues.size) {
           const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
           // do not proceed with the streaming request
-          return editMessage({
+          return updateMessage({
             text: `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`,
             typing: false,
           }, true);
         }
       } catch (error: any) {
         // as the moderation check was requested, we cannot proceed in case of error
-        return editMessage({
+        return updateMessage({
           text: `[Issue] There was an error while checking for harmful content. ${error?.toString()}`,
           typing: false,
         }, true);
@@ -148,7 +152,7 @@ async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatM
 
   if (!response.ok || !response.body) {
     const errorMessage = response.body ? await response.text() : 'No response from server';
-    return editMessage({ text: errorMessage, typing: false }, true);
+    return updateMessage({ text: errorMessage, typing: false }, true);
   }
 
   const responseReader = response.body.getReader();
@@ -176,7 +180,7 @@ async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatM
       parsedFirstPacket = true;
       try {
         const parsed: OpenAI.API.Chat.StreamingFirstResponse = JSON.parse(json);
-        editMessage({ originLLM: parsed.model }, false);
+        updateMessage({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore
         console.log('vendorStreamChat: error parsing JSON:', e);
@@ -184,6 +188,6 @@ async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatM
     }
 
     if (incrementalText)
-      editMessage({ text: incrementalText }, false);
+      updateMessage({ text: incrementalText }, false);
   }
 }
