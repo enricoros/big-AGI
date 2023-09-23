@@ -9,9 +9,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { ModelVendorOoobabooga } from './oobabooga.vendor';
 
 

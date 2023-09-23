@@ -10,7 +10,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
+import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';

@@ -11,7 +11,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { IModelVendor, ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
 import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendor.registry';
-import { hasServerKeyOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { hasServerKeyOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';

@@ -1,6 +1,6 @@
 import DevicesIcon from '@mui/icons-material/Devices';
 
-import { IModelVendor } from '../vendors/IModelVendor';
+import { IModelVendor } from '../IModelVendor';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { DLLM, useModelsStore } from '../store-llms';
+import { DLLM, useModelsStore } from '../../store-llms';
 import { LLMOptionsOpenAI } from './openai.vendor';
 
 function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {

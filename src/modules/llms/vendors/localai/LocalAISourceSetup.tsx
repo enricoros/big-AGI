@@ -14,7 +14,7 @@ import { settingsGap } from '~/common/theme';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { ModelVendorLocalAI } from './localai.vendor';
 
 
