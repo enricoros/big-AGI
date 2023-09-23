@@ -13,10 +13,10 @@ import { ModelVendorOpenAI, SourceSetupOpenAI } from '../vendors/openai/openai.v
 
 
 /**
- * Chat streaming function on the client side. This decodes the (text) streaming response
- * from the /api/llms/stream endpoint, and signals updates via our callback.
+ * Client side chat generation, with streaming. This decodes the (text) streaming response from
+ * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
  *
- * Vendor-specific implementation is on the backend (API) code. This function tries to be
+ * Vendor-specific implementation is on our server backend (API) code. This function tries to be
  * as generic as possible.
  *
  * @param llmId LLM to use
@@ -90,7 +90,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
     throw new Error(`Error in openAI configuration for model ${llm.id}: ${llm.options}`);
 
-  // call /api/llms/stream
+  // connect to the server-side streaming endpoint
   const response = await fetch('/api/llms/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,6 @@
 import type { OpenAI } from './server/openai.wiretypes';
 import { DLLMId } from '../store-llms';
-
-import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendor.registry';
+import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
 
 export interface VChatMessageIn {
