@@ -7,7 +7,7 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 import { historySchema, modelSchema } from '~/modules/llms/openai/openai.router';
 import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '~/modules/llms/llm.router';
 
-import { AnthropicWire } from './anthropic.types';
+import { AnthropicWire } from './anthropic.wiretypes';
 
 
 // Input Schemas
