@@ -4,7 +4,7 @@ import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 
 import { DLLM } from '../store-llms';
 import { IModelVendor } from '../vendors/IModelVendor';
-import { VChatMessageIn, VChatMessageOut } from '../llm.client';
+import { VChatMessageIn, VChatMessageOut } from '../transports/chatGenerate';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

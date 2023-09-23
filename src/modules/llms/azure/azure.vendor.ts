@@ -4,7 +4,7 @@ import { AzureIcon } from '~/common/components/icons/AzureIcon';
 
 import { DLLM } from '../store-llms';
 import { IModelVendor } from '../vendors/IModelVendor';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
