@@ -1,18 +1,19 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
+import { AzureIcon } from '~/common/components/icons/AzureIcon';
+
 import { DLLM, ModelVendor } from '../llm.types';
-import { LLMOptionsOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
-import { AzureIcon } from './AzureIcon';
+import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+
 import { AzureSourceSetup } from './AzureSourceSetup';
 
 
 // special symbols
 export const hasServerKeyAzure = !!process.env.HAS_SERVER_KEY_AZURE_OPENAI;
 export const isValidAzureApiKey = (apiKey?: string) => !!apiKey && apiKey.length >= 32;
-
 
 export interface SourceSetupAzure {
   azureEndpoint: string;

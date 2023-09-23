@@ -1,9 +1,10 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+
 import { DLLM, ModelVendor } from '../llm.types';
 import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
-import { OpenAIIcon } from './OpenAIIcon';
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
 
@@ -11,7 +12,6 @@ import { OpenAISourceSetup } from './OpenAISourceSetup';
 // special symbols
 export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
-
 
 export interface SourceSetupOpenAI {
   oaiKey: string;

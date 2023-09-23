@@ -1,10 +1,12 @@
+import DevicesIcon from '@mui/icons-material/Devices';
+
 import { ModelVendor } from '../llm.types';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import DevicesIcon from '@mui/icons-material/Devices';
 import { LocalAISourceSetup } from './LocalAISourceSetup';
+
 
 export interface SourceSetupLocalAI {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)

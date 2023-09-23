@@ -1,10 +1,12 @@
+import { OobaboogaIcon } from '~/common/components/icons/OobaboogaIcon';
+
 import { ModelVendor } from '../llm.types';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import { OobaboogaIcon } from './OobaboogaIcon';
 import { OobaboogaSourceSetup } from './OobaboogaSourceSetup';
+
 
 export interface SourceSetupOobabooga {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
