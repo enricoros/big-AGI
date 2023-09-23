@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { OpenAI } from '../openai/openai.types';
-import { historySchema, modelSchema, openAIChatCompletionPayload } from '../openai/openai.router';
+import { chatGenerateOutputSchema, historySchema, modelSchema, openAIChatCompletionPayload } from '../openai/openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.router';
 import { openAIModelToModelDescription } from '../openai/openai.data';
 
@@ -17,18 +17,9 @@ const azureAccessSchema = z.object({
   azureKey: z.string().trim(),
 });
 
-const chatGenerateSchema = z.object({ access: azureAccessSchema, model: modelSchema, history: historySchema });
+const azureChatGenerateSchema = z.object({ access: azureAccessSchema, model: modelSchema, history: historySchema });
 
-const listModelsSchema = z.object({ access: azureAccessSchema });
-
-
-// Output Schemas
-
-const chatGenerateOutputSchema = z.object({
-  role: z.enum(['assistant', 'system', 'user']),
-  content: z.string(),
-  finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
-});
+const azureListModelsSchema = z.object({ access: azureAccessSchema });
 
 
 // Wire schemas
@@ -50,17 +41,19 @@ const wireAzureListDeploymentsSchema = z.object({
 
 export const llmAzureRouter = createTRPCRouter({
 
-  /* List the Azure models
-   * Small complexity arises here as the models are called 'deployments' within allocated Azure 'endpoints'.
+  /* Azure: list models
+   *
+   * Some complexity arises here as the models are called 'deployments' within allocated Azure 'endpoints'.
    * We use an unofficial API to list the deployments, and map them to models descriptions.
+   *
+   * See: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835 for our input on the issue.
    */
   listModels: publicProcedure
-    .input(listModelsSchema)
+    .input(azureListModelsSchema)
     .output(listModelsOutputSchema)
     .query(async ({ input }) => {
 
-      // fetch the Azure OpenAI models
-      // HACK: this method may stop working soon - see: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835,
+      // fetch the Azure OpenAI 'deployments'
       const azureModels = await azureOpenaiGET(
         input.access.azureEndpoint, input.access.azureKey,
         `/openai/deployments?api-version=2023-03-15-preview`,
@@ -84,10 +77,9 @@ export const llmAzureRouter = createTRPCRouter({
       return { models };
     }),
 
-
-  /* Chat-based message generation */
+  /* Azure: Chat generation */
   chatGenerate: publicProcedure
-    .input(chatGenerateSchema)
+    .input(azureChatGenerateSchema)
     .output(chatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 

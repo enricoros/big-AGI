@@ -4,7 +4,7 @@ import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent
 import { AnthropicWire } from '~/modules/llms/anthropic/anthropic.wiretypes';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { anthropicAccess, anthropicCompletionRequest } from '~/modules/llms/anthropic/anthropic.router';
-import { chatStreamSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
+import { openAIChatStreamSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
 
 
 /**
@@ -145,7 +145,7 @@ export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
 export default async function handler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { vendorId, access, model, history } = chatStreamSchema.parse(await req.json());
+  const { vendorId, access, model, history } = openAIChatStreamSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
   let upstreamResponse: Response;
