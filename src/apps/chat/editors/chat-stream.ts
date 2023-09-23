@@ -1,5 +1,5 @@
-import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId } from '../../../data';
+import { DLLMId } from '~/modules/llms/store-llms';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';

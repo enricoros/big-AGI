@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { DLLMId } from '~/modules/llms/llm.types';
-import { findVendorById } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 
 export function VendorLLMOptions(props: { id: DLLMId }) {

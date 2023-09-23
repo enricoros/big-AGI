@@ -12,11 +12,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { ModelVendorLocalAI } from './localai.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 const urlSchema = z.string().url().startsWith('http');

@@ -2,13 +2,15 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import type { ChatStreamSchema } from './openai/openai.router';
-import type { DLLM, DLLMId, ModelVendor } from './llm.types';
-import type { OpenAI } from './openai/openai.types';
+import { ChatStreamSchema } from './openai/openai.router';
 import { ModelVendorAnthropic, SourceSetupAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
-import { findVendorById } from './vendor.registry';
-import { useModelsStore } from './store-llms';
+import { OpenAI } from './openai/openai.types';
+
+import { IModelVendor } from './vendors/IModelVendor';
+import { findVendorById } from './vendors/vendor.registry';
+
+import { DLLM, DLLMId, useModelsStore } from './store-llms';
 
 
 export interface VChatMessageIn {
@@ -76,7 +78,7 @@ function getLLMAndVendorOrThrow(llmId: DLLMId) {
  * @param updateMessage callback when a piece of a message (text, model name, typing..) is received
  */
 async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
-  vendor: ModelVendor<TSourceSetup>, llm: DLLM<TLLMOptions>, messages: VChatMessageIn[],
+  vendor: IModelVendor<TSourceSetup>, llm: DLLM<TLLMOptions>, messages: VChatMessageIn[],
   abortSignal: AbortSignal,
   updateMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void,
 ) {

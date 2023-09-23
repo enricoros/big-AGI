@@ -1,6 +1,6 @@
 import { OpenRouterIcon } from '~/common/components/icons/OpenRouterIcon';
 
-import { ModelVendor } from '../llm.types';
+import { IModelVendor } from '../vendors/IModelVendor';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -28,7 +28,7 @@ export interface SourceSetupOpenRouter {
  *  [x] decide whether to do UI work to improve the appearance - prioritized models
  *  [x] works!
  */
-export const ModelVendorOpenRouter: ModelVendor<SourceSetupOpenRouter, LLMOptionsOpenAI> = {
+export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptionsOpenAI> = {
   id: 'openrouter',
   name: 'OpenRouter',
   rank: 25,

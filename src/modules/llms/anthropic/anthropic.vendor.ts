@@ -2,7 +2,8 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 
-import { DLLM, ModelVendor } from '../llm.types';
+import { DLLM } from '../store-llms';
+import { IModelVendor } from '../vendors/IModelVendor';
 import { VChatMessageIn, VChatMessageOut } from '../llm.client';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
@@ -20,7 +21,7 @@ export interface SourceSetupAnthropic {
   anthropicHost: string;
 }
 
-export const ModelVendorAnthropic: ModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI> = {
+export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI> = {
   id: 'anthropic',
   name: 'Anthropic',
   rank: 13,

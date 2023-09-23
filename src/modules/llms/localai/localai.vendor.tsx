@@ -1,6 +1,6 @@
 import DevicesIcon from '@mui/icons-material/Devices';
 
-import { ModelVendor } from '../llm.types';
+import { IModelVendor } from '../vendors/IModelVendor';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -12,7 +12,7 @@ export interface SourceSetupLocalAI {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorLocalAI: ModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI> = {
+export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,

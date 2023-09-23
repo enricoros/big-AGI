@@ -12,9 +12,8 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { ModelVendorOoobabooga } from './oobabooga.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
