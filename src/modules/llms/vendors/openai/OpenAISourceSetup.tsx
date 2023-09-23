@@ -11,9 +11,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import type { ModelDescriptionSchema } from '../../transports/server/server.common';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
+import { openAIModelToModelDescription } from './openai.data';
 
 
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
@@ -152,65 +153,46 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-// this will help with adding metadata to the models
-const knownBases = [
-  {
-    id: 'gpt-4-32k-0613',
-    label: 'GPT-4-32k (0613)',
-    context: 32768,
-    description: 'Largest context window for big problems',
-  },
-  {
-    id: 'gpt-4',
-    label: 'GPT-4',
-    context: 8192,
-    description: 'Insightful, big thinker, slower, pricey',
-  },
-  {
-    id: 'gpt-3.5-turbo-instruct',
-    label: '3.5-Turbo-Instruct',
-    context: 4097,
-    description: 'Not for Chat',
-  },
-  {
-    id: 'gpt-3.5-turbo-16k',
-    label: '3.5-Turbo-16k',
-    context: 16384,
-    description: 'Fair speed and smarts, large context',
-  },
-  {
-    id: 'gpt-3.5-turbo',
-    label: '3.5-Turbo',
-    context: 4097,
-    description: 'Fair speed and smarts',
-  },
-  {
-    id: '',
-    label: '?:',
-    context: 4096,
-    description: 'Unknown, please let us know the ID',
-  },
-];
-
-
 function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
-  const base = knownBases.find(base => model.id.startsWith(base.id)) || knownBases[knownBases.length - 1];
-  const suffix = model.id.slice(base.id.length).trim();
-  const hidden = !suffix || suffix.startsWith('-03') || model.id.indexOf('-instruct') !== -1;
+  const { label, created, updated, description, contextWindow: contextTokens, hidden } = openAIModelToModelDescription(model.id, model.created);
   return {
     id: `${source.id}-${model.id}`,
-    label: base.label + (suffix ? ` (${suffix.replaceAll('-', ' ').trim()})` : ''),
-    created: model.created,
-    description: base.description,
+
+    label,
+    created: created || 0,
+    updated: updated || 0,
+    description,
     tags: [], // ['stream', 'chat'],
-    contextTokens: base.context,
-    hidden,
+    contextTokens,
+    hidden: hidden || false,
+
+    sId: source.id,
+    _source: source,
+
+    options: {
+      llmRef: model.id,
+      llmTemperature: 0.5,
+      llmResponseTokens: Math.round(contextTokens / 8),
+    },
+  };
+}
+
+export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+  return {
+    id: `${source.id}-${model.id}`,
+    label: model.label,
+    created: model.created || 0,
+    updated: model.updated || 0,
+    description: model.description,
+    tags: [], // ['stream', 'chat'],
+    contextTokens: model.contextWindow,
+    hidden: !!model.hidden,
     sId: source.id,
     _source: source,
     options: {
       llmRef: model.id,
       llmTemperature: 0.5,
-      llmResponseTokens: Math.round(base.context / 8),
+      llmResponseTokens: Math.round(model.contextWindow / 8),
     },
   };
 }

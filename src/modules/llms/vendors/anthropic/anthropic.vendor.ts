@@ -1,25 +1,27 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { DLLM, ModelVendor } from '../llm.types';
-import { VChatMessageIn, VChatMessageOut } from '../llm.client';
+import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
+import { DLLM } from '../../store-llms';
+import { IModelVendor } from '../IModelVendor';
+import { VChatMessageIn, VChatMessageOut } from '../../transports/chatGenerate';
 
-import { AnthropicIcon } from './AnthropicIcon';
+import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+
 import { AnthropicSourceSetup } from './AnthropicSourceSetup';
+
 
 // special symbols
 export const hasServerKeyAnthropic = !!process.env.HAS_SERVER_KEY_ANTHROPIC;
 export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
-
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;
   anthropicHost: string;
 }
 
-export const ModelVendorAnthropic: ModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI> = {
+export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI> = {
   id: 'anthropic',
   name: 'Anthropic',
   rank: 13,

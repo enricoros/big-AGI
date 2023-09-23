@@ -1,38 +1,41 @@
-import { DModelSource, DModelSourceId, ModelVendor, ModelVendorId } from './llm.types';
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
+import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
+import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
+import { IModelVendor, ModelVendorId } from './IModelVendor';
 
-/// Internal - Main Vendor Registry ///
-
-const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, ModelVendor> = {
+/** Vendor Instances Registry **/
+const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   anthropic: ModelVendorAnthropic,
+  azure: ModelVendorAzure,
   localai: ModelVendorLocalAI,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
-  // azure_openai: { id: 'azure_openai', name: 'Azure OpenAI', instanceLimit: 1, location: 'cloud', rank: 30 },
-  // google_vertex: { id: 'google_vertex', name: 'Google Vertex', instanceLimit: 1, location: 'cloud', rank: 40 },
-  // anthropic: { id: 'anthropic', name: 'Anthropic', instanceLimit: 1, location: 'cloud', rank: 50 },
 };
 
-const DEFAULT_MODEL_VENDOR: ModelVendorId = 'openai';
+const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';
 
-export function findAllVendors(): ModelVendor[] {
+
+export function findAllVendors(): IModelVendor[] {
   const modelVendors = Object.values(MODEL_VENDOR_REGISTRY);
   modelVendors.sort((a, b) => a.rank - b.rank);
   return modelVendors;
 }
 
-export function findVendorById(vendorId?: ModelVendorId): ModelVendor | null {
+export function findVendorById(vendorId?: ModelVendorId): IModelVendor | null {
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] ?? null) : null;
 }
 
-export function createModelSourceForDefaultVendor(otherSources: DModelSource[]): DModelSource {
-  return createModelSourceForVendor(DEFAULT_MODEL_VENDOR, otherSources);
+export function findVendorForLlmOrThrow(llmId: DLLMId) {
+  const llm = findLLMOrThrow(llmId);
+  const vendor = findVendorById(llm?._source.vId);
+  if (!vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
+  return { llm, vendor };
 }
 
 export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {
@@ -53,6 +56,10 @@ export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources
     id: sourceId,
     label: vendor.name + (sourceN > 0 ? ` #${sourceN}` : ''),
     vId: vendorId,
-    setup: vendor.initalizeSetup?.() || {},
+    setup: vendor.initializeSetup?.() || {},
   };
+}
+
+export function createModelSourceForDefaultVendor(otherSources: DModelSource[]): DModelSource {
+  return createModelSourceForVendor(MODEL_VENDOR_DEFAULT, otherSources);
 }

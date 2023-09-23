@@ -6,12 +6,12 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { useChatStore } from '~/common/state/store-chats';
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
+import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
-import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 
 
 type ListGrouping = 'off' | 'persona';

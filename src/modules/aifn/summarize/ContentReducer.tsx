@@ -3,9 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
-import { DLLM, DLLMId } from '~/modules/llms/llm.types';
+import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/util/token-counter';

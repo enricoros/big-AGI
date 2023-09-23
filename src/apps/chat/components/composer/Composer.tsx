@@ -19,7 +19,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';

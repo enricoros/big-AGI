@@ -1,9 +1,11 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { DLLM, ModelVendor } from '../llm.types';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 
-import { OpenAIIcon } from './OpenAIIcon';
+import { DLLM } from '../../store-llms';
+import { IModelVendor } from '../IModelVendor';
+import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
 
@@ -11,7 +13,6 @@ import { OpenAISourceSetup } from './OpenAISourceSetup';
 // special symbols
 export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
-
 
 export interface SourceSetupOpenAI {
   oaiKey: string;
@@ -27,7 +28,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
+export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,

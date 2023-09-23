@@ -1,84 +1,45 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import type { DMessage } from '~/common/state/store-chats';
+import type { DLLM, DLLMId } from '../store-llms';
+import type { IModelVendor } from '../vendors/IModelVendor';
+import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
-import type { ChatStreamSchema } from './openai/openai.router';
-import type { DLLM, DLLMId, ModelVendor } from './llm.types';
-import type { OpenAI } from './openai/openai.types';
-import { ModelVendorAnthropic, SourceSetupAnthropic } from '~/modules/llms/anthropic/anthropic.vendor';
-import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
-import { findVendorById } from './vendor.registry';
-import { useModelsStore } from './store-llms';
+import type { ChatStreamSchema } from './server/openai.router';
+import type { OpenAI } from './server/openai.wiretypes';
+import type { VChatMessageIn } from './chatGenerate';
 
-
-export interface VChatMessageIn {
-  role: 'assistant' | 'system' | 'user'; // | 'function';
-  content: string;
-  //name?: string; // when role: 'function'
-}
-
-export type VChatFunctionIn = OpenAI.Wire.ChatCompletion.RequestFunctionDef;
-
-export interface VChatMessageOut {
-  role: 'assistant' | 'system' | 'user';
-  content: string;
-  finish_reason: 'stop' | 'length' | null;
-}
-
-export interface VChatMessageOrFunctionCallOut extends VChatMessageOut {
-  function_name: string;
-  function_arguments: object | null;
-}
-
-
-export async function streamChat(llmId: DLLMId, messages: VChatMessageIn[], abortSignal: AbortSignal, editMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void): Promise<void> {
-  const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
-  return await vendorStreamChat(vendor, llm, messages, abortSignal, editMessage);
-}
-
-export async function callChatGenerate(llmId: DLLMId, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-  const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
-  return await vendor.callChat(llm, messages, maxTokens);
-}
-
-export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
-  const { llm, vendor } = getLLMAndVendorOrThrow(llmId);
-  return await vendor.callChatWithFunctions(llm, messages, functions, forceFunctionName, maxTokens);
-}
-
-
-export function findLLMOrThrow<TLLMOptions>(llmId: DLLMId): DLLM<TLLMOptions> {
-  const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
-  if (!llm) throw new Error(`LLM ${llmId} not found`);
-  if (!llm._source) throw new Error(`LLM ${llmId} has no source`);
-  return llm as DLLM<TLLMOptions>;
-}
-
-function getLLMAndVendorOrThrow(llmId: DLLMId) {
-  const llm = findLLMOrThrow(llmId);
-  const vendor = findVendorById(llm?._source.vId);
-  if (!vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
-  return { llm, vendor };
-}
+import { ModelVendorAnthropic, SourceSetupAnthropic } from '../vendors/anthropic/anthropic.vendor';
+import { ModelVendorOpenAI, SourceSetupOpenAI } from '../vendors/openai/openai.vendor';
 
 
 /**
- * Chat streaming function on the client side. This decodes the (text) streaming response
- * from the /api/llms/stream endpoint, and signals updates.
+ * Client side chat generation, with streaming. This decodes the (text) streaming response from
+ * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
  *
- * Vendor-specific implementation is on the backend (API) code. This function tries to be
+ * Vendor-specific implementation is on our server backend (API) code. This function tries to be
  * as generic as possible.
  *
- * @param vendor vendor, mostly for vendor-specific backend
- * @param llm the LLM model
- * @param messages the history of messages to send to the API endpoint
+ * @param llmId LLM to use
+ * @param chatHistory the history of messages to send to the API endpoint
  * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
- * @param updateMessage callback when a piece of a message (text, model name, typing..) is received
+ * @param onUpdate callback when a piece of a message (text, model name, typing..) is received
  */
-async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
-  vendor: ModelVendor<TSourceSetup>, llm: DLLM<TLLMOptions>, messages: VChatMessageIn[],
+export async function streamChat(
+  llmId: DLLMId,
+  chatHistory: VChatMessageIn[],
   abortSignal: AbortSignal,
-  updateMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void,
+  onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
+): Promise<void> {
+  const { llm, vendor } = findVendorForLlmOrThrow(llmId);
+  return await vendorStreamChat(vendor, llm, chatHistory, abortSignal, onUpdate);
+}
+
+
+async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
+  vendor: IModelVendor<TSourceSetup, TLLMOptions>, llm: DLLM<TLLMOptions>,
+  chatHistory: VChatMessageIn[],
+  abortSignal: AbortSignal,
+  onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ) {
 
   // access params (source)
@@ -87,7 +48,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   // [OpenAI-only] check for harmful content with the free 'moderation' API
   if (vendor.id === 'openai') {
     const openAISourceSetup = sourceSetup as SourceSetupOpenAI;
-    const lastMessage = messages.at(-1) ?? null;
+    const lastMessage = chatHistory.at(-1) ?? null;
     const useModeration = openAISourceSetup.moderationCheck && lastMessage && lastMessage.role === 'user';
     if (useModeration) {
       try {
@@ -109,14 +70,14 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
         if (issues.size) {
           const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
           // do not proceed with the streaming request
-          return updateMessage({
+          return onUpdate({
             text: `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`,
             typing: false,
           }, true);
         }
       } catch (error: any) {
         // as the moderation check was requested, we cannot proceed in case of error
-        return updateMessage({
+        return onUpdate({
           text: `[Issue] There was an error while checking for harmful content. ${error?.toString()}`,
           typing: false,
         }, true);
@@ -129,7 +90,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
     throw new Error(`Error in openAI configuration for model ${llm.id}: ${llm.options}`);
 
-  // call /api/llms/stream
+  // connect to the server-side streaming endpoint
   const response = await fetch('/api/llms/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -145,14 +106,14 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
         maxTokens: llmResponseTokens,
       },
       functions: undefined,
-      history: messages,
+      history: chatHistory,
     } satisfies ChatStreamSchema),
     signal: abortSignal,
   });
 
   if (!response.ok || !response.body) {
     const errorMessage = response.body ? await response.text() : 'No response from server';
-    return updateMessage({ text: errorMessage, typing: false }, true);
+    return onUpdate({ text: errorMessage, typing: false }, true);
   }
 
   const responseReader = response.body.getReader();
@@ -180,7 +141,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       parsedFirstPacket = true;
       try {
         const parsed: OpenAI.API.Chat.StreamingFirstResponse = JSON.parse(json);
-        updateMessage({ originLLM: parsed.model }, false);
+        onUpdate({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore
         console.log('vendorStreamChat: error parsing JSON:', e);
@@ -188,6 +149,6 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
     }
 
     if (incrementalText)
-      updateMessage({ text: incrementalText }, false);
+      onUpdate({ text: incrementalText }, false);
   }
 }
