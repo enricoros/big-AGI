@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { AnthropicWire } from '~/modules/llms/anthropic/anthropic.types';
+import { AnthropicWire } from '~/modules/llms/anthropic/anthropic.wiretypes';
 import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { anthropicAccess, anthropicCompletionRequest } from '~/modules/llms/anthropic/anthropic.router';
 import { chatStreamSchema, openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/openai/openai.router';
