@@ -1,12 +1,24 @@
-import { ModelVendorAnthropic } from '../anthropic/anthropic.vendor';
-import { ModelVendorAzure } from '../azure/azure.vendor';
-import { ModelVendorLocalAI } from '../localai/localai.vendor';
-import { ModelVendorOoobabooga } from '../oobabooga/oobabooga.vendor';
-import { ModelVendorOpenAI } from '../openai/openai.vendor';
-import { ModelVendorOpenRouter } from '../openrouter/openrouter.vendor';
+import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
+import { ModelVendorAzure } from './azure/azure.vendor';
+import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
+import { ModelVendorOpenAI } from './openai/openai.vendor';
+import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
 import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
 import { IModelVendor, ModelVendorId } from './IModelVendor';
+
+/** Vendor Instances Registry **/
+const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
+  anthropic: ModelVendorAnthropic,
+  azure: ModelVendorAzure,
+  localai: ModelVendorLocalAI,
+  oobabooga: ModelVendorOoobabooga,
+  openai: ModelVendorOpenAI,
+  openrouter: ModelVendorOpenRouter,
+};
+
+const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';
 
 
 export function findAllVendors(): IModelVendor[] {
@@ -51,17 +63,3 @@ export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources
 export function createModelSourceForDefaultVendor(otherSources: DModelSource[]): DModelSource {
   return createModelSourceForVendor(MODEL_VENDOR_DEFAULT, otherSources);
 }
-
-
-/// Main Vendor Registry ///
-
-const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
-  anthropic: ModelVendorAnthropic,
-  azure: ModelVendorAzure,
-  localai: ModelVendorLocalAI,
-  oobabooga: ModelVendorOoobabooga,
-  openai: ModelVendorOpenAI,
-  openrouter: ModelVendorOpenRouter,
-};
-
-const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';

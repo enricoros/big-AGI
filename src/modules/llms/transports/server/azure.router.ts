@@ -4,10 +4,11 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
+import { openAIModelToModelDescription } from '../../vendors/openai/openai.data';
+
 import { OpenAI } from './openai.wiretypes';
 import { chatGenerateOutputSchema, historySchema, modelSchema, openAIChatCompletionPayload } from './openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
-import { openAIModelToModelDescription } from '../../openai/openai.data';
 
 
 // input schemas

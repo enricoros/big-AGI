@@ -10,7 +10,7 @@ import { Link } from '~/common/components/Link';
 import { asValidURL } from '~/common/util/urlUtils';
 import { settingsGap } from '~/common/theme';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
+import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';

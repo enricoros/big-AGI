@@ -8,8 +8,8 @@ import type { ChatStreamSchema } from './server/openai.router';
 import type { OpenAI } from './server/openai.wiretypes';
 import type { VChatMessageIn } from './chatGenerate';
 
-import { ModelVendorAnthropic, SourceSetupAnthropic } from '../anthropic/anthropic.vendor';
-import { ModelVendorOpenAI, SourceSetupOpenAI } from '../openai/openai.vendor';
+import { ModelVendorAnthropic, SourceSetupAnthropic } from '../vendors/anthropic/anthropic.vendor';
+import { ModelVendorOpenAI, SourceSetupOpenAI } from '../vendors/openai/openai.vendor';
 
 
 /**

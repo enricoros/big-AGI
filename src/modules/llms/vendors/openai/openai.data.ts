@@ -1,5 +1,5 @@
-import type { ModelDescriptionSchema } from '../transports/server/server.common';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '../store-llms';
+import type { ModelDescriptionSchema } from '../../transports/server/server.common';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '../../store-llms';
 
 const knownOpenAIChatModels: ({ idPrefix: string } & Omit<ModelDescriptionSchema, 'id'>)[] = [
   // GPT4-32k's

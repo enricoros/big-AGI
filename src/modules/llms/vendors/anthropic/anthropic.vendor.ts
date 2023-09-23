@@ -2,9 +2,9 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 
-import { DLLM } from '../store-llms';
-import { IModelVendor } from '../vendors/IModelVendor';
-import { VChatMessageIn, VChatMessageOut } from '../transports/chatGenerate';
+import { DLLM } from '../../store-llms';
+import { IModelVendor } from '../IModelVendor';
+import { VChatMessageIn, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

@@ -1,6 +1,6 @@
 import { OpenRouterIcon } from '~/common/components/icons/OpenRouterIcon';
 
-import { IModelVendor } from '../vendors/IModelVendor';
+import { IModelVendor } from '../IModelVendor';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
