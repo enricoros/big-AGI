@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { Brand } from '~/common/brand';
 
-import { OpenAI } from './openai.types';
+import { OpenAI } from './openai.wiretypes';
 
 
 // if (!process.env.OPENAI_API_KEY)

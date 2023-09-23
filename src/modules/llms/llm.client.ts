@@ -2,10 +2,10 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { ChatStreamSchema } from './openai/openai.router';
+import type { ChatStreamSchema } from './transports/server/openai.router';
+import type { OpenAI } from './transports/server/openai.wiretypes';
 import { ModelVendorAnthropic, SourceSetupAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
-import { OpenAI } from './openai/openai.types';
 
 import { IModelVendor } from './vendors/IModelVendor';
 import { findVendorById } from './vendors/vendor.registry';
