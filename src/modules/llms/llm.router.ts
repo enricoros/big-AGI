@@ -7,6 +7,7 @@ import { LLMOptionsOpenAI } from './openai/openai.vendor';
 // they're here as a preview - will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
 export const LLM_IF_OAI_Fn = 'oai-fn';
+export const LLM_IF_OAI_Complete = 'oai-complete';
 
 
 const modelDescriptionSchema = z.object({
@@ -16,7 +17,7 @@ const modelDescriptionSchema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number(),
-  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn])),
+  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete])),
   hidden: z.boolean().optional(),
 });
 
