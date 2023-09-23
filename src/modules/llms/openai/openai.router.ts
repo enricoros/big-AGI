@@ -15,7 +15,7 @@ import { OpenAI } from './openai.types';
 
 // Input Schemas
 
-const accessSchema = z.object({
+const openAIAccessSchema = z.object({
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
@@ -48,29 +48,31 @@ export const functionsSchema = z.array(z.object({
   }).optional(),
 }));
 
-export const chatStreamSchema = z.object({
+export const openAIChatStreamSchema = z.object({
   vendorId: z.enum(['anthropic', 'openai']),
   // shall clean this up a bit
-  access: z.union([accessSchema, z.object({ anthropicKey: z.string().trim(), anthropicHost: z.string().trim() })]),
+  access: z.union([openAIAccessSchema, z.object({ anthropicKey: z.string().trim(), anthropicHost: z.string().trim() })]),
   model: modelSchema, history: historySchema, functions: functionsSchema.optional(),
 });
-export type ChatStreamSchema = z.infer<typeof chatStreamSchema>;
+export type ChatStreamSchema = z.infer<typeof openAIChatStreamSchema>;
 
-const chatGenerateSchema = z.object({ access: accessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional(), forceFunctionName: z.string().optional() });
+const openAIChatGenerateSchema = z.object({ access: openAIAccessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional(), forceFunctionName: z.string().optional() });
 
-const chatModerationSchema = z.object({ access: accessSchema, text: z.string() });
+const openAIChatModerationSchema = z.object({ access: openAIAccessSchema, text: z.string() });
 
-const listModelsSchema = z.object({ access: accessSchema, filterGpt: z.boolean().optional() });
+const openAIListModelsSchema = z.object({ access: openAIAccessSchema, filterGpt: z.boolean().optional() });
 
 
 // Output Schemas
 
+export const chatGenerateOutputSchema = z.object({
+  role: z.enum(['assistant', 'system', 'user']),
+  content: z.string(),
+  finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
+});
+
 const chatGenerateWithFunctionsOutputSchema = z.union([
-  z.object({
-    role: z.enum(['assistant', 'system', 'user']),
-    content: z.string(),
-    finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
-  }),
+  chatGenerateOutputSchema,
   z.object({
     function_name: z.string(),
     function_arguments: z.record(z.any()),
@@ -80,67 +82,9 @@ const chatGenerateWithFunctionsOutputSchema = z.union([
 
 export const llmOpenAIRouter = createTRPCRouter({
 
-  /**
-   * Chat-based message generation
-   */
-  chatGenerateWithFunctions: publicProcedure
-    .input(chatGenerateSchema)
-    .output(chatGenerateWithFunctionsOutputSchema)
-    .mutation(async ({ input }) => {
-
-      const { access, model, history, functions, forceFunctionName } = input;
-      const isFunctionsCall = !!functions && functions.length > 0;
-
-      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
-        access,
-        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
-        '/v1/chat/completions',
-      );
-
-      // expect a single output
-      if (wireCompletions?.choices?.length !== 1)
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
-      let { message, finish_reason } = wireCompletions.choices[0];
-
-      // LocalAI hack/workaround, until https://github.com/go-skynet/LocalAI/issues/788 is fixed
-      if (finish_reason === undefined)
-        finish_reason = 'stop';
-
-      // check for a function output
-      // NOTE: this includes a workaround for when we requested a function but the model could not deliver
-      return (finish_reason === 'function_call' || 'function_call' in message)
-        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
-        : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
-    }),
-
-  /**
-   * Check for content policy violations
-   */
-  moderation: publicProcedure
-    .input(chatModerationSchema)
-    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
-      const { access, text } = input;
-      try {
-
-        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, {
-          input: text,
-          model: 'text-moderation-latest',
-        }, '/v1/moderations');
-
-      } catch (error: any) {
-        if (error.code === 'ECONNRESET')
-          throw new TRPCError({ code: 'CLIENT_CLOSED_REQUEST', message: 'Connection reset by the client.' });
-
-        console.error('api/openai/moderation error:', error);
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `Error: ${error?.message || error?.toString() || 'Unknown error'}` });
-      }
-    }),
-
-  /**
-   * List the Models available
-   */
+  /* OpenAI: List the Models available */
   listModels: publicProcedure
-    .input(listModelsSchema)
+    .input(openAIListModelsSchema)
     .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
 
       const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
@@ -177,10 +121,62 @@ export const llmOpenAIRouter = createTRPCRouter({
       return llms;
     }),
 
+  /* OpenAI: chat generation */
+  chatGenerateWithFunctions: publicProcedure
+    .input(openAIChatGenerateSchema)
+    .output(chatGenerateWithFunctionsOutputSchema)
+    .mutation(async ({ input }) => {
+
+      const { access, model, history, functions, forceFunctionName } = input;
+      const isFunctionsCall = !!functions && functions.length > 0;
+
+      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
+        access,
+        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
+        '/v1/chat/completions',
+      );
+
+      // expect a single output
+      if (wireCompletions?.choices?.length !== 1)
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
+      let { message, finish_reason } = wireCompletions.choices[0];
+
+      // LocalAI hack/workaround, until https://github.com/go-skynet/LocalAI/issues/788 is fixed
+      if (finish_reason === undefined)
+        finish_reason = 'stop';
+
+      // check for a function output
+      // NOTE: this includes a workaround for when we requested a function but the model could not deliver
+      return (finish_reason === 'function_call' || 'function_call' in message)
+        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
+        : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
+    }),
+
+  /* OpenAI: check for content policy violations */
+  moderation: publicProcedure
+    .input(openAIChatModerationSchema)
+    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+      const { access, text } = input;
+      try {
+
+        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, {
+          input: text,
+          model: 'text-moderation-latest',
+        }, '/v1/moderations');
+
+      } catch (error: any) {
+        if (error.code === 'ECONNRESET')
+          throw new TRPCError({ code: 'CLIENT_CLOSED_REQUEST', message: 'Connection reset by the client.' });
+
+        console.error('api/openai/moderation error:', error);
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `Error: ${error?.message || error?.toString() || 'Unknown error'}` });
+      }
+    }),
+
 });
 
 
-type AccessSchema = z.infer<typeof accessSchema>;
+type AccessSchema = z.infer<typeof openAIAccessSchema>;
 type ModelSchema = z.infer<typeof modelSchema>;
 type HistorySchema = z.infer<typeof historySchema>;
 type FunctionsSchema = z.infer<typeof functionsSchema>;

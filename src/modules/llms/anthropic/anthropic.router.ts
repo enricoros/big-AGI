@@ -4,8 +4,8 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
-import { historySchema, modelSchema } from '~/modules/llms/openai/openai.router';
-import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '~/modules/llms/llm.router';
+import { chatGenerateOutputSchema, historySchema, modelSchema } from '../openai/openai.router';
+import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '../llm.router';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 
@@ -17,27 +17,26 @@ const anthropicAccessSchema = z.object({
   anthropicHost: z.string().trim(),
 });
 
-const chatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
+const anthropicChatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
 
-const listModelsSchema = z.object({ access: anthropicAccessSchema });
-
-
-// Output Schemas
-
-const chatGenerateOutputSchema = z.object({
-  role: z.enum(['assistant', 'system', 'user']),
-  content: z.string(),
-  finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
-});
+const anthropicListModelsSchema = z.object({ access: anthropicAccessSchema });
 
 
 export const llmAnthropicRouter = createTRPCRouter({
 
-  /**
+  /* Anthropic: list models
    *
+   * See https://github.com/anthropics/anthropic-sdk-typescript/commit/7c53ded6b7f5f3efec0df295181f18469c37e09d?diff=unified for
+   * some details on the models, as the API docs are scarce: https://docs.anthropic.com/claude/reference/selecting-a-model
    */
+  listModels: publicProcedure
+    .input(anthropicListModelsSchema)
+    .output(listModelsOutputSchema)
+    .query(() => ({ models: hardcodedAnthropicModels })),
+
+  /* Anthropic: Chat generation */
   chatGenerate: publicProcedure
-    .input(chatGenerateSchema)
+    .input(anthropicChatGenerateSchema)
     .output(chatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
@@ -66,18 +65,6 @@ export const llmAnthropicRouter = createTRPCRouter({
         content: wireCompletions.completion || '',
       };
     }),
-
-
-  /**
-   * List the Models available
-   *
-   * See https://github.com/anthropics/anthropic-sdk-typescript/commit/7c53ded6b7f5f3efec0df295181f18469c37e09d?diff=unified for
-   * some details on the models, as the API docs are scarce: https://docs.anthropic.com/claude/reference/selecting-a-model
-   */
-  listModels: publicProcedure
-    .input(listModelsSchema)
-    .output(listModelsOutputSchema)
-    .query(async () => ({ models: hardcodedAnthropicModels })),
 
 });
 
@@ -138,13 +125,9 @@ async function anthropicPOST<TOut, TPostBody>(access: AccessSchema, body: TPostB
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
 }
 
-
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 
-export function anthropicAccess(access: AccessSchema, apiPath: string): {
-  headers: HeadersInit,
-  url: string
-} {
+export function anthropicAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API version
   const apiVersion = '2023-06-01';
 
