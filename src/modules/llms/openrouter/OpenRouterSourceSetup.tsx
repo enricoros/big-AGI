@@ -4,7 +4,6 @@ import { Box, Button, Typography } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAI } from '~/modules/llms/openai/openai.types';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
@@ -118,7 +117,7 @@ const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isO
 
 const orModelFamilyOrder = ['openai/', 'anthropic/', 'google/', 'meta-llama/'];
 
-function orFamilySortFn(a: OpenAI.Wire.Models.ModelDescription, b: OpenAI.Wire.Models.ModelDescription): number {
+function orFamilySortFn(a: { id: string }, b: { id: string }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
   const bPrefixIndex = orModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
 
@@ -131,7 +130,7 @@ function orFamilySortFn(a: OpenAI.Wire.Models.ModelDescription, b: OpenAI.Wire.M
 }
 
 
-function openRouterModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   // label: use the known name if available, otherwise format the model id
   const orModel = orModelMap[model.id] ?? null;
   const label = orModel?.name || model.id.replace('/', ' · ');

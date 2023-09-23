@@ -10,7 +10,6 @@ import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAI } from '~/modules/llms/openai/openai.types';
 
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { ModelVendorOoobabooga } from './oobabooga.vendor';
@@ -94,7 +93,7 @@ const NotChatModels: string[] = [
 ];
 
 
-function oobaboogaModelToDLLM(model: OpenAI.Wire.Models.ModelDescription, source: DModelSource): DLLM<LLMOptionsOpenAI> | null {
+function oobaboogaModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> | null {
   // if the model id is one of NotChatModels, we don't want to show it
   if (NotChatModels.includes(model.id))
     return null;
