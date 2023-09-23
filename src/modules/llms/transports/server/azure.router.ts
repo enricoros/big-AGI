@@ -70,7 +70,7 @@ export const llmAzureRouter = createTRPCRouter({
           const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
           return {
             id: model.id,
-            label: `${model.id} (${label})`,
+            label: `${label} (${model.id})`,
             ...rest,
           };
         });

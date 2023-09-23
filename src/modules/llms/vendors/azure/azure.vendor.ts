@@ -31,7 +31,7 @@ export interface SourceSetupAzure {
  *      "/openai/deployments?api-version=2023-03-15-preview" path on the endpoint. See:
  *      https://github.com/openai/openai-python/issues/447#issuecomment-1730976835
  *
- *   2. Still looking for a solution - in the meantime the way to go seems to be to manyally get the full URL
+ *   2. Still looking for a solution - in the meantime the way to go seems to be to manually get the full URL
  *      of every "Deployment" (Model) and hit the URL directly. However the user will need to fill in the full
  *      model sheet, as details are not available just from the URL.
  *
@@ -42,7 +42,7 @@ export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI> 
   name: 'Azure',
   rank: 14,
   location: 'cloud',
-  instanceLimit: 2,
+  instanceLimit: 0,
 
   // components
   Icon: AzureIcon,
