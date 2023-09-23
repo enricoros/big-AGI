@@ -10,7 +10,7 @@ import { ModelVendorOpenAI, SourceSetupOpenAI } from './openai/openai.vendor';
 import { IModelVendor } from './vendors/IModelVendor';
 import { findVendorById } from './vendors/vendor.registry';
 
-import { DLLM, DLLMId, useModelsStore } from './store-llms';
+import { DLLM, DLLMId, findLLMOrThrow } from './store-llms';
 
 
 export interface VChatMessageIn {
@@ -48,13 +48,6 @@ export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VCh
   return await vendor.callChatWithFunctions(llm, messages, functions, forceFunctionName, maxTokens);
 }
 
-
-export function findLLMOrThrow<TLLMOptions>(llmId: DLLMId): DLLM<TLLMOptions> {
-  const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
-  if (!llm) throw new Error(`LLM ${llmId} not found`);
-  if (!llm._source) throw new Error(`LLM ${llmId} has no source`);
-  return llm as DLLM<TLLMOptions>;
-}
 
 function getLLMAndVendorOrThrow(llmId: DLLMId) {
   const llm = findLLMOrThrow(llmId);

@@ -184,6 +184,13 @@ const defaultChatSuffixPreference = ['gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.
 const defaultFastSuffixPreference = ['gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
 const defaultFuncSuffixPreference = ['gpt-3.5-turbo-0613', 'gpt-4-0613'];
 
+export function findLLMOrThrow<TLLMOptions>(llmId: DLLMId): DLLM<TLLMOptions> {
+  const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
+  if (!llm) throw new Error(`LLM ${llmId} not found`);
+  if (!llm._source) throw new Error(`LLM ${llmId} has no source`);
+  return llm as DLLM<TLLMOptions>;
+}
+
 function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: boolean): DLLMId | null {
   if (!llms?.length) return null;
   for (const suffix of suffixes)
@@ -207,21 +214,19 @@ function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId:
   return { chatLLMId: chatLlmId, fastLLMId: fastLlmId, funcLLMId: funcLlmId };
 }
 
-
+/**
+ * Current 'Chat' LLM, or null
+ */
 export function useChatLLM() {
   return useModelsStore(state => {
     const { chatLLMId } = state;
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    return {
-      chatLLMId,
-      chatLLM,
-    };
+    return { chatLLMId, chatLLM };
   }, shallow);
 }
 
-
 /**
- * Hook used for Source-specific setup
+ * Source-specific read/write - great time saver
  */
 export function useSourceSetup<T>(sourceId: DModelSourceId, normalizer: (partialSetup?: Partial<T>) => T) {
   // invalidate when the setup changes
