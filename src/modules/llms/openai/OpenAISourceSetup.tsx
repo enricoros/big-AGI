@@ -11,6 +11,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
+import type { ModelDescriptionSchema } from '../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
@@ -172,6 +173,26 @@ function openAIModelToDLLM(model: { id: string, created: number }, source: DMode
       llmRef: model.id,
       llmTemperature: 0.5,
       llmResponseTokens: Math.round(contextTokens / 8),
+    },
+  };
+}
+
+export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+  return {
+    id: `${source.id}-${model.id}`,
+    label: model.label,
+    created: model.created || 0,
+    updated: model.updated || 0,
+    description: model.description,
+    tags: [], // ['stream', 'chat'],
+    contextTokens: model.contextWindow,
+    hidden: !!model.hidden,
+    sId: source.id,
+    _source: source,
+    options: {
+      llmRef: model.id,
+      llmTemperature: 0.5,
+      llmResponseTokens: Math.round(model.contextWindow / 8),
     },
   };
 }

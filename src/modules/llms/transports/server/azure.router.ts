@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { OpenAI } from './openai.wiretypes';
 import { chatGenerateOutputSchema, historySchema, modelSchema, openAIChatCompletionPayload } from './openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../../llm.router';
+import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
 import { openAIModelToModelDescription } from '../../openai/openai.data';
 
 

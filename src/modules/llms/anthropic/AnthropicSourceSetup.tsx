@@ -11,7 +11,7 @@ import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
-import { modelDescriptionToDLLM } from '../llm.router';
+import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 

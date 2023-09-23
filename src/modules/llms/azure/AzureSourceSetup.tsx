@@ -11,7 +11,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
-import { modelDescriptionToDLLM } from '../llm.router';
+import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 

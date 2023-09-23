@@ -4,15 +4,11 @@ import { persist } from 'zustand/middleware';
 
 import { ModelVendorId } from './vendors/IModelVendor';
 
-export type DLLMId = string;
-export type DModelSourceId = string;
-
 
 /**
  * Large Language Model - description and configuration (data object, stored)
  */
 export interface DLLM<TLLMOptions = unknown, TModelSource = DModelSource> {
-
   id: DLLMId;
   label: string;
   created: number | 0;
@@ -30,6 +26,14 @@ export interface DLLM<TLLMOptions = unknown, TModelSource = DModelSource> {
   options: Partial<{ llmRef: string } & TLLMOptions>;
 }
 
+export type DLLMId = string;
+
+// Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
+export const LLM_IF_OAI_Chat = 'oai-chat';
+export const LLM_IF_OAI_Fn = 'oai-fn';
+export const LLM_IF_OAI_Complete = 'oai-complete';
+
+
 /**
  * Model Server - configured to be a unique origin of models (data object, stored)
  */
@@ -44,8 +48,11 @@ export interface DModelSource<TModelSetup = unknown> {
   setup: Partial<TModelSetup>;
 }
 
+export type DModelSourceId = string;
 
-/// ModelsStore - a store for LLMs and their origins
+
+/// ModelsStore - a store for configured LLMs and configured Sources
+
 interface ModelsData {
   llms: DLLM[];
   sources: DModelSource[];
