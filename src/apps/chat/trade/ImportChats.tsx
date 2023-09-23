@@ -5,10 +5,10 @@ import { Box, Button, FormControl, FormLabel, Input, Sheet, Typography } from '@
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import type { ChatGptSharedChatSchema } from '~/modules/sharing/import.chatgpt';
-import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { Brand } from '~/common/brand';
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
