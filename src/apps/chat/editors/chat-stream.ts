@@ -1,9 +1,9 @@
-import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId } from '../../../data';
+import { DLLMId } from '~/modules/llms/store-llms';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { streamChat } from '~/modules/llms/llm.client';
+import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';

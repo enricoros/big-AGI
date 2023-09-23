@@ -5,8 +5,7 @@ import { ListItemButton, ListItemDecorator } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-import { DLLM, DLLMId, DModelSourceId } from '~/modules/llms/llm.types';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { useUIStateStore } from '~/common/state/store-ui';
