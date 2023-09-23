@@ -4,7 +4,7 @@
 
 import { DLLMId } from '~/modules/llms/store-llms';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
-import { callChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 
 
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629

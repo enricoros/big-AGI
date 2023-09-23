@@ -5,7 +5,7 @@ import { ModelVendorOoobabooga } from '../oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
 import { ModelVendorOpenRouter } from '../openrouter/openrouter.vendor';
 
-import { DModelSource, DModelSourceId } from '../store-llms';
+import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
 import { IModelVendor, ModelVendorId } from './IModelVendor';
 
 
@@ -17,6 +17,13 @@ export function findAllVendors(): IModelVendor[] {
 
 export function findVendorById(vendorId?: ModelVendorId): IModelVendor | null {
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] ?? null) : null;
+}
+
+export function findVendorForLlmOrThrow(llmId: DLLMId) {
+  const llm = findLLMOrThrow(llmId);
+  const vendor = findVendorById(llm?._source.vId);
+  if (!vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
+  return { llm, vendor };
 }
 
 export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {
