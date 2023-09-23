@@ -6,7 +6,8 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { OpenAI } from '../openai/openai.types';
 import { historySchema, modelSchema, openAIChatCompletionPayload } from '../openai/openai.router';
-import { listModelsOutputSchema, LLM_IF_OAI_Chat, ModelDescriptionSchema } from '../llm.router';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.router';
+import { openAIModelToModelDescription } from '../openai/openai.data';
 
 
 // input schemas
@@ -66,10 +67,21 @@ export const llmAzureRouter = createTRPCRouter({
       );
 
       // parse and validate output, and take the GPT models only (e.g. no 'whisper')
-      const models = wireAzureListDeploymentsSchema.parse(azureModels).data;
-      return {
-        models: models.filter(m => m.model.includes('gpt')).map(azureModelToModelDescription),
-      };
+      const wireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
+
+      // map to ModelDescriptions
+      const models: ModelDescriptionSchema[] = wireModels
+        .filter(m => m.model.includes('gpt'))
+        .map((model): ModelDescriptionSchema => {
+          const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
+          return {
+            id: model.id,
+            label: `${model.id} (${label})`,
+            ...rest,
+          };
+        });
+
+      return { models };
     }),
 
 
@@ -110,48 +122,6 @@ export const llmAzureRouter = createTRPCRouter({
     }),
 
 });
-
-
-function azureModelToModelDescription(model: { id: string, model: string, created_at: number, updated_at: number }): ModelDescriptionSchema {
-  const knownModel = knownAzureModels.find(m => m.id === model.model);
-  return {
-    id: model.id,
-    label: knownModel?.label || model.id,
-    created: model.created_at,
-    updated: model.updated_at || model.created_at,
-    description: knownModel?.description || 'Unknown model type, please let us know',
-    contextWindow: knownModel?.contextWindow || 2048,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: !knownModel,
-  };
-}
-
-const knownAzureModels: Partial<ModelDescriptionSchema>[] = [
-  {
-    id: 'gpt-35-turbo',
-    label: '3.5-Turbo',
-    contextWindow: 4097,
-    description: 'Fair speed and smarts',
-  },
-  {
-    id: 'gpt-35-turbo-16k',
-    label: '3.5-Turbo-16k',
-    contextWindow: 16384,
-    description: 'Fair speed and smarts, large context',
-  },
-  {
-    id: 'gpt-4',
-    label: 'GPT-4',
-    contextWindow: 8192,
-    description: 'Insightful, big thinker, slower, pricey',
-  },
-  {
-    id: 'gpt-4-32k',
-    label: 'GPT-4-32k',
-    contextWindow: 32768,
-    description: 'Largest context window for big problems',
-  },
-];
 
 
 async function azureOpenaiGET<TOut>(endpoint: string, key: string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
