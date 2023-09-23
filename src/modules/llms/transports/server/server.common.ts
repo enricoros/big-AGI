@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '~/modules/llms/store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '../../store-llms';
 
 
 const modelDescriptionSchema = z.object({
