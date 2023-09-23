@@ -1,6 +1,6 @@
 import { OobaboogaIcon } from '~/common/components/icons/OobaboogaIcon';
 
-import { ModelVendor } from '../llm.types';
+import { IModelVendor } from '../vendors/IModelVendor';
 
 import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -12,7 +12,7 @@ export interface SourceSetupOobabooga {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorOoobabooga: ModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI> = {
+export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga',
   rank: 15,

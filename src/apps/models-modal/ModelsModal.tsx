@@ -6,9 +6,8 @@ import { Checkbox, Divider } from '@mui/joy';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';
 
-import { DModelSourceId } from '~/modules/llms/llm.types';
-import { createModelSourceForDefaultVendor } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { createModelSourceForDefaultVendor } from '~/modules/llms/vendors/vendor.registry';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';

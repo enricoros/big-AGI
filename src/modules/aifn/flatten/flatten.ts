@@ -1,4 +1,4 @@
-import { DLLMId } from '~/modules/llms/llm.types';
+import { DLLMId } from '~/modules/llms/store-llms';
 import { callChatGenerate } from '~/modules/llms/llm.client';
 
 import { DConversation } from '~/common/state/store-chats';

@@ -11,10 +11,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {

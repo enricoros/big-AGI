@@ -6,8 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { DLLMId } from '~/modules/llms/llm.types';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { useUIStateStore } from '~/common/state/store-ui';

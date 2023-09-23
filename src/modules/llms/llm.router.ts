@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { DLLM, DModelSource } from './llm.types';
+import { DLLM, DModelSource } from './store-llms';
 import { LLMOptionsOpenAI } from './openai/openai.vendor';
 
 // these are constants used for model interfaces (chat, and function calls)

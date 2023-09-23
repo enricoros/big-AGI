@@ -10,9 +10,8 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { DModelSourceId } from '../llm.types';
+import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { modelDescriptionToDLLM } from '../llm.router';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 

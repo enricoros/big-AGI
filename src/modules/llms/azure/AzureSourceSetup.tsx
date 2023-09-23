@@ -10,9 +10,8 @@ import { Link } from '~/common/components/Link';
 import { asValidURL } from '~/common/util/urlUtils';
 import { settingsGap } from '~/common/theme';
 
-import { DModelSourceId } from '../llm.types';
+import { DModelSourceId, useModelsStore, useSourceSetup } from '../store-llms';
 import { modelDescriptionToDLLM } from '../llm.router';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 

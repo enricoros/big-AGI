@@ -2,22 +2,59 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import { DLLM, DLLMId, DModelSource, DModelSourceId } from './llm.types';
+import { ModelVendorId } from './vendors/IModelVendor';
+
+export type DLLMId = string;
+export type DModelSourceId = string;
+
+
+/**
+ * Large Language Model - description and configuration (data object, stored)
+ */
+export interface DLLM<TLLMOptions = unknown, TModelSource = DModelSource> {
+
+  id: DLLMId;
+  label: string;
+  created: number | 0;
+  updated?: number | 0;
+  description: string;
+  tags: string[]; // UNUSED for now
+  contextTokens: number;
+  hidden: boolean;
+
+  // llm -> source
+  sId: DModelSourceId;
+  _source: TModelSource;
+
+  // llm-specific
+  options: Partial<{ llmRef: string } & TLLMOptions>;
+}
+
+/**
+ * Model Server - configured to be a unique origin of models (data object, stored)
+ */
+export interface DModelSource<TModelSetup = unknown> {
+  id: DModelSourceId;
+  label: string;
+
+  // source -> vendor
+  vId: ModelVendorId;
+
+  // source-specific
+  setup: Partial<TModelSetup>;
+}
 
 
 /// ModelsStore - a store for LLMs and their origins
-interface ModelsStore {
-
+interface ModelsData {
+  llms: DLLM[];
+  sources: DModelSource[];
   chatLLMId: DLLMId | null;
   fastLLMId: DLLMId | null;
   funcLLMId: DLLMId | null;
-  llms: DLLM[];
-  sources: DModelSource[];
+}
 
-  setChatLLMId: (id: DLLMId | null) => void;
-  setFastLLMId: (id: DLLMId | null) => void;
-  setFuncLLMId: (id: DLLMId | null) => void;
-
+interface ModelsActions {
   addLLMs: (llms: DLLM[]) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
@@ -27,18 +64,20 @@ interface ModelsStore {
   removeSource: (id: DModelSourceId) => void;
   updateSourceSetup: <T>(id: DModelSourceId, partialSetup: Partial<T>) => void;
 
+  setChatLLMId: (id: DLLMId | null) => void;
+  setFastLLMId: (id: DLLMId | null) => void;
+  setFuncLLMId: (id: DLLMId | null) => void;
 }
 
-
-export const useModelsStore = create<ModelsStore>()(
+export const useModelsStore = create<ModelsData & ModelsActions>()(
   persist(
     (set) => ({
 
+      llms: [],
+      sources: [],
       chatLLMId: null,
       fastLLMId: null,
       funcLLMId: null,
-      llms: [],
-      sources: [],
 
       setChatLLMId: (id: DLLMId | null) =>
         set(state => updateSelectedIds(state.llms, id, state.fastLLMId, state.funcLLMId)),
@@ -118,7 +157,7 @@ export const useModelsStore = create<ModelsStore>()(
     {
       name: 'app-models',
 
-      // omit the memory references from the persisted state
+      // Pre-saving: omit the memory references from the persisted state
       partialize: (state) => ({
         ...state,
         llms: state.llms.map(llm => {
@@ -127,7 +166,7 @@ export const useModelsStore = create<ModelsStore>()(
         }),
       }),
 
-      // re-link the memory references on rehydration
+      // Post-loading: re-link the memory references on rehydration
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
@@ -155,7 +194,7 @@ function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: bo
   return fallbackToFirst ? llms[0].id : null;
 }
 
-function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null): Partial<ModelsStore> {
+function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null): Partial<ModelsData> {
   if (chatLlmId && !allLlms.find(llm => llm.id === chatLlmId)) chatLlmId = null;
   if (!chatLlmId) chatLlmId = findLlmIdBySuffix(allLlms, defaultChatSuffixPreference, true);
 

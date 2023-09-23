@@ -2,7 +2,8 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 
-import { DLLM, ModelVendor } from '../llm.types';
+import { DLLM } from '../store-llms';
+import { IModelVendor } from '../vendors/IModelVendor';
 import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
@@ -27,7 +28,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
+export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,

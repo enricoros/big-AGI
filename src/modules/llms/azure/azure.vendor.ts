@@ -2,7 +2,8 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import { AzureIcon } from '~/common/components/icons/AzureIcon';
 
-import { DLLM, ModelVendor } from '../llm.types';
+import { DLLM } from '../store-llms';
+import { IModelVendor } from '../vendors/IModelVendor';
 import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
@@ -36,7 +37,7 @@ export interface SourceSetupAzure {
  *
  * Work in progress...
  */
-export const ModelVendorAzure: ModelVendor<SourceSetupAzure, LLMOptionsOpenAI> = {
+export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI> = {
   id: 'azure',
   name: 'Azure',
   rank: 14,
