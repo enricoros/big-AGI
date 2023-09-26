@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { createEmptyReadableStream, throwResponseNotOk } from '~/modules/llms/transports/server/openai.streaming';
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
-import { createEmptyReadableStream, throwResponseNotOk } from '../llms/stream';
 
 
 /* NOTE: Why does this file even exist?
@@ -10,7 +10,7 @@ This file is a workaround for a limitation in tRPC; it does not support ArrayBuf
 and that would force us to use base64 encoding for the audio data, which would be a waste of
 bandwidth. So instead, we use this file to make the request to ElevenLabs, and then return the
 response as an ArrayBuffer. Unfortunately this means duplicating the code in the server-side
-and client-side vs. the TRPC implementation. So at lease we recycle the input structures.
+and client-side vs. the tRPC implementation. So at lease we recycle the input structures.
 
 */
 

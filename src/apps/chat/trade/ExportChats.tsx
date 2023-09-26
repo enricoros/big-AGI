@@ -112,11 +112,15 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         Share to Paste.gg
       </Button>
 
+      {/*<Button variant='soft' size='md' disabled sx={{ minWidth: 240, justifyContent: 'space-between', fontWeight: 400 }}>*/}
+      {/*  Share to ShareGPT*/}
+      {/*</Button>*/}
+
       <Button variant='soft' size='md' disabled={!hasConversation} sx={{ minWidth: 240, justifyContent: 'space-between' }}
               color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
               endDecorator={downloadedState === 'ok' ? '✔' : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
               onClick={handleDownloadConversation}>
-        Download JSON
+        Download chat
       </Button>
 
       <Typography level='body-sm' sx={{ mt: 2 }}>
@@ -126,7 +130,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
               endDecorator={downloadedAllState === 'ok' ? '✔' : downloadedAllState === 'fail' ? '✘' : <FileDownloadIcon />}
               onClick={handleDownloadAllConversations}>
-        Backup all
+        Backup all chats
       </Button>
     </Box>
 

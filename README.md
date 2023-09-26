@@ -41,9 +41,15 @@ Or fork & run on Vercel
 
 ## Latest Drops 💧🎁
 
-#### 🚨 July/Aug: Back with the Cool features 🧠
+#### 🚨 Sept: Back with the Cool features 🧠
+
+- 🎉 **[OpenRouter models](https://openrouter.ai/docs#models)** support, incl. GPT4-32k
+- 🎉 **Unlimited chats** - removed the 20 chats limit by switching to IndexedDB ([Ashesh3](https://github.com/enricoros/big-agi/pull/158))
+
+#### 🚨 July/Aug: More Beter Faster 🚀
 
 - 🎉 **Camera OCR** - real-world AI - take a picture of a text, and chat with it
+- 🎉 **Anthropic models** support, e.g. Claude
 - 🎉 **Backup/Restore** - save chats, and restore them later
 - 🎉 **[Local model support with Oobabooga server](docs/local-llm-text-web-ui.md)** - run your own LLMs!
 - 🎉 **Flatten conversations** - conversations summarizer with 4 modes

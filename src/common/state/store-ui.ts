@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { DLLMId } from '~/modules/llms/llm.types';
+import { DLLMId } from '~/modules/llms/store-llms';
 
 
 // UI State - not persisted

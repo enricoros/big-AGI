@@ -12,11 +12,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { ModelVendorLocalAI } from './localai.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 const urlSchema = z.string().url().startsWith('http');
@@ -55,8 +54,9 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <FormInputKey
+      id='localai-key' label='LocalAI URL'
       required noKey
-      label='LocalAI URL' rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
       placeholder='e.g., http://127.0.0.1:8080'
       value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
     />

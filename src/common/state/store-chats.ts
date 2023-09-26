@@ -1,16 +1,12 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DLLMId } from '~/modules/llms/llm.types';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
-
-
-// configuration
-export const MAX_CONVERSATIONS = 60;
+import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
 
 
 /**
@@ -110,11 +106,12 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
 
 /// Conversations Store
 
-
-export interface ChatStore {
+interface ChatState {
   conversations: DConversation[];
   activeConversationId: string | null;
+}
 
+interface ChatActions {
   // store setters
   createConversation: () => void;
   duplicateConversation: (conversationId: string) => void;
@@ -143,7 +140,7 @@ export interface ChatStore {
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
 }
 
-export const useChatStore = create<ChatStore>()(devtools(
+export const useChatStore = create<ChatState & ChatActions>()(devtools(
   persist(
     (set, get) => ({
 
@@ -160,7 +157,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           return {
             conversations: [
               conversation,
-              ...state.conversations.slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations,
             ],
             activeConversationId: conversation.id,
           };
@@ -180,6 +177,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             messages: deepCopy.messages.map((message: DMessage): DMessage => ({
               ...message,
               id: uuidv4(),
+              typing: false,
             })),
             updated: Date.now(),
             abortController: null,
@@ -189,7 +187,7 @@ export const useChatStore = create<ChatStore>()(devtools(
           return {
             conversations: [
               duplicate,
-              ...state.conversations, // DISABLED: can inadvertendly lose data - check upstream instead - .slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations,
             ],
             activeConversationId: duplicate.id,
           };
@@ -203,7 +201,7 @@ export const useChatStore = create<ChatStore>()(devtools(
             // NOTE: the .filter below is superfluous (we delete the conversation above), but it's a reminder that we don't want to corrupt the state
             conversations: [
               conversation,
-              ...state.conversations.filter(other => other.id !== conversation.id).slice(0, MAX_CONVERSATIONS - 1),
+              ...state.conversations.filter((other: DConversation) => other.id !== conversation.id),
             ],
             activeConversationId: conversation.id,
           };
@@ -403,12 +401,26 @@ export const useChatStore = create<ChatStore>()(devtools(
     }),
     {
       name: 'app-chats',
-      // version history:
-      //  - 1: [2023-03-18] app launch, single chat
-      //  - 2: [2023-04-10] multi-chat version - invalidating data to be sure
-      version: 2,
+      /* Version history:
+       *  - 1: [2023-03-18] App launch, single chat
+       *  - 2: [2023-04-10] Multi-chat version - invalidating data to be sure
+       *  - 3: [2023-09-19] Switch to IndexedDB - no data shape change,
+       *                    but we swapped the backend (localStorage -> IndexedDB)
+       */
+      version: 3,
+      storage: createJSONStorage(() => idbStateStorage),
 
-      // omit the transient property from the persisted state
+      // Migrations
+      migrate: (persistedState: unknown, fromVersion: number): ChatState & ChatActions => {
+        // -1 -> 3: migration loading from localStorage to IndexedDB
+        if (fromVersion === IDB_MIGRATION_INITIAL)
+          return _migrateLocalStorageData() as any;
+
+        // other: just proceed
+        return persistedState as any;
+      },
+
+      // Pre-Saving: remove transient properties
       partialize: (state) => ({
         ...state,
         conversations: state.conversations.map((conversation: DConversation) => {
@@ -420,23 +432,26 @@ export const useChatStore = create<ChatStore>()(devtools(
         }),
       }),
 
+      // Post-Loading: re-add transient properties and cleanup state
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          // if nothing is selected, select the first conversation
-          if (!state.activeConversationId && state.conversations.length)
-            state.activeConversationId = state.conversations[0].id;
+        if (!state) return;
 
-          for (const conversation of (state.conversations || [])) {
-            // fixup stale state
-            for (const message of conversation.messages)
-              message.typing = false;
+        // fixup state
+        for (const conversation of (state.conversations || [])) {
+          // reset the typing flag
+          for (const message of conversation.messages)
+            message.typing = false;
 
-            // rehydrate the transient properties
-            conversation.abortController = null;
-            conversation.ephemerals = [];
-          }
+          // rehydrate the transient properties
+          conversation.abortController = null;
+          conversation.ephemerals = [];
         }
+
+        // select the first conversation if none is selected
+        if (!state.activeConversationId && state.conversations.length)
+          state.activeConversationId = state.conversations[0].id;
       },
+
     }),
   {
     name: 'AppChats',
@@ -444,6 +459,34 @@ export const useChatStore = create<ChatStore>()(devtools(
   }),
 );
 
+
+/**
+ * Returns the chats stored in the localStorage, and rename the key for
+ * backup/data loss prevention purposes
+ */
+function _migrateLocalStorageData(): ChatState | {} {
+  const key = 'app-chats';
+  const value = localStorage.getItem(key);
+  if (!value) return {};
+  try {
+    // parse the localStorage state
+    const localStorageState = JSON.parse(value)?.state;
+
+    // backup and delete the localStorage key
+    const backupKey = `${key}-v2`;
+    localStorage.setItem(backupKey, value);
+    localStorage.removeItem(key);
+
+    // match the state from localstorage
+    return {
+      conversations: localStorageState?.conversations ?? [],
+      activeConversationId: localStorageState?.activeConversationId ?? null,
+    };
+  } catch (error) {
+    console.error('LocalStorage migration error', error);
+    return {};
+  }
+}
 
 /**
  * Convenience function to count the tokens in a DMessage object

@@ -1,9 +1,11 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
-import { DLLM, ModelVendor } from '../llm.types';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 
-import { OpenAIIcon } from './OpenAIIcon';
+import { DLLM } from '../../store-llms';
+import { IModelVendor } from '../IModelVendor';
+import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
 
@@ -11,7 +13,6 @@ import { OpenAISourceSetup } from './OpenAISourceSetup';
 // special symbols
 export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
-
 
 export interface SourceSetupOpenAI {
   oaiKey: string;
@@ -27,7 +28,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
+export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,
@@ -49,10 +50,10 @@ export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI>
     ...partialSetup,
   }),
   callChat: (llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], maxTokens?: number) => {
-    return openAICallChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
+    return openAICallChatOverloaded<VChatMessageOut>(llm, messages, null, null, maxTokens);
   },
-  callChatWithFunctions: (llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], functions: VChatFunctionIn[], maxTokens?: number) => {
-    return openAICallChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, maxTokens);
+  callChatWithFunctions: (llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number) => {
+    return openAICallChatOverloaded<VChatMessageOrFunctionCallOut>(llm, messages, functions, forceFunctionName || null, maxTokens);
   },
 };
 
@@ -61,7 +62,7 @@ export const ModelVendorOpenAI: ModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI>
  * This function either returns the LLM message, or function calls, or throws a descriptive error string
  */
 async function openAICallChatOverloaded<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(
-  llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number,
+  llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number,
 ): Promise<TOut> {
   // access params (source)
   const openAISetup = ModelVendorOpenAI.normalizeSetup(llm._source.setup as Partial<SourceSetupOpenAI>);
@@ -78,6 +79,7 @@ async function openAICallChatOverloaded<TOut = VChatMessageOut | VChatMessageOrF
         maxTokens: maxTokens || llmResponseTokens || 1024,
       },
       functions: functions ?? undefined,
+      forceFunctionName: forceFunctionName ?? undefined,
       history: messages,
     }) as TOut;
   } catch (error: any) {

@@ -2,8 +2,7 @@ import { fileSave } from 'browser-fs-access';
 
 import { defaultSystemPurposeId } from '../../../data';
 
-import { DModelSource } from '~/modules/llms/llm.types';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 
 import { DConversation, useChatStore } from '~/common/state/store-chats';
 import { ImportedOutcome } from './ImportOutcomeModal';

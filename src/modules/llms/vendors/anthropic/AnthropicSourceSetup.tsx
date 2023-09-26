@@ -10,11 +10,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
+import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
-import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
-import { useModelsStore, useSourceSetup } from '../store-llms';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -36,14 +35,14 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     access: { anthropicKey, anthropicHost },
   }, {
     enabled: !hasModels && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => anthropicModelToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
     <FormInputKey
-      label={'Anthropic API Key'}
+      id='anthropic-key' label='Anthropic API Key'
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
         : '✔️ already set in server'
@@ -69,24 +68,4 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     {isError && <InlineError error={error} />}
 
   </Box>;
-}
-
-
-function anthropicModelToDLLM(model: { id: string, created: number, description: string, name: string, contextWindow: number, hidden?: boolean }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
-  return {
-    id: `${source.id}-${model.id}`,
-    label: model.name,
-    created: model.created,
-    description: model.description,
-    tags: [], // ['stream', 'chat'],
-    contextTokens: model.contextWindow,
-    hidden: !!model.hidden,
-    sId: source.id,
-    _source: source,
-    options: {
-      llmRef: model.id,
-      llmTemperature: 0.5,
-      llmResponseTokens: Math.round(model.contextWindow / 8),
-    },
-  };
 }

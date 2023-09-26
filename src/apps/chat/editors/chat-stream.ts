@@ -1,8 +1,9 @@
-import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId } from '../../../data';
+import { DLLMId } from '~/modules/llms/store-llms';
+import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { streamChat } from '~/modules/llms/llm.client';
+import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';
@@ -13,7 +14,7 @@ import { createAssistantTypingMessage, updatePurposeInHistory } from './editors'
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, _autoSuggestions: boolean) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, enableFollowUps: boolean) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -32,6 +33,10 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   // clear to send, again
   startTyping(conversationId, null);
+
+  // auto-suggestions
+  if (enableFollowUps)
+    await autoSuggestions(conversationId, assistantMessageId);
 
   // update text, if needed
   if (_autoTitle)

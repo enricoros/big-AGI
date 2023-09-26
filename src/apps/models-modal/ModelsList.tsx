@@ -5,14 +5,14 @@ import { Box, Chip, IconButton, List, ListItem, ListItemButton, Tooltip, Typogra
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
-import { DLLM, DModelSourceId, ModelVendor } from '~/modules/llms/llm.types';
-import { findVendorById } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLM, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
+import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { useUIStateStore } from '~/common/state/store-ui';
 
 
-function ModelItem(props: { llm: DLLM, vendor: ModelVendor, chipChat: boolean, chipFast: boolean, chipFunc: boolean }) {
+function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, chipFast: boolean, chipFunc: boolean }) {
 
   // external state
   const openLLMOptions = useUIStateStore(state => state.openLLMOptions);
@@ -20,7 +20,7 @@ function ModelItem(props: { llm: DLLM, vendor: ModelVendor, chipChat: boolean, c
   // derived
   const llm = props.llm;
   const label = llm.label;
-  const tooltip = `${llm._source.label} - ${llm.description}`;
+  const tooltip = `${llm._source.label}${llm.description ? ' - ' + llm.description : ''} - ${llm.contextTokens?.toLocaleString() || 'unknown tokens size'}`;
 
   return (
     <ListItem>

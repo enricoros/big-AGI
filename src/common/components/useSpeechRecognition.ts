@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { isChromeOnDesktopWindows, isSafariOriPhone } from '~/common/util/pwaUtils';
+import { isChromeOnDesktopWindows, isIPhone } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -12,7 +12,7 @@ export interface SpeechResult {
 
 
 export function maySpeechRecognitionWork() {
-  return !isSafariOriPhone() && !!getSpeechRecognition();
+  return !isIPhone() && !!getSpeechRecognition();
 }
 
 /**
@@ -47,8 +47,8 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     }
 
     // skip speech recognition on iPhones and Safari browsers - because of sub-par quality
-    if (isSafariOriPhone()) {
-      console.log('Speech recognition is disabled on iPhones and Safari browsers.');
+    if (isIPhone()) {
+      console.log('Speech recognition is disabled (not yet tested) on iPhones.');
       return;
     }
 

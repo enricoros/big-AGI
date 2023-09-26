@@ -1,16 +1,18 @@
-import { ModelVendor } from '../llm.types';
+import { OobaboogaIcon } from '~/common/components/icons/OobaboogaIcon';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '~/modules/llms/openai/openai.vendor';
-import { OpenAILLMOptions } from '~/modules/llms/openai/OpenAILLMOptions';
+import { IModelVendor } from '../IModelVendor';
 
-import { OobaboogaIcon } from './OobaboogaIcon';
+import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+
 import { OobaboogaSourceSetup } from './OobaboogaSourceSetup';
+
 
 export interface SourceSetupOobabooga {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorOoobabooga: ModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI> = {
+export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga',
   rank: 15,
@@ -23,7 +25,7 @@ export const ModelVendorOoobabooga: ModelVendor<SourceSetupOobabooga, LLMOptions
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  initalizeSetup: () => ({
+  initializeSetup: () => ({
     oaiHost: 'http://127.0.0.1:5001',
   }),
   normalizeSetup: (partialSetup?: Partial<SourceSetupOobabooga>) => ({
