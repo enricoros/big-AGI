@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
@@ -12,6 +13,7 @@ import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
+import { heuristicIsHtml, IFrameComponent } from './RenderHtml';
 
 
 function RenderCodeImpl(props: {
@@ -20,11 +22,15 @@ function RenderCodeImpl(props: {
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
 }) {
   // state
+  const [showHTML, setShowHTML] = React.useState(false);
   const [showSVG, setShowSVG] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
 
   // derived props
   const { codeBlock: { blockTitle, blockCode }, highlightCode, inferCodeLanguage } = props;
+
+  const isHTML = heuristicIsHtml(blockCode);
+  const renderHTML = isHTML && showHTML;
 
   const isSVG = blockCode.startsWith('<svg') && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
@@ -113,6 +119,13 @@ function RenderCodeImpl(props: {
             </IconButton>
           </Tooltip>
         )}
+        {isHTML && (
+          <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
+            <IconButton variant={renderHTML ? 'solid' : 'soft'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+              <HtmlIcon />
+            </IconButton>
+          </Tooltip>
+        )}
         {isPlantUML && (
           <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
             <IconButton variant={renderPlantUML ? 'solid' : 'soft'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
@@ -137,19 +150,20 @@ function RenderCodeImpl(props: {
         </Typography>
       </Sheet>}
 
-      {/* Renders SVG, plantUML code, or Highlighted Code */}
-      <Box
-        dangerouslySetInnerHTML={{
-          __html:
-            renderSVG ? blockCode
-              : (renderPlantUML && plantUmlHtmlData) ? plantUmlHtmlData
-                : highlightedCode,
-        }}
-        sx={{
-          ...(renderSVG ? { lineHeight: 0 } : {}),
-          ...(renderPlantUML ? { textAlign: 'center' } : {}),
-        }}
-      />
+      {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
+      {renderHTML ? <IFrameComponent htmlString={blockCode} />
+        : <Box
+          dangerouslySetInnerHTML={{
+            __html:
+              renderSVG ? blockCode
+                : (renderPlantUML && plantUmlHtmlData) ? plantUmlHtmlData
+                  : highlightedCode,
+          }}
+          sx={{
+            ...(renderSVG ? { lineHeight: 0 } : {}),
+            ...(renderPlantUML ? { textAlign: 'center' } : {}),
+          }}
+        />}
     </Box>
   );
 }
