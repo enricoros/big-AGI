@@ -57,7 +57,9 @@ export function ImportOutcomeModal(props: { outcome: ImportedOutcome, onClose: (
         </Alert>
         <List>
           {failures.map((f, idx) =>
-            <ListItem variant='soft' color='warning' key={'fail-' + idx}><b>{f.fileName}</b>: {(f as any).error}</ListItem>,
+            <ListItem variant='soft' color='warning' key={'fail-' + idx} sx={{ display: 'list-item' }}>
+              <b>{f.fileName}</b>: {(f as any).error}
+            </ListItem>,
           )}
         </List>
       </Box>}

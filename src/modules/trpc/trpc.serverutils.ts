@@ -34,12 +34,14 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       });
     }
     if (!response.ok) {
-      const error: any | null = await response.json().catch(() => null);
+      let error: any | null = await response.json().catch(() => null);
+      if (error === null)
+        error = await response.text().catch(() => null);
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: error
           ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown http error'}`
-          : `[Issue] ${moduleName} ${response.statusText} (${response.status})`
+          : `[Issue] ${moduleName}: ${response.statusText} (${response.status})`
           + (response.status === 403 ? ` - is ${url} accessible by the server?` : '')
           + (response.status === 502 ? ` - is ${url} down?` : ''),
       });
