@@ -84,11 +84,11 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
           API Host
         </FormLabel>
         <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...
+          <Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link>
         </FormHelperText>
       </Box>
       <Input
-        variant='outlined' placeholder='e.g., oai.hconeai.com'
+        variant='outlined' placeholder='e.g., oai.hconeai.com or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai'
         value={oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
         sx={{ flexGrow: 1 }}
       />

@@ -218,6 +218,31 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // [Openrouter-specific] lame detection, but works great for now (unless we get requests for non-standard hosts)
   const isOpenrouter = oaiHost.indexOf('openrouter.ai') !== -1;
 
+  // [Cloudflare AI Gateway support] - Adds OpenAI support for Cloudflare's AI gateway -  Recognise and re-format API path when using a 'universal' or 'openai' Cloudflare AI Gateway endpoint in the API Host field. 
+  if (oaiHost.includes('https://gateway.ai.cloudflare.com')) {
+    const parsedUrl = new URL(oaiHost);
+    const pathSegments = parsedUrl.pathname.split('/').filter(segment => segment.length > 0);
+
+    // The expected path should be: /v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/<PROVIDER_ENDPOINT>
+    if (pathSegments.length < 3 || pathSegments.length > 4 || pathSegments[0] !== 'v1') {
+      throw new Error('Invalid Cloudflare AI Gateway URL path format.');
+    }
+    if (pathSegments[3] && pathSegments[3] !== 'openai') {
+      throw new Error('Invalid Cloudflare AI Gateway URL path format. Only OpenAI provider is supported.');
+    }
+
+    const cloudflareAiAccountTag = pathSegments[1]
+    const cloudflareAiGatewayName = pathSegments[2]
+    const cloudflareAiProvider = pathSegments[3] || 'openai' // Default to openai if not specified (which is the case for universal endpoints)
+
+    if (apiPath.startsWith('/v1')) {
+      apiPath = apiPath.replace('/v1', '');
+    }
+
+    oaiHost = 'https://gateway.ai.cloudflare.com'
+    apiPath = `/v1/${cloudflareAiAccountTag}/${cloudflareAiGatewayName}/${cloudflareAiProvider}${apiPath}`
+  }
+
   return {
     headers: {
       ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
