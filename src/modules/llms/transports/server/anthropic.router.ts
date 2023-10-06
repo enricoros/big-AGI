@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
-import { chatGenerateOutputSchema, historySchema, modelSchema } from './openai.router';
+import { openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
 
 import { AnthropicWire } from './anthropic.wiretypes';
@@ -14,14 +14,22 @@ import { AnthropicWire } from './anthropic.wiretypes';
 
 // Input Schemas
 
-const anthropicAccessSchema = z.object({
+export const anthropicAccessSchema = z.object({
+  dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim(),
 });
+export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
 
-const anthropicChatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
 
-const anthropicListModelsSchema = z.object({ access: anthropicAccessSchema });
+const listModelsInputSchema = z.object({
+  access: anthropicAccessSchema,
+});
+
+const chatGenerateInputSchema = z.object({
+  access: anthropicAccessSchema,
+  model: openAIModelSchema, history: openAIHistorySchema,
+});
 
 
 export const llmAnthropicRouter = createTRPCRouter({
@@ -32,14 +40,14 @@ export const llmAnthropicRouter = createTRPCRouter({
    * some details on the models, as the API docs are scarce: https://docs.anthropic.com/claude/reference/selecting-a-model
    */
   listModels: publicProcedure
-    .input(anthropicListModelsSchema)
+    .input(listModelsInputSchema)
     .output(listModelsOutputSchema)
     .query(() => ({ models: hardcodedAnthropicModels })),
 
   /* Anthropic: Chat generation */
   chatGenerate: publicProcedure
-    .input(anthropicChatGenerateSchema)
-    .output(chatGenerateOutputSchema)
+    .input(chatGenerateInputSchema)
+    .output(openAIChatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;
@@ -50,7 +58,7 @@ export const llmAnthropicRouter = createTRPCRouter({
 
       const wireCompletions = await anthropicPOST<AnthropicWire.Complete.Response, AnthropicWire.Complete.Request>(
         access,
-        anthropicCompletionRequest(model, history, false),
+        anthropicChatCompletionPayload(model, history, false),
         '/v1/complete',
       );
 
@@ -118,18 +126,17 @@ const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
   },
 ];
 
-type AccessSchema = z.infer<typeof anthropicAccessSchema>;
-type ModelSchema = z.infer<typeof modelSchema>;
-type HistorySchema = z.infer<typeof historySchema>;
+type ModelSchema = z.infer<typeof openAIModelSchema>;
+type HistorySchema = z.infer<typeof openAIHistorySchema>;
 
-async function anthropicPOST<TOut, TPostBody>(access: AccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function anthropicPOST<TOut, TPostBody>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
 }
 
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 
-export function anthropicAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API version
   const apiVersion = '2023-06-01';
 
@@ -158,7 +165,7 @@ export function anthropicAccess(access: AccessSchema, apiPath: string): { header
   };
 }
 
-export function anthropicCompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): AnthropicWire.Complete.Request {
+export function anthropicChatCompletionPayload(model: ModelSchema, history: HistorySchema, stream: boolean): AnthropicWire.Complete.Request {
   // encode the prompt for Claude models
   const prompt = history.map(({ role, content }) => {
     return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;

@@ -1,87 +1,9 @@
-import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
-
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
-
-import { openAIModelToModelDescription } from '../../vendors/openai/openai.data';
-
-import { OpenAI } from './openai.wiretypes';
-import { chatGenerateOutputSchema, historySchema, modelSchema, openAIChatCompletionPayload } from './openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
-
-
-// input schemas
-
-const azureAccessSchema = z.object({
-  azureEndpoint: z.string().trim(),
-  azureKey: z.string().trim(),
-});
-
-const azureChatGenerateSchema = z.object({ access: azureAccessSchema, model: modelSchema, history: historySchema });
-
-const azureListModelsSchema = z.object({ access: azureAccessSchema });
-
-
 // Wire schemas
 
-const wireAzureListDeploymentsSchema = z.object({
-  data: z.array(z.object({
-    // scale_settings: z.object({ scale_type: z.string() }),
-    model: z.string(),
-    owner: z.enum(['organization-owner']),
-    id: z.string(),
-    status: z.enum(['succeeded']),
-    created_at: z.number(),
-    updated_at: z.number(),
-    object: z.literal('deployment'),
-  })),
-  object: z.literal('list'),
-});
-
-
-export const llmAzureRouter = createTRPCRouter({
-
-  /* Azure: list models
-   *
-   * Some complexity arises here as the models are called 'deployments' within allocated Azure 'endpoints'.
-   * We use an unofficial API to list the deployments, and map them to models descriptions.
-   *
-   * See: https://github.com/openai/openai-python/issues/447#issuecomment-1730976835 for our input on the issue.
-   */
-  listModels: publicProcedure
-    .input(azureListModelsSchema)
-    .output(listModelsOutputSchema)
-    .query(async ({ input }) => {
-
-      // fetch the Azure OpenAI 'deployments'
-      const azureModels = await azureOpenaiGET(
-        input.access.azureEndpoint, input.access.azureKey,
-        `/openai/deployments?api-version=2023-03-15-preview`,
-      );
-
-      // parse and validate output, and take the GPT models only (e.g. no 'whisper')
-      const wireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
-
-      // map to ModelDescriptions
-      const models: ModelDescriptionSchema[] = wireModels
-        .filter(m => m.model.includes('gpt'))
-        .map((model): ModelDescriptionSchema => {
-          const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
-          return {
-            id: model.id,
-            label: `${label} (${model.id})`,
-            ...rest,
-          };
-        });
-
-      return { models };
-    }),
-
   /* Azure: Chat generation */
-  chatGenerate: publicProcedure
+  /*chatGenerate: publicProcedure
     .input(azureChatGenerateSchema)
-    .output(chatGenerateOutputSchema)
+    .output(openAIChatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;
@@ -113,40 +35,4 @@ export const llmAzureRouter = createTRPCRouter({
         finish_reason: finish_reason as 'stop' | 'length',
       };
     }),
-
-});
-
-
-async function azureOpenaiGET<TOut>(endpoint: string, key: string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = azureOpenAIAccess(endpoint, key, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Azure OpenAI');
-}
-
-async function azureOpenAIPOST<TOut, TPostBody>(endpoint: string, key: string, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = azureOpenAIAccess(endpoint, key, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Azure OpenAI');
-}
-
-function azureOpenAIAccess(endpoint: string, key: string, apiPath: string): { headers: HeadersInit, url: string } {
-  // API endpoint
-  let azureEndpoint = endpoint || process.env.AZURE_OPENAI_API_ENDPOINT || '';
-  if (!azureEndpoint.startsWith('http'))
-    azureEndpoint = `https://${azureEndpoint}`;
-  if (azureEndpoint.endsWith('/') && apiPath.startsWith('/'))
-    azureEndpoint = azureEndpoint.slice(0, -1);
-
-  // API key
-  const azureKey = key || process.env.AZURE_OPENAI_API_KEY || '';
-
-  // warn if no key - only for default (non-overridden) hosts
-  if (!azureKey || !azureEndpoint)
-    throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
-
-  return {
-    headers: {
-      ...(azureKey && { 'api-key': azureKey }),
-      'Content-Type': 'application/json',
-    },
-    url: azureEndpoint + apiPath,
-  };
-}
+*/

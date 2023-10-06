@@ -25,10 +25,10 @@ export interface VChatMessageOrFunctionCallOut extends VChatMessageOut {
 
 export async function callChatGenerate(llmId: DLLMId, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  return await vendor.callChat(llm, messages, maxTokens);
+  return await vendor.callChatGenerate(llm, messages, maxTokens);
 }
 
-export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName?: string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
+export async function callChatGenerateWithFunctions(llmId: DLLMId, messages: VChatMessageIn[], functions: VChatFunctionIn[], forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  return await vendor.callChatWithFunctions(llm, messages, functions, forceFunctionName, maxTokens);
+  return await vendor.callChatGenerateWF(llm, messages, functions, forceFunctionName, maxTokens);
 }

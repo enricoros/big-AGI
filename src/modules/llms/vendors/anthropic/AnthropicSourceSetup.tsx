@@ -19,12 +19,12 @@ import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } f
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { anthropicKey, anthropicHost },
-  } = useSourceSetup(props.sourceId, ModelVendorAnthropic.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorAnthropic.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
+  // derived state
+  const { anthropicKey } = access;
+
   const needsUserKey = !hasServerKeyAnthropic;
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
@@ -32,9 +32,9 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
-    access: { anthropicKey, anthropicHost },
+    access,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });

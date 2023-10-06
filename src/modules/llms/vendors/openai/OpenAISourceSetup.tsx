@@ -13,7 +13,8 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
+
+import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
 
 
@@ -23,12 +24,12 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
-  } = useSourceSetup(props.sourceId, ModelVendorOpenAI.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorOpenAI.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
+  // derived state
+  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
+
   const needsUserKey = !hasServerKeyOpenAI;
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -36,10 +37,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
-    filterGpt: true,
+    access, filterGpt: true,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -153,7 +153,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<SourceSetupOpenAI, LLMOptionsOpenAI> {
   const { label, created, updated, description, contextWindow: contextTokens, hidden } = openAIModelToModelDescription(model.id, model.created);
   return {
     id: `${source.id}-${model.id}`,
@@ -177,7 +177,7 @@ function openAIModelToDLLM(model: { id: string, created: number }, source: DMode
   };
 }
 
-export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
   return {
     id: `${source.id}-${model.id}`,
     label: model.label,
