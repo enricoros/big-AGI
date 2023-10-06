@@ -18,6 +18,9 @@ declare namespace NodeJS {
     ANTHROPIC_API_KEY: string;
     ANTHROPIC_API_HOST: string;
 
+    // LLM: OpenRouter
+    OPENROUTER_API_KEY: string;
+
     // Helicone
     HELICONE_API_KEY: string;
 

@@ -19,12 +19,12 @@ import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure
 export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { azureEndpoint, azureKey },
-  } = useSourceSetup(props.sourceId, ModelVendorAzure.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorAzure.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
+  // derived state
+  const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
+
   const needsUserKey = !hasServerKeyAzure;
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
@@ -33,10 +33,10 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = azureKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmAzure.listModels.useQuery({
-    access: { azureEndpoint, azureKey },
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModelsAzure.useQuery({
+    access,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });

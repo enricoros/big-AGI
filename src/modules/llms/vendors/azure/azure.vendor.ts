@@ -1,12 +1,10 @@
-import { apiAsync } from '~/modules/trpc/trpc.client';
-
 import { AzureIcon } from '~/common/components/icons/AzureIcon';
 
-import { DLLM } from '../../store-llms';
-import { IModelVendor } from '../IModelVendor';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { IModelVendor } from '../IModelVendor';
+import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
-import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { AzureSourceSetup } from './AzureSourceSetup';
@@ -37,7 +35,7 @@ export interface SourceSetupAzure {
  *
  * Work in progress...
  */
-export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI> = {
+export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI, OpenAIAccessSchema> = {
   id: 'azure',
   name: 'Azure',
   rank: 14,
@@ -50,46 +48,18 @@ export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI> 
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  normalizeSetup: (partialSetup?: Partial<SourceSetupAzure>): SourceSetupAzure => ({
-    azureEndpoint: '',
-    azureKey: '',
-    ...partialSetup,
+  getAccess: (partialSetup): OpenAIAccessSchema => ({
+    dialect: 'azure',
+    oaiKey: partialSetup?.azureKey || '',
+    oaiOrg: '',
+    oaiHost: partialSetup?.azureEndpoint || '',
+    heliKey: '',
+    moderationCheck: false,
   }),
-  callChat: (llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], maxTokens?: number) => {
-    return azureCallChatOverloaded<VChatMessageOut>(llm, messages, null, maxTokens);
+  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
+    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
   },
-  callChatWithFunctions: () => {
-    throw new Error('Azure does not support functions');
+  callChatGenerateWF(llm, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
+    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, functions, forceFunctionName, maxTokens);
   },
 };
-
-
-/**
- * This function either returns the LLM message, or function calls, or throws a descriptive error string
- */
-async function azureCallChatOverloaded<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(
-  llm: DLLM<LLMOptionsOpenAI>, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, maxTokens?: number,
-): Promise<TOut> {
-  // access params (source)
-  const azureSetup = ModelVendorAzure.normalizeSetup(llm._source.setup as Partial<SourceSetupAzure>);
-
-  // model params (llm)
-  const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llm.options;
-
-  try {
-    return await apiAsync.llmAzure.chatGenerate.mutate({
-      access: azureSetup,
-      model: {
-        id: llmRef!,
-        temperature: llmTemperature,
-        maxTokens: maxTokens || llmResponseTokens || 1024,
-      },
-      // functions: functions ?? undefined,
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'OpenAI Chat Fetch Error';
-    console.error(`openAICallChat: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}

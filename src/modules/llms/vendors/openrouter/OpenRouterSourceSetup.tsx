@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Box, Button, Typography } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
@@ -11,20 +10,22 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
+import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
+import { isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
 
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { oaiHost, oaiKey },
-  } = useSourceSetup(props.sourceId, ModelVendorOpenRouter.normalizeSetup);
+    source, sourceHasLLMs, access, updateSetup,
+  } = useSourceSetup(props.sourceId, ModelVendorOpenRouter.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
+  // derived state
+  const { oaiKey } = access;
+
   const needsUserKey = true; // !hasServerKey...;
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -32,10 +33,9 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: ModelVendorOpenAI.normalizeSetup({ oaiHost, oaiKey }),
-    filterGpt: false,
+    access, filterGpt: false,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.sort(orFamilySortFn).map(model => openRouterModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -130,7 +130,7 @@ function orFamilySortFn(a: { id: string }, b: { id: string }): number {
 }
 
 
-function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource<SourceSetupOpenRouter>): DLLM<SourceSetupOpenRouter, LLMOptionsOpenAI> {
   // label: use the known name if available, otherwise format the model id
   const orModel = orModelMap[model.id] ?? null;
   const label = orModel?.name || model.id.replace('/', ' · ');

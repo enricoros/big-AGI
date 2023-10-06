@@ -1,15 +1,11 @@
 import { apiAsync } from '~/modules/trpc/trpc.client';
 
 import type { DLLM, DLLMId } from '../store-llms';
-import type { IModelVendor } from '../vendors/IModelVendor';
 import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
-import type { ChatStreamSchema } from './server/openai.router';
+import type { ChatStreamInputSchema } from './server/openai.streaming';
 import type { OpenAI } from './server/openai.wiretypes';
 import type { VChatMessageIn } from './chatGenerate';
-
-import { ModelVendorAnthropic, SourceSetupAnthropic } from '../vendors/anthropic/anthropic.vendor';
-import { ModelVendorOpenAI, SourceSetupOpenAI } from '../vendors/openai/openai.vendor';
 
 
 /**
@@ -20,41 +16,38 @@ import { ModelVendorOpenAI, SourceSetupOpenAI } from '../vendors/openai/openai.v
  * as generic as possible.
  *
  * @param llmId LLM to use
- * @param chatHistory the history of messages to send to the API endpoint
+ * @param messages the history of messages to send to the API endpoint
  * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
  * @param onUpdate callback when a piece of a message (text, model name, typing..) is received
  */
 export async function streamChat(
   llmId: DLLMId,
-  chatHistory: VChatMessageIn[],
+  messages: VChatMessageIn[],
   abortSignal: AbortSignal,
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ): Promise<void> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  return await vendorStreamChat(vendor, llm, chatHistory, abortSignal, onUpdate);
+  const access = vendor.getAccess(llm._source.setup) as ChatStreamInputSchema['access'];
+  return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate);
 }
 
 
 async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
-  vendor: IModelVendor<TSourceSetup, TLLMOptions>, llm: DLLM<TLLMOptions>,
-  chatHistory: VChatMessageIn[],
+  access: ChatStreamInputSchema['access'],
+  llm: DLLM<TSourceSetup, TLLMOptions>,
+  messages: VChatMessageIn[],
   abortSignal: AbortSignal,
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ) {
 
-  // access params (source)
-  const sourceSetup = vendor.normalizeSetup(llm._source.setup);
-
   // [OpenAI-only] check for harmful content with the free 'moderation' API
-  if (vendor.id === 'openai') {
-    const openAISourceSetup = sourceSetup as SourceSetupOpenAI;
-    const lastMessage = chatHistory.at(-1) ?? null;
-    const useModeration = openAISourceSetup.moderationCheck && lastMessage && lastMessage.role === 'user';
+  if (access.dialect === 'openai') {
+    const lastMessage = messages.at(-1) ?? null;
+    const useModeration = access.moderationCheck && lastMessage && lastMessage.role === 'user';
     if (useModeration) {
       try {
         const moderationResult: OpenAI.Wire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({
-          access: openAISourceSetup,
-          text: lastMessage.content,
+          access, text: lastMessage.content,
         });
         const issues = moderationResult.results.reduce((acc, result) => {
           if (result.flagged) {
@@ -88,26 +81,24 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llm.options as any) || {};
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
-    throw new Error(`Error in openAI configuration for model ${llm.id}: ${llm.options}`);
+    throw new Error(`Error in configuration for model ${llm.id}: ${llm.options}`);
+
+  // prepare the input, similarly to the tRPC openAI.chatGenerate
+  const input: ChatStreamInputSchema = {
+    access,
+    model: {
+      id: llmRef,
+      temperature: llmTemperature,
+      maxTokens: llmResponseTokens,
+    },
+    history: messages,
+  };
 
   // connect to the server-side streaming endpoint
   const response = await fetch('/api/llms/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      // map all to OpenAI, apart from Anthropic
-      vendorId: vendor.id === 'anthropic' ? 'anthropic' : 'openai',
-      access: vendor.id === 'anthropic'
-        ? ModelVendorAnthropic.normalizeSetup(sourceSetup as SourceSetupAnthropic)
-        : ModelVendorOpenAI.normalizeSetup(sourceSetup as SourceSetupOpenAI),
-      model: {
-        id: llmRef,
-        temperature: llmTemperature,
-        maxTokens: llmResponseTokens,
-      },
-      functions: undefined,
-      history: chatHistory,
-    } satisfies ChatStreamSchema),
+    body: JSON.stringify(input),
     signal: abortSignal,
   });
 
