@@ -46,6 +46,7 @@ declare namespace NodeJS {
     HAS_SERVER_KEY_AZURE_OPENAI?: boolean;
     HAS_SERVER_KEY_ELEVENLABS: boolean;
     HAS_SERVER_KEY_OPENAI?: boolean;
+    HAS_SERVER_KEY_OPENROUTER?: boolean;
     HAS_SERVER_KEY_PRODIA: boolean;
 
   }

@@ -11,6 +11,7 @@ import { OpenRouterSourceSetup } from './OpenRouterSourceSetup';
 
 
 // special symbols
+export const hasServerKeyOpenRouter = !!process.env.HAS_SERVER_KEY_OPENROUTER;
 export const isValidOpenRouterKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-or-') && apiKey.length > 40;
 
 // use OpenAI-compatible host and key
