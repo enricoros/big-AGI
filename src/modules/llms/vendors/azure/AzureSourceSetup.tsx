@@ -13,7 +13,7 @@ import { settingsGap } from '~/common/theme';
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
-import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
+import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 
 
 export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -25,7 +25,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
 
-  const needsUserKey = !hasServerKeyAzure;
+  const needsUserKey = !ModelVendorAzure.hasServerKey;
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
   const hostValid = !!asValidURL(azureEndpoint);

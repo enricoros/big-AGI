@@ -13,6 +13,7 @@ export interface IModelVendor<TSourceSetup = unknown, TLLMOptions = unknown, TAc
   readonly rank: number;
   readonly location: 'local' | 'cloud';
   readonly instanceLimit: number;
+  readonly hasServerKey?: boolean;
 
   // components
   readonly Icon: React.ComponentType;

@@ -11,7 +11,6 @@ import { OpenRouterSourceSetup } from './OpenRouterSourceSetup';
 
 
 // special symbols
-export const hasServerKeyOpenRouter = !!process.env.HAS_SERVER_KEY_OPENROUTER;
 export const isValidOpenRouterKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-or-') && apiKey.length > 40;
 
 // use OpenAI-compatible host and key
@@ -34,9 +33,10 @@ export interface SourceSetupOpenRouter {
 export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptionsOpenAI, OpenAIAccessSchema> = {
   id: 'openrouter',
   name: 'OpenRouter',
-  rank: 25,
+  rank: 12,
   location: 'cloud',
   instanceLimit: 1,
+  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENAI,
 
   // components
   Icon: OpenRouterIcon,

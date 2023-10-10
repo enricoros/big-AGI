@@ -13,7 +13,7 @@ import { settingsGap } from '~/common/theme';
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
-import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
+import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -25,7 +25,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { anthropicKey } = access;
 
-  const needsUserKey = !hasServerKeyAnthropic;
+  const needsUserKey = !ModelVendorAnthropic.hasServerKey;
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : !needsUserKey;

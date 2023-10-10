@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
@@ -10,8 +10,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { IModelVendor, ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
+import { ModelVendorOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendor.registry';
-import { hasServerKeyOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -19,14 +19,16 @@ import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 
 
 function locationIcon(vendor?: IModelVendor | null) {
-  if (vendor && vendor.id === 'openai' && hasServerKeyOpenAI)
+  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasServerKey)
     return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }
 
-function vendorIcon(vendor?: IModelVendor | null) {
+function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
   const Icon = !vendor ? null : vendor.Icon;
-  return Icon ? <Icon /> : null;
+  return (greenMark && Icon)
+    ? <Badge color='primary' size='sm' badgeContent=''><Icon /></Badge>
+    : Icon ? <Icon /> : null;
 }
 
 
@@ -73,23 +75,26 @@ export function ModelsSourceSelector(props: {
 
 
   // vendor list items
-  const vendorItems = React.useMemo(() => findAllVendors().filter(v => !!v.instanceLimit).map(vendor => {
-    const sourceCount = modelSources.filter(source => source.vId === vendor.id).length;
-    const enabled = vendor.instanceLimit > sourceCount;
-    return {
-      vendor,
-      enabled,
-      sourceCount,
-      component: (
-        <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
-          <ListItemDecorator>
-            {vendorIcon(vendor)}
-          </ListItemDecorator>
-          {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
-        </MenuItem>
-      ),
-    };
-  }), [handleAddSourceFromVendor, modelSources]);
+  const vendorItems = React.useMemo(() => findAllVendors()
+    .filter(v => !!v.instanceLimit)
+    .map(vendor => {
+        const sourceCount = modelSources.filter(source => source.vId === vendor.id).length;
+        const enabled = vendor.instanceLimit > sourceCount;
+        return {
+          vendor,
+          enabled,
+          sourceCount,
+          component: (
+            <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
+              <ListItemDecorator>
+                {vendorIcon(vendor, !!vendor.hasServerKey)}
+              </ListItemDecorator>
+              {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
+            </MenuItem>
+          ),
+        };
+      },
+    ), [handleAddSourceFromVendor, modelSources]);
 
 
   // source items
