@@ -13,7 +13,6 @@ import { AnthropicSourceSetup } from './AnthropicSourceSetup';
 
 
 // special symbols
-export const hasServerKeyAnthropic = !!process.env.HAS_SERVER_KEY_ANTHROPIC;
 export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export interface SourceSetupAnthropic {
@@ -27,6 +26,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptions
   rank: 13,
   location: 'cloud',
   instanceLimit: 1,
+  hasServerKey: !!process.env.HAS_SERVER_KEY_ANTHROPIC,
 
   // components
   Icon: AnthropicIcon,

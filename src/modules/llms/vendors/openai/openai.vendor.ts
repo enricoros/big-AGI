@@ -11,7 +11,6 @@ import { OpenAISourceSetup } from './OpenAISourceSetup';
 
 
 // special symbols
-export const hasServerKeyOpenAI = !!process.env.HAS_SERVER_KEY_OPENAI;
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export interface SourceSetupOpenAI {
@@ -34,6 +33,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI
   rank: 10,
   location: 'cloud',
   instanceLimit: 1,
+  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENAI,
 
   // components
   Icon: OpenAIIcon,

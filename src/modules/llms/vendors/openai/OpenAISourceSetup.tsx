@@ -14,7 +14,7 @@ import { settingsCol1Width, settingsGap } from '~/common/theme';
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
+import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
 
 
@@ -30,7 +30,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const needsUserKey = !hasServerKeyOpenAI;
+  const needsUserKey = !ModelVendorOpenAI.hasServerKey;
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;

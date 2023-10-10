@@ -11,7 +11,6 @@ import { AzureSourceSetup } from './AzureSourceSetup';
 
 
 // special symbols
-export const hasServerKeyAzure = !!process.env.HAS_SERVER_KEY_AZURE_OPENAI;
 export const isValidAzureApiKey = (apiKey?: string) => !!apiKey && apiKey.length >= 32;
 
 export interface SourceSetupAzure {
@@ -40,7 +39,8 @@ export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI, 
   name: 'Azure',
   rank: 14,
   location: 'cloud',
-  instanceLimit: 0,
+  instanceLimit: 2,
+  hasServerKey: !!process.env.HAS_SERVER_KEY_AZURE_OPENAI,
 
   // components
   Icon: AzureIcon,

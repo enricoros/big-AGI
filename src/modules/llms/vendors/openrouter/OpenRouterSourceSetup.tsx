@@ -13,7 +13,7 @@ import { settingsGap } from '~/common/theme';
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { hasServerKeyOpenRouter, isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
+import { isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
 
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -26,7 +26,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey } = access;
 
-  const needsUserKey = !hasServerKeyOpenRouter;
+  const needsUserKey = !ModelVendorOpenRouter.hasServerKey;
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
