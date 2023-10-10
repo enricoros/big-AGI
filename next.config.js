@@ -8,6 +8,7 @@ let nextConfig = {
     HAS_SERVER_KEY_AZURE_OPENAI: !!process.env.AZURE_OPENAI_API_KEY && !!process.env.AZURE_OPENAI_API_ENDPOINT,
     HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
     HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
+    HAS_SERVER_KEY_OPENROUTER: !!process.env.OPENROUTER_API_KEY,
     HAS_SERVER_KEY_PRODIA: !!process.env.PRODIA_API_KEY,
   },
   webpack(config, { isServer, dev }) {

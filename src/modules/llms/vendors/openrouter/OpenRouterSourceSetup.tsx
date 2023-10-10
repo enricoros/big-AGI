@@ -10,10 +10,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
+import { hasServerKeyOpenRouter, isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
 
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -26,7 +26,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey } = access;
 
-  const needsUserKey = true; // !hasServerKey...;
+  const needsUserKey = !hasServerKeyOpenRouter;
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
