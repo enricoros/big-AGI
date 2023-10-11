@@ -11,19 +11,19 @@ Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
-## Useful 👊
+## ✨ Key Features 👊
 
 ![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
 
-- Engaging AI Personas
-- Clean UX, w/ tokens counters
-- Private: user-owned API keys and localStorage, self-hostable if you like
-- Human I/O: Advanced voice support (TTS, STT)
-- Machine I/O: PDF import & Summarization, code execution
-- Many more updates & integrations: ElevenLabs, Helicone, Paste.gg, Prodia
-- Coming up: automatic-AGI reasoning (Reason+Act) and more
+- **AI Personas**
+- **Polished UI**: installable web app, mobile-friendly, token counters, etc.
+- **Fast UX**: Microphone, Camera OCR, Drag files, Voice Synthesis
+- **Models**: [OpenAI](https://platform.openai.com/overview), [Anthropic](https://www.anthropic.com/product), [Azure](https://oai.azure.com/), [OpenRouter](https://openrouter.ai/), [Local models](https://github.com/oobabooga/text-generation-webui), and more
+- **Private**: use your own API keys and self-host if you like
+- **Advanced**: PDF import & Summarization, code execution
+- **Integrations**: ElevenLabs, Helicone, Paste.gg, Prodia and more
 
-## Support 🙌
+## 💖 Support
 
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
 [![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
