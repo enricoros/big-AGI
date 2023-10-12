@@ -12,10 +12,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
-
+import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { ModelVendorLocalAI } from './localai.vendor';
+
+import { ModelVendorLocalAI, SourceSetupLocalAI } from './localai.vendor';
 
 
 const urlSchema = z.string().url().startsWith('http');
@@ -24,19 +24,19 @@ const urlSchema = z.string().url().startsWith('http');
 export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, normSetup: { oaiHost }, updateSetup, sourceLLMs,
-  } = useSourceSetup(props.sourceId, ModelVendorLocalAI.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorLocalAI.getAccess);
+
+  // derived state
+  const { oaiHost } = access;
 
   // validate if url is a well formed proper url with zod
   const { success: isValidHost } = urlSchema.safeParse(oaiHost);
   const shallFetchSucceed = isValidHost;
 
-  const hasModels = !!sourceLLMs.length;
-
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: ModelVendorOpenAI.normalizeSetup({ oaiHost }),
+    access,
   }, {
     enabled: false, //!sourceLLMs.length && shallFetchSucceed,
     onSuccess: models => {
@@ -64,7 +64,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     <Button
       variant='solid' color={isError ? 'warning' : 'primary'}
       disabled={!shallFetchSucceed || isFetching}
-      endDecorator={hasModels ? <SyncIcon /> : <FileDownloadIcon />}
+      endDecorator={sourceHasLLMs ? <SyncIcon /> : <FileDownloadIcon />}
       onClick={() => refetch()}
       sx={{ minWidth: 120, ml: 'auto' }}
     >
@@ -86,7 +86,7 @@ const ModelHeuristics: { [key: string]: { label: string, contextTokens: number }
 };
 
 
-function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function localAIToDLLM(model: { id: string, object: 'model' }, source: DModelSource<SourceSetupLocalAI>): DLLM<SourceSetupLocalAI, LLMOptionsOpenAI> {
   const h = ModelHeuristics[model.id] || {
     label: model.id
       .replace('ggml-', '')

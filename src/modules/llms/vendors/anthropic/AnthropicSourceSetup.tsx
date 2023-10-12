@@ -13,28 +13,28 @@ import { settingsGap } from '~/common/theme';
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
-import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
+import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { anthropicKey, anthropicHost },
-  } = useSourceSetup(props.sourceId, ModelVendorAnthropic.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorAnthropic.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
-  const needsUserKey = !hasServerKeyAnthropic;
+  // derived state
+  const { anthropicKey } = access;
+
+  const needsUserKey = !ModelVendorAnthropic.hasServerKey;
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
-    access: { anthropicKey, anthropicHost },
+    access,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });

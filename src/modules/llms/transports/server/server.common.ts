@@ -12,7 +12,6 @@ const modelDescriptionSchema = z.object({
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete])),
   hidden: z.boolean().optional(),
 });
-
 export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;
 
 export const listModelsOutputSchema = z.object({

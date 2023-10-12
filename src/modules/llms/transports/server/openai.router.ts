@@ -7,34 +7,34 @@ import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
 import { Brand } from '~/common/brand';
 
 import { OpenAI } from './openai.wiretypes';
-
-
-// if (!process.env.OPENAI_API_KEY)
-//   console.warn('OPENAI_API_KEY has not been provided in this deployment environment. Will need client-supplied keys, which is not recommended.');
+import { listModelsOutputSchema, ModelDescriptionSchema } from '~/modules/llms/transports/server/server.common';
+import { openAIModelToModelDescription } from '~/modules/llms/vendors/openai/openai.data';
 
 
 // Input Schemas
 
-const openAIAccessSchema = z.object({
+export const openAIAccessSchema = z.object({
+  dialect: z.enum(['azure', 'openai', 'openrouter']),
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
   heliKey: z.string().trim(),
   moderationCheck: z.boolean(),
 });
+export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 
-export const modelSchema = z.object({
+export const openAIModelSchema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(1).optional(),
   maxTokens: z.number().min(1).max(1000000),
 });
 
-export const historySchema = z.array(z.object({
+export const openAIHistorySchema = z.array(z.object({
   role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
   content: z.string(),
 }));
 
-export const functionsSchema = z.array(z.object({
+export const openAIFunctionsSchema = z.array(z.object({
   name: z.string(),
   description: z.string().optional(),
   parameters: z.object({
@@ -48,31 +48,34 @@ export const functionsSchema = z.array(z.object({
   }).optional(),
 }));
 
-export const openAIChatStreamSchema = z.object({
-  vendorId: z.enum(['anthropic', 'openai']),
-  // shall clean this up a bit
-  access: z.union([openAIAccessSchema, z.object({ anthropicKey: z.string().trim(), anthropicHost: z.string().trim() })]),
-  model: modelSchema, history: historySchema, functions: functionsSchema.optional(),
+
+export const listModelsInputSchema = z.object({
+  access: openAIAccessSchema,
+  filterGpt: z.boolean().optional(),
 });
-export type ChatStreamSchema = z.infer<typeof openAIChatStreamSchema>;
 
-const openAIChatGenerateSchema = z.object({ access: openAIAccessSchema, model: modelSchema, history: historySchema, functions: functionsSchema.optional(), forceFunctionName: z.string().optional() });
+const chatGenerateWithFunctionsInputSchema = z.object({
+  access: openAIAccessSchema,
+  model: openAIModelSchema, history: openAIHistorySchema,
+  functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
+});
 
-const openAIChatModerationSchema = z.object({ access: openAIAccessSchema, text: z.string() });
-
-const openAIListModelsSchema = z.object({ access: openAIAccessSchema, filterGpt: z.boolean().optional() });
+const moderationInputSchema = z.object({
+  access: openAIAccessSchema,
+  text: z.string(),
+});
 
 
 // Output Schemas
 
-export const chatGenerateOutputSchema = z.object({
+export const openAIChatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
   content: z.string(),
   finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
 });
 
-const chatGenerateWithFunctionsOutputSchema = z.union([
-  chatGenerateOutputSchema,
+const openAIChatGenerateWithFunctionsOutputSchema = z.union([
+  openAIChatGenerateOutputSchema,
   z.object({
     function_name: z.string(),
     function_arguments: z.record(z.any()),
@@ -84,7 +87,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
   /* OpenAI: List the Models available */
   listModels: publicProcedure
-    .input(openAIListModelsSchema)
+    .input(listModelsInputSchema)
     .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
 
       const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
@@ -121,17 +124,56 @@ export const llmOpenAIRouter = createTRPCRouter({
       return llms;
     }),
 
+  /* Azure: List the Models available from the 'deployments' */
+  listModelsAzure: publicProcedure
+    .input(listModelsInputSchema)
+    .output(listModelsOutputSchema)
+    .query(async ({ input }) => {
+
+      // fetch the Azure OpenAI 'deployments'
+      const azureModels = await openaiGET(input.access, `/openai/deployments?api-version=2023-03-15-preview`);
+
+      // parse and validate output, and take the GPT models only (e.g. no 'whisper')
+      const wireAzureListDeploymentsSchema = z.object({
+        data: z.array(z.object({
+          // scale_settings: z.object({ scale_type: z.string() }),
+          model: z.string(),
+          owner: z.enum(['organization-owner']),
+          id: z.string(),
+          status: z.enum(['succeeded']),
+          created_at: z.number(),
+          updated_at: z.number(),
+          object: z.literal('deployment'),
+        })),
+        object: z.literal('list'),
+      });
+      const wireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
+
+      // map to ModelDescriptions
+      const models: ModelDescriptionSchema[] = wireModels
+        .filter(m => m.model.includes('gpt'))
+        .map((model): ModelDescriptionSchema => {
+          const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
+          return {
+            id: model.id,
+            label: `${label} (${model.id})`,
+            ...rest,
+          };
+        });
+      return { models };
+    }),
+
   /* OpenAI: chat generation */
   chatGenerateWithFunctions: publicProcedure
-    .input(openAIChatGenerateSchema)
-    .output(chatGenerateWithFunctionsOutputSchema)
+    .input(chatGenerateWithFunctionsInputSchema)
+    .output(openAIChatGenerateWithFunctionsOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history, functions, forceFunctionName } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
-        access,
+        access, model.id,
         openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
         '/v1/chat/completions',
       );
@@ -154,12 +196,12 @@ export const llmOpenAIRouter = createTRPCRouter({
 
   /* OpenAI: check for content policy violations */
   moderation: publicProcedure
-    .input(openAIChatModerationSchema)
+    .input(moderationInputSchema)
     .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
       const { access, text } = input;
       try {
 
-        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, {
+        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -176,61 +218,97 @@ export const llmOpenAIRouter = createTRPCRouter({
 });
 
 
-type AccessSchema = z.infer<typeof openAIAccessSchema>;
-type ModelSchema = z.infer<typeof modelSchema>;
-type HistorySchema = z.infer<typeof historySchema>;
-type FunctionsSchema = z.infer<typeof functionsSchema>;
+type ModelSchema = z.infer<typeof openAIModelSchema>;
+type HistorySchema = z.infer<typeof openAIHistorySchema>;
+type FunctionsSchema = z.infer<typeof openAIFunctionsSchema>;
 
-async function openaiGET<TOut>(access: AccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = openAIAccess(access, apiPath);
+async function openaiGET<TOut>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = openAIAccess(access, null, apiPath);
   return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'OpenAI');
 }
 
-async function openaiPOST<TOut, TPostBody>(access: AccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = openAIAccess(access, apiPath);
+async function openaiPOST<TOut, TPostBody>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = openAIAccess(access, modelRefId, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'OpenAI');
 }
 
 
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
+const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 
-export function openAIAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
-  // API key
-  const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
+function fixupHost(host: string, apiPath: string): string {
+  if (!host.startsWith('http'))
+    host = `https://${host}`;
+  if (host.endsWith('/') && apiPath.startsWith('/'))
+    host = host.slice(0, -1);
+  return host;
+}
 
-  // Organization ID
-  const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
+export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
+  switch (access.dialect) {
 
-  // API host
-  let oaiHost = access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
-  if (!oaiHost.startsWith('http'))
-    oaiHost = `https://${oaiHost}`;
-  if (oaiHost.endsWith('/') && apiPath.startsWith('/'))
-    oaiHost = oaiHost.slice(0, -1);
+    case 'azure':
+      const azureKey = access.oaiKey || process.env.AZURE_OPENAI_API_KEY || '';
+      const azureHost = fixupHost(access.oaiHost || process.env.AZURE_OPENAI_API_ENDPOINT || '', apiPath);
+      if (!azureKey || !azureHost)
+        throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
-  // Helicone key
-  const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
+      let url = azureHost;
+      if (apiPath.startsWith('/v1/')) {
+        if (!modelRefId)
+          throw new Error('Azure OpenAI API needs a deployment id');
+        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2023-07-01-preview`;
+      } else if (apiPath.startsWith('/openai/deployments'))
+        url += apiPath;
+      else
+        throw new Error('Azure OpenAI API path not supported: ' + apiPath);
 
-  // warn if no key - only for default (non-overridden) hosts
-  if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
-    throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': azureKey,
+        },
+        url,
+      };
 
-  // [Openrouter-specific] lame detection, but works great for now (unless we get requests for non-standard hosts)
-  const isOpenrouter = oaiHost.indexOf('openrouter.ai') !== -1;
 
-  return {
-    headers: {
-      ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
-      'Content-Type': 'application/json',
-      ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
-      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
-      ...(isOpenrouter && {
-        'HTTP-Referer': Brand.URIs.Home,
-        'X-Title': Brand.Title.Base,
-      }),
-    },
-    url: oaiHost + apiPath,
-  };
+    case 'openai':
+      const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
+      const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
+      const oaiHost = fixupHost(access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
+      // warn if no key - only for default (non-overridden) hosts
+      if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
+        throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
+          ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
+          ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
+        },
+        url: oaiHost + apiPath,
+      };
+
+
+    case 'openrouter':
+      const orKey = access.oaiKey || process.env.OPENROUTER_API_KEY || '';
+      const orHost = fixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
+      if (!orKey || !orHost)
+        throw new Error('Missing OpenRouter API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${orKey}`,
+          'HTTP-Referer': Brand.URIs.Home,
+          'X-Title': Brand.Title.Base,
+        },
+        url: orHost + apiPath,
+      };
+  }
 }
 
 export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
@@ -287,7 +365,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
   };
 }
 
-export function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
+function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({
