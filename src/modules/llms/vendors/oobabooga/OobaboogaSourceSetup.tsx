@@ -9,26 +9,28 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
-
+import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { ModelVendorOoobabooga } from './oobabooga.vendor';
+
+import { ModelVendorOoobabooga, SourceSetupOobabooga } from './oobabooga.vendor';
 
 
 export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup, normSetup,
-  } = useSourceSetup(props.sourceId, ModelVendorOoobabooga.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorOoobabooga.getAccess);
 
-  // fetch models - the OpenAI way
+  // derived state
+  const { oaiHost } = access;
+
+  // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: ModelVendorOpenAI.normalizeSetup(normSetup),
+    access,
   }, {
     enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),
     onSuccess: (models) => {
-      const llms: DLLM[] = [];
+      const llms: DLLM<SourceSetupOobabooga, LLMOptionsOpenAI>[] = [];
       if (source && models) {
         for (const model of models) {
           const llm = oobaboogaModelToDLLM(model, source);
@@ -61,12 +63,12 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       </Box>
       <Input
         variant='outlined' placeholder='http://127.0.0.1:5001'
-        value={normSetup.oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
+        value={oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
         sx={{ flexGrow: 1 }}
       />
     </FormControl>
 
-    {sourceLLMs.length > 0 && <Alert variant='soft' color='warning'>
+    {sourceHasLLMs && <Alert variant='soft' color='warning'>
       Success! Note The active model must be selected on the Oobabooga server, as it does not support switching models via API.
       Concurrent model execution is also not supported.
     </Alert>}
@@ -74,7 +76,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
     <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
       <Button
         variant='solid' color={isError ? 'warning' : 'primary'}
-        disabled={!(normSetup.oaiHost.length >= 7) || isFetching}
+        disabled={!(oaiHost.length >= 7) || isFetching}
         endDecorator={<SyncIcon />}
         onClick={() => refetch()}
         sx={{ minWidth: 120, ml: 'auto' }}
@@ -93,7 +95,7 @@ const NotChatModels: string[] = [
 ];
 
 
-function oobaboogaModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> | null {
+function oobaboogaModelToDLLM(model: { id: string, created: number }, source: DModelSource<SourceSetupOobabooga>): DLLM<SourceSetupOobabooga, LLMOptionsOpenAI> | null {
   // if the model id is one of NotChatModels, we don't want to show it
   if (NotChatModels.includes(model.id))
     return null;

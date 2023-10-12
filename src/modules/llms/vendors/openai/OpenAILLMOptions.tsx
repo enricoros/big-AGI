@@ -16,15 +16,12 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
 }
 
 
-export function OpenAILLMOptions(props: { llm: DLLM<LLMOptionsOpenAI> }) {
+export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }) {
 
-  // external state
-  const updateLLMOptions = useModelsStore(state => state.updateLLMOptions<LLMOptionsOpenAI>);
+  const { id: llmId, contextTokens, options } = props.llm;
+  const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
 
-  const { id: llmId } = props.llm;
-  const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(props.llm.options);
-
-  const maxValue = props.llm.contextTokens > 1024 ? Math.round(props.llm.contextTokens / 2) : 4096;
+  const maxValue = contextTokens > 1024 ? Math.round(contextTokens / 2) : 4096;
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
@@ -36,7 +33,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<LLMOptionsOpenAI> }) {
       <Slider
         aria-label='Model Temperature' color='neutral'
         min={0} max={1} step={0.1} defaultValue={0.5}
-        value={llmTemperature} onChange={(_event, value) => updateLLMOptions(llmId, { llmTemperature: value as number })}
+        value={llmTemperature} onChange={(_event, value) => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value as number })}
         valueLabelDisplay='auto'
         sx={{ py: 1, mt: 1.1 }}
       />
@@ -50,7 +47,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<LLMOptionsOpenAI> }) {
       <Slider
         aria-label='Model Max Tokens' color='neutral'
         min={256} max={maxValue} step={256} defaultValue={1024}
-        value={llmResponseTokens} onChange={(_event, value) => updateLLMOptions(llmId, { llmResponseTokens: value as number })}
+        value={llmResponseTokens} onChange={(_event, value) => useModelsStore.getState().updateLLMOptions(llmId, { llmResponseTokens: value as number })}
         valueLabelDisplay='on'
         sx={{ py: 1, mt: 1.1 }}
       />

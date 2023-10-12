@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Box, Button, Typography } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { apiQuery } from '~/modules/trpc/trpc.client';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
@@ -11,31 +10,32 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
+import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
+import { isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
 
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { oaiHost, oaiKey },
-  } = useSourceSetup(props.sourceId, ModelVendorOpenRouter.normalizeSetup);
+    source, sourceHasLLMs, access, updateSetup,
+  } = useSourceSetup(props.sourceId, ModelVendorOpenRouter.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
-  const needsUserKey = true; // !hasServerKey...;
+  // derived state
+  const { oaiKey } = access;
+
+  const needsUserKey = !ModelVendorOpenRouter.hasServerKey;
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: ModelVendorOpenAI.normalizeSetup({ oaiHost, oaiKey }),
-    filterGpt: false,
+    access, filterGpt: false,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.sort(orFamilySortFn).map(model => openRouterModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -91,23 +91,27 @@ const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isO
   'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', contextWindowSize: 16383, isOld: false },
   'openai/gpt-4': { name: 'OpenAI: GPT-4', contextWindowSize: 8191, isOld: false },
   'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', contextWindowSize: 32767, isOld: false },
+  'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', contextWindowSize: 4095, isOld: false },
   'anthropic/claude-2': { name: 'Anthropic: Claude v2', contextWindowSize: 100000, isOld: false },
   'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', contextWindowSize: 100000, isOld: false },
   'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Bison', contextWindowSize: 8000, isOld: false },
   'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Bison (Code Chat)', contextWindowSize: 8000, isOld: false },
   'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat (beta)', contextWindowSize: 4096, isOld: false },
   'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat (beta)', contextWindowSize: 4096, isOld: false },
-  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', contextWindowSize: 16000, isOld: false },
+  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', contextWindowSize: 8096, isOld: false },
+  'phind/phind-codellama-34b-v2': { name: 'Phind: Phind CodeLlama 34B v2 (beta)', contextWindowSize: 4096, isOld: false },
   'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', contextWindowSize: 4096, isOld: false },
+  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 4096, isOld: false },
   'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', contextWindowSize: 8000, isOld: false },
-  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 8192, isOld: false },
-  'jondurbin/airoboros-l2-70b-2.1': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 4096, isOld: false },
+  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', contextWindowSize: 6144, isOld: false },
   'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', contextWindowSize: 6144, isOld: false },
-  'pygmalionai/mythalion-13b': { name: 'Mythalion 13B (NEW)', contextWindowSize: 2560, isOld: false },
+  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 4096, isOld: false },
+  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', contextWindowSize: 6144, isOld: false },
+  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', contextWindowSize: 4096, isOld: false },
   'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', contextWindowSize: 4095, isOld: true },
   'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', contextWindowSize: 8191, isOld: true },
   'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', contextWindowSize: 32767, isOld: true },
-  'openai/text-davinci-002': { name: 'OpenAI: Davinci (No RL)', contextWindowSize: 4095, isOld: true },
+  'openai/text-davinci-002': { name: 'OpenAI: Davinci 2', contextWindowSize: 4095, isOld: true },
   'anthropic/claude-v1': { name: 'Anthropic: Claude v1', contextWindowSize: 9000, isOld: true },
   'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', contextWindowSize: 9000, isOld: true },
   'anthropic/claude-instant-v1-100k': { name: 'Anthropic: Claude Instant 100k v1', contextWindowSize: 100000, isOld: true },
@@ -130,7 +134,7 @@ function orFamilySortFn(a: { id: string }, b: { id: string }): number {
 }
 
 
-function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource<SourceSetupOpenRouter>): DLLM<SourceSetupOpenRouter, LLMOptionsOpenAI> {
   // label: use the known name if available, otherwise format the model id
   const orModel = orModelMap[model.id] ?? null;
   const label = orModel?.name || model.id.replace('/', ' · ');

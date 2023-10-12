@@ -99,7 +99,7 @@ export namespace OpenAI {
 
       export interface ResponseStreamingChunk {
         id: string;
-        object: 'chat.completion.chunk';
+        object: 'chat.completion.chunk' | ''; // '' is for some Azure responses
         created: number;
         model: string;
         choices: {
