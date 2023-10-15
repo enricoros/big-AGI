@@ -109,7 +109,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
       <Button variant='soft' size='md' disabled={!hasConversation} endDecorator={<ExitToAppIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handlePublishConversation}>
-        Share to Paste.gg
+        Publish to Paste.gg
       </Button>
 
       {/*<Button variant='soft' size='md' disabled sx={{ minWidth: 240, justifyContent: 'space-between', fontWeight: 400 }}>*/}
@@ -130,7 +130,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
               endDecorator={downloadedAllState === 'ok' ? '✔' : downloadedAllState === 'fail' ? '✘' : <FileDownloadIcon />}
               onClick={handleDownloadAllConversations}>
-        Backup all chats
+        Download all chats
       </Button>
     </Box>
 

@@ -111,7 +111,7 @@ export function ChatMenuItems(props: {
       <ListItemDecorator>
         <FileDownloadIcon />
       </ListItemDecorator>
-      Export
+      Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
