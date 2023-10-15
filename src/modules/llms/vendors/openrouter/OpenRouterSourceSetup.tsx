@@ -87,38 +87,38 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
 // created to reflect the doc page: https://openrouter.ai/docs - update prompt:
 // "Please update the typescript object (do not change the definition, just the object), based on the updated upstream documentation, below:"
-const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isOld: boolean; } } = {
-  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', contextWindowSize: 4096, isOld: false },
-  'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', contextWindowSize: 4095, isOld: false },
-  'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', contextWindowSize: 16383, isOld: false },
-  'openai/gpt-4': { name: 'OpenAI: GPT-4', contextWindowSize: 8191, isOld: false },
-  'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', contextWindowSize: 32767, isOld: false },
-  'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', contextWindowSize: 4095, isOld: false },
-  'anthropic/claude-2': { name: 'Anthropic: Claude v2', contextWindowSize: 100000, isOld: false },
-  'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', contextWindowSize: 100000, isOld: false },
-  'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Bison', contextWindowSize: 8000, isOld: false },
-  'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Bison (Code Chat)', contextWindowSize: 8000, isOld: false },
-  'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat (beta)', contextWindowSize: 4096, isOld: false },
-  'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat (beta)', contextWindowSize: 4096, isOld: false },
-  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', contextWindowSize: 8096, isOld: false },
-  'phind/phind-codellama-34b-v2': { name: 'Phind: Phind CodeLlama 34B v2 (beta)', contextWindowSize: 4096, isOld: false },
-  'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', contextWindowSize: 4096, isOld: false },
-  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 4096, isOld: false },
-  'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', contextWindowSize: 8000, isOld: false },
-  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', contextWindowSize: 8192, isOld: false },
-  'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', contextWindowSize: 6144, isOld: false },
-  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 8192, isOld: false },
-  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', contextWindowSize: 8192, isOld: false },
-  'xwin-lm/xwin-lm-70b': { name: 'Xwin 70B (beta)', contextWindowSize: 8192, isOld: false },
-  'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', contextWindowSize: 4095, isOld: true },
-  'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', contextWindowSize: 8191, isOld: true },
-  'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', contextWindowSize: 32767, isOld: true },
-  'openai/text-davinci-002': { name: 'OpenAI: Davinci 2', contextWindowSize: 4095, isOld: true },
-  'anthropic/claude-v1': { name: 'Anthropic: Claude v1', contextWindowSize: 9000, isOld: true },
-  'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', contextWindowSize: 9000, isOld: true },
-  'anthropic/claude-instant-v1-100k': { name: 'Anthropic: Claude Instant 100k v1', contextWindowSize: 100000, isOld: true },
-  'anthropic/claude-v1-100k': { name: 'Anthropic: Claude 100k v1', contextWindowSize: 100000, isOld: true },
-  'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', contextWindowSize: 9000, isOld: true },
+const orModelMap: { [id: string]: { name: string; contextWindowSize: number; cost1kPrompt: number; cost1kCompletion: number; isOld: boolean; } } = {
+  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', contextWindowSize: 4096, cost1kPrompt: 0, cost1kCompletion: 0, isOld: false },
+  'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', contextWindowSize: 4095, cost1kPrompt: 0.0015, cost1kCompletion: 0.002, isOld: false },
+  'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', contextWindowSize: 16383, cost1kPrompt: 0.003, cost1kCompletion: 0.004, isOld: false },
+  'openai/gpt-4': { name: 'OpenAI: GPT-4', contextWindowSize: 8191, cost1kPrompt: 0.03, cost1kCompletion: 0.06, isOld: false },
+  'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', contextWindowSize: 32767, cost1kPrompt: 0.06, cost1kCompletion: 0.12, isOld: false },
+  'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', contextWindowSize: 4095, cost1kPrompt: 0.0015, cost1kCompletion: 0.002, isOld: false },
+  'anthropic/claude-2': { name: 'Anthropic: Claude v2', contextWindowSize: 100000, cost1kPrompt: 0.01102, cost1kCompletion: 0.03268, isOld: false },
+  'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', contextWindowSize: 100000, cost1kPrompt: 0.00163, cost1kCompletion: 0.00551, isOld: false },
+  'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Bison', contextWindowSize: 8000, cost1kPrompt: 0.0005, cost1kCompletion: 0.0005, isOld: false },
+  'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Bison (Code Chat)', contextWindowSize: 8000, cost1kPrompt: 0.0005, cost1kCompletion: 0.0005, isOld: false },
+  'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat (beta)', contextWindowSize: 4096, cost1kPrompt: 0.0002, cost1kCompletion: 0.0002, isOld: false },
+  'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat (beta)', contextWindowSize: 4096, cost1kPrompt: 0.001, cost1kCompletion: 0.001, isOld: false },
+  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', contextWindowSize: 8096, cost1kPrompt: 0.0004, cost1kCompletion: 0.0004, isOld: false },
+  'phind/phind-codellama-34b-v2': { name: 'Phind: Phind CodeLlama 34B v2 (beta)', contextWindowSize: 4096, cost1kPrompt: 0.0004, cost1kCompletion: 0.0004, isOld: false },
+  'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', contextWindowSize: 4096, cost1kPrompt: 0.0002, cost1kCompletion: 0.0002, isOld: false },
+  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 4096, cost1kPrompt: 0.0008, cost1kCompletion: 0.0008, isOld: false },
+  'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', contextWindowSize: 8000, cost1kPrompt: 0.0045, cost1kCompletion: 0.0045, isOld: false },
+  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', contextWindowSize: 8192, cost1kPrompt: 0.001125, cost1kCompletion: 0.001125, isOld: false },
+  'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', contextWindowSize: 6144, cost1kPrompt: 0.001125, cost1kCompletion: 0.001125, isOld: false },
+  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 8192, cost1kPrompt: 0.009375, cost1kCompletion: 0.009375, isOld: false },
+  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', contextWindowSize: 8192, cost1kPrompt: 0.009375, cost1kCompletion: 0.009375, isOld: false },
+  'xwin-lm/xwin-lm-70b': { name: 'Xwin 70B (beta)', contextWindowSize: 8192, cost1kPrompt: 0.009375, cost1kCompletion: 0.009375, isOld: false },
+  'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', contextWindowSize: 4095, cost1kPrompt: 0.0015, cost1kCompletion: 0.002, isOld: true },
+  'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', contextWindowSize: 8191, cost1kPrompt: 0.03, cost1kCompletion: 0.06, isOld: true },
+  'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', contextWindowSize: 32767, cost1kPrompt: 0.06, cost1kCompletion: 0.12, isOld: true },
+  'openai/text-davinci-002': { name: 'OpenAI: Davinci 2', contextWindowSize: 4095, cost1kPrompt: 0.02, cost1kCompletion: 0.02, isOld: true },
+  'anthropic/claude-v1': { name: 'Anthropic: Claude v1', contextWindowSize: 9000, cost1kPrompt: 0.01102, cost1kCompletion: 0.03268, isOld: true },
+  'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', contextWindowSize: 9000, cost1kPrompt: 0.01102, cost1kCompletion: 0.03268, isOld: true },
+  'anthropic/claude-instant-v1-100k': { name: 'Anthropic: Claude Instant 100k v1', contextWindowSize: 100000, cost1kPrompt: 0.00163, cost1kCompletion: 0.00551, isOld: true },
+  'anthropic/claude-v1-100k': { name: 'Anthropic: Claude 100k v1', contextWindowSize: 100000, cost1kPrompt: 0.01102, cost1kCompletion: 0.03268, isOld: true },
+  'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', contextWindowSize: 9000, cost1kPrompt: 0.00163, cost1kCompletion: 0.00551, isOld: true },
 };
 
 const orModelFamilyOrder = ['openai/', 'anthropic/', 'google/', 'mistralai/', 'meta-llama/'];
@@ -139,7 +139,9 @@ function orFamilySortFn(a: { id: string }, b: { id: string }): number {
 function openRouterModelToDLLM(model: { id: string, created: number }, source: DModelSource<SourceSetupOpenRouter>): DLLM<SourceSetupOpenRouter, LLMOptionsOpenAI> {
   // label: use the known name if available, otherwise format the model id
   const orModel = orModelMap[model.id] ?? null;
-  const label = orModel?.name || model.id.replace('/', ' · ');
+  let label = orModel?.name || model.id.replace('/', ' · ');
+  if (orModel?.cost1kPrompt === 0 && orModel?.cost1kCompletion === 0)
+    label += ' - 🎁 Free';
 
   // context: use the known size if available, otherwise fallback to the (undocumneted) provided length or fallback again to 4096
   const contextWindow = orModel?.contextWindowSize || (model as any)?.['context_length'] || 4096;
