@@ -85,8 +85,10 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-// created to reflect the doc page: https://openrouter.ai/docs
+// created to reflect the doc page: https://openrouter.ai/docs - update prompt:
+// "Please update the typescript object (do not change the definition, just the object), based on the updated upstream documentation, below:"
 const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isOld: boolean; } } = {
+  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', contextWindowSize: 4096, isOld: false },
   'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', contextWindowSize: 4095, isOld: false },
   'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', contextWindowSize: 16383, isOld: false },
   'openai/gpt-4': { name: 'OpenAI: GPT-4', contextWindowSize: 8191, isOld: false },
@@ -103,11 +105,11 @@ const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isO
   'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', contextWindowSize: 4096, isOld: false },
   'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B (beta)', contextWindowSize: 4096, isOld: false },
   'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', contextWindowSize: 8000, isOld: false },
-  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', contextWindowSize: 6144, isOld: false },
+  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', contextWindowSize: 8192, isOld: false },
   'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', contextWindowSize: 6144, isOld: false },
-  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 4096, isOld: false },
-  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', contextWindowSize: 6144, isOld: false },
-  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', contextWindowSize: 4096, isOld: false },
+  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', contextWindowSize: 8192, isOld: false },
+  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', contextWindowSize: 8192, isOld: false },
+  'xwin-lm/xwin-lm-70b': { name: 'Xwin 70B (beta)', contextWindowSize: 8192, isOld: false },
   'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', contextWindowSize: 4095, isOld: true },
   'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', contextWindowSize: 8191, isOld: true },
   'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', contextWindowSize: 32767, isOld: true },
