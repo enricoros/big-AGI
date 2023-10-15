@@ -121,7 +121,7 @@ const orModelMap: { [id: string]: { name: string; contextWindowSize: number; isO
   'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', contextWindowSize: 9000, isOld: true },
 };
 
-const orModelFamilyOrder = ['openai/', 'anthropic/', 'google/', 'meta-llama/'];
+const orModelFamilyOrder = ['openai/', 'anthropic/', 'google/', 'mistralai/', 'meta-llama/'];
 
 function orFamilySortFn(a: { id: string }, b: { id: string }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
