@@ -5,7 +5,7 @@ import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/common/util/trpc.client';
 
 import { playSoundUrl } from '~/common/util/audioUtils';
 

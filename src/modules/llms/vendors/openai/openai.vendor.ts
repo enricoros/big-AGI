@@ -1,4 +1,4 @@
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 
