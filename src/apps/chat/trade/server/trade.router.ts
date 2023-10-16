@@ -30,7 +30,7 @@ const publishToOutputSchema = z.object({
 export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
 
 
-export const sharingRouter = createTRPCRouter({
+export const tradeRouter = createTRPCRouter({
 
   /**
    * ChatGPT Shared Chats Importer

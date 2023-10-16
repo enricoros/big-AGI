@@ -4,7 +4,7 @@ import { Alert, Box, Button, Divider, Input, Modal, ModalDialog, Stack, Typograp
 
 import { Link } from '~/common/components/Link';
 
-import type { PublishedSchema } from '~/modules/sharing/sharing.router';
+import type { PublishedSchema } from './server/trade.router';
 
 
 /**
