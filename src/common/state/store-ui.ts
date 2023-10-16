@@ -41,6 +41,44 @@ export const useUIStateStore = create<UIStateStore>()(
 );
 
 
+// UI Counters
+
+interface UICountersStore {
+
+  actionCounters: Record<string, number>;
+  incrementActionCounter: (key: string) => void;
+  clearActionCounter: (key: string) => void;
+  clearAllActionCounters: () => void;
+
+}
+
+const useUICountersStore = create<UICountersStore>()(
+  persist(
+    (set) => ({
+
+      actionCounters: {},
+      incrementActionCounter: (key: string) => set(state => ({
+        actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
+      })),
+      clearActionCounter: (key: string) => set(state => ({
+        actionCounters: { ...state.actionCounters, [key]: 0 },
+      })),
+      clearAllActionCounters: () => set({ actionCounters: {} }),
+
+    }),
+    {
+      name: 'app-ui-counters',
+    }),
+);
+
+type UiCounterKey = 'export-share' | 'share-web';
+
+export function useUICounter(key: UiCounterKey) {
+  const value = useUICountersStore(state => state.actionCounters[key] || 0);
+  return { value, novel: !value, touch: () => useUICountersStore.getState().incrementActionCounter(key) };
+}
+
+
 // UI Preferences
 
 interface UIPreferencesStore {
