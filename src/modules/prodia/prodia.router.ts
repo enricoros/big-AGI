@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { HARDCODED_MODELS } from '~/modules/prodia/prodia.models';
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 
 const imagineInputSchema = z.object({

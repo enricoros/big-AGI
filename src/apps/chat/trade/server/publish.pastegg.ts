@@ -1,4 +1,4 @@
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 
 /**

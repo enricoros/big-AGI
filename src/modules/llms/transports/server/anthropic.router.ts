@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 

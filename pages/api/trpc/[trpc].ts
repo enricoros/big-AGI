@@ -1,15 +1,14 @@
 import { NextRequest } from 'next/server';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
-import { appRouter } from '~/modules/trpc/trpc.router';
-import { createTRPCContext } from '~/modules/trpc/trpc.server';
+import { appRouter } from '~/server/api/trpc.router';
+import { createTRPCContext } from '~/server/api/trpc.server';
 
 
 /*
 // NextJS (traditional, non-edge) API handler
 
 import { createNextApiHandler } from '@trpc/server/adapters/next';
-import { createTRPCContext } from '~/modules/trpc/trpc.server';
 
 export default createNextApiHandler({
   router: appRouter,
