@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { Alert, Box, Divider, List, ListItem, Typography } from '@mui/joy';
 
+import type { DConversation } from '~/common/state/store-chats';
 import { GoodModal } from '~/common/components/GoodModal';
-import { DConversation } from '~/common/state/store-chats';
 
 type ConversationOutcome = {
   success: true;

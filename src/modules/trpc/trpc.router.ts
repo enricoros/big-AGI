@@ -5,7 +5,7 @@ import { googleSearchRouter } from '~/modules/google/search.router';
 import { llmAnthropicRouter } from '~/modules/llms/transports/server/anthropic.router';
 import { llmOpenAIRouter } from '~/modules/llms/transports/server/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
-import { sharingRouter } from '~/modules/sharing/sharing.router';
+import { tradeRouter } from '../../apps/chat/trade/server/trade.router';
 import { ytPersonaRouter } from '../../apps/personas/ytpersona.router';
 
 /**
@@ -19,7 +19,7 @@ export const appRouter = createTRPCRouter({
   llmAnthropic: llmAnthropicRouter,
   llmOpenAI: llmOpenAIRouter,
   prodia: prodiaRouter,
-  sharing: sharingRouter,
+  trade: tradeRouter,
   ytpersona: ytPersonaRouter,
 });
 
