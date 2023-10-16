@@ -1,0 +1,26 @@
+// Prisma is the ORM for server-side (API) access to the database
+//
+// This file defines the schema for the database.
+//  - make sure to run 'prisma generate' after making changes to this file
+//  - make sure to run 'prisma db push' to sync the remote database with the schema
+//
+// Database is optional: when the environment variables are not set, the database is not used at all,
+// and the storage of data in Big-AGI is limited to client-side (browser) storage.
+//
+// The database is used for:
+//  - the 'sharing' function, to let users share the chats with each other
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model Sharing {
+  id String @id @default(uuid())
+  // TODO: to be defined later
+}
