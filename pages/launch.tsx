@@ -11,9 +11,7 @@ import { AppLayout } from '~/common/layout/AppLayout';
 import { asValidURL } from '~/common/util/urlUtils';
 
 
-function LogoProgress(props: {
-  showProgress: boolean
-}) {
+function LogoProgress(props: { showProgress: boolean }) {
   return <Box sx={{
     width: 64,
     height: 64,
@@ -30,7 +28,16 @@ function LogoProgress(props: {
 }
 
 
-function AppShare() {
+/**
+ * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
+ * See the /public/manifest.json for how this is configured. Parameters:
+ *  - text: the text to share
+ *  - url: the URL to share
+ *   - if the URL is a valid URL, it will be downloaded and the content will be shared
+ *   - if the URL is not a valid URL, it will be shared as text
+ *  - title: the title of the shared content
+ */
+function AppShareTarget() {
   // state
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [intentText, setIntentText] = React.useState<string | null>(null);
@@ -140,12 +147,12 @@ function AppShare() {
 
 /**
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
- * Example URL: https://get.big-agi.com/share?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
+ * Example URL: https://get.big-agi.com/launch?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
-export default function SharePage() {
+export default function LaunchPage() {
   return (
     <AppLayout>
-      <AppShare />
+      <AppShareTarget />
     </AppLayout>
   );
 }

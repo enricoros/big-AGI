@@ -188,7 +188,7 @@ export function Composer(props: {
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
 
-  // Effect: load initial text if queued up (e.g. by /share)
+  // Effect: load initial text if queued up (e.g. by /launch)
   React.useEffect(() => {
     if (startupText) {
       setStartupText(null);
