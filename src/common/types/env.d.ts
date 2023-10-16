@@ -5,6 +5,10 @@ declare namespace NodeJS {
   // available to the server-side
   interface ProcessEnv {
 
+    // Postgres, for optional storage via Prisma
+    POSTGRES_PRISMA_URL?: string;
+    POSTGRES_URL_NON_POOLING?: string;
+
     // LLM: OpenAI
     OPENAI_API_KEY: string;
     OPENAI_API_ORG_ID: string;
