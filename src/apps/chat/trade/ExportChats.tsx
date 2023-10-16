@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/joy';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';

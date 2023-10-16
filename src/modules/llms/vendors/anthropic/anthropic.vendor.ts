@@ -1,4 +1,4 @@
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 

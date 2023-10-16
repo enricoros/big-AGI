@@ -11,7 +11,7 @@ import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
 
 import { FormInputKey } from '~/common/components/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/theme';
 
 import { isValidProdiaApiKey, requireUserKeyProdia } from './prodia.client';

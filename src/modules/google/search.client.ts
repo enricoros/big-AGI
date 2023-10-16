@@ -1,7 +1,8 @@
 import { useGoogleSearchStore } from '~/modules/google/store-google';
 
+import { apiAsync } from '~/common/util/trpc.client';
+
 import { Search } from './search.types';
-import { apiAsync } from '~/modules/trpc/trpc.client';
 
 export const requireUserKeyGoogleCse = !process.env.HAS_SERVER_KEYS_GOOGLE_CSE;
 

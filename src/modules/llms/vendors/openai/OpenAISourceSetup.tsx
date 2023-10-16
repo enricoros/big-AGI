@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';

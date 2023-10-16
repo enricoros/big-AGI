@@ -1,4 +1,4 @@
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 import { prodiaDefaultModelId } from '~/modules/prodia/prodia.models';
 import { useProdiaStore } from '~/modules/prodia/store-prodia';
 

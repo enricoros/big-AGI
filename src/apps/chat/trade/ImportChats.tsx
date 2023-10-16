@@ -4,7 +4,7 @@ import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { Box, Button, FormControl, FormLabel, Input, Sheet, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
 import { InlineError } from '~/common/components/InlineError';
