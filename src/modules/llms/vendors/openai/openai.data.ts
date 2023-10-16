@@ -24,7 +24,6 @@ const knownOpenAIChatModels: ({ idPrefix: string } & Omit<ModelDescriptionSchema
     description: 'Largest context window for big problems',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
   },
 
   // GPT4's
