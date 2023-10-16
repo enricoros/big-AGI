@@ -40,6 +40,9 @@ declare namespace NodeJS {
 
   interface ProcessEnv {
 
+    // Application Identity
+    NEXT_PUBLIC_PRIVACY_POLICY_URL?: string;
+
     // set in next.config.js and available to the client-side
     HAS_SERVER_KEYS_GOOGLE_CSE: boolean;
     HAS_SERVER_KEY_ANTHROPIC?: boolean;

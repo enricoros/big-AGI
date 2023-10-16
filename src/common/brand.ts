@@ -24,5 +24,6 @@ export const Brand = {
     OpenRepo: 'https://github.com/enricoros/big-agi',
     SupportInvite: 'https://discord.gg/MkH4qj2Jp9',
     // Twitter: 'https://www.twitter.com/enricoros',
+    PrivacyPolicy: process.env.NEXT_PUBLIC_PRIVACY_POLICY_URL || undefined,
   },
 };
