@@ -11,11 +11,10 @@ import { apiAsync } from '~/modules/trpc/trpc.client';
 import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
-import { conversationToMarkdown } from './trade.markdown';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { downloadDAllJson, downloadDConversationJson } from './trade.json';
+import { conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade';
 
 
 export type ExportConfig = { dir: 'export', conversationId: string | null };
@@ -87,13 +86,13 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     if (!props.config.conversationId) return;
     const conversation = findConversation(props.config.conversationId);
     if (!conversation) return;
-    downloadDConversationJson(conversation)
+    downloadConversationJson(conversation)
       .then(() => setDownloadedState('ok'))
       .catch(() => setDownloadedState('fail'));
   };
 
   const handleDownloadAllConversations = () => {
-    downloadDAllJson()
+    downloadAllConversationsJson()
       .then(() => setDownloadedAllState('ok'))
       .catch(() => setDownloadedAllState('fail'));
   };
