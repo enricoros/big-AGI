@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 
 import { Button, Card, Input, Stack, Typography } from '@mui/joy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -77,7 +78,7 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
       {!tryDeleted && <Card variant='solid' color='primary' invertedColors>
 
         <Typography level='title-md'>
-          Ready to share!
+          Ready to share?
         </Typography>
         <Typography level='body-sm'>
           {fullUrl}
@@ -140,7 +141,7 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
         <Stack direction='row' gap={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           {!!expiresAt && (
             <Typography level='title-sm'>
-              This chat will auto-expire on {expiresAt.toLocaleString()}.
+              This chat will auto-expire <TimeAgo date={expiresAt} />.
             </Typography>
           )}
           <Button variant='outlined' color='neutral' endDecorator={<DeleteForeverIcon />} onClick={onDeleteNow}>
