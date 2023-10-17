@@ -149,7 +149,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom: (offset: number) => void, onImagine: (messageText: string) => void }) {
+export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -181,7 +181,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
   const renderMarkdown = _renderMarkdown && !fromSystem;
-  const isImaginable = canUseProdia();
+  const isImaginable = canUseProdia() && !!props.onImagine;
   const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
   const isSpeakableEnabled = isImaginableEnabled;
@@ -204,10 +204,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
   const handleMenuImagine = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsImagining(true);
-    await props.onImagine(messageText);
-    setIsImagining(false);
-    closeOperationsMenu();
+    if (props.onImagine) {
+      setIsImagining(true);
+      await props.onImagine(messageText);
+      setIsImagining(false);
+      closeOperationsMenu();
+    }
   };
 
   const handleMenuSpeak = async (e: React.MouseEvent) => {
@@ -220,8 +222,10 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
   const handleMenuRunAgain = (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onMessageRunFrom(fromAssistant ? -1 : 0);
-    closeOperationsMenu();
+    if (props.onMessageRunFrom) {
+      props.onMessageRunFrom(fromAssistant ? -1 : 0);
+      closeOperationsMenu();
+    }
   };
 
   const handleTextEdited = (editedText: string) => {
@@ -402,10 +406,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             </MenuItem>
           </Box>
           <ListDivider />
-          <MenuItem onClick={handleMenuRunAgain}>
-            <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
-            {fromAssistant ? 'Retry' : 'Run from here'}
-          </MenuItem>
+          {!!props.onMessageRunFrom && (
+            <MenuItem onClick={handleMenuRunAgain}>
+              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
+              {fromAssistant ? 'Retry' : 'Run from here'}
+            </MenuItem>
+          )}
           {isImaginable && isImaginableEnabled && (
             <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
               <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
@@ -418,7 +424,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
               Speak
             </MenuItem>
           )}
-          <ListDivider />
+          {!!props.onMessageRunFrom && <ListDivider />}
           <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Delete
