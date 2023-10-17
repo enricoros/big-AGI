@@ -1,8 +1,9 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 
-import { Box, Button, Card, List, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { AppLayout } from '~/common/layout/AppLayout';
@@ -20,7 +21,7 @@ import { LogoProgress } from '../launch';
 import { conversationTitle } from '../../src/apps/chat/components/applayout/ConversationItem';
 
 
-function ConversationPreview(props: { conversation: DConversation }) {
+function ConversationPreview(props: { conversation: DConversation, sharedAt: Date, expiresAt: Date | null }) {
 
   // state
   const [cloning, setCloning] = React.useState<boolean>(false);
@@ -34,8 +35,7 @@ function ConversationPreview(props: { conversation: DConversation }) {
   // derived state
   const messages = props.conversation.messages;
   let filteredMessages = messages
-    .filter(m => m.role !== 'system' || showSystemMessages)
-    .reverse();
+    .filter(m => m.role !== 'system' || showSystemMessages);
 
 
   const handleClone = async (canOverwrite: boolean) => {
@@ -60,46 +60,81 @@ function ConversationPreview(props: { conversation: DConversation }) {
       flexGrow: 1,
       backgroundColor: 'background.level3',
       display: 'flex', flexFlow: 'column nowrap', minHeight: 96, alignItems: 'center',
-      p: { xs: 2, md: 3, xl: 5 },
-      gap: { xs: 2, md: 3, xl: 5 },
-      // position: 'relative',
+      gap: { xs: 4, md: 5, xl: 6 },
+      px: { xs: 2 },
+      py: { xs: 4, md: 5, xl: 6 },
     }}>
 
-      <Typography level='h2'>
-        Chat: {conversationTitle(props.conversation)}
-      </Typography>
+      {/* Heading */}
+      <Box sx={{
+        display: 'flex', flexDirection: 'column',
+        backgroundColor: 'background.level1', borderRadius: 'xl', boxShadow: 'xs',
+        gap: 1,
+        px: { xs: 2.5, md: 3.5 },
+        py: { xs: 2, md: 3 },
+      }}>
+        <Typography level='h3' startDecorator={<TelegramIcon sx={{ fontSize: 'xl3', mr: 0.5 }} />}>
+          {conversationTitle(props.conversation)}
+        </Typography>
+        <Typography level='title-sm'>
+          Uploaded <TimeAgo date={props.sharedAt} />
+          {!!props.expiresAt && <>, expires <TimeAgo date={props.expiresAt} /></>}.
+        </Typography>
+      </Box>
 
+      {/* Messages */}
       <Card sx={{
         overflowY: 'auto', // overflowY: 'hidden'
         borderRadius: 'xl', boxShadow: 'md',
-        // p: 4,
         p: 0,
       }}>
 
         <List sx={{
           p: 0,
-          // this makes sure that the the window is scrolled to the bottom (column-reverse)
-          display: 'flex', flexDirection: 'column-reverse',
+          display: 'flex', flexDirection: 'column',
           flexGrow: 1,
         }}>
+
+          <ListItem sx={{
+            // backgroundColor: 'background.surface',
+            borderBottom: '1px solid',
+            borderBottomColor: 'divider',
+            borderBottomStyle: 'dashed',
+            // justifyContent: 'center',
+            px: { xs: 2.5, md: 3.5 }, py: 2,
+          }}>
+            <Typography level='body-md'>
+              Welcome to the chat! 👋
+            </Typography>
+          </ListItem>
 
           {filteredMessages.map((message, idx) =>
             <ChatMessage
               key={'msg-' + message.id} message={message}
-              isBottom={idx === 0}
+              showDate={idx === 0 || idx === filteredMessages.length - 1}
               onMessageEdit={text => message.text = text}
             />,
           )}
 
+          <ListItem sx={{
+            px: { xs: 2.5, md: 3.5 }, py: 2,
+          }}>
+            <Typography level='body-sm'>
+              Like the chat? Clone it and keep the talk going! 🚀
+            </Typography>
+          </ListItem>
+
         </List>
       </Card>
 
-      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      {/* Buttons */}
+      <Box sx={{ display: 'flex', flexFlow: 'row wrap', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
         <Button
           variant='solid' color='neutral' size='lg'
           disabled={!hasMessages || cloning} loading={cloning}
           endDecorator={<TelegramIcon />}
           onClick={handleCloneClicked}
+          sx={{ boxShadow: 'md' }}
         >
           Clone on {Brand.Title.Base}
         </Button>
@@ -107,12 +142,12 @@ function ConversationPreview(props: { conversation: DConversation }) {
         {existingId && (
           <Tooltip title='This conversation is already present, enabling Overwrite'>
             <Button
-              variant='soft' color='danger' size='lg'
+              variant='soft' color='warning'
               disabled={!hasMessages || cloning} loading={cloning}
               endDecorator={<TelegramIcon />}
               onClick={handleOverwriteClicked}
             >
-              Overwrite
+              Replace Existing
             </Button>
           </Tooltip>
         )}
@@ -131,7 +166,7 @@ function AppSharedConversationPreview() {
   const sharedId = query.sharedId as string ?? '';
 
   // load the shared chat
-  const { data: conversation, isError, error, isLoading } = useQuery({
+  const { data, isError, error, isLoading } = useQuery({
     enabled: !!sharedId,
     queryKey: ['shared', sharedId],
     queryFn: async () => {
@@ -148,7 +183,11 @@ function AppSharedConversationPreview() {
       const restored = createConversationFromJsonV1(result.dataObject as any);
       if (!restored)
         throw new Error('Failed to restore conversation');
-      return restored;
+      return {
+        conversation: restored,
+        sharedAt: result.sharedAt,
+        expiresAt: result.expiresAt,
+      };
     },
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -182,8 +221,8 @@ function AppSharedConversationPreview() {
     );
 
   // Success
-  if (conversation)
-    return <ConversationPreview conversation={conversation} />;
+  if (data?.conversation)
+    return <ConversationPreview conversation={data.conversation} sharedAt={data.sharedAt} expiresAt={data.expiresAt} />;
 
   // No sharedId
   return (
