@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Button, Card, Input, Stack, Typography } from '@mui/joy';
+import { Button, Card, Input, Stack, Tooltip, Typography } from '@mui/joy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DoneIcon from '@mui/icons-material/Done';
 import IosShareIcon from '@mui/icons-material/IosShare';
@@ -34,7 +34,7 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
   // in case of 'put' error, just display the message
   if (props.response.type === 'error') {
     return (
-      <GoodModal title='Upload Error' dividers open={props.open} onClose={props.onClose}>
+      <GoodModal title='❌ Upload Error' dividers open={props.open} onClose={props.onClose}>
         <InlineError error={props.response.error} />
       </GoodModal>
     );
@@ -72,44 +72,50 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
 
 
   return (
-    <GoodModal title='Link created' strongerTitle noTitleBar={isDeleted} dividers={!isDeleted} open onClose={props.onClose}>
+    <GoodModal title='🔗 Link created' strongerTitle noTitleBar={isDeleted} dividers={!isDeleted} open onClose={props.onClose}>
 
       {/* Success */}
       {!tryDeleted && <Card variant='solid' color='primary' invertedColors>
 
         <Typography level='title-md'>
-          Ready to share?
+          🚀 Ready to share
         </Typography>
         <Typography level='body-sm'>
           {fullUrl}
         </Typography>
 
         <Stack direction='row' gap={1}>
-          <Button
-            variant={opened ? 'soft' : 'solid'} onClick={onOpen}
-            color={opened ? 'success' : undefined} endDecorator={opened ? <DoneIcon /> : <LaunchIcon />}
-            component={Link} href={relativeUrl} target='_blank' noLinkStyle
-            sx={{ flexGrow: 1 }}
-          >
-            Open
-          </Button>
-
-          <Button
-            variant={copied ? 'soft' : 'solid'} onClick={onCopy}
-            color={copied ? 'success' : undefined} endDecorator={copied ? <DoneIcon /> : <LinkIcon />}
-            sx={{ flexGrow: 1 }}
-          >
-            Copy
-          </Button>
-
-          {webSharePresent() &&
+          <Tooltip title='Open the link in a new tab'>
             <Button
-              variant={shared ? 'soft' : 'solid'} onClick={onShare}
-              color={shared ? 'success' : undefined} endDecorator={shared ? <DoneIcon /> : <IosShareIcon />}
+              variant={opened ? 'soft' : 'solid'} onClick={onOpen}
+              color={opened ? 'success' : undefined} endDecorator={opened ? <DoneIcon /> : <LaunchIcon />}
+              component={Link} href={relativeUrl} target='_blank' noLinkStyle
               sx={{ flexGrow: 1 }}
             >
-              Share
-            </Button>}
+              Open
+            </Button>
+          </Tooltip>
+
+          <Tooltip title='Copy the link to your clipboard'>
+            <Button
+              variant={copied ? 'soft' : 'solid'} onClick={onCopy}
+              color={copied ? 'success' : undefined} endDecorator={copied ? <DoneIcon /> : <LinkIcon />}
+              sx={{ flexGrow: 1 }}
+            >
+              Copy
+            </Button>
+          </Tooltip>
+
+          {webSharePresent() &&
+            <Tooltip title='Share the link using your device'>
+              <Button
+                variant={shared ? 'soft' : 'solid'} onClick={onShare}
+                color={shared ? 'success' : undefined} endDecorator={shared ? <DoneIcon /> : <IosShareIcon />}
+                sx={{ flexGrow: 1 }}
+              >
+                Share
+              </Button>
+            </Tooltip>}
         </Stack>
 
       </Card>}
@@ -117,7 +123,7 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
       {/* Deleted */}
       {isDeleted && <Card variant='solid' color='danger' invertedColors>
         <Typography level='title-md'>
-          Link deleted
+          🗑️ Link deleted
         </Typography>
         <Typography level='body-sm'>
           This link has been deleted
