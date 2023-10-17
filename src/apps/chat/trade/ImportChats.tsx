@@ -59,7 +59,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     // import conversations (warning - will overwrite things)
     for (let conversation of [...outcome.conversations].reverse()) {
       if (conversation.success)
-        useChatStore.getState().importConversation(conversation.conversation);
+        useChatStore.getState().importConversation(conversation.conversation, false);
     }
 
     // show the outcome of the import
@@ -109,7 +109,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     // outcome
     const success = conversation.messages.length >= 1;
     if (success) {
-      useChatStore.getState().importConversation(conversation);
+      useChatStore.getState().importConversation(conversation, false);
       outcome.conversations.push({ success: true, fileName: 'chatgpt', conversation });
     } else
       outcome.conversations.push({ success: false, fileName: 'chatgpt', error: `Empty conversation` });
