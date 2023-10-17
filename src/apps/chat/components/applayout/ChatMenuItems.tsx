@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Badge, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -11,7 +11,7 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ChatMenuItems(props: {
@@ -24,6 +24,7 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
+  const { novel: shareBadge, touch: shareTouch } = useUICounter('export-share');
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -39,6 +40,7 @@ export function ChatMenuItems(props: {
     e.stopPropagation();
     closeContextMenu();
     props.onExportConversation(!disabled ? props.conversationId : null);
+    shareTouch();
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -109,7 +111,9 @@ export function ChatMenuItems(props: {
 
     <MenuItem onClick={handleConversationExport}>
       <ListItemDecorator>
-        <FileDownloadIcon />
+        <Badge color='danger' invisible={!shareBadge}>
+          <FileDownloadIcon />
+        </Badge>
       </ListItemDecorator>
       Share / Export ...
     </MenuItem>
