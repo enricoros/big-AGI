@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 
 import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
@@ -39,7 +40,11 @@ import { RenderText } from './RenderText';
 import { parseBlocks } from './blocks';
 
 
-export function messageBackground(theme: Theme, messageRole: DMessage['role'], wasEdited: boolean, unknownAssistantIssue: boolean): string {
+// Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
+const ENABLE_COPY_MESSAGE: boolean = false;
+
+
+export function messageBackground(theme: Theme, messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
   const defaultBackground = theme.palette.background.surface;
   switch (messageRole) {
     case 'system':
@@ -52,7 +57,7 @@ export function messageBackground(theme: Theme, messageRole: DMessage['role'], w
   return defaultBackground;
 }
 
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'], messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
+export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'] | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
     return <Avatar alt={messageSender} src={messageAvatar} />;
   const iconSx = { width: 40, height: 40 };
@@ -149,7 +154,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
+export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -158,6 +163,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
     role: messageRole,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
+    created: messageCreated,
     updated: messageUpdated,
   } = props.message;
   const fromAssistant = messageRole === 'assistant';
@@ -281,10 +287,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
       display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
       gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
       background,
-      borderBottom: '1px solid',
-      borderBottomColor: 'divider',
-      position: 'relative',
-      ...(props.isBottom && { mb: 'auto' }),
+      ...(props.noBottomBorder !== true && {
+        borderBottom: '1px solid',
+        borderBottomColor: 'divider',
+      }),
+      ...(ENABLE_COPY_MESSAGE && { position: 'relative' }),
+      ...(props.isBottom === true && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
     }}>
 
@@ -329,6 +337,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             overflowX: 'auto',
           }}>
 
+          {props.showDate === true && (
+            <Typography level='body-sm' sx={{ mx: 1.5, textAlign: fromAssistant ? 'left' : 'right' }}>
+              <TimeAgo date={messageUpdated || messageCreated} />
+            </Typography>
+          )}
+
           {/* Warn about user-edited system message */}
           {fromSystem && wasEdited && (
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
@@ -340,7 +354,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
               : block.type === 'code'
                 ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
                 : block.type === 'image'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom} onRunAgain={handleMenuRunAgain} />
+                  ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleMenuRunAgain} />
                   : block.type === 'latex'
                     ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                     : renderMarkdown
@@ -374,7 +388,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
 
 
       {/* Copy message */}
-      {!fromSystem && !isEditing && (
+      {ENABLE_COPY_MESSAGE && !fromSystem && !isEditing && (
         <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
             variant='outlined' color='neutral' onClick={handleMenuCopy}
