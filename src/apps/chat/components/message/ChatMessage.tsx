@@ -149,7 +149,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
+export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -425,10 +425,12 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
             </MenuItem>
           )}
           {!!props.onMessageRunFrom && <ListDivider />}
-          <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
-            <ListItemDecorator><ClearIcon /></ListItemDecorator>
-            Delete
-          </MenuItem>
+          {!!props.onMessageDelete && (
+            <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+            </MenuItem>
+          )}
         </CloseableMenu>
       )}
 
