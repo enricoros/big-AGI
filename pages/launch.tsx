@@ -11,7 +11,7 @@ import { AppLayout } from '~/common/layout/AppLayout';
 import { asValidURL } from '~/common/util/urlUtils';
 
 
-function LogoProgress(props: { showProgress: boolean }) {
+export function LogoProgress(props: { showProgress: boolean }) {
   return <Box sx={{
     width: 64,
     height: 64,
