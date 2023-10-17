@@ -44,6 +44,7 @@ export const shareGetOutputSchema = z.union([
     type: z.literal('success'),
     dataType: dataTypesSchema,
     dataObject: dataSchema,
+    sharedAt: z.date(),
     expiresAt: z.date().nullable(),
   }),
   z.object({
@@ -123,6 +124,7 @@ export const shareGetProducedure =
         select: {
           dataType: true,
           data: true,
+          createdAt: true,
           expiresAt: true,
         },
         where: {
@@ -171,6 +173,7 @@ export const shareGetProducedure =
         type: 'success',
         dataType: result.dataType,
         dataObject: result.data as any,
+        sharedAt: result.createdAt,
         expiresAt: result.expiresAt,
       };
 
