@@ -60,12 +60,14 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, hasAnyContent, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
+    const isConversationEmpty = conversation ? !conversation.messages.length : true;
+    const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
     return {
       activeConversationId: state.activeConversationId,
-      isConversationEmpty: conversation ? !conversation.messages.length : true,
-      // conversationsCount: state.conversations.length,
+      isConversationEmpty,
+      hasAnyContent,
       duplicateConversation: state.duplicateConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
@@ -195,14 +197,14 @@ export function AppChat() {
 
   const menuItems = React.useMemo(() =>
       <ChatMenuItems
-        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
+        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty} hasConversations={hasAnyContent}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onClearConversation={handleClearConversation}
         onDuplicateConversation={duplicateConversation}
         onExportConversation={handleExportConversation}
         onFlattenConversation={handleFlattenConversation}
       />,
-    [activeConversationId, duplicateConversation, isConversationEmpty, isMessageSelectionMode],
+    [activeConversationId, duplicateConversation, hasAnyContent, isConversationEmpty, isMessageSelectionMode],
   );
 
   useLayoutPluggable(centerItems, drawerItems, menuItems);

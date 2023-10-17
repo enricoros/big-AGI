@@ -65,7 +65,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   const handleShareConversation = () => setShareConversationId(props.config.conversationId);
 
-  const handleShareConfirmed = async () => {
+  const handleConfirmedShare = async () => {
     if (!shareConversationId) return;
 
     const conversation = findConversation(shareConversationId);
@@ -155,7 +155,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       </Typography>
 
       {ENABLE_SHARING && <Badge color='danger' invisible={!shareWebBadge}>
-        <Button variant='soft' size='md' disabled={!hasConversation || shareUploading}
+        <Button variant='soft' disabled={!hasConversation || shareUploading}
                 loading={shareUploading}
                 color={shareResponse ? 'success' : 'primary'}
                 endDecorator={shareResponse ? <DoneIcon /> : <IosShareIcon />}
@@ -165,7 +165,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         </Button>
       </Badge>}
 
-      <Button variant='soft' size='md' disabled={!hasConversation || publishUploading}
+      <Button variant='soft' disabled={!hasConversation || publishUploading}
               loading={publishUploading}
               color={publishResponse ? 'success' : 'primary'}
               endDecorator={<ExitToAppIcon />}
@@ -178,7 +178,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       {/*  Publish to ShareGPT*/}
       {/*</Button>*/}
 
-      <Button variant='soft' size='md' disabled={!hasConversation}
+      <Button variant='soft' disabled={!hasConversation}
               color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
               endDecorator={downloadedState === 'ok' ? <DoneIcon /> : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
@@ -199,15 +199,19 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     </Box>
 
     {/* [share] confirmation */}
-    {ENABLE_SHARING && shareConversationId && <ConfirmationModal
-      open onClose={() => setShareConversationId(null)} onPositive={handleShareConfirmed}
-      confirmationText={<>
-        Everyone with the link will be able to see it. It will be automatically deleted after 30 days.
-        For more information, please see the <Link href={Brand.URIs.PrivacyPolicy} target='_blank'>privacy
-        policy</Link> of this server. <br />
-        Are you sure you want to proceed?
-      </>} positiveActionText={'Understood, share on ' + Brand.Title.Base}
-    />}
+    {ENABLE_SHARING && shareConversationId && (
+      <ConfirmationModal
+        open onClose={() => setShareConversationId(null)} onPositive={handleConfirmedShare}
+        title='Upload Confirmation'
+        confirmationText={<>
+          Everyone with the link will be able to see this chat.
+          It will be automatically deleted after 30 days.
+          For more information, please see the <Link href={Brand.URIs.PrivacyPolicy} target='_blank'>privacy
+          policy</Link> of this server. <br />
+          Are you sure you want to proceed?
+        </>} positiveActionText={'Yes, create shared link'}
+      />
+    )}
 
     {/* [share] outcome */}
     {!!shareResponse && <ExportSharedModal open onClose={() => setShareResponse(null)} response={shareResponse} />}
