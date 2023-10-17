@@ -5,27 +5,13 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { chatGptImportConversation, chatGptSharedChatSchema } from './import.chatgpt';
-import { postToPasteGGOrThrow } from './publish.pastegg';
+import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './publish.pastegg';
+import { shareDeleteOutputSchema, shareDeleteProcedure, shareGetProducedure, sharePutOutputSchema, sharePutProcedure } from './share.server';
 
 
-const chatGptImportInputSchema = z.object({
-  url: z.string().url().startsWith('https://chat.openai.com/share/'),
-});
+export type SharePutSchema = z.infer<typeof sharePutOutputSchema>;
 
-const publishToInputSchema = z.object({
-  to: z.enum(['paste.gg']),
-  title: z.string(),
-  fileContent: z.string(),
-  fileName: z.string(),
-  origin: z.string(),
-});
-
-const publishToOutputSchema = z.object({
-  url: z.string(),
-  expires: z.string(),
-  deletionKey: z.string(),
-  created: z.string(),
-});
+export type ShareDeleteSchema = z.infer<typeof shareDeleteOutputSchema>;
 
 export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
 
@@ -36,7 +22,7 @@ export const tradeRouter = createTRPCRouter({
    * ChatGPT Shared Chats Importer
    */
   importChatGptShare: publicProcedure
-    .input(chatGptImportInputSchema)
+    .input(z.object({ url: z.string().url().startsWith('https://chat.openai.com/share/') }))
     .output(z.object({ data: chatGptSharedChatSchema, conversationId: z.string() }))
     .query(async ({ input: { url } }) => {
       const htmlPage = await fetchTextOrTRPCError(url, 'GET', {}, undefined, 'ChatGPT Importer');
@@ -48,7 +34,22 @@ export const tradeRouter = createTRPCRouter({
     }),
 
   /**
-   * Publish a file (with title, content, name) to a sharing service
+   * Experimental: 'Sharing functionality': server-side storage
+   */
+  sharePut: sharePutProcedure,
+
+  /**
+   * This function will read the shared data by ID, but only if not deleted or expired
+   */
+  shareGet: shareGetProducedure,
+
+  /**
+   * This function will delete the shared data by ID, but only if not deleted or expired
+   */
+  shareDelete: shareDeleteProcedure,
+
+  /**
+   * Publish a text file (with title, content, name) to a sharing service
    * For now only 'paste.gg' is supported
    */
   publishTo: publicProcedure
