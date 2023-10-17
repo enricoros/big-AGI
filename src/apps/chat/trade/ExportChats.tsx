@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/joy';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiAsyncNode } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -61,7 +61,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
     const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
     try {
-      const paste = await apiAsync.trade.publishTo.mutate({
+      const paste = await apiAsyncNode.trade.publishTo.mutate({
         to: 'paste.gg',
         title: '🤖💬 Chat Conversation',
         fileContent: markdownContent,

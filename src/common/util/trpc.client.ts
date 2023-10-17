@@ -1,3 +1,5 @@
+// noinspection JSUnresolvedReference
+
 /**
  * This is the client-side entrypoint for your tRPC API. It is used to create the `api` object which
  * contains the Next.js App-wrapper, as well as your type-safe React Query hooks.
@@ -6,10 +8,10 @@
  */
 import { createTRPCProxyClient, httpBatchLink, httpLink, loggerLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
-import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
 import superjson from 'superjson';
 
-import type { AppRouter } from '~/server/api/trpc.router';
+import { type AppRouterEdge, type AppRouterNode } from '~/server/api/trpc.router';
+
 
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') return ''; // browser should use relative url
@@ -17,8 +19,16 @@ const getBaseUrl = () => {
   return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 };
 
-/** A set of type-safe react-query hooks for your tRPC API. */
-export const apiQuery = createTRPCNext<AppRouter>({
+const enableLoggerLink = (opts: any) => {
+  return process.env.NODE_ENV === 'development' ||
+    (opts.direction === 'down' && opts.result instanceof Error);
+};
+
+
+/**
+ * Typesafe React Query hooks for the tRPC Edge-Runtime API
+ */
+export const apiQuery = createTRPCNext<AppRouterEdge>({
   config() {
     return {
       /**
@@ -34,13 +44,9 @@ export const apiQuery = createTRPCNext<AppRouter>({
        * @see https://trpc.io/docs/links
        */
       links: [
-        loggerLink({
-          enabled: (opts) =>
-            process.env.NODE_ENV === 'development' ||
-            (opts.direction === 'down' && opts.result instanceof Error),
-        }),
+        loggerLink({ enabled: enableLoggerLink }),
         httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
+          url: `${getBaseUrl()}/api/trpc-edge`,
         }),
       ],
     };
@@ -53,32 +59,31 @@ export const apiQuery = createTRPCNext<AppRouter>({
   ssr: false,
 });
 
-/** Double-API! A set of type-safe async/await hooks for your tRPC API. */
-export const apiAsync = createTRPCProxyClient<AppRouter>({
-    transformer: superjson,
-    links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === 'development' ||
-          (opts.direction === 'down' && opts.result instanceof Error),
-      }),
-      httpLink({
-        url: `${getBaseUrl()}/api/trpc`,
-      }),
-    ],
-  },
-);
 
 /**
- * Inference helper for inputs.
- *
- * @example type HelloInput = RouterInputs['example']['hello']
+ * Typesafe async/await hooks for the the Edge-Runtime API
  */
-export type RouterInputs = inferRouterInputs<AppRouter>;
+export const apiAsync = createTRPCProxyClient<AppRouterEdge>({
+  transformer: superjson,
+  links: [
+    loggerLink({ enabled: enableLoggerLink }),
+    httpLink({
+      url: `${getBaseUrl()}/api/trpc-edge`,
+    }),
+  ],
+});
+
 
 /**
- * Inference helper for outputs.
- *
- * @example type HelloOutput = RouterOutputs['example']['hello']
+ * Node/Immediate API: Typesafe async/await hooks for the the Node functions API
  */
-export type RouterOutputs = inferRouterOutputs<AppRouter>;
+export const apiAsyncNode = createTRPCProxyClient<AppRouterNode>({
+  transformer: superjson,
+  links: [
+    loggerLink({ enabled: enableLoggerLink }),
+    httpLink({
+      url: `${getBaseUrl()}/api/trpc-node`,
+    }),
+  ],
+});
+
