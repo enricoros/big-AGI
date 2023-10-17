@@ -6,6 +6,12 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
+import { initTRPC } from '@trpc/server';
+import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
+import { type FetchCreateContextFnOptions } from '@trpc/server/dist/adapters/fetch';
+import superjson from 'superjson';
+import { ZodError } from 'zod';
+
 
 /**
  * 1. CONTEXT
@@ -14,39 +20,29 @@
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
-// Former Context (for NextJS, non-edge-function)
-// import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
-// type CreateContextOptions = Record<string, never>;
-// const createInnerTRPCContext = (_opts: CreateContextOptions) => {
-//   return {};
-// };
-// export const createTRPCContext = (_opts: CreateNextContextOptions) => {
-//   return createInnerTRPCContext({});
-// };
-// const t = initTRPC.context<typeof createTRPCContext>().create({
 
-import { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
+export const createTRPCNodeContext = ({ /*req, res*/ }: CreateNextContextOptions) => {
+  // ...
+  // ...
+  return {};
+};
 
-export function createTRPCContext({ /*req, resHeaders*/ }: FetchCreateContextFnOptions) {
+export const createTRPCEdgeContext = ({ /*req, resHeaders*/ }: FetchCreateContextFnOptions) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
   return {};
-}
+};
 
 
 /**
  * 2. INITIALIZATION
  *
  * This is where the tRPC API is initialized, connecting the context and transformer. We also parse
- * ZodErrors so that you get type safety on the frontend if your procedure fails due to validation
+ * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-import { initTRPC } from '@trpc/server';
-import superjson from 'superjson';
-import { ZodError } from 'zod';
 
-
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const t = initTRPC.context<typeof createTRPCEdgeContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
     return {
