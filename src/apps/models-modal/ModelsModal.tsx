@@ -45,9 +45,9 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   // add the default source on cold - will require setup
   React.useEffect(() => {
     const { addSource, sources } = useModelsStore.getState();
-    if (!sources.length)
+    if (!sources.length && !props.suspendAutoModelsSetup)
       addSource(createModelSourceForDefaultVendor(sources));
-  }, []);
+  }, [props.suspendAutoModelsSetup]);
 
 
   return <>
