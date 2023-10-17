@@ -23,11 +23,11 @@ export function loadAllConversationsFromJson(fileName: string, obj: any, outcome
   if (hasConversations && !hasMessages) {
     const payload = obj as ExportedAllJsonV1;
     for (let conversation of payload.conversations)
-      loadConversationFromJson(fileName, conversation, outcome);
+      pushOutcomeFromJsonV1(fileName, conversation, outcome);
   }
   // parse ExportedConversationJsonV1
   else if (hasMessages && !hasConversations) {
-    loadConversationFromJson(fileName, obj as ExportedConversationJsonV1, outcome);
+    pushOutcomeFromJsonV1(fileName, obj as ExportedConversationJsonV1, outcome);
   }
   // invalid
   else {
@@ -35,11 +35,19 @@ export function loadAllConversationsFromJson(fileName: string, obj: any, outcome
   }
 }
 
-function loadConversationFromJson(fileName: string, part: Partial<DConversation>, outcome: ImportedOutcome) {
-  if (!part || !part.id || !part.messages) {
+function pushOutcomeFromJsonV1(fileName: string, part: ExportedConversationJsonV1, outcome: ImportedOutcome) {
+  const restored = createConversationFromJsonV1(part);
+  if (!restored)
     outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
-    return;
-  }
+  else
+    outcome.conversations.push({ success: true, fileName, conversation: restored });
+}
+
+
+// NOTE: the tokenCount was removed while still in the JsonV1 format, so here we add it back, for backwards compat
+export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & { tokenCount?: number }) {
+  if (!part || !part.id || !part.messages)
+    return null;
   const restored: DConversation = {
     id: part.id,
     messages: part.messages,
@@ -53,7 +61,7 @@ function loadConversationFromJson(fileName: string, part: Partial<DConversation>
     abortController: null,
     ephemerals: [],
   };
-  outcome.conversations.push({ success: true, fileName, conversation: restored });
+  return restored;
 }
 
 

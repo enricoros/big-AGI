@@ -15,7 +15,7 @@ import { SystemPurposes } from '../../../../data';
 const DEBUG_CONVERSATION_IDs = false;
 
 
-const conversationTitle = (conversation: DConversation): string =>
+export const conversationTitle = (conversation: DConversation): string =>
   conversation.userTitle || conversation.autoTitle || 'new conversation'; // 👋💬🗨️
 
 
