@@ -19,6 +19,10 @@ import { ExportSharedModal } from './ExportSharedModal';
 import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade.client';
 
 
+// global flag to enable/disable the sharing mechanics
+const ENABLE_SHARING = process.env.HAS_SERVER_DB_PRISMA;
+
+
 export type ExportConfig = { dir: 'export', conversationId: string | null };
 
 /// Returns a pretty link to the current page, for promo
@@ -150,7 +154,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         Share or download this conversation
       </Typography>
 
-      {!!Brand.URIs.PrivacyPolicy && <Badge color='danger' invisible={!shareWebBadge}>
+      {ENABLE_SHARING && <Badge color='danger' invisible={!shareWebBadge}>
         <Button variant='soft' size='md' disabled={!hasConversation || shareUploading}
                 loading={shareUploading}
                 color={shareResponse ? 'success' : 'primary'}
@@ -195,7 +199,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     </Box>
 
     {/* [share] confirmation */}
-    {shareConversationId && !!Brand.URIs.PrivacyPolicy && <ConfirmationModal
+    {ENABLE_SHARING && shareConversationId && <ConfirmationModal
       open onClose={() => setShareConversationId(null)} onPositive={handleShareConfirmed}
       confirmationText={<>
         Everyone with the link will be able to see it. It will be automatically deleted after 30 days.
