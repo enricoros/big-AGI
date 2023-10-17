@@ -182,7 +182,7 @@ export function ChatMessage(props: { message: DMessage, isBottom: boolean, onMes
   }), shallow);
   const renderMarkdown = _renderMarkdown && !fromSystem;
   const isImaginable = canUseProdia() && !!props.onImagine;
-  const isImaginableEnabled = messageText?.length > 5 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
+  const isImaginableEnabled = messageText?.length >= 2 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
   const isSpeakableEnabled = isImaginableEnabled;
 
