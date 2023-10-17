@@ -9,7 +9,7 @@ import { Link } from '~/common/components/Link';
 import { ImageBlock } from './blocks';
 
 
-export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) => {
+export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain?: (e: React.MouseEvent) => void }) => {
   const imageUrls = props.imageBlock.url.split('\n');
 
   return imageUrls.map((url, index) => (
@@ -35,7 +35,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: bool
           display: 'flex', flexDirection: 'row', gap: 0.5,
           opacity: 0, transition: 'opacity 0.3s',
         }}>
-        {props.allowRunAgain && (
+        {props.allowRunAgain && !!props.onRunAgain && (
           <Tooltip title='Draw again' variant='solid'>
             <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
               <ReplayIcon />
