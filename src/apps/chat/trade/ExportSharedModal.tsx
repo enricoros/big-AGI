@@ -130,24 +130,23 @@ export function ExportSharedModal(props: { onClose: () => void, response: ShareP
           Deletion Key
         </Typography>
 
-        <Stack direction='row' gap={1}>
-          <Input readOnly variant='plain' value={deletionKey} sx={{ flexGrow: 1 }} />
-
-          <Button variant='plain' color='neutral' endDecorator={<DeleteForeverIcon />} onClick={onDeleteNow}>
-            Delete Now
-          </Button>
-        </Stack>
+        <Input readOnly variant='plain' value={deletionKey} sx={{ flexGrow: 1 }} />
 
         <Typography level='body-sm'>
           IMPORTANT - <b>keep this key safe</b>, you will need it if you decide to delete the link at a later time,
           and it will not appear again once you close this dialog.
         </Typography>
 
-        {!!expiresAt && (
-          <Typography sx={{ mt: 1 }} level='title-sm'>
-            This chat will auto-expire on {expiresAt.toLocaleString()}.
-          </Typography>
-        )}
+        <Stack direction='row' gap={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          {!!expiresAt && (
+            <Typography level='title-sm'>
+              This chat will auto-expire on {expiresAt.toLocaleString()}.
+            </Typography>
+          )}
+          <Button variant='outlined' color='neutral' endDecorator={<DeleteForeverIcon />} onClick={onDeleteNow}>
+            Delete Now
+          </Button>
+        </Stack>
 
       </Card>}
 
