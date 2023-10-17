@@ -1,4 +1,22 @@
+import { z } from 'zod';
+
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
+
+
+export const publishToInputSchema = z.object({
+  to: z.enum(['paste.gg']),
+  title: z.string(),
+  fileContent: z.string(),
+  fileName: z.string(),
+  origin: z.string(),
+});
+
+export const publishToOutputSchema = z.object({
+  url: z.string(),
+  expires: z.string(),
+  deletionKey: z.string(),
+  created: z.string(),
+});
 
 
 /**
