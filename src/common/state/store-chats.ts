@@ -115,7 +115,7 @@ interface ChatActions {
   // store setters
   createConversation: () => void;
   duplicateConversation: (conversationId: string) => void;
-  importConversation: (conversation: DConversation) => void;
+  importConversation: (conversation: DConversation, preventClash: boolean) => void;
   deleteConversation: (conversationId: string) => void;
   deleteAllConversations: () => void;
   setActiveConversationId: (conversationId: string) => void;
@@ -193,7 +193,15 @@ export const useChatStore = create<ChatState & ChatActions>()(devtools(
           };
         }),
 
-      importConversation: (conversation: DConversation) => {
+      importConversation: (conversation: DConversation, preventClash) => {
+        // if we're importing a conversation with the same id as an existing one, we need to change the id
+        if (preventClash) {
+          const exists = get().conversations.some(c => c.id === conversation.id);
+          if (exists) {
+            conversation.id = uuidv4();
+            console.warn('Conversation ID clash, changing ID to', conversation.id);
+          }
+        }
         get().deleteConversation(conversation.id);
         set(state => {
           conversation.tokenCount = updateTokenCounts(conversation.messages, true, 'importConversation');
