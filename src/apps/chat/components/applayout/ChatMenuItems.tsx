@@ -15,7 +15,7 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ChatMenuItems(props: {
-  conversationId: string | null, isConversationEmpty: boolean,
+  conversationId: string | null, isConversationEmpty: boolean, hasConversations: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
   onDuplicateConversation: (conversationId: string) => void,
@@ -109,9 +109,9 @@ export function ChatMenuItems(props: {
       </span>
     </MenuItem>
 
-    <MenuItem onClick={handleConversationExport}>
+    <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
-        <Badge color='danger' invisible={!shareBadge}>
+        <Badge color='danger' invisible={!shareBadge || !props.hasConversations}>
           <FileDownloadIcon />
         </Badge>
       </ListItemDecorator>
