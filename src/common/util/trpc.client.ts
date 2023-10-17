@@ -12,12 +12,8 @@ import superjson from 'superjson';
 
 import { type AppRouterEdge, type AppRouterNode } from '~/server/api/trpc.router';
 
+import { getBaseUrl } from './urlUtils';
 
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') return ''; // browser should use relative url
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
-  return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
-};
 
 const enableLoggerLink = (opts: any) => {
   return process.env.NODE_ENV === 'development' ||
