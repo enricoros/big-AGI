@@ -71,7 +71,7 @@ const useUICountersStore = create<UICountersStore>()(
     }),
 );
 
-type UiCounterKey = 'export-share' | 'share-web';
+type UiCounterKey = 'export-share' | 'share-chat-link';
 
 export function useUICounter(key: UiCounterKey) {
   const value = useUICountersStore(state => state.actionCounters[key] || 0);

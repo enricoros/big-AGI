@@ -10,13 +10,15 @@ import { Brand } from '~/common/brand';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, useChatStore } from '~/common/state/store-chats';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
-import type { PublishedSchema, SharePutSchema } from './server/trade.router';
-import { ExportPublishedModal } from './ExportPublishedModal';
-import { ExportSharedModal } from './ExportSharedModal';
-import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade.client';
+import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
+
+import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from '../trade.client';
+
+import { ExportedChatLink } from './ExportedChatLink';
+import { ExportedPublish } from './ExportedPublish';
 
 
 // global flag to enable/disable the sharing mechanics
@@ -43,52 +45,52 @@ function findConversation(conversationId: string) {
 
 /**
  * Export Buttons and functionality
- * Supports Share locally, Pulish to Paste.gg and Download in own format
  */
 export function ExportChats(props: { config: ExportConfig, onClose: () => void }) {
 
   // state
   const [downloadedState, setDownloadedState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
-  const [shareConversationId, setShareConversationId] = React.useState<string | null>(null);
-  const [shareUploading, setShareUploading] = React.useState(false);
-  const [shareResponse, setShareResponse] = React.useState<SharePutSchema | null>(null);
+  const [chatLinkConfirmId, setChatLinkConfirmId] = React.useState<string | null>(null);
+  const [chatLinkUploading, setChatLinkUploading] = React.useState(false);
+  const [chatLinkResponse, setChatLinkResponse] = React.useState<StoragePutSchema | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
   const [publishUploading, setPublishUploading] = React.useState(false);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
 
   // external state
-  const { novel: shareWebBadge, touch: shareWebTouch } = useUICounter('share-web');
+  const { novel: chatLinkBadge, touch: clearChatLinkBadge } = useUICounter('share-chat-link');
 
 
-  // share
+  // chat link
 
-  const handleShareConversation = () => setShareConversationId(props.config.conversationId);
+  const handleChatLinkCreate = () => setChatLinkConfirmId(props.config.conversationId);
 
-  const handleConfirmedShare = async () => {
-    if (!shareConversationId) return;
+  const handleChatLinkConfirmed = async () => {
+    if (!chatLinkConfirmId) return;
 
-    const conversation = findConversation(shareConversationId);
-    setShareConversationId(null);
+    const conversation = findConversation(chatLinkConfirmId);
+    setChatLinkConfirmId(null);
     if (!conversation) return;
 
-    setShareUploading(true);
+    setChatLinkUploading(true);
     try {
       const chatV1 = conversationToJsonV1(conversation);
-      const response: SharePutSchema = await apiAsyncNode.trade.sharePut.mutate({
+      const response: StoragePutSchema = await apiAsyncNode.trade.storagePut.mutate({
         ownerId: undefined, // TODO: save owner id and reuse every time
         dataType: 'CHAT_V1',
+        dataTitle: conversationTitle(conversation) || undefined,
         dataObject: chatV1,
       });
-      setShareResponse(response);
-      shareWebTouch();
+      setChatLinkResponse(response);
+      clearChatLinkBadge();
     } catch (error: any) {
-      setShareResponse({
+      setChatLinkResponse({
         type: 'error',
         error: error?.message ?? error?.toString() ?? 'unknown error',
       });
     }
-    setShareUploading(false);
+    setChatLinkUploading(false);
   };
 
 
@@ -154,16 +156,18 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         Share or download this conversation
       </Typography>
 
-      {ENABLE_SHARING && <Badge color='danger' invisible={!shareWebBadge}>
-        <Button variant='soft' disabled={!hasConversation || shareUploading}
-                loading={shareUploading}
-                color={shareResponse ? 'success' : 'primary'}
-                endDecorator={shareResponse ? <DoneIcon /> : <IosShareIcon />}
-                sx={{ minWidth: 240, justifyContent: 'space-between' }}
-                onClick={handleShareConversation}>
-          Share on {Brand.Title.Base}
-        </Button>
-      </Badge>}
+      {ENABLE_SHARING && (
+        <Badge color='danger' invisible={!chatLinkBadge}>
+          <Button variant='soft' disabled={!hasConversation || chatLinkUploading}
+                  loading={chatLinkUploading}
+                  color={chatLinkResponse ? 'success' : 'primary'}
+                  endDecorator={chatLinkResponse ? <DoneIcon /> : <IosShareIcon />}
+                  sx={{ minWidth: 240, justifyContent: 'space-between' }}
+                  onClick={handleChatLinkCreate}>
+            Share on {Brand.Title.Base}
+          </Button>
+        </Badge>
+      )}
 
       <Button variant='soft' disabled={!hasConversation || publishUploading}
               loading={publishUploading}
@@ -198,36 +202,44 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       </Button>
     </Box>
 
-    {/* [share] confirmation */}
-    {ENABLE_SHARING && shareConversationId && (
+
+    {/* [chat link] confirmation */}
+    {ENABLE_SHARING && !!chatLinkConfirmId && (
       <ConfirmationModal
-        open onClose={() => setShareConversationId(null)} onPositive={handleConfirmedShare}
+        open onClose={() => setChatLinkConfirmId(null)} onPositive={handleChatLinkConfirmed}
         title='Upload Confirmation'
         confirmationText={<>
-          Everyone with the link will be able to see this chat.
+          Everyone who has the unlisted link will be able to access this chat.
           It will be automatically deleted after 30 days.
           For more information, please see the <Link href={Brand.URIs.PrivacyPolicy} target='_blank'>privacy
           policy</Link> of this server. <br />
-          Are you sure you want to proceed?
-        </>} positiveActionText={'Yes, create shared link'}
+          Do you wish to continue?
+        </>} positiveActionText={'Yes, Create Link'}
       />
     )}
 
-    {/* [share] outcome */}
-    {!!shareResponse && <ExportSharedModal open onClose={() => setShareResponse(null)} response={shareResponse} />}
+    {/* [chat link] response */}
+    {ENABLE_SHARING && !!chatLinkResponse && (
+      <ExportedChatLink open onClose={() => setChatLinkResponse(null)} response={chatLinkResponse} />
+    )}
+
 
     {/* [publish] confirmation */}
-    {publishConversationId && <ConfirmationModal
-      open onClose={() => setPublishConversationId(null)} onPositive={handlePublishConfirmed}
-      confirmationText={<>
-        Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
-        It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
-        Are you sure you want to proceed?
-      </>} positiveActionText={'Understood, upload to paste.gg'}
-    />}
+    {publishConversationId && (
+      <ConfirmationModal
+        open onClose={() => setPublishConversationId(null)} onPositive={handlePublishConfirmed}
+        confirmationText={<>
+          Share your conversation anonymously on <Link href='https://paste.gg' target='_blank'>paste.gg</Link>?
+          It will be unlisted and available to share and read for 30 days. Keep in mind, deletion may not be possible.
+          Do you wish to continue?
+        </>} positiveActionText={'Understood, Upload to Paste.gg'}
+      />
+    )}
 
-    {/* [publish] outcome */}
-    {!!publishResponse && <ExportPublishedModal open onClose={handlePublishResponseClosed} response={publishResponse} />}
+    {/* [publish] response */}
+    {!!publishResponse && (
+      <ExportedPublish open onClose={handlePublishResponseClosed} response={publishResponse} />
+    )}
 
   </>;
 }

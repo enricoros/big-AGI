@@ -6,12 +6,12 @@ import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { chatGptImportConversation, chatGptSharedChatSchema } from './import.chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './publish.pastegg';
-import { shareDeleteOutputSchema, shareDeleteProcedure, shareGetProducedure, sharePutOutputSchema, sharePutProcedure } from './share.server';
+import { storageDeleteOutputSchema, storageGetProcedure, storageMarkAsDeletedProcedure, storagePutOutputSchema, storagePutProcedure } from './storage.server';
 
 
-export type SharePutSchema = z.infer<typeof sharePutOutputSchema>;
+export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;
 
-export type ShareDeleteSchema = z.infer<typeof shareDeleteOutputSchema>;
+export type StorageDeleteSchema = z.infer<typeof storageDeleteOutputSchema>;
 
 export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
 
@@ -34,19 +34,19 @@ export const tradeRouter = createTRPCRouter({
     }),
 
   /**
-   * Experimental: 'Sharing functionality': server-side storage
+   * Write an object to storage, and return the ID, owner, and deletion key
    */
-  sharePut: sharePutProcedure,
+  storagePut: storagePutProcedure,
 
   /**
-   * This function will read the shared data by ID, but only if not deleted or expired
+   * Read a stored object by ID (optional owner)
    */
-  shareGet: shareGetProducedure,
+  storageGet: storageGetProcedure,
 
   /**
-   * This function will delete the shared data by ID, but only if not deleted or expired
+   * Delete a stored object by ID and deletion key
    */
-  shareDelete: shareDeleteProcedure,
+  storageDelete: storageMarkAsDeletedProcedure,
 
   /**
    * Publish a text file (with title, content, name) to a sharing service

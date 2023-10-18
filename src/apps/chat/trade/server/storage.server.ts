@@ -1,33 +1,38 @@
 import { z } from 'zod';
 
-import { SharingDataType } from '@prisma/client';
+import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
 import { db } from '~/server/db';
 import { publicProcedure } from '~/server/api/trpc.server';
 import { v4 as uuidv4 } from 'uuid';
 
 
+// configuration
+const DEFAULT_EXPIRES_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+
 /// Zod schemas
 
-const dataTypesSchema = z.enum([SharingDataType.CHAT_V1]);
-const dataSchema = z.object({}).nonstrict();
+const dataTypesSchema = z.enum([LinkStorageDataType.CHAT_V1]);
+const dataSchema = z.object({}).passthrough();
 
 
-const sharePutInputSchema = z.object({
+const storagePutInputSchema = z.object({
   ownerId: z.string().optional(),
   dataType: dataTypesSchema,
+  dataTitle: z.string().optional(),
   dataObject: dataSchema,
   expiresSeconds: z.number().optional(),
 });
 
-export const sharePutOutputSchema = z.union([
+export const storagePutOutputSchema = z.union([
   z.object({
     type: z.literal('success'),
-    sharedId: z.string(),
+    objectId: z.string(),
     ownerId: z.string(),
+    createdAt: z.date(),
     expiresAt: z.date().nullable(),
     deletionKey: z.string(),
-    createdAt: z.date(),
   }),
   z.object({
     type: z.literal('error'),
@@ -35,16 +40,18 @@ export const sharePutOutputSchema = z.union([
   }),
 ]);
 
-const shareGetInputSchema = z.object({
-  sharedId: z.string(),
+const storageGetInputSchema = z.object({
+  objectId: z.string(),
+  ownerId: z.string().optional(),
 });
 
-export const shareGetOutputSchema = z.union([
+export const storageGetOutputSchema = z.union([
   z.object({
     type: z.literal('success'),
     dataType: dataTypesSchema,
+    dataTitle: z.string().nullable(),
     dataObject: dataSchema,
-    sharedAt: z.date(),
+    storedAt: z.date(),
     expiresAt: z.date().nullable(),
   }),
   z.object({
@@ -53,12 +60,13 @@ export const shareGetOutputSchema = z.union([
   }),
 ]);
 
-const shareDeleteInputSchema = z.object({
-  sharedId: z.string(),
+const storageDeleteInputSchema = z.object({
+  objectId: z.string(),
+  ownerId: z.string().optional(),
   deletionKey: z.string(),
 });
 
-export const shareDeleteOutputSchema = z.object({
+export const storageDeleteOutputSchema = z.object({
   type: z.enum(['success', 'error']),
   error: z.string().optional(),
 });
@@ -67,21 +75,17 @@ export const shareDeleteOutputSchema = z.object({
 /// tRPC procedures
 
 /**
- * Writes dataObject to DB, returns sharedId / ownerId
+ * Writes dataObject to DB, returns ownerId, objectId, and deletionKey
  */
-export const sharePutProcedure =
+export const storagePutProcedure =
   publicProcedure
-    .input(sharePutInputSchema)
-    .output(sharePutOutputSchema)
-    .mutation(async ({ input: { ownerId, dataType, dataObject, expiresSeconds } }) => {
+    .input(storagePutInputSchema)
+    .output(storagePutOutputSchema)
+    .mutation(async ({ input }) => {
 
-      // expire in 30 days, if unspecified
-      if (!expiresSeconds)
-        expiresSeconds = 60 * 60 * 24 * 30;
+      const { ownerId, dataType, dataTitle, dataObject, expiresSeconds } = input;
 
-      const dataSizeEstimate = JSON.stringify(dataObject).length;
-
-      const { id: sharedId, ...rest } = await db.sharing.create({
+      const { id: objectId, ...rest } = await db.linkStorage.create({
         select: {
           id: true,
           ownerId: true,
@@ -91,11 +95,14 @@ export const sharePutProcedure =
         },
         data: {
           ownerId: ownerId || uuidv4(),
-          isPublic: true,
+          visibility: LinkStorageVisibility.UNLISTED,
           dataType,
-          dataSize: dataSizeEstimate,
+          dataTitle,
+          dataSize: JSON.stringify(dataObject).length, // data size estimate
           data: dataObject,
-          expiresAt: new Date(Date.now() + 1000 * expiresSeconds),
+          expiresAt: expiresSeconds === 0
+            ? undefined // never expires
+            : new Date(Date.now() + 1000 * (expiresSeconds || DEFAULT_EXPIRES_SECONDS)), // default
           deletionKey: uuidv4(),
           isDeleted: false,
         },
@@ -103,7 +110,7 @@ export const sharePutProcedure =
 
       return {
         type: 'success',
-        sharedId,
+        objectId,
         ...rest,
       };
 
@@ -111,25 +118,26 @@ export const sharePutProcedure =
 
 
 /**
- * Read a public object from DB, if it exists, and is not expired, and is not deleted
+ * Reads an object from DB, if it exists, and is not expired, and is not marked as deleted
  */
-export const shareGetProducedure =
+export const storageGetProcedure =
   publicProcedure
-    .input(shareGetInputSchema)
-    .output(shareGetOutputSchema)
-    .query(async ({ input: { sharedId } }) => {
+    .input(storageGetInputSchema)
+    .output(storageGetOutputSchema)
+    .query(async ({ input: { objectId, ownerId } }) => {
 
       // read object
-      const result = await db.sharing.findUnique({
+      const result = await db.linkStorage.findUnique({
         select: {
           dataType: true,
+          dataTitle: true,
           data: true,
           createdAt: true,
           expiresAt: true,
         },
         where: {
-          id: sharedId,
-          isPublic: true,
+          id: objectId,
+          ownerId: ownerId || undefined,
           isDeleted: false,
           OR: [
             { expiresAt: null },
@@ -154,12 +162,12 @@ export const shareGetProducedure =
       // increment the read count
       // NOTE: fire-and-forget; we don't care about the result
       {
-        db.sharing.update({
+        db.linkStorage.update({
           select: {
             id: true,
           },
           where: {
-            id: sharedId,
+            id: objectId,
           },
           data: {
             readCount: {
@@ -172,8 +180,9 @@ export const shareGetProducedure =
       return {
         type: 'success',
         dataType: result.dataType,
+        dataTitle: result.dataTitle,
         dataObject: result.data as any,
-        sharedAt: result.createdAt,
+        storedAt: result.createdAt,
         expiresAt: result.expiresAt,
       };
 
@@ -183,15 +192,16 @@ export const shareGetProducedure =
 /**
  * Mark a public object as deleted, if it exists, and is not expired, and is not deleted
  */
-export const shareDeleteProcedure =
+export const storageMarkAsDeletedProcedure =
   publicProcedure
-    .input(shareDeleteInputSchema)
-    .output(shareDeleteOutputSchema)
-    .mutation(async ({ input: { sharedId, deletionKey } }) => {
+    .input(storageDeleteInputSchema)
+    .output(storageDeleteOutputSchema)
+    .mutation(async ({ input: { objectId, ownerId, deletionKey } }) => {
 
-      const result = await db.sharing.updateMany({
+      const result = await db.linkStorage.updateMany({
         where: {
-          id: sharedId,
+          id: objectId,
+          ownerId: ownerId || undefined,
           deletionKey,
           isDeleted: false,
         },

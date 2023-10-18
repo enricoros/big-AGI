@@ -11,9 +11,10 @@ import { InlineError } from '~/common/components/InlineError';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 
-import type { ChatGptSharedChatSchema } from './server/import.chatgpt';
+import type { ChatGptSharedChatSchema } from '../server/import.chatgpt';
+import { loadAllConversationsFromJson } from '../trade.client';
+
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
-import { loadAllConversationsFromJson } from './trade.client';
 
 
 export type ImportConfig = { dir: 'import' };

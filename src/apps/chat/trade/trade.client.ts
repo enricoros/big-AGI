@@ -7,7 +7,7 @@ import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 import { DConversation, DMessage, useChatStore } from '~/common/state/store-chats';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 
-import { ImportedOutcome } from './ImportOutcomeModal';
+import { ImportedOutcome } from './import/ImportOutcomeModal';
 
 
 /**

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import Head from 'next/head';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/router';
 
 import { Box, Typography } from '@mui/joy';
 
@@ -11,8 +10,10 @@ import { Brand } from '~/common/brand';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { apiAsyncNode } from '~/common/util/trpc.client';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { conversationTitle } from '~/common/state/store-chats';
 
-import { ViewSharedConversation } from './ViewSharedConversation';
+import { ViewChatLink } from './ViewChatLink';
 
 
 const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }) =>
@@ -39,61 +40,56 @@ const ShowError = (props: { error: any }) =>
 
 
 /**
- * Fetches the shared conversation from the server
+ * Fetches the object using tRPC
  * Note: we don't have react-query for the Node functions, so we use the immediate API here,
  *       and wrap it in a react-query hook
  */
-async function fetchSharedConversation(sharedId: string) {
+async function fetchStoredChatV1(objectId: string) {
   // fetch
-  const result = await apiAsyncNode.trade.shareGet.query({ sharedId });
-
-  // validate
+  const result = await apiAsyncNode.trade.storageGet.query({ objectId });
   if (result.type === 'error')
     throw result.error;
-  if (result.dataType !== 'CHAT_V1')
-    throw new Error('Unsupported data type: ' + result.dataType);
+
+  // validate a CHAT_V1
+  const { dataType, dataObject, storedAt, expiresAt } = result;
+  if (dataType !== 'CHAT_V1')
+    throw new Error('Unsupported data type: ' + dataType);
 
   // convert to DConversation
-  const restored = createConversationFromJsonV1(result.dataObject as any);
+  const restored = createConversationFromJsonV1(dataObject as any);
   if (!restored)
     throw new Error('Could not restore conversation');
 
-  return {
-    conversation: restored,
-    sharedAt: result.sharedAt,
-    expiresAt: result.expiresAt,
-  };
+  return { conversation: restored, storedAt, expiresAt };
 }
 
 
-export function AppShared() {
-
-  // state
-  const { query } = useRouter();
-  const sharedId = query.sharedId as string ?? '';
+export function AppChatLink(props: { linkId: string }) {
 
   // external state
   const { data, isError, error, isLoading } = useQuery({
-    enabled: !!sharedId,
-    queryKey: ['app-shared-chat', sharedId],
-    queryFn: () => fetchSharedConversation(sharedId),
+    enabled: !!props.linkId,
+    queryKey: ['chat-link', props.linkId],
+    queryFn: () => fetchStoredChatV1(props.linkId),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading)
-    return <ShowLoading />;
-
-  if (isError)
-    return <ShowError error={error} />;
-
-  if (!data?.conversation)
-    return <Centerer backgroundColor='background.level3' />;
+  const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
 
   return <>
+
     <Head>
-      <title>{Brand.Title.Common} - Shared Chat</title>
+      <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
     </Head>
-    <ViewSharedConversation conversation={data.conversation} sharedAt={data.sharedAt} expiresAt={data.expiresAt} />
+
+    {isLoading
+      ? <ShowLoading />
+      : isError
+        ? <ShowError error={error} />
+        : !!data?.conversation
+          ? <ViewChatLink conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+          : <Centerer backgroundColor='background.level3' />}
+
   </>;
 }
