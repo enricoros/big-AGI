@@ -6,17 +6,14 @@ import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DConversation, useChatStore } from '~/common/state/store-chats';
-import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { SystemPurposes } from '../../../../data';
+
+import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { conversationTitle, useChatStore } from '~/common/state/store-chats';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const DEBUG_CONVERSATION_IDs = false;
-
-
-export const conversationTitle = (conversation: DConversation): string =>
-  conversation.userTitle || conversation.autoTitle || 'new conversation'; // 👋💬🗨️
 
 
 export function ConversationItem(props: {
@@ -39,7 +36,7 @@ export function ConversationItem(props: {
       messageCount: conversation.messages.length,
       assistantTyping: !!conversation.abortController,
       systemPurposeId: conversation.systemPurposeId,
-      title: conversationTitle(conversation),
+      title: conversationTitle(conversation, 'new conversation'),
       setUserTitle: state.setUserTitle,
     };
   }, shallow);
