@@ -131,7 +131,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       experimentalLabs: false,
       setExperimentalLabs: (experimentalLabs: boolean) => set({ experimentalLabs }),
 
-      renderMarkdown: false,
+      renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
       showPurposeFinder: false,
