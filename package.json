@@ -45,7 +45,7 @@
     "react-timeago": "^7.2.0",
     "remark-gfm": "^4.0.0",
     "superjson": "^2.0.0",
-    "tesseract.js": "^4.1.1",
+    "tesseract.js": "^5.0.2",
     "uuid": "^9.0.1",
     "zod": "3.22.4",
     "zustand": "4.3.9"
