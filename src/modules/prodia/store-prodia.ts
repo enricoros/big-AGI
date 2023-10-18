@@ -65,5 +65,6 @@ export const useProdiaStore = create<ProdiaStore>()(
     }),
     {
       name: 'app-module-prodia',
-    }),
+    },
+  ),
 );
