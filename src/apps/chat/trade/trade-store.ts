@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 
 interface ChatLinkItem {
+  chatTitle?: string;
   objectId: string;
   createdAt: Date;
   expiresAt: Date | null;
@@ -17,7 +18,7 @@ interface TradeStore {
 
   // exported items
   chatLinkItems: ChatLinkItem[];
-  addChatLinkItem: (objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
+  addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
   removeChatLinkItem: (objectId: string) => void;
 
 }
@@ -30,8 +31,8 @@ const useTradeStore = create<TradeStore>()(
       setLinkStorageOwnerId: (linkStorageOwnerId: string) => set({ linkStorageOwnerId }),
 
       chatLinkItems: [],
-      addChatLinkItem: (objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
-        chatLinkItems: [...state.chatLinkItems, { objectId, createdAt, expiresAt, deletionKey }],
+      addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
+        chatLinkItems: [...state.chatLinkItems, { chatTitle, objectId, createdAt, expiresAt, deletionKey }],
       })),
       removeChatLinkItem: (objectId: string) => set(state => ({
         chatLinkItems: state.chatLinkItems.filter(item => item.objectId !== objectId),
