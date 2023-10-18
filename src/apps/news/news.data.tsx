@@ -8,32 +8,45 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 4;
+export const incrementalVersion: number = 5;
+
+const B = (props: { children: React.ReactNode }) => <Typography color='danger' sx={{ fontWeight: 600 }}>{props.children}</Typography>;
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
+  /*{
+    versionName: 'NEXT',
+    items: [
+      { text: <>(Labs mode) YouTube personas creator</> },
+    ],
+  },*/
+  {
+    versionName: '1.4.0',
+    items: [
+      { text: <><B>Share and clone</B> conversations, with public links</> },
+      { text: <><B>Azure</B> models full support, incl. gpt-4-32k</> },
+      { text: <><B>OpenRouter</B> models full support, incl. gpt-4-32k</> },
+      { text: <>Latex Rendering</> },
+      { text: <>Augmented Chat modes (Labs)</> },
+    ],
+  },
   {
     versionName: '1.3.5',
     items: [
-      // { text: <>(Labs mode) YouTube personas creator</> },
-      // { text: <>Latex Rendering</>},
-      // { text: <><Typography color='success'>Augmented Chat</Typography> modes</> },
-      { text: <>Removed the 20 chats hard limit</>},
-      { text: <><Typography color='success' sx={{ fontWeight: 600 }}>OpenRouter</Typography> models full support, incl. GPT4-32k</> },
+      { text: <>AI in the real world with <B>Camera OCR</B> - MOBILE-ONLY</> },
+      { text: <><B>Anthropic</B> models full support</> },
+      { text: <>Removed the 20 chats hard limit</> },
       { text: <>Backup chats (export all)</> },
       { text: <>Import ChatGPT shared chats</> },
       { text: <>Cleaner, better, newer UI, including relative chats size</> },
-      // -- version separator --
-      { text: <>AI in the real world with <Typography color='success' sx={{ fontWeight: 600 }}>camera OCR</Typography> - MOBILE-ONLY</> },
-      { text: <><Typography color='success' sx={{ fontWeight: 600 }}>Anthropic</Typography> models full support</> },
     ],
   },
   {
     versionName: '1.3.1',
     items: [
-      { text: <><Typography color='success'>Flattener</Typography> - 4-mode conversations summarizer</> },
-      { text: <><Typography color='success'>Forking</Typography> - branch your conversations</> },
-      { text: <><Typography color='success'>/s</Typography> and <Typography color='success'>/a</Typography> to append a <i>system</i> or <i>assistant</i> message</> },
+      { text: <><B>Flattener</B> - 4-mode conversations summarizer</> },
+      { text: <><B>Forking</B> - branch your conversations</> },
+      { text: <><B>/s</B> and <B>/a</B> to append a <i>system</i> or <i>assistant</i> message</> },
       { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>Oobabooga server</Link></> },
       { text: 'NextJS STOP bug.. squashed, with Vercel!' },
     ],
