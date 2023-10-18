@@ -16,6 +16,7 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
 
 import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from '../trade.client';
+import { useLinkStorageOwnerId } from '../trade-store';
 
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
@@ -60,6 +61,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   // external state
   const { novel: chatLinkBadge, touch: clearChatLinkBadge } = useUICounter('share-chat-link');
+  const { linkStorageOwnerId, setLinkStorageOwnerId } = useLinkStorageOwnerId();
 
 
   // chat link
@@ -77,12 +79,14 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     try {
       const chatV1 = conversationToJsonV1(conversation);
       const response: StoragePutSchema = await apiAsyncNode.trade.storagePut.mutate({
-        ownerId: undefined, // TODO: save owner id and reuse every time
+        ownerId: linkStorageOwnerId,
         dataType: 'CHAT_V1',
         dataTitle: conversationTitle(conversation) || undefined,
         dataObject: chatV1,
       });
       setChatLinkResponse(response);
+      if (!linkStorageOwnerId && response.type === 'success')
+        setLinkStorageOwnerId(response.ownerId);
       clearChatLinkBadge();
     } catch (error: any) {
       setChatLinkResponse({
