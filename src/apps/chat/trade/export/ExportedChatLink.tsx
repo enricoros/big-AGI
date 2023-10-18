@@ -19,6 +19,7 @@ import { getChatLinkRelativePath } from '~/common/routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
+import { removeChatLinkItem } from '../trade-store';
 import { type StorageDeleteSchema, type StoragePutSchema } from '../server/trade.router';
 
 
@@ -64,6 +65,8 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
   const onConfirmedDeletion = async () => {
     const result: StorageDeleteSchema = await apiAsyncNode.trade.storageDelete.mutate({ objectId, deletionKey });
     setDeletionResponse(result);
+    if (result.type === 'success')
+      removeChatLinkItem(objectId);
     setConfirmDeletion(false);
   };
 

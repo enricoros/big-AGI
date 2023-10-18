@@ -15,8 +15,8 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
 
+import { addChatLinkItem, useLinkStorageOwnerId } from '../trade-store';
 import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from '../trade.client';
-import { useLinkStorageOwnerId } from '../trade-store';
 
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
@@ -85,8 +85,11 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         dataObject: chatV1,
       });
       setChatLinkResponse(response);
-      if (!linkStorageOwnerId && response.type === 'success')
-        setLinkStorageOwnerId(response.ownerId);
+      if (response.type === 'success') {
+        addChatLinkItem(response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
+        if (!linkStorageOwnerId)
+          setLinkStorageOwnerId(response.ownerId);
+      }
       clearChatLinkBadge();
     } catch (error: any) {
       setChatLinkResponse({
