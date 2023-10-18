@@ -39,7 +39,7 @@ Or fork & run on Vercel
 
 <br/>
 
-## 🚨 Latest Drops
+## 🧠 Latest Drops
 
 ####  1.4.0: Sept/Oct: scale OUT
 
