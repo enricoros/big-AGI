@@ -27,7 +27,7 @@ const useAppLayoutStore = create<AppLayoutStore>()(
 /**
  * used by the active UI client to register its components (and unregister on cleanup)
  */
-export function useLayoutPluggable(centerItems: React.JSX.Element, drawerItems: React.JSX.Element, menuItems: React.JSX.Element) {
+export function useLayoutPluggable(centerItems: React.JSX.Element | null, drawerItems: React.JSX.Element | null, menuItems: React.JSX.Element | null) {
   React.useEffect(() => {
     useAppLayoutStore.setState({ centerItems, drawerItems, menuItems });
     return () => useAppLayoutStore.setState({ centerItems: null, drawerItems: null, menuItems: null });
