@@ -16,6 +16,19 @@ import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
+/*const cssMagicSwapKeyframes = keyframes`
+    0% {
+        opacity: 0;
+        transform-origin: 0 100%;
+        transform: scale(0, 0) translate(-300px, 0px);
+    }
+    100% {
+        opacity: 1;
+        transform-origin: 100% 100%;
+        transform: scale(1, 1) translate(0px, 0px);
+    }`;
+*/
+
 function AppSharedMenuItems() {
 
   // external state
@@ -64,6 +77,7 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
 
   // state
   const [cloning, setCloning] = React.useState<boolean>(false);
+  const listBottomRef = React.useRef<HTMLDivElement>(null);
 
   // external state
   const { push: routerPush } = useRouter();
@@ -87,7 +101,8 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
   useLayoutPluggable(null, null, menuItems);
 
 
-  // heuristic: turn on Markdown if a table is detected
+  // Effect: Turn on Markdown (globally) if there are tables in the chat
+
   React.useEffect(() => {
     const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore.getState();
     if (!renderMarkdown) {
@@ -99,6 +114,14 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
     }
   }, [messages]);
 
+  // Effect: Scroll to bottom of list when messages change
+
+  /*React.useEffect(() => {
+    setTimeout(() => {
+      if (listBottomRef.current)
+        listBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, 1000);
+  }, [messages]);*/
 
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
@@ -126,6 +149,7 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
         gap: 1,
         px: { xs: 2.5, md: 3.5 },
         py: { xs: 2, md: 3 },
+        // animation: `${cssMagicSwapKeyframes} 0.4s cubic-bezier(0.22, 1, 0.36, 1)`,
       }}>
         <Typography level='h3' startDecorator={<TelegramIcon sx={{ fontSize: 'xl3', mr: 0.5 }} />}>
           {conversationTitle(props.conversation)}
@@ -174,7 +198,7 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
           <ListItem sx={{
             px: { xs: 2.5, md: 3.5 }, py: 2,
           }}>
-            <Typography level='body-sm'>
+            <Typography level='body-sm' ref={listBottomRef}>
               Like the chat? Clone it and keep the talk going! 🚀
             </Typography>
           </ListItem>
@@ -189,7 +213,9 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
           disabled={!hasMessages || cloning} loading={cloning}
           endDecorator={<TelegramIcon />}
           onClick={() => handleClone(false)}
-          sx={{ boxShadow: 'md' }}
+          sx={{
+            boxShadow: 'md',
+          }}
         >
           Clone on {Brand.Title.Base}
         </Button>
