@@ -125,8 +125,9 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
 
       {/* Messages */}
       <Card sx={{
-        overflowY: 'auto', // overflowY: 'hidden'
         borderRadius: 'xl', boxShadow: 'md',
+        maxWidth: '100%', // fixes the card growing out of bounds
+        overflowY: 'auto',
         p: 0,
       }}>
 
