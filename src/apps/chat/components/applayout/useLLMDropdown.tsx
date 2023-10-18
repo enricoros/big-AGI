@@ -78,7 +78,7 @@ export function useChatLLMDropdown() {
   return { chatLLMId, chatLLMDropdown };
 }
 
-export function useTempLLMDropdown(props: { initialLlmId: DLLMId | null }) {
+/*export function useTempLLMDropdown(props: { initialLlmId: DLLMId | null }) {
   // local state
   const [llmId, setLlmId] = React.useState<DLLMId | null>(props.initialLlmId);
 
@@ -91,4 +91,4 @@ export function useTempLLMDropdown(props: { initialLlmId: DLLMId | null }) {
   );
 
   return { llmId, chatLLMDropdown };
-}
+}*/

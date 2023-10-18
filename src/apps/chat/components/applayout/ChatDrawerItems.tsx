@@ -26,10 +26,8 @@ export function ChatDrawerItems(props: {
   const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const conversationIDs = useChatStore(state => state.conversations.map(
-    conversation => conversation.id,
-  ), shallow);
-  const { topNewConversationId, maxChatMessages, setActiveConversationId, createConversation, deleteConversation } = useChatStore(state => ({
+  const { conversationIDs, topNewConversationId, maxChatMessages, setActiveConversationId, createConversation, deleteConversation } = useChatStore(state => ({
+    conversationIDs: state.conversations.map(conversation => conversation.id),
     topNewConversationId: state.conversations.length ? state.conversations[0].messages.length === 0 ? state.conversations[0].id : null : null,
     maxChatMessages: state.conversations.reduce((longest, conversation) => Math.max(longest, conversation.messages.length), 0),
     setActiveConversationId: state.setActiveConversationId,

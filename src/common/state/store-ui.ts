@@ -146,5 +146,6 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
     }),
     {
       name: 'app-ui',
-    }),
+    },
+  ),
 );
