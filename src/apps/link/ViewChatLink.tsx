@@ -7,10 +7,9 @@ import { Box, Button, Card, List, ListItem, MenuItem, Switch, Tooltip, Typograph
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
-import { conversationTitle } from '../chat/components/applayout/ConversationItem';
 
 import { Brand } from '~/common/brand';
-import { DConversation, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
 import { navigateToChat } from '~/common/routes';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -29,7 +28,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
     }`;
 */
 
-function AppSharedMenuItems() {
+function AppChatLinkMenuItems() {
 
   // external state
   const {
@@ -73,7 +72,7 @@ function AppSharedMenuItems() {
   </>;
 }
 
-export function ViewSharedConversation(props: { conversation: DConversation, sharedAt: Date, expiresAt: Date | null }) {
+export function ViewChatLink(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
 
   // state
   const [cloning, setCloning] = React.useState<boolean>(false);
@@ -94,7 +93,7 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
   // pluggable UI
 
   const menuItems = React.useMemo(() =>
-      <AppSharedMenuItems />,
+      <AppChatLinkMenuItems />,
     [],
   );
 
@@ -152,10 +151,10 @@ export function ViewSharedConversation(props: { conversation: DConversation, sha
         // animation: `${cssMagicSwapKeyframes} 0.4s cubic-bezier(0.22, 1, 0.36, 1)`,
       }}>
         <Typography level='h3' startDecorator={<TelegramIcon sx={{ fontSize: 'xl3', mr: 0.5 }} />}>
-          {conversationTitle(props.conversation)}
+          {conversationTitle(props.conversation, 'Chat')}
         </Typography>
         <Typography level='title-sm'>
-          Uploaded <TimeAgo date={props.sharedAt} />
+          Uploaded <TimeAgo date={props.storedAt} />
           {!!props.expiresAt && <>, expires <TimeAgo date={props.expiresAt} /></>}.
         </Typography>
       </Box>

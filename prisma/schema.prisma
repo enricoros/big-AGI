@@ -20,15 +20,19 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-model Sharing {
+//
+// Storage of Linked Data
+//
+model LinkStorage {
   id String @id @default(uuid())
 
-  ownerId  String
-  isPublic Boolean @default(true)
+  ownerId    String
+  visibility LinkStorageVisibility
 
-  dataType SharingDataType
-  dataSize Int
-  data     Json
+  dataType  LinkStorageDataType
+  dataTitle String?
+  dataSize  Int
+  data      Json
 
   upVotes    Int @default(0)
   downVotes  Int @default(0)
@@ -48,6 +52,12 @@ model Sharing {
   updatedAt DateTime @updatedAt
 }
 
-enum SharingDataType {
+enum LinkStorageVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+enum LinkStorageDataType {
   CHAT_V1
 }

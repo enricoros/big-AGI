@@ -4,8 +4,8 @@ import { Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
 
-import { ExportConfig, ExportChats } from './ExportChats';
-import { ImportConfig, ImportConversations } from './ImportChats';
+import { ExportConfig, ExportChats } from './export/ExportChats';
+import { ImportConfig, ImportConversations } from './import/ImportChats';
 
 export type TradeConfig = ImportConfig | ExportConfig;
 
