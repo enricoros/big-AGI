@@ -8,11 +8,11 @@ import { AppLayout } from '~/common/layout/AppLayout';
 
 export default function ChatLinkPage() {
   const { query } = useRouter();
-  const linkId = query?.linkId as string ?? '';
+  const chatLinkId = query?.chatLinkId as string ?? '';
 
   return (
     <AppLayout suspendAutoModelsSetup>
-      <AppChatLink linkId={linkId} />
+      <AppChatLink linkId={chatLinkId} />
     </AppLayout>
   );
 }
