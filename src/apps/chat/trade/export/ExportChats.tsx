@@ -78,15 +78,16 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     setChatLinkUploading(true);
     try {
       const chatV1 = conversationToJsonV1(conversation);
+      const chatTitle = conversationTitle(conversation) || undefined;
       const response: StoragePutSchema = await apiAsyncNode.trade.storagePut.mutate({
         ownerId: linkStorageOwnerId,
         dataType: 'CHAT_V1',
-        dataTitle: conversationTitle(conversation) || undefined,
+        dataTitle: chatTitle,
         dataObject: chatV1,
       });
       setChatLinkResponse(response);
       if (response.type === 'success') {
-        addChatLinkItem(response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
+        addChatLinkItem(chatTitle, response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
         if (!linkStorageOwnerId)
           setLinkStorageOwnerId(response.ownerId);
       }
