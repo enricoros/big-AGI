@@ -28,7 +28,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
   // state
   const [opened, setOpened] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
-  const [shared, setShared] = React.useState(false);
+  const [native, setNative] = React.useState(false);
   const [confirmDeletion, setConfirmDeletion] = React.useState(false);
   const [deletionResponse, setDeletionResponse] = React.useState<StorageDeleteSchema | null>(null);
 
@@ -54,8 +54,8 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
     setCopied(true);
   };
 
-  const onShare = async () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl,
-    () => setShared(true));
+  const onNative = async () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl,
+    () => setNative(true));
 
 
   const onDeleteNow = () => setConfirmDeletion(true);
@@ -112,8 +112,8 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
           {webSharePresent() &&
             <Tooltip title='Share the link using your device'>
               <Button
-                variant={shared ? 'soft' : 'solid'} onClick={onShare}
-                color={shared ? 'success' : undefined} endDecorator={shared ? <DoneIcon /> : <IosShareIcon />}
+                variant={native ? 'soft' : 'solid'} onClick={onNative}
+                color={native ? 'success' : undefined} endDecorator={native ? <DoneIcon /> : <IosShareIcon />}
                 sx={{ flexGrow: 1 }}
               >
                 Share
