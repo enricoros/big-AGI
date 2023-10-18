@@ -468,6 +468,10 @@ export const useChatStore = create<ChatState & ChatActions>()(devtools(
 );
 
 
+export const conversationTitle = (conversation: DConversation, fallback?: string): string =>
+  conversation.userTitle || conversation.autoTitle || fallback || ''; // 👋💬🗨️
+
+
 /**
  * Returns the chats stored in the localStorage, and rename the key for
  * backup/data loss prevention purposes
