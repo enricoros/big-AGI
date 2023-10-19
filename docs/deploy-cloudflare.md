@@ -1,26 +1,28 @@
-# Deploying Next.js App on Cloudflare Pages
+# Deploying a Next.js App on Cloudflare Pages
 
-Follow these steps to deploy your Next.js app on Cloudflare Pages. This guide is based on
-the [official Cloudflare developer documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-nextjs-site/),
-with a few additional steps.
+***NOTE: See https://github.com/enricoros/big-agi/issues/174 for a recent issue we are aware of*** 
 
-## Step 1: Fork the Repository
+This guide provides steps to deploy your Next.js app on Cloudflare Pages.
+It is based on the [official Cloudflare developer documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-nextjs-site/), 
+with some additional steps.
 
-Fork the repository to your own GitHub account.
+## Step 1: Repository Forking
 
-## Step 2: Connect Cloudflare Pages to Your GitHub Account
+Fork the repository to your personal GitHub account.
 
-1. Go to the Cloudflare Pages section and click the `Create a project` button.
-2. Click `Connect To Git` and give Cloudflare Pages either All GitHub account Repo access or selected Repo access. We
-   recommend using selected Repo access and selecting the forked repo from step 1.
+## Step 2: Linking Cloudflare Pages to Your GitHub Account
 
-## Step 3: Setup Build and Deployments
+1. Navigate to the Cloudflare Pages section and click on the `Create a project` button.
+2. Click `Connect To Git` and grant Cloudflare Pages access to either all GitHub account repositories or selected repositories.
+   We recommend using selected Repo access and selecting the forked repository from step 1.
 
-1. Once you select the forked GitHub repo, click the `Begin Setup` button.
+## Step 3: Configuring Build and Deployments
+
+1. After selecting the forked GitHub repository, click the `Begin Setup` button.
 2. On this page, set your `Project name`, `Production branch` (e.g., main), and your Build settings.
-3. Select `Next.js` from the `Framework preset` dropdown menu.
-4. Leave the preset filled Build command and Build output directory as preset defaults.
-5. Set `Environmental variables` (advanced) on this page to configure some variables as follows:
+3. Choose `Next.js` from the `Framework preset` dropdown menu.
+4. Keep the preset filled Build command and Build output directory as default.
+5. Set `Environmental variables` (advanced) on this page as follows:
 
 | Variable                  | Value   |
 |---------------------------|---------|
@@ -33,23 +35,23 @@ Fork the repository to your own GitHub account.
 
 6. Click the `Save and Deploy` button.
 
-## Step 4: Monitor the Deployment Process
+## Step 4: Monitoring the Deployment Process
 
-Watch the process run to initialize your build environment, clone the GitHub repo, build the application, and deploy to
-the Cloudflare Network. Once that is done, proceed to the project you created.
+Observe the process as it initializes your build environment, clones the GitHub repository, builds the application, and deploys it
+to the Cloudflare Network. Once complete, proceed to the project you created.
 
-## Step 5: Set up a Custom Domain
+## Step 5: Custom Domain Configuration
 
 Use the `Custom domains` tab to set up your domain via CNAME.
 
-## Step 6: Configure Access Policy and Web Analytics
+## Step 6: Access Policy and Web Analytics Configuration
 
-Go to the `Settings` page and enable the following settings:
+Navigate to the `Settings` page and enable the following settings:
 
 1. Access Policy: Restrict [preview deployments](https://developers.cloudflare.com/pages/platform/preview-deployments/)
    to members of your Cloudflare account via one-time pin and restrict primary `*.YOURPROJECT.pages.dev` domain.
-   See [Cloudflare Pages known issues](https://developers.cloudflare.com/pages/platform/known-issues/#enabling-access-on-your-pagesdev-domain)
-   for more information.
+   Refer to [Cloudflare Pages known issues](https://developers.cloudflare.com/pages/platform/known-issues/#enabling-access-on-your-pagesdev-domain)
+   for more details.
 2. Enable Web Analytics.
 
-Now you have successfully deployed your Next.js app on Cloudflare Pages.
+Congratulations! You have successfully deployed your Next.js app on Cloudflare Pages.

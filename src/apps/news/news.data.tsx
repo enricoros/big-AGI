@@ -50,7 +50,7 @@ export const NewsItems: NewsItem[] = [
       { text: <><B>Flattener</B> - 4-mode conversations summarizer</> },
       { text: <><B>Forking</B> - branch your conversations</> },
       { text: <><B>/s</B> and <B>/a</B> to append a <i>system</i> or <i>assistant</i> message</> },
-      { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>Oobabooga server</Link></> },
+      { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-oobabooga.md' target='_blank'>Oobabooga server</Link></> },
       { text: 'NextJS STOP bug.. squashed, with Vercel!' },
     ],
   },
