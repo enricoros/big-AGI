@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
-import SyncIcon from '@mui/icons-material/Sync';
+import { Box } from '@mui/joy';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
@@ -9,11 +8,13 @@ import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
-import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { settingsGap } from '~/common/theme';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
+import { RefetchButton, SetupSwitchControl, SetupTextControl } from '../components.setup';
 import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
 
@@ -21,7 +22,7 @@ import { openAIModelToModelDescription } from './openai.data';
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
-  const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const advanced = useToggleableBoolean();
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
@@ -62,90 +63,41 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-...'
     />
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Organization ID
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='Optional, for enterprise users'
-        value={oaiOrg} onChange={event => updateSetup({ oaiOrg: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <SetupTextControl
+      title='Organization ID'
+      description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
+      placeholder='Optional, for enterprise users'
+      value={oaiOrg}
+      onChange={text => updateSetup({ oaiOrg: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          API Host
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='e.g., oai.hconeai.com'
-        value={oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <SetupTextControl
+      title='API Host'
+      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...</>}
+      placeholder='e.g., oai.hconeai.com'
+      value={oaiHost}
+      onChange={text => updateSetup({ oaiHost: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Helicone Key
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link>
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='sk-...'
-        value={heliKey} onChange={event => updateSetup({ heliKey: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <SetupTextControl
+      title='Helicone Key'
+      description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
+      placeholder='sk-...'
+      value={heliKey}
+      onChange={text => updateSetup({ heliKey: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Moderation
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
-          {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
-        </FormHelperText>
-      </Box>
-      <Switch
-        checked={moderationCheck}
-        onChange={event => updateSetup({ moderationCheck: event.target.checked })}
-        endDecorator={moderationCheck ? 'Enabled' : 'Off'}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <SetupSwitchControl
+      title='Moderation'
+      description={<>
+        <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+        {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
+      </>}
+      value={moderationCheck}
+      onChange={on => updateSetup({ moderationCheck: on })}
+    />}
 
-
-    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
-
-      <FormLabel onClick={() => setShowAdvanced(!showAdvanced)} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>
-        {showAdvanced ? 'Hide Advanced' : 'Advanced'}
-      </FormLabel>
-
-      <Button
-        variant='solid' color={isError ? 'warning' : 'primary'}
-        disabled={!shallFetchSucceed || isFetching}
-        endDecorator={<SyncIcon />}
-        onClick={() => refetch()}
-        sx={{ minWidth: 120, ml: 'auto' }}
-      >
-        Models
-      </Button>
-
-    </Box>
+    <RefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 
