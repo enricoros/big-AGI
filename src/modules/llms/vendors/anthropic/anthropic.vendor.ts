@@ -17,7 +17,7 @@ export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && apiKey.st
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;
-  anthropicHost: string;
+  heliconeKey: string;
 }
 
 export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI, AnthropicAccessSchema> = {
@@ -37,7 +37,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptions
   getAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
     anthropicKey: partialSetup?.anthropicKey || '',
-    anthropicHost: partialSetup?.anthropicHost || '',
+    heliconeKey: partialSetup?.heliconeKey || null,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
     return anthropicCallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, /*null, null,*/ maxTokens);

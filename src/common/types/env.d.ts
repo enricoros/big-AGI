@@ -19,14 +19,13 @@ declare namespace NodeJS {
     AZURE_OPENAI_API_KEY: string;
 
     // LLM: Anthropic
-    ANTHROPIC_API_KEY: string;
-    ANTHROPIC_API_HOST: string;
+    ANTHROPIC_API_KEY?: string;
 
     // LLM: OpenRouter
     OPENROUTER_API_KEY: string;
 
-    // Helicone
-    HELICONE_API_KEY: string;
+    // Helicone - works on both OpenAI and Anthropic vendors
+    HELICONE_API_KEY?: string;
 
     // ElevenLabs - speech.ts
     ELEVENLABS_API_KEY: string;
