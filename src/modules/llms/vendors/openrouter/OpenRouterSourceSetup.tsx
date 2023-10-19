@@ -33,7 +33,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access, filterGpt: false,
+    access,
   }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {

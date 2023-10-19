@@ -51,7 +51,7 @@ export const openAIFunctionsSchema = z.array(z.object({
 
 export const listModelsInputSchema = z.object({
   access: openAIAccessSchema,
-  filterGpt: z.boolean().optional(),
+  onlyChatModels: z.boolean().optional(),
 });
 
 const chatGenerateWithFunctionsInputSchema = z.object({
@@ -92,9 +92,16 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
 
-      // filter out the non-gpt models, if requested
-      let llms = (wireModels.data || [])
-        .filter(model => !input.filterGpt || model.id.includes('gpt'));
+      let llms = wireModels.data || [];
+
+      // filter out the non-gpt models, if requested (only by OpenAI right now)
+      if (llms.length && input.onlyChatModels) {
+        llms = llms.filter(model => {
+          if (model.id.includes('-instruct'))
+            return false;
+          return model.id.includes('gpt');
+        });
+      }
 
       // remove models with duplicate ids (can happen for local servers)
       const preFilterCount = llms.length;
