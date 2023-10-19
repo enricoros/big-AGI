@@ -392,7 +392,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
           )}
 
           {isCollapsed && (
-            <Button variant='plain' onClick={handleExpand}>... expand ...</Button>
+            <Button variant='plain' color='neutral' onClick={handleExpand}>... expand ...</Button>
           )}
 
           {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
