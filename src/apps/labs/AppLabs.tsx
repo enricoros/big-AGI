@@ -47,8 +47,9 @@ export function AppLabs() {
               Features {experimentalLabs ? 'enabled' : 'disabled'}:
             </Typography>
             <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 32 }}>
-              <li><b>YouTube persona synthesizer</b> - 90% complete</li>
-              <li><b>Chat mode: Follow-up augmentation</b> - almost done</li>
+              <li><b>Text tools</b> - complete (highlight differences)</li>
+              <li><b>YouTube persona synthesizer</b> - alpha, not persisted</li>
+              <li><b>Chat mode: follow-up/augmentation</b> - alpha (diagrams)</li>
               <li><b>Relative chats size</b> - complete</li>
             </ul>
             <Typography sx={{ mt: 2 }}>

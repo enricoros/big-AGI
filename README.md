@@ -45,6 +45,7 @@ Or fork & run on Vercel
 
 - **Cloudflare API Gateway** support
 - **Helicone for Anthropic** support
+- **Text Tools** - incl. highlight differences
 
 #### 1.4.0: Sept/Oct: scale OUT
 

@@ -19,6 +19,7 @@ export const NewsItems: NewsItem[] = [
     items: [
       { text: <>CloudFlare OpenAI API Gateway</> },
       { text: <>Helicone Anthropic support</> },
+      { text: <>Highlight differneces (Labs)</> },
       { text: <>(Labs mode) YouTube personas creator</> },
     ],
   },*/
