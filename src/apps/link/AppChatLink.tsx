@@ -71,8 +71,8 @@ export function AppChatLink(props: { linkId: string }) {
     enabled: !!props.linkId,
     queryKey: ['chat-link', props.linkId],
     queryFn: () => fetchStoredChatV1(props.linkId),
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
