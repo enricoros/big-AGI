@@ -17,7 +17,7 @@ import { AnthropicWire } from './anthropic.wiretypes';
 export const anthropicAccessSchema = z.object({
   dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
-  anthropicHost: z.string().trim(),
+  heliconeKey: z.string().trim().nullable(),
 });
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
 
@@ -142,17 +142,17 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
 
   // API key
   const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+  if (!anthropicKey)
+    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
-  let anthropicHost = access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST;
-  if (!anthropicHost.startsWith('http'))
-    anthropicHost = `https://${anthropicHost}`;
-  if (anthropicHost.endsWith('/') && apiPath.startsWith('/'))
-    anthropicHost = anthropicHost.slice(0, -1);
+  let anthropicHost = `https://${DEFAULT_ANTHROPIC_HOST}`;
 
-  // warn if no key - only for default host
-  if (!anthropicKey && anthropicHost.indexOf(DEFAULT_ANTHROPIC_HOST) !== -1)
-    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+  // https://docs.helicone.ai/getting-started/integration-method/anthropic
+  // Helicone for Anthropic
+  const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
+  if (heliKey)
+    anthropicHost = 'https://anthropic.hconeai.com';
 
   return {
     headers: {
@@ -160,6 +160,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
       'Content-Type': 'application/json',
       'anthropic-version': apiVersion,
       'X-API-Key': anthropicKey,
+      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },
     url: anthropicHost + apiPath,
   };

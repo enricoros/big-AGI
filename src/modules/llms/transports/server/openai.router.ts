@@ -280,7 +280,9 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
         throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
-      const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
+      const heliKey = access.heliKey || process.env.HELICONE_API_KEY || false;
+      // NOTE: We don't change the host (as we do for Anthropic), as the user could be using a custom host.
+      //       In this case, we show a UI message to let the user set the correct host.
 
       return {
         headers: {
