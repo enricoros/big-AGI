@@ -5,7 +5,45 @@ This document provides an explanation of the environment variables used in the b
 **All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
 which take place over _defaults_. This file is kept in sync with [`../src/common/types/env.d.ts`](../src/common/types/env.d.ts).
 
----
+### Setting Environment Variables
+
+Environment variables can be set by creating a `.env` file in the root directory of the project.
+
+> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
+> If the Docker container is built without setting environment variables, the frontend UI will be unaware
+> of them, despite the backend being able to use them at runtime.
+
+The following is an example `.env` for copy-paste convenience:
+
+```bash
+# Database
+POSTGRES_PRISMA_URL=
+POSTGRES_URL_NON_POOLING=
+
+# LLMs
+OPENAI_API_KEY=
+OPENAI_API_HOST=
+OPENAI_API_ORG_ID=
+AZURE_OPENAI_API_ENDPOINT=
+AZURE_OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+OPENROUTER_API_KEY=
+
+# Model Observability: Helicone
+HELICONE_API_KEY=
+
+# Text-To-Speech
+ELEVENLABS_API_KEY=
+ELEVENLABS_API_HOST=
+ELEVENLABS_VOICE_ID=
+# Google Custom Search
+GOOGLE_CLOUD_API_KEY=
+GOOGLE_CSE_ID=
+# Text-To-Image
+PRODIA_API_KEY=
+```
+
+## Variables Documentation
 
 ### Database
 
@@ -51,56 +89,19 @@ It is currently supported for:
 
 Enable the app to Talk, Draw, and Google things up.
 
-| Variable                 | Description                                                                                                                    |
-|:-------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**       | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                                |
-| `ELEVENLABS_API_KEY`     | The API key for ElevenLabs - used                                                                                              |
-| `ELEVENLABS_API_HOST`    | The host for ElevenLabs                                                                                                        |
-| `ELEVENLABS_VOICE_ID`    | The voice ID for ElevenLabs                                                                                                    |
-| **Google Custom Search** | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages               |
-| `GOOGLE_CLOUD_API_KEY`   | An API key for Google Cloud, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
-| `GOOGLE_CSE_ID`          | An ID for Google Custom/Programmable Search Engine - [Link to PSE](https://programmablesearchengine.google.com/)               |
-| **Text-To-Image**        | [Prodia](https://prodia.com/) is a reliable image generation service                                                           |
-| `PRODIA_API_KEY`         | The API key for Prodia - used with '/imagine ...'                                                                              |
+| Variable                 | Description                                                                                                             |
+|:-------------------------|:------------------------------------------------------------------------------------------------------------------------|
+| **Text-To-Speech**       | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
+| `ELEVENLABS_API_KEY`     | ElevenLabs API Key - used for calls, etc.                                                                               |
+| `ELEVENLABS_API_HOST`    | Custom host for ElevenLabs                                                                                              |
+| `ELEVENLABS_VOICE_ID`    | Default voice ID for ElevenLabs                                                                                         |
+| **Google Custom Search** | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
+| `GOOGLE_CLOUD_API_KEY`   | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
+| `GOOGLE_CSE_ID`          | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
+| **Text-To-Image**        | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
+| `PRODIA_API_KEY`         | Prodia API Key - used with '/imagine ...'                                                                               |
 
 ---
 
-### Setting Environment Variables
-
-Environment variables can be set by creating a `.env` file in the root directory of the project.
-
-> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
-> If the Docker container is built without setting environment variables, the frontend UI will be unaware
-> of them, despite the backend being able to use them at runtime.
-
-The following is an example `.env` for copy-paste convenience:
-
-```bash
-# Database
-POSTGRES_PRISMA_URL=
-POSTGRES_URL_NON_POOLING=
-
-# LLMs
-OPENAI_API_KEY=
-OPENAI_API_HOST=
-OPENAI_API_ORG_ID=
-AZURE_OPENAI_API_ENDPOINT=
-AZURE_OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-OPENROUTER_API_KEY=
-
-# Model Observability: Helicone
-HELICONE_API_KEY=
-
-# Text-To-Speech
-ELEVENLABS_API_KEY=
-ELEVENLABS_API_HOST=
-ELEVENLABS_VOICE_ID=
-# Google Custom Search
-GOOGLE_CLOUD_API_KEY=
-GOOGLE_CSE_ID=
-# Text-To-Image
-PRODIA_API_KEY=
-```
 
 
