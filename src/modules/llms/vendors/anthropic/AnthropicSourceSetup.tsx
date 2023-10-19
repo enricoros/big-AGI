@@ -2,16 +2,17 @@ import * as React from 'react';
 
 import { Alert, Box } from '@mui/joy';
 
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { RefetchButton, SetupTextControl } from '../vendor.components';
 import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
@@ -56,7 +57,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-...'
     />
 
-    {advanced.on && <SetupTextControl
+    {advanced.on && <FormTextField
       title='Helicone Key'
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'
@@ -68,7 +69,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       Advanced: You set the Helicone key, and Anthropic text will be routed through Helicone.
     </Alert>}
 
-    <RefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

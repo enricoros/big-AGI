@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Tooltip } from '@mui/joy';
 
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 

@@ -5,7 +5,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
@@ -14,6 +14,7 @@ import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter, SourceSetupOpenRouter } from './openrouter.vendor';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -67,17 +68,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-or-...'
     />
 
-    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
-      <Button
-        variant='solid' color={isError ? 'warning' : 'primary'}
-        disabled={!shallFetchSucceed || isFetching}
-        endDecorator={<SyncIcon />}
-        onClick={() => refetch()}
-        sx={{ minWidth: 120, ml: 'auto' }}
-      >
-        Models
-      </Button>
-    </Box>
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 
