@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
+import { Alert, Box } from '@mui/joy';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
@@ -14,7 +14,7 @@ import { settingsGap } from '~/common/theme';
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { RefetchButton, SetupSwitchControl, SetupTextControl } from '../components.setup';
+import { RefetchButton, SetupSwitchControl, SetupTextControl } from '../vendor.components';
 import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
 
@@ -86,6 +86,12 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       value={heliKey}
       onChange={text => updateSetup({ heliKey: text })}
     />}
+
+    {!!heliKey && <Alert variant='soft' color={oaiHost?.includes('oai.hconeai.com') ? 'success' : 'warning'}>
+      Advanced: You set the Helicone key. {!oaiHost?.includes('oai.hconeai.com')
+      ? 'But you also need to set the OpenAI Host to "oai.hconeai.com" to use Helicone.'
+      : 'OpenAI traffic will now be routed through Helicone.'}
+    </Alert>}
 
     {advanced.on && <SetupSwitchControl
       title='Moderation'
