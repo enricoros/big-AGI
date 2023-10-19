@@ -4,7 +4,7 @@ import TimeAgo from 'react-timeago';
 import { Box, ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { useChatLinkItems } from '../chat/trade/trade-store';
+import { useChatLinkItems } from '../chat/trade/store-sharing';
 
 import { Brand } from '~/common/brand';
 import { Link } from '~/common/components/Link';
