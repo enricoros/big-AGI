@@ -242,6 +242,7 @@ async function openaiPOST<TOut, TPostBody>(access: OpenAIAccessSchema, modelRefI
 
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
+const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
 function fixupHost(host: string, apiPath: string): string {
   if (!host.startsWith('http'))
@@ -282,14 +283,37 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'openai':
       const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
       const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
-      const oaiHost = fixupHost(access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
+      let oaiHost = fixupHost(access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
       // warn if no key - only for default (non-overridden) hosts
       if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
         throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
+      // [Helicone]
+      // We don't change the host (as we do on Anthropic's), as we expect the user to have a custom host.
       const heliKey = access.heliKey || process.env.HELICONE_API_KEY || false;
-      // NOTE: We don't change the host (as we do for Anthropic), as the user could be using a custom host.
-      //       In this case, we show a UI message to let the user set the correct host.
+      if (heliKey && !oaiHost.includes(DEFAULT_HELICONE_OPENAI_HOST))
+        throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
+
+      // [Cloudflare OpenAI AI Gateway support]
+      // Adapts the API path when using a 'universal' or 'openai' Cloudflare AI Gateway endpoint in the "API Host" field
+      if (oaiHost.includes('https://gateway.ai.cloudflare.com')) {
+        const parsedUrl = new URL(oaiHost);
+        const pathSegments = parsedUrl.pathname.split('/').filter(segment => segment.length > 0);
+
+        // The expected path should be: /v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/<PROVIDER_ENDPOINT>
+        if (pathSegments.length < 3 || pathSegments.length > 4 || pathSegments[0] !== 'v1')
+          throw new Error('Cloudflare AI Gateway API Host is not valid. Please check the API Host field in the Models Setup page.');
+
+        const [_v1, accountTag, gatewayName, provider] = pathSegments;
+        if (provider && provider !== 'openai')
+          throw new Error('Cloudflare AI Gateway only supports OpenAI as a provider.');
+
+        if (apiPath.startsWith('/v1'))
+          apiPath = apiPath.replace('/v1', '');
+
+        oaiHost = 'https://gateway.ai.cloudflare.com';
+        apiPath = `/v1/${accountTag}/${gatewayName}/${provider || 'openai'}${apiPath}`;
+      }
 
       return {
         headers: {
