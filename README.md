@@ -41,7 +41,12 @@ Or fork & run on Vercel
 
 ## 🧠 Latest Drops
 
-####  1.4.0: Sept/Oct: scale OUT
+#### Next
+
+- **Cloudflare API Gateway** support
+- **Helicone for Anthropic** support
+
+#### 1.4.0: Sept/Oct: scale OUT
 
 - **Expanded Model Support**: Azure and [OpenRouter](https://openrouter.ai/docs#models) models, including gpt-4-32k
 - **Share and clone** conversations with public links
@@ -101,7 +106,7 @@ Or fork & run on Vercel
 - **Context** - Attach or [Drag & Drop files](docs/pixels/feature_drop_target.png) to add them to the prompt 📁
 - **Syntax highlighting** - for multiple languages 🌈
 - **Code Execution: Sandpack** -
-   [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
+  [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
 - Chat with GPT-4 and 3.5 Turbo 🧠💨
 - Real-time streaming of AI responses ⚡
 - **Voice Input** 🎙️ - works great on Chrome / Windows
@@ -141,7 +146,7 @@ Now the app should be running on `http://localhost:3000`
 ### Integrations:
 
 * [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
-* [Helicone](https://www.helicone.ai/) LLM Observability Platform - Settings > Advanced > API Host: 'oai.hconeai.com'
+* [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
