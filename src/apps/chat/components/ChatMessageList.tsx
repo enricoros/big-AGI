@@ -29,7 +29,7 @@ function ToolsPanel(props: { showDiff: boolean, setShowDiff: (showDiff: boolean)
       }}
     >
       <Typography level='title-md'>
-        🪛🔧
+        🪛
       </Typography>
       <Tooltip title='Highlight differences'>
         <Switch
