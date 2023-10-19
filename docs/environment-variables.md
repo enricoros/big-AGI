@@ -2,15 +2,8 @@
 
 This document provides an explanation of the environment variables used in the big-AGI application.
 
-**All variables are optional**; and _UI options_ take precedence over _backend environment variables_, which take place over _defaults_.
-
-## Setting Environment Variables
-
-Environment variables can be set by creating a `.env` file in the root directory of the project.
-
-> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
-> If the Docker container is built without setting environment variables, the frontend UI will be unaware
-> of them, despite the backend being able to use them at runtime.
+**All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
+which take place over _defaults_. This file is kept in sync with [`../src/common/types/env.d.ts`](../src/common/types/env.d.ts).
 
 ---
 
@@ -72,6 +65,42 @@ Enable the app to Talk, Draw, and Google things up.
 
 ---
 
-#### 🔧 Developers
+### Setting Environment Variables
 
-Note: keep this file in sync with [`../src/common/types/env.d.ts`](../src/common/types/env.d.ts) file.
+Environment variables can be set by creating a `.env` file in the root directory of the project.
+
+> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
+> If the Docker container is built without setting environment variables, the frontend UI will be unaware
+> of them, despite the backend being able to use them at runtime.
+
+The following is an example `.env` for copy-paste convenience:
+
+```bash
+# Database
+POSTGRES_PRISMA_URL=
+POSTGRES_URL_NON_POOLING=
+
+# LLMs
+OPENAI_API_KEY=
+OPENAI_API_HOST=
+OPENAI_API_ORG_ID=
+AZURE_OPENAI_API_ENDPOINT=
+AZURE_OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+OPENROUTER_API_KEY=
+
+# Model Observability: Helicone
+HELICONE_API_KEY=
+
+# Text-To-Speech
+ELEVENLABS_API_KEY=
+ELEVENLABS_API_HOST=
+ELEVENLABS_VOICE_ID=
+# Google Custom Search
+GOOGLE_CLOUD_API_KEY=
+GOOGLE_CSE_ID=
+# Text-To-Image
+PRODIA_API_KEY=
+```
+
+
