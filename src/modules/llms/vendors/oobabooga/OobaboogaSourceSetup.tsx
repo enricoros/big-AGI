@@ -48,7 +48,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
     <Typography level='body-sm'>
       You can use a running <Link href='https://github.com/oobabooga/text-generation-webui' target='_blank'>
       text-generation-webui</Link> instance as a source for local models.
-      Follow <Link href='https://github.com/enricoros/big-agi/blob/main/docs/local-llm-text-web-ui.md' target='_blank'>
+      Follow <Link href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-oobabooga.md' target='_blank'>
       the instructions</Link> to set up the server.
     </Typography>
 
