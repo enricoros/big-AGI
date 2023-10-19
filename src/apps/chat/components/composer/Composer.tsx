@@ -543,7 +543,12 @@ export function Composer(props: {
               }} />
             )}
 
-            {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
+            {!!tokenLimit && (
+              <TokenBadge
+                directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit}
+                showExcess absoluteBottomRight
+              />
+            )}
 
             {!!speechInterimResult && (
               <Card
