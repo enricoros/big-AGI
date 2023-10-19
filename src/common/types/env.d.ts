@@ -1,5 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
+/** Keep this file in sync with docs/environment-variables.md */
+
 declare namespace NodeJS {
 
   // available to the server-side
@@ -11,8 +13,8 @@ declare namespace NodeJS {
 
     // LLM: OpenAI
     OPENAI_API_KEY: string;
-    OPENAI_API_ORG_ID: string;
     OPENAI_API_HOST: string;
+    OPENAI_API_ORG_ID: string;
 
     // LLM: Azure OpenAI
     AZURE_OPENAI_API_ENDPOINT: string;
@@ -32,12 +34,12 @@ declare namespace NodeJS {
     ELEVENLABS_API_HOST: string;
     ELEVENLABS_VOICE_ID: string;
 
-    // Prodia
-    PRODIA_API_KEY: string;
-
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: string;
     GOOGLE_CSE_ID: string;
+
+    // Prodia
+    PRODIA_API_KEY: string;
 
   }
 
