@@ -73,8 +73,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
     {advanced.on && <SetupTextControl
       title='API Host'
-      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...</>}
-      placeholder='e.g., oai.hconeai.com'
+      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
+      placeholder='e.g., oai.hconeai.com or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai'
       value={oaiHost}
       onChange={text => updateSetup({ oaiHost: text })}
     />}
