@@ -157,7 +157,10 @@ For more detailed information on deploying with Docker, please refer to the [doc
 
 ### 🔧 Locally built image
 
-> Firstly, write all your API keys and env vars to an `.env` file, and make sure the env file is using *both build and run*
+> Firstly, write all your API keys and env vars to an `.env` file, and make sure the env file is using *both build and run*.
+> See [docs/environment-variables.md](docs/environment-variables.md) for a list of all environment variables.
+
+```bash
 
 ```bash
 docker build -t big-agi .
@@ -171,6 +174,18 @@ docker run --detach 'big-agi'
 ```bash
 docker-compose up
 ```
+
+## Deploy with Cloudflare Pages ☁️
+
+Please refer to the [Cloudflare deployment documentation](docs/deploy-cloudflare.md).
+
+## Deploy with Vercel 🚀
+
+Create your GitHub fork, create a Vercel project over that fork, and deploy it. Or press the button below for convenience.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
+
+
 
 <br/>
 
