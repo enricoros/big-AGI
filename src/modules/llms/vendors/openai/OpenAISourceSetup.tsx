@@ -38,7 +38,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access, filterGpt: true,
+    access, onlyChatModels: true,
   }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {
