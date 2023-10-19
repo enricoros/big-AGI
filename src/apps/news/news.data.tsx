@@ -17,6 +17,8 @@ export const NewsItems: NewsItem[] = [
   /*{
     versionName: 'NEXT',
     items: [
+      { text: <>CloudFlare OpenAI API Gateway</> },
+      { text: <>Helicone Anthropic support</> },
       { text: <>(Labs mode) YouTube personas creator</> },
     ],
   },*/

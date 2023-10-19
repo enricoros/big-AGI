@@ -19,6 +19,10 @@ import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOp
 import { openAIModelToModelDescription } from './openai.data';
 
 
+// avoid repeating it all over
+const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+
+
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
@@ -74,7 +78,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     {advanced.on && <SetupTextControl
       title='API Host'
       description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
-      placeholder='e.g., oai.hconeai.com or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai'
+      placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
       value={oaiHost}
       onChange={text => updateSetup({ oaiHost: text })}
     />}
@@ -87,9 +91,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={text => updateSetup({ heliKey: text })}
     />}
 
-    {!!heliKey && <Alert variant='soft' color={oaiHost?.includes('oai.hconeai.com') ? 'success' : 'warning'}>
-      Advanced: You set the Helicone key. {!oaiHost?.includes('oai.hconeai.com')
-      ? 'But you also need to set the OpenAI Host to "oai.hconeai.com" to use Helicone.'
+    {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
+      Advanced: You set the Helicone key. {!oaiHost?.includes(HELICONE_OPENAI_HOST)
+      ? `But you also need to set the OpenAI Host to ${HELICONE_OPENAI_HOST} to use Helicone.`
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
