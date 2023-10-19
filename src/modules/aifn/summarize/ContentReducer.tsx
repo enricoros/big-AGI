@@ -4,12 +4,13 @@ import { shallow } from 'zustand/shallow';
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Modal, ModalClose, ModalDialog, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { summerizeToFitContextBudget } from '~/modules/aifn/summarize/summerize';
+
+import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
 
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/util/token-counter';
 
-import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
+import { summerizeToFitContextBudget } from './summerize';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
@@ -48,9 +49,9 @@ export function ContentReducer(props: {
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 
-  const handleReducerModelChange = (event: any, value: DLLMId | null) => value && setReducerModelId(value);
+  const handleReducerModelChange = (_event: any, value: DLLMId | null) => value && setReducerModelId(value);
 
-  const handleCompressionLevelChange = (event: Event, newValue: number | number[]) => setCompressionLevel(newValue as number);
+  const handleCompressionLevelChange = (_event: Event, newValue: number | number[]) => setCompressionLevel(newValue as number);
 
   const handlePreviewClicked = async () => {
     setProcessing(true);
