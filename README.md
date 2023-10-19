@@ -153,24 +153,24 @@ Now the app should be running on `http://localhost:3000`
 
 ## Deploy with Docker 🐳
 
-Specific docker information on [docs/deploy-docker.md](docs/deploy-docker.md). In short:
+For more detailed information on deploying with Docker, please refer to the [docker deployment documentation](docs/deploy-docker.md).
 
-#### Pre-built image
+### 🔧 Locally built image
 
-Add your OpenAI API key to the `.env` file, then in a terminal run:
-
-```bash
-docker-compose up
-```
-
-#### Locally built image
-
-If you wish to build the image yourself, run
+> Firstly, write all your API keys and env vars to an `.env` file, and make sure the env file is using *both build and run*
 
 ```bash
 docker build -t big-agi .
 docker run --detach 'big-agi'
 ``` 
+
+### Pre-built image
+
+> Warning: the UI will still be asking for keys, as the image was built without the API keys
+
+```bash
+docker-compose up
+```
 
 <br/>
 

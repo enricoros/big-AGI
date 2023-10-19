@@ -3,9 +3,6 @@
 Utilize Docker containers to deploy the big-AGI application for an efficient and automated deployment process.
 Docker ensures faster development cycles, easier collaboration, and seamless environment management.
 
-Docker is a platform that allows for the development, packaging, and deployment of applications in lightweight
-containers, guaranteeing consistent behavior across various environments.
-
 ## 🔧 Local Build & Deployment
 
 1. **Clone big-AGI**
