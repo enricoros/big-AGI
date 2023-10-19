@@ -5,16 +5,18 @@ import { Alert, Box } from '@mui/joy';
 import { apiQuery } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { settingsGap } from '~/common/theme';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { RefetchButton, SetupSwitchControl, SetupTextControl } from '../vendor.components';
 import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
 
@@ -67,7 +69,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-...'
     />
 
-    {advanced.on && <SetupTextControl
+    {advanced.on && <FormTextField
       title='Organization ID'
       description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
@@ -75,7 +77,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={text => updateSetup({ oaiOrg: text })}
     />}
 
-    {advanced.on && <SetupTextControl
+    {advanced.on && <FormTextField
       title='API Host'
       description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
       placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
@@ -83,7 +85,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={text => updateSetup({ oaiHost: text })}
     />}
 
-    {advanced.on && <SetupTextControl
+    {advanced.on && <FormTextField
       title='Helicone Key'
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'
@@ -97,7 +99,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       : 'OpenAI traffic will now be routed through Helicone.'}
     </Alert>}
 
-    {advanced.on && <SetupSwitchControl
+    {advanced.on && <FormSwitchControl
       title='Moderation'
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
@@ -107,7 +109,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={on => updateSetup({ moderationCheck: on })}
     />}
 
-    <RefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

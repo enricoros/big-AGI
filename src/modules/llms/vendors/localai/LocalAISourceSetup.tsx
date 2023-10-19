@@ -1,15 +1,13 @@
 import * as React from 'react';
 import { z } from 'zod';
 
-import { Box, Button, Typography } from '@mui/joy';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import SyncIcon from '@mui/icons-material/Sync';
+import { Box, Typography } from '@mui/joy';
 
-import { apiQuery } from '~/common/util/trpc.client';
-
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/theme';
 
 import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
@@ -61,15 +59,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
     />
 
-    <Button
-      variant='solid' color={isError ? 'warning' : 'primary'}
-      disabled={!shallFetchSucceed || isFetching}
-      endDecorator={sourceHasLLMs ? <SyncIcon /> : <FileDownloadIcon />}
-      onClick={() => refetch()}
-      sx={{ minWidth: 120, ml: 'auto' }}
-    >
-      Models
-    </Button>
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

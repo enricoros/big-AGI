@@ -13,7 +13,6 @@ export function FormInputKey(props: {
   value: string, onChange: (value: string) => void,
   placeholder?: string, isVisible?: boolean,
   required: boolean, isError?: boolean,
-  noFormControl?: boolean,
   noKey?: boolean,
 }) {
 
@@ -28,9 +27,7 @@ export function FormInputKey(props: {
     </IconButton>
   ), [props.value, props.noKey, isVisible]);
 
-  const Wrapper = props.noFormControl ? React.Fragment : FormControl;
-
-  return <Wrapper>
+  return <FormControl>
 
     {!!props.label && <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       <FormLabel>{props.label}</FormLabel>
@@ -52,5 +49,5 @@ export function FormInputKey(props: {
 
     {props.description && <FormHelperText sx={{ display: 'block' }}>{props.description}</FormHelperText>}
 
-  </Wrapper>;
+  </FormControl>;
 }

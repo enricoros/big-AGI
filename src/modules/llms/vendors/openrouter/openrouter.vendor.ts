@@ -36,7 +36,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptio
   rank: 12,
   location: 'cloud',
   instanceLimit: 1,
-  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENAI,
+  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENROUTER,
 
   // components
   Icon: OpenRouterIcon,
