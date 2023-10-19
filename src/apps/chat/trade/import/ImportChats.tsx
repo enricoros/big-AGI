@@ -148,7 +148,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     {chatGptEdit && <Sheet variant='soft' color='primary' sx={{ display: 'flex', flexDirection: 'column', borderRadius: 'md', p: 1, gap: 1 }}>
 
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-        <InlineError error='Note: OpenAI seems to be blocking importing shared chats at the moment. Proceeding is likely to result in an HTTP error.' severity='danger' />
+        <InlineError error='Note: this operation may be unreliable as OpenAI is often blocking imports.' severity='warning' />
         <OpenAIIcon sx={{ mx: 'auto', my: 1 }} />
       </Box>
 
