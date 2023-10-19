@@ -3,16 +3,19 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { useRouter } from 'next/router';
 
-import { Box, Button, Card, List, ListItem, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Card, List, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
+import { useChatLinkItems, useHasChatLinkItems } from '../chat/trade/trade-store';
 
+import { Link } from '~/common/components/Link';
 import { Brand } from '~/common/brand';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/routes';
+import { getChatLinkRelativePath, getHomeLink, navigateToChat } from '~/common/routes';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 
 /*const cssMagicSwapKeyframes = keyframes`
@@ -28,6 +31,61 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
     }`;
 */
 
+
+/**
+ * Drawer Items are all the links already shared, for quick access.
+ * This is stores in the Trade Store (local storage).
+ */
+function AppChatLinkDrawerItems() {
+
+  // external state
+  const chatLinkItems = useChatLinkItems();
+  const hasChatLinks = chatLinkItems.length > 0;
+
+  return <>
+
+    <MenuItem component={Link} href={getHomeLink()} noLinkStyle>
+      <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
+      {Brand.Title.Base}
+    </MenuItem>
+
+    {hasChatLinks && <ListDivider />}
+
+    {hasChatLinks && <ListItem>
+      <Typography level='body-sm'>
+        Links shared by you
+      </Typography>
+    </ListItem>}
+
+    {hasChatLinks && <Box sx={{ overflowY: 'auto' }}>
+      {chatLinkItems.map(item => (
+
+        <MenuItem
+          key={'chat-link-' + item.objectId}
+          component={Link} href={getChatLinkRelativePath(item.objectId)} noLinkStyle
+          sx={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'flex-start',
+          }}
+        >
+          <Typography level='title-sm'>
+            {item.chatTitle || 'Untitled Chat'}
+          </Typography>
+          <Typography level='body-xs'>
+            <TimeAgo date={item.createdAt} />
+          </Typography>
+        </MenuItem>
+
+      ))}
+    </Box>}
+  </>;
+
+}
+
+
+/**
+ * Menu Items are the settings for the chat.
+ */
 function AppChatLinkMenuItems() {
 
   // external state
@@ -72,6 +130,10 @@ function AppChatLinkMenuItems() {
   </>;
 }
 
+
+/**
+ * Renders a chat link view with conversation details and messages.
+ */
 export function ViewChatLink(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
 
   // state
@@ -81,8 +143,8 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   // external state
   const { push: routerPush } = useRouter();
   const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
-  const conversationId = props.conversation.id;
-  const existingId = useChatStore(state => state.conversations.some(c => c.id === conversationId));
+  const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
+  const hasLinkItems = useHasChatLinkItems();
 
   // derived state
   const messages = props.conversation.messages;
@@ -91,13 +153,15 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
 
 
   // pluggable UI
+  const drawerItems = React.useMemo(() =>
+      hasLinkItems ? <AppChatLinkDrawerItems /> : null,
+    [hasLinkItems]);
 
   const menuItems = React.useMemo(() =>
       <AppChatLinkMenuItems />,
-    [],
-  );
+    []);
 
-  useLayoutPluggable(null, null, menuItems);
+  useLayoutPluggable(null, drawerItems, menuItems);
 
 
   // Effect: Turn on Markdown (globally) if there are tables in the chat
@@ -121,6 +185,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
         listBottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }, 1000);
   }, [messages]);*/
+
 
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
@@ -219,7 +284,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
           Clone on {Brand.Title.Base}
         </Button>
 
-        {existingId && (
+        {hasExistingChat && (
           <Tooltip title='This conversation is already present, enabling Overwrite'>
             <Button
               variant='soft' color='warning'

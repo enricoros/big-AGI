@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 
 
 interface ChatLinkItem {
@@ -45,12 +46,13 @@ const useTradeStore = create<TradeStore>()(
   ),
 );
 
-export function useLinkStorageOwnerId() {
-  return {
-    linkStorageOwnerId: useTradeStore(state => state.linkStorageOwnerId),
-    setLinkStorageOwnerId: useTradeStore.getState().setLinkStorageOwnerId,
-  };
-}
+export const useLinkStorageOwnerId = () => ({
+  linkStorageOwnerId: useTradeStore(state => state.linkStorageOwnerId),
+  setLinkStorageOwnerId: useTradeStore.getState().setLinkStorageOwnerId,
+});
 
+
+export const useChatLinkItems = () => useTradeStore(state => state.chatLinkItems, shallow);
+export const useHasChatLinkItems = () => useTradeStore(state => state.chatLinkItems.length > 0);
 export const addChatLinkItem = useTradeStore.getState().addChatLinkItem;
 export const removeChatLinkItem = useTradeStore.getState().removeChatLinkItem;

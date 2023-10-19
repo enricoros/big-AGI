@@ -10,6 +10,8 @@ const APP_CHAT = '/';
 const APP_LINK_CHAT = '/link/chat/:linkId';
 
 
+export const getHomeLink = () => APP_CHAT;
+
 export const getChatLinkRelativePath = (chatLinkId: string) => APP_LINK_CHAT.replace(':linkId', chatLinkId);
 
 export const navigateToChat = async (next: NextRouter['push'] | NextRouter['replace']) =>

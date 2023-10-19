@@ -114,7 +114,7 @@ export function AppBar(props: { sx?: SxProps }) {
       }}>
 
       {/* Drawer Anchor */}
-      {!centerItems ? (
+      {!drawerItems ? (
         <IconButton component={Link} href='/' noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
