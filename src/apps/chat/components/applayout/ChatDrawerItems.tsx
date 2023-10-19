@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
+import { closeLayoutDrawerMenu } from '~/common/layout/store-applayout';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -45,21 +45,19 @@ export function ChatDrawerItems(props: {
   const singleChat = totalConversations === 1;
   const softMaxReached = totalConversations >= 50;
 
-  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
-
   const handleNew = () => {
     // if the first in the stack is a new conversation, just activate it
     if (topNewConversationId)
       setActiveConversationId(topNewConversationId);
     else
       createConversation();
-    closeDrawerMenu();
+    closeLayoutDrawerMenu();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
     if (closeMenu)
-      closeDrawerMenu();
+      closeLayoutDrawerMenu();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {

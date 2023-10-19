@@ -6,8 +6,8 @@ import { shallow } from 'zustand/shallow';
 interface ChatLinkItem {
   chatTitle?: string;
   objectId: string;
-  createdAt: Date;
-  expiresAt: Date | null;
+  createdAt: string;
+  expiresAt: string | null;
   deletionKey: string;
 }
 
@@ -33,7 +33,7 @@ const useTradeStore = create<TradeStore>()(
 
       chatLinkItems: [],
       addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
-        chatLinkItems: [...state.chatLinkItems, { chatTitle, objectId, createdAt, expiresAt, deletionKey }],
+        chatLinkItems: [...state.chatLinkItems, { chatTitle, objectId, createdAt: createdAt.toISOString(), expiresAt: expiresAt?.toISOString() ?? null, deletionKey }],
       })),
       removeChatLinkItem: (objectId: string) => set(state => ({
         chatLinkItems: state.chatLinkItems.filter(item => item.objectId !== objectId),

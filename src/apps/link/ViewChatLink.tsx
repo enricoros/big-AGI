@@ -1,134 +1,16 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
-import { shallow } from 'zustand/shallow';
 import { useRouter } from 'next/router';
 
-import { Box, Button, Card, List, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
-import { useChatLinkItems, useHasChatLinkItems } from '../chat/trade/trade-store';
 
-import { Link } from '~/common/components/Link';
 import { Brand } from '~/common/brand';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { getChatLinkRelativePath, getHomeLink, navigateToChat } from '~/common/routes';
-import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { navigateToChat } from '~/common/routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-
-
-/*const cssMagicSwapKeyframes = keyframes`
-    0% {
-        opacity: 0;
-        transform-origin: 0 100%;
-        transform: scale(0, 0) translate(-300px, 0px);
-    }
-    100% {
-        opacity: 1;
-        transform-origin: 100% 100%;
-        transform: scale(1, 1) translate(0px, 0px);
-    }`;
-*/
-
-
-/**
- * Drawer Items are all the links already shared, for quick access.
- * This is stores in the Trade Store (local storage).
- */
-function AppChatLinkDrawerItems() {
-
-  // external state
-  const chatLinkItems = useChatLinkItems();
-  const hasChatLinks = chatLinkItems.length > 0;
-
-  return <>
-
-    <MenuItem component={Link} href={getHomeLink()} noLinkStyle>
-      <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
-      {Brand.Title.Base}
-    </MenuItem>
-
-    {hasChatLinks && <ListDivider />}
-
-    {hasChatLinks && <ListItem>
-      <Typography level='body-sm'>
-        Links shared by you
-      </Typography>
-    </ListItem>}
-
-    {hasChatLinks && <Box sx={{ overflowY: 'auto' }}>
-      {chatLinkItems.map(item => (
-
-        <MenuItem
-          key={'chat-link-' + item.objectId}
-          component={Link} href={getChatLinkRelativePath(item.objectId)} noLinkStyle
-          sx={{
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'flex-start',
-          }}
-        >
-          <Typography level='title-sm'>
-            {item.chatTitle || 'Untitled Chat'}
-          </Typography>
-          <Typography level='body-xs'>
-            <TimeAgo date={item.createdAt} />
-          </Typography>
-        </MenuItem>
-
-      ))}
-    </Box>}
-  </>;
-
-}
-
-
-/**
- * Menu Items are the settings for the chat.
- */
-function AppChatLinkMenuItems() {
-
-  // external state
-  const {
-    renderMarkdown, setRenderMarkdown,
-    zenMode, setZenMode,
-  } = useUIPreferencesStore(state => ({
-    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
-  }), shallow);
-
-  const zenOn = zenMode === 'cleaner';
-
-  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
-
-  const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.checked ? 'cleaner' : 'clean');
-
-  return <>
-
-    <MenuItem onClick={() => setRenderMarkdown(!renderMarkdown)} sx={{ justifyContent: 'space-between' }}>
-      <Typography>
-        Markdown
-      </Typography>
-      <Switch
-        checked={renderMarkdown} onChange={handleRenderMarkdownChange}
-        endDecorator={renderMarkdown ? 'On' : 'Off'}
-        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-      />
-    </MenuItem>
-
-    <MenuItem onClick={() => setZenMode(zenOn ? 'clean' : 'cleaner')} sx={{ justifyContent: 'space-between' }}>
-      <Typography>
-        Zen
-      </Typography>
-      <Switch
-        checked={zenOn} onChange={handleZenModeChange}
-        endDecorator={zenOn ? 'On' : 'Off'}
-        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-      />
-    </MenuItem>
-
-  </>;
-}
 
 
 /**
@@ -144,24 +26,11 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const { push: routerPush } = useRouter();
   const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
   const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
-  const hasLinkItems = useHasChatLinkItems();
 
   // derived state
   const messages = props.conversation.messages;
   const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages);
   const hasMessages = filteredMessages.length > 0;
-
-
-  // pluggable UI
-  const drawerItems = React.useMemo(() =>
-      hasLinkItems ? <AppChatLinkDrawerItems /> : null,
-    [hasLinkItems]);
-
-  const menuItems = React.useMemo(() =>
-      <AppChatLinkMenuItems />,
-    []);
-
-  useLayoutPluggable(null, drawerItems, menuItems);
 
 
   // Effect: Turn on Markdown (globally) if there are tables in the chat

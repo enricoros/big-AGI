@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/joy';
 
 import { createConversationFromJsonV1 } from '../chat/trade/trade.client';
+import { useHasChatLinkItems } from '../chat/trade/trade-store';
 
 import { Brand } from '~/common/brand';
 import { InlineError } from '~/common/components/InlineError';
@@ -12,7 +13,10 @@ import { LogoProgress } from '~/common/components/LogoProgress';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/state/store-chats';
+import { useLayoutPluggable } from '~/common/layout/store-applayout';
 
+import { AppChatLinkDrawerItems } from './AppChatLinkDrawerItems';
+import { AppChatLinkMenuItems } from './AppChatLinkMenuItems';
 import { ViewChatLink } from './ViewChatLink';
 
 
@@ -74,6 +78,15 @@ export function AppChatLink(props: { linkId: string }) {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
+  const hasLinkItems = useHasChatLinkItems();
+
+
+  // pluggable UI
+
+  const drawerItems = React.useMemo(() => <AppChatLinkDrawerItems />, []);
+  const menuItems = React.useMemo(() => <AppChatLinkMenuItems />, []);
+  useLayoutPluggable(null, hasLinkItems ? drawerItems : null, menuItems);
+
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
 
