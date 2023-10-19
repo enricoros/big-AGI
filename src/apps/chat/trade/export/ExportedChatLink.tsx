@@ -19,7 +19,7 @@ import { getChatLinkRelativePath } from '~/common/routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
-import { removeChatLinkItem } from '../trade-store';
+import { removeChatLinkItem } from '../store-sharing';
 import { type StorageDeleteSchema, type StoragePutSchema } from '../server/trade.router';
 
 

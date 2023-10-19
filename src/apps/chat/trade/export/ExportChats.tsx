@@ -15,7 +15,7 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
 
-import { addChatLinkItem, useLinkStorageOwnerId } from '../trade-store';
+import { addChatLinkItem, useLinkStorageOwnerId } from '../store-sharing';
 import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from '../trade.client';
 
 import { ExportedChatLink } from './ExportedChatLink';
