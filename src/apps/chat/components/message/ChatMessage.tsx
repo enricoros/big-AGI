@@ -1,6 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
+import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
 import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
@@ -37,6 +38,7 @@ import { RenderImage } from './RenderImage';
 import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown } from './RenderMarkdown';
 import { RenderText } from './RenderText';
+import { RenderTextDiff } from './RenderTextDiff';
 import { parseBlocks } from './blocks';
 
 
@@ -154,7 +156,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
+export function ChatMessage(props: { message: DMessage, diffText?: string, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
   const {
     text: messageText,
     sender: messageSender,
@@ -172,6 +174,7 @@ export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBo
   const wasEdited = !!messageUpdated;
 
   // state
+  const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
   const [forceExpanded, setForceExpanded] = React.useState(false);
   const [isHovering, setIsHovering] = React.useState(false);
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
@@ -191,6 +194,20 @@ export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBo
   const isImaginableEnabled = messageText?.length >= 2 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
   const isSpeakableEnabled = isImaginableEnabled;
+
+
+  // Effect: text diffing vs the former message
+  React.useEffect(() => {
+    if (!props.diffText)
+      return setDiffs(null);
+    setDiffs(
+      cleanupEfficiency(makeDiff(props.diffText, messageText, {
+        timeout: 1,
+        checkLines: true,
+      }), 4),
+    );
+  }, [messageText, props.diffText]);
+
 
   const closeOperationsMenu = () => setMenuAnchor(null);
 
@@ -283,18 +300,22 @@ export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBo
 
 
   return (
-    <ListItem sx={{
-      display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-      gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
-      background,
-      ...(props.noBottomBorder !== true && {
-        borderBottom: '1px solid',
-        borderBottomColor: 'divider',
-      }),
-      ...(ENABLE_COPY_MESSAGE && { position: 'relative' }),
-      ...(props.isBottom === true && { mb: 'auto' }),
-      '&:hover > button': { opacity: 1 },
-    }}>
+    <ListItem
+      // [alpha] Right-click menu: still in early development
+      // onContextMenu={event => setMenuAnchor(event.currentTarget)}
+      sx={{
+        display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
+        gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
+        background,
+        ...(props.noBottomBorder !== true && {
+          borderBottom: '1px solid',
+          borderBottomColor: 'divider',
+        }),
+        ...(ENABLE_COPY_MESSAGE && { position: 'relative' }),
+        ...(props.isBottom === true && { mb: 'auto' }),
+        '&:hover > button': { opacity: 1 },
+      }}
+    >
 
       {/* Avatar */}
       {showAvatars && <Stack
@@ -348,7 +369,7 @@ export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBo
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
-          {!errorMessage && parseBlocks(fromSystem, collapsedText).map((block, index) =>
+          {!errorMessage && parseBlocks(collapsedText, fromSystem, diffs).map((block, index) =>
             block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
               : block.type === 'code'
@@ -357,9 +378,11 @@ export function ChatMessage(props: { message: DMessage, showDate?: boolean, isBo
                   ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleMenuRunAgain} />
                   : block.type === 'latex'
                     ? <RenderLatex key={'latex-' + index} latexBlock={block} />
-                    : renderMarkdown
-                      ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                      : <RenderText key={'text-' + index} textBlock={block} />,
+                    : block.type === 'diff'
+                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
+                      : renderMarkdown
+                        ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                        : <RenderText key={'text-' + index} textBlock={block} />,
           )}
 
           {errorMessage && (
