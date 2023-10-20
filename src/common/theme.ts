@@ -115,17 +115,6 @@ export const cssRainbowColorKeyframes = keyframes`
     color: rgb(204, 0, 102);
   }`;
 
-export const cssScaleKeyframes = keyframes`
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }`;
-
 
 // Emotion Cache (with insertion point on the SSR pass)
 

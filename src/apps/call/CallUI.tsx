@@ -9,23 +9,24 @@ import CallIcon from '@mui/icons-material/Call';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
 
+import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
+
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { streamChat, VChatMessageIn } from '~/modules/llms/llm.client';
+import { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useVoiceDropdown } from '~/modules/elevenlabs/useVoiceDropdown';
 
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
-import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
-
-import { AvatarRing } from './components/AvatarRing';
-import { CallButton } from './components/CallButton';
-import { CallStatus } from './components/CallStatus';
-import { TranscriptMessage } from './components/TranscriptMessage';
-import { conversationTitle } from '../chat/components/applayout/ConversationItem';
-import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
+
+import { CallAvatar } from './components/CallAvatar';
+import { CallButton } from './components/CallButton';
+import { CallMessage } from './components/CallMessage';
+import { CallStatus } from './components/CallStatus';
 
 
 function CallMenuItems(props: {
@@ -62,7 +63,7 @@ export function CallUI(props: {
 
   // state
   const [pushToTalk, setPushToTalk] = React.useState(true);
-  const [avatarClicked, setAvatarClicked] = React.useState<number>(0);
+  const [avatarClickCount, setAvatarClickCount] = React.useState<number>(0);
   const [stage, setStage] = React.useState<'ring' | 'declined' | 'connected' | 'ended'>('ring');
   // const [micMuted, setMicMuted] = React.useState(false);
   const [callMessages, setCallMessages] = React.useState<DMessage[]>([]);
@@ -239,8 +240,8 @@ export function CallUI(props: {
   // more derived state
   const personaName = persona?.title ?? 'Unknown';
   const isMicEnabled = isSpeechEnabled;
-  const isSpeakEnabled = true;
-  const isEnabled = isMicEnabled && isSpeakEnabled;
+  const isTTSEnabled = true;
+  const isEnabled = isMicEnabled && isTTSEnabled;
 
 
   // pluggable UI
@@ -252,22 +253,35 @@ export function CallUI(props: {
 
   useLayoutPluggable(chatLLMDropdown, null, menuItems);
 
+
   return <>
 
-    <Typography level='h1' sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, textAlign: 'center', mx: 2 }}>
+    <Typography
+      level='h1'
+      sx={{
+        fontSize: { xs: '2.5rem', md: '3rem' },
+        textAlign: 'center',
+        mx: 2,
+      }}
+    >
       {isConnected ? personaName : 'Hello'}
     </Typography>
 
-    <AvatarRing symbol={persona?.symbol || '?'} imageUrl={persona?.imageUri} isRinging={isRinging} onClick={() => setAvatarClicked(avatarClicked + 1)} />
+    <CallAvatar
+      symbol={persona?.symbol || '?'}
+      imageUrl={persona?.imageUri}
+      isRinging={isRinging}
+      onClick={() => setAvatarClickCount(avatarClickCount + 1)}
+    />
 
     <CallStatus
       callerName={isConnected ? undefined : personaName}
       statusText={isRinging ? 'is calling you,' : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
-      isMicEnabled={isMicEnabled} isSpeakEnabled={isSpeakEnabled}
+      micError={!isMicEnabled} speakError={!isTTSEnabled}
     />
 
-    {/* Messages */}
+    {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
     {(isConnected || isEnded) && (
       <Card variant='soft' sx={{
         minHeight: '15dvh', maxHeight: '24dvh',
@@ -276,19 +290,35 @@ export function CallUI(props: {
         borderRadius: 'lg',
         flexDirection: 'column-reverse',
       }}>
+
+        {/* Messages in reverse order, for auto-scroll from the bottom */}
         <Box sx={{ display: 'flex', flexDirection: 'column-reverse', gap: 1 }}>
+
           {/* Listening... */}
-          {isRecording && <TranscriptMessage
-            text={<>{speechInterim?.transcript ? speechInterim.transcript + ' ' : ''}<i>{speechInterim?.interimTranscript}</i></>}
-            role='user' variant={isRecordingSpeech ? 'solid' : 'outlined'}
-          />}
+          {isRecording && (
+            <CallMessage
+              text={<>{speechInterim?.transcript ? speechInterim.transcript + ' ' : ''}<i>{speechInterim?.interimTranscript}</i></>}
+              variant={isRecordingSpeech ? 'solid' : 'outlined'}
+              role='user'
+            />
+          )}
 
-          {/* Persona partial */}
-          {!!personaTextInterim && <TranscriptMessage role='assistant' text={personaTextInterim} variant='solid' color='neutral' />}
+          {/* Persona streaming text... */}
+          {!!personaTextInterim && (
+            <CallMessage
+              text={personaTextInterim}
+              variant='solid' color='neutral'
+              role='assistant'
+            />
+          )}
 
-          {/* Messages (all in reverse order, for column-reverse to work) */}
+          {/* Messages (last 6 messages, in reverse order) */}
           {callMessages.slice(-6).reverse().map((message) =>
-            <TranscriptMessage key={message.id} role={message.role} text={message.text} variant={message.role === 'assistant' ? 'solid' : 'soft'} color='neutral' />,
+            <CallMessage
+              key={message.id}
+              text={message.text}
+              variant={message.role === 'assistant' ? 'solid' : 'soft'} color='neutral'
+              role={message.role} />,
           )}
         </Box>
       </Card>
@@ -296,11 +326,12 @@ export function CallUI(props: {
 
     {/* Call Buttons */}
     <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly' }}>
-      {/* ringing */}
+
+      {/* [ringing] Decline / Accept */}
       {isRinging && <CallButton Icon={CallEndIcon} text='Decline' color='danger' onClick={() => setStage('declined')} />}
       {isRinging && isEnabled && <CallButton Icon={CallIcon} text='Accept' color='success' variant='soft' onClick={() => setStage('connected')} />}
 
-      {/* connected */}
+      {/* [Calling] Hang / PTT (mute not enabled yet) */}
       {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' onClick={handleCallStop} />}
       {isConnected && (pushToTalk
           ? <CallButton Icon={MicIcon} onClick={toggleRecording}
@@ -312,16 +343,19 @@ export function CallUI(props: {
         //               color={micMuted ? 'warning' : undefined} variant={micMuted ? 'solid' : 'outlined'} />
       )}
 
-      {/* ended */}
+      {/* [ended] Back / Call Again */}
       {(isEnded || isDeclined) && <Link noLinkStyle href='/'><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
       {(isEnded || isDeclined) && <CallButton Icon={CallIcon} text='Call Again' color='success' variant='soft' onClick={() => setStage('connected')} />}
+
     </Box>
 
     {/* DEBUG state */}
-    {avatarClicked > 10 && (avatarClicked % 2 === 0) && <Card variant='outlined' sx={{ maxHeight: '25dvh', overflow: 'auto', whiteSpace: 'pre', py: 0, width: '100%' }}>
-      Special commands: Stop, Retry, Try Again, Restart, Goodbye.
-      {JSON.stringify({ isSpeechEnabled, isRecordingAudio, speechInterim }, null, 2)}
-    </Card>}
+    {avatarClickCount > 10 && (avatarClickCount % 2 === 0) && (
+      <Card variant='outlined' sx={{ maxHeight: '25dvh', overflow: 'auto', whiteSpace: 'pre', py: 0, width: '100%' }}>
+        Special commands: Stop, Retry, Try Again, Restart, Goodbye.
+        {JSON.stringify({ isSpeechEnabled, isRecordingAudio, speechInterim }, null, 2)}
+      </Card>
+    )}
 
     {/*{isEnded && <Card variant='solid' size='lg' color='primary'>*/}
     {/*  <CardContent>*/}
