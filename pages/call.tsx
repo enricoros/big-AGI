@@ -7,7 +7,7 @@ import { AppLayout } from '~/common/layout/AppLayout';
 
 export default function CallPage() {
   return (
-    <AppLayout suspendAutoModelsSetup>
+    <AppLayout>
       <AppCall />
     </AppLayout>
   );
