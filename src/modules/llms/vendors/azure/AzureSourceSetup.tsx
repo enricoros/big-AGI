@@ -46,7 +46,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
     <FormTextField
       title='Azure Endpoint'
-      description={<Link level='body-sm' href='https://oai.azure.com/portal/deployment' target='_blank'>deployments</Link>}
+      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>configuration</Link>}
       placeholder='https://your-resource-name.openai.azure.com/'
       isError={hostError}
       value={azureEndpoint}
