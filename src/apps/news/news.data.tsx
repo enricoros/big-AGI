@@ -27,7 +27,7 @@ export const NewsItems: NewsItem[] = [
     versionName: '1.4.0',
     items: [
       { text: <><B>Share and clone</B> conversations, with public links</> },
-      { text: <><B>Azure</B> models full support, incl. gpt-4-32k</> },
+      { text: <><B>Azure</B> models <Link href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>full support</Link>, incl. gpt-4-32k</> },
       { text: <><B>OpenRouter</B> models full support, incl. gpt-4-32k</> },
       { text: <>Latex Rendering</> },
       { text: <>Augmented Chat modes (Labs)</> },
