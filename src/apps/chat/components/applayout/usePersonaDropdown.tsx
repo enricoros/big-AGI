@@ -4,6 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { ListItemButton, ListItemDecorator } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
+import { APP_CALL_ENABLED } from '../../../call/AppCall';
+
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { AppBarDropdown } from '~/common/layout/AppBarDropdown';
@@ -32,7 +34,7 @@ function AppBarPersonaDropdown(props: {
   let appendOption: React.JSX.Element | undefined = undefined;
 
   if (experimentalLabs && props.onCall) {
-    const enableCallOption = !!props.systemPurposeId;
+    const enableCallOption = APP_CALL_ENABLED && !!props.systemPurposeId;
     appendOption = (
       <ListItemButton color='primary' disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
         <ListItemDecorator><CallIcon color={enableCallOption ? 'primary' : 'warning'} /></ListItemDecorator>

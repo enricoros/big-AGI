@@ -16,6 +16,8 @@ export const getChatLinkRelativePath = (chatLinkId: string) => APP_LINK_CHAT.rep
 
 export const navigateToChat = async () => await Router.push(APP_CHAT);
 
+export const navigateBack = Router.back;
+
 export interface AppCallQueryParams {
   conversationId: string;
   personaId: string;

@@ -32,7 +32,7 @@ const useUICountersStore = create<UICountersStore>()(
     }),
 );
 
-type UiCounterKey = 'export-share' | 'share-chat-link';
+type UiCounterKey = 'export-share' | 'share-chat-link' | 'call-wizard';
 
 export function useUICounter(key: UiCounterKey) {
   const value = useUICountersStore(state => state.actionCounters[key] || 0);
