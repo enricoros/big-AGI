@@ -276,7 +276,7 @@ export function CallUI(props: {
 
     <CallStatus
       callerName={isConnected ? undefined : personaName}
-      statusText={isRinging ? 'is calling you,' : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
+      statusText={isRinging ? 'is calling you' : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
       micError={!isMicEnabled} speakError={!isTTSEnabled}
     />
@@ -284,6 +284,7 @@ export function CallUI(props: {
     {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
     {(isConnected || isEnded) && (
       <Card variant='soft' sx={{
+        flexGrow: 1,
         minHeight: '15dvh', maxHeight: '24dvh',
         overflow: 'auto',
         width: '100%',
