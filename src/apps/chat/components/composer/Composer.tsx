@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
+import CallIcon from '@mui/icons-material/Call';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MicIcon from '@mui/icons-material/Mic';
@@ -12,6 +13,8 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
+
+import { APP_CALL_ENABLED } from '../../../call/AppCall';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
@@ -22,6 +25,7 @@ import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { launchAppCall } from '~/common/routes';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -94,6 +98,16 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
     </IconButton>
   </Tooltip>;
 
+const CallButtonMobile = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
+  <IconButton variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} sx={props.sx}>
+    <CallIcon />
+  </IconButton>;
+
+const CallButtonDesktop = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
+  <Button variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} endDecorator={<CallIcon />} sx={props.sx}>
+    Call
+  </Button>;
+
 
 /**
  * A React component for composing and sending messages in a chat-like interface.
@@ -128,10 +142,11 @@ export function Composer(props: {
     experimentalLabs: state.experimentalLabs,
   }), shallow);
   const { startupText, setStartupText } = useComposerStore();
-  const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
+  const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
+      systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
       stopTyping: state.stopTyping,
     };
@@ -163,6 +178,10 @@ export function Composer(props: {
       props.onSendMessage(props.conversationId, text);
     }
   };
+
+
+  const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
+
 
   const handleToggleChatMode = (event: React.MouseEvent<HTMLAnchorElement>) =>
     setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
@@ -391,20 +410,21 @@ export function Composer(props: {
     <Box sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
-        {/* Left pane (buttons and Textarea) */}
+        {/* Button column and composer Text (mobile: top, desktop: left and center) */}
         <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
-          {/* Vertical Buttons Bar */}
+          {/* Vertical buttons */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
-            {/*<Typography level='body-xs' sx={{mb: 2}}>Context</Typography>*/}
-
+            {/* [mobile] Mic button */}
             {isSpeechEnabled && <Box sx={hideOnDesktop}>
               <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
             </Box>}
 
+            {/* Responsive Camera OCR button */}
             <CameraCaptureButton onOCR={handleCameraOCR} />
 
+            {/* Responsive Attach button */}
             <IconButton onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
               <AttachFileOutlinedIcon />
             </IconButton>
@@ -417,6 +437,7 @@ export function Composer(props: {
               </Button>
             </Tooltip>
 
+            {/* Responsive Paste button */}
             <IconButton onClick={handlePasteButtonClicked} sx={{ ...hideOnDesktop }}>
               <ContentPasteGoIcon />
             </IconButton>
@@ -528,19 +549,21 @@ export function Composer(props: {
 
         </Stack></Grid>
 
-        {/* Send pane */}
+        {/* Send pane (mobile: bottom, desktop: right) */}
         <Grid xs={12} md={3}>
-          <Stack spacing={2}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'space-between', height: '100%' }}>
 
-            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            {/* first row of buttons */}
+            <Box sx={{ display: 'flex' }}>
 
-              {/* [mobile-only] corner button - placeholder */}
-              {/*<IconButton disabled={} onClick={}*/}
-              {/*            sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>*/}
-              {/* Some icon here */}
-              {/*</IconButton>*/}
+              {/* [mobile] Call button */}
+              {APP_CALL_ENABLED && <CallButtonMobile
+                disabled={!props.conversationId || !chatLLM}
+                onClick={handleCallClicked}
+                sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}
+              />}
 
-              {/* Send / Stop */}
+              {/* Responsive Send/Stop buttons */}
               {assistantTyping
                 ? (
                   <Button
@@ -560,16 +583,12 @@ export function Composer(props: {
                 )}
             </Box>
 
-            {/* [desktop-only] second row */}
-            {/*<Stack direction='row' spacing={1}*/}
-            {/*       sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>*/}
-            {/*    <Button disabled={} fullWidth variant='plain' color='neutral'*/}
-            {/*            startDecorator={<KeyboardArrowUpIcon />} onClick={}>*/}
-            {/*      Placeholder button*/}
-            {/*    </Button>*/}
-            {/*</Stack>*/}
+            {/* [desktop] bottom buttons */}
+            <Box sx={{ flexDirection: 'column', ...hideOnMobile }}>
+              {APP_CALL_ENABLED && <CallButtonDesktop disabled={!props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+            </Box>
 
-          </Stack>
+          </Box>
         </Grid>
 
 

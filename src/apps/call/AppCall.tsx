@@ -9,6 +9,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { CallUI } from './CallUI';
 
 
+export const APP_CALL_ENABLED = false;
+
+
 export function AppCall() {
   // external state
   const { query } = useRouter();
