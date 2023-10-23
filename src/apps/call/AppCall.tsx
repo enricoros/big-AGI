@@ -7,6 +7,7 @@ import { AppCallQueryParams } from '~/common/routes';
 import { InlineError } from '~/common/components/InlineError';
 
 import { CallUI } from './CallUI';
+import { CallWizard } from './CallWizard';
 
 
 export const APP_CALL_ENABLED = false;
@@ -28,16 +29,20 @@ export function AppCall() {
       minHeight: 96,
     }}>
 
-      <Container disableGutters maxWidth='sm' sx={{
+      <Container maxWidth='sm' sx={{
         display: 'flex', flexDirection: 'column',
         alignItems: 'center',
         minHeight: '80dvh', justifyContent: 'space-evenly',
         gap: { xs: 2, md: 4 },
       }}>
 
-        {validInput
-          ? <CallUI conversationId={conversationId} personaId={personaId} />
-          : <InlineError error={`Something went wrong. ${JSON.stringify(query)}`} />}
+        {!validInput && <InlineError error={`Something went wrong. ${JSON.stringify(query)}`} />}
+
+        {validInput && (
+          <CallWizard>
+            <CallUI conversationId={conversationId} personaId={personaId} />
+          </CallWizard>
+        )}
 
       </Container>
 
