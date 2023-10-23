@@ -1,15 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -22,8 +20,6 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
@@ -103,48 +99,8 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
   </Tooltip>;
 
 
-const SentMessagesMenu = (props: {
-  anchorEl: HTMLAnchorElement, onClose: () => void,
-  messages: { date: number; text: string; count: number }[],
-  onPaste: (text: string) => void,
-  onClear: () => void,
-}) =>
-  <CloseableMenu
-    placement='top-end' maxHeightGapPx={56 * 3} noTopPadding sx={{ minWidth: 320, maxWidth: '100dvw' }}
-    open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}
-  >
-
-    <MenuItem variant='solid' selected>
-      Reuse messages 💬
-    </MenuItem>
-
-    <Box sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-      {props.messages.map((item, index) =>
-        <MenuItem
-          key={'composer-sent-' + index}
-          onClick={() => {
-            props.onPaste(item.text);
-            props.onClose();
-          }}
-          sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', overflowX: 'hidden' }}
-        >
-          {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
-        </MenuItem>)}
-    </Box>
-
-    <ListDivider />
-
-    <MenuItem onClick={props.onClear}>
-      <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-      Clear sent messages history
-    </MenuItem>
-
-  </CloseableMenu>;
-
-
 /**
  * A React component for composing and sending messages in a chat-like interface.
- * Supports pasting text and code from the clipboard, and a local log of sent messages.
  *
  * Note: Useful bash trick to generate code from a list of files:
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
@@ -167,8 +123,6 @@ export function Composer(props: {
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
   const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const [confirmClearSent, setConfirmClearSent] = React.useState(false);
   const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
@@ -177,7 +131,7 @@ export function Composer(props: {
     enterToSend: state.enterToSend,
     experimentalLabs: state.experimentalLabs,
   }), shallow);
-  const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
+  const { startupText, setStartupText } = useComposerStore();
   const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -211,7 +165,6 @@ export function Composer(props: {
     if (text.length && props.conversationId) {
       setComposeText('');
       props.onSendMessage(props.conversationId, text);
-      appendSentMessage(text);
     }
   };
 
@@ -362,22 +315,6 @@ export function Composer(props: {
     }
 
     // paste not intercepted, continue with default behavior
-  };
-
-
-  const showSentMessages = (event: React.MouseEvent<HTMLAnchorElement>) => setSentMessagesAnchor(event.currentTarget);
-
-  const hideSentMessages = () => setSentMessagesAnchor(null);
-
-  const handlePasteSent = (text: string) => setComposeText(text);
-
-  const handleClearSent = () => setConfirmClearSent(true);
-
-  const handleCancelClearSent = () => setConfirmClearSent(false);
-
-  const handleConfirmedClearSent = () => {
-    setConfirmClearSent(false);
-    clearSentMessages();
   };
 
 
@@ -599,12 +536,11 @@ export function Composer(props: {
 
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
 
-              {/* [mobile-only] Sent messages arrow */}
-              {sentMessages.length > 0 && (
-                <IconButton disabled={!!sentMessagesAnchor} onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
-                  <KeyboardArrowUpIcon />
-                </IconButton>
-              )}
+              {/* [mobile-only] corner button - placeholder */}
+              {/*<IconButton disabled={} onClick={}*/}
+              {/*            sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>*/}
+              {/* Some icon here */}
+              {/*</IconButton>*/}
 
               {/* Send / Stop */}
               {assistantTyping
@@ -626,14 +562,14 @@ export function Composer(props: {
                 )}
             </Box>
 
-            {/* [desktop-only] row with Sent Messages button */}
-            <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-              {sentMessages.length > 0 && (
-                <Button disabled={!!sentMessagesAnchor} fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showSentMessages}>
-                  History
-                </Button>
-              )}
-            </Stack>
+            {/* [desktop-only] second row */}
+            {/*<Stack direction='row' spacing={1}*/}
+            {/*       sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>*/}
+            {/*    <Button disabled={} fullWidth variant='plain' color='neutral'*/}
+            {/*            startDecorator={<KeyboardArrowUpIcon />} onClick={}>*/}
+            {/*      Placeholder button*/}
+            {/*    </Button>*/}
+            {/*</Stack>*/}
 
           </Stack>
         </Grid>
@@ -648,14 +584,6 @@ export function Composer(props: {
           />
         )}
 
-        {/* Sent messages menu */}
-        {!!sentMessagesAnchor && (
-          <SentMessagesMenu
-            anchorEl={sentMessagesAnchor} messages={sentMessages} onClose={hideSentMessages}
-            onPaste={handlePasteSent} onClear={handleClearSent}
-          />
-        )}
-
         {/* Content reducer modal */}
         {reducerText?.length >= 1 &&
           <ContentReducer
@@ -663,12 +591,6 @@ export function Composer(props: {
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }
-
-        {/* Clear confirmation modal */}
-        <ConfirmationModal
-          open={confirmClearSent} onClose={handleCancelClearSent} onPositive={handleConfirmedClearSent}
-          confirmationText={'Are you sure you want to clear all your sent messages?'} positiveActionText={'Clear all'}
-        />
 
       </Grid>
     </Box>
