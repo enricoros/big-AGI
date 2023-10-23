@@ -444,7 +444,7 @@ export function Composer(props: {
   const chatButton = (
     <Button
       fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode}
+      onClick={handleSendClicked}
       endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
     >
       {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
