@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { useRouter } from 'next/router';
 
-import { Box, Button, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
@@ -91,6 +91,7 @@ export function CallUI(props: {
     };
   }, shallow);
   const persona = SystemPurposes[props.personaId as SystemPurposeId] ?? undefined;
+  const personaCallStarters = persona?.call?.starters ?? undefined;
   const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
   const personaSystemMessage = persona?.systemMessage ?? undefined;
 
@@ -132,6 +133,7 @@ export function CallUI(props: {
   };
 
   // [E] pickup -> seed message and call timer
+  // FIXME: Overriding the voice will reset the call - not a desired behavior
   React.useEffect(() => {
     if (!isConnected) return;
 
@@ -146,17 +148,14 @@ export function CallUI(props: {
     }, 1000);
 
     // seed the first message
-    const phoneMessages =
-      props.personaId === 'Russ'
-        ? ['Russ Hanneman here. Talk.', 'It\'s Russ. Spill the beans.', 'Hey, it\'s Russ. Make it quick.', 'You\'re on with Russ. Impress me.', 'Russ here. What\'s the deal?']
-        : ['Hello?', 'Hey!'];
+    const phoneMessages = personaCallStarters || ['Hello?', 'Hey!'];
     const firstMessage = phoneMessages[Math.floor(Math.random() * phoneMessages.length)];
 
     setCallMessages([createDMessage('assistant', firstMessage)]);
     EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId).then();
 
     return () => clearInterval(interval);
-  }, [isConnected, personaVoiceId, props.personaId]);
+  }, [isConnected, personaCallStarters, personaVoiceId]);
 
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
