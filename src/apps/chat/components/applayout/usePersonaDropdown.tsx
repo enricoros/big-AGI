@@ -21,8 +21,7 @@ function AppBarPersonaDropdown(props: {
 }) {
 
   // external state
-  const { experimentalLabs, zenMode } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs,
+  const { zenMode } = useUIPreferencesStore(state => ({
     zenMode: state.zenMode,
   }), shallow);
 
@@ -33,8 +32,8 @@ function AppBarPersonaDropdown(props: {
 
   let appendOption: React.JSX.Element | undefined = undefined;
 
-  if (experimentalLabs && props.onCall) {
-    const enableCallOption = APP_CALL_ENABLED && !!props.systemPurposeId;
+  if (props.onCall) {
+    const enableCallOption = !!props.systemPurposeId;
     appendOption = (
       <ListItemButton color='primary' disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
         <ListItemDecorator><CallIcon color={enableCallOption ? 'primary' : 'warning'} /></ListItemDecorator>
@@ -70,10 +69,10 @@ export function usePersonaIdDropdown(conversationId: string | null) {
           if (conversationId && systemPurposeId)
             useChatStore.getState().setSystemPurposeId(conversationId, systemPurposeId);
         }}
-        onCall={() => {
+        onCall={APP_CALL_ENABLED ? () => {
           if (conversationId && systemPurposeId)
             launchAppCall(conversationId, systemPurposeId);
-        }}
+        } : undefined}
       /> : null,
     [conversationId, systemPurposeId],
   );
