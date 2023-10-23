@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { useRouter } from 'next/router';
 
-import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { Box, Button, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
@@ -32,13 +32,16 @@ import { CallStatus } from './components/CallStatus';
 function CallMenuItems(props: {
   pushToTalk: boolean,
   setPushToTalk: (pushToTalk: boolean) => void,
-  disableVoiceSelector: boolean,
+  override: boolean,
+  setOverride: (overridePersonaVoice: boolean) => void,
 }) {
 
   // external state
-  const { voicesDropdown } = useVoiceDropdown(false, props.disableVoiceSelector);
+  const { voicesDropdown } = useVoiceDropdown(false, !props.override);
 
   const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
+
+  const handleChangeVoiceToggle = () => props.setOverride(!props.override);
 
   return <>
 
@@ -48,7 +51,13 @@ function CallMenuItems(props: {
       <Switch checked={props.pushToTalk} onChange={handlePushToTalkToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
 
+    <MenuItem onClick={handleChangeVoiceToggle}>
+      Change Voice
+      <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
+    </MenuItem>
+
     <MenuItem>
+      <ListItemDecorator>{' '}</ListItemDecorator>
       {voicesDropdown}
     </MenuItem>
 
@@ -62,13 +71,13 @@ export function CallUI(props: {
 }) {
 
   // state
-  const [pushToTalk, setPushToTalk] = React.useState(true);
-  const [avatarClickCount, setAvatarClickCount] = React.useState<number>(0);
-  const [stage, setStage] = React.useState<'ring' | 'declined' | 'connected' | 'ended'>('ring');
-  // const [micMuted, setMicMuted] = React.useState(false);
-  const [callMessages, setCallMessages] = React.useState<DMessage[]>([]);
-  const [personaTextInterim, setPersonaTextInterim] = React.useState<string | null>(null);
+  const [avatarClickCount, setAvatarClickCount] = React.useState<number>(0);// const [micMuted, setMicMuted] = React.useState(false);
   const [callElapsedTime, setCallElapsedTime] = React.useState<string>('00:00');
+  const [callMessages, setCallMessages] = React.useState<DMessage[]>([]);
+  const [overridePersonaVoice, setOverridePersonaVoice] = React.useState<boolean>(false);
+  const [personaTextInterim, setPersonaTextInterim] = React.useState<string | null>(null);
+  const [pushToTalk, setPushToTalk] = React.useState(true);
+  const [stage, setStage] = React.useState<'ring' | 'declined' | 'connected' | 'ended'>('ring');
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
@@ -82,7 +91,7 @@ export function CallUI(props: {
     };
   }, shallow);
   const persona = SystemPurposes[props.personaId as SystemPurposeId] ?? undefined;
-  const personaVoiceId = persona?.voices?.elevenLabs?.voiceId ?? undefined;
+  const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
   const personaSystemMessage = persona?.systemMessage ?? undefined;
 
   // hooks and speech
@@ -247,8 +256,10 @@ export function CallUI(props: {
   // pluggable UI
 
   const menuItems = React.useMemo(() =>
-      <CallMenuItems pushToTalk={pushToTalk} setPushToTalk={setPushToTalk} disableVoiceSelector={!!personaVoiceId} />
-    , [pushToTalk, personaVoiceId],
+      <CallMenuItems
+        pushToTalk={pushToTalk} setPushToTalk={setPushToTalk}
+        override={overridePersonaVoice} setOverride={setOverridePersonaVoice} />
+    , [overridePersonaVoice, pushToTalk],
   );
 
   useLayoutPluggable(chatLLMDropdown, null, menuItems);
