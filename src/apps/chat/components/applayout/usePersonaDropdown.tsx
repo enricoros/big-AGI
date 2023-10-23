@@ -7,6 +7,7 @@ import CallIcon from '@mui/icons-material/Call';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { AppBarDropdown } from '~/common/layout/AppBarDropdown';
+import { launchAppCall } from '~/common/routes';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -67,10 +68,10 @@ export function usePersonaIdDropdown(conversationId: string | null) {
           if (conversationId && systemPurposeId)
             useChatStore.getState().setSystemPurposeId(conversationId, systemPurposeId);
         }}
-        // onCall={() => {
-        //   if (conversationId && systemPurposeId)
-        //     launchAppCall(conversationId, systemPurposeId);
-        //}}
+        onCall={() => {
+          if (conversationId && systemPurposeId)
+            launchAppCall(conversationId, systemPurposeId);
+        }}
       /> : null,
     [conversationId, systemPurposeId],
   );
