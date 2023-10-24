@@ -39,7 +39,7 @@ export function AppCall() {
         {!validInput && <InlineError error={`Something went wrong. ${JSON.stringify(query)}`} />}
 
         {validInput && (
-          <CallWizard>
+          <CallWizard conversationId={conversationId}>
             <CallUI conversationId={conversationId} personaId={personaId} />
           </CallWizard>
         )}

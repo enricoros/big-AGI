@@ -3,6 +3,7 @@ import { keyframes } from '@emotion/react';
 
 import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typography } from '@mui/joy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChatIcon from '@mui/icons-material/Chat';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import MicIcon from '@mui/icons-material/Mic';
@@ -12,6 +13,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { navigateBack } from '~/common/routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useChatStore } from '~/common/state/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
 
@@ -73,20 +75,30 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
 }
 
 
-export function CallWizard(props: { strict?: boolean, children: React.ReactNode }) {
+export function CallWizard(props: { strict?: boolean, conversationId: string, children: React.ReactNode }) {
   // state
+  const [chatEmptyOverride, setChatEmptyOverride] = React.useState(false);
   const [recognitionOverride, setRecognitionOverride] = React.useState(false);
 
   // external state
-  const { novel, touch } = useUICounter('call-wizard');
   const recognition = useCapabilityBrowserSpeechRecognition();
-  const overriddenRecognition = recognitionOverride || recognition.mayWork;
   const synthesis = useCapabilityElevenLabs();
-  const allGood = overriddenRecognition && synthesis.mayWork;
+  const chatIsEmpty = useChatStore(state => {
+    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+    return !(conversation?.messages?.length);
+  });
+  const { novel, touch } = useUICounter('call-wizard');
 
-  if (!novel)
+  // derived state
+  const overriddenEmptyChat = chatEmptyOverride || !chatIsEmpty;
+  const overriddenRecognition = recognitionOverride || recognition.mayWork;
+  const allGood = overriddenEmptyChat && overriddenRecognition && synthesis.mayWork;
+  const fatalGood = overriddenRecognition && synthesis.mayWork;
+
+  if (!novel && fatalGood)
     return props.children;
 
+  const handleOverrideChatEmpty = () => setChatEmptyOverride(true);
 
   const handleOverrideRecognition = () => setRecognitionOverride(true);
 
@@ -121,8 +133,20 @@ export function CallWizard(props: { strict?: boolean, children: React.ReactNode 
 
     <Typography level='body-lg'>
       {/*Before you receive your first call, */}
-      Let&apos;s get you&apos;re all set up.
+      Let&apos;s get you all set up.
     </Typography>
+
+    {/* Chat Empty status */}
+    <StatusCard
+      icon={<ChatIcon />}
+      hasIssue={!overriddenEmptyChat}
+      text={overriddenEmptyChat ? 'Great! Your chat has messages.' : 'The chat is empty. Calls are effective when the caller has context.'}
+      button={overriddenEmptyChat ? undefined : (
+        <Button variant='outlined' onClick={handleOverrideChatEmpty} sx={{ mx: 1 }}>
+          Ignore
+        </Button>
+      )}
+    />
 
     {/* Add the speech to text feature status */}
     <StatusCard
