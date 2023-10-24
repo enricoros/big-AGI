@@ -68,7 +68,7 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
 
       <Divider />
 
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap' }}>
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabel sx={{ minWidth: 80 }}>
           Name
         </FormLabel>

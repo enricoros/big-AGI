@@ -97,7 +97,7 @@ export function ContentReducer(props: {
               compression needed ≥ <b>{props.tokenLimit ? Math.round(100 * props.initialTokens / props.tokenLimit) : 0}</b> %
             </Typography>
 
-            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+            <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ minWidth: 120 }}>
                 <FormLabel>Reducer model</FormLabel>
                 <FormHelperText>{llms.find(llm => llm.id === reducerModelId)?.description?.slice(0, 10) ?? null}</FormHelperText>
