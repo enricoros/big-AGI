@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Theme, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -46,17 +46,17 @@ import { parseBlocks } from './blocks';
 const ENABLE_COPY_MESSAGE: boolean = false;
 
 
-export function messageBackground(theme: Theme, messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
-  const defaultBackground = theme.palette.background.surface;
+export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
   switch (messageRole) {
-    case 'system':
-      return wasEdited ? theme.palette.warning.softHoverBg : defaultBackground;
     case 'user':
-      return theme.palette.primary.plainHoverBg; // was .background.level1
+      return 'primary.plainHoverBg'; // was .background.level1
     case 'assistant':
-      return unknownAssistantIssue ? theme.palette.danger.softBg : defaultBackground;
+      return unknownAssistantIssue ? 'danger.softBg' : 'background.surface';
+    case 'system':
+      return wasEdited ? 'warning.softHoverBg' : 'background.surface';
+    default:
+      return '#ff0000';
   }
-  return defaultBackground;
 }
 
 export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'] | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
@@ -264,7 +264,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
   const { isAssistantError, errorMessage } = explainErrorInMessage(messageText, fromAssistant, messageOriginLLM);
 
   // style
-  const background = messageBackground(theme, messageRole, wasEdited, isAssistantError && !errorMessage);
+  const backgroundColor = messageBackground(messageRole, wasEdited, isAssistantError && !errorMessage);
 
   // avatar
   const avatarEl: React.JSX.Element | null = React.useMemo(
@@ -306,7 +306,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       sx={{
         display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
         gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
-        background,
+        backgroundColor,
         ...(props.noBottomBorder !== true && {
           borderBottom: '1px solid',
           borderBottomColor: 'divider',

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography, useTheme } from '@mui/joy';
+import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -40,9 +40,8 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
 export function CleanerMessage(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens?: number, onToggleSelected?: (messageId: string, selected: boolean) => void }) {
-  // external state
-  const theme = useTheme();
 
+  // derived state
   const {
     id: messageId,
     text: messageText,
@@ -60,7 +59,7 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
 
   const isAssistantError = fromAssistant && (messageText.startsWith('[Issue] ') || messageText.startsWith('[OpenAI Issue]'));
 
-  const background = messageBackground(theme, messageRole, !!messageUpdated, isAssistantError);
+  const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 
   const avatarEl: React.JSX.Element | null = React.useMemo(() =>
       makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping, 'sm'),
@@ -74,8 +73,9 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
     <ListItem sx={{
       display: 'flex', flexDirection: !fromAssistant ? 'row' : 'row', alignItems: 'center',
       gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 2,
-      background,
-      borderBottom: `1px solid ${theme.palette.divider}`,
+      backgroundColor,
+      borderBottom: '1px solid',
+      borderBottomColor: 'divider',
       // position: 'relative',
       ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
