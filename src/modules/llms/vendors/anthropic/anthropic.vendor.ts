@@ -13,10 +13,11 @@ import { AnthropicSourceSetup } from './AnthropicSourceSetup';
 
 
 // special symbols
-export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
+export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length > 40 : apiKey.length >= 40);
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;
+  anthropicHost: string;
   heliconeKey: string;
 }
 
@@ -37,6 +38,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptions
   getAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
     anthropicKey: partialSetup?.anthropicKey || '',
+    anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {

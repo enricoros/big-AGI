@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
-import { openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
+import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
 
 import { AnthropicWire } from './anthropic.wiretypes';
@@ -17,6 +17,7 @@ import { AnthropicWire } from './anthropic.wiretypes';
 export const anthropicAccessSchema = z.object({
   dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
+  anthropicHost: z.string().trim().nullable(),
   heliconeKey: z.string().trim().nullable(),
 });
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
@@ -135,6 +136,7 @@ async function anthropicPOST<TOut, TPostBody>(access: AnthropicAccessSchema, bod
 }
 
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
+const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
 export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API version
@@ -146,13 +148,16 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
     throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
-  let anthropicHost = `https://${DEFAULT_ANTHROPIC_HOST}`;
+  let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
 
-  // https://docs.helicone.ai/getting-started/integration-method/anthropic
   // Helicone for Anthropic
+  // https://docs.helicone.ai/getting-started/integration-method/anthropic
   const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
-  if (heliKey)
-    anthropicHost = 'https://anthropic.hconeai.com';
+  if (heliKey) {
+    if (!anthropicHost.includes(DEFAULT_ANTHROPIC_HOST) && !anthropicHost.includes(DEFAULT_HELICONE_ANTHROPIC_HOST))
+      throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);
+    anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
+  }
 
   return {
     headers: {
