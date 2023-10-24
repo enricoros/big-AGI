@@ -8,6 +8,10 @@ import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload 
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
 
 
+// enable to print to console the outgoing and incoming data
+const DEBUG_WIRE = false;
+
+
 /**
  * Vendor stream parsers
  * - The vendor can decide to terminate the connection (close: true), transmitting anything in 'text' before doing so
@@ -99,8 +103,19 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
 
   return new TransformStream({
     start: async (controller): Promise<void> => {
+
+      // only used for debugging
+      let debugLastMs: number | null = null;
+
       eventSourceParser = createEventsourceParser(
         (event: ParsedEvent | ReconnectInterval) => {
+
+          if (DEBUG_WIRE) {
+            const nowMs = Date.now();
+            const elapsedMs = debugLastMs ? nowMs - debugLastMs : 0;
+            debugLastMs = nowMs;
+            console.warn(`<- SSE (${elapsedMs} ms):`, event);
+          }
 
           // ignore 'reconnect-interval' and events with no data
           if (event.type !== 'event' || !('data' in event))
@@ -185,6 +200,8 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
     }
 
     // POST to our API route
+    if (DEBUG_WIRE)
+      console.warn('-> POST', headersUrl.url, body);
     upstreamResponse = await fetch(headersUrl.url, {
       method: 'POST',
       headers: headersUrl.headers,
