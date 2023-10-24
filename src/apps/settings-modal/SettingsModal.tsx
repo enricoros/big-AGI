@@ -26,15 +26,18 @@ export function SettingsModal() {
   const tabFixSx = { fontFamily: theme.fontFamily.body, flex: 1, p: 0, m: 0 };
 
   return (
-    <GoodModal title={`Preferences`} open={!!settingsOpenTab} onClose={closeSettings}
-               startButton={
-                 <Button variant='soft' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />} sx={{
-                   '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-                 }}>
-                   Models
-                 </Button>
-               }
-               sx={{ p: { xs: 1, sm: 2, lg: 2.5 } }}>
+    <GoodModal
+      title='Preferences' strongerTitle
+      open={!!settingsOpenTab} onClose={closeSettings}
+      startButton={
+        <Button variant='soft' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />} sx={{
+          '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+        }}>
+          Models
+        </Button>
+      }
+      sx={{ p: { xs: 1, sm: 2, lg: 2.5 } }}
+    >
 
       {/*<Divider />*/}
 
@@ -44,6 +47,7 @@ export function SettingsModal() {
           disableUnderline
           sx={{
             '--ListItem-minHeight': '2.4rem',
+            bgcolor: 'background.level2',
             mb: 2,
             p: 0.5,
             borderRadius: 'lg',
@@ -52,7 +56,7 @@ export function SettingsModal() {
             overflow: 'hidden',
             [`& .${tabClasses.root}[aria-selected="true"]`]: {
               bgcolor: 'background.surface',
-              boxShadow: 'sm',
+              boxShadow: 'md',
               fontWeight: 'lg',
             },
           }}
