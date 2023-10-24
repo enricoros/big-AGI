@@ -13,7 +13,7 @@ export function FormSwitchControl(props: {
   value: boolean, onChange: (on: boolean) => void,
 }) {
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
       <Box sx={{ minWidth: settingsCol1Width }}>
         <FormLabel>
           {props.title}

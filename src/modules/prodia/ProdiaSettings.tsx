@@ -61,7 +61,7 @@ export function ProdiaSettings() {
 
       {isError && <InlineError error={error} />}
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <FormLabel sx={{ minWidth: colWidth }}>
           Diffusion Model
         </FormLabel>
@@ -84,7 +84,7 @@ export function ProdiaSettings() {
         </Select>
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Tooltip title='Avoid these image traits: comma-separated names & adjectives that you want the images to Not have. Example: ugly, blurry, malformed'>
             <FormLabel sx={{ minWidth: colWidth }}>
@@ -172,7 +172,7 @@ export function ProdiaSettings() {
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Tooltip title='Set value for reproducible images. Different by default.'>
             <FormLabel sx={{ minWidth: colWidth }}>

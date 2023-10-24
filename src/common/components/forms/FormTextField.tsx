@@ -14,7 +14,7 @@ export function FormTextField(props: {
   value: string | undefined, onChange: (text: string) => void,
 }) {
   return (
-    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
       <Box sx={{ minWidth: settingsCol1Width }}>
         <FormLabel>
           {props.title}
