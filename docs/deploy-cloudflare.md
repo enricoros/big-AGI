@@ -1,9 +1,21 @@
 # Deploying a Next.js App on Cloudflare Pages
 
-***NOTE: See https://github.com/enricoros/big-agi/issues/174 for a recent issue we are aware of*** 
+> WARNING: Cloudflare Pages does not support traditional NodeJS runtimes, but only Edge Runtime functions.
+>
+> In this project we use Prisma connected to serverless Postgres, which at the moment cannot run on
+> edge functions, so we cannot deploy this project on Cloudflare Pages.
+>
+> Workaround: Step 3.4. has been added below, to DELETE the NodeJS traditional runtime - which means that some
+> parts of this application will not work.
+>  - [Side effects](https://github.com/enricoros/big-agi/blob/main/src/apps/chat/trade/server/trade.router.ts#L19):
+     > Sharing functionality to DB, and import from ChatGPT share, and post to Paste.GG will not work
+>  - See [Issue 174](https://github.com/enricoros/big-agi/issues/174).
+>
+> Longer term: follow [prisma/prisma: Support Edge Function deployments](https://github.com/prisma/prisma/issues/21394)
+> and convert the Node runtime to Edge runtime once Prisma supports it.
 
 This guide provides steps to deploy your Next.js app on Cloudflare Pages.
-It is based on the [official Cloudflare developer documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-nextjs-site/), 
+It is based on the [official Cloudflare developer documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-nextjs-site/),
 with some additional steps.
 
 ## Step 1: Repository Forking
@@ -18,33 +30,25 @@ Fork the repository to your personal GitHub account.
 
 ## Step 3: Configuring Build and Deployments
 
-1. After selecting the forked GitHub repository, click the `Begin Setup` button.
-2. On this page, set your `Project name`, `Production branch` (e.g., main), and your Build settings.
-3. Choose `Next.js` from the `Framework preset` dropdown menu.
-4. Keep the preset filled Build command and Build output directory as default.
-5. Set `Environmental variables` (advanced) on this page as follows:
-
-| Variable                  | Value   |
-|---------------------------|---------|
-| `GO_VERSION`              | `1.16`  |
-| `NEXT_TELEMETRY_DISABLED` | `1`     |
-| `NODE_VERSION`            | `17`    |
-| `PHP_VERSION`             | `7.4`   |
-| `PYTHON_VERSION`          | `3.7`   |
-| `RUBY_VERSION`            | `2.7.1` |
-
-6. Click the `Save and Deploy` button.
+1. After selecting the forked GitHub repository, click the **Begin Setup** button
+2. On this page, set your **Project name**, **Production branch** (e.g., main), and your Build settings
+3. Choose `Next.js` from the **Framework preset** dropdown menu
+4. Set a custom **Build Command**:
+    - `rm pages/api/trpc-node/[trpc].ts && npx @cloudflare/next-on-pages@1`
+    - see the tradeoffs for this deletion on the notice at the top
+5. Keep the **Build output directory** as default
+6. Click the **Save and Deploy** button
 
 ## Step 4: Monitoring the Deployment Process
 
 Observe the process as it initializes your build environment, clones the GitHub repository, builds the application, and deploys it
 to the Cloudflare Network. Once complete, proceed to the project you created.
 
-## Step 5: Custom Domain Configuration
+## Step 5: (Optional) Custom Domain Configuration
 
 Use the `Custom domains` tab to set up your domain via CNAME.
 
-## Step 6: Access Policy and Web Analytics Configuration
+## Step 6: (Optional) Access Policy and Web Analytics Configuration
 
 Navigate to the `Settings` page and enable the following settings:
 
