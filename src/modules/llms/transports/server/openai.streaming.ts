@@ -149,7 +149,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
   });
 }
 
-export async function throwResponseNotOk(response: Response) {
+export async function throwIfResponseNotOk(response: Response) {
   if (!response.ok) {
     const errorPayload: object | null = await response.json().catch(() => null);
     throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
@@ -176,12 +176,12 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
   const { access, model, history } = chatStreamInputSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
+  let headersUrl: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
   let upstreamResponse: Response;
   let vendorStreamParser: AIStreamParser;
   try {
 
     // prepare the API request data
-    let headersUrl: { headers: HeadersInit, url: string };
     let body: object;
     switch (access.dialect) {
       case 'anthropic':
@@ -199,19 +199,20 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
         break;
     }
 
-    // POST to our API route
     if (DEBUG_WIRE)
-      console.warn('-> POST', headersUrl.url, body);
+      console.warn('-> POST', headersUrl.url, headersUrl.headers, body);
+
+    // POST to our API route
     upstreamResponse = await fetch(headersUrl.url, {
       method: 'POST',
       headers: headersUrl.headers,
       body: JSON.stringify(body),
     });
-    await throwResponseNotOk(upstreamResponse);
+    await throwIfResponseNotOk(upstreamResponse);
 
   } catch (error: any) {
     const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
-    console.log(`/api/llms/stream: fetch issue: ${fetchOrVendorError}`);
+    console.log(`/api/llms/stream: fetch issue:`, fetchOrVendorError, headersUrl?.url);
     return new NextResponse('[OpenAI Issue] ' + fetchOrVendorError, { status: 500 });
   }
 
