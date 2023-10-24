@@ -15,16 +15,16 @@ export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: bool
   return imageUrls.map((url, index) => (
     <Box
       key={'gen-img-' + index}
-      sx={theme => ({
+      sx={{
         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
         mx: 1.5, mt: index > 0 ? 1.5 : 0,
         // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-        minWidth: 32, minHeight: 32, boxShadow: theme.shadow.md,
-        background: theme.palette.neutral.solidBg,
+        minWidth: 32, minHeight: 32, boxShadow: 'md',
+        backgroundColor: 'neutral.solidBg',
         '& picture': { display: 'flex' },
         '& img': { maxWidth: '100%', maxHeight: '100%' },
         '&:hover > .image-buttons': { opacity: 1 },
-      })}>
+      }}>
       {/* External Image */}
       <picture><img src={url} alt='Generated Image' /></picture>
       {/* Image Buttons */}
