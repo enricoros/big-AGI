@@ -5,6 +5,8 @@ import { appRouterEdge } from '~/server/api/trpc.router';
 import { createTRPCEdgeContext } from '~/server/api/trpc.server';
 
 export default async function handler(req: NextRequest) {
+  // NOTE: the `fetchRequestHandler` will find the path by subtracting the `endpoint` (base) from the request URL
+  //       i.e.: this nextjs file can have any name, contrary to the nodejs pages router rile
   return fetchRequestHandler({
     endpoint: '/api/trpc-edge',
     router: appRouterEdge,
