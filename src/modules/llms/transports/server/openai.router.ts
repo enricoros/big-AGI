@@ -244,7 +244,7 @@ const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
-function fixupHost(host: string, apiPath: string): string {
+export function fixupHost(host: string, apiPath: string): string {
   if (!host.startsWith('http'))
     host = `https://${host}`;
   if (host.endsWith('/') && apiPath.startsWith('/'))
