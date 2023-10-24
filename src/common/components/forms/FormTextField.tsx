@@ -10,11 +10,11 @@ import { settingsCol1Width } from '~/common/theme';
  */
 export function FormTextField(props: {
   title: string | React.JSX.Element, description?: string | React.JSX.Element,
-  placeholder?: string, isError?: boolean,
+  placeholder?: string, isError?: boolean, disabled?: boolean,
   value: string | undefined, onChange: (text: string) => void,
 }) {
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
       <Box sx={{ minWidth: settingsCol1Width }}>
         <FormLabel>
           {props.title}
