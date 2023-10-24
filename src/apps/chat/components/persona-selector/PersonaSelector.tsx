@@ -27,7 +27,7 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
   acc[key] = tileCols[index] * (value + 8 * tileSpacing) - 8 * tileSpacing;
   return acc;
 }, {} as Record<string, number>);
-const bpTileGap = { xs: 2, md: 3 };
+const bpTileGap = { xs: 0.5, md: 1 };
 
 
 // Add this utility function to get a random array element
