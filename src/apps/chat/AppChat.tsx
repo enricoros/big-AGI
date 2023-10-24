@@ -27,24 +27,28 @@ import { runReActUpdatingState } from './editors/react-tangent';
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
 // definition of chat modes
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react' | 'write-user';
+export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine';
 export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
   'immediate': {
     label: 'Chat',
-    description: 'AI-powered responses',
+    description: 'Persona answers',
   },
   'immediate-follow-up': {
     label: 'Augmented Chat',
     description: 'Chat with follow-up questions',
     experimental: true,
   },
+  'write-user': {
+    label: 'Write',
+    description: 'Just append a message',
+  },
   'react': {
     label: 'Reason+Act',
     description: 'Answer your questions with ReAct and search',
   },
-  'write-user': {
-    label: 'Write',
-    description: 'No AI responses',
+  'draw-imagine': {
+    label: 'Draw',
+    description: 'AI Image Generation',
   },
 };
 
@@ -111,14 +115,22 @@ export function AppChat() {
         case 'immediate':
         case 'immediate-follow-up':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
+        case 'write-user':
+          return setMessages(conversationId, history);
         case 'react':
           if (!lastMessage?.text)
             break;
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
-        case 'write-user':
-          setMessages(conversationId, history);
-          return;
+        case 'draw-imagine':
+          if (!lastMessage?.text)
+            break;
+          const imagePrompt = lastMessage.text;
+          setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
+            ...message,
+            text: `${CmdRunProdia[0]} ${imagePrompt}`,
+          }));
+          return await runImageGenerationUpdatingState(conversationId, imagePrompt);
       }
     }
 
