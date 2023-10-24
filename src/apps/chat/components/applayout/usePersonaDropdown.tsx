@@ -3,7 +3,6 @@ import { shallow } from 'zustand/shallow';
 
 import { ListItemButton, ListItemDecorator } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
-import PhoneForwardedIcon from '@mui/icons-material/PhoneForwarded';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
@@ -34,9 +33,9 @@ function AppBarPersonaDropdown(props: {
   if (experimentalLabs && props.onCall) {
     const enableCallOption = !!props.systemPurposeId;
     appendOption = (
-      <ListItemButton disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
-        <ListItemDecorator>{enableCallOption ? <PhoneForwardedIcon color='success' /> : <CallIcon color='warning' />}</ListItemDecorator>
-        Call {props.systemPurposeId ? SystemPurposes[props.systemPurposeId]?.symbol : ''}
+      <ListItemButton color='primary' disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
+        <ListItemDecorator><CallIcon color={enableCallOption ? 'primary' : 'warning'} /></ListItemDecorator>
+        Call&nbsp; {!!props.systemPurposeId && SystemPurposes[props.systemPurposeId]?.symbol}
       </ListItemButton>
     );
   }
