@@ -78,42 +78,42 @@ export const theme = extendTheme({
 export const bodyFontClassName = inter.className;
 
 export const cssRainbowColorKeyframes = keyframes`
-  100%, 0% {
-    color: rgb(255, 0, 0);
-  }
-  8% {
-    color: rgb(204, 102, 0);
-  }
-  16% {
-    color: rgb(128, 128, 0);
-  }
-  25% {
-    color: rgb(77, 153, 0);
-  }
-  33% {
-    color: rgb(0, 179, 0);
-  }
-  41% {
-    color: rgb(0, 153, 82);
-  }
-  50% {
-    color: rgb(0, 128, 128);
-  }
-  58% {
-    color: rgb(0, 102, 204);
-  }
-  66% {
-    color: rgb(0, 0, 255);
-  }
-  75% {
-    color: rgb(127, 0, 255);
-  }
-  83% {
-    color: rgb(153, 0, 153);
-  }
-  91% {
-    color: rgb(204, 0, 102);
-  }`;
+    100%, 0% {
+        color: rgb(255, 0, 0);
+    }
+    8% {
+        color: rgb(204, 102, 0);
+    }
+    16% {
+        color: rgb(128, 128, 0);
+    }
+    25% {
+        color: rgb(77, 153, 0);
+    }
+    33% {
+        color: rgb(0, 179, 0);
+    }
+    41% {
+        color: rgb(0, 153, 82);
+    }
+    50% {
+        color: rgb(0, 128, 128);
+    }
+    58% {
+        color: rgb(0, 102, 204);
+    }
+    66% {
+        color: rgb(0, 0, 255);
+    }
+    75% {
+        color: rgb(127, 0, 255);
+    }
+    83% {
+        color: rgb(153, 0, 153);
+    }
+    91% {
+        color: rgb(204, 0, 102);
+    }`;
 
 
 // Emotion Cache (with insertion point on the SSR pass)
