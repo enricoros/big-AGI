@@ -6,8 +6,10 @@ import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
+import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
 import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
 
@@ -52,6 +54,7 @@ function CallMenuItems(props: {
     </MenuItem>
 
     <MenuItem onClick={handleChangeVoiceToggle}>
+      <ListItemDecorator><RecordVoiceOverIcon /></ListItemDecorator>
       Change Voice
       <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
@@ -59,6 +62,11 @@ function CallMenuItems(props: {
     <MenuItem>
       <ListItemDecorator>{' '}</ListItemDecorator>
       {voicesDropdown}
+    </MenuItem>
+
+    <MenuItem component={Link} href='https://github.com/enricoros/big-agi/issues/175' target='_blank'>
+      <ListItemDecorator><ChatOutlinedIcon /></ListItemDecorator>
+      Voice Calls Feedback
     </MenuItem>
 
   </>;
