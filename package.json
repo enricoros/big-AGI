@@ -2,9 +2,6 @@
   "name": "big-agi",
   "version": "1.4.0",
   "private": true,
-  "engines": {
-    "node": "^18.0.0"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -65,5 +62,8 @@
     "prettier": "^3.0.3",
     "prisma": "^5.4.2",
     "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": "^20.0.0 || ^18.0.0"
   }
 }
