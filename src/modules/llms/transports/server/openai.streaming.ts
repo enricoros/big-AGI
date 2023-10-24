@@ -114,7 +114,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
             const nowMs = Date.now();
             const elapsedMs = debugLastMs ? nowMs - debugLastMs : 0;
             debugLastMs = nowMs;
-            console.warn(`<- SSE (${elapsedMs} ms):`, event);
+            console.log(`<- SSE (${elapsedMs} ms):`, event);
           }
 
           // ignore 'reconnect-interval' and events with no data
@@ -152,7 +152,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
 export async function throwIfResponseNotOk(response: Response) {
   if (!response.ok) {
     const errorPayload: object | null = await response.json().catch(() => null);
-    throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
+    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
 }
 
@@ -200,7 +200,7 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
     }
 
     if (DEBUG_WIRE)
-      console.warn('-> POST', headersUrl.url, headersUrl.headers, body);
+      console.log('-> POST', headersUrl.url, 'headers:', headersUrl.headers, 'body:', body);
 
     // POST to our API route
     upstreamResponse = await fetch(headersUrl.url, {
@@ -211,9 +211,14 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
     await throwIfResponseNotOk(upstreamResponse);
 
   } catch (error: any) {
-    const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
-    console.log(`/api/llms/stream: fetch issue:`, fetchOrVendorError, headersUrl?.url);
-    return new NextResponse('[OpenAI Issue] ' + fetchOrVendorError, { status: 500 });
+    const fetchOrVendorError = (error?.message || (typeof error === 'string' ? error : JSON.stringify(error))) + (error?.cause ? ' · ' + error.cause : '');
+    const dialectError = (access.dialect.charAt(0).toUpperCase() + access.dialect.slice(1)) + ' - ' + fetchOrVendorError;
+
+    // server-side admins message
+    console.log(`/api/llms/stream: fetch issue:`, dialectError, headersUrl?.url);
+
+    // client-side users visible message
+    return new NextResponse('[Issue] ' + dialectError + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
