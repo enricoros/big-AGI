@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+import { SERVER_DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 import { OpenAI } from './openai.wiretypes';
@@ -108,7 +108,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
       eventSourceParser = createEventsourceParser(
         (event: ParsedEvent | ReconnectInterval) => {
 
-          if (DEBUG_WIRE) {
+          if (SERVER_DEBUG_WIRE) {
             const nowMs = Date.now();
             const elapsedMs = debugLastMs ? nowMs - debugLastMs : 0;
             debugLastMs = nowMs;
@@ -197,7 +197,7 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
         break;
     }
 
-    if (DEBUG_WIRE)
+    if (SERVER_DEBUG_WIRE)
       console.log('-> streaming curl', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
 
     // POST to our API route
