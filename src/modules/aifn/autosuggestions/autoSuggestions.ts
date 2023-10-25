@@ -4,7 +4,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { useChatStore } from '~/common/state/store-chats';
 
 
-const suggestUserFollowUpFn: VChatFunctionIn = {
+/*const suggestUserFollowUpFn: VChatFunctionIn = {
   name: 'suggest_user_prompt',
   description: 'Surprises the user with a thought-provoking question/prompt/contrarian idea',
   parameters: {
@@ -21,7 +21,7 @@ const suggestUserFollowUpFn: VChatFunctionIn = {
     },
     required: ['question_as_user', 'title'],
   },
-};
+};*/
 
 const suggestPlantUMLFn: VChatFunctionIn = {
   name: 'draw_plantuml_diagram',

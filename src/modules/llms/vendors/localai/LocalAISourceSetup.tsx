@@ -22,7 +22,7 @@ const urlSchema = z.string().url().startsWith('http');
 export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, access, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorLocalAI.getAccess);
 
   // derived state
