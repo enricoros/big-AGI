@@ -290,9 +290,15 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
       // [Helicone]
       // We don't change the host (as we do on Anthropic's), as we expect the user to have a custom host.
-      const heliKey = access.heliKey || process.env.HELICONE_API_KEY || false;
-      if (heliKey && !oaiHost.includes(DEFAULT_HELICONE_OPENAI_HOST))
-        throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
+      let heliKey = access.heliKey || process.env.HELICONE_API_KEY || false;
+      if (heliKey) {
+        if (oaiHost.includes(DEFAULT_OPENAI_HOST)) {
+          oaiHost = `https://${DEFAULT_HELICONE_OPENAI_HOST}`;
+        } else if (!oaiHost.includes(DEFAULT_HELICONE_OPENAI_HOST)) {
+          // throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
+          heliKey = false;
+        }
+      }
 
       // [Cloudflare OpenAI AI Gateway support]
       // Adapts the API path when using a 'universal' or 'openai' Cloudflare AI Gateway endpoint in the "API Host" field
