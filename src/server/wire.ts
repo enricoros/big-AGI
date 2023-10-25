@@ -1,5 +1,5 @@
-
-export const DEBUG_WIRE = true;
+/// set this to true to see the tRPC and fetch requests made by the server
+export const SERVER_DEBUG_WIRE = false;
 
 /**
  * Weak (meaning the string could be encoded poorly) function that returns a string that can be used to debug a TRPC request.

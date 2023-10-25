@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
 
-import { DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+import { SERVER_DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
 
 
 // JSON fetcher
@@ -27,7 +27,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
   return async (url, method, headers, body, moduleName) => {
     let response: Response;
     try {
-      if (DEBUG_WIRE)
+      if (SERVER_DEBUG_WIRE)
         console.log('-> tRPC curl', debugGenerateCurlCommand(method, url, headers, body as any));
       response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     } catch (error: any) {
