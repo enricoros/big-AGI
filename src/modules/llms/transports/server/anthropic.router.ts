@@ -130,7 +130,7 @@ const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
 type ModelSchema = z.infer<typeof openAIModelSchema>;
 type HistorySchema = z.infer<typeof openAIHistorySchema>;
 
-async function anthropicPOST<TOut, TPostBody>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
 }
