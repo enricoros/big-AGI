@@ -1,19 +1,31 @@
 import * as React from 'react';
 
-import { isChromeOnDesktopWindows, isIPhone } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
+import { isChromeOnDesktopWindows, isIPhone } from '../util/pwaUtils';
+import { useUIPreferencesStore } from '../state/store-ui';
 
 
 export interface SpeechResult {
   transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
-  interimTranscript: string;  // for the conitnuous (interim) listening, this is the current transcript
+  interimTranscript: string;  // for the continuous (interim) listening, this is the current transcript
   done: boolean;              // true if the recognition is done - no more updates after this
 }
 
+let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
 
-export function maySpeechRecognitionWork() {
-  return !isIPhone() && !!getSpeechRecognition();
-}
+export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRecognition => {
+  if (!cachedCapability) {
+    const isApiAvailable = !!getSpeechRecognition();
+    const isDeviceNotSupported = isIPhone();
+    cachedCapability = {
+      mayWork: isApiAvailable && !isDeviceNotSupported,
+      isApiAvailable,
+      isDeviceNotSupported,
+    };
+  }
+  return cachedCapability;
+};
+
 
 /**
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
@@ -47,8 +59,8 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     }
 
     // skip speech recognition on iPhones and Safari browsers - because of sub-par quality
-    if (isIPhone()) {
-      console.log('Speech recognition is disabled (not yet tested) on iPhones.');
+    if (browserSpeechRecognitionCapability().isDeviceNotSupported) {
+      console.log('Speech recognition is disabled on this device.');
       return;
     }
 
