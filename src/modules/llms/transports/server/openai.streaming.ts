@@ -2,14 +2,12 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
+import { DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+
 import { AnthropicWire } from './anthropic.wiretypes';
 import { OpenAI } from './openai.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic.router';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
-
-
-// enable to print to console the outgoing and incoming data
-const DEBUG_WIRE = false;
 
 
 /**
@@ -200,7 +198,7 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
     }
 
     if (DEBUG_WIRE)
-      console.log('-> POST', headersUrl.url, 'headers:', headersUrl.headers, 'body:', body);
+      console.log('-> streaming curl', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
 
     // POST to our API route
     upstreamResponse = await fetch(headersUrl.url, {
