@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
 import { isChromeOnDesktopWindows, isIPhone } from '../util/pwaUtils';
+import { useGlobalShortcut } from './useGlobalShortcut';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
@@ -216,15 +217,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       startRecording();
   }, [startRecording, stopRecording]);
 
-  React.useEffect(() => {
-    if (!useShortcutCtrlKey) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === useShortcutCtrlKey)
-        toggleRecording();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleRecording, useShortcutCtrlKey]);
+  useGlobalShortcut(useShortcutCtrlKey, toggleRecording);
 
   return {
     isRecording,
