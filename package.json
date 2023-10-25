@@ -21,7 +21,7 @@
     "@mui/icons-material": "^5.14.3",
     "@mui/joy": "^5.0.0-beta.2",
     "@next/bundle-analyzer": "^13.4.19",
-    "@prisma/client": "^5.5.0",
+    "@prisma/client": "^5.5.1",
     "@sanity/diff-match-patch": "^3.1.1",
     "@tanstack/react-query": "^4.36.1",
     "@trpc/client": "^10.42.0",
@@ -52,7 +52,7 @@
     "@types/node": "^20.8.8",
     "@types/plantuml-encoder": "^1.4.1",
     "@types/prismjs": "^1.26.2",
-    "@types/react": "^18.2.31",
+    "@types/react": "^18.2.32",
     "@types/react-dom": "^18.2.14",
     "@types/react-katex": "^3.0.2",
     "@types/react-timeago": "^4.1.5",
@@ -60,7 +60,7 @@
     "eslint": "^8.52.0",
     "eslint-config-next": "^13.4.19",
     "prettier": "^3.0.3",
-    "prisma": "^5.5.0",
+    "prisma": "^5.5.1",
     "typescript": "^5.2.2"
   },
   "engines": {
