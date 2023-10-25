@@ -8,7 +8,6 @@ import PhoneForwardedIcon from '@mui/icons-material/PhoneForwarded';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { AppBarDropdown } from '~/common/layout/AppBarDropdown';
-import { maySpeechRecognitionWork } from '~/common/components/useSpeechRecognition';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -33,7 +32,7 @@ function AppBarPersonaDropdown(props: {
   let appendOption: React.JSX.Element | undefined = undefined;
 
   if (experimentalLabs && props.onCall) {
-    const enableCallOption = !!props.systemPurposeId && maySpeechRecognitionWork();
+    const enableCallOption = !!props.systemPurposeId;
     appendOption = (
       <ListItemButton disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
         <ListItemDecorator>{enableCallOption ? <PhoneForwardedIcon color='success' /> : <CallIcon color='warning' />}</ListItemDecorator>
