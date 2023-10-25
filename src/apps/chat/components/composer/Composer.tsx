@@ -5,12 +5,9 @@ import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tool
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
-import DataArrayIcon from '@mui/icons-material/DataArray';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -27,6 +24,7 @@ import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { CameraCaptureButton } from './CameraCaptureButton';
@@ -55,28 +53,25 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 
 const attachFileLegend =
   <Stack sx={{ p: 1, gap: 1 }}>
-    <Box sx={{ mb: 1, textAlign: 'center' }}>
-      <b>Attach a file to the message</b>
+    <Box sx={{ mb: 1 }}>
+      <b>Attach a file</b>
     </Box>
     <table>
       <tbody>
       <tr>
-        <td width={32}><PictureAsPdfIcon /></td>
-        <td><b>PDF</b></td>
-        <td width={36} align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📝 Text (summarized)</td>
+        <td><b>Text</b></td>
+        <td align='center' style={{ opacity: 0.5 }}>→</td>
+        <td>📝 As-is</td>
       </tr>
       <tr>
-        <td><DataArrayIcon /></td>
         <td><b>Code</b></td>
         <td align='center' style={{ opacity: 0.5 }}>→</td>
         <td>📚 Markdown</td>
       </tr>
       <tr>
-        <td><FormatAlignCenterIcon /></td>
-        <td><b>Text</b></td>
-        <td align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📝 As-is</td>
+        <td><b>PDF</b></td>
+        <td width={36} align='center' style={{ opacity: 0.5 }}>→</td>
+        <td>📝 Text (summarized)</td>
       </tr>
       </tbody>
     </table>
@@ -86,13 +81,14 @@ const attachFileLegend =
   </Stack>;
 
 const pasteClipboardLegend =
-  <Box sx={{ p: 1 }}>
-    Converts Code and Tables to 📚 Markdown
+  <Box sx={{ p: 1, lineHeight: 2 }}>
+    <b>Paste as 📚 Markdown attachment</b><br />
+    Also converts Code and Tables<br />
+    Ctrl + Shift + V
   </Box>;
 
-
 const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip title='CTRL + M' placement='top'>
+  <Tooltip title='Ctrl + M' placement='top'>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <MicIcon />
     </IconButton>
@@ -272,7 +268,7 @@ export function Composer(props: {
 
   const handleCameraOCR = (text: string) => text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
 
-  const handlePasteButtonClicked = async () => {
+  const handlePasteButtonClicked = React.useCallback(async () => {
     for (const clipboardItem of await navigator.clipboard.read()) {
 
       // when pasting html, only process tables as markdown (e.g. from Excel), or fallback to text
@@ -303,7 +299,9 @@ export function Composer(props: {
       // no text/html or text/plain item found
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  };
+  }, []);
+
+  useGlobalShortcut('v', true, false, handlePasteButtonClicked);
 
   const handleTextareaCtrlV = async (e: React.ClipboardEvent) => {
 
