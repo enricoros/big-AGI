@@ -1,5 +1,6 @@
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
-import { LiveAudioPlayer, playSoundBuffer } from '~/common/util/audioUtils';
+import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';
+import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { SpeechInputSchema } from './elevenlabs.router';
@@ -56,7 +57,7 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
   const edgeResponse = await fetchApiElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
 
   // if (!liveAudioPlayer)
-  const liveAudioPlayer = new LiveAudioPlayer();
+  const liveAudioPlayer = new AudioLivePlayer();
   liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse).then();
 }
 
