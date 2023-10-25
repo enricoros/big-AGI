@@ -1,3 +1,4 @@
+import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { LiveAudioPlayer, playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -12,6 +13,15 @@ export const canUseElevenLabs = (): boolean => !!useElevenlabsStore.getState().e
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
 export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLabsApiKey(apiKey) : !requireUserKeyElevenLabs;
+
+
+export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
+  const clientApiKey = useElevenlabsStore(state => state.elevenLabsApiKey);
+  const isConfiguredServerSide = !requireUserKeyElevenLabs;
+  const isConfiguredClientSide = clientApiKey ? isValidElevenLabsApiKey(clientApiKey) : false;
+  const mayWork = isConfiguredServerSide || isConfiguredClientSide;
+  return { mayWork, isConfiguredServerSide, isConfiguredClientSide };
+}
 
 
 export async function speakText(text: string, voiceId?: string) {
