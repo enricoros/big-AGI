@@ -1,3 +1,5 @@
+// noinspection JSUnresolvedReference
+
 /**
  * Return the base URL for the current environment.
  *  - browser: '' (relative url)

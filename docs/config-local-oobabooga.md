@@ -37,7 +37,7 @@ This guide assumes that **big-AGI** is already installed on your system. Note th
     - Select the model once it's loaded
 
 ### Integrating text-web-ui with big-AGI:
-5. Integrating Text-Generation-WebUI with big-AGI:
+1. Integrating Text-Generation-WebUI with big-AGI:
     - Go to Models > Add a model source of type: **Oobabooga**
     - Enter the address: `http://127.0.0.1:5001`
         - If running remotely, replace 127.0.0.1 with the IP of the machine. Make sure to use the **IP:Port** format

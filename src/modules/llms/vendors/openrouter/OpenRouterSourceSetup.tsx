@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Typography } from '@mui/joy';
-import SyncIcon from '@mui/icons-material/Sync';
+import { Box, Typography } from '@mui/joy';
 
 import { apiQuery } from '~/common/util/trpc.client';
 

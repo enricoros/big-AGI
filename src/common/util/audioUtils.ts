@@ -47,19 +47,19 @@ export class LiveAudioPlayer {
   private readonly audioContext: AudioContext;
   private readonly audioElement: HTMLAudioElement;
   private readonly mediaSource: MediaSource;
+  private readonly bufferSizeLimit: number;
+  private readonly onStart: (() => void) | null;
+  private readonly onStop: (() => void) | null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null;
-  private bufferSizeLimit: number;
-  private onStart: (() => void) | null;
-  private onStop: (() => void) | null;
 
   constructor() {
     this.audioContext = new AudioContext();
     this.audioElement = new Audio();
     this.mediaSource = new MediaSource();
-    this.reader = null;
     this.bufferSizeLimit = 5; // in seconds
     this.onStart = null;
     this.onStop = null;
+    this.reader = null;
   }
 
   async EXPERIMENTAL_playStream(edgeResponse: Response) {
