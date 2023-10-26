@@ -8,7 +8,6 @@
  */
 import { initTRPC } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { type FetchCreateContextFnOptions } from '@trpc/server/dist/adapters/fetch';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
@@ -27,7 +26,7 @@ export const createTRPCNodeContext = ({ /*req, res*/ }: CreateNextContextOptions
   return {};
 };
 
-export const createTRPCEdgeContext = ({ /*req, resHeaders*/ }: FetchCreateContextFnOptions) => {
+export const createTRPCEdgeContext = ({ /*req, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
   return {};
