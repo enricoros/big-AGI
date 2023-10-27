@@ -1,6 +1,4 @@
-import { apiAsync } from '~/common/util/trpc.client';
-import { prodiaDefaultModelId } from '~/modules/prodia/prodia.models';
-import { useProdiaStore } from '~/modules/prodia/store-prodia';
+import { prodiaGenerateImage } from '~/modules/prodia/prodia.client';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -26,32 +24,7 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
   const { editMessage } = useChatStore.getState();
 
   try {
-
-    const {
-      prodiaApiKey: prodiaKey, prodiaModelId,
-      prodiaNegativePrompt: negativePrompt, prodiaSteps: steps, prodiaCfgScale: cfgScale,
-      prodiaAspectRatio: aspectRatio, prodiaUpscale: upscale,
-      prodiaSeed: seed,
-    } = useProdiaStore.getState();
-
-    // Run the image generation count times in parallel
-    const imageUrls = await Promise.all(
-      Array(count).fill(undefined).map(async () => {
-        const { imageUrl } = await apiAsync.prodia.imagine.query({
-          ...(!!prodiaKey && { prodiaKey }),
-          prodiaModel: prodiaModelId || prodiaDefaultModelId,
-          prompt: imageText,
-          ...(!!negativePrompt && { negativePrompt }),
-          ...(!!steps && { steps }),
-          ...(!!cfgScale && { cfgScale }),
-          ...(!!aspectRatio && aspectRatio !== 'square' && { aspectRatio }),
-          ...((upscale && { upscale })),
-          ...(!!seed && { seed }),
-        });
-
-        return imageUrl;
-      }),
-    );
+    const imageUrls = await prodiaGenerateImage(count, imageText);
 
     // Concatenate all the resulting URLs and update the assistant message with these URLs
     const allImageUrls = imageUrls.join('\n');
