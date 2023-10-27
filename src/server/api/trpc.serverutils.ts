@@ -34,7 +34,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`[${moduleName} Fetch Error]:`, error);
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[${moduleName} Issue] ${error?.message || error?.toString() || 'Unknown fetch error'} - ${error?.cause}`,
+        message: `[${moduleName} Issue] (network) ${error?.message || error?.toString() || 'Unknown fetch error'} - ${error?.cause}`,
       });
     }
     if (!response.ok) {
