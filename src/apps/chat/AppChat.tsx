@@ -120,6 +120,8 @@ export function AppChat() {
     const conversation = _findConversation(conversationId);
     if (conversation) {
       const chatModeId = useChatModeStore.getState().chatModeId;
+      if (chatModeId === 'draw-imagine-plus')
+        return await handleImagineFromText(conversationId, userText);
       return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
     }
   };

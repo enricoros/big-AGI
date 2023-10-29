@@ -403,6 +403,7 @@ export function Composer(props: {
   const isFollowUp = chatModeId === 'immediate-follow-up';
   const isReAct = chatModeId === 'react';
   const isDraw = chatModeId === 'draw-imagine';
+  const isDrawPlus = chatModeId === 'draw-imagine-plus';
 
   const textPlaceholder: string =
     isDraw
@@ -467,7 +468,7 @@ export function Composer(props: {
             <Box sx={{ position: 'relative' }}>
 
               <Textarea
-                variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
+                variant='outlined' color={(isDraw || isDrawPlus) ? 'warning' : isReAct ? 'success' : 'neutral'}
                 autoFocus
                 minRows={5} maxRows={10}
                 placeholder={textPlaceholder}
@@ -572,7 +573,7 @@ export function Composer(props: {
               />}
 
               {/* [mobile] [corner] Draw button */}
-              {isDraw && <DrawOptionsButtonMobile
+              {(isDraw || isDrawPlus) && <DrawOptionsButtonMobile
                 onClick={handleDrawOptionsClicked}
                 sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}
               />}
@@ -588,13 +589,13 @@ export function Composer(props: {
                     Stop
                   </Button>
                 ) : (
-                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     <Button
-                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
                       onClick={handleSendClicked}
                       endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                     >
-                      {isWriteUser ? 'Write' : isFollowUp ? 'Chat+' : isReAct ? 'ReAct' : isDraw ? 'Draw' : 'Chat'}
+                      {isWriteUser ? 'Write' : isFollowUp ? 'Chat+' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
                     </Button>
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
                       <ExpandLessIcon />
@@ -609,7 +610,7 @@ export function Composer(props: {
 
               {APP_CALL_ENABLED && isChat && <CallButtonDesktop disabled={!props.conversationId || !chatLLM} onClick={handleCallClicked} />}
 
-              {isDraw && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}
+              {(isDraw || isDrawPlus) && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}
             </Box>
 
           </Box>
