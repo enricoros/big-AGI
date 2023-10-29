@@ -1,6 +1,5 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
-import { useRouter } from 'next/router';
 
 import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -23,7 +22,6 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const listBottomRef = React.useRef<HTMLDivElement>(null);
 
   // external state
-  const { push: routerPush } = useRouter();
   const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
   const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
 
@@ -59,7 +57,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat(routerPush);
+    await navigateToChat();
     setCloning(false);
   };
 
