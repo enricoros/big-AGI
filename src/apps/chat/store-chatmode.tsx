@@ -2,7 +2,7 @@ import * as React from 'react';
 import { create } from 'zustand';
 
 
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine';
+export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
 
 /// Describe the chat modes
 export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
@@ -26,6 +26,10 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
   'draw-imagine': {
     label: 'Draw',
     description: 'AI Image Generation',
+  },
+  'draw-imagine-plus': {
+    label: 'Assisted Draw',
+    description: 'Assisted Image Generation',
   },
 };
 
