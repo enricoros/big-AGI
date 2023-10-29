@@ -15,6 +15,7 @@ import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
+import { ChatModeId, useChatModeStore } from './store-chatmode';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
@@ -26,37 +27,10 @@ import { runReActUpdatingState } from './editors/react-tangent';
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
-// definition of chat modes
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine';
-export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
-  'immediate': {
-    label: 'Chat',
-    description: 'Persona answers',
-  },
-  'immediate-follow-up': {
-    label: 'Augmented Chat',
-    description: 'Chat with follow-up questions',
-    experimental: true,
-  },
-  'write-user': {
-    label: 'Write',
-    description: 'Just append a message',
-  },
-  'react': {
-    label: 'Reason+Act',
-    description: 'Answer your questions with ReAct and search',
-  },
-  'draw-imagine': {
-    label: 'Draw',
-    description: 'AI Image Generation',
-  },
-};
-
 
 export function AppChat() {
 
   // state
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
@@ -144,12 +118,14 @@ export function AppChat() {
 
   const handleSendUserMessage = async (conversationId: string, userText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation)
+    if (conversation) {
+      const chatModeId = useChatModeStore.getState().chatModeId;
       return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
+    }
   };
 
   const handleExecuteChatHistory = async (conversationId: string, history: DMessage[]) =>
-    await handleExecuteConversation(chatModeId, conversationId, history);
+    await handleExecuteConversation('immediate', conversationId, history);
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
@@ -246,7 +222,6 @@ export function AppChat() {
 
     <Composer
       conversationId={activeConversationId} messageId={null}
-      chatModeId={chatModeId} setChatModeId={setChatModeId}
       isDeveloperMode={systemPurposeId === 'Developer'}
       onSendMessage={handleSendUserMessage}
       sx={{
