@@ -18,7 +18,7 @@ export const useDebugHook = (app: string) => {
   // test behavior of React.useState - note the function syntax, so we don't call the initializer on every render
   const [test, setTest] = React.useState<number>(() => getRandom1000());
   // test behavior of React.useRef with instance counter
-  const testRef = React.useRef(() => increment());
+  const testRef = React.useRef<number>(increment());
 
   console.log(app, 'render', test, testRef.current);
 
