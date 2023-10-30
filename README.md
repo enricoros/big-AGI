@@ -5,8 +5,8 @@ Fork with basic auth added.
 ## Basic Auth
 Add the following environment variables
 
-BASIC_AUTH_USERNAME=test
-BASIC_AUTH_PASSWORD=test
+BASIC_AUTH_USERNAME=<your username>
+BASIC_AUTH_PASSWORD=<your password>
 
 Update the middleware.ts to use the basic auth middleware on all routes in src/pages
 
