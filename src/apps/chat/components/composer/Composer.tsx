@@ -148,10 +148,7 @@ export function Composer(props: {
   // external state
   const theme = useTheme();
   const [chatModeId, setChatModeId] = useChatModeStore(state => [state.chatModeId, state.setChatModeId], shallow);
-  const { enterToSend, experimentalLabs } = useUIPreferencesStore(state => ({
-    enterToSend: state.enterToSend,
-    experimentalLabs: state.experimentalLabs,
-  }), shallow);
+  const [enterIsNewline, experimentalLabs] = useUIPreferencesStore(state => [state.enterIsNewline, state.experimentalLabs], shallow);
   const { startupText, setStartupText } = useComposerStore();
   const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -211,7 +208,7 @@ export function Composer(props: {
   const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       const shiftOrAlt = e.shiftKey || e.altKey;
-      if (enterToSend ? !shiftOrAlt : shiftOrAlt) {
+      if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
         if (!assistantTyping)
           handleSendClicked();
         e.preventDefault();
@@ -479,7 +476,7 @@ export function Composer(props: {
                 onPasteCapture={handleTextareaCtrlV}
                 slotProps={{
                   textarea: {
-                    enterKeyHint: enterToSend ? 'send' : 'enter',
+                    enterKeyHint: enterIsNewline ? 'enter' : 'send',
                     sx: {
                       ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
                       mb: 0.5,

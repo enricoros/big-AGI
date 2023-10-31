@@ -23,7 +23,7 @@ export function UISettings() {
   const {
     centerMode, setCenterMode,
     doubleClickToEdit, setDoubleClickToEdit,
-    enterToSend, setEnterToSend,
+    enterIsNewline, setEnterIsNewline,
     experimentalLabs, setExperimentalLabs,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
@@ -31,7 +31,7 @@ export function UISettings() {
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
-    enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
+    enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
     experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
@@ -41,7 +41,7 @@ export function UISettings() {
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
-  const handleEnterToSendChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterToSend(event.target.checked);
+  const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
 
   const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
@@ -72,10 +72,10 @@ export function UISettings() {
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Enter to send</FormLabel>
-          <FormHelperText>{enterToSend ? <>Sends message<TelegramIcon /></> : 'New line'}</FormHelperText>
+          <FormHelperText>{enterIsNewline ? 'New line' : <>Sends message<TelegramIcon /></>}</FormHelperText>
         </Box>
-        <Switch checked={enterToSend} onChange={handleEnterToSendChange}
-                endDecorator={enterToSend ? 'On' : 'Off'}
+        <Switch checked={!enterIsNewline} onChange={handleEnterIsNewlineChange}
+                endDecorator={enterIsNewline ? 'Off' : 'On'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
