@@ -92,8 +92,8 @@ interface UIPreferencesStore {
   doubleClickToEdit: boolean;
   setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
-  enterToSend: boolean;
-  setEnterToSend: (enterToSend: boolean) => void;
+  enterIsNewline: boolean;
+  setEnterIsNewline: (enterIsNewline: boolean) => void;
 
   experimentalLabs: boolean;
   setExperimentalLabs: (experimentalLabs: boolean) => void;
@@ -125,8 +125,8 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       doubleClickToEdit: true,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
-      enterToSend: true,
-      setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
+      enterIsNewline: false,
+      setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
 
       experimentalLabs: false,
       setExperimentalLabs: (experimentalLabs: boolean) => set({ experimentalLabs }),
@@ -146,6 +146,18 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
     }),
     {
       name: 'app-ui',
+
+      /* versioning:
+       * 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+       */
+      version: 1,
+
+      migrate: (state: any, fromVersion: number): UIPreferencesStore => {
+        // 0 -> 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+        if (state && fromVersion === 0)
+          state.enterIsNewline = state['enterToSend'] === false;
+        return state;
+      },
     },
   ),
 );
