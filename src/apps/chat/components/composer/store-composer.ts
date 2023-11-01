@@ -69,3 +69,6 @@ const useComposerStore = create<ComposerStore>()(
 
 export const useComposerStartupText = (): [string | null, (text: string | null) => void] =>
   useComposerStore(state => [state.startupText, state.setStartupText], shallow);
+
+export const setComposerStartupText = (text: string | null) =>
+  useComposerStore.getState().setStartupText(text);
