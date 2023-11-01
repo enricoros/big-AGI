@@ -33,11 +33,10 @@ import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
 
 import { CameraCaptureButton } from './CameraCaptureButton';
-import { ChatModeId, useChatModeStore } from '../../store-chatmode';
+import { ChatModeId, useComposerStartupText } from './store-composer';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useComposerStore } from './store-composer';
 
 
 /// Text template helpers
@@ -133,7 +132,7 @@ const DrawOptionsButtonDesktop = (props: { onClick: () => void, sx?: SxProps }) 
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
-  onSendMessage: (conversationId: string, text: string) => void;
+  onNewMessage: (chatModeId: ChatModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
@@ -147,9 +146,9 @@ export function Composer(props: {
 
   // external state
   const theme = useTheme();
-  const [chatModeId, setChatModeId] = useChatModeStore(state => [state.chatModeId, state.setChatModeId], shallow);
+  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
+  const [startupText, setStartupText] = useComposerStartupText();
   const [enterIsNewline, experimentalLabs] = useUIPreferencesStore(state => [state.enterIsNewline, state.experimentalLabs], shallow);
-  const { startupText, setStartupText } = useComposerStore();
   const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -179,11 +178,11 @@ export function Composer(props: {
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
-  const handleSendClicked = () => {
+  const handleSendClicked = (_chatModeId: ChatModeId) => {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
       setComposeText('');
-      props.onSendMessage(props.conversationId, text);
+      props.onNewMessage(_chatModeId, props.conversationId, text);
     }
   };
 
@@ -206,13 +205,20 @@ export function Composer(props: {
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      const shiftOrAlt = e.shiftKey || e.altKey;
-      if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
-        if (!assistantTyping)
-          handleSendClicked();
-        e.preventDefault();
-      }
+    if (e.key !== 'Enter')
+      return;
+
+    // Alt: append the message
+    if (e.altKey) {
+      handleSendClicked('write-user');
+      return e.preventDefault();
+    }
+
+    // Shift: toggles the 'enter is newline'
+    if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+      if (!assistantTyping)
+        handleSendClicked(chatModeId);
+      return e.preventDefault();
     }
   };
 
@@ -403,13 +409,15 @@ export function Composer(props: {
   const isDrawPlus = chatModeId === 'draw-imagine-plus';
 
   const textPlaceholder: string =
-    isDraw
-      ? 'Describe an idea or a drawing...'
-      : isReAct
-        ? 'Multi-step reasoning question...'
-        : props.isDeveloperMode
-          ? 'Chat with me · drop source files · attach code...'
-          : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
+    isDrawPlus
+      ? 'Write a subject, and we\'ll add detail...'
+      : isDraw
+        ? 'Describe an idea or a drawing...'
+        : isReAct
+          ? 'Multi-step reasoning question...'
+          : props.isDeveloperMode
+            ? 'Chat with me · drop source files · attach code...'
+            : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
   return (
     <Box sx={props.sx}>
@@ -589,7 +597,7 @@ export function Composer(props: {
                   <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     <Button
                       fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-                      onClick={handleSendClicked}
+                      onClick={() => handleSendClicked(chatModeId)}
                       endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                     >
                       {isWriteUser ? 'Write' : isFollowUp ? 'Chat+' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}

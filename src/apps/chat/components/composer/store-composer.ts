@@ -1,19 +1,51 @@
+import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
+
+
+export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
+
+/// Describe the chat modes
+export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
+  'immediate': {
+    label: 'Chat',
+    description: 'Persona answers',
+  },
+  'immediate-follow-up': {
+    label: 'Augmented Chat',
+    description: 'Chat with follow-up questions',
+    experimental: true,
+  },
+  'write-user': {
+    label: 'Write',
+    description: 'Just append a message',
+  },
+  'react': {
+    label: 'Reason+Act',
+    description: 'Answer your questions with ReAct and search',
+  },
+  'draw-imagine': {
+    label: 'Draw',
+    description: 'AI Image Generation',
+  },
+  'draw-imagine-plus': {
+    label: 'Assisted Draw',
+    description: 'Assisted Image Generation',
+  },
+};
 
 
 /// Composer Store
 
 interface ComposerStore {
 
-  startupText: string | null;
+  startupText: string | null; // if not null, the composer will load this text at startup
   setStartupText: (text: string | null) => void;
 
 }
 
-// const MAX_SENT_MESSAGES_HISTORY = 16;
-
-export const useComposerStore = create<ComposerStore>()(
+const useComposerStore = create<ComposerStore>()(
   persist((set, _get) => ({
 
       startupText: null,
@@ -33,3 +65,7 @@ export const useComposerStore = create<ComposerStore>()(
       },*/
     }),
 );
+
+
+export const useComposerStartupText = (): [string | null, (text: string | null) => void] =>
+  useComposerStore(state => [state.startupText, state.setStartupText], shallow);
