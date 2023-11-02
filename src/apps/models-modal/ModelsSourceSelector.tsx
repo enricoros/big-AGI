@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
@@ -25,10 +25,16 @@ function locationIcon(vendor?: IModelVendor | null) {
 }
 
 function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
-  const Icon = !vendor ? null : vendor.Icon;
-  return (greenMark && Icon)
-    ? <Badge color='primary' size='sm' badgeContent=''><Icon /></Badge>
-    : Icon ? <Icon /> : null;
+  let icon: React.JSX.Element | null = null;
+  if (vendor?.Icon) {
+    if (typeof vendor.Icon === 'string')
+      icon = <Avatar sx={{ width: 24, height: 24 }}>{vendor.Icon}</Avatar>;
+    else
+      icon = <vendor.Icon />;
+  }
+  return (greenMark && icon)
+    ? <Badge color='primary' size='sm' badgeContent=''>{icon}</Badge>
+    : icon;
 }
 
 
