@@ -9,13 +9,10 @@ import { DLLM, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms'
 import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
-import { useUIStateStore } from '~/common/state/store-ui';
+import { openLayoutLLMOptions } from '~/common/layout/store-applayout';
 
 
 function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, chipFast: boolean, chipFunc: boolean }) {
-
-  // external state
-  const openLLMOptions = useUIStateStore(state => state.openLLMOptions);
 
   // derived
   const llm = props.llm;
@@ -24,7 +21,7 @@ function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, 
 
   return (
     <ListItem>
-      <ListItemButton onClick={() => openLLMOptions(llm.id)} sx={{ alignItems: 'center', gap: 1 }}>
+      <ListItemButton onClick={() => openLayoutLLMOptions(llm.id)} sx={{ alignItems: 'center', gap: 1 }}>
 
         {/* Model Name */}
         <Tooltip title={tooltip}>

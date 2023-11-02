@@ -9,7 +9,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { closeLayoutLLMOptions } from '~/common/layout/store-applayout';
 
 import { VendorLLMOptions } from './VendorLLMOptions';
 
@@ -20,7 +20,6 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
   const [showDetails, setShowDetails] = React.useState(false);
 
   // external state
-  const closeLLMOptions = useUIStateStore(state => state.closeLLMOptions);
   const {
     llm,
     removeLLM, updateLLM,
@@ -49,14 +48,14 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
 
   const handleLlmDelete = () => {
     removeLLM(llm.id);
-    closeLLMOptions();
+    closeLayoutLLMOptions();
   };
 
   return (
 
     <GoodModal
       title={<><b>{llm.label}</b> options</>}
-      open={!!props.id} onClose={closeLLMOptions}
+      open={!!props.id} onClose={closeLayoutLLMOptions}
       startButton={
         <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
           Delete

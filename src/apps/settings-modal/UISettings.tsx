@@ -9,9 +9,10 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { Link } from '~/common/components/Link';
+import { closeLayoutPreferences } from '~/common/layout/store-applayout';
 import { hideOnMobile, settingsGap } from '~/common/theme';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 // configuration
@@ -37,7 +38,6 @@ export function UISettings() {
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
-  const { closeSettings } = useUIStateStore(state => ({ closeSettings: state.closeSettings }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
@@ -123,7 +123,7 @@ export function UISettings() {
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
-          <FormLabel component={Link} href='/labs' onClick={closeSettings}>
+          <FormLabel component={Link} href='/labs' onClick={closeLayoutPreferences}>
             <u>Experiments</u>
             <InfoOutlinedIcon sx={{ mx: 0.5 }} />
           </FormLabel>

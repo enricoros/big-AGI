@@ -21,16 +21,18 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { launchAppCall } from '~/common/routes';
+import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { CameraCaptureButton } from './CameraCaptureButton';
 import { ChatModeId, useComposerStartupText } from './store-composer';
@@ -88,11 +90,11 @@ const pasteClipboardLegend =
   <Box sx={{ p: 1, lineHeight: 2 }}>
     <b>Paste as 📚 Markdown attachment</b><br />
     Also converts Code and Tables<br />
-    Ctrl + Shift + V
+    <KeyStroke combo='Ctrl + Shift + V' />
   </Box>;
 
 const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip title='Ctrl + M' placement='top'>
+  <Tooltip title={<KeyStroke combo='Ctrl + M' />} placement='top'>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <MicIcon />
     </IconButton>
@@ -189,7 +191,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => useUIStateStore.getState().openSettings(2);
+  const handleDrawOptionsClicked = () => openLayoutPreferences(2);
 
 
   const handleToggleChatMode = (event: React.MouseEvent<HTMLAnchorElement>) =>

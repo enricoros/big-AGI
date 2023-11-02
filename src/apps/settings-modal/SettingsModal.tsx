@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, Divider, Tab, TabList, TabPanel, Tabs, useTheme } from '@mui/joy';
+import { Button, Divider, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import { tabClasses } from '@mui/joy/Tab';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
@@ -8,7 +8,8 @@ import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { closeLayoutPreferences, openLayoutModelsSetup, openLayoutPreferences, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
 import { ToolsSettings } from './ToolsSettings';
 import { UISettings } from './UISettings';
@@ -19,18 +20,19 @@ import { UISettings } from './UISettings';
  * persisted on the client via localStorage.
  */
 export function SettingsModal() {
-  // external state
-  const theme = useTheme();
-  const { settingsOpenTab, closeSettings, openModelsSetup } = useUIStateStore();
 
-  const tabFixSx = { fontFamily: theme.fontFamily.body, flex: 1, p: 0, m: 0 };
+  // external state
+  const settingsTabIndex = useLayoutPreferencesTab();
+  useGlobalShortcut('p', true, true, openLayoutPreferences);
+
+  const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal
       title='Preferences' strongerTitle
-      open={!!settingsOpenTab} onClose={closeSettings}
+      open={!!settingsTabIndex} onClose={closeLayoutPreferences}
       startButton={
-        <Button variant='soft' color='success' onClick={openModelsSetup} startDecorator={<BuildCircleIcon />} sx={{
+        <Button variant='soft' color='success' onClick={openLayoutModelsSetup} startDecorator={<BuildCircleIcon />} sx={{
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
         }}>
           Models
@@ -41,7 +43,7 @@ export function SettingsModal() {
 
       {/*<Divider />*/}
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsOpenTab}>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsTabIndex}>
         <TabList
           variant='soft'
           disableUnderline
