@@ -4,7 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
 import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { createModelSourceForDefaultVendor } from '~/modules/llms/vendors/vendor.registry';
@@ -22,11 +23,12 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
-  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
+  const [modelsSetupOpen, llmOptionsId] = useLayoutModelsSetup();
   const { modelSources, llmCount } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
   }), shallow);
+  useGlobalShortcut('m', true, true, openLayoutModelsSetup);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
@@ -39,8 +41,8 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   // if no sources at startup, open the modal
   React.useEffect(() => {
     if (!selectedSourceId && !props.suspendAutoModelsSetup)
-      openModelsSetup();
-  }, [selectedSourceId, openModelsSetup, props.suspendAutoModelsSetup]);
+      openLayoutModelsSetup();
+  }, [selectedSourceId, props.suspendAutoModelsSetup]);
 
   // add the default source on cold - will require setup
   React.useEffect(() => {
@@ -61,7 +63,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
           checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
         /> : undefined
       }
-      open={modelsSetupOpen} onClose={closeModelsSetup}
+      open onClose={closeLayoutModelsSetup}
     >
 
       <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />

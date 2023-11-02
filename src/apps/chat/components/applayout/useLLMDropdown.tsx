@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItemButton, ListItemDecorator } from '@mui/joy';
+import { ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { KeyStroke } from '~/common/components/KeyStroke';
+import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
 
 
 function AppBarLLMDropdown(props: {
@@ -34,9 +35,8 @@ function AppBarLLMDropdown(props: {
 
   const handleChatLLMChange = (_event: any, value: DLLMId | null) => value && props.setLlmId(value);
 
-  const handleOpenLLMOptions = () => props.llmId && useUIStateStore.getState().openLLMOptions(props.llmId);
+  const handleOpenLLMOptions = () => props.llmId && openLayoutLLMOptions(props.llmId);
 
-  const handleOpenModelsSetup = () => useUIStateStore.getState().openModelsSetup();
 
   return (
     <AppBarDropdown
@@ -52,10 +52,12 @@ function AppBarLLMDropdown(props: {
           </ListItemButton>
         )}
 
-        <ListItemButton key='menu-llms' onClick={handleOpenModelsSetup}>
-          <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
-          Models
-        </ListItemButton>
+        <Tooltip title={<KeyStroke combo='Ctrl + Alt + M' />}>
+          <ListItemButton key='menu-llms' onClick={openLayoutModelsSetup}>
+            <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
+            Models
+          </ListItemButton>
+        </Tooltip>
 
       </>}
     />

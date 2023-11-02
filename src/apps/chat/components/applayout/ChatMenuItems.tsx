@@ -10,7 +10,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
+import { closeLayoutMenu } from '~/common/layout/store-applayout';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -32,32 +32,30 @@ export function ChatMenuItems(props: {
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
 
-  const closeContextMenu = () => setLayoutMenuAnchor(null);
-
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
   const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.onExportConversation(!disabled ? props.conversationId : null);
     shareTouch();
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onDuplicateConversation(props.conversationId);
   };
 
   const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onFlattenConversation(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 

@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { closeLayoutDrawerMenu } from '~/common/layout/store-applayout';
+import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -51,13 +51,13 @@ export function ChatDrawerItems(props: {
       setActiveConversationId(topNewConversationId);
     else
       createConversation();
-    closeLayoutDrawerMenu();
+    closeLayoutDrawer();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
     if (closeMenu)
-      closeLayoutDrawerMenu();
+      closeLayoutDrawer();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {

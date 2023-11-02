@@ -2,6 +2,8 @@ import * as React from 'react';
 import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 
+import type { DLLMId } from '~/modules/llms/store-llms';
+
 interface AppLayoutStore {
 
   // pluggable UI
@@ -12,6 +14,11 @@ interface AppLayoutStore {
   // anchors - for externally closeable menus
   drawerAnchor: HTMLElement | null;
   menuAnchor: HTMLElement | null;
+
+  // modals, which are on the AppLayout
+  preferencesTab: number; // 0: closed, 1..N: tab index
+  modelsSetupOpen: boolean;
+  llmOptionsId: DLLMId | null;
 
 }
 
@@ -24,6 +31,10 @@ const useAppLayoutStore = create<AppLayoutStore>()(
 
     drawerAnchor: null,
     menuAnchor: null,
+
+    preferencesTab: 0,
+    modelsSetupOpen: false,
+    llmOptionsId: null,
 
   }),
 );
@@ -49,14 +60,18 @@ export function useLayoutComponents() {
   }), shallow);
 }
 
-export function setLayoutDrawerAnchor(anchor: HTMLElement | null) {
-  useAppLayoutStore.setState({ drawerAnchor: anchor });
-}
+export const setLayoutDrawerAnchor = (anchor: HTMLElement | null) => useAppLayoutStore.setState({ drawerAnchor: anchor });
+export const closeLayoutDrawer = () => useAppLayoutStore.setState({ drawerAnchor: null });
 
-export function closeLayoutDrawerMenu() {
-  useAppLayoutStore.setState({ drawerAnchor: null });
-}
+export const setLayoutMenuAnchor = (anchor: HTMLElement) => useAppLayoutStore.setState({ menuAnchor: anchor });
+export const closeLayoutMenu = () => useAppLayoutStore.setState({ menuAnchor: null });
 
-export function setLayoutMenuAnchor(anchor: HTMLElement | null) {
-  useAppLayoutStore.setState({ menuAnchor: anchor });
-}
+export const useLayoutPreferencesTab = () => useAppLayoutStore(state => state.preferencesTab);
+export const openLayoutPreferences = (tab?: number) => useAppLayoutStore.setState({ preferencesTab: tab || 1 });
+export const closeLayoutPreferences = () => useAppLayoutStore.setState({ preferencesTab: 0 });
+
+export const useLayoutModelsSetup = (): [open: boolean, llmId: DLLMId | null] => useAppLayoutStore(state => [state.modelsSetupOpen, state.llmOptionsId], shallow);
+export const openLayoutModelsSetup = () => useAppLayoutStore.setState({ modelsSetupOpen: true });
+export const closeLayoutModelsSetup = () => useAppLayoutStore.setState({ modelsSetupOpen: false });
+export const openLayoutLLMOptions = (llmId: DLLMId) => useAppLayoutStore.setState({ llmOptionsId: llmId });
+export const closeLayoutLLMOptions = () => useAppLayoutStore.setState({ llmOptionsId: null });
