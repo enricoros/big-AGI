@@ -28,7 +28,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
     let response: Response;
     try {
       if (SERVER_DEBUG_WIRE)
-        console.log('-> tRPC curl', debugGenerateCurlCommand(method, url, headers, body as any));
+        console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
       response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     } catch (error: any) {
       console.error(`[${moduleName} Fetch Error]:`, error);
