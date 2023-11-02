@@ -49,7 +49,7 @@ export const openAIFunctionsSchema = z.array(z.object({
 }));
 
 
-export const listModelsInputSchema = z.object({
+const listModelsInputSchema = z.object({
   access: openAIAccessSchema,
   onlyChatModels: z.boolean().optional(),
 });
