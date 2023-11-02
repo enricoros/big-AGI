@@ -16,7 +16,7 @@ export interface IModelVendor<TSourceSetup = unknown, TLLMOptions = unknown, TAc
   readonly hasServerKey?: boolean;
 
   // components
-  readonly Icon: React.ComponentType;
+  readonly Icon: React.ComponentType | string;
   readonly SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
   readonly LLMOptionsComponent: React.ComponentType<{ llm: TDLLM }>;
 
