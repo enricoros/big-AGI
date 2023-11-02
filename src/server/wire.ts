@@ -65,3 +65,9 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST', url: string, he
 
   return curl;
 }
+
+export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
+  return new ReadableStream({
+    start: (controller) => controller.close(),
+  });
+}
