@@ -1,6 +1,7 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
@@ -13,6 +14,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
   localai: ModelVendorLocalAI,
+  ollama: ModelVendorOllama,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,

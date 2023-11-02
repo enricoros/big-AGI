@@ -24,6 +24,9 @@ declare namespace NodeJS {
     ANTHROPIC_API_KEY?: string;
     ANTHROPIC_API_HOST?: string;
 
+    // LLM: Ollama
+    OLLAMA_API_HOST?: string;
+
     // LLM: OpenRouter
     OPENROUTER_API_KEY: string;
 
@@ -52,6 +55,7 @@ declare namespace NodeJS {
     HAS_SERVER_KEY_ANTHROPIC?: boolean;
     HAS_SERVER_KEY_AZURE_OPENAI?: boolean;
     HAS_SERVER_KEY_ELEVENLABS: boolean;
+    HAS_SERVER_HOST_OLLAMA?: boolean;
     HAS_SERVER_KEY_OPENAI?: boolean;
     HAS_SERVER_KEY_OPENROUTER?: boolean;
     HAS_SERVER_KEY_PRODIA: boolean;

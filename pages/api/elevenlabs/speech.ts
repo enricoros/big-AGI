@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { safeErrorString, serverFetchOrThrow } from '~/server/wire';
+import { createEmptyReadableStream, safeErrorString, serverFetchOrThrow } from '~/server/wire';
 
-import { createEmptyReadableStream } from '~/modules/llms/transports/server/openai/openai.streaming';
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
 
 
