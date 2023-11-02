@@ -17,11 +17,12 @@ let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
 export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRecognition => {
   if (!cachedCapability) {
     const isApiAvailable = !!getSpeechRecognition();
-    const isDeviceNotSupported = isIPhone();
+    const isDeviceNotSupported = false;
     cachedCapability = {
       mayWork: isApiAvailable && !isDeviceNotSupported,
       isApiAvailable,
       isDeviceNotSupported,
+      warnings: isIPhone() ? ['Not tested on this browser/device.'] : [],
     };
   }
   return cachedCapability;

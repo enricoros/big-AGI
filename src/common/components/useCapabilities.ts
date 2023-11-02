@@ -16,6 +16,7 @@ export interface CapabilityBrowserSpeechRecognition {
   mayWork: boolean; // Is the SpeechRecognition API available in the user's browser and device
   isApiAvailable: boolean; // Is the SpeechRecognition API available in the user's browser
   isDeviceNotSupported: boolean; // Is the user's device not supported (e.g., iPhone)
+  warnings: string[];
 }
 
 export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './useSpeechRecognition';

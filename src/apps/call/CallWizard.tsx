@@ -152,9 +152,10 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
     <StatusCard
       icon={<MicIcon />}
       text={
-        (overriddenRecognition ? 'Speech recognition should be good to go.' : 'There might be a speech recognition issue.')
+        ((overriddenRecognition && !recognition.warnings.length) ? 'Speech recognition should be good to go.' : 'There might be a speech recognition issue.')
         + (recognition.isApiAvailable ? '' : ' Your browser does not support the speech recognition API.')
-        + (recognition.isDeviceNotSupported ? ' Your device does not provide this feature (IPhone?).' : '')
+        + (recognition.isDeviceNotSupported ? ' Your device does not provide this feature.' : '')
+        + (recognition.warnings.length ? ' ⚠️ ' + recognition.warnings.join(' · ') : '')
       }
       button={overriddenRecognition ? undefined : (
         <Button variant='outlined' onClick={handleOverrideRecognition} sx={{ mx: 1 }}>
