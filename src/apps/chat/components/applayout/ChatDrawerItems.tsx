@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
+import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -26,10 +26,8 @@ export function ChatDrawerItems(props: {
   const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const conversationIDs = useChatStore(state => state.conversations.map(
-    conversation => conversation.id,
-  ), shallow);
-  const { topNewConversationId, maxChatMessages, setActiveConversationId, createConversation, deleteConversation } = useChatStore(state => ({
+  const { conversationIDs, topNewConversationId, maxChatMessages, setActiveConversationId, createConversation, deleteConversation } = useChatStore(state => ({
+    conversationIDs: state.conversations.map(conversation => conversation.id),
     topNewConversationId: state.conversations.length ? state.conversations[0].messages.length === 0 ? state.conversations[0].id : null : null,
     maxChatMessages: state.conversations.reduce((longest, conversation) => Math.max(longest, conversation.messages.length), 0),
     setActiveConversationId: state.setActiveConversationId,
@@ -47,21 +45,19 @@ export function ChatDrawerItems(props: {
   const singleChat = totalConversations === 1;
   const softMaxReached = totalConversations >= 50;
 
-  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
-
   const handleNew = () => {
     // if the first in the stack is a new conversation, just activate it
     if (topNewConversationId)
       setActiveConversationId(topNewConversationId);
     else
       createConversation();
-    closeDrawerMenu();
+    closeLayoutDrawer();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
     if (closeMenu)
-      closeDrawerMenu();
+      closeLayoutDrawer();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {

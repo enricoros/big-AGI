@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Badge, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -10,12 +10,12 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { closeLayoutMenu } from '~/common/layout/store-applayout';
+import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ChatMenuItems(props: {
-  conversationId: string | null, isConversationEmpty: boolean,
+  conversationId: string | null, isConversationEmpty: boolean, hasConversations: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
   onDuplicateConversation: (conversationId: string) => void,
@@ -24,6 +24,7 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
+  const { novel: shareBadge, touch: shareTouch } = useUICounter('export-share');
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -31,31 +32,30 @@ export function ChatMenuItems(props: {
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
 
-  const closeContextMenu = () => setLayoutMenuAnchor(null);
-
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
   const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.onExportConversation(!disabled ? props.conversationId : null);
+    shareTouch();
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onDuplicateConversation(props.conversationId);
   };
 
   const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onFlattenConversation(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
@@ -107,11 +107,13 @@ export function ChatMenuItems(props: {
       </span>
     </MenuItem>
 
-    <MenuItem onClick={handleConversationExport}>
+    <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
-        <FileDownloadIcon />
+        <Badge color='danger' invisible={!shareBadge || !props.hasConversations}>
+          <FileDownloadIcon />
+        </Badge>
       </ListItemDecorator>
-      Export
+      Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>

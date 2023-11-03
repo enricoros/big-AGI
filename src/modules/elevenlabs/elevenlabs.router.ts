@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 
 export const speechInputSchema = z.object({

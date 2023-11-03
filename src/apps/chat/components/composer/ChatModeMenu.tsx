@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
-import { ChatModeId, ChatModeItems } from '../../AppChat';
-
 import { CloseableMenu } from '~/common/components/CloseableMenu';
+
+import { ChatModeId, ChatModeItems } from './store-composer';
 
 
 export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) =>

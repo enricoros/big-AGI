@@ -7,12 +7,12 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import { BringTheLove, DiscordIcon } from '~/common/layout/AppBarSupportItem';
 import { Brand } from '~/common/brand';
 
-import { setLayoutMenuAnchor } from './store-applayout';
+import { closeLayoutMenu } from './store-applayout';
 
 
 // routes for the quick switcher menu item
 
-type ContainedAppType = 'chat' | /*'data' |*/ 'news' /*| 'share'*/;
+type ContainedAppType = 'chat' | /*'data' |*/ 'news';
 
 const AppItems: ContainedAppType[] = ['chat', 'news'];
 
@@ -24,10 +24,6 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
   // 'data': {
   //   name: 'Data',
   //   route: '/data',
-  // },
-  // 'share': {
-  //   name: 'Share',
-  //   route: '/share',
   // },
   'news': {
     name: 'News',
@@ -46,7 +42,7 @@ export function AppBarSwitcherItem() {
   // switcher
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
-      setLayoutMenuAnchor(null);
+      closeLayoutMenu();
       routerPush(AppRouteMap[app].route).then(() => null);
     }
   };

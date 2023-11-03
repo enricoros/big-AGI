@@ -9,9 +9,10 @@ import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { Link } from '~/common/components/Link';
+import { closeLayoutPreferences } from '~/common/layout/store-applayout';
 import { hideOnMobile, settingsGap } from '~/common/theme';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore, useUIStateStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 // configuration
@@ -23,7 +24,7 @@ export function UISettings() {
   const {
     centerMode, setCenterMode,
     doubleClickToEdit, setDoubleClickToEdit,
-    enterToSend, setEnterToSend,
+    enterIsNewline, setEnterIsNewline,
     experimentalLabs, setExperimentalLabs,
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
@@ -31,17 +32,16 @@ export function UISettings() {
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
-    enterToSend: state.enterToSend, setEnterToSend: state.setEnterToSend,
+    enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
     experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
-  const { closeSettings } = useUIStateStore(state => ({ closeSettings: state.closeSettings }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
 
-  const handleEnterToSendChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterToSend(event.target.checked);
+  const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
 
   const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
@@ -72,10 +72,10 @@ export function UISettings() {
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
           <FormLabel>Enter to send</FormLabel>
-          <FormHelperText>{enterToSend ? <>Sends message<TelegramIcon /></> : 'New line'}</FormHelperText>
+          <FormHelperText>{enterIsNewline ? 'New line' : <>Sends message<TelegramIcon /></>}</FormHelperText>
         </Box>
-        <Switch checked={enterToSend} onChange={handleEnterToSendChange}
-                endDecorator={enterToSend ? 'On' : 'Off'}
+        <Switch checked={!enterIsNewline} onChange={handleEnterIsNewlineChange}
+                endDecorator={enterIsNewline ? 'Off' : 'On'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
@@ -123,7 +123,7 @@ export function UISettings() {
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
         <Box>
-          <FormLabel component={Link} href='/labs' onClick={closeSettings}>
+          <FormLabel component={Link} href='/labs' onClick={closeLayoutPreferences}>
             <u>Experiments</u>
             <InfoOutlinedIcon sx={{ mx: 0.5 }} />
           </FormLabel>

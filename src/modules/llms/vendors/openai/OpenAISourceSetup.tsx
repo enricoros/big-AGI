@@ -1,45 +1,52 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Switch } from '@mui/joy';
-import SyncIcon from '@mui/icons-material/Sync';
+import { Alert, Box } from '@mui/joy';
 
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/common/util/trpc.client';
 
 import { Brand } from '~/common/brand';
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
-import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { settingsGap } from '~/common/theme';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { hasServerKeyOpenAI, isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
+
+import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
 import { openAIModelToModelDescription } from './openai.data';
+
+
+// avoid repeating it all over
+const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
 
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
-  const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const advanced = useToggleableBoolean();
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { heliKey, oaiHost, oaiKey, oaiOrg, moderationCheck },
-  } = useSourceSetup(props.sourceId, ModelVendorOpenAI.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorOpenAI.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
-  const needsUserKey = !hasServerKeyOpenAI;
+  // derived state
+  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
+
+  const needsUserKey = !ModelVendorOpenAI.hasServerKey;
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access: { oaiKey, oaiHost, oaiOrg, heliKey, moderationCheck },
-    filterGpt: true,
+    access, onlyChatModels: true,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => {
       const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
       useModelsStore.getState().addLLMs(llms);
@@ -62,90 +69,47 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-...'
     />
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Organization ID
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='Optional, for enterprise users'
-        value={oaiOrg} onChange={event => updateSetup({ oaiOrg: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <FormTextField
+      title='Organization ID'
+      description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
+      placeholder='Optional, for enterprise users'
+      value={oaiOrg}
+      onChange={text => updateSetup({ oaiOrg: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          API Host
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, ...
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='e.g., oai.hconeai.com'
-        value={oaiHost} onChange={event => updateSetup({ oaiHost: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <FormTextField
+      title='API Host'
+      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
+      placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
+      value={oaiHost}
+      onChange={text => updateSetup({ oaiHost: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Helicone Key
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link>
-        </FormHelperText>
-      </Box>
-      <Input
-        variant='outlined' placeholder='sk-...'
-        value={heliKey} onChange={event => updateSetup({ heliKey: event.target.value })}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {advanced.on && <FormTextField
+      title='Helicone Key'
+      description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
+      placeholder='sk-...'
+      value={heliKey}
+      onChange={text => updateSetup({ heliKey: text })}
+    />}
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          Moderation
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
-          {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
-        </FormHelperText>
-      </Box>
-      <Switch
-        checked={moderationCheck}
-        onChange={event => updateSetup({ moderationCheck: event.target.checked })}
-        endDecorator={moderationCheck ? 'Enabled' : 'Off'}
-        sx={{ flexGrow: 1 }}
-      />
-    </FormControl>}
+    {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
+      Advanced: You set the Helicone key. {!oaiHost?.includes(HELICONE_OPENAI_HOST)
+      ? `But you also need to set the OpenAI Host to ${HELICONE_OPENAI_HOST} to use Helicone.`
+      : 'OpenAI traffic will now be routed through Helicone.'}
+    </Alert>}
 
+    {advanced.on && <FormSwitchControl
+      title='Moderation'
+      description={<>
+        <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
+        {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
+      </>}
+      value={moderationCheck}
+      onChange={on => updateSetup({ moderationCheck: on })}
+    />}
 
-    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
-
-      <FormLabel onClick={() => setShowAdvanced(!showAdvanced)} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>
-        {showAdvanced ? 'Hide Advanced' : 'Advanced'}
-      </FormLabel>
-
-      <Button
-        variant='solid' color={isError ? 'warning' : 'primary'}
-        disabled={!shallFetchSucceed || isFetching}
-        endDecorator={<SyncIcon />}
-        onClick={() => refetch()}
-        sx={{ minWidth: 120, ml: 'auto' }}
-      >
-        Models
-      </Button>
-
-    </Box>
+    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 
@@ -153,7 +117,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<SourceSetupOpenAI, LLMOptionsOpenAI> {
   const { label, created, updated, description, contextWindow: contextTokens, hidden } = openAIModelToModelDescription(model.id, model.created);
   return {
     id: `${source.id}-${model.id}`,
@@ -177,7 +141,7 @@ function openAIModelToDLLM(model: { id: string, created: number }, source: DMode
   };
 }
 
-export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
   return {
     id: `${source.id}-${model.id}`,
     label: model.label,

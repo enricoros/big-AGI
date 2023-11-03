@@ -38,23 +38,19 @@ export const theme = extendTheme({
     light: {
       palette: {
         neutral: {
-          plainColor: 'var(--joy-palette-neutral-800)',     // increase contrast a bit - Menu text
-          solidBg: 'var(--joy-palette-neutral-700)',        // AppBar: background (#32383E)
-          solidHoverBg: 'var(--joy-palette-neutral-800)',   // AppBar: buttons background on hover
+          plainColor: 'var(--joy-palette-neutral-800)',     // [700 -> 800] Dropdown menu: increase text contrast a bit
+          solidBg: 'var(--joy-palette-neutral-700)',        // [500 -> 700] AppBar background & Button[solid]
+          solidHoverBg: 'var(--joy-palette-neutral-800)',   // [600 -> 800] Buttons[solid]:hover
         },
+        // primary [800] > secondary [700 -> 800] > tertiary [600] > icon [500 -> 700]
         text: {
           icon: 'var(--joy-palette-neutral-700)',           // <IconButton color='neutral' /> icon color
           secondary: 'var(--joy-palette-neutral-800)',      // increase contrast a bit
-          // tertiary: 'var(--joy-palette-neutral-700)',
         },
+        // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300] > body [white -> 400]
         background: {
-          // popup | surface > level1 > level2 > level3 > body
-          body: 'var(--joy-palette-neutral-400, #9FA6AD)',  // Body: background
-          popup: '#fff',
+          body: 'var(--joy-palette-neutral-400, #9FA6AD)',  // background to stand back after all levels
         },
-        // common: {
-        //   white: '#fff',
-        // },
       },
     },
     dark: {
@@ -73,58 +69,109 @@ export const theme = extendTheme({
       },
     },
   },
+  components: {
+    /**
+     * IconButton
+     *  - enlarge 'md' a bit: https://github.com/mui/material-ui/commit/7f81475ea148a416ec8fab252120ce6567c62897#diff-45dca083057933d78377b59e031146804cfedb68fe1514955bc8a5b3c38d7c44
+     */
+    JoyIconButton: {
+      styleOverrides: {
+        root: ({ ownerState }) => ({
+          ...(ownerState.instanceSize && {
+            '--IconButton-size': { sm: '2rem', md: '2.5rem', lg: '3rem' }[ownerState.instanceSize],
+          }),
+          ...(ownerState.size === 'md' && {
+            '--Icon-fontSize': 'calc(var(--IconButton-size, 2.5rem) / 1.667)',
+            '--CircularProgress-size': '24px',
+            '--CircularProgress-thickness': '3px',
+            minWidth: 'var(--IconButton-size, 2.5rem)',
+            minHeight: 'var(--IconButton-size, 2.5rem)',
+          }),
+        }),
+      },
+    },
+
+    /**
+     * Input
+     *  - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
+     */
+    JoyInput: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+        },
+      },
+    },
+
+    /**
+     * Select
+     * - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
+     * */
+    JoySelect: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+        },
+      },
+    },
+
+    /**
+     * Switch: increase the size of the thumb, to a default iconButton
+     * NOTE: do not use anything else than 'md' size
+     */
+    JoySwitch: {
+      styleOverrides: {
+        root: ({ ownerState }) => ({
+          ...(ownerState.size === 'md' && {
+            '--Switch-trackWidth': '40px',
+            '--Switch-trackHeight': '24px',
+            '--Switch-thumbSize': '18px',
+          }),
+        }),
+      },
+    },
+  },
 });
 
 export const bodyFontClassName = inter.className;
 
 export const cssRainbowColorKeyframes = keyframes`
-  100%, 0% {
-    color: rgb(255, 0, 0);
-  }
-  8% {
-    color: rgb(204, 102, 0);
-  }
-  16% {
-    color: rgb(128, 128, 0);
-  }
-  25% {
-    color: rgb(77, 153, 0);
-  }
-  33% {
-    color: rgb(0, 179, 0);
-  }
-  41% {
-    color: rgb(0, 153, 82);
-  }
-  50% {
-    color: rgb(0, 128, 128);
-  }
-  58% {
-    color: rgb(0, 102, 204);
-  }
-  66% {
-    color: rgb(0, 0, 255);
-  }
-  75% {
-    color: rgb(127, 0, 255);
-  }
-  83% {
-    color: rgb(153, 0, 153);
-  }
-  91% {
-    color: rgb(204, 0, 102);
-  }`;
-
-export const cssScaleKeyframes = keyframes`
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }`;
+    100%, 0% {
+        color: rgb(255, 0, 0);
+    }
+    8% {
+        color: rgb(204, 102, 0);
+    }
+    16% {
+        color: rgb(128, 128, 0);
+    }
+    25% {
+        color: rgb(77, 153, 0);
+    }
+    33% {
+        color: rgb(0, 179, 0);
+    }
+    41% {
+        color: rgb(0, 153, 82);
+    }
+    50% {
+        color: rgb(0, 128, 128);
+    }
+    58% {
+        color: rgb(0, 102, 204);
+    }
+    66% {
+        color: rgb(0, 0, 255);
+    }
+    75% {
+        color: rgb(127, 0, 255);
+    }
+    83% {
+        color: rgb(153, 0, 153);
+    }
+    91% {
+        color: rgb(204, 0, 102);
+    }`;
 
 
 // Emotion Cache (with insertion point on the SSR pass)

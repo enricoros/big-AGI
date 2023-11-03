@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Tooltip } from '@mui/joy';
 
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { settingsCol1Width, settingsGap } from '~/common/theme';
 
@@ -35,7 +35,7 @@ export function ElevenlabsSettings() {
       {/*</FormHelperText>*/}
 
       {/* LanguageSelect: moved from the UI settings (where it logically belongs), just to group things better from an UX perspective */}
-      <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
             <FormLabel>
@@ -56,7 +56,7 @@ export function ElevenlabsSettings() {
         required={requiresKey} isError={!isValidKey}
       />
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <FormLabel sx={{ minWidth: settingsCol1Width }}>
           Assistant Voice
         </FormLabel>

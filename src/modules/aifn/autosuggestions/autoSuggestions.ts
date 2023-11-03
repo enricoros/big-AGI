@@ -4,7 +4,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { useChatStore } from '~/common/state/store-chats';
 
 
-const suggestUserFollowUpFn: VChatFunctionIn = {
+/*const suggestUserFollowUpFn: VChatFunctionIn = {
   name: 'suggest_user_prompt',
   description: 'Surprises the user with a thought-provoking question/prompt/contrarian idea',
   parameters: {
@@ -21,7 +21,7 @@ const suggestUserFollowUpFn: VChatFunctionIn = {
     },
     required: ['question_as_user', 'title'],
   },
-};
+};*/
 
 const suggestPlantUMLFn: VChatFunctionIn = {
   name: 'draw_plantuml_diagram',
@@ -35,7 +35,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
       },
       code: {
         type: 'string',
-        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap, or an empty string. Quotations should be used, external references and spaces in participants/actors should be avoided.',
+        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap, or an empty string. Use quotation marks for proper escaping, avoid external references and avoid unescaped spaces in participants/actors.',
       },
     },
     required: ['type', 'code'],

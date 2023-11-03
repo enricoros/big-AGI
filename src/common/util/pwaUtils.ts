@@ -9,6 +9,16 @@ export function isPwa(): boolean {
   return false;
 }
 
+export function webSharePresent(): boolean {
+  return typeof navigator !== 'undefined' && !!navigator.share;
+}
+
+export function webShare(title: string, text: string, url: string, onShared?: () => void): void {
+  if (typeof navigator !== 'undefined' && navigator.share)
+    navigator.share({ title, text, url })
+      .then(() => onShared?.())
+      .catch((error) => console.log('Error sharing', error));
+}
 
 /**
  * An immediate alternative to useMediaQuery, for cases where we can't use CSS and we don't need to listen to changes

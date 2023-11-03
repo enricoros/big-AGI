@@ -6,7 +6,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import { apiQuery } from '~/modules/trpc/trpc.client';
+import { apiQuery } from '~/common/util/trpc.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { copyToClipboard } from '~/common/util/copyToClipboard';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, List } from '@mui/joy';
+import { Box, List, Sheet, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { useChatLLM } from '~/modules/llms/store-llms';
@@ -15,20 +15,53 @@ import { PersonaSelector } from './persona-selector/PersonaSelector';
 
 
 /**
+ * [Experimental] A panel with tools for the chat
+ */
+function ToolsPanel(props: { showDiff: boolean, setShowDiff: (showDiff: boolean) => void }) {
+  return (
+    <Sheet
+      variant='outlined' invertedColors
+      sx={{
+        position: 'fixed', top: 64, left: 8, zIndex: 101,
+        boxShadow: 'md', borderRadius: '100px',
+        p: 2,
+        display: 'flex', flexFlow: 'row wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2,
+      }}
+    >
+      <Typography level='title-md'>
+        🪛
+      </Typography>
+      <Tooltip title='Highlight differences'>
+        <Switch
+          checked={props.showDiff} onChange={() => props.setShowDiff(!props.showDiff)}
+          startDecorator={<Typography level='title-md'>Diff</Typography>}
+        />
+      </Tooltip>
+    </Sheet>
+  );
+}
+
+
+/**
  * A list of ChatMessages
  */
 export function ChatMessageList(props: {
   conversationId: string | null,
+  showTools?: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onExecuteChatHistory: (conversationId: string, history: DMessage[]) => void,
   onImagineFromText: (conversationId: string, userText: string) => void,
   sx?: SxProps
 }) {
   // state
+  const [diffing, setDiffing] = React.useState<boolean>(false);
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
-  const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
+  const { experimentalLabs, showSystemMessages } = useUIPreferencesStore(state => ({
+    experimentalLabs: state.experimentalLabs,
+    showSystemMessages: state.showSystemMessages,
+  }));
   const { messages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -109,6 +142,24 @@ export function ChatMessageList(props: {
   //   },
   // };
 
+
+  // pass the diff text to most recent assistant message, once done
+  const showTextTools = !!props.showTools || experimentalLabs;
+  let diffMessage: DMessage | undefined;
+  let diffText: string | undefined;
+  if (diffing && showTextTools) {
+    const [msgB, msgA] = filteredMessages.filter(m => m.role === 'assistant');
+    if (!msgB.typing && msgB?.text && msgA?.text) {
+      const textA = msgA.text, textB = msgB.text;
+      const lenA = textA.length, lenB = textB.length;
+      if (lenA > 80 && lenB > 80 && lenA > lenB / 2 && lenB > lenA / 2) {
+        diffMessage = msgB;
+        diffText = textA;
+      }
+    }
+  }
+
+
   return (
     <List sx={{
       p: 0, ...(props.sx || {}),
@@ -130,7 +181,7 @@ export function ChatMessageList(props: {
         ) : (
 
           <ChatMessage
-            key={'msg-' + message.id} message={message}
+            key={'msg-' + message.id} message={message} diffText={message === diffMessage ? diffText : undefined}
             isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
@@ -140,6 +191,8 @@ export function ChatMessageList(props: {
 
         ),
       )}
+
+      {showTextTools && <ToolsPanel showDiff={diffing} setShowDiff={setDiffing} />}
 
       {/* Header at the bottom because of 'row-reverse' */}
       {props.isMessageSelectionMode && (

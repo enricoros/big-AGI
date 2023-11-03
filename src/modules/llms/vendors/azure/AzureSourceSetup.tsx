@@ -1,31 +1,32 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, FormControl, FormLabel, Input, Typography } from '@mui/joy';
-import SyncIcon from '@mui/icons-material/Sync';
+import { Box } from '@mui/joy';
 
-import { apiQuery } from '~/modules/trpc/trpc.client';
-
-import { FormInputKey } from '~/common/components/FormInputKey';
+import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormTextField } from '~/common/components/forms/FormTextField';
+import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { apiQuery } from '~/common/util/trpc.client';
 import { asValidURL } from '~/common/util/urlUtils';
 import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
-import { hasServerKeyAzure, isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
+import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 
 
 export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const {
-    source, sourceLLMs, updateSetup,
-    normSetup: { azureEndpoint, azureKey },
-  } = useSourceSetup(props.sourceId, ModelVendorAzure.normalizeSetup);
+  const { source, sourceHasLLMs, access, updateSetup } =
+    useSourceSetup(props.sourceId, ModelVendorAzure.getAccess);
 
-  const hasModels = !!sourceLLMs.length;
-  const needsUserKey = !hasServerKeyAzure;
+  // derived state
+  const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
+
+  const needsUserKey = !ModelVendorAzure.hasServerKey;
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
   const hostValid = !!asValidURL(azureEndpoint);
@@ -33,28 +34,24 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = azureKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmAzure.listModels.useQuery({
-    access: { azureEndpoint, azureKey },
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModelsAzure.useQuery({
+    access,
   }, {
-    enabled: !hasModels && shallFetchSucceed,
+    enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
-    <FormControl>
-      <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1, alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <FormLabel>Azure Endpoint</FormLabel>
-        <Link level='body-sm' href='https://oai.azure.com/portal/deployment' target='_blank'>deployments</Link>
-      </Box>
-      <Input
-        variant='outlined'
-        value={azureEndpoint} onChange={event => updateSetup({ azureEndpoint: event.target.value })}
-        placeholder='https://your-resource-name.openai.azure.com/'
-        error={hostError}
-      />
-    </FormControl>
+    <FormTextField
+      title='Azure Endpoint'
+      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>configuration</Link>}
+      placeholder='https://your-resource-name.openai.azure.com/'
+      isError={hostError}
+      value={azureEndpoint}
+      onChange={text => updateSetup({ azureEndpoint: text })}
+    />
 
     <FormInputKey
       id='azure-key' label='Azure Key'
@@ -67,19 +64,9 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='...'
     />
 
-    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
-      <Button
-        variant='solid' color={isError ? 'warning' : 'primary'}
-        disabled={!shallFetchSucceed || isFetching}
-        endDecorator={<SyncIcon />}
-        onClick={() => refetch()}
-        sx={{ minWidth: 120, ml: 'auto' }}
-      >
-        Models
-      </Button>
-    </Box>
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} />
 
-    {isError && <Alert variant='soft' color='warning' sx={{ mt: 1 }}><Typography>Issue: {error?.message || error?.toString() || 'unknown'}</Typography></Alert>}
+    {isError && <InlineError error={error} />}
 
   </Box>;
 }

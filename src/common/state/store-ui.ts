@@ -1,44 +1,43 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { DLLMId } from '~/modules/llms/store-llms';
 
+// UI Counters
 
-// UI State - not persisted
+interface UICountersStore {
 
-interface UIStateStore {
-
-  settingsOpenTab: number; // 0: closed, 1..N: tab index
-  openSettings: (tab?: number) => void;
-  closeSettings: () => void;
-
-  modelsSetupOpen: boolean;
-  openModelsSetup: () => void;
-  closeModelsSetup: () => void;
-
-  llmOptionsId: DLLMId | null;
-  openLLMOptions: (llmId: DLLMId) => void;
-  closeLLMOptions: () => void;
+  actionCounters: Record<string, number>;
+  incrementActionCounter: (key: string) => void;
+  clearActionCounter: (key: string) => void;
+  clearAllActionCounters: () => void;
 
 }
 
-export const useUIStateStore = create<UIStateStore>()(
-  (set) => ({
+const useUICountersStore = create<UICountersStore>()(
+  persist(
+    (set) => ({
 
-    settingsOpenTab: 0,
-    openSettings: (tab?: number) => set({ settingsOpenTab: tab || 1 }),
-    closeSettings: () => set({ settingsOpenTab: 0 }),
+      actionCounters: {},
+      incrementActionCounter: (key: string) => set(state => ({
+        actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
+      })),
+      clearActionCounter: (key: string) => set(state => ({
+        actionCounters: { ...state.actionCounters, [key]: 0 },
+      })),
+      clearAllActionCounters: () => set({ actionCounters: {} }),
 
-    modelsSetupOpen: false,
-    openModelsSetup: () => set({ modelsSetupOpen: true }),
-    closeModelsSetup: () => set({ modelsSetupOpen: false }),
-
-    llmOptionsId: null,
-    openLLMOptions: (llmId: DLLMId) => set({ llmOptionsId: llmId }),
-    closeLLMOptions: () => set({ llmOptionsId: null }),
-
-  }),
+    }),
+    {
+      name: 'app-ui-counters',
+    }),
 );
+
+type UiCounterKey = 'export-share' | 'share-chat-link' | 'call-wizard';
+
+export function useUICounter(key: UiCounterKey) {
+  const value = useUICountersStore(state => state.actionCounters[key] || 0);
+  return { value, novel: !value, touch: () => useUICountersStore.getState().incrementActionCounter(key) };
+}
 
 
 // UI Preferences
@@ -54,8 +53,8 @@ interface UIPreferencesStore {
   doubleClickToEdit: boolean;
   setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
-  enterToSend: boolean;
-  setEnterToSend: (enterToSend: boolean) => void;
+  enterIsNewline: boolean;
+  setEnterIsNewline: (enterIsNewline: boolean) => void;
 
   experimentalLabs: boolean;
   setExperimentalLabs: (experimentalLabs: boolean) => void;
@@ -87,13 +86,13 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       doubleClickToEdit: true,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
-      enterToSend: true,
-      setEnterToSend: (enterToSend: boolean) => set({ enterToSend }),
+      enterIsNewline: false,
+      setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
 
       experimentalLabs: false,
       setExperimentalLabs: (experimentalLabs: boolean) => set({ experimentalLabs }),
 
-      renderMarkdown: false,
+      renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
       showPurposeFinder: false,
@@ -108,5 +107,18 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
     }),
     {
       name: 'app-ui',
-    }),
+
+      /* versioning:
+       * 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+       */
+      version: 1,
+
+      migrate: (state: any, fromVersion: number): UIPreferencesStore => {
+        // 0 -> 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+        if (state && fromVersion === 0)
+          state.enterIsNewline = state['enterToSend'] === false;
+        return state;
+      },
+    },
+  ),
 );

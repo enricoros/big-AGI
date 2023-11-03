@@ -5,7 +5,7 @@ ENV PATH $PATH:/usr/src/app/node_modules/.bin
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY package*.json prisma/ ./
 
 # CI and release builds should use npm ci to fully respect the lockfile.
 # Local development may use npm install for opportunistic package updates.

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 
 import { Search } from './search.types';
 

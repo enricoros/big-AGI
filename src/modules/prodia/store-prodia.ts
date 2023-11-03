@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
+// These work good for SDXL models, from: https://docs.prodia.com/reference/sdxl-generate
+export const HARDCODED_PRODIA_RESOLUTIONS: string[] = ['1024x1024', '1152x896', '1216x832', '1344x768', '1536x640', '640x1536', '768x1344', '832x1216'];
+export const DEFAULT_PRODIA_RESOLUTION = HARDCODED_PRODIA_RESOLUTIONS[0];
+
+
 interface ProdiaStore {
 
   // Prodia Image Generation settings
@@ -11,6 +16,9 @@ interface ProdiaStore {
 
   prodiaModelId: string;
   setProdiaModelId: (modelId: string) => void;
+
+  prodiaModelGen: 'sd' | 'sdxl';
+  setProdiaModelGen: (modelGen: 'sd' | 'sdxl') => void;
 
   prodiaNegativePrompt: string;
   setProdiaNegativePrompt: (negativePrompt: string) => void;
@@ -26,6 +34,9 @@ interface ProdiaStore {
 
   prodiaUpscale: boolean;
   setProdiaUpscale: (upscale: boolean) => void;
+
+  prodiaResolution: string,
+  setProdiaResolution: (resolution: string) => void;
 
   prodiaSeed: number | null;
   setProdiaSeed: (seed: string) => void;
@@ -44,6 +55,9 @@ export const useProdiaStore = create<ProdiaStore>()(
       prodiaModelId: '',
       setProdiaModelId: (prodiaModelId: string) => set({ prodiaModelId }),
 
+      prodiaModelGen: 'sd',
+      setProdiaModelGen: (prodiaModelGen: 'sd' | 'sdxl') => set({ prodiaModelGen }),
+
       prodiaNegativePrompt: '',
       setProdiaNegativePrompt: (prodiaNegativePrompt: string) => set({ prodiaNegativePrompt }),
 
@@ -59,11 +73,19 @@ export const useProdiaStore = create<ProdiaStore>()(
       prodiaUpscale: false,
       setProdiaUpscale: (prodiaUpscale: boolean) => set({ prodiaUpscale }),
 
+      prodiaResolution: DEFAULT_PRODIA_RESOLUTION,
+      setProdiaResolution: (prodiaResolution: string) => set({ prodiaResolution }),
+
       prodiaSeed: null,
       setProdiaSeed: (prodiaSeed: string) => set({ prodiaSeed: (prodiaSeed === '' || prodiaSeed === '-1') ? null : parseInt(prodiaSeed) ?? null }),
 
     }),
     {
       name: 'app-module-prodia',
-    }),
+      /* Version history:
+       * 2: [2023-10-27] Add SDXL support (prodiaModelGen, prodiaResolution)
+       */
+      version: 2,
+    },
+  ),
 );

@@ -15,9 +15,11 @@ import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
+import { ChatModeId } from './components/composer/store-composer';
 import { CmdAddRoleMessage, extractCommands } from './commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
+
 import { TradeConfig, TradeModal } from './trade/TradeModal';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
@@ -26,33 +28,10 @@ import { runReActUpdatingState } from './editors/react-tangent';
 
 const SPECIAL_ID_ALL_CHATS = 'all-chats';
 
-// definition of chat modes
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'react' | 'write-user';
-export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
-  'immediate': {
-    label: 'Chat',
-    description: 'AI-powered responses',
-  },
-  'immediate-follow-up': {
-    label: 'Augmented Chat',
-    description: 'Chat with follow-up questions',
-    experimental: true,
-  },
-  'react': {
-    label: 'Reason+Act',
-    description: 'Answer your questions with ReAct and search',
-  },
-  'write-user': {
-    label: 'Write',
-    description: 'No AI responses',
-  },
-};
-
 
 export function AppChat() {
 
   // state
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
@@ -60,12 +39,14 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, hasAnyContent, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
+    const isConversationEmpty = conversation ? !conversation.messages.length : true;
+    const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
     return {
       activeConversationId: state.activeConversationId,
-      isConversationEmpty: conversation ? !conversation.messages.length : true,
-      // conversationsCount: state.conversations.length,
+      isConversationEmpty,
+      hasAnyContent,
       duplicateConversation: state.duplicateConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
@@ -77,15 +58,14 @@ export function AppChat() {
 
   const handleExecuteConversation = async (chatModeId: ChatModeId, conversationId: string, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();
-    if (!conversationId || !chatLLMId) return;
+    if (!chatModeId || !conversationId || !chatLLMId) return;
 
-    // /command: overrides the chat mode
+    // "/command ...": overrides the chat mode
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
     if (lastMessage?.role === 'user') {
       const pieces = extractCommands(lastMessage.text);
       if (pieces.length == 2 && pieces[0].type === 'cmd' && pieces[1].type === 'text') {
-        const command = pieces[0].value;
-        const prompt = pieces[1].value;
+        const [command, prompt] = [pieces[0].value, pieces[1].value];
         if (CmdRunProdia.includes(command)) {
           setMessages(conversationId, history);
           return await runImageGenerationUpdatingState(conversationId, prompt);
@@ -104,46 +84,54 @@ export function AppChat() {
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (chatModeId && chatLLMId && systemPurposeId) {
+    if (chatLLMId && systemPurposeId) {
       switch (chatModeId) {
         case 'immediate':
         case 'immediate-follow-up':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
+        case 'write-user':
+          return setMessages(conversationId, history);
         case 'react':
           if (!lastMessage?.text)
             break;
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
-        case 'write-user':
-          setMessages(conversationId, history);
-          return;
+        case 'draw-imagine':
+        case 'draw-imagine-plus':
+          if (!lastMessage?.text)
+            break;
+          const imagePrompt = chatModeId == 'draw-imagine-plus'
+            ? await imaginePromptFromText(lastMessage.text) || 'An error sign.'
+            : lastMessage.text;
+          setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
+            ...message,
+            text: `${CmdRunProdia[0]} ${imagePrompt}`,
+          }));
+          return await runImageGenerationUpdatingState(conversationId, imagePrompt);
       }
     }
 
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
-    console.log('handleExecuteConversation: issue running', conversationId, lastMessage);
+    console.log('handleExecuteConversation: issue running', chatModeId, conversationId, lastMessage);
     setMessages(conversationId, history);
   };
 
   const _findConversation = (conversationId: string) =>
     conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
 
-  const handleSendUserMessage = async (conversationId: string, userText: string) => {
-    const conversation = _findConversation(conversationId);
-    if (conversation)
-      return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
-  };
-
   const handleExecuteChatHistory = async (conversationId: string, history: DMessage[]) =>
-    await handleExecuteConversation(chatModeId, conversationId, history);
+    await handleExecuteConversation('immediate', conversationId, history);
 
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
-    if (conversation) {
-      const prompt = await imaginePromptFromText(messageText);
-      if (prompt)
-        return await handleExecuteConversation('immediate', conversationId, [...conversation.messages, createDMessage('user', `${CmdRunProdia[0]} ${prompt}`)]);
-    }
+    if (conversation)
+      return await handleExecuteConversation('draw-imagine-plus', conversationId, [...conversation.messages, createDMessage('user', messageText)]);
+  };
+
+  const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: string, userText: string) => {
+    const conversation = _findConversation(conversationId);
+    if (conversation)
+      return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
 
 
@@ -195,14 +183,14 @@ export function AppChat() {
 
   const menuItems = React.useMemo(() =>
       <ChatMenuItems
-        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty}
+        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty} hasConversations={hasAnyContent}
         isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
         onClearConversation={handleClearConversation}
         onDuplicateConversation={duplicateConversation}
         onExportConversation={handleExportConversation}
         onFlattenConversation={handleFlattenConversation}
       />,
-    [activeConversationId, duplicateConversation, isConversationEmpty, isMessageSelectionMode],
+    [activeConversationId, duplicateConversation, hasAnyContent, isConversationEmpty, isMessageSelectionMode],
   );
 
   useLayoutPluggable(centerItems, drawerItems, menuItems);
@@ -232,9 +220,8 @@ export function AppChat() {
 
     <Composer
       conversationId={activeConversationId} messageId={null}
-      chatModeId={chatModeId} setChatModeId={setChatModeId}
       isDeveloperMode={systemPurposeId === 'Developer'}
-      onSendMessage={handleSendUserMessage}
+      onNewMessage={handleComposerNewMessage}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
         backgroundColor: 'background.surface',

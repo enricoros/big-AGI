@@ -1,10 +1,13 @@
+import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
+import { SERVER_DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+
 import { AnthropicWire } from './anthropic.wiretypes';
 import { OpenAI } from './openai.wiretypes';
-import { anthropicAccess, anthropicCompletionRequest } from './anthropic.router';
-import { openAIChatStreamSchema, openAIAccess, openAIChatCompletionPayload } from './openai.router';
+import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic.router';
+import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
 
 
 /**
@@ -29,8 +32,13 @@ function parseOpenAIStream(): AIStreamParser {
     if (json.error)
       return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
 
-    if (json.choices.length !== 1)
+    if (json.choices.length !== 1) {
+      // Azure: we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
+      if (json.id === '' && json.object === '' && json.model === '')
+        return { text: '', close: false };
+      console.log('/api/llms/stream: OpenAI stream issue (no choices):', json);
       throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
+    }
 
     const index = json.choices[0].index;
     if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
@@ -93,8 +101,19 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
 
   return new TransformStream({
     start: async (controller): Promise<void> => {
+
+      // only used for debugging
+      let debugLastMs: number | null = null;
+
       eventSourceParser = createEventsourceParser(
         (event: ParsedEvent | ReconnectInterval) => {
+
+          if (SERVER_DEBUG_WIRE) {
+            const nowMs = Date.now();
+            const elapsedMs = debugLastMs ? nowMs - debugLastMs : 0;
+            debugLastMs = nowMs;
+            console.log(`<- SSE (${elapsedMs} ms):`, event);
+          }
 
           // ignore 'reconnect-interval' and events with no data
           if (event.type !== 'event' || !('data' in event))
@@ -128,10 +147,10 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
   });
 }
 
-export async function throwResponseNotOk(response: Response) {
+export async function throwIfResponseNotOk(response: Response) {
   if (!response.ok) {
     const errorPayload: object | null = await response.json().catch(() => null);
-    throw new Error(`${response.status} · ${response.statusText}${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
+    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
   }
 }
 
@@ -142,32 +161,44 @@ export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
 }
 
 
+const chatStreamInputSchema = z.object({
+  access: z.union([openAIAccessSchema, anthropicAccessSchema]),
+  model: openAIModelSchema, history: openAIHistorySchema,
+});
+export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
+
+
 export async function openaiStreamingResponse(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { vendorId, access, model, history } = openAIChatStreamSchema.parse(await req.json());
+  const { access, model, history } = chatStreamInputSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
+  let headersUrl: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
   let upstreamResponse: Response;
   let vendorStreamParser: AIStreamParser;
   try {
 
     // prepare the API request data
-    let headersUrl: { headers: HeadersInit, url: string };
     let body: object;
-    switch (vendorId) {
+    switch (access.dialect) {
       case 'anthropic':
-        headersUrl = anthropicAccess(access as any, '/v1/complete');
-        body = anthropicCompletionRequest(model, history, true);
+        headersUrl = anthropicAccess(access, '/v1/complete');
+        body = anthropicChatCompletionPayload(model, history, true);
         vendorStreamParser = parseAnthropicStream();
         break;
 
+      case 'azure':
       case 'openai':
-        headersUrl = openAIAccess(access as any, '/v1/chat/completions');
+      case 'openrouter':
+        headersUrl = openAIAccess(access, model.id, '/v1/chat/completions');
         body = openAIChatCompletionPayload(model, history, null, null, 1, true);
         vendorStreamParser = parseOpenAIStream();
         break;
     }
+
+    if (SERVER_DEBUG_WIRE)
+      console.log('-> streaming curl', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
 
     // POST to our API route
     upstreamResponse = await fetch(headersUrl.url, {
@@ -175,12 +206,17 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
       headers: headersUrl.headers,
       body: JSON.stringify(body),
     });
-    await throwResponseNotOk(upstreamResponse);
+    await throwIfResponseNotOk(upstreamResponse);
 
   } catch (error: any) {
-    const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
-    console.log(`/api/llms/stream: fetch issue: ${fetchOrVendorError}`);
-    return new NextResponse('[OpenAI Issue] ' + fetchOrVendorError, { status: 500 });
+    const fetchOrVendorError = (error?.message || (typeof error === 'string' ? error : JSON.stringify(error))) + (error?.cause ? ' · ' + error.cause : '');
+    const dialectError = (access.dialect.charAt(0).toUpperCase() + access.dialect.slice(1)) + ' - ' + fetchOrVendorError;
+
+    // server-side admins message
+    console.log(`/api/llms/stream: fetch issue:`, dialectError, headersUrl?.url);
+
+    // client-side users visible message
+    return new NextResponse('[Issue] ' + dialectError + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.

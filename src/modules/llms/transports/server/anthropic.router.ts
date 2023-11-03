@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
-import { chatGenerateOutputSchema, historySchema, modelSchema } from './openai.router';
+import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
 
 import { AnthropicWire } from './anthropic.wiretypes';
@@ -14,14 +14,23 @@ import { AnthropicWire } from './anthropic.wiretypes';
 
 // Input Schemas
 
-const anthropicAccessSchema = z.object({
+export const anthropicAccessSchema = z.object({
+  dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
-  anthropicHost: z.string().trim(),
+  anthropicHost: z.string().trim().nullable(),
+  heliconeKey: z.string().trim().nullable(),
+});
+export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
+
+
+const listModelsInputSchema = z.object({
+  access: anthropicAccessSchema,
 });
 
-const anthropicChatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
-
-const anthropicListModelsSchema = z.object({ access: anthropicAccessSchema });
+const chatGenerateInputSchema = z.object({
+  access: anthropicAccessSchema,
+  model: openAIModelSchema, history: openAIHistorySchema,
+});
 
 
 export const llmAnthropicRouter = createTRPCRouter({
@@ -32,14 +41,14 @@ export const llmAnthropicRouter = createTRPCRouter({
    * some details on the models, as the API docs are scarce: https://docs.anthropic.com/claude/reference/selecting-a-model
    */
   listModels: publicProcedure
-    .input(anthropicListModelsSchema)
+    .input(listModelsInputSchema)
     .output(listModelsOutputSchema)
     .query(() => ({ models: hardcodedAnthropicModels })),
 
   /* Anthropic: Chat generation */
   chatGenerate: publicProcedure
-    .input(anthropicChatGenerateSchema)
-    .output(chatGenerateOutputSchema)
+    .input(chatGenerateInputSchema)
+    .output(openAIChatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;
@@ -50,7 +59,7 @@ export const llmAnthropicRouter = createTRPCRouter({
 
       const wireCompletions = await anthropicPOST<AnthropicWire.Complete.Response, AnthropicWire.Complete.Request>(
         access,
-        anthropicCompletionRequest(model, history, false),
+        anthropicChatCompletionPayload(model, history, false),
         '/v1/complete',
       );
 
@@ -118,34 +127,37 @@ const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
   },
 ];
 
-type AccessSchema = z.infer<typeof anthropicAccessSchema>;
-type ModelSchema = z.infer<typeof modelSchema>;
-type HistorySchema = z.infer<typeof historySchema>;
+type ModelSchema = z.infer<typeof openAIModelSchema>;
+type HistorySchema = z.infer<typeof openAIHistorySchema>;
 
-async function anthropicPOST<TOut, TPostBody>(access: AccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
 }
 
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
+const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
-export function anthropicAccess(access: AccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API version
   const apiVersion = '2023-06-01';
 
   // API key
   const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+  if (!anthropicKey)
+    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
-  let anthropicHost = access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST;
-  if (!anthropicHost.startsWith('http'))
-    anthropicHost = `https://${anthropicHost}`;
-  if (anthropicHost.endsWith('/') && apiPath.startsWith('/'))
-    anthropicHost = anthropicHost.slice(0, -1);
+  let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
 
-  // warn if no key - only for default host
-  if (!anthropicKey && anthropicHost.indexOf(DEFAULT_ANTHROPIC_HOST) !== -1)
-    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+  // Helicone for Anthropic
+  // https://docs.helicone.ai/getting-started/integration-method/anthropic
+  const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
+  if (heliKey) {
+    if (!anthropicHost.includes(DEFAULT_ANTHROPIC_HOST) && !anthropicHost.includes(DEFAULT_HELICONE_ANTHROPIC_HOST))
+      throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);
+    anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
+  }
 
   return {
     headers: {
@@ -153,12 +165,13 @@ export function anthropicAccess(access: AccessSchema, apiPath: string): { header
       'Content-Type': 'application/json',
       'anthropic-version': apiVersion,
       'X-API-Key': anthropicKey,
+      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },
     url: anthropicHost + apiPath,
   };
 }
 
-export function anthropicCompletionRequest(model: ModelSchema, history: HistorySchema, stream: boolean): AnthropicWire.Complete.Request {
+export function anthropicChatCompletionPayload(model: ModelSchema, history: HistorySchema, stream: boolean): AnthropicWire.Complete.Request {
   // encode the prompt for Claude models
   const prompt = history.map(({ role, content }) => {
     return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;

@@ -9,22 +9,22 @@ import { Link } from '~/common/components/Link';
 import { ImageBlock } from './blocks';
 
 
-export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain: (e: React.MouseEvent) => void }) => {
+export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: boolean, onRunAgain?: (e: React.MouseEvent) => void }) => {
   const imageUrls = props.imageBlock.url.split('\n');
 
   return imageUrls.map((url, index) => (
     <Box
       key={'gen-img-' + index}
-      sx={theme => ({
+      sx={{
         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
         mx: 1.5, mt: index > 0 ? 1.5 : 0,
         // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-        minWidth: 32, minHeight: 32, boxShadow: theme.shadow.md,
-        background: theme.palette.neutral.solidBg,
+        minWidth: 32, minHeight: 32, boxShadow: 'md',
+        backgroundColor: 'neutral.solidBg',
         '& picture': { display: 'flex' },
         '& img': { maxWidth: '100%', maxHeight: '100%' },
         '&:hover > .image-buttons': { opacity: 1 },
-      })}>
+      }}>
       {/* External Image */}
       <picture><img src={url} alt='Generated Image' /></picture>
       {/* Image Buttons */}
@@ -35,7 +35,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: bool
           display: 'flex', flexDirection: 'row', gap: 0.5,
           opacity: 0, transition: 'opacity 0.3s',
         }}>
-        {props.allowRunAgain && (
+        {props.allowRunAgain && !!props.onRunAgain && (
           <Tooltip title='Draw again' variant='solid'>
             <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
               <ReplayIcon />
