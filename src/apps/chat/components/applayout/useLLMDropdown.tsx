@@ -52,7 +52,7 @@ function AppBarLLMDropdown(props: {
           </ListItemButton>
         )}
 
-        <Tooltip title={<KeyStroke combo='Ctrl + Alt + M' />}>
+        <Tooltip title={<KeyStroke combo='Ctrl + Shift + M' />}>
           <ListItemButton key='menu-llms' onClick={openLayoutModelsSetup}>
             <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
             Models
