@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '../../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../store-llms';
 
 
 const modelDescriptionSchema = z.object({
@@ -9,7 +9,7 @@ const modelDescriptionSchema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number(),
-  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete])),
+  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
   hidden: z.boolean().optional(),
 });
 export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;

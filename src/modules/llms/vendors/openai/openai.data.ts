@@ -1,7 +1,24 @@
 import type { ModelDescriptionSchema } from '../../transports/server/server.common';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn } from '../../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../store-llms';
 
 const knownOpenAIChatModels: ({ idPrefix: string } & Omit<ModelDescriptionSchema, 'id'>)[] = [
+  // GPT4 Turbo
+  {
+    idPrefix: 'gpt-4-1106-preview',
+    label: '4-Turbo (1106)',
+    description: '128k context, fresher knowledge, cheaper than GPT-4.',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'gpt-4-1106-vision-preview',
+    label: '4-Turbo-Vision (1106)',
+    description: 'Vision support, 128k context, fresher knowledge, cheaper than GPT-4.',
+    contextWindow: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    hidden: true,
+  },
+
   // GPT4-32k's
   {
     idPrefix: 'gpt-4-32k-0314',
@@ -54,11 +71,19 @@ const knownOpenAIChatModels: ({ idPrefix: string } & Omit<ModelDescriptionSchema
 
   // 3.5-Turbo-16k's
   {
+    idPrefix: 'gpt-3.5-turbo-1106',
+    label: '3.5-Turbo-16k (0613)',
+    description: 'Snapshot of gpt-3.5-turbo-16k from November 6th 2023.',
+    contextWindow: 16385,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
     idPrefix: 'gpt-3.5-turbo-16k-0613',
     label: '3.5-Turbo-16k (0613)',
     description: 'Snapshot of gpt-3.5-turbo-16k from June 13th 2023.',
     contextWindow: 16385,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k',
