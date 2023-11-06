@@ -32,7 +32,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   const needsUserKey = !ModelVendorAnthropic.hasServerKey;
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
-  const shallFetchSucceed = anthropicKey ? keyValid : !needsUserKey;
+  const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
