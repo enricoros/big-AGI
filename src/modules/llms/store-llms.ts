@@ -30,6 +30,7 @@ export type DLLMId = string;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
+export const LLM_IF_OAI_Vision = 'oai-vision';
 export const LLM_IF_OAI_Fn = 'oai-fn';
 export const LLM_IF_OAI_Complete = 'oai-complete';
 
@@ -187,7 +188,7 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
 );
 
 
-const defaultChatSuffixPreference = ['gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
+const defaultChatSuffixPreference = ['gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
 const defaultFastSuffixPreference = ['gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
 const defaultFuncSuffixPreference = ['gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-4-0613'];
 
