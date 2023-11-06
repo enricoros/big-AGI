@@ -144,8 +144,11 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
 
   // API key
   const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+
+  // break for the missing key only on the default host
   if (!anthropicKey)
-    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+    if (!access.anthropicHost && !process.env.ANTHROPIC_API_HOST)
+      throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
   let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
