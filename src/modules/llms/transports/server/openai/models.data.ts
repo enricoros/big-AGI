@@ -7,17 +7,19 @@ const _knownOpenAIChatModels: ManualMappings = [
   // GPT4 Turbo
   {
     idPrefix: 'gpt-4-1106-preview',
-    label: '🌟 4-Turbo (1106)',
+    label: '4-Turbo (1106)',
     description: '128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    latest: true,
   },
   {
     idPrefix: 'gpt-4-vision-preview',
     label: '4-Turbo (Vision preview)',
     description: 'Vision support, 128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    latest: true,
     hidden: true,
   },
 
@@ -74,10 +76,11 @@ const _knownOpenAIChatModels: ManualMappings = [
   // 3.5-Turbo-16k's
   {
     idPrefix: 'gpt-3.5-turbo-1106',
-    label: '🌟 3.5-Turbo-16k (1106)',
+    label: '3.5-Turbo-16k (1106)',
     description: 'Snapshot of gpt-3.5-turbo-16k from November 6th 2023.',
     contextWindow: 16385,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    latest: true,
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k-0613',
@@ -212,7 +215,6 @@ export function oobaboogaModelToModelDescription(modelId: string, created: numbe
   return fromManualMapping(_knownOobaboogaChatModels, modelId, created, undefined, {
     idPrefix: modelId,
     label: label,
-    created: created || 0,
     description: 'Oobabooga model',
     contextWindow: 4096, // FIXME: figure out how to the context window size from Oobabooga
     interfaces: [LLM_IF_OAI_Chat], // assume..
@@ -312,7 +314,6 @@ export function openRouterModelToModelDescription(modelId: string, created: numb
   return fromManualMapping([], modelId, created, undefined, {
     idPrefix: modelId,
     label,
-    created: created || 0,
     description: 'OpenRouter model',
     contextWindow,
     interfaces: [LLM_IF_OAI_Chat],
@@ -324,7 +325,7 @@ export function openRouterModelToModelDescription(modelId: string, created: numb
 // Helpers
 
 type ManualMappings = ManualMapping[];
-type ManualMapping = ({ idPrefix: string } & Omit<ModelDescriptionSchema, 'id'>);
+type ManualMapping = ({ idPrefix: string, latest?: boolean } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
 
 function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping): ModelDescriptionSchema {
 
@@ -336,8 +337,8 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
 
   // return the model description sheet
   return {
-    id: id,
-    label: known.label + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : ''),
+    id,
+    label: (known.latest ? '🌟 ' : '') + known.label + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : ''),
     created: created || 0,
     updated: updated || created || 0,
     description: known.description,
