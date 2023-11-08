@@ -28,11 +28,10 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
       }
     }
     let count: number = 0;
-    // Note: the try/catch shouldn't be necessary, but it seems that the Tiktoken library will
-    // throw an exception when particular text (e.g. '<|fim_suffix|>') is passed for encoding
+    // Note: the try/catch shouldn't be necessary, but there could be corner cases where the tiktoken library throws
     // https://github.com/enricoros/big-agi/issues/182
     try {
-      count = tokenEncoders[openaiModel]?.encode(text)?.length || 0;
+      count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
     } catch (e) {
       console.error(`Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
     }
