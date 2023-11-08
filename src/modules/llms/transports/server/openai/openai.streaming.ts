@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
 import { debugGenerateCurlCommand, SERVER_DEBUG_WIRE } from '~/server/wire';
+import { safeErrorString } from '~/server/api/trpc.serverutils';
 
 import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
 import type { OpenAIWire } from './openai.wiretypes';
@@ -28,21 +29,20 @@ function parseOpenAIStream(): AIStreamParser {
 
     const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
 
-    // an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
+    // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error)
-      return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
+      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
 
     if (json.choices.length !== 1) {
-      // Azure: we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
+      // [Azure] we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
       if (json.id === '' && json.object === '' && json.model === '')
         return { text: '', close: false };
-      console.log('/api/llms/stream: OpenAI stream issue (no choices):', json);
-      throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
+      throw new Error(`Expected 1 completion, got ${json.choices.length}`);
     }
 
     const index = json.choices[0].index;
     if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
-      throw new Error(`[OpenAI Issue] Expected completion index 0, got ${index}`);
+      throw new Error(`Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
     // hack: prepend the model name to the first packet
@@ -94,7 +94,7 @@ function parseAnthropicStream(): AIStreamParser {
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
  */
-function createEventStreamTransformer(vendorTextParser: AIStreamParser): TransformStream<Uint8Array, Uint8Array> {
+function createEventStreamTransformer(vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
@@ -133,7 +133,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
               controller.terminate();
           } catch (error: any) {
             // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
-            controller.enqueue(textEncoder.encode(`[Stream Issue] ${error?.message || error}`));
+            controller.enqueue(textEncoder.encode(`[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
             controller.terminate();
           }
         },
@@ -235,7 +235,7 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(createEventStreamTransformer(vendorStreamParser));
+    .pipeThrough(createEventStreamTransformer(vendorStreamParser, access.dialect));
 
   return new NextResponse(chatResponseStream, {
     status: 200,
