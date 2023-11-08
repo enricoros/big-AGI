@@ -89,7 +89,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
       .catch((err) => {
         stepDone = true;
         if (!stepAbortController.signal.aborted)
-          setError(`Transformation Error: ${err?.message || err?.toString() || err || 'unknown'}`);
+          setError(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
       });
 
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted

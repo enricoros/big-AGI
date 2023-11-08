@@ -86,7 +86,7 @@ export const elevenlabsRouter = createTRPCRouter({
         ...(nonEnglish && { model_id: 'eleven_multilingual_v1' }),
       };
 
-      const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
+      const response = await fetchBufferOrTRPCError(url, headers, method: 'POST', body: JSON.stringify(body), ... });
       await rethrowElevenLabsError(response);
       return await response.arrayBuffer();
     }),*/
