@@ -189,6 +189,8 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
         break;
 
       case 'azure':
+      case 'localai':
+      case 'oobabooga':
       case 'openai':
       case 'openrouter':
         headersUrl = openAIAccess(access, model.id, '/v1/chat/completions');

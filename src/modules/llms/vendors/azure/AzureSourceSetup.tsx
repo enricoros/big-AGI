@@ -34,9 +34,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = azureKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModelsAzure.useQuery({
-    access,
-  }, {
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
