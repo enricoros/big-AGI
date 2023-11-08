@@ -108,9 +108,10 @@ export namespace OpenAIWire {
       object: 'model';
       created: number;
       owned_by: 'openai' | 'openai-dev' | 'openai-internal' | 'system' | string; // 'user' for Oobabooga models
-      permission: any[];
-      root: string;
-      parent: null;
+      // [2023-11-08] Note: the following properties are not present in OpenAI responses any longer
+      // permission: any[];
+      // root: string;
+      // parent: null;
 
       // non-standard properties
       //context_length?: number; // Openrouter-only models, non-standard - commented because dynamically added by the Openrouter vendor code
