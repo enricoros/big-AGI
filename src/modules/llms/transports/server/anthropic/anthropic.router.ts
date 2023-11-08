@@ -7,7 +7,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 import { LLM_IF_OAI_Chat } from '../../../store-llms';
 
 import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.common';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 

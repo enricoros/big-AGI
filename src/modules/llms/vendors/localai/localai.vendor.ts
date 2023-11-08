@@ -31,7 +31,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpen
     oaiHost: 'http://localhost:8080',
   }),
   getAccess: (partialSetup) => ({
-    dialect: 'openai',
+    dialect: 'localai',
     oaiKey: '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
