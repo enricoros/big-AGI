@@ -1,4 +1,4 @@
-import type { OpenAI } from './server/openai.wiretypes';
+import type { OpenAI } from './server/openai/openai.wiretypes';
 import { DLLMId } from '../store-llms';
 import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 

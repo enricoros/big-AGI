@@ -4,10 +4,10 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { LLM_IF_OAI_Chat } from '../../store-llms';
+import { LLM_IF_OAI_Chat } from '../../../store-llms';
 
-import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
+import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from '../openai/openai.router';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.common';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 

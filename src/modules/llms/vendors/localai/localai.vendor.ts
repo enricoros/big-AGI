@@ -1,7 +1,7 @@
 import DevicesIcon from '@mui/icons-material/Devices';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';

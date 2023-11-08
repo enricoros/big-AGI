@@ -13,8 +13,10 @@ import { openAIModelToModelDescription } from '~/modules/llms/vendors/openai/ope
 
 // Input Schemas
 
+const openAIDialects = z.enum(['azure', 'openai', 'openrouter']);
+
 export const openAIAccessSchema = z.object({
-  dialect: z.enum(['azure', 'openai', 'openrouter']),
+  dialect: openAIDialects,
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
