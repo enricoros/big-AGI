@@ -33,7 +33,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
         console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
       response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     } catch (error: any) {
-      console.error(`[${moduleName} Fetch Error]:`, error);
+      console.error(`[${moduleName} Error] (fetch):`, error);
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: `[${moduleName} Issue] (network) ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
@@ -45,6 +45,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       let error: any | null = await response.json().catch(() => null);
       if (error === null)
         error = await response.text().catch(() => null);
+      console.error(`[${moduleName} Error] (upstream):`, response.status, error);
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: error
@@ -59,6 +60,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
     try {
       return await parser(response);
     } catch (error: any) {
+      console.error(`[${moduleName} Error] (parse):`, error);
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: `[${moduleName} Issue] (parsing) ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
