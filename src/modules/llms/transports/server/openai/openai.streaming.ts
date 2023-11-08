@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { SERVER_DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+import { debugGenerateCurlCommand, SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import { AnthropicWire } from '../anthropic/anthropic.wiretypes';
-import { OpenAI } from './openai.wiretypes';
+import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
+import type { OpenAIWire } from './openai.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from '../anthropic/anthropic.router';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
 
@@ -26,7 +26,7 @@ function parseOpenAIStream(): AIStreamParser {
 
   return data => {
 
-    const json: OpenAI.Wire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
 
     // an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error)
@@ -48,7 +48,7 @@ function parseOpenAIStream(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+      const firstPacket: ChatStreamFirstPacketSchema = {
         model: json.model,
       };
       text = JSON.stringify(firstPacket) + text;
@@ -79,7 +79,7 @@ function parseAnthropicStream(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+      const firstPacket: ChatStreamFirstPacketSchema = {
         model: json.model,
       };
       text = JSON.stringify(firstPacket) + text;
@@ -167,6 +167,10 @@ const chatStreamInputSchema = z.object({
 });
 export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
 
+const chatStreamFirstPacketSchema = z.object({
+  model: z.string(),
+});
+export type ChatStreamFirstPacketSchema = z.infer<typeof chatStreamFirstPacketSchema>;
 
 export async function openaiStreamingResponse(req: NextRequest): Promise<Response> {
 

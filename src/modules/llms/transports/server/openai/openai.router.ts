@@ -6,7 +6,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Brand } from '~/common/brand';
 
-import type { OpenAI } from './openai.wiretypes';
+import type { OpenAIWire } from './openai.wiretypes';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
 import { localAIModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
@@ -129,8 +129,8 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGET<OpenAI.Wire.Models.Response>(access, '/v1/models');
-      let openAIModels: OpenAI.Wire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
+      const openAIWireModelsResponse = await openaiGET<OpenAIWire.Models.Response>(access, '/v1/models');
+      let openAIModels: OpenAIWire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
       const preCount = openAIModels.length;
@@ -203,7 +203,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, model, history, functions, forceFunctionName } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
-      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
+      const wireCompletions = await openaiPOST<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
         access, model.id,
         openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
         '/v1/chat/completions',
@@ -221,18 +221,18 @@ export const llmOpenAIRouter = createTRPCRouter({
       // check for a function output
       // NOTE: this includes a workaround for when we requested a function but the model could not deliver
       return (finish_reason === 'function_call' || 'function_call' in message)
-        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
-        : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
+        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAIWire.ChatCompletion.ResponseFunctionCall)
+        : parseChatGenerateOutput(message as OpenAIWire.ChatCompletion.ResponseMessage, finish_reason);
     }),
 
   /* OpenAI: check for content policy violations */
   moderation: publicProcedure
     .input(moderationInputSchema)
-    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+    .mutation(async ({ input }): Promise<OpenAIWire.Moderation.Response> => {
       const { access, text } = input;
       try {
 
-        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, null, {
+        return await openaiPOST<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -376,7 +376,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
   }
 }
 
-export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
@@ -388,7 +388,7 @@ export function openAIChatCompletionPayload(model: ModelSchema, history: History
   };
 }
 
-function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wire.ChatCompletion.ResponseFunctionCall) {
+function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAIWire.ChatCompletion.ResponseFunctionCall) {
   // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
   if (!isFunctionsCall)
     throw new TRPCError({
@@ -397,7 +397,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
     });
 
   // parse the function call
-  const fcMessage = message as any as OpenAI.Wire.ChatCompletion.ResponseFunctionCall;
+  const fcMessage = message as any as OpenAIWire.ChatCompletion.ResponseFunctionCall;
   if (fcMessage.content !== null)
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
@@ -430,7 +430,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
   };
 }
 
-function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
+function parseChatGenerateOutput(message: OpenAIWire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({
