@@ -1,22 +1,23 @@
 /// set this to true to see the tRPC and fetch requests made by the server
 export const SERVER_DEBUG_WIRE = false;
 
+
 /**
- * Weak (meaning the string could be encoded poorly) function that returns a string that can be used to debug a TRPC request.
+ * Fetches a URL, but throws an Error if the response is not ok.
  */
-export function debugGenerateCurlCommand(method: 'GET' | 'POST', url: string, headers: HeadersInit, body: object | undefined): string {
-  let curl = `curl -X ${method} '${url}' `;
+export async function serverFetchOrThrow(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: object | undefined): Promise<Response> {
+  const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 
-  const headersRecord = headers as Record<string, string>;
+  // Throws an error if the response is not ok
+  // Use in server-side code, and not tRPC code (which has utility functions in trpc.serverutils.ts)
+  if (!response.ok) {
+    const errorPayload: object | null = await response.json().catch(() => null);
+    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
+  }
 
-  for (let header in headersRecord)
-    curl += `-H '${header}: ${headersRecord[header]}' `;
-
-  if (method === 'POST' && body)
-    curl += `-d '${JSON.stringify(body)}'`;
-
-  return curl;
+  return response;
 }
+
 
 /**
  * Safely convert a typical exception/error to a string.
@@ -45,4 +46,22 @@ export function safeErrorString(error: any): string | null {
 
   // unlikely fallback
   return error.toString();
+}
+
+
+/**
+ * Weak (meaning the string could be encoded poorly) function that returns a string that can be used to debug a request
+ */
+export function debugGenerateCurlCommand(method: 'GET' | 'POST', url: string, headers: HeadersInit, body: object | undefined): string {
+  let curl = `curl -X ${method} '${url}' `;
+
+  const headersRecord = headers as Record<string, string>;
+
+  for (let header in headersRecord)
+    curl += `-H '${header}: ${headersRecord[header]}' `;
+
+  if (method === 'POST' && body)
+    curl += `-d '${JSON.stringify(body)}'`;
+
+  return curl;
 }

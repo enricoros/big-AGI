@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
+import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE, serverFetchOrThrow } from '~/server/wire';
 
 import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
 import type { OpenAIWire } from './openai.wiretypes';
@@ -146,13 +146,6 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, dialectL
   });
 }
 
-export async function throwIfResponseNotOk(response: Response) {
-  if (!response.ok) {
-    const errorPayload: object | null = await response.json().catch(() => null);
-    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
-  }
-}
-
 export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
   return new ReadableStream({
     start: (controller) => controller.close(),
@@ -206,22 +199,17 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
       console.log('-> streaming curl', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
 
     // POST to our API route
-    upstreamResponse = await fetch(headersUrl.url, {
-      method: 'POST',
-      headers: headersUrl.headers,
-      body: JSON.stringify(body),
-    });
-    await throwIfResponseNotOk(upstreamResponse);
+    upstreamResponse = await serverFetchOrThrow(headersUrl.url, 'POST', headersUrl.headers, body);
 
   } catch (error: any) {
-    const fetchOrVendorError = (error?.message || (typeof error === 'string' ? error : JSON.stringify(error))) + (error?.cause ? ' · ' + error.cause : '');
-    const dialectError = (access.dialect.charAt(0).toUpperCase() + access.dialect.slice(1)) + ' - ' + fetchOrVendorError;
+    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
+    const dialectError = access.dialect + ': ' + fetchOrVendorError;
 
     // server-side admins message
     console.log(`/api/llms/stream: fetch issue:`, dialectError, headersUrl?.url);
 
     // client-side users visible message
-    return new NextResponse('[Issue] ' + dialectError + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
+    return new NextResponse(`[Issue] ${dialectError}` + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
