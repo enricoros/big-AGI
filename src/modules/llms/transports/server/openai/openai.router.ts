@@ -100,10 +100,9 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         const wireAzureListDeploymentsSchema = z.object({
           data: z.array(z.object({
-            // scale_settings: z.object({ scale_type: z.string() }),
-            model: z.string(),
+            model: z.string(), // the OpenAI model id
             owner: z.enum(['organization-owner']),
-            id: z.string(),
+            id: z.string(), // the deployment name
             status: z.enum(['succeeded']),
             created_at: z.number(),
             updated_at: z.number(),
@@ -117,10 +116,11 @@ export const llmOpenAIRouter = createTRPCRouter({
         models = azureWireModels
           .filter(m => m.model.includes('gpt'))
           .map((model): ModelDescriptionSchema => {
-            const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
+            const { id: deploymentRef, model: openAIModelId } = model;
+            const { id: _deleted, label, ...rest } = openAIModelToModelDescription(openAIModelId, model.created_at, model.updated_at);
             return {
-              id: model.id,
-              label: `${label} (${model.id})`,
+              id: deploymentRef,
+              label: `${label} (${deploymentRef})`,
               ...rest,
             };
           });
