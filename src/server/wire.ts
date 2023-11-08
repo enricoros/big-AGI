@@ -17,3 +17,32 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST', url: string, he
 
   return curl;
 }
+
+/**
+ * Safely convert a typical exception/error to a string.
+ */
+export function safeErrorString(error: any): string | null {
+  // skip nulls
+  if (!error)
+    return null;
+
+  // descend into an 'error' object
+  if (error.error)
+    return safeErrorString(error.error);
+
+  // choose the 'message' property if available
+  if (error.message)
+    return safeErrorString(error.message);
+  if (typeof error === 'string')
+    return error;
+  if (typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch (error) {
+      // ignore
+    }
+  }
+
+  // unlikely fallback
+  return error.toString();
+}
