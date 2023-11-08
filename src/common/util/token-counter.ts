@@ -33,7 +33,7 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
     try {
       count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
     } catch (e) {
-      console.error(`Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
+      console.error(`countModelTokens: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
     }
     if (DEBUG_TOKEN_COUNT)
       console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
