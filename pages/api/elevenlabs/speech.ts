@@ -48,7 +48,7 @@ export default async function handler(req: NextRequest) {
   } catch (error: any) {
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
     console.log(`api/elevenlabs/speech: fetch issue: ${fetchOrVendorError}`);
-    return new NextResponse('[ElevenLabs Issue] ' + fetchOrVendorError, { status: 500 });
+    return new NextResponse(`[Issue] elevenlabs: ${fetchOrVendorError}`, { status: 500 });
   }
 }
 

@@ -203,13 +203,13 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
 
   } catch (error: any) {
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
-    const dialectError = access.dialect + ': ' + fetchOrVendorError;
 
     // server-side admins message
-    console.log(`/api/llms/stream: fetch issue:`, dialectError, headersUrl?.url);
+    console.log(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, headersUrl?.url);
 
     // client-side users visible message
-    return new NextResponse(`[Issue] ${dialectError}` + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
+    return new NextResponse(`[Issue] ${access.dialect}: ${fetchOrVendorError}`
+      + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
