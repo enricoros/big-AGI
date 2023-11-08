@@ -13,7 +13,7 @@ export const useGlobalShortcut = (shortcutKey: string | undefined, useCtrl: bool
     if (!shortcutKey) return;
     let lcShortcut = shortcutKey.toLowerCase();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((!useCtrl || event.ctrlKey) && (!useShift || event.shiftKey) && event.key.toLowerCase() === lcShortcut) {
+      if ((useCtrl === event.ctrlKey) && (useShift === event.shiftKey) && event.key.toLowerCase() === lcShortcut) {
         event.preventDefault();
         event.stopPropagation();
         callback();
