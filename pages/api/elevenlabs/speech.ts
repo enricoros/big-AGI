@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { createEmptyReadableStream, throwIfResponseNotOk } from '~/modules/llms/transports/server/openai.streaming';
+import { createEmptyReadableStream, throwIfResponseNotOk } from '~/modules/llms/transports/server/openai/openai.streaming';
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
 
 

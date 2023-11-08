@@ -3,8 +3,8 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { DLLM, DLLMId } from '../store-llms';
 import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
-import type { ChatStreamInputSchema } from './server/openai.streaming';
-import type { OpenAI } from './server/openai.wiretypes';
+import type { ChatStreamInputSchema } from './server/openai/openai.streaming';
+import type { OpenAI } from './server/openai/openai.wiretypes';
 import type { VChatMessageIn } from './chatGenerate';
 
 

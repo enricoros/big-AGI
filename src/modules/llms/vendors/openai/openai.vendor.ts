@@ -3,7 +3,7 @@ import { apiAsync } from '~/common/util/trpc.client';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
