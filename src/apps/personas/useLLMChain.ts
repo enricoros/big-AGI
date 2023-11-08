@@ -141,9 +141,8 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
   if (!llm)
     throw new Error(`LLM ${llmId} not found`);
 
-  const maxTokens = llm.contextTokens;
-  const overrideResponseTokens = Math.floor(maxTokens / 3);
-  const inputTokens = maxTokens - overrideResponseTokens;
+  const overrideResponseTokens = llm.maxOutputTokens;
+  const inputTokens = llm.contextTokens - overrideResponseTokens;
   const safeInputLength = Math.floor(inputTokens * 2); // it's deemed around 4
 
   return {

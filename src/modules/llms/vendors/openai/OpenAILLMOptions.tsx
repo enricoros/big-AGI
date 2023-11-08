@@ -18,10 +18,8 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
 
 export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }) {
 
-  const { id: llmId, contextTokens, options } = props.llm;
+  const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
-
-  const maxValue = contextTokens > 1024 ? Math.round(contextTokens / 2) : 4096;
 
   return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
 
@@ -46,7 +44,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
       </Box>
       <Slider
         aria-label='Model Max Tokens' color='neutral'
-        min={256} max={maxValue} step={256} defaultValue={1024}
+        min={256} max={maxOutputTokens} step={256} defaultValue={1024}
         value={llmResponseTokens} onChange={(_event, value) => useModelsStore.getState().updateLLMOptions(llmId, { llmResponseTokens: value as number })}
         valueLabelDisplay='on'
         sx={{ py: 1, mt: 1.1 }}

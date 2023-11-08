@@ -108,8 +108,11 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
           Details
         </FormLabel>
         {showDetails && <Typography level='body-sm' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `} context tokens: {llm.contextTokens?.toLocaleString()} · {
-          llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()}`} · description: {llm.description}
+          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `}
+          {llm.contextTokens && `context tokens: ${llm.contextTokens.toLocaleString()} · `}
+          {llm.maxOutputTokens && `max output tokens: ${llm.maxOutputTokens.toLocaleString()} · `}
+          {llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()} · `}
+          description: {llm.description}
           {/*· tags: {llm.tags.join(', ')}*/}
         </Typography>}
       </FormControl>

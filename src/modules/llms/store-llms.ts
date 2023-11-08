@@ -16,6 +16,7 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   description: string;
   tags: string[]; // UNUSED for now
   contextTokens: number;
+  maxOutputTokens: number;
   hidden: boolean;
 
   // llm -> source
@@ -164,6 +165,21 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
     }),
     {
       name: 'app-models',
+
+      /* versioning:
+       *  1: adds maxOutputTokens (default to half of contextTokens)
+       */
+      version: 1,
+      migrate: (state: any, fromVersion: number): ModelsData & ModelsActions => {
+
+        // 0 -> 1: add 'maxOutputTokens' where missing,
+        if (state && fromVersion === 0)
+          for (const llm of state.llms)
+            if (!llm.maxOutputTokens)
+              llm.maxOutputTokens = Math.round((llm.contextTokens || 4096) / 2);
+
+        return state;
+      },
 
       // Pre-saving: omit the memory references from the persisted state
       partialize: (state) => ({
