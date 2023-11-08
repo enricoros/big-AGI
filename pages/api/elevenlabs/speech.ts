@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { createEmptyReadableStream, throwIfResponseNotOk } from '~/modules/llms/transports/server/openai/openai.streaming';
+import { safeErrorString, serverFetchOrThrow } from '~/server/wire';
+
+import { createEmptyReadableStream } from '~/modules/llms/transports/server/openai/openai.streaming';
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
 
 
@@ -30,8 +32,7 @@ export default async function handler(req: NextRequest) {
     };
 
     // elevenlabs POST
-    const upstreamResponse: Response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-    await throwIfResponseNotOk(upstreamResponse);
+    const upstreamResponse: Response = await serverFetchOrThrow(url, 'POST', headers, body);
 
     // NOTE: this is disabled, as we pass-through what we get upstream for speed, as it is not worthy
     //       to wait for the entire audio to be downloaded before we send it to the client
@@ -45,7 +46,7 @@ export default async function handler(req: NextRequest) {
     return new NextResponse(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
 
   } catch (error: any) {
-    const fetchOrVendorError = (error?.message || typeof error === 'string' ? error : JSON.stringify(error)) + (error?.cause ? ' · ' + error.cause : '');
+    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
     console.log(`api/elevenlabs/speech: fetch issue: ${fetchOrVendorError}`);
     return new NextResponse('[ElevenLabs Issue] ' + fetchOrVendorError, { status: 500 });
   }
