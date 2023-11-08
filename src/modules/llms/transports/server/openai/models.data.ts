@@ -10,6 +10,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     label: '4-Turbo (1106)',
     description: '128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     latest: true,
   },
@@ -18,6 +19,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     label: '4-Turbo (Vision preview)',
     description: 'Vision support, 128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
     latest: true,
     hidden: true,
@@ -79,6 +81,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     label: '3.5-Turbo-16k (1106)',
     description: 'Snapshot of gpt-3.5-turbo-16k from November 6th 2023.',
     contextWindow: 16385,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     latest: true,
   },
@@ -343,7 +346,8 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
     updated: updated || created || 0,
     description: known.description,
     contextWindow: known.contextWindow,
+    ...(!!known.maxCompletionTokens && { maxCompletionTokens: known.maxCompletionTokens }),
     interfaces: known.interfaces,
-    hidden: known.hidden,
+    ...(!!known.hidden && { hidden: known.hidden })
   };
 }

@@ -111,6 +111,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
 
 export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
+  const maxOutputTokens = model.maxCompletionTokens || Math.round((model.contextWindow || 4096) / 2);
+  const llmResponseTokens = Math.round(maxOutputTokens / (model.maxCompletionTokens ? 2 : 4));
   return {
     id: `${source.id}-${model.id}`,
 
@@ -120,6 +122,7 @@ export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSche
     description: model.description,
     tags: [], // ['stream', 'chat'],
     contextTokens: model.contextWindow,
+    maxOutputTokens: maxOutputTokens,
     hidden: !!model.hidden,
 
     sId: source.id,
@@ -128,7 +131,7 @@ export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSche
     options: {
       llmRef: model.id,
       llmTemperature: 0.5,
-      llmResponseTokens: Math.round(model.contextWindow / 8),
+      llmResponseTokens: llmResponseTokens,
     },
   };
 }

@@ -9,6 +9,7 @@ const modelDescriptionSchema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number(),
+  maxCompletionTokens: z.number().optional(),
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
   hidden: z.boolean().optional(),
 });
