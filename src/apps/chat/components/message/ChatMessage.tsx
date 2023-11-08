@@ -25,10 +25,11 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { cssRainbowColorKeyframes } from '~/common/theme';
+import { cssRainbowColorKeyframes, hideOnMobile } from '~/common/theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -446,7 +447,15 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
           {!!props.onMessageRunFrom && (
             <MenuItem onClick={handleMenuRunAgain}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
-              {fromAssistant ? 'Retry' : 'Run from here'}
+              {!fromAssistant
+                ? 'Run from here'
+                : !props.isBottom
+                  ? 'Retry from here'
+                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                    Retry
+                    <KeyStroke light combo='Ctrl + Shift + R' sx={hideOnMobile} />
+                  </Box>
+              }
             </MenuItem>
           )}
           {isImaginable && isImaginableEnabled && (

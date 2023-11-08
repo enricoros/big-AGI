@@ -9,6 +9,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
@@ -133,6 +134,19 @@ export function AppChat() {
     if (conversation)
       return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
   };
+
+  const handleRegenerateAssistant = async () => {
+    const conversation = activeConversationId ? _findConversation(activeConversationId) : null;
+    if (conversation?.messages?.length) {
+      const lastMessage = conversation.messages[conversation.messages.length - 1];
+      if (lastMessage.role === 'assistant') {
+        const newMessages = [...conversation.messages];
+        newMessages.pop();
+        return await handleExecuteConversation('immediate', conversation.id, newMessages);
+      }
+    }
+  };
+  useGlobalShortcut('r', true, true, handleRegenerateAssistant);
 
 
   const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
