@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
+import { Box, ListItemButton, ListItemDecorator } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -9,6 +9,7 @@ import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/sto
 
 import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { hideOnMobile } from '~/common/theme';
 import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
 
 
@@ -52,12 +53,13 @@ function AppBarLLMDropdown(props: {
           </ListItemButton>
         )}
 
-        <Tooltip title={<KeyStroke combo='Ctrl + Shift + M' />}>
-          <ListItemButton key='menu-llms' onClick={openLayoutModelsSetup}>
-            <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
+        <ListItemButton key='menu-llms' onClick={openLayoutModelsSetup}>
+          <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
+          <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
             Models
-          </ListItemButton>
-        </Tooltip>
+            <KeyStroke light combo='Ctrl + Shift + M' sx={hideOnMobile} />
+          </Box>
+        </ListItemButton>
 
       </>}
     />
