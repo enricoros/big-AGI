@@ -87,16 +87,16 @@ const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     label: 'Claude 2',
     created: roundTime('2023-07-11'),
     description: 'Claude-2 is the latest version of Claude',
-    interfaces: [LLM_IF_OAI_Chat],
     contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'claude-instant-1.2',
     label: 'Claude Instant 1.2',
     created: roundTime('2023-08-09'),
     description: 'Precise and faster',
-    interfaces: [LLM_IF_OAI_Chat],
     contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'claude-instant-1.1',
