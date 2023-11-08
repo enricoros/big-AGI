@@ -22,9 +22,11 @@ export const fetchTextOrTRPCError: <TPostBody extends object | undefined>(
 ) => Promise<string> = createFetcherFromTRPC(async (response) => await response.text(), 'text');
 
 
-// [internal safe fetch implementation]
+
+// internal safe fetch implementation
 function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => Promise<TOut>, parserName: string): (url: string, method: 'GET' | 'POST', headers: HeadersInit, body: TPostBody | undefined, moduleName: string) => Promise<TOut> {
   return async (url, method, headers, body, moduleName) => {
+    // Fetch
     let response: Response;
     try {
       if (SERVER_DEBUG_WIRE)
@@ -34,9 +36,11 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`[${moduleName} Fetch Error]:`, error);
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[${moduleName} Issue] (network) ${error?.message || error?.toString() || 'Unknown fetch error'} - ${error?.cause}`,
+        message: `[${moduleName} Issue] (network) ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
       });
     }
+
+    // Check for non-200
     if (!response.ok) {
       let error: any | null = await response.json().catch(() => null);
       if (error === null)
@@ -44,20 +48,47 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: error
-          ? `[${moduleName} Issue] ${error?.error?.message || error?.error || error?.toString() || 'Unknown http error'}`
+          ? `[${moduleName} Issue] ${safeErrorString(error) || 'Unknown http error'}`
           : `[Issue] ${moduleName}: ${response.statusText} (${response.status})`
           + (response.status === 403 ? ` - is ${url} accessible by the server?` : '')
           + (response.status === 502 ? ` - is ${url} down?` : ''),
       });
     }
+
+    // Safe Parse
     try {
       return await parser(response);
     } catch (error: any) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: `[${moduleName} Issue] ${error?.message || error?.toString() || `Unknown ${parserName} parsing error`}`,
+        message: `[${moduleName} Issue] (parsing) ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
       });
     }
   };
 }
 
+export function safeErrorString(error: any): string | null {
+  // skip nulls
+  if (!error)
+    return null;
+
+  // descend into an 'error' object
+  if (error.error)
+    return safeErrorString(error.error);
+
+  // choose the 'message' property if available
+  if (error.message)
+    return safeErrorString(error.message);
+  if (typeof error === 'string')
+    return error;
+  if (typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch (error) {
+      // ignore
+    }
+  }
+
+  // unlikely fallback
+  return error.toString();
+}
