@@ -16,7 +16,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4-vision-preview',
-    label: '4-Turbo (Vision preview)',
+    label: '4-Turbo (Vision)',
     description: 'Vision support, 128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
