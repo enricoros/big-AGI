@@ -8,7 +8,7 @@ import { Brand } from '~/common/brand';
 
 import type { OpenAI } from './openai.wiretypes';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
-import { localAIModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelToModelDescription } from './models.data';
+import { localAIModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
 
 // Input Schemas
@@ -186,6 +186,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'openrouter':
           models = openAIModels
+            .sort(openRouterModelFamilySortFn)
             .map(model => openRouterModelToModelDescription(model.id, model.created, (model as any)?.['context_length']));
           break;
       }
