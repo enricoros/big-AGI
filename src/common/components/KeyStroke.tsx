@@ -1,13 +1,14 @@
 import * as React from 'react';
 
 import { Chip } from '@mui/joy';
+import { SxProps } from '@mui/system';
 
 /**
  * Shows a shortcut combo in a nicely presented dark box.
  */
-export function KeyStroke(props: { combo: string }) {
+export function KeyStroke(props: { combo: string, light?: boolean, sx?: SxProps }) {
   return (
-    <Chip variant='solid' color='neutral'>
+    <Chip variant={props.light ? 'outlined' : 'solid'} color='neutral' sx={props.sx}>
       {props.combo}
     </Chip>
     // <Box sx={{
