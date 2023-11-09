@@ -90,11 +90,16 @@ const pasteClipboardLegend =
   <Box sx={{ p: 1, lineHeight: 2 }}>
     <b>Paste as 📚 Markdown attachment</b><br />
     Also converts Code and Tables<br />
-    <KeyStroke combo='Ctrl + Shift + V' />
+    <KeyStroke light combo='Ctrl + Shift + V' />
   </Box>;
 
 const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip title={<KeyStroke combo='Ctrl + M' />} placement='top'>
+  <Tooltip placement='top' title={
+    <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
+      Voice input<br />
+      <KeyStroke light combo='Ctrl + M' />
+    </Box>
+  }>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <MicIcon />
     </IconButton>

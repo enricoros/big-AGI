@@ -1,7 +1,7 @@
 import DevicesIcon from '@mui/icons-material/Devices';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';
@@ -31,7 +31,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpen
     oaiHost: 'http://localhost:8080',
   }),
   getAccess: (partialSetup) => ({
-    dialect: 'openai',
+    dialect: 'localai',
     oaiKey: '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',

@@ -4,10 +4,10 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { LLM_IF_OAI_Chat } from '../../store-llms';
+import { LLM_IF_OAI_Chat } from '../../../store-llms';
 
-import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from './openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from './server.common';
+import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from '../openai/openai.router';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 
@@ -87,16 +87,16 @@ const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     label: 'Claude 2',
     created: roundTime('2023-07-11'),
     description: 'Claude-2 is the latest version of Claude',
-    interfaces: [LLM_IF_OAI_Chat],
     contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'claude-instant-1.2',
     label: 'Claude Instant 1.2',
     created: roundTime('2023-08-09'),
     description: 'Precise and faster',
-    interfaces: [LLM_IF_OAI_Chat],
     contextWindow: 100000,
+    interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'claude-instant-1.1',
@@ -144,8 +144,11 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
 
   // API key
   const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+
+  // break for the missing key only on the default host
   if (!anthropicKey)
-    throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+    if (!access.anthropicHost && !process.env.ANTHROPIC_API_HOST)
+      throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
   let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);

@@ -12,9 +12,9 @@ import { settingsGap } from '~/common/theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
+import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -32,12 +32,10 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   const needsUserKey = !ModelVendorAnthropic.hasServerKey;
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
-  const shallFetchSucceed = anthropicKey ? keyValid : !needsUserKey;
+  const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({
-    access,
-  }, {
+  const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({ access }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,

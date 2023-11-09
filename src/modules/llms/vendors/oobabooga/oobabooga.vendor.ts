@@ -1,7 +1,7 @@
 import { OobaboogaIcon } from '~/common/components/icons/OobaboogaIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';
@@ -28,10 +28,10 @@ export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOption
 
   // functions
   initializeSetup: (): SourceSetupOobabooga => ({
-    oaiHost: 'http://127.0.0.1:5001',
+    oaiHost: 'http://127.0.0.1:5000',
   }),
   getAccess: (partialSetup): OpenAIAccessSchema => ({
-    dialect: 'openai',
+    dialect: 'oobabooga',
     oaiKey: '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',

@@ -6,15 +6,17 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Brand } from '~/common/brand';
 
-import { OpenAI } from './openai.wiretypes';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '~/modules/llms/transports/server/server.common';
-import { openAIModelToModelDescription } from '~/modules/llms/vendors/openai/openai.data';
+import type { OpenAIWire } from './openai.wiretypes';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
+import { localAIModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
 
 // Input Schemas
 
+const openAIDialects = z.enum(['azure', 'localai', 'oobabooga', 'openai', 'openrouter']);
+
 export const openAIAccessSchema = z.object({
-  dialect: z.enum(['azure', 'openai', 'openrouter']),
+  dialect: openAIDialects,
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
@@ -51,7 +53,6 @@ export const openAIFunctionsSchema = z.array(z.object({
 
 const listModelsInputSchema = z.object({
   access: openAIAccessSchema,
-  onlyChatModels: z.boolean().optional(),
 });
 
 const chatGenerateWithFunctionsInputSchema = z.object({
@@ -88,85 +89,108 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* OpenAI: List the Models available */
   listModels: publicProcedure
     .input(listModelsInputSchema)
-    .query(async ({ input }): Promise<OpenAI.Wire.Models.ModelDescription[]> => {
+    .output(listModelsOutputSchema)
+    .query(async ({ input: { access } }): Promise<{ models: ModelDescriptionSchema[] }> => {
 
-      const wireModels: OpenAI.Wire.Models.Response = await openaiGET<OpenAI.Wire.Models.Response>(input.access, '/v1/models');
+      let models: ModelDescriptionSchema[];
 
-      let llms = wireModels.data || [];
+      // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
+      if (access.dialect === 'azure') {
+        const azureModels = await openaiGET(access, `/openai/deployments?api-version=2023-03-15-preview`);
 
-      // filter out the non-gpt models, if requested (only by OpenAI right now)
-      if (llms.length && input.onlyChatModels) {
-        llms = llms.filter(model => {
-          if (model.id.includes('-instruct'))
-            return false;
-          return model.id.includes('gpt');
+        const wireAzureListDeploymentsSchema = z.object({
+          data: z.array(z.object({
+            model: z.string(), // the OpenAI model id
+            owner: z.enum(['organization-owner']),
+            id: z.string(), // the deployment name
+            status: z.enum(['succeeded']),
+            created_at: z.number(),
+            updated_at: z.number(),
+            object: z.literal('deployment'),
+          })),
+          object: z.literal('list'),
         });
+        const azureWireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
+
+        // only take 'gpt' models
+        models = azureWireModels
+          .filter(m => m.model.includes('gpt'))
+          .map((model): ModelDescriptionSchema => {
+            const { id: deploymentRef, model: openAIModelId } = model;
+            const { id: _deleted, label, ...rest } = openAIModelToModelDescription(openAIModelId, model.created_at, model.updated_at);
+            return {
+              id: deploymentRef,
+              label: `${label} (${deploymentRef})`,
+              ...rest,
+            };
+          });
+        return { models };
       }
 
-      // remove models with duplicate ids (can happen for local servers)
-      const preFilterCount = llms.length;
-      llms = llms.filter((model, index) => llms.findIndex(m => m.id === model.id) === index);
-      if (preFilterCount !== llms.length)
-        console.warn(`openai.router.listModels: Duplicate model ids found, removed ${preFilterCount - llms.length} models`);
 
-      // sort by which model has the least number of '-' in the name, and then by id, decreasing
-      llms.sort((a, b) => {
-        // model that have '-0' in their name go at the end
-        // if (a.id.includes('-0') && !b.id.includes('-0')) return 1;
-        // if (!a.id.includes('-0') && b.id.includes('-0')) return -1;
+      // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
+      const openAIWireModelsResponse = await openaiGET<OpenAIWire.Models.Response>(access, '/v1/models');
+      let openAIModels: OpenAIWire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
 
-        // sort by the first 5 chars of id, decreasing, then by the number of '-' in the name
-        const aId = a.id.slice(0, 5);
-        const bId = b.id.slice(0, 5);
-        if (aId === bId) {
-          const aCount = a.id.split('-').length;
-          const bCount = b.id.split('-').length;
-          if (aCount === bCount)
-            return a.id.localeCompare(b.id);
-          return aCount - bCount;
-        }
-        return bId.localeCompare(aId);
-      });
+      // de-duplicate by ids (can happen for local servers.. upstream bugs)
+      const preCount = openAIModels.length;
+      openAIModels = openAIModels.filter((model, index) => openAIModels.findIndex(m => m.id === model.id) === index);
+      if (preCount !== openAIModels.length)
+        console.warn(`openai.router.listModels: removed ${preCount - openAIModels.length} duplicate models for dialect ${access.dialect}`);
 
-      return llms;
-    }),
+      // sort by id
+      openAIModels.sort((a, b) => a.id.localeCompare(b.id));
 
-  /* Azure: List the Models available from the 'deployments' */
-  listModelsAzure: publicProcedure
-    .input(listModelsInputSchema)
-    .output(listModelsOutputSchema)
-    .query(async ({ input }) => {
 
-      // fetch the Azure OpenAI 'deployments'
-      const azureModels = await openaiGET(input.access, `/openai/deployments?api-version=2023-03-15-preview`);
+      // every dialect has a different way to enumerate models - we execute the mapping on the server side
+      switch (access.dialect) {
 
-      // parse and validate output, and take the GPT models only (e.g. no 'whisper')
-      const wireAzureListDeploymentsSchema = z.object({
-        data: z.array(z.object({
-          // scale_settings: z.object({ scale_type: z.string() }),
-          model: z.string(),
-          owner: z.enum(['organization-owner']),
-          id: z.string(),
-          status: z.enum(['succeeded']),
-          created_at: z.number(),
-          updated_at: z.number(),
-          object: z.literal('deployment'),
-        })),
-        object: z.literal('list'),
-      });
-      const wireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
+        // [LocalAI]: map id to label
+        case 'localai':
+          models = openAIModels
+            .map(model => localAIModelToModelDescription(model.id));
+          break;
 
-      // map to ModelDescriptions
-      const models: ModelDescriptionSchema[] = wireModels
-        .filter(m => m.model.includes('gpt'))
-        .map((model): ModelDescriptionSchema => {
-          const { id, label, ...rest } = openAIModelToModelDescription(model.model, model.created_at, model.updated_at);
-          return {
-            id: model.id,
-            label: `${label} (${model.id})`,
-            ...rest,
-          };
-        });
+        // [Oobabooga]: remove virtual models, hidden by default
+        case 'oobabooga':
+          models = openAIModels
+            .map(model => oobaboogaModelToModelDescription(model.id, model.created))
+            .filter(model => !model.hidden);
+          break;
+
+        // [OpenAI]: chat-only models, custom sort, manual mapping
+        case 'openai':
+          models = openAIModels
+
+            // limit to only 'gpt' and 'non instruct' models
+            .filter(model => model.id.includes('gpt') && !model.id.includes('-instruct'))
+
+            // custom openai sort
+            .sort((a, b) => {
+              const aId = a.id.slice(0, 5);
+              const bId = b.id.slice(0, 5);
+              if (aId === bId) {
+                const aCount = a.id.split('-').length;
+                const bCount = b.id.split('-').length;
+                if (aCount === bCount)
+                  return a.id.localeCompare(b.id);
+                return aCount - bCount;
+              }
+              return bId.localeCompare(aId);
+            })
+
+            // to model description
+            .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created));
+          break;
+
+
+        case 'openrouter':
+          models = openAIModels
+            .sort(openRouterModelFamilySortFn)
+            .map(model => openRouterModelToModelDescription(model.id, model.created, (model as any)?.['context_length']));
+          break;
+      }
+
       return { models };
     }),
 
@@ -179,7 +203,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, model, history, functions, forceFunctionName } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
-      const wireCompletions = await openaiPOST<OpenAI.Wire.ChatCompletion.Response, OpenAI.Wire.ChatCompletion.Request>(
+      const wireCompletions = await openaiPOST<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
         access, model.id,
         openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
         '/v1/chat/completions',
@@ -197,18 +221,18 @@ export const llmOpenAIRouter = createTRPCRouter({
       // check for a function output
       // NOTE: this includes a workaround for when we requested a function but the model could not deliver
       return (finish_reason === 'function_call' || 'function_call' in message)
-        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAI.Wire.ChatCompletion.ResponseFunctionCall)
-        : parseChatGenerateOutput(message as OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason);
+        ? parseChatGenerateFCOutput(isFunctionsCall, message as OpenAIWire.ChatCompletion.ResponseFunctionCall)
+        : parseChatGenerateOutput(message as OpenAIWire.ChatCompletion.ResponseMessage, finish_reason);
     }),
 
   /* OpenAI: check for content policy violations */
   moderation: publicProcedure
     .input(moderationInputSchema)
-    .mutation(async ({ input }): Promise<OpenAI.Wire.Moderation.Response> => {
+    .mutation(async ({ input }): Promise<OpenAIWire.Moderation.Response> => {
       const { access, text } = input;
       try {
 
-        return await openaiPOST<OpenAI.Wire.Moderation.Response, OpenAI.Wire.Moderation.Request>(access, null, {
+        return await openaiPOST<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -231,12 +255,12 @@ type FunctionsSchema = z.infer<typeof openAIFunctionsSchema>;
 
 async function openaiGET<TOut extends object>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, null, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'OpenAI');
+  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, `OpenAI/${access.dialect}`);
 }
 
 async function openaiPOST<TOut extends object, TPostBody extends object>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'OpenAI');
+  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, `OpenAI/${access.dialect}`);
 }
 
 
@@ -280,6 +304,8 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
 
+    case 'localai':
+    case 'oobabooga':
     case 'openai':
       const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
       const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
@@ -350,7 +376,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
   }
 }
 
-export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAI.Wire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(model: ModelSchema, history: HistorySchema, functions: FunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire.ChatCompletion.Request {
   return {
     model: model.id,
     messages: history,
@@ -362,7 +388,7 @@ export function openAIChatCompletionPayload(model: ModelSchema, history: History
   };
 }
 
-function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wire.ChatCompletion.ResponseFunctionCall) {
+function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAIWire.ChatCompletion.ResponseFunctionCall) {
   // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
   if (!isFunctionsCall)
     throw new TRPCError({
@@ -371,7 +397,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
     });
 
   // parse the function call
-  const fcMessage = message as any as OpenAI.Wire.ChatCompletion.ResponseFunctionCall;
+  const fcMessage = message as any as OpenAIWire.ChatCompletion.ResponseFunctionCall;
   if (fcMessage.content !== null)
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
@@ -404,7 +430,7 @@ function parseChatGenerateFCOutput(isFunctionsCall: boolean, message: OpenAI.Wir
   };
 }
 
-function parseChatGenerateOutput(message: OpenAI.Wire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
+function parseChatGenerateOutput(message: OpenAIWire.ChatCompletion.ResponseMessage, finish_reason: 'stop' | 'length' | null) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({

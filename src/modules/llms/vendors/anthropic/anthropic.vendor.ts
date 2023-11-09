@@ -3,7 +3,7 @@ import { apiAsync } from '~/common/util/trpc.client';
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { AnthropicAccessSchema } from '../../transports/server/anthropic.router';
+import type { AnthropicAccessSchema } from '../../transports/server/anthropic/anthropic.router';
 import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';

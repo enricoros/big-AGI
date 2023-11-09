@@ -2,11 +2,11 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { SERVER_DEBUG_WIRE, debugGenerateCurlCommand } from '~/server/wire';
+import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE, serverFetchOrThrow } from '~/server/wire';
 
-import { AnthropicWire } from './anthropic.wiretypes';
-import { OpenAI } from './openai.wiretypes';
-import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic.router';
+import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
+import type { OpenAIWire } from './openai.wiretypes';
+import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from '../anthropic/anthropic.router';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
 
 
@@ -26,29 +26,28 @@ function parseOpenAIStream(): AIStreamParser {
 
   return data => {
 
-    const json: OpenAI.Wire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
 
-    // an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
+    // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error)
-      return { text: `[OpenAI Issue] ${json.error.message || json.error}`, close: true };
+      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
 
     if (json.choices.length !== 1) {
-      // Azure: we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
+      // [Azure] we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
       if (json.id === '' && json.object === '' && json.model === '')
         return { text: '', close: false };
-      console.log('/api/llms/stream: OpenAI stream issue (no choices):', json);
-      throw new Error(`[OpenAI Issue] Expected 1 completion, got ${json.choices.length}`);
+      throw new Error(`Expected 1 completion, got ${json.choices.length}`);
     }
 
     const index = json.choices[0].index;
     if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
-      throw new Error(`[OpenAI Issue] Expected completion index 0, got ${index}`);
+      throw new Error(`Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+      const firstPacket: ChatStreamFirstPacketSchema = {
         model: json.model,
       };
       text = JSON.stringify(firstPacket) + text;
@@ -79,7 +78,7 @@ function parseAnthropicStream(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: OpenAI.API.Chat.StreamingFirstResponse = {
+      const firstPacket: ChatStreamFirstPacketSchema = {
         model: json.model,
       };
       text = JSON.stringify(firstPacket) + text;
@@ -94,7 +93,7 @@ function parseAnthropicStream(): AIStreamParser {
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
  */
-function createEventStreamTransformer(vendorTextParser: AIStreamParser): TransformStream<Uint8Array, Uint8Array> {
+function createEventStreamTransformer(vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
@@ -133,7 +132,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
               controller.terminate();
           } catch (error: any) {
             // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
-            controller.enqueue(textEncoder.encode(`[Stream Issue] ${error?.message || error}`));
+            controller.enqueue(textEncoder.encode(`[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
             controller.terminate();
           }
         },
@@ -145,13 +144,6 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser): Transfo
       eventSourceParser.feed(textDecoder.decode(chunk, { stream: true }));
     },
   });
-}
-
-export async function throwIfResponseNotOk(response: Response) {
-  if (!response.ok) {
-    const errorPayload: object | null = await response.json().catch(() => null);
-    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
-  }
 }
 
 export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
@@ -167,6 +159,10 @@ const chatStreamInputSchema = z.object({
 });
 export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
 
+const chatStreamFirstPacketSchema = z.object({
+  model: z.string(),
+});
+export type ChatStreamFirstPacketSchema = z.infer<typeof chatStreamFirstPacketSchema>;
 
 export async function openaiStreamingResponse(req: NextRequest): Promise<Response> {
 
@@ -189,6 +185,8 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
         break;
 
       case 'azure':
+      case 'localai':
+      case 'oobabooga':
       case 'openai':
       case 'openrouter':
         headersUrl = openAIAccess(access, model.id, '/v1/chat/completions');
@@ -201,22 +199,17 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
       console.log('-> streaming curl', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
 
     // POST to our API route
-    upstreamResponse = await fetch(headersUrl.url, {
-      method: 'POST',
-      headers: headersUrl.headers,
-      body: JSON.stringify(body),
-    });
-    await throwIfResponseNotOk(upstreamResponse);
+    upstreamResponse = await serverFetchOrThrow(headersUrl.url, 'POST', headersUrl.headers, body);
 
   } catch (error: any) {
-    const fetchOrVendorError = (error?.message || (typeof error === 'string' ? error : JSON.stringify(error))) + (error?.cause ? ' · ' + error.cause : '');
-    const dialectError = (access.dialect.charAt(0).toUpperCase() + access.dialect.slice(1)) + ' - ' + fetchOrVendorError;
+    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
 
     // server-side admins message
-    console.log(`/api/llms/stream: fetch issue:`, dialectError, headersUrl?.url);
+    console.log(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, headersUrl?.url);
 
     // client-side users visible message
-    return new NextResponse('[Issue] ' + dialectError + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
+    return new NextResponse(`[Issue] ${access.dialect}: ${fetchOrVendorError}`
+      + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
@@ -229,7 +222,7 @@ export async function openaiStreamingResponse(req: NextRequest): Promise<Respons
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(createEventStreamTransformer(vendorStreamParser));
+    .pipeThrough(createEventStreamTransformer(vendorStreamParser, access.dialect));
 
   return new NextResponse(chatResponseStream, {
     status: 200,

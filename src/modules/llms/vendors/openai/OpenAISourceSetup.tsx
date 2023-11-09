@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { Alert, Box } from '@mui/joy';
 
-import { apiQuery } from '~/common/util/trpc.client';
-
 import { Brand } from '~/common/brand';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -11,14 +9,14 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import type { ModelDescriptionSchema } from '../../transports/server/server.common';
+import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 
-import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from './openai.vendor';
-import { openAIModelToModelDescription } from './openai.data';
+import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -43,14 +41,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({
-    access, onlyChatModels: true,
-  }, {
+  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => {
-      const llms = source ? models.map(model => openAIModelToDLLM(model, source)) : [];
-      useModelsStore.getState().addLLMs(llms);
-    },
+    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
 
@@ -117,46 +110,28 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function openAIModelToDLLM(model: { id: string, created: number }, source: DModelSource): DLLM<SourceSetupOpenAI, LLMOptionsOpenAI> {
-  const { label, created, updated, description, contextWindow: contextTokens, hidden } = openAIModelToModelDescription(model.id, model.created);
-  return {
-    id: `${source.id}-${model.id}`,
-
-    label,
-    created: created || 0,
-    updated: updated || 0,
-    description,
-    tags: [], // ['stream', 'chat'],
-    contextTokens,
-    hidden: hidden || false,
-
-    sId: source.id,
-    _source: source,
-
-    options: {
-      llmRef: model.id,
-      llmTemperature: 0.5,
-      llmResponseTokens: Math.round(contextTokens / 8),
-    },
-  };
-}
-
 export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
+  const maxOutputTokens = model.maxCompletionTokens || Math.round((model.contextWindow || 4096) / 2);
+  const llmResponseTokens = Math.round(maxOutputTokens / (model.maxCompletionTokens ? 2 : 4));
   return {
     id: `${source.id}-${model.id}`,
+
     label: model.label,
     created: model.created || 0,
     updated: model.updated || 0,
     description: model.description,
     tags: [], // ['stream', 'chat'],
     contextTokens: model.contextWindow,
+    maxOutputTokens: maxOutputTokens,
     hidden: !!model.hidden,
+
     sId: source.id,
     _source: source,
+
     options: {
       llmRef: model.id,
       llmTemperature: 0.5,
-      llmResponseTokens: Math.round(model.contextWindow / 8),
+      llmResponseTokens: llmResponseTokens,
     },
   };
 }
