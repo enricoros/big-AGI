@@ -4,8 +4,10 @@ export function useDebouncer<TValue = string | number>(
   initialValue: TValue,
   delayMs: number,
   deadlineMs?: number,
-): [TValue, (newValue: TValue | ((prevState: TValue) => TValue)) => void, () => TValue] {
-  const [debouncedValue, setDebouncedValue] = React.useState(initialValue);
+  immediate?: boolean,
+): [TValue, TValue, (newValue: TValue | ((prevState: TValue) => TValue)) => void, () => TValue] {
+  const [immediateValue, setImmediateValue] = React.useState<TValue>(initialValue);
+  const [debouncedValue, setDebouncedValue] = React.useState<TValue>(initialValue);
   const valueRef = React.useRef(initialValue);
   const debounceTimeoutRef = React.useRef<number>();
   const deadlineTimeoutRef = React.useRef<number>();
@@ -27,7 +29,11 @@ export function useDebouncer<TValue = string | number>(
   const setValue = React.useCallback((_newValue: TValue | ((prevState: TValue) => TValue)) => {
     clearDebounceTimeout();
     // @ts-ignore
-    valueRef.current = typeof _newValue === 'function' ? _newValue(valueRef.current) : _newValue;
+    const newValue: TValue = typeof _newValue === 'function' ? _newValue(valueRef.current) : _newValue;
+    valueRef.current = newValue;
+    // trigger an immediate update
+    if (immediate)
+      setImmediateValue(newValue);
 
     const handler = () => {
       setDebouncedValue(valueRef.current);
@@ -41,7 +47,7 @@ export function useDebouncer<TValue = string | number>(
     if (typeof deadlineMs === 'number' && deadlineMs > delayMs && deadlineTimeoutRef.current === undefined)
       deadlineTimeoutRef.current = window.setTimeout(handler, deadlineMs);
 
-  }, [clearDebounceTimeout, clearDeadlineTimeout, delayMs, deadlineMs]);
+  }, [clearDebounceTimeout, immediate, delayMs, deadlineMs, clearDeadlineTimeout]);
 
   const getValue = React.useCallback(() => valueRef.current, []);
 
@@ -52,7 +58,7 @@ export function useDebouncer<TValue = string | number>(
     };
   }, [clearDebounceTimeout, clearDeadlineTimeout]);
 
-  return [debouncedValue, setValue, getValue];
+  return [immediateValue, debouncedValue, setValue, getValue];
 }
 
 
