@@ -39,6 +39,7 @@ import { ChatModeId, useComposerStartupText } from './store-composer';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
+import { useDebouncer } from '~/common/components/useDebouncer';
 
 
 /// Text template helpers
@@ -143,7 +144,7 @@ export function Composer(props: {
   sx?: SxProps;
 }) {
   // state
-  const [composeText, setComposeText] = React.useState('');
+  const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
@@ -173,13 +174,13 @@ export function Composer(props: {
       setStartupText(null);
       setComposeText(startupText);
     }
-  }, [startupText, setStartupText]);
+  }, [setComposeText, setStartupText, startupText]);
 
   // derived state
   const tokenLimit = chatLLM?.contextTokens || 0;
   const directTokens = React.useMemo(() => {
-    return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
-  }, [chatLLMId, composeText]);
+    return (!debouncedText || !chatLLMId) ? 4 : 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
+  }, [chatLLMId, debouncedText]);
   const historyTokens = conversationTokenCount;
   const responseTokens = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
@@ -239,7 +240,7 @@ export function Composer(props: {
         return prevText ? prevText + ' ' + transcript : transcript;
       });
     }
-  }, []);
+  }, [setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 2000, 'm');
 
@@ -341,7 +342,7 @@ export function Composer(props: {
       // no text/html or text/plain item found
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, []);
+  }, [setComposeText]);
 
   useGlobalShortcut('v', true, true, handlePasteButtonClicked);
 
