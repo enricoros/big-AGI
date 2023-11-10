@@ -13,9 +13,8 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
     description: 'Persona answers',
   },
   'immediate-follow-up': {
-    label: 'Augmented Chat',
-    description: 'Chat with follow-up questions',
-    experimental: true,
+    label: 'Chat Plus',
+    description: 'Augmented chat (diagrams)',
   },
   'write-user': {
     label: 'Write',

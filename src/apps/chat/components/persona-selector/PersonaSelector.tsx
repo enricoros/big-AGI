@@ -45,10 +45,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { experimentalLabs, showFinder } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs,
-    showFinder: state.showPurposeFinder,
-  }), shallow);
+  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -187,7 +184,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
             </Grid>
           ))}
           {/* Button to start the YouTube persona creator */}
-          {experimentalLabs && <Grid>
+          <Grid>
             <Button
               variant='soft' color='neutral'
               component={Link} noLinkStyle href='/personas'
@@ -210,7 +207,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
                 YouTube persona creator
               </div>
             </Button>
-          </Grid>}
+          </Grid>
         </Grid>
 
         <Typography
