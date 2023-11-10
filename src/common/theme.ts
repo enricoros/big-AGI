@@ -134,6 +134,7 @@ export const theme = extendTheme({
 });
 
 export const bodyFontClassName = inter.className;
+export const themeBreakpoints = theme.breakpoints.values;
 
 export const cssRainbowColorKeyframes = keyframes`
     100%, 0% {
