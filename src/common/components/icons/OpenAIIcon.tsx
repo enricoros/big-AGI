@@ -4,7 +4,7 @@ import { SvgIcon } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 export function OpenAIIcon(props: { sx?: SxProps }) {
-  return <SvgIcon viewBox='0 0 24 24' width='24' height='24' stroke='currentColor' strokeWidth={2} fill='none' strokeLinecap='round' strokeLinejoin='round' {...props}>
+  return <SvgIcon viewBox='0 0 24 24' width='24' height='24' stroke='currentColor' strokeWidth={1.5} fill='none' strokeLinecap='round' strokeLinejoin='round' {...props}>
     {/*<path stroke='none' d='M0 0h24v24H0z' fill='none'></path>*/}
     <path d='M11.217 19.384a3.501 3.501 0 0 0 6.783 -1.217v-5.167l-6 -3.35' fill='none' />
     <path d='M5.214 15.014a3.501 3.501 0 0 0 4.446 5.266l4.34 -2.534v-6.946' fill='none' />
