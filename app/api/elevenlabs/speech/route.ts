@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 import { createEmptyReadableStream, safeErrorString, serverFetchOrThrow } from '~/server/wire';
 
 import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from '~/modules/elevenlabs/elevenlabs.router';
@@ -14,8 +12,7 @@ response as an ArrayBuffer. Unfortunately this means duplicating the code in the
 and client-side vs. the tRPC implementation. So at lease we recycle the input structures.
 
 */
-
-export default async function handler(req: NextRequest) {
+const handler = async (req: Request) => {
   try {
 
     // construct the upstream request
@@ -42,14 +39,14 @@ export default async function handler(req: NextRequest) {
 
     // stream the data to the client
     const audioReadableStream = upstreamResponse.body || createEmptyReadableStream();
-    return new NextResponse(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
+    return new Response(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
 
   } catch (error: any) {
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
     console.log(`api/elevenlabs/speech: fetch issue: ${fetchOrVendorError}`);
-    return new NextResponse(`[Issue] elevenlabs: ${fetchOrVendorError}`, { status: 500 });
+    return new Response(`[Issue] elevenlabs: ${fetchOrVendorError}`, { status: 500 });
   }
-}
+};
 
-// noinspection JSUnusedGlobalSymbols
 export const runtime = 'edge';
+export { handler as POST };
