@@ -22,7 +22,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
   const [adminOpen, setAdminOpen] = React.useState(false);
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, access, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorOllama.getAccess);
 
   // derived state
@@ -34,7 +34,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOllama.listModels.useQuery({ access }, {
-    enabled: !sourceHasLLMs && shallFetchSucceed,
+    enabled: false, // !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
