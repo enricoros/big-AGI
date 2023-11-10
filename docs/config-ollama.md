@@ -23,16 +23,48 @@ For detailed instructions on setting up the Ollama API server, please refer to t
 ### Visual Guide
 
 * After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:
-  ![config-local-ollama-1-models.png](pixels/config-ollama-1-models.png)
-* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:
-  ![config-local-ollama-2-admin-pull.png](pixels/config-ollama-2-admin-pull.png)
-* You can now switch model/persona dynamically and text/voice chat with the models:
-  ![config-local-ollama-3-chat.png](pixels/config-ollama-3-chat.png)
+  <img src="pixels/config-ollama-1-models.png" alt="config-local-ollama-1-models.png" style="max-width: 320px;">
 
-### Advanced Configuration
+* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:
+  <img src="pixels/config-ollama-2-admin-pull.png" alt="config-local-ollama-2-admin-pull.png" style="max-width: 320px;">
+
+* You can now switch model/persona dynamically and text/voice chat with the models:
+  <img src="pixels/config-ollama-3-chat.png" alt="config-local-ollama-3-chat.png" style="max-width: 320px;">
+
+### Advanced: Model parameters
 
 For users who wish to delve deeper into advanced settings, `big-AGI` offers additional configuration options, such
 as the model temperature, maximum tokens, etc.
+
+### Advanced: Ollama under a reverse proxy
+
+You can elegantly expose your Ollama server to the internet (and thus make it easier to use from your server-side
+big-AGI deployments) by exposing it on an http/https URL, such as: `https://yourdomain.com/ollama`
+
+On Ubuntu Servers, you will need to install `nginx` and configure it to proxy requests to Ollama.
+
+```bash
+sudo apt update
+sudo apt install nginx
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+```
+
+Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and add the following block:
+
+```nginx
+    location /ollama/ {
+        proxy_pass http://localhost:11434;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        # Further proxy settings...
+    }
+```
+
+Reach out to our community if you need help with this.
 
 ### Community and Support
 
