@@ -107,7 +107,7 @@ export function ModelsSourceSelector(props: {
   const sourceItems = React.useMemo(() => modelSources.map(source => {
     return {
       source,
-      icon: locationIcon(findVendorById(source.vId)),
+      icon: vendorIcon(findVendorById(source.vId), false),
       component: <Option key={source.id} value={source.id}>{source.label}</Option>,
     };
   }), [modelSources]);
@@ -120,7 +120,7 @@ export function ModelsSourceSelector(props: {
 
       {/* Models: [Select] Add Delete */}
       <Typography sx={{ mr: 1, ...hideOnMobile }}>
-        Vendor:
+        Service:
       </Typography>
 
       <Select
