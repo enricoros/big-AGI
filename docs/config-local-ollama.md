@@ -5,7 +5,7 @@ This guide helps you connect [Ollama](https://ollama.ai) [models](https://ollama
 experience. The integration brings the popular big-AGI features to Ollama, including: voice chats,
 editing tools, models switching, personas, and more.
 
-![config-local-ollama-3-chat.png](pixels/config-local-ollama-3-chat.png)
+![config-local-ollama-0-example.png](pixels/config-local-ollama-0-example.png)
 
 ## Quick Integration Guide
 
@@ -26,6 +26,8 @@ For detailed instructions on setting up the Ollama API server, please refer to t
   ![config-local-ollama-1-models.png](pixels/config-local-ollama-1-models.png)
 * The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:
   ![config-local-ollama-2-admin-pull.png](pixels/config-local-ollama-2-admin-pull.png)
+* You can now switch model/persona dynamically and text/voice chat with the models:
+  ![config-local-ollama-3-chat.png](pixels/config-local-ollama-3-chat.png)
 
 ### Advanced Configuration
 
