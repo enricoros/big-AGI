@@ -20,13 +20,7 @@ import { ZodError } from 'zod';
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
 
-export const createTRPCNodeContext = ({ /*req, res*/ }: CreateNextContextOptions) => {
-  // ...
-  // ...
-  return {};
-};
-
-export const createTRPCEdgeContext = ({ /*req, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
+export const createTRPCFetchContext = ({ /*req, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
   return {};
@@ -41,7 +35,7 @@ export const createTRPCEdgeContext = ({ /*req, resHeaders*/ }: { req: Request; r
  * errors on the backend.
  */
 
-const t = initTRPC.context<typeof createTRPCEdgeContext>().create({
+const t = initTRPC.context<typeof createTRPCFetchContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
     return {
