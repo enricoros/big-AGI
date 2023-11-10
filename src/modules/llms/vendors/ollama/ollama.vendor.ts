@@ -8,6 +8,7 @@ import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { OllamaSourceSetup } from './OllamaSourceSetup';
+import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
 
 
 export interface SourceSetupOllama {
@@ -28,7 +29,7 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, LLMOptionsOpenAI
   hasServerKey: !!process.env.HAS_SERVER_HOST_OLLAMA,
 
   // components
-  Icon: '🦙',
+  Icon: OllamaIcon,
   SourceSetupComponent: OllamaSourceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
