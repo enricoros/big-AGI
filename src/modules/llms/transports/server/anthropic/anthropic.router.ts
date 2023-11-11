@@ -4,12 +4,74 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { LLM_IF_OAI_Chat } from '../../../store-llms';
-
-import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
+import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
+import { listModelsOutputSchema } from '../server.schemas';
 
 import { AnthropicWire } from './anthropic.wiretypes';
+import { hardcodedAnthropicModels } from './anthropic.models';
+
+
+// Default hosts
+const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
+const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
+
+
+// Mappers
+
+export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+  // API version
+  const apiVersion = '2023-06-01';
+
+  // API key
+  const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+
+  // break for the missing key only on the default host
+  if (!anthropicKey)
+    if (!access.anthropicHost && !process.env.ANTHROPIC_API_HOST)
+      throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+
+  // API host
+  let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
+
+  // Helicone for Anthropic
+  // https://docs.helicone.ai/getting-started/integration-method/anthropic
+  const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
+  if (heliKey) {
+    if (!anthropicHost.includes(DEFAULT_ANTHROPIC_HOST) && !anthropicHost.includes(DEFAULT_HELICONE_ANTHROPIC_HOST))
+      throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);
+    anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
+  }
+
+  return {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'anthropic-version': apiVersion,
+      'X-API-Key': anthropicKey,
+      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
+    },
+    url: anthropicHost + apiPath,
+  };
+}
+
+export function anthropicChatCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWire.Complete.Request {
+  // encode the prompt for Claude models
+  const prompt = history.map(({ role, content }) => {
+    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
+  }).join('') + '\n\nAssistant:';
+  return {
+    prompt,
+    model: model.id,
+    max_tokens_to_sample: model.maxTokens,
+    stream,
+    ...(model.temperature && { temperature: model.temperature }),
+  };
+}
+
+async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = anthropicAccess(access, apiPath);
+  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
+}
 
 
 // Input Schemas
@@ -22,7 +84,6 @@ export const anthropicAccessSchema = z.object({
 });
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;
 
-
 const listModelsInputSchema = z.object({
   access: anthropicAccessSchema,
 });
@@ -32,6 +93,8 @@ const chatGenerateInputSchema = z.object({
   model: openAIModelSchema, history: openAIHistorySchema,
 });
 
+
+// Router
 
 export const llmAnthropicRouter = createTRPCRouter({
 
@@ -78,112 +141,3 @@ export const llmAnthropicRouter = createTRPCRouter({
     }),
 
 });
-
-const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
-
-const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
-  {
-    id: 'claude-2.0',
-    label: 'Claude 2',
-    created: roundTime('2023-07-11'),
-    description: 'Claude-2 is the latest version of Claude',
-    contextWindow: 100000,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'claude-instant-1.2',
-    label: 'Claude Instant 1.2',
-    created: roundTime('2023-08-09'),
-    description: 'Precise and faster',
-    contextWindow: 100000,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'claude-instant-1.1',
-    label: 'Claude Instant 1.1',
-    created: roundTime('2023-03-14'),
-    description: 'Precise and fast',
-    contextWindow: 100000,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
-  },
-  {
-    id: 'claude-1.3',
-    label: 'Claude 1.3',
-    created: roundTime('2023-03-14'),
-    description: 'Claude 1.3 is the latest version of Claude v1',
-    contextWindow: 100000,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
-  },
-  {
-    id: 'claude-1.0',
-    label: 'Claude 1',
-    created: roundTime('2023-03-14'),
-    description: 'Claude 1.0 is the first version of Claude',
-    contextWindow: 9000,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
-  },
-];
-
-type ModelSchema = z.infer<typeof openAIModelSchema>;
-type HistorySchema = z.infer<typeof openAIHistorySchema>;
-
-async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = anthropicAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Anthropic');
-}
-
-const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
-const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
-
-export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
-  // API version
-  const apiVersion = '2023-06-01';
-
-  // API key
-  const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
-
-  // break for the missing key only on the default host
-  if (!anthropicKey)
-    if (!access.anthropicHost && !process.env.ANTHROPIC_API_HOST)
-      throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
-
-  // API host
-  let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
-
-  // Helicone for Anthropic
-  // https://docs.helicone.ai/getting-started/integration-method/anthropic
-  const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
-  if (heliKey) {
-    if (!anthropicHost.includes(DEFAULT_ANTHROPIC_HOST) && !anthropicHost.includes(DEFAULT_HELICONE_ANTHROPIC_HOST))
-      throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);
-    anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
-  }
-
-  return {
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'anthropic-version': apiVersion,
-      'X-API-Key': anthropicKey,
-      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
-    },
-    url: anthropicHost + apiPath,
-  };
-}
-
-export function anthropicChatCompletionPayload(model: ModelSchema, history: HistorySchema, stream: boolean): AnthropicWire.Complete.Request {
-  // encode the prompt for Claude models
-  const prompt = history.map(({ role, content }) => {
-    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
-  }).join('') + '\n\nAssistant:';
-  return {
-    prompt,
-    model: model.id,
-    max_tokens_to_sample: model.maxTokens,
-    stream,
-    ...(model.temperature && { temperature: model.temperature }),
-  };
-}

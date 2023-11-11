@@ -30,11 +30,13 @@ export const openAIModelSchema = z.object({
   temperature: z.number().min(0).max(1).optional(),
   maxTokens: z.number().min(1).max(1000000),
 });
+export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
 
 export const openAIHistorySchema = z.array(z.object({
   role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
   content: z.string(),
 }));
+export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
 export const openAIFunctionsSchema = z.array(z.object({
   name: z.string(),
