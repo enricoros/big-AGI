@@ -20,7 +20,7 @@ import { wireOllamaGenerationSchema } from '../ollama/ollama.wiretypes';
  * The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
  * communicate parameters before the text starts flowing to the client.
  */
-type AIStreamParser = (data: string) => { text: string, close: boolean };
+export type AIStreamParser = (data: string) => { text: string, close: boolean };
 
 type EventStreamFormat = 'sse' | 'json-nl';
 
@@ -278,7 +278,7 @@ function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSource
     feed: (chunk: string): void => {
       accumulator += chunk;
       if (accumulator.endsWith('\n')) {
-        for (const jsonString of chunk.split('\n').filter(line => !!line)) {
+        for (const jsonString of accumulator.split('\n').filter(line => !!line)) {
           const mimicEvent: ParsedEvent = {
             type: 'event',
             id: undefined,
