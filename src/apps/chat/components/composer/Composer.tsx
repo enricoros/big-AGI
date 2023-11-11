@@ -626,8 +626,8 @@ export function Composer(props: {
 
 
               {/* [mobile] [corner] Call button */}
-              {APP_CALL_ENABLED && isChat && <CallButtonMobile
-                disabled={!props.conversationId || !chatLLM}
+              {isChat && <CallButtonMobile
+                disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM}
                 onClick={handleCallClicked}
                 sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}
               />}
@@ -669,7 +669,7 @@ export function Composer(props: {
             {/* [desktop] other buttons (aligned to bottom for now, and mutually exclusive) */}
             <Box sx={{ flexGrow: 1, flexDirection: 'column', gap: 1, justifyContent: 'flex-end', ...hideOnMobile }}>
 
-              {APP_CALL_ENABLED && isChat && <CallButtonDesktop disabled={!props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+              {isChat && <CallButtonDesktop disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
 
               {(isDraw || isDrawPlus) && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}
             </Box>
