@@ -140,7 +140,14 @@ function createOllamaStreamParser(): AIStreamParser {
 
   return (data: string) => {
 
-    const wireGeneration = JSON.parse(data);
+    let wireGeneration: any;
+    try {
+      wireGeneration = JSON.parse(data);
+    } catch (error: any) {
+      // log the malformed data to the console, and rethrow to transmit as 'error'
+      console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
+      throw error;
+    }
     const generation = wireOllamaGenerationSchema.parse(wireGeneration);
     let text = generation.response;
 
