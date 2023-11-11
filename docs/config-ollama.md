@@ -60,7 +60,9 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-        # Further proxy settings...
+        
+        # Disable buffering for the streaming responses
+        proxy_buffering off;
     }
 ```
 
