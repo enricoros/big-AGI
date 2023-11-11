@@ -7,14 +7,74 @@ import { LLM_IF_OAI_Chat } from '../../../store-llms';
 
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
-import { fixupHost, openAIChatGenerateOutputSchema, openAIHistorySchema, openAIModelSchema } from '../openai/openai.router';
+import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
 
 import { OLLAMA_BASE_MODELS } from './ollama.models';
 import { wireOllamaGenerationSchema } from './ollama.wiretypes';
 
 
-// Input Schemas
+// Default hosts
+const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
+
+
+// Mappers
+
+export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+
+  const ollamaHost = fixupHost(access.ollamaHost || process.env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
+
+  return {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    url: ollamaHost + apiPath,
+  };
+
+}
+
+export function ollamaChatCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean) {
+
+  // if the first message is the system prompt, extract it
+  let systemPrompt: string | undefined = undefined;
+  if (history.length && history[0].role === 'system') {
+    const [firstMessage, ...rest] = history;
+    systemPrompt = firstMessage.content;
+    history = rest;
+  }
+
+  // encode the prompt for ollama, assuming the same template for everyone for now
+  const prompt = history.map(({ role, content }) => {
+    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
+  }).join('') + '\n\nAssistant:\n';
+
+  // const prompt = history.map(({ role, content }) => {
+  //   return role === 'assistant' ? `### Response:\n${content}\n\n` : `### User:\n${content}\n\n`;
+  // }).join('') + '### Response:\n';
+
+  return {
+    model: model.id,
+    prompt,
+    options: {
+      ...(model.temperature && { temperature: model.temperature }),
+    },
+    ...(systemPrompt && { system: systemPrompt }),
+    stream,
+  };
+}
+
+async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = ollamaAccess(access, apiPath);
+  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Ollama');
+}
+
+async function ollamaPOST<TOut extends object, TPostBody extends object>(access: OllamaAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = ollamaAccess(access, apiPath);
+  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Ollama');
+}
+
+
+// Input/Output Schemas
 
 export const ollamaAccessSchema = z.object({
   dialect: z.enum(['ollama']),
@@ -36,9 +96,6 @@ const chatGenerateInputSchema = z.object({
   model: openAIModelSchema, history: openAIHistorySchema,
   // functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
 });
-
-
-// Output Schemas
 
 const listPullableOutputSchema = z.object({
   pullable: z.array(z.object({
@@ -162,63 +219,3 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
 });
-
-
-type ModelSchema = z.infer<typeof openAIModelSchema>;
-type HistorySchema = z.infer<typeof openAIHistorySchema>;
-
-async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Ollama');
-}
-
-async function ollamaPOST<TOut extends object, TPostBody extends object>(access: OllamaAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Ollama');
-}
-
-
-const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
-
-export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
-
-  const ollamaHost = fixupHost(access.ollamaHost || process.env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
-
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    url: ollamaHost + apiPath,
-  };
-
-}
-
-export function ollamaChatCompletionPayload(model: ModelSchema, history: HistorySchema, stream: boolean) {
-
-  // if the first message is the system prompt, extract it
-  let systemPrompt: string | undefined = undefined;
-  if (history.length && history[0].role === 'system') {
-    const [firstMessage, ...rest] = history;
-    systemPrompt = firstMessage.content;
-    history = rest;
-  }
-
-  // encode the prompt for ollama, assuming the same template for everyone for now
-  const prompt = history.map(({ role, content }) => {
-    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
-  }).join('') + '\n\nAssistant:\n';
-
-  // const prompt = history.map(({ role, content }) => {
-  //   return role === 'assistant' ? `### Response:\n${content}\n\n` : `### User:\n${content}\n\n`;
-  // }).join('') + '### Response:\n';
-
-  return {
-    model: model.id,
-    prompt,
-    options: {
-      ...(model.temperature && { temperature: model.temperature }),
-    },
-    ...(systemPrompt && { system: systemPrompt }),
-    stream,
-  };
-}
