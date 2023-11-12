@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
-import { isChromeOnDesktopWindows, isIPhone } from '../util/pwaUtils';
+import { isChromeOnDesktop, isIPhone } from '../util/pwaUtils';
 import { useGlobalShortcut } from './useGlobalShortcut';
 import { useUIPreferencesStore } from '../state/store-ui';
 
@@ -85,7 +85,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     const instance = new webSpeechAPI();
     instance.lang = preferredLanguage;
-    instance.interimResults = isChromeOnDesktopWindows() && softStopTimeout > 0;
+    instance.interimResults = isChromeOnDesktop() && softStopTimeout > 0;
     instance.maxAlternatives = 1;
     instance.continuous = true;
 
