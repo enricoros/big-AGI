@@ -1,6 +1,6 @@
 # Local LLM integration with `localai`
 
-Integrate local Large Language Models (LLMs) with [LocalAI](localai.io).
+Integrate local Large Language Models (LLMs) with [LocalAI](https://localai.io).
 
 _Last updated Nov 7, 2023_
 
