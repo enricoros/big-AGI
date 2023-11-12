@@ -46,6 +46,10 @@ import { parseBlocks } from './blocks';
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE: boolean = false;
 
+// Enable the automatic menu on text selection
+// const ENABLE_SELECTION_AUTO_MENU: boolean = false;
+const ENABLE_SELECTION_RIGHT_CLICK_MENU: boolean = true;
+
 
 export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
   switch (messageRole) {
@@ -162,6 +166,22 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   return { errorMessage, isAssistantError };
 }
 
+function useSanityTextDiffs(text: string, diffText: string | undefined) {
+  const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
+  React.useEffect(() => {
+    if (!diffText)
+      return setDiffs(null);
+    setDiffs(
+      cleanupEfficiency(makeDiff(diffText, text, {
+        timeout: 1,
+        checkLines: true,
+      }), 4),
+    );
+  }, [text, diffText]);
+  return diffs;
+}
+
+
 /**
  * The Message component is a customizable chat message UI component that supports
  * different roles (user, assistant, and system), text editing, syntax highlighting,
@@ -188,13 +208,16 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
   const wasEdited = !!messageUpdated;
 
   // state
-  const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
+  const diffs = useSanityTextDiffs(messageText, props.diffText);
   const [forceExpanded, setForceExpanded] = React.useState(false);
   const [isHovering, setIsHovering] = React.useState(false);
-  const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
   const [isImagining, setIsImagining] = React.useState(false);
   const [isSpeaking, setIsSpeaking] = React.useState(false);
+  // const contentRef = React.useRef<HTMLUListElement>(null);
 
   // external state
   const theme = useTheme();
@@ -204,66 +227,12 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
   const renderMarkdown = _renderMarkdown && !fromSystem;
+  const textSel = selMenuText ? selMenuText : messageText;
   const isImaginable = canUseProdia() && !!props.onImagine;
-  const isImaginableEnabled = messageText?.length >= 2 && !messageText.startsWith('https://images.prodia.xyz/') && !(messageText.startsWith('/imagine') || messageText.startsWith('/img'));
+  const isImaginableEnabled = textSel?.length >= 2 && !textSel.startsWith('https://images.prodia.xyz/') && !(textSel.startsWith('/imagine') || textSel.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
   const isSpeakableEnabled = isImaginableEnabled;
 
-
-  // Effect: text diffing vs the former message
-  React.useEffect(() => {
-    if (!props.diffText)
-      return setDiffs(null);
-    setDiffs(
-      cleanupEfficiency(makeDiff(props.diffText, messageText, {
-        timeout: 1,
-        checkLines: true,
-      }), 4),
-    );
-  }, [messageText, props.diffText]);
-
-
-  const closeOperationsMenu = () => setMenuAnchor(null);
-
-  const handleMenuCopy = (e: React.MouseEvent) => {
-    copyToClipboard(messageText);
-    e.preventDefault();
-    closeOperationsMenu();
-  };
-
-  const handleMenuEdit = (e: React.MouseEvent) => {
-    if (messageTyping && !isEditing) return; // don't allow editing while typing
-    setIsEditing(!isEditing);
-    e.preventDefault();
-    closeOperationsMenu();
-  };
-
-
-  const handleMenuImagine = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (props.onImagine) {
-      setIsImagining(true);
-      await props.onImagine(messageText);
-      setIsImagining(false);
-      closeOperationsMenu();
-    }
-  };
-
-  const handleMenuSpeak = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsSpeaking(true);
-    await speakText(messageText);
-    setIsSpeaking(false);
-    closeOperationsMenu();
-  };
-
-  const handleMenuRunAgain = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (props.onMessageRunFrom) {
-      props.onMessageRunFrom(fromAssistant ? -1 : 0);
-      closeOperationsMenu();
-    }
-  };
 
   const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
@@ -271,10 +240,119 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       props.onMessageEdit(editedText);
   };
 
-  const handleExpand = () => setForceExpanded(true);
+  const handleUncollapse = () => setForceExpanded(true);
 
 
-  // soft error handling
+  // Operations Menu
+
+  const closeOperationsMenu = () => setOpsMenuAnchor(null);
+
+  const handleOpsCopy = (e: React.MouseEvent) => {
+    copyToClipboard(textSel);
+    e.preventDefault();
+    closeOperationsMenu();
+    closeSelectionMenu();
+  };
+
+  const handleOpsEdit = (e: React.MouseEvent) => {
+    if (messageTyping && !isEditing) return; // don't allow editing while typing
+    setIsEditing(!isEditing);
+    e.preventDefault();
+    closeOperationsMenu();
+  };
+
+  const handleOpsImagine = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.onImagine) {
+      setIsImagining(true);
+      await props.onImagine(textSel);
+      setIsImagining(false);
+      closeOperationsMenu();
+      closeSelectionMenu();
+    }
+  };
+
+  const handleOpsSpeak = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSpeaking(true);
+    await speakText(textSel);
+    setIsSpeaking(false);
+    closeOperationsMenu();
+    closeSelectionMenu();
+  };
+
+  const handleOpsRunAgain = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.onMessageRunFrom) {
+      props.onMessageRunFrom(fromAssistant ? -1 : 0);
+      closeOperationsMenu();
+    }
+  };
+
+
+  // Selection Menu
+
+  const removeSelectionAnchor = React.useCallback(() => {
+    if (selMenuAnchor) {
+      try {
+        document.body.removeChild(selMenuAnchor);
+      } catch (e) {
+        // ignore...
+      }
+    }
+  }, [selMenuAnchor]);
+
+  const openSelectionMenu = React.useCallback((event: MouseEvent, selectedText: string) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    // remove any stray anchor
+    removeSelectionAnchor();
+
+    // create a temporary fixed anchor element to position the menu
+    const anchorEl = document.createElement('div');
+    anchorEl.style.position = 'fixed';
+    anchorEl.style.left = `${event.clientX}px`;
+    anchorEl.style.top = `${event.clientY}px`;
+    document.body.appendChild(anchorEl);
+
+    setSelMenuAnchor(anchorEl);
+    setSelMenuText(selectedText);
+  }, [removeSelectionAnchor]);
+
+  const closeSelectionMenu = React.useCallback(() => {
+    // window.getSelection()?.removeAllRanges?.();
+    removeSelectionAnchor();
+    setSelMenuAnchor(null);
+    setSelMenuText(null);
+  }, [removeSelectionAnchor]);
+
+  const handleMouseUp = React.useCallback((event: MouseEvent) => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString().trim();
+      if (selectedText.length > 0) {
+        // range check: only to exclude the 'auto selection' from other components
+        // if (contentRef.current?.contains(range.commonAncestorContainer))
+        openSelectionMenu(event, selectedText);
+        // else
+        //   closeSelectionMenu();
+      }
+    }
+  }, [openSelectionMenu]);
+
+  // React.useEffect(() => {
+  //   if (!ENABLE_SELECTION_AUTO_MENU)
+  //     return;
+  //
+  //   // Attach event listener for automatic text selection
+  //   window.addEventListener('mouseup', handleMouseUp);
+  //   return () => window.removeEventListener('mouseup', handleMouseUp);
+  // }, [handleMouseUp]);
+
+
+  // prettier upstream errors
   const { isAssistantError, errorMessage } = React.useMemo(
     () => explainErrorInMessage(messageText, fromAssistant, messageOriginLLM),
     [messageText, fromAssistant, messageOriginLLM],
@@ -318,8 +396,6 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
 
   return (
     <ListItem
-      // [alpha] Right-click menu: still in early development
-      // onContextMenu={event => setMenuAnchor(event.currentTarget)}
       sx={{
         display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
         gap: { xs: 0, md: 1 }, px: { xs: 1, md: 2 }, py: 2,
@@ -338,7 +414,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       {showAvatars && <Stack
         sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, maxWidth: 80, textAlign: 'center' }}
         onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-        onClick={event => setMenuAnchor(event.currentTarget)}>
+        onClick={event => setOpsMenuAnchor(event.currentTarget)}>
 
         {isHovering ? (
           <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
@@ -368,7 +444,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       {!isEditing ? (
 
         <Box
-          onDoubleClick={(e) => doubleClickToEdit ? handleMenuEdit(e) : null}
+          onDoubleClick={(e) => doubleClickToEdit ? handleOpsEdit(e) : null}
           sx={{
             ...blockSx,
             flexGrow: 0,
@@ -386,30 +462,37 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
-          {!errorMessage && parseBlocks(collapsedText, fromSystem, diffs).map((block, index) =>
-            block.type === 'html'
-              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
-              : block.type === 'code'
-                ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
-                : block.type === 'image'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleMenuRunAgain} />
-                  : block.type === 'latex'
-                    ? <RenderLatex key={'latex-' + index} latexBlock={block} />
-                    : block.type === 'diff'
-                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                      : renderMarkdown
-                        ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                        : <RenderText key={'text-' + index} textBlock={block} />,
-          )}
-
-          {errorMessage && (
-            <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
-              <InlineError error={errorMessage} />
-            </Tooltip>
-          )}
+          {errorMessage
+            ? (
+              <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
+                <InlineError error={errorMessage} />
+              </Tooltip>
+            ) : (
+              <Box
+                // ref={contentRef}
+                onContextMenu={ENABLE_SELECTION_RIGHT_CLICK_MENU ? event => handleMouseUp(event.nativeEvent) : undefined}
+              >
+                {parseBlocks(collapsedText, fromSystem, diffs).map((block, index) =>
+                  block.type === 'html'
+                    ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
+                    : block.type === 'code'
+                      ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
+                      : block.type === 'image'
+                        ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsRunAgain} />
+                        : block.type === 'latex'
+                          ? <RenderLatex key={'latex-' + index} latexBlock={block} />
+                          : block.type === 'diff'
+                            ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
+                            : renderMarkdown
+                              ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                              : <RenderText key={'text-' + index} textBlock={block} />,
+                )}
+              </Box>
+            )
+          }
 
           {isCollapsed && (
-            <Button variant='plain' color='neutral' onClick={handleExpand}>... expand ...</Button>
+            <Button variant='plain' color='neutral' onClick={handleUncollapse}>... expand ...</Button>
           )}
 
           {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
@@ -427,11 +510,11 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       )}
 
 
-      {/* Copy message */}
+      {/* Overlay copy icon */}
       {ENABLE_COPY_MESSAGE && !fromSystem && !isEditing && (
         <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
-            variant='outlined' color='neutral' onClick={handleMenuCopy}
+            variant='outlined' color='neutral' onClick={handleOpsCopy}
             sx={{
               position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
               opacity: 0, transition: 'opacity 0.3s',
@@ -442,26 +525,26 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       )}
 
 
-      {/* Message Operations menu */}
-      {!!menuAnchor && (
+      {/* Operations Menu (3 dots) */}
+      {!!opsMenuAnchor && (
         <CloseableMenu
           placement='bottom-end' sx={{ minWidth: 280 }}
-          open anchorEl={menuAnchor} onClose={closeOperationsMenu}
+          open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <MenuItem variant='plain' disabled={messageTyping} onClick={handleMenuEdit} sx={{ flex: 1 }}>
+            <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
               <ListItemDecorator><EditIcon /></ListItemDecorator>
               {isEditing ? 'Discard' : 'Edit'}
               {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
             </MenuItem>
-            <MenuItem onClick={handleMenuCopy} sx={{ flex: 1 }}>
+            <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
               Copy
             </MenuItem>
           </Box>
           <ListDivider />
           {!!props.onMessageRunFrom && (
-            <MenuItem onClick={handleMenuRunAgain}>
+            <MenuItem onClick={handleOpsRunAgain}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
               {!fromAssistant
                 ? 'Run from here'
@@ -475,13 +558,13 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
             </MenuItem>
           )}
           {isImaginable && isImaginableEnabled && (
-            <MenuItem onClick={handleMenuImagine} disabled={!isImaginableEnabled || isImagining}>
+            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || isImagining}>
               <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
           {isSpeakable && isSpeakableEnabled && (
-            <MenuItem onClick={handleMenuSpeak} disabled={isSpeaking}>
+            <MenuItem onClick={handleOpsSpeak} disabled={isSpeaking}>
               <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
               Speak
             </MenuItem>
@@ -491,6 +574,31 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
             <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
               Delete
+            </MenuItem>
+          )}
+        </CloseableMenu>
+      )}
+
+      {/* Selection Menu */}
+      {!!selMenuAnchor && (
+        <CloseableMenu
+          placement='bottom-start' sx={{ minWidth: 200 }}
+          open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
+        >
+          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
+            <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+            Copy
+          </MenuItem>
+          {isImaginable && (
+            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || isImagining}>
+              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+              Imagine
+            </MenuItem>
+          )}
+          {isSpeakable && (
+            <MenuItem onClick={handleOpsSpeak} disabled={!isImaginableEnabled || isSpeaking}>
+              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+              Speak
             </MenuItem>
           )}
         </CloseableMenu>
