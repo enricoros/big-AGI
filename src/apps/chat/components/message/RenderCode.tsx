@@ -16,6 +16,13 @@ import { OpenInReplit } from './OpenInReplit';
 import { heuristicIsHtml, IFrameComponent } from './RenderHtml';
 
 
+export const overlayButtonsSx: SxProps = {
+  position: 'absolute', top: 0, right: 0, zIndex: 10,
+  display: 'flex', flexDirection: 'row', gap: 1,
+  opacity: 0, transition: 'opacity 0.2s',
+  '& > button': { backdropFilter: 'blur(12px)' },
+};
+
 function RenderCodeImpl(props: {
   codeBlock: CodeBlock, sx?: SxProps,
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
@@ -90,80 +97,77 @@ function RenderCodeImpl(props: {
   };
 
   return (
-    <Box
-      component='code'
-      className={`language-${inferredCodeLanguage || 'unknown'}`}
-      sx={{
-        position: 'relative', mx: 0, p: 1.5, // this block gets a thicker border
-        display: 'block', fontWeight: 500,
-        whiteSpace: 'pre', // was 'break-spaces' before we implmented per-block scrolling
-        overflowX: 'auto',
-        '&:hover > .code-buttons': { opacity: 1 },
-        ...(props.sx || {}),
-      }}>
-
-      {/* Overlay Buttons */}
+    <Box sx={{ position: 'relative' /* for overlay buttons to stick properly */ }}>
       <Box
-        className='code-buttons'
+        component='code'
+        className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          backdropFilter: 'blur(8px)', // '... grayscale(0.8)
-          position: 'absolute', top: 0, right: 0, zIndex: 10, p: 0.5,
-          display: 'flex', flexDirection: 'row', gap: 1,
-          opacity: 0, transition: 'opacity 0.3s',
-          // '& > button': { backdropFilter: 'blur(6px)' },
+          fontWeight: 500, whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
+          mx: 0, p: 1.5, // this block gets a thicker border
+          display: 'block',
+          overflowX: 'auto',
+          '&:hover > .overlay-buttons': { opacity: 1 },
+          ...(props.sx || {}),
         }}>
-        {isSVG && (
-          <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
-            <IconButton variant={renderSVG ? 'solid' : 'soft'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
-              <ShapeLineOutlinedIcon />
+
+        {/* Markdown Title (File/Type) */}
+        {blockTitle != inferredCodeLanguage && blockTitle.includes('.') && (
+          <Sheet sx={{ boxShadow: 'sm', borderRadius: 'sm', mb: 1 }}>
+            <Typography level='title-sm' sx={{ px: 1, py: 0.5 }}>
+              {blockTitle}
+              {/*{inferredCodeLanguage}*/}
+            </Typography>
+          </Sheet>
+        )}
+
+        {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
+        {renderHTML ? <IFrameComponent htmlString={blockCode} />
+          : <Box
+            dangerouslySetInnerHTML={{
+              __html:
+                renderSVG ? blockCode
+                  : (renderPlantUML && plantUmlHtmlData) ? plantUmlHtmlData
+                    : highlightedCode,
+            }}
+            sx={{
+              ...(renderSVG ? { lineHeight: 0 } : {}),
+              ...(renderPlantUML ? { textAlign: 'center' } : {}),
+            }}
+          />}
+
+        {/* Code Buttons */}
+        <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 0.5 }}>
+          {isSVG && (
+            <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
+              <IconButton variant={renderSVG ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
+                <ShapeLineOutlinedIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {isHTML && (
+            <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
+              <IconButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+                <HtmlIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {isPlantUML && (
+            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
+              <IconButton variant={renderPlantUML ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
+                <SchemaIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {canCodepen && <OpenInCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
+          {canReplit && <OpenInReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
+          <Tooltip title='Copy Code' variant='solid'>
+            <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+              <ContentCopyIcon />
             </IconButton>
           </Tooltip>
-        )}
-        {isHTML && (
-          <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
-            <IconButton variant={renderHTML ? 'solid' : 'soft'} color='danger' onClick={() => setShowHTML(!showHTML)}>
-              <HtmlIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {isPlantUML && (
-          <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
-            <IconButton variant={renderPlantUML ? 'solid' : 'soft'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
-              <SchemaIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {canCodepen && <OpenInCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-        {canReplit && <OpenInReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-        <Tooltip title='Copy Code' variant='solid'>
-          <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
-            <ContentCopyIcon />
-          </IconButton>
-        </Tooltip>
+        </Box>
+
       </Box>
-
-      {/* Title (highlighted code) */}
-      {blockTitle != inferredCodeLanguage && blockTitle.includes('.') && <Sheet sx={{ boxShadow: 'sm', borderRadius: 'sm', mb: 1 }}>
-        <Typography level='title-sm' sx={{ px: 1, py: 0.5 }}>
-          {blockTitle}
-          {/*{inferredCodeLanguage}*/}
-        </Typography>
-      </Sheet>}
-
-      {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-      {renderHTML ? <IFrameComponent htmlString={blockCode} />
-        : <Box
-          dangerouslySetInnerHTML={{
-            __html:
-              renderSVG ? blockCode
-                : (renderPlantUML && plantUmlHtmlData) ? plantUmlHtmlData
-                  : highlightedCode,
-          }}
-          sx={{
-            ...(renderSVG ? { lineHeight: 0 } : {}),
-            ...(renderPlantUML ? { textAlign: 'center' } : {}),
-          }}
-        />}
     </Box>
   );
 }
