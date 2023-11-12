@@ -189,7 +189,7 @@ export function ChatMessageList(props: {
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
             onMessageRunFrom={(offset: number) => handleMessageRestartFrom(message.id, offset)}
-            // onTextDiagram={(text: string) => handleTextDiagram(message.id, text)}
+            onTextDiagram={(text: string) => handleTextDiagram(message.id, text)}
             onTextImagine={handleTextImagine} onTextSpeak={handleTextSpeak}
           />
 

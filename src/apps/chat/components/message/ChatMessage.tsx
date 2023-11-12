@@ -192,8 +192,8 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
  */
 export function ChatMessage(props: {
   message: DMessage,
-  hideAvatars?: boolean,
   showDate?: boolean, diffText?: string,
+  hideAvatars?: boolean, codeBackground?: string, noMarkdown?: boolean,
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
   onMessageDelete?: () => void,
@@ -395,7 +395,7 @@ export function ChatMessage(props: {
   };
   const codeSx: SxProps = {
     // backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
-    backgroundColor: fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    backgroundColor: props.codeBackground ? props.codeBackground : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
     boxShadow: 'xs',
     fontFamily: 'code',
     fontSize: '14px',
@@ -506,7 +506,7 @@ export function ChatMessage(props: {
                           ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                           : block.type === 'diff'
                             ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                            : (renderMarkdown && !fromSystem)
+                            : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
                               ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                               : <RenderText key={'text-' + index} textBlock={block} />,
                 )}
