@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, List, Sheet, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { useChatLLM } from '~/modules/llms/store-llms';
@@ -12,34 +12,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { ChatMessage } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-
-
-/**
- * [Experimental] A panel with tools for the chat
- */
-function ToolsPanel(props: { showDiff: boolean, setShowDiff: (showDiff: boolean) => void }) {
-  return (
-    <Sheet
-      variant='outlined' invertedColors
-      sx={{
-        position: 'fixed', top: 64, left: 8, zIndex: 101,
-        boxShadow: 'md', borderRadius: '100px',
-        p: 2,
-        display: 'flex', flexFlow: 'row wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2,
-      }}
-    >
-      <Typography level='title-md'>
-        🪛
-      </Typography>
-      <Tooltip title='Highlight differences'>
-        <Switch
-          checked={props.showDiff} onChange={() => props.setShowDiff(!props.showDiff)}
-          startDecorator={<Typography level='title-md'>Diff</Typography>}
-        />
-      </Tooltip>
-    </Sheet>
-  );
-}
+import { ToolsPanel } from './ToolsPanel';
 
 
 /**
