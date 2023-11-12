@@ -4,10 +4,12 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { canUseProdia } from '~/modules/prodia/prodia.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatMessage } from './message/ChatMessage';
@@ -48,6 +50,8 @@ export function ChatMessageList(props: {
     };
   }, shallow);
   const { chatLLM } = useChatLLM();
+  const isImaginable = canUseProdia();
+  const isSpeakable = canUseElevenLabs();
 
 
   // text actions
@@ -56,7 +60,9 @@ export function ChatMessageList(props: {
     props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
 
   const handleTextImagine = async (text: string) => {
-    if (props.conversationId) {
+    if (!isImaginable) {
+      openLayoutPreferences(2);
+    } else if (props.conversationId) {
       setIsImagining(true);
       await props.onImagineFromText(props.conversationId, text);
       setIsImagining(false);
@@ -65,9 +71,13 @@ export function ChatMessageList(props: {
   };
 
   const handleTextSpeak = async (text: string) => {
-    setIsSpeaking(true);
-    await speakText(text);
-    setIsSpeaking(false);
+    if (!isSpeakable) {
+      openLayoutPreferences(3);
+    } else {
+      setIsSpeaking(true);
+      await speakText(text);
+      setIsSpeaking(false);
+    }
   };
 
 

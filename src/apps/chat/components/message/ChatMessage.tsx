@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -17,9 +17,6 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-
-import { canUseElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
-import { canUseProdia } from '~/modules/prodia/prodia.client';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
@@ -43,12 +40,14 @@ import { RenderTextDiff } from './RenderTextDiff';
 import { parseBlocks } from './blocks';
 
 
-// Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
-const ENABLE_COPY_MESSAGE: boolean = false;
+// How long is the user collapsed message
+const USER_COLLAPSED_LINES: number = 8;
 
 // Enable the automatic menu on text selection
-// const ENABLE_SELECTION_AUTO_MENU: boolean = false;
 const ENABLE_SELECTION_RIGHT_CLICK_MENU: boolean = true;
+
+// Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
+const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
 export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
@@ -201,6 +200,25 @@ export function ChatMessage(props: {
   onTextImagine?: (messageText: string) => Promise<void>
   onTextSpeak?: (messageText: string) => Promise<void>
 }) {
+
+  // state
+  const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
+  const [isHovering, setIsHovering] = React.useState(false);
+  const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  // const contentRef = React.useRef<HTMLUListElement>(null);
+
+  // external state
+  const { showAvatars, renderMarkdown, doubleClickToEdit } = useUIPreferencesStore(state => ({
+    showAvatars: state.zenMode !== 'cleaner',
+    renderMarkdown: state.renderMarkdown,
+    doubleClickToEdit: state.doubleClickToEdit,
+  }), shallow);
+  const diffs = useSanityTextDiffs(props.message.text, props.diffText);
+
+  // derived state
   const {
     text: messageText,
     sender: messageSender,
@@ -217,29 +235,9 @@ export function ChatMessage(props: {
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
 
-  // state
-  const diffs = useSanityTextDiffs(messageText, props.diffText);
-  const [forceExpanded, setForceExpanded] = React.useState(false);
-  const [isHovering, setIsHovering] = React.useState(false);
-  const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
-  const [isEditing, setIsEditing] = React.useState(false);
-  // const contentRef = React.useRef<HTMLUListElement>(null);
-
-  // external state
-  const theme = useTheme();
-  const { showAvatars, renderMarkdown: _renderMarkdown, doubleClickToEdit } = useUIPreferencesStore(state => ({
-    showAvatars: state.zenMode !== 'cleaner',
-    renderMarkdown: state.renderMarkdown,
-    doubleClickToEdit: state.doubleClickToEdit,
-  }), shallow);
-  const renderMarkdown = _renderMarkdown && !fromSystem;
   const textSel = selMenuText ? selMenuText : messageText;
-  const isImaginable = canUseProdia() && !!props.onTextImagine;
-  const isImaginableEnabled = textSel?.length >= 2 && !textSel.startsWith('https://images.prodia.xyz/') && !(textSel.startsWith('/imagine') || textSel.startsWith('/img'));
-  const isSpeakable = canUseElevenLabs();
-  const isSpeakableEnabled = isImaginableEnabled;
+  const couldImagine = textSel?.length >= 2 && !textSel.startsWith('https://images.prodia.xyz/') && !(textSel.startsWith('/imagine') || textSel.startsWith('/img'));
+  const couldSpeak = couldImagine;
 
 
   const handleTextEdited = (editedText: string) => {
@@ -248,7 +246,7 @@ export function ChatMessage(props: {
       props.onMessageEdit(editedText);
   };
 
-  const handleUncollapse = () => setForceExpanded(true);
+  const handleUncollapse = () => setForceUserExpanded(true);
 
 
   // Operations Menu
@@ -381,7 +379,7 @@ export function ChatMessage(props: {
     // backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
     backgroundColor: fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
     boxShadow: 'xs',
-    fontFamily: theme.fontFamily.code,
+    fontFamily: 'code',
     fontSize: '14px',
     fontVariantLigatures: 'none',
     lineHeight: 1.75,
@@ -391,10 +389,10 @@ export function ChatMessage(props: {
   // user message truncation
   let collapsedText = messageText;
   let isCollapsed = false;
-  if (fromUser && !forceExpanded) {
+  if (fromUser && !forceUserExpanded) {
     const lines = messageText.split('\n');
-    if (lines.length > 10) {
-      collapsedText = lines.slice(0, 10).join('\n');
+    if (lines.length > USER_COLLAPSED_LINES) {
+      collapsedText = lines.slice(0, USER_COLLAPSED_LINES).join('\n');
       isCollapsed = true;
     }
   }
@@ -410,7 +408,7 @@ export function ChatMessage(props: {
           borderBottom: '1px solid',
           borderBottomColor: 'divider',
         }),
-        ...(ENABLE_COPY_MESSAGE && { position: 'relative' }),
+        ...(ENABLE_COPY_MESSAGE_OVERLAY && { position: 'relative' }),
         ...(props.isBottom === true && { mb: 'auto' }),
         '&:hover > button': { opacity: 1 },
       }}
@@ -489,7 +487,7 @@ export function ChatMessage(props: {
                           ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                           : block.type === 'diff'
                             ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                            : renderMarkdown
+                            : (renderMarkdown && !fromSystem)
                               ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                               : <RenderText key={'text-' + index} textBlock={block} />,
                 )}
@@ -517,7 +515,7 @@ export function ChatMessage(props: {
 
 
       {/* Overlay copy icon */}
-      {ENABLE_COPY_MESSAGE && !fromSystem && !isEditing && (
+      {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
         <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
             variant='outlined' color='neutral' onClick={handleOpsCopy}
@@ -563,18 +561,14 @@ export function ChatMessage(props: {
               }
             </MenuItem>
           )}
-          {isImaginable && isImaginableEnabled && (
-            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-              Imagine
-            </MenuItem>
-          )}
-          {isSpeakable && isSpeakableEnabled && (
-            <MenuItem onClick={handleOpsSpeak} disabled={props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
-              Speak
-            </MenuItem>
-          )}
+          {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
+            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+            Imagine
+          </MenuItem>}
+          {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
+            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            Speak
+          </MenuItem>}
           {!!props.onMessageRunFrom && <ListDivider />}
           {!!props.onMessageDelete && (
             <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
@@ -595,18 +589,14 @@ export function ChatMessage(props: {
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy selection
           </MenuItem>
-          {isImaginable && (
-            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-              Imagine
-            </MenuItem>
-          )}
-          {isSpeakable && (
-            <MenuItem onClick={handleOpsSpeak} disabled={!isImaginableEnabled || props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
-              Speak
-            </MenuItem>
-          )}
+          {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
+            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+            Imagine
+          </MenuItem>}
+          {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
+            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            Speak
+          </MenuItem>}
         </CloseableMenu>
       )}
 
