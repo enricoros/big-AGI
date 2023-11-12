@@ -20,7 +20,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, allowRunAgain: bool
         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
         mx: 1.5, mt: index > 0 ? 1.5 : 0,
         // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-        minWidth: 64, minHeight: 64, boxShadow: 'xl',
+        minWidth: 64, minHeight: 64, boxShadow: 'lg',
         backgroundColor: 'neutral.solidBg',
         '& picture': { display: 'flex' },
         '& img': { maxWidth: '100%', maxHeight: '100%' },
