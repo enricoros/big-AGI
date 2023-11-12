@@ -1,16 +1,10 @@
 /** @type {import('next').NextConfig} */
 let nextConfig = {
   reactStrictMode: true,
-  env: {
-    HAS_SERVER_DB_PRISMA: !!process.env.POSTGRES_PRISMA_URL && !!process.env.POSTGRES_URL_NON_POOLING,
-    HAS_SERVER_KEYS_GOOGLE_CSE: !!process.env.GOOGLE_CLOUD_API_KEY && !!process.env.GOOGLE_CSE_ID,
-    HAS_SERVER_KEY_ANTHROPIC: !!process.env.ANTHROPIC_API_KEY,
-    HAS_SERVER_KEY_AZURE_OPENAI: !!process.env.AZURE_OPENAI_API_KEY && !!process.env.AZURE_OPENAI_API_ENDPOINT,
-    HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
-    HAS_SERVER_HOST_OLLAMA: !!process.env.OLLAMA_API_HOST,
-    HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
-    HAS_SERVER_KEY_OPENROUTER: !!process.env.OPENROUTER_API_KEY,
-    HAS_SERVER_KEY_PRODIA: !!process.env.PRODIA_API_KEY,
+  modularizeImports: {
+    '@mui/icons-material': {
+      transform: '@mui/icons-material/{{member}}',
+    },
   },
   webpack: (config, _options) => {
     // @mui/joy: anything material gets redirected to Joy
@@ -23,6 +17,18 @@ let nextConfig = {
     };
 
     return config;
+  },
+  // NOTE: the following shall be replaced by runtime config
+  env: {
+    HAS_SERVER_DB_PRISMA: !!process.env.POSTGRES_PRISMA_URL && !!process.env.POSTGRES_URL_NON_POOLING,
+    HAS_SERVER_KEYS_GOOGLE_CSE: !!process.env.GOOGLE_CLOUD_API_KEY && !!process.env.GOOGLE_CSE_ID,
+    HAS_SERVER_KEY_ANTHROPIC: !!process.env.ANTHROPIC_API_KEY,
+    HAS_SERVER_KEY_AZURE_OPENAI: !!process.env.AZURE_OPENAI_API_KEY && !!process.env.AZURE_OPENAI_API_ENDPOINT,
+    HAS_SERVER_KEY_ELEVENLABS: !!process.env.ELEVENLABS_API_KEY,
+    HAS_SERVER_HOST_OLLAMA: !!process.env.OLLAMA_API_HOST,
+    HAS_SERVER_KEY_OPENAI: !!process.env.OPENAI_API_KEY,
+    HAS_SERVER_KEY_OPENROUTER: !!process.env.OPENROUTER_API_KEY,
+    HAS_SERVER_KEY_PRODIA: !!process.env.PRODIA_API_KEY,
   },
 };
 
