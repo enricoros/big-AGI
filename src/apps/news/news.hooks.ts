@@ -8,7 +8,7 @@ import { incrementalVersion } from './news.data';
 
 
 export function useShowNewsOnUpdate() {
-  const { push } = useRouter();
+  const { push: routerPush } = useRouter();
   const { usageCount, lastSeenNewsVersion } = useAppStateStore(state => ({
     usageCount: state.usageCount,
     lastSeenNewsVersion: state.lastSeenNewsVersion,
@@ -17,9 +17,9 @@ export function useShowNewsOnUpdate() {
     const isNewsOutdated = (lastSeenNewsVersion || 0) < incrementalVersion;
     if (isNewsOutdated && usageCount > 2) {
       // Disable for now
-      push('/news').then(() => null);
+      void routerPush('/news');
     }
-  }, [lastSeenNewsVersion, push, usageCount]);
+  }, [lastSeenNewsVersion, routerPush, usageCount]);
 }
 
 export function useMarkNewsAsSeen() {

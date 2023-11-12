@@ -46,7 +46,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 /**
  * Formulates proposals for follow-up questions, prompts, and counterpoints, based on the last 2 chat messages
  */
-export async function autoSuggestions(conversationId: string, assistantMessageId: string) {
+export function autoSuggestions(conversationId: string, assistantMessageId: string) {
 
   // use valid fast model
   const { funcLLMId } = useModelsStore.getState();
@@ -82,7 +82,7 @@ export async function autoSuggestions(conversationId: string, assistantMessageId
 
 
   // Follow-up: Auto-Diagrams
-  callChatGenerateWithFunctions(funcLLMId, [
+  void callChatGenerateWithFunctions(funcLLMId, [
       { role: 'system', content: systemMessage.text },
       { role: 'user', content: userMessage.text },
       { role: 'assistant', content: assistantMessageText },

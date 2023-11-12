@@ -85,7 +85,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       // display the purpose symbol
       if (messageOriginLLM === 'prodia')
         return <PaletteOutlinedIcon sx={iconSx} />;
-      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
+      const symbol = SystemPurposes[messagePurposeId!]?.symbol;
       if (symbol)
         return <Box
           sx={{
@@ -170,7 +170,7 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, diffText?: string, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => void }) {
+export function ChatMessage(props: { message: DMessage, diffText?: string, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => Promise<void> }) {
   const {
     text: messageText,
     sender: messageSender,

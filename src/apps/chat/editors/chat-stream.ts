@@ -34,13 +34,13 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // clear to send, again
   startTyping(conversationId, null);
 
-  // auto-suggestions
+  // auto-suggestions (fire/forget)
   if (enableFollowUps)
-    await autoSuggestions(conversationId, assistantMessageId);
+    autoSuggestions(conversationId, assistantMessageId);
 
-  // update text, if needed
+  // update text, if needed (fire/forget)
   if (_autoTitle)
-    await autoTitle(conversationId);
+    autoTitle(conversationId);
 }
 
 
@@ -68,7 +68,8 @@ async function streamAssistantMessage(
         if (cutPoint > 100 && cutPoint < 400) {
           firstLineSpoken = true;
           const firstParagraph = updatedMessage.text.substring(0, cutPoint);
-          speakText(firstParagraph).then(() => false /* fire and forget, we don't want to stall this loop */);
+          // fire/forget: we don't want to stall this loop
+          void speakText(firstParagraph);
         }
       }
     });

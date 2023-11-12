@@ -54,9 +54,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
     setCopied(true);
   };
 
-  const onNative = async () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl,
-    () => setNative(true));
-
+  const onNativeShare = () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl, () => setNative(true));
 
   const onDeleteNow = () => setConfirmDeletion(true);
 
@@ -112,7 +110,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
           {webSharePresent() &&
             <Tooltip title='Share the link using your device'>
               <Button
-                variant={native ? 'soft' : 'solid'} onClick={onNative}
+                variant={native ? 'soft' : 'solid'} onClick={onNativeShare}
                 color={native ? 'success' : undefined} endDecorator={native ? <DoneIcon /> : <IosShareIcon />}
                 sx={{ flexGrow: 1 }}
               >

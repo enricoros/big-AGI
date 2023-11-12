@@ -33,7 +33,7 @@ function AppShareTarget() {
 
   const queueComposerTextAndLaunchApp = React.useCallback((text: string) => {
     setComposerStartupText(text);
-    routerReplace('/').then(() => null);
+    void routerReplace('/');
   }, [routerReplace]);
 
 

@@ -8,7 +8,7 @@ import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.se
 
 
 const inputSchema = z.object({
-  videoId: z.string().nonempty(),
+  videoId: z.string().min(1),
 });
 
 const youtubeTranscriptionSchema = z.object({

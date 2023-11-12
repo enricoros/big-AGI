@@ -75,12 +75,12 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link
     ...other
   } = props;
 
-  const router = useRouter();
+  const { pathname: routerPathname } = useRouter();
   const pathname = typeof href === 'string' ? href : href.pathname;
-  const className = `${classNameProps || ''}${router.pathname === pathname ? ` ${activeClassName}` : ''}`;
+  const className = `${classNameProps || ''}${routerPathname === pathname ? ` ${activeClassName}` : ''}`;
 
   // external links: MuiLink (default) or 'a'
-  const isExternal = typeof href === 'string' && (href.indexOf('http') === 0 || href.indexOf('mailto:') === 0);
+  const isExternal = typeof href === 'string' && (href.startsWith('http') || href.startsWith('mailto:'));
   if (isExternal)
     return noLinkStyle
       ? <Anchor className={className} href={href} ref={ref} {...other} />

@@ -190,7 +190,7 @@ function prodiaAccess(_prodiaKey: string | undefined, apiPath: string): { header
     throw new Error('Missing Prodia API Key. Add it on the UI (Setup) or server side (your deployment).');
 
   // API host
-  let prodiaHost = 'https://api.prodia.com';
+  const prodiaHost = 'https://api.prodia.com';
 
   return {
     headers: {

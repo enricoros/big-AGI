@@ -81,7 +81,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llm.options as any) || {};
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
-    throw new Error(`Error in configuration for model ${llm.id}: ${llm.options}`);
+    throw new Error(`Error in configuration for model ${llm.id}: ${JSON.stringify(llm.options)}`);
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate
   const input: ChatStreamInputSchema = {

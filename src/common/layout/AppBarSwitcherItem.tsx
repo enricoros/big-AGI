@@ -43,7 +43,7 @@ export function AppBarSwitcherItem() {
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
       closeLayoutMenu();
-      routerPush(AppRouteMap[app].route).then(() => null);
+      void routerPush(AppRouteMap[app].route);
     }
   };
 

@@ -57,7 +57,7 @@ export function debugGenerateCurlCommand(method: 'GET' | 'POST', url: string, he
 
   const headersRecord = headers as Record<string, string>;
 
-  for (let header in headersRecord)
+  for (const header in headersRecord)
     curl += `-H '${header}: ${headersRecord[header]}' `;
 
   if (method === 'POST' && body)

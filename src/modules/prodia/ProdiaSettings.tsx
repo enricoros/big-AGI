@@ -49,7 +49,7 @@ export function ProdiaSettings() {
 
   // [effect] if no model is selected, auto-select the first
   React.useEffect(() => {
-    if (modelsData && modelsData.models && !modelId) {
+    if (modelsData?.models && !modelId) {
       setModelId(modelsData.models[0].id);
       setModelGen(modelsData.models[0].gen);
     }
@@ -104,7 +104,7 @@ export function ProdiaSettings() {
             button: { sx: { whiteSpace: 'inherit' } },
           }}
         >
-          {modelsData && modelsData.models?.map((model, idx) => (
+          {!!modelsData && modelsData.models?.map((model, idx) => (
             <Option key={'prodia-model-' + idx} value={model.id} sx={model.priority ? { fontWeight: 500 } : undefined}>
               {model.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {model.label}
             </Option>

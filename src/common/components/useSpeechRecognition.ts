@@ -149,7 +149,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       // coalesce all the final pieces into a cohesive string
       speechResult.transcript = '';
       speechResult.interimTranscript = '';
-      for (let result of event.results) {
+      for (const result of event.results) {
         let chunk = result[0]?.transcript?.trim();
         if (!chunk)
           continue;
@@ -253,6 +253,7 @@ function getSpeechRecognition(): ISpeechRecognition | null {
 }
 
 interface ISpeechRecognition extends EventTarget {
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
   new(): ISpeechRecognition;
 
   lang: string;

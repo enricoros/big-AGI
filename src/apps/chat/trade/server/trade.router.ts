@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { chatGptImportConversation, chatGptSharedChatSchema } from './import.chatgpt';
+import { chatGptParseConversation, chatGptSharedChatSchema } from './import.chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './publish.pastegg';
 import { storageDeleteOutputSchema, storageGetProcedure, storageMarkAsDeletedProcedure, storagePutOutputSchema, storagePutProcedure } from './storage.server';
 
@@ -34,7 +34,7 @@ export const tradeRouter = createTRPCRouter({
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
       }, undefined, 'ChatGPT Importer');
 
-      const data = await chatGptImportConversation(htmlPage);
+      const data = chatGptParseConversation(htmlPage);
 
       return {
         data: data.props.pageProps.serverResponse.data,
