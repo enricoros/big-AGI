@@ -253,7 +253,6 @@ function getSpeechRecognition(): ISpeechRecognition | null {
 }
 
 interface ISpeechRecognition extends EventTarget {
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
   new(): ISpeechRecognition;
 
   lang: string;
