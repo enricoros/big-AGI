@@ -48,6 +48,9 @@ export function ChatMessageList(props: {
 
   // text actions
 
+  const handleAppendMessage = (text: string) =>
+    props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
+
   const handleImagineFromText = (messageText: string): Promise<any> => {
     if (props.conversationId)
       return props.onImagineFromText(props.conversationId, messageText);
@@ -55,18 +58,15 @@ export function ChatMessageList(props: {
       return Promise.reject('No conversation');
   };
 
-  const handleRespondToText = (text: string) =>
-    props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
-
-  // hide system messages if the user chooses so
-  // NOTE: reverse is because we'll use flexDirection: 'column-reverse' to auto-snap-to-bottom
-  const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages).reverse();
+  const filteredMessages = messages
+    .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
+    .reverse(); // 'reverse' is because flexDirection: 'column-reverse' to auto-snap-to-bottom
 
   // when there are no messages, show the purpose selector
   if (!filteredMessages.length)
     return props.conversationId ? (
       <Box sx={props.sx || {}}>
-        <PersonaSelector conversationId={props.conversationId} runExample={handleRespondToText} />
+        <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
       </Box>
     ) : null;
 
