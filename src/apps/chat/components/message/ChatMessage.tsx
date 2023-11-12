@@ -584,7 +584,7 @@ export function ChatMessage(props: {
           )}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Diagram ...
+            Visualize ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
@@ -616,7 +616,7 @@ export function ChatMessage(props: {
           </MenuItem>
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Diagram ...
+            Visualize ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>

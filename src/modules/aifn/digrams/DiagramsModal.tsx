@@ -1,8 +1,10 @@
 import * as React from 'react';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { Button, Divider, FormControl, FormLabel, Grid, Radio, RadioGroup } from '@mui/joy';
+import { Button, ButtonGroup, Divider, FormControl, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -47,6 +49,7 @@ const bigDiagramPrompt = (diagramType: DiagramType, systemPrompt: string, subjec
 export function DiagramsModal(props: { config: DiagramConfig, onClose: () => void; }) {
 
   // state
+  const [showOptions, setShowOptions] = React.useState(true);
   const [message, setMessage] = React.useState<DMessage | null>(null);
   const [diagramType, setDiagramType] = React.useState<DiagramType>('auto');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -57,6 +60,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   // derived state
   const { conversationId, messageId, text: subject } = props.config;
+
+
+  const handleToggleOptions = () => setShowOptions(options => !options);
 
 
   /**
@@ -140,37 +146,47 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     <Divider />
 
-    <Grid container spacing={2}>
-      <Grid xs={12} md={6}>
-        <FormControl>
-          <FormLabel>Diagram Type</FormLabel>
-          <RadioGroup
-            orientation='horizontal'
-            value={diagramType}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDiagramType(event.target.value as DiagramType)}>
-            <Radio value='auto' label='Auto' />
-            <Radio value='mind' label='Mind Map' />
-          </RadioGroup>
-        </FormControl>
+    {showOptions && (
+      <Grid container spacing={2}>
+        <Grid xs={12} md={6}>
+          <FormControl>
+            <FormLabel>Diagram Type</FormLabel>
+            <RadioGroup
+              orientation='horizontal'
+              value={diagramType}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDiagramType(event.target.value as DiagramType)}>
+              <Radio value='auto' label='Auto' />
+              <Radio value='mind' label='Mind Map' />
+            </RadioGroup>
+          </FormControl>
+        </Grid>
+        <Grid xs={12} md={6}>
+          {selectorComponent}
+        </Grid>
       </Grid>
-      <Grid xs={12} md={6}>
-        {selectorComponent}
-      </Grid>
-    </Grid>
+    )}
 
     {/*{!!abortController && <Box sx={{ display: 'flex', justifyContent: 'center' }}>*/}
     {/*  <CircularProgress size='lg' />*/}
     {/*</Box>}*/}
 
-    <Button
-      variant={abortController ? 'soft' : 'solid'} color='primary'
-      onClick={abortController ? () => abortController.abort() : handleGenerateNew}
-      endDecorator={abortController ? <StopOutlinedIcon /> : message ? <ReplayIcon /> : <AccountTreeIcon />}
-      // loading={!!abortController}
-      sx={{ minWidth: 200 }}
-    >
-      {abortController ? 'Stop' : message ? 'Regenerate' : 'Generate'}
-    </Button>
+
+    <ButtonGroup color='primary' sx={{ flexGrow: 1 }}>
+      <Button
+        fullWidth
+        variant={abortController ? 'soft' : 'solid'} color='primary'
+        disabled={!chosenLlm}
+        onClick={abortController ? () => abortController.abort() : handleGenerateNew}
+        endDecorator={abortController ? <StopOutlinedIcon /> : message ? <ReplayIcon /> : <AccountTreeIcon />}
+        // loading={!!abortController}
+        sx={{ minWidth: 200 }}
+      >
+        {abortController ? 'Stop' : message ? 'Regenerate' : 'Generate'}
+      </Button>
+      <IconButton onClick={handleToggleOptions}>
+        {showOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+      </IconButton>
+    </ButtonGroup>
 
     {errorMessage && <InlineError error={errorMessage} />}
 
