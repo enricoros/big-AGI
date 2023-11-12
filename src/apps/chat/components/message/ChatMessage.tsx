@@ -196,7 +196,7 @@ export function ChatMessage(props: {
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
   onMessageDelete?: () => void,
-  onMessageEdit: (text: string) => void,
+  onMessageEdit?: (text: string) => void,
   onMessageRunFrom?: (offset: number) => void,
   onTextDiagram?: (text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
@@ -246,7 +246,7 @@ export function ChatMessage(props: {
 
   const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
-    if (editedText?.trim() && editedText !== messageText)
+    if (props.onMessageEdit && editedText?.trim() && editedText !== messageText)
       props.onMessageEdit(editedText);
   };
 
@@ -461,7 +461,7 @@ export function ChatMessage(props: {
       {!isEditing ? (
 
         <Box
-          onDoubleClick={(e) => doubleClickToEdit ? handleOpsEdit(e) : null}
+          onDoubleClick={event => (doubleClickToEdit && props.onMessageEdit) ? handleOpsEdit(event) : null}
           sx={{
             ...blockSx,
             flexGrow: 0,
@@ -549,11 +549,13 @@ export function ChatMessage(props: {
           open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
-              <ListItemDecorator><EditIcon /></ListItemDecorator>
-              {isEditing ? 'Discard' : 'Edit'}
-              {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
-            </MenuItem>
+            {!!props.onMessageEdit && (
+              <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
+                <ListItemDecorator><EditIcon /></ListItemDecorator>
+                {isEditing ? 'Discard' : 'Edit'}
+                {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
+              </MenuItem>
+            )}
             <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
               Copy
