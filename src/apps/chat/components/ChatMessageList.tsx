@@ -109,9 +109,8 @@ export function ChatMessageList(props: {
   };
 
 
-  // text tools
+  // text tools: pass the diff text to most recent assistant message, if enabled
 
-  // pass the diff text to most recent assistant message, once done
   const showTextTools = !!props.showTools || experimentalLabs;
   let diffMessage: DMessage | undefined;
   let diffText: string | undefined;

@@ -27,6 +27,7 @@ export function CloseableMenu(props: {
   // color?: ColorPaletteProp,
   // size?: 'sm' | 'md' | 'lg',
   placement?: PopperPlacementType,
+  placementOffset?: number[],
   maxHeightGapPx?: number,
   noTopPadding?: boolean,
   noBottomPadding?: boolean,
@@ -60,7 +61,7 @@ export function CloseableMenu(props: {
       modifiers={[{
         name: 'offset',
         options: {
-          offset: [0, 4],
+          offset: props.placementOffset || [0, 4],
         },
       }]}
       sx={props.zIndex
