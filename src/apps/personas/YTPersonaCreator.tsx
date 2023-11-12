@@ -1,16 +1,14 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Radio, RadioGroup, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
-
 import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { useLlmTypeSelector } from '~/common/components/useLlmTypeSelector';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
 
@@ -67,21 +65,11 @@ const YouTubePersonaSteps: LLMChainStep[] = [
 export function YTPersonaCreator() {
   // state
   const [videoURL, setVideoURL] = React.useState('');
-  const [selectedModelType, setSelectedModelType] = React.useState<'chat' | 'fast'>('fast');
-  // const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
   const [videoID, setVideoID] = React.useState('');
   const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
 
   // external state
-  const { chatLLM, fastLLM } = useModelsStore(state => {
-    const { chatLLMId, fastLLMId } = state;
-    const chatLLM = state.llms.find(llm => llm.id === chatLLMId) ?? null;
-    const fastLLM = state.llms.find(llm => llm.id === fastLLMId) ?? null;
-    return {
-      chatLLM: chatLLM,
-      fastLLM: /*chatLLM === fastLLM ? null :*/ fastLLM,
-    };
-  }, shallow);
+  const { chosenLlm: llm, selectorComponent } = useLlmTypeSelector();
 
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
@@ -89,7 +77,6 @@ export function YTPersonaCreator() {
   React.useEffect(() => setPersonaTranscript(transcript), [transcript]);
 
   // use the transformation sequence to create a persona
-  const llm = selectedModelType === 'chat' ? chatLLM : fastLLM;
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
     useLLMChain(YouTubePersonaSteps, llm?.id, personaTranscript ?? undefined);
 
@@ -143,17 +130,7 @@ export function YTPersonaCreator() {
     </form>
 
     {/* LLM selector (chat vs fast) */}
-    {!isTransforming && !isFinished && !!chatLLM && !!fastLLM && (
-      <RadioGroup
-        orientation='horizontal'
-        value={selectedModelType}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSelectedModelType(event.target.value as 'chat' | 'fast')}
-      >
-        <Radio value='chat' label={chatLLM.label.startsWith('GPT-4') ? chatLLM.label + ' (slow, accurate)' : chatLLM.label} />
-        <Radio value='fast' label={fastLLM.label} />
-      </RadioGroup>
-    )}
-
+    {!isTransforming && !isFinished && selectorComponent}
 
     {/* 1. Transcript*/}
     {personaTranscript && (
