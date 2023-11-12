@@ -5,6 +5,7 @@ import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-matc
 
 import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
@@ -197,8 +198,9 @@ export function ChatMessage(props: {
   onMessageDelete?: () => void,
   onMessageEdit: (text: string) => void,
   onMessageRunFrom?: (offset: number) => void,
-  onTextImagine?: (messageText: string) => Promise<void>
-  onTextSpeak?: (messageText: string) => Promise<void>
+  onTextDiagram?: (text: string) => Promise<void>
+  onTextImagine?: (text: string) => Promise<void>
+  onTextSpeak?: (text: string) => Promise<void>
 }) {
 
   // state
@@ -236,7 +238,9 @@ export function ChatMessage(props: {
   const wasEdited = !!messageUpdated;
 
   const textSel = selMenuText ? selMenuText : messageText;
-  const couldImagine = textSel?.length >= 2 && !textSel.startsWith('https://images.prodia.xyz/') && !(textSel.startsWith('/imagine') || textSel.startsWith('/img'));
+  const isSpecialProdia = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/imagine') || textSel.startsWith('/img');
+  const couldDiagram = textSel?.length >= 100 && !isSpecialProdia;
+  const couldImagine = textSel?.length >= 2 && !isSpecialProdia;
   const couldSpeak = couldImagine;
 
 
@@ -265,6 +269,15 @@ export function ChatMessage(props: {
     setIsEditing(!isEditing);
     e.preventDefault();
     closeOperationsMenu();
+  };
+
+  const handleOpsDiagram = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.onTextDiagram) {
+      await props.onTextDiagram(textSel);
+      closeOperationsMenu();
+      closeSelectionMenu();
+    }
   };
 
   const handleOpsImagine = async (e: React.MouseEvent) => {
@@ -561,6 +574,10 @@ export function ChatMessage(props: {
               }
             </MenuItem>
           )}
+          {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
+            <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
+            Diagram ...
+          </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
             Imagine
@@ -589,6 +606,10 @@ export function ChatMessage(props: {
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy selection
           </MenuItem>
+          {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
+            <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
+            Diagram ...
+          </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
             Imagine

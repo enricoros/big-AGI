@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
+import { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { canUseProdia } from '~/modules/prodia/prodia.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
@@ -26,7 +27,8 @@ export function ChatMessageList(props: {
   showTools?: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onExecuteChatHistory: (conversationId: string, history: DMessage[]) => void,
-  onImagineFromText: (conversationId: string, userText: string) => Promise<any>,
+  onDiagramFromText: (diagramConfig: DiagramConfig | null) => Promise<any>,
+  onImagineFromText: (conversationId: string, selectedText: string) => Promise<any>,
   sx?: SxProps
 }) {
 
@@ -58,6 +60,13 @@ export function ChatMessageList(props: {
 
   const handleAppendMessage = (text: string) =>
     props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
+
+  const handleTextDiagram = async (messageId: string, text: string) => {
+    if (props.conversationId) {
+      await props.onDiagramFromText({ conversationId: props.conversationId, messageId, text });
+    } else
+      return Promise.reject('No conversation');
+  };
 
   const handleTextImagine = async (text: string) => {
     if (!isImaginable) {
@@ -180,8 +189,8 @@ export function ChatMessageList(props: {
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
             onMessageRunFrom={(offset: number) => handleMessageRestartFrom(message.id, offset)}
-            onTextImagine={handleTextImagine}
-            onTextSpeak={handleTextSpeak}
+            // onTextDiagram={(text: string) => handleTextDiagram(message.id, text)}
+            onTextImagine={handleTextImagine} onTextSpeak={handleTextSpeak}
           />
 
         ),

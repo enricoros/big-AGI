@@ -56,8 +56,10 @@ export function AppLayout(props: {
 
       </Container>
 
+      {/* Overlay Settings */}
       <SettingsModal />
 
+      {/* Overlay Models (& Model Options )*/}
       <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     </NoSSR>
