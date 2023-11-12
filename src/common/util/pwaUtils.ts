@@ -37,10 +37,10 @@ export function isIPhone(): boolean {
   return /*isSafari ||*/ isiPhone;
 }
 
-export const isChromeOnDesktopWindows = (): boolean => {
+export const isChromeOnDesktop = (): boolean => {
   if (typeof window !== 'undefined') {
     const agent = window.navigator.userAgent;
-    return agent.indexOf('Windows') > -1 && agent.indexOf('Chrome') > -1 && agent.indexOf('Mobile') === -1;
+    return /*agent.indexOf('Windows') > -1 &&*/ agent.indexOf('Chrome') > -1 && agent.indexOf('Mobile') === -1;
   }
   return false;
 };
