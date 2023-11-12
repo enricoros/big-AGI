@@ -8,7 +8,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { useLlmTypeSelector } from '~/common/components/useLlmTypeSelector';
+import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
 
@@ -69,7 +69,7 @@ export function YTPersonaCreator() {
   const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
 
   // external state
-  const { chosenLlm: llm, selectorComponent } = useLlmTypeSelector();
+  const [diagramLlm, llmComponent] = useFormRadioLlmType();
 
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
@@ -78,7 +78,7 @@ export function YTPersonaCreator() {
 
   // use the transformation sequence to create a persona
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(YouTubePersonaSteps, llm?.id, personaTranscript ?? undefined);
+    useLLMChain(YouTubePersonaSteps, diagramLlm?.id, personaTranscript ?? undefined);
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -130,7 +130,7 @@ export function YTPersonaCreator() {
     </form>
 
     {/* LLM selector (chat vs fast) */}
-    {!isTransforming && !isFinished && selectorComponent}
+    {!isTransforming && !isFinished && llmComponent}
 
     {/* 1. Transcript*/}
     {personaTranscript && (
