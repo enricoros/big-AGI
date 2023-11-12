@@ -18,7 +18,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
-import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { canUseElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
 import { canUseProdia } from '~/modules/prodia/prodia.client';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -190,7 +190,17 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
  * or collapsing long user messages.
  *
  */
-export function ChatMessage(props: { message: DMessage, diffText?: string, showDate?: boolean, isBottom?: boolean, noBottomBorder?: boolean, onMessageDelete?: () => void, onMessageEdit: (text: string) => void, onMessageRunFrom?: (offset: number) => void, onImagine?: (messageText: string) => Promise<void> }) {
+export function ChatMessage(props: {
+  message: DMessage,
+  showDate?: boolean, diffText?: string,
+  isBottom?: boolean, noBottomBorder?: boolean,
+  isImagining?: boolean, isSpeaking?: boolean,
+  onMessageDelete?: () => void,
+  onMessageEdit: (text: string) => void,
+  onMessageRunFrom?: (offset: number) => void,
+  onTextImagine?: (messageText: string) => Promise<void>
+  onTextSpeak?: (messageText: string) => Promise<void>
+}) {
   const {
     text: messageText,
     sender: messageSender,
@@ -215,8 +225,6 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
   const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [isImagining, setIsImagining] = React.useState(false);
-  const [isSpeaking, setIsSpeaking] = React.useState(false);
   // const contentRef = React.useRef<HTMLUListElement>(null);
 
   // external state
@@ -228,7 +236,7 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
   }), shallow);
   const renderMarkdown = _renderMarkdown && !fromSystem;
   const textSel = selMenuText ? selMenuText : messageText;
-  const isImaginable = canUseProdia() && !!props.onImagine;
+  const isImaginable = canUseProdia() && !!props.onTextImagine;
   const isImaginableEnabled = textSel?.length >= 2 && !textSel.startsWith('https://images.prodia.xyz/') && !(textSel.startsWith('/imagine') || textSel.startsWith('/img'));
   const isSpeakable = canUseElevenLabs();
   const isSpeakableEnabled = isImaginableEnabled;
@@ -263,10 +271,8 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
 
   const handleOpsImagine = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (props.onImagine) {
-      setIsImagining(true);
-      await props.onImagine(textSel);
-      setIsImagining(false);
+    if (props.onTextImagine) {
+      await props.onTextImagine(textSel);
       closeOperationsMenu();
       closeSelectionMenu();
     }
@@ -274,11 +280,11 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
 
   const handleOpsSpeak = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsSpeaking(true);
-    await speakText(textSel);
-    setIsSpeaking(false);
-    closeOperationsMenu();
-    closeSelectionMenu();
+    if (props.onTextSpeak) {
+      await props.onTextSpeak(textSel);
+      closeOperationsMenu();
+      closeSelectionMenu();
+    }
   };
 
   const handleOpsRunAgain = (e: React.MouseEvent) => {
@@ -558,14 +564,14 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
             </MenuItem>
           )}
           {isImaginable && isImaginableEnabled && (
-            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || isImagining}>
-              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || props.isImagining}>
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
           {isSpeakable && isSpeakableEnabled && (
-            <MenuItem onClick={handleOpsSpeak} disabled={isSpeaking}>
-              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            <MenuItem onClick={handleOpsSpeak} disabled={props.isSpeaking}>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
@@ -590,14 +596,14 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
             Copy selection
           </MenuItem>
           {isImaginable && (
-            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || isImagining}>
-              <ListItemDecorator>{isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+            <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || props.isImagining}>
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
               Imagine
             </MenuItem>
           )}
           {isSpeakable && (
-            <MenuItem onClick={handleOpsSpeak} disabled={!isImaginableEnabled || isSpeaking}>
-              <ListItemDecorator>{isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            <MenuItem onClick={handleOpsSpeak} disabled={!isImaginableEnabled || props.isSpeaking}>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}

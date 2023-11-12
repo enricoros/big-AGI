@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
@@ -26,7 +27,10 @@ export function ChatMessageList(props: {
   onImagineFromText: (conversationId: string, userText: string) => Promise<any>,
   sx?: SxProps
 }) {
+
   // state
+  const [isImagining, setIsImagining] = React.useState(false);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
   const [toolDiffOn, setToolDiffOn] = React.useState<boolean>(false);
 
@@ -51,12 +55,21 @@ export function ChatMessageList(props: {
   const handleAppendMessage = (text: string) =>
     props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
 
-  const handleImagineFromText = (messageText: string): Promise<any> => {
-    if (props.conversationId)
-      return props.onImagineFromText(props.conversationId, messageText);
-    else
+  const handleTextImagine = async (text: string) => {
+    if (props.conversationId) {
+      setIsImagining(true);
+      await props.onImagineFromText(props.conversationId, text);
+      setIsImagining(false);
+    } else
       return Promise.reject('No conversation');
   };
+
+  const handleTextSpeak = async (text: string) => {
+    setIsSpeaking(true);
+    await speakText(text);
+    setIsSpeaking(false);
+  };
+
 
   const filteredMessages = messages
     .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
@@ -140,7 +153,8 @@ export function ChatMessageList(props: {
         props.isMessageSelectionMode ? (
 
           <CleanerMessage
-            key={'sel-' + message.id} message={message}
+            key={'sel-' + message.id}
+            message={message}
             isBottom={idx === 0} remainingTokens={(chatLLM ? chatLLM.contextTokens : 0) - historyTokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
           />
@@ -148,13 +162,16 @@ export function ChatMessageList(props: {
         ) : (
 
           <ChatMessage
-            key={'msg-' + message.id} message={message}
+            key={'msg-' + message.id}
+            message={message}
             diffText={message === diffMessage ? diffText : undefined}
             isBottom={idx === 0}
+            isImagining={isImagining} isSpeaking={isSpeaking}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
             onMessageRunFrom={(offset: number) => handleMessageRestartFrom(message.id, offset)}
-            onImagine={handleImagineFromText}
+            onTextImagine={handleTextImagine}
+            onTextSpeak={handleTextSpeak}
           />
 
         ),
