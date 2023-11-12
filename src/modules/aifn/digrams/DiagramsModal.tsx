@@ -46,6 +46,14 @@ const bigDiagramPrompt = (diagramType: DiagramType, systemPrompt: string, subjec
 ];
 
 
+/**
+ * This method fixes issues in the generation output. Very heuristic.
+ */
+function hotFixMessage(message: DMessage) {
+  if (message.text.includes('@endmindmap\n@enduml'))
+    message.text = message.text.replace('@endmindmap\n@enduml', '@endmindmap');
+}
+
 export function DiagramsModal(props: { config: DiagramConfig, onClose: () => void; }) {
 
   // state
@@ -96,6 +104,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           if (update.originLLM)
             update.originLLM = '(diagram)'; // `(diagram) ${update.originLLM}`;
           assistantMessage = { ...assistantMessage, ...update };
+          hotFixMessage(assistantMessage);
           setMessage(assistantMessage);
         },
       );
