@@ -1,17 +1,15 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormLabel, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Radio, RadioGroup, Typography } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormLabel, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Typography } from '@mui/joy';
 import ReplayIcon from '@mui/icons-material/Replay';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
-
+import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessage, DConversation, useChatStore } from '~/common/state/store-chats';
+import { useLlmTypeSelector } from '~/common/components/useLlmTypeSelector';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
 import { flattenConversation } from './flatten';
-import { GoodModal } from '~/common/components/GoodModal';
 
 
 function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedStyle: (type: FlattenStyleType) => void }) {
@@ -65,21 +63,12 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
 
   // state
   const [selectedStyle, setSelectedStyle] = React.useState<FlattenStyleType | null>(null);
-  const [selectedModelType, setSelectedModelType] = React.useState<'chat' | 'fast'>('chat');
   const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
   const [flattenedText, setFlattenedText] = React.useState<string | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // external state
-  const { chatLLM, fastLLM } = useModelsStore(state => {
-    const { chatLLMId, fastLLMId } = state;
-    const chatLLM = state.llms.find(llm => llm.id === chatLLMId) ?? null;
-    const fastLLM = state.llms.find(llm => llm.id === fastLLMId) ?? null;
-    return {
-      chatLLM: chatLLM,
-      fastLLM: chatLLM === fastLLM ? null : fastLLM,
-    };
-  }, shallow);
+  const { chosenLlm: llm, selectorComponent } = useLlmTypeSelector();
 
   const handlePerformFlattening = async (type: FlattenStyleType) => {
     if (!props.conversationId || !type) return;
@@ -90,7 +79,6 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
     setSelectedStyle(type);
 
     // select model
-    const llm = selectedModelType === 'chat' ? chatLLM : fastLLM;
     if (!llm) {
       setErrorMessage('No model selected');
       return;
@@ -175,20 +163,9 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
 
       </Box>}
 
-      {!isDone && !isFlattening && !!chatLLM && !!fastLLM && <Divider />}
+      {!isDone && !isFlattening && !!selectorComponent && <Divider />}
 
-      {!isDone && !isFlattening && !!chatLLM && !!fastLLM && (
-        <FormControl>
-          <FormLabel>Model</FormLabel>
-          <RadioGroup
-            orientation='horizontal'
-            value={selectedModelType}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSelectedModelType(event.target.value as 'chat' | 'fast')}>
-            <Radio value='chat' label={chatLLM.label} />
-            <Radio value='fast' label={fastLLM.label} />
-          </RadioGroup>
-        </FormControl>
-      )}
+      {!isDone && !isFlattening && selectorComponent}
 
     </GoodModal>
   );
