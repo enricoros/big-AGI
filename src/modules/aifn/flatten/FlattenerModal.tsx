@@ -6,7 +6,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessage, DConversation, useChatStore } from '~/common/state/store-chats';
-import { useLlmTypeSelector } from '~/common/components/useLlmTypeSelector';
+import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
 import { flattenConversation } from './flatten';
@@ -68,7 +68,7 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // external state
-  const { chosenLlm: llm, selectorComponent } = useLlmTypeSelector();
+  const [diagramLlm, llmComponent] = useFormRadioLlmType();
 
   const handlePerformFlattening = async (type: FlattenStyleType) => {
     if (!props.conversationId || !type) return;
@@ -79,15 +79,15 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
     setSelectedStyle(type);
 
     // select model
-    if (!llm) {
+    if (!diagramLlm) {
       setErrorMessage('No model selected');
       return;
     }
-    setSelectedLLMLabel(llm.label);
+    setSelectedLLMLabel(diagramLlm.label);
 
     let text: string | null = null;
     try {
-      text = await flattenConversation(llm.id, conversation, type);
+      text = await flattenConversation(diagramLlm.id, conversation, type);
     } catch (error: any) {
       setErrorMessage(error?.message || error?.toString() || 'Unknown error');
     }
@@ -163,9 +163,9 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
 
       </Box>}
 
-      {!isDone && !isFlattening && !!selectorComponent && <Divider />}
+      {!isDone && !isFlattening && !!llmComponent && <Divider />}
 
-      {!isDone && !isFlattening && selectorComponent}
+      {!isDone && !isFlattening && llmComponent}
 
     </GoodModal>
   );
