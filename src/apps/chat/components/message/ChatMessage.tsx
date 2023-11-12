@@ -582,12 +582,12 @@ export function ChatMessage(props: { message: DMessage, diffText?: string, showD
       {/* Selection Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
-          placement='bottom-start' sx={{ minWidth: 200 }}
+          placement='bottom-start' sx={{ minWidth: 220 }}
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy
+            Copy selection
           </MenuItem>
           {isImaginable && (
             <MenuItem onClick={handleOpsImagine} disabled={!isImaginableEnabled || isImagining}>
