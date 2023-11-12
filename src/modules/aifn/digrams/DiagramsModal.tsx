@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { Button, ButtonGroup, Divider, FormControl, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -166,11 +166,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       </Grid>
     )}
 
-    {/*{!!abortController && <Box sx={{ display: 'flex', justifyContent: 'center' }}>*/}
-    {/*  <CircularProgress size='lg' />*/}
-    {/*</Box>}*/}
-
-
     <ButtonGroup color='primary' sx={{ flexGrow: 1 }}>
       <Button
         fullWidth
@@ -190,7 +185,11 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     {errorMessage && <InlineError error={errorMessage} />}
 
-    {!!message && /*!abortController &&*/ (
+    {!showOptions && !!abortController && <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <CircularProgress size='lg' />
+    </Box>}
+
+    {!!message && (!abortController || showOptions) && (
       <ChatMessage
         message={message} hideAvatars noBottomBorder noMarkdown
         codeBackground='background.surface'
