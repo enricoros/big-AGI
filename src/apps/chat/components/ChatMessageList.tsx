@@ -27,8 +27,8 @@ export function ChatMessageList(props: {
   sx?: SxProps
 }) {
   // state
-  const [diffing, setDiffing] = React.useState<boolean>(false);
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
+  const [toolDiffOn, setToolDiffOn] = React.useState<boolean>(false);
 
   // external state
   const { experimentalLabs, showSystemMessages } = useUIPreferencesStore(state => ({
@@ -45,11 +45,8 @@ export function ChatMessageList(props: {
   }, shallow);
   const { chatLLM } = useChatLLM();
 
-  const handleMessageDelete = (messageId: string) =>
-    props.conversationId && deleteMessage(props.conversationId, messageId);
 
-  const handleMessageEdit = (messageId: string, newText: string) =>
-    props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
+  // text actions
 
   const handleImagineFromText = (messageText: string): Promise<any> => {
     if (props.conversationId)
@@ -58,14 +55,8 @@ export function ChatMessageList(props: {
       return Promise.reject('No conversation');
   };
 
-  const handleRestartFromMessage = (messageId: string, offset: number) => {
-    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-    props.conversationId && props.onExecuteChatHistory(props.conversationId, truncatedHistory);
-  };
-
-  const handleRunExample = (text: string) =>
+  const handleRespondToText = (text: string) =>
     props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
-
 
   // hide system messages if the user chooses so
   // NOTE: reverse is because we'll use flexDirection: 'column-reverse' to auto-snap-to-bottom
@@ -75,18 +66,28 @@ export function ChatMessageList(props: {
   if (!filteredMessages.length)
     return props.conversationId ? (
       <Box sx={props.sx || {}}>
-        <PersonaSelector conversationId={props.conversationId} runExample={handleRunExample} />
+        <PersonaSelector conversationId={props.conversationId} runExample={handleRespondToText} />
       </Box>
     ) : null;
 
 
-  const handleToggleSelected = (messageId: string, selected: boolean) => {
-    const newSelected = new Set(selectedMessages);
-    selected ? newSelected.add(messageId) : newSelected.delete(messageId);
-    setSelectedMessages(newSelected);
+  // message menu methods proxy
+
+  const handleMessageDelete = (messageId: string) =>
+    props.conversationId && deleteMessage(props.conversationId, messageId);
+
+  const handleMessageEdit = (messageId: string, newText: string) =>
+    props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
+
+  const handleMessageRestartFrom = (messageId: string, offset: number) => {
+    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
+    props.conversationId && props.onExecuteChatHistory(props.conversationId, truncatedHistory);
   };
 
-  const handleSelectAllMessages = (selected: boolean) => {
+
+  // operate on the local selection set
+
+  const handleSelectAll = (selected: boolean) => {
     const newSelected = new Set<string>();
     if (selected)
       for (const message of messages)
@@ -94,7 +95,13 @@ export function ChatMessageList(props: {
     setSelectedMessages(newSelected);
   };
 
-  const handleDeleteSelectedMessages = () => {
+  const handleSelectMessage = (messageId: string, selected: boolean) => {
+    const newSelected = new Set(selectedMessages);
+    selected ? newSelected.add(messageId) : newSelected.delete(messageId);
+    setSelectedMessages(newSelected);
+  };
+
+  const handleSelectionDelete = () => {
     if (props.conversationId)
       for (const selectedMessage of selectedMessages)
         deleteMessage(props.conversationId, selectedMessage);
@@ -102,29 +109,13 @@ export function ChatMessageList(props: {
   };
 
 
-  // scrollbar style
-  // const scrollbarStyle: SxProps = {
-  //   '&::-webkit-scrollbar': {
-  //     md: {
-  //       width: 8,
-  //       background: theme.palette.neutral.plainHoverBg,
-  //     },
-  //   },
-  //   '&::-webkit-scrollbar-thumb': {
-  //     background: theme.palette.neutral.solidBg,
-  //     borderRadius: 6,
-  //   },
-  //   '&::-webkit-scrollbar-thumb:hover': {
-  //     background: theme.palette.neutral.solidHoverBg,
-  //   },
-  // };
-
+  // text tools
 
   // pass the diff text to most recent assistant message, once done
   const showTextTools = !!props.showTools || experimentalLabs;
   let diffMessage: DMessage | undefined;
   let diffText: string | undefined;
-  if (diffing && showTextTools) {
+  if (toolDiffOn && showTextTools) {
     const [msgB, msgA] = filteredMessages.filter(m => m.role === 'assistant');
     if (!msgB.typing && msgB?.text && msgA?.text) {
       const textA = msgA.text, textB = msgB.text;
@@ -152,24 +143,25 @@ export function ChatMessageList(props: {
           <CleanerMessage
             key={'sel-' + message.id} message={message}
             isBottom={idx === 0} remainingTokens={(chatLLM ? chatLLM.contextTokens : 0) - historyTokenCount}
-            selected={selectedMessages.has(message.id)} onToggleSelected={handleToggleSelected}
+            selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
           />
 
         ) : (
 
           <ChatMessage
-            key={'msg-' + message.id} message={message} diffText={message === diffMessage ? diffText : undefined}
+            key={'msg-' + message.id} message={message}
+            diffText={message === diffMessage ? diffText : undefined}
             isBottom={idx === 0}
             onMessageDelete={() => handleMessageDelete(message.id)}
             onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={(offset: number) => handleRestartFromMessage(message.id, offset)}
+            onMessageRunFrom={(offset: number) => handleMessageRestartFrom(message.id, offset)}
             onImagine={handleImagineFromText}
           />
 
         ),
       )}
 
-      {showTextTools && <ToolsPanel showDiff={diffing} setShowDiff={setDiffing} />}
+      {showTextTools && <ToolsPanel showDiff={toolDiffOn} setShowDiff={setToolDiffOn} />}
 
       {/* Header at the bottom because of 'row-reverse' */}
       {props.isMessageSelectionMode && (
@@ -178,8 +170,8 @@ export function ChatMessageList(props: {
           isBottom={filteredMessages.length === 0}
           sumTokens={historyTokenCount}
           onClose={() => props.setIsMessageSelectionMode(false)}
-          onSelectAll={handleSelectAllMessages}
-          onDeleteMessages={handleDeleteSelectedMessages}
+          onSelectAll={handleSelectAll}
+          onDeleteMessages={handleSelectionDelete}
         />
       )}
 
