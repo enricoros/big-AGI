@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Modal, ModalDialog, Radio, RadioGroup, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Radio, RadioGroup, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import { apiQuery } from '~/common/util/trpc.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { GoodModal } from '~/common/components/GoodModal';
+import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
@@ -239,28 +240,26 @@ export function YTPersonaCreator() {
 
 
     {/* Embodiment Progress */}
-    {isTransforming && <Modal open>
-      <ModalDialog>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
-          <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
-        </Box>
-        <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
-          Embodying Persona ...
-        </Typography>
-        <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
-          {chainStepName}
-        </Typography>
-        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
-        <Typography level='title-sm'>
-          This may take 1-2 minutes. Do not close this window or the progress will be lost.
-          If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
-          please try again with faster/smaller models.
-        </Typography>
-        <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
-          Cancel
-        </Button>
-      </ModalDialog>
-    </Modal>}
+    {isTransforming && <GoodModal open>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
+        <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
+      </Box>
+      <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
+        Embodying Persona ...
+      </Typography>
+      <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
+        {chainStepName}
+      </Typography>
+      <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
+      <Typography level='title-sm'>
+        This may take 1-2 minutes. Do not close this window or the progress will be lost.
+        If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
+        please try again with faster/smaller models.
+      </Typography>
+      <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
+        Cancel
+      </Button>
+    </GoodModal>}
 
   </>;
 }
