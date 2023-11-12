@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -24,7 +24,7 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
-  const { novel: shareBadge, touch: shareTouch } = useUICounter('export-share');
+  const { touch: shareTouch } = useUICounter('export-share');
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -109,9 +109,7 @@ export function ChatMenuItems(props: {
 
     <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
-        <Badge color='danger' invisible={!shareBadge || !props.hasConversations}>
-          <FileDownloadIcon />
-        </Badge>
+        <FileDownloadIcon />
       </ListItemDecorator>
       Share / Export ...
     </MenuItem>
