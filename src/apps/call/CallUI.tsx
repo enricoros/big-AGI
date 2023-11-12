@@ -160,7 +160,8 @@ export function CallUI(props: {
     const firstMessage = phoneMessages[Math.floor(Math.random() * phoneMessages.length)];
 
     setCallMessages([createDMessage('assistant', firstMessage)]);
-    EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId).then();
+    // fire/forget
+    void EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId);
 
     return () => clearInterval(interval);
   }, [isConnected, personaCallStarters, personaVoiceId]);
@@ -177,7 +178,9 @@ export function CallUI(props: {
       // command: close the call
       case 'Goodbye.':
         setStage('ended');
-        setTimeout(() => routerPush('/'), 2000);
+        setTimeout(() => {
+          void routerPush('/');
+        }, 2000);
         return;
       // command: regenerate answer
       case 'Retry.':
@@ -225,7 +228,8 @@ export function CallUI(props: {
     }).finally(() => {
       setPersonaTextInterim(null);
       setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
-      EXPERIMENTAL_speakTextStream(finalText, personaVoiceId).then();
+      // fire/forget
+      void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
     });
 
     return () => {

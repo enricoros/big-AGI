@@ -11,7 +11,7 @@ import * as React from 'react';
 export const useGlobalShortcut = (shortcutKey: string | undefined, useCtrl: boolean, useShift: boolean, callback: () => void) => {
   React.useEffect(() => {
     if (!shortcutKey) return;
-    let lcShortcut = shortcutKey.toLowerCase();
+    const lcShortcut = shortcutKey.toLowerCase();
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((useCtrl === event.ctrlKey) && (useShift === event.shiftKey) && event.key.toLowerCase() === lcShortcut) {
         event.preventDefault();

@@ -93,7 +93,6 @@ export function AppBar(props: { sx?: SxProps }) {
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  // const { push } = useRouter();
   const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
 
   const commonMenuItems = React.useMemo(() =>

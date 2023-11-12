@@ -303,10 +303,10 @@ export function Composer(props: {
         else
           fileText = await file.text();
         newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: fileName, fileText })(newText);
-      } catch (error) {
+      } catch (error: any) {
         // show errors in the prompt box itself - FUTURE: show in a toast
         console.error(error);
-        newText = `${newText}\n\nError loading file ${fileName}: ${error}\n`;
+        newText = `${newText}\n\nError loading file ${fileName}: ${JSON.stringify(error)}\n`;
       }
     }
 
@@ -356,7 +356,7 @@ export function Composer(props: {
         const htmlItem = await clipboardItem.getType('text/html');
         const htmlString = await htmlItem.text();
         // paste tables as markdown
-        if (htmlString.indexOf('<table') == 0) {
+        if (htmlString.startsWith('<table')) {
           const markdownString = htmlTableToMarkdown(htmlString);
           setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
           continue;

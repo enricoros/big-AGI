@@ -12,7 +12,7 @@ import type { PublishedSchema } from '../server/trade.router';
  * This is to give the user the chance to write down the deletion key, mainly.
  */
 export function ExportedPublish(props: { onClose: () => void, response: PublishedSchema, open: boolean }) {
-  if (!props.response || !props.response.url)
+  if (!props.response?.url)
     return null;
 
   const { url, deletionKey, expires } = props.response;

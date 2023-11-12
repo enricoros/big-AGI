@@ -58,7 +58,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     }
 
     // import conversations (warning - will overwrite things)
-    for (let conversation of [...outcome.conversations].reverse()) {
+    for (const conversation of [...outcome.conversations].reverse()) {
       if (conversation.success)
         useChatStore.getState().importConversation(conversation.conversation, false);
     }
@@ -93,7 +93,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     conversation.autoTitle = data.title;
     conversation.messages = data.linear_conversation.map(msgNode => {
       const message = msgNode.message;
-      if (message && message.content.parts) {
+      if (message?.content.parts) {
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {

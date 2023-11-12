@@ -28,7 +28,7 @@ export function useDebouncer<TValue = string | number>(
 
   const setValue = React.useCallback((_newValue: TValue | ((prevState: TValue) => TValue)) => {
     clearDebounceTimeout();
-    // @ts-ignore
+    // @ts-expect-error _newValue can be a function type (cannot, but lint doesn't know)
     const newValue: TValue = typeof _newValue === 'function' ? _newValue(valueRef.current) : _newValue;
     valueRef.current = newValue;
     // trigger an immediate update

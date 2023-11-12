@@ -58,7 +58,8 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
 
   // if (!liveAudioPlayer)
   const liveAudioPlayer = new AudioLivePlayer();
-  liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse).then();
+  // fire/forget
+  void liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse);
 }
 
 

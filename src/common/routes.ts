@@ -24,7 +24,7 @@ export interface AppCallQueryParams {
 }
 
 export function launchAppCall(conversationId: string, personaId: string) {
-  Router.push(
+  void Router.push(
     {
       pathname: `/call`,
       query: {
