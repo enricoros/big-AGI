@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 let nextConfig = {
   reactStrictMode: true,
-  modularizeImports: {
-    '@mui/icons-material': {
-      transform: '@mui/icons-material/{{member}}',
-    },
-  },
+
+  // Note: disabled to chech whether the project becomes slower with this
+  // modularizeImports: {
+  //   '@mui/icons-material': {
+  //     transform: '@mui/icons-material/{{member}}',
+  //   },
+  // },
+
   webpack: (config, _options) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
@@ -18,6 +21,7 @@ let nextConfig = {
 
     return config;
   },
+
   // NOTE: the following shall be replaced by runtime config
   env: {
     HAS_SERVER_DB_PRISMA: !!process.env.POSTGRES_PRISMA_URL && !!process.env.POSTGRES_URL_NON_POOLING,
