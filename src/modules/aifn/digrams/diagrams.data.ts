@@ -8,8 +8,8 @@ export type DiagramLanguage = 'mermaid' | 'plantuml';
 
 // NOTE: keep these global, or it will trigger re-renders
 export const diagramTypes: FormRadioOption<DiagramType>[] = [
-  { label: 'Auto', value: 'auto' },
-  { label: 'Mind Map', value: 'mind' },
+  { label: 'Diagram', value: 'auto' },
+  { label: 'Mindmap', value: 'mind' },
 ];
 
 export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
