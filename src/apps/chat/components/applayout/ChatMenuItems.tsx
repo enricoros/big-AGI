@@ -12,7 +12,7 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
-import { hideOnMobile } from '~/common/theme';
+import { hideOnMobile } from '~/common/app.theme';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 

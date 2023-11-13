@@ -4,8 +4,8 @@ import { default as Document, DocumentContext, DocumentProps, Head, Html, Main, 
 import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
-import { Brand } from '~/common/brand';
-import { bodyFontClassName, createEmotionCache } from '~/common/theme';
+import { Brand } from '~/common/app.config';
+import { bodyFontClassName, createEmotionCache } from '~/common/app.theme';
 
 import { MyAppProps } from './_app';
 

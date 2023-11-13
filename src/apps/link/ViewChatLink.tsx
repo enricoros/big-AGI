@@ -6,9 +6,9 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/routes';
+import { navigateToChat } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 

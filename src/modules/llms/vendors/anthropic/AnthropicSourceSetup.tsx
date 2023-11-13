@@ -8,7 +8,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';

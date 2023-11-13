@@ -11,7 +11,7 @@ import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/mo
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { hideOnDesktop, hideOnMobile } from '~/common/app.theme';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {

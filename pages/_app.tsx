@@ -6,13 +6,13 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
+import { appTheme, createEmotionCache } from '~/common/app.theme';
 
 import 'katex/dist/katex.min.css';
-import '~/common/styles/CodePrism.css'
+import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
-import { Brand } from '~/common/brand';
-import { createEmotionCache, theme } from '~/common/theme';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.
@@ -41,7 +41,7 @@ function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: 
       </Head>
       {/* Rect-query provider */}
       <QueryClientProvider client={queryClient}>
-        <CssVarsProvider defaultMode='light' theme={theme}>
+        <CssVarsProvider defaultMode='light' theme={appTheme}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <Component {...pageProps} />

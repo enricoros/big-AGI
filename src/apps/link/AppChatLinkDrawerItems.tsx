@@ -6,10 +6,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { useChatLinkItems } from '../chat/trade/store-sharing';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { closeLayoutDrawer } from '~/common/layout/store-applayout';
-import { getChatLinkRelativePath, getHomeLink } from '~/common/routes';
+import { getChatLinkRelativePath, getHomeLink } from '~/common/app.routes';
 
 
 /**

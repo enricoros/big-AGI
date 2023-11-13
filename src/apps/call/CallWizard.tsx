@@ -10,7 +10,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import WarningIcon from '@mui/icons-material/Warning';
 
-import { navigateBack } from '~/common/routes';
+import { navigateBack } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/state/store-chats';

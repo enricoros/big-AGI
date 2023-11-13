@@ -8,7 +8,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
 import { asValidURL } from '~/common/util/urlUtils';
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { ModelVendorOllama } from './ollama.vendor';

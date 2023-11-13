@@ -7,7 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import { Link } from '~/common/components/Link';
-import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { settingsCol1Width, settingsGap } from '~/common/app.theme';
 
 import { isValidGoogleCloudApiKey, isValidGoogleCseId, requireUserKeyGoogleCse } from './search.client';
 import { useGoogleSearchStore } from './store-google';

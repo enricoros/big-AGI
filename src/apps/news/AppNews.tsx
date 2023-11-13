@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, Card, CardContent, Container, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 

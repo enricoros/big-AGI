@@ -29,7 +29,7 @@ const jetBrainsMono = JetBrains_Mono({
   fallback: ['monospace'],
 });
 
-export const theme = extendTheme({
+export const appTheme = extendTheme({
   fontFamily: {
     body: inter.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
@@ -134,7 +134,7 @@ export const theme = extendTheme({
 });
 
 export const bodyFontClassName = inter.className;
-export const themeBreakpoints = theme.breakpoints.values;
+export const themeBreakpoints = appTheme.breakpoints.values;
 
 export const cssRainbowColorKeyframes = keyframes`
     100%, 0% {

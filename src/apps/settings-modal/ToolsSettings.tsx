@@ -4,7 +4,7 @@ import { FormHelperText, Stack } from '@mui/joy';
 
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 
 export function ToolsSettings() {
 

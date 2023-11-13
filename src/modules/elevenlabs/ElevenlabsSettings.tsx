@@ -5,7 +5,7 @@ import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, 
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
-import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { settingsCol1Width, settingsGap } from '~/common/app.theme';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs } from './elevenlabs.client';
 import { useElevenlabsStore } from './store-elevenlabs';

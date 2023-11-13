@@ -7,7 +7,7 @@ import { Box, Typography } from '@mui/joy';
 import { createConversationFromJsonV1 } from '../chat/trade/trade.client';
 import { useHasChatLinkItems } from '../chat/trade/store-sharing';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { apiAsyncNode } from '~/common/util/trpc.client';

@@ -9,7 +9,7 @@ import { APP_CALL_ENABLED } from '../../../call/AppCall';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { AppBarDropdown } from '~/common/layout/AppBarDropdown';
-import { launchAppCall } from '~/common/routes';
+import { launchAppCall } from '~/common/app.routes';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
