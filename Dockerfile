@@ -1,3 +1,4 @@
+# Base
 FROM node:18-alpine AS base
 ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -23,7 +24,6 @@ COPY . .
 
 # Build the application
 ENV NODE_ENV production
-ENV APP_DOCKER_BUILD 1
 RUN npm run build
 
 # Reduce installed packages to production-only
