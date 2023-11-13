@@ -1,5 +1,6 @@
 # big-AGI non-code files
 /docs/
+README.md
 
 # Node build artifacts
 /node_modules
@@ -12,6 +13,13 @@
 
 # production
 /build
+
+# versioning
+.git/
+.github/
+
+# IDEs
+.idea/
 
 # debug
 npm-debug.log*
