@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { themeBreakpoints } from '~/common/theme';
+import { themeBreakpoints } from '../app.theme';
 
 
 const isBrowser = typeof window !== 'undefined';

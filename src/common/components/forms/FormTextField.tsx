@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
 
-import { settingsCol1Width } from '~/common/theme';
+import { settingsCol1Width } from '../../app.theme';
 
 
 /**

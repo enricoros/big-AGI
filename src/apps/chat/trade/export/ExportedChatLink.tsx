@@ -8,14 +8,14 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LinkIcon from '@mui/icons-material/Link';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { getChatLinkRelativePath } from '~/common/routes';
+import { getChatLinkRelativePath } from '~/common/app.routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 

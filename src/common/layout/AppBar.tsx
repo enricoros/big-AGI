@@ -9,10 +9,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { Brand } from '~/common/brand';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { Link } from '~/common/components/Link';
-import { LogoSquircle } from '~/common/components/LogoSquircle';
+import { Brand } from '../app.config';
+import { CloseableMenu } from '../components/CloseableMenu';
+import { Link } from '../components/Link';
+import { LogoSquircle } from '../components/LogoSquircle';
 
 // import { AppBarSupportItem } from './AppBarSupportItem';
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';

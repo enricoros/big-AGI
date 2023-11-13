@@ -4,7 +4,7 @@ import { Box, Button, Divider, FormControl, FormHelperText, FormLabel, Input, Op
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 
 import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
 

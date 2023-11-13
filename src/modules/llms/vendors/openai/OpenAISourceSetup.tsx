@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Alert, Box } from '@mui/joy';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -10,7 +10,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';

@@ -12,7 +12,7 @@ import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
+import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DEFAULT_PRODIA_RESOLUTION, HARDCODED_PRODIA_RESOLUTIONS, useProdiaStore } from './store-prodia';

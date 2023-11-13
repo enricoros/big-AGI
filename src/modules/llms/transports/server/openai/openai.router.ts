@@ -4,7 +4,7 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 
 import type { OpenAIWire } from './openai.wiretypes';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';

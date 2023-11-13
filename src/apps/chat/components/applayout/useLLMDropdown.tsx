@@ -9,7 +9,7 @@ import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/sto
 
 import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { hideOnMobile } from '~/common/theme';
+import { hideOnMobile } from '~/common/app.theme';
 import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
 
 

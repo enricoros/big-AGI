@@ -10,7 +10,7 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { Link } from '~/common/components/Link';
 import { closeLayoutPreferences } from '~/common/layout/store-applayout';
-import { hideOnMobile, settingsGap } from '~/common/theme';
+import { hideOnMobile, settingsGap } from '~/common/app.theme';
 import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 

@@ -6,7 +6,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { InlineError } from '~/common/components/InlineError';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';

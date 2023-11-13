@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Button, IconButton } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { hideOnDesktop, hideOnMobile } from '~/common/app.theme';
 
 import { CameraCaptureModal } from './CameraCaptureModal';
 

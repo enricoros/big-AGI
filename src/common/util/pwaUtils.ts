@@ -1,4 +1,4 @@
-import { Brand } from '~/common/brand';
+import { Brand } from '../app.config';
 
 /**
  * Returns 'true' if the application is been executed as a 'pwa' (e.g. installed, stand-alone)
