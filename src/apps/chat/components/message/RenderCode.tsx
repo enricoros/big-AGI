@@ -50,10 +50,12 @@ function RenderCodeImpl(props: {
     || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
 
   let renderPlantUML = isPlantUML && showPlantUML;
-  const { data: plantUmlHtmlData } = useQuery({
+  const { data: plantUmlHtmlData, error: plantUmlError } = useQuery({
     enabled: renderPlantUML,
     queryKey: ['plantuml', blockCode],
     queryFn: async () => {
+      // fetch the PlantUML SVG
+      let text: string = '';
       try {
         // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
         const { encode: plantUmlEncode } = await import('plantuml-encoder');
@@ -61,20 +63,28 @@ function RenderCodeImpl(props: {
         // retrieve and manually adapt the SVG, to remove the background
         const encodedPlantUML: string = plantUmlEncode(blockCode);
         const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
-        const svg = await response.text();
-        const start = svg.indexOf('<svg ');
-        const end = svg.indexOf('</svg>');
-        if (start < 0 || end <= start)
-          return null;
-        return svg.slice(start, end + 6).replace('background:#FFFFFF;', '');
+        text = await response.text();
       } catch (e) {
-        // ignore errors, and disable the component in that case
         return null;
       }
+      // validate/extract the SVG
+      const start = text.indexOf('<svg ');
+      const end = text.indexOf('</svg>');
+      if (start < 0 || end <= start)
+        throw new Error('Could not render PlantUML');
+      const svg = text
+        .slice(start, end + 6) // <svg ... </svg>
+        .replace('background:#FFFFFF;', ''); // transparent background
+
+      // check for syntax errors
+      if (svg.includes('>Syntax Error?</text>'))
+        throw new Error('syntax issue (it happens!). Please regenerate.');
+
+      return svg;
     },
     staleTime: 24 * 60 * 60 * 1000, // 1 day
   });
-  renderPlantUML = renderPlantUML && !!plantUmlHtmlData;
+  renderPlantUML = renderPlantUML && (!!plantUmlHtmlData || !!plantUmlError);
 
   // heuristic for language, and syntax highlight
   const { highlightedCode, inferredCodeLanguage } = React.useMemo(
@@ -126,7 +136,8 @@ function RenderCodeImpl(props: {
             dangerouslySetInnerHTML={{
               __html:
                 renderSVG ? blockCode
-                  : (renderPlantUML && plantUmlHtmlData) ? plantUmlHtmlData
+                  : renderPlantUML
+                    ? (plantUmlHtmlData || plantUmlError || 'No PlantUML rendering.')
                     : highlightedCode,
             }}
             sx={{
