@@ -71,13 +71,7 @@ const RenderMermaidDynamic = React.lazy(async () => {
   return { default: MermaidDiagram };
 });
 
-export const RenderCodeMermaid = (props: { mermaidCode: string, sx?: SxProps }) =>
-  <Box sx={{
-    lineHeight: 1.75,
-    mx: 1.5,
-    ...(props.sx || {}),
-  }}>
-    <React.Suspense fallback={<div>Summoning Mermaids...</div>}>
-      <RenderMermaidDynamic mermaidCode={props.mermaidCode} />
-    </React.Suspense>
-  </Box>;
+export const RenderCodeMermaid = (props: { mermaidCode: string }) =>
+  <React.Suspense fallback={<div>Summoning Mermaids...</div>}>
+    <RenderMermaidDynamic mermaidCode={props.mermaidCode} />
+  </React.Suspense>;
