@@ -13,8 +13,8 @@ export const diagramTypes: FormRadioOption<DiagramType>[] = [
 ];
 
 export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
-  { label: 'Mermaid', value: 'mermaid' },
   { label: 'PlantUML', value: 'plantuml' },
+  { label: 'Mermaid (labs)', value: 'mermaid', experimental: true },
 ];
 
 function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
@@ -31,12 +31,12 @@ function plantumlDiagramPrompt(diagramType: DiagramType): { sys: string, usr: st
   switch (diagramType) {
     case 'auto':
       return {
-        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by "@startuml" and "@enduml", ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram type—sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, or flowchart.',
+        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by "```\n@startuml" and "@enduml\n```", ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram type—sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, or flowchart.',
         usr: 'Generate the PlantUML code for the diagram type that best represents the preceding assistant message.',
       };
     case 'mind':
       return {
-        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by @startmindmap" and "@endmindmap", ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.',
+        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by "```\n@startmindmap" and "@endmindmap\n```", ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.',
         usr: 'Generate the PlantUML code for a mind map based on the preceding assistant message.',
       };
   }

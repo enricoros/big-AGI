@@ -1,9 +1,10 @@
 import * as React from 'react';
 
 import { FormControl, FormLabel, Radio, RadioGroup } from '@mui/joy';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export type FormRadioOption<T extends string> = { label: string, value: T };
+export type FormRadioOption<T extends string> = { label: string, value: T, experimental?: boolean };
 
 
 /**
@@ -13,6 +14,9 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
 
   // state
   const [value, setValue] = React.useState<T | null>(initialValue);
+
+  // external state
+  const experimentalLabs = useUIPreferencesStore(state => state.experimentalLabs);
 
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value as T | null);
@@ -28,7 +32,7 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
             value={value} onChange={handleChange}
           >
             {options.map((option) =>
-              <Radio key={option.value} value={option.value} label={option.label} />)}
+              <Radio key={option.value} disabled={!!option.experimental && !experimentalLabs} value={option.value} label={option.label} />)}
           </RadioGroup>
         </FormControl>,
     [handleChange, hidden, label, options, value],

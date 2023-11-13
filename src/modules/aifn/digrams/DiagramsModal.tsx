@@ -30,6 +30,10 @@ export interface DiagramConfig {
 
 // This method fixes issues in the generation output. Very heuristic.
 function hotFixMessage(message: DMessage) {
+  // put the code in markdown, if missing
+  if (message.text.startsWith('@start'))
+    message.text = '```\n' + message.text + '\n```';
+  // fix generation mistakes
   message.text = message.text
     .replaceAll('@endmindmap\n@enduml', '@endmindmap')
     .replaceAll('```\n```', '```');
@@ -43,7 +47,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [showOptions, setShowOptions] = React.useState(true);
   const [message, setMessage] = React.useState<DMessage | null>(null);
   const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Exploration');
-  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Style');
+  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Style');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
@@ -137,9 +141,11 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <Grid xs={12} md={6}>
           {diagramComponent}
         </Grid>
-        <Grid xs={12} md={6}>
-          {languageComponent}
-        </Grid>
+        {languageComponent && (
+          <Grid xs={12} md={6}>
+            {languageComponent}
+          </Grid>
+        )}
         <Grid xs={12}>
           {llmComponent}
         </Grid>
@@ -170,8 +176,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     {!!message && (!abortController || showOptions) && (
       <ChatMessage
-        message={message} hideAvatars noBottomBorder noMarkdown
+        message={message} hideAvatars noBottomBorder noMarkdown filterOnlyCode
         codeBackground='background.surface'
+        onMessageEdit={(text) => setMessage({ ...message, text })}
         sx={{
           backgroundColor: abortController ? 'background.level3' : 'background.level2',
           marginX: 'calc(-1 * var(--Card-padding))',

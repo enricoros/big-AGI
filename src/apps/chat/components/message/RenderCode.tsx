@@ -13,6 +13,7 @@ import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
+import { RenderCodeMermaid } from './RenderCodeMermaid';
 import { heuristicIsHtml, IFrameComponent } from './RenderHtml';
 
 
@@ -145,20 +146,20 @@ function RenderCodeImpl(props: {
         {renderHTML
           ? <IFrameComponent htmlString={blockCode} />
           : renderMermaid
-            ? <div className='mermaid'>{blockCode}</div>
-            : <Box
-              dangerouslySetInnerHTML={{
-                __html:
-                  renderSVG
-                    ? blockCode
-                    : renderPlantUML
-                      ? (plantUmlHtmlData || plantUmlError || 'No PlantUML rendering.')
-                      : highlightedCode,
-              }}
-              sx={{
-                ...(renderSVG ? { lineHeight: 0 } : {}),
-                ...(renderPlantUML ? { textAlign: 'center' } : {}),
-              }}
+            ? <RenderCodeMermaid mermaidCode={blockCode} />
+            : <Box component='div'
+                   dangerouslySetInnerHTML={{
+                     __html:
+                       renderSVG
+                         ? blockCode
+                         : renderPlantUML
+                           ? (plantUmlHtmlData || (plantUmlError as string) || 'No PlantUML rendering.')
+                           : highlightedCode,
+                   }}
+                   sx={{
+                     ...(renderSVG ? { lineHeight: 0 } : {}),
+                     ...(renderPlantUML ? { textAlign: 'center' } : {}),
+                   }}
             />}
 
         {/* Code Buttons */}
@@ -171,7 +172,7 @@ function RenderCodeImpl(props: {
             </Tooltip>
           )}
           {isMermaid && (
-            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render Mermaid'} variant='solid'>
+            <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'} variant='solid'>
               <IconButton variant={renderMermaid ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowMermaid(!showMermaid)}>
                 <SchemaIcon />
               </IconButton>
