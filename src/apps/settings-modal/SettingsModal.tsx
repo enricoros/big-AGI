@@ -23,7 +23,7 @@ export function SettingsModal() {
 
   // external state
   const settingsTabIndex = useLayoutPreferencesTab();
-  useGlobalShortcut('p', true, true, openLayoutPreferences);
+  useGlobalShortcut('p', true, true, false, openLayoutPreferences);
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 

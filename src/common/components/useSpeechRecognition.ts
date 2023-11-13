@@ -224,7 +224,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       startRecording();
   }, [startRecording, stopRecording]);
 
-  useGlobalShortcut(useShortcutCtrlKey, true, false, toggleRecording);
+  useGlobalShortcut(useShortcutCtrlKey, true, false, false, toggleRecording);
 
   return {
     isRecording,
