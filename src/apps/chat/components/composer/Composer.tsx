@@ -381,7 +381,7 @@ export function Composer(props: {
     }
   }, [setComposeText]);
 
-  useGlobalShortcut('v', true, true, handlePasteButtonClicked);
+  useGlobalShortcut('v', true, true, false, handlePasteButtonClicked);
 
   const handleTextareaCtrlV = async (e: React.ClipboardEvent) => {
 

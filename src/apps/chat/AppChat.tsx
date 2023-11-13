@@ -42,7 +42,7 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, hasAnyContent, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, hasAnyContent, newConversation, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     const isConversationEmpty = conversation ? !conversation.messages.length : true;
     const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
@@ -50,6 +50,7 @@ export function AppChat() {
       activeConversationId: state.activeConversationId,
       isConversationEmpty,
       hasAnyContent,
+      newConversation: state.createConversationOrSwitch,
       duplicateConversation: state.duplicateConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
@@ -150,7 +151,7 @@ export function AppChat() {
       }
     }
   };
-  useGlobalShortcut('r', true, true, handleRegenerateAssistant);
+  useGlobalShortcut('r', true, true, false, handleRegenerateAssistant);
 
 
   const handleImportConversation = () => setTradeConfig({ dir: 'import' });
@@ -160,8 +161,10 @@ export function AppChat() {
   const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
 
 
+  useGlobalShortcut('n', true, false, true, () => newConversation());
+
   const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
-  useGlobalShortcut('x', true, true, () => isConversationEmpty || setClearConfirmationId(activeConversationId));
+  useGlobalShortcut('x', true, false, true, () => isConversationEmpty || setClearConfirmationId(activeConversationId));
 
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {

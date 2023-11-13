@@ -113,7 +113,7 @@ interface ChatState {
 
 interface ChatActions {
   // store setters
-  createConversation: () => void;
+  createConversationOrSwitch: () => void;
   duplicateConversation: (conversationId: string) => void;
   importConversation: (conversation: DConversation, preventClash: boolean) => void;
   deleteConversation: (conversationId: string) => void;
@@ -149,15 +149,24 @@ export const useChatStore = create<ChatState & ChatActions>()(devtools(
       activeConversationId: defaultConversations[0].id,
 
 
-      createConversation: () =>
+      createConversationOrSwitch: () =>
         set(state => {
+
+          // if the first conversation is empty, switch to it
+          const conversations = state.conversations;
+          if (conversations.length && conversations[0].messages.length === 0) {
+            return {
+              activeConversationId: conversations[0].id,
+            };
+          }
+
           // inherit some values from the active conversation (matches users' expectations)
-          const activeConversation = state.conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
+          const activeConversation = conversations.find((conversation: DConversation): boolean => conversation.id === state.activeConversationId);
           const conversation = createDConversation(activeConversation?.systemPurposeId);
           return {
             conversations: [
               conversation,
-              ...state.conversations,
+              ...conversations,
             ],
             activeConversationId: conversation.id,
           };

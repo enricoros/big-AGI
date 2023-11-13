@@ -28,7 +28,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     modelSources: state.sources,
     llmCount: state.llms.length,
   }), shallow);
-  useGlobalShortcut('m', true, true, openLayoutModelsSetup);
+  useGlobalShortcut('m', true, true, false, openLayoutModelsSetup);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
