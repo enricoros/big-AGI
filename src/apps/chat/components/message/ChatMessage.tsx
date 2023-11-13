@@ -193,7 +193,8 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
 export function ChatMessage(props: {
   message: DMessage,
   showDate?: boolean, diffText?: string,
-  hideAvatars?: boolean, codeBackground?: string, noMarkdown?: boolean,
+  hideAvatars?: boolean, codeBackground?: string,
+  noMarkdown?: boolean, filterOnlyCode?: boolean,
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
   onMessageDelete?: () => void,
@@ -212,7 +213,6 @@ export function ChatMessage(props: {
   const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  // const contentRef = React.useRef<HTMLUListElement>(null);
 
   // external state
   const { cleanerLooks, renderMarkdown, doubleClickToEdit } = useUIPreferencesStore(state => ({
@@ -354,24 +354,10 @@ export function ChatMessage(props: {
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString().trim();
-      if (selectedText.length > 0) {
-        // range check: only to exclude the 'auto selection' from other components
-        // if (contentRef.current?.contains(range.commonAncestorContainer))
+      if (selectedText.length > 0)
         openSelectionMenu(event, selectedText);
-        // else
-        //   closeSelectionMenu();
-      }
     }
   }, [openSelectionMenu]);
-
-  // React.useEffect(() => {
-  //   if (!ENABLE_SELECTION_AUTO_MENU)
-  //     return;
-  //
-  //   // Attach event listener for automatic text selection
-  //   window.addEventListener('mouseup', handleMouseUp);
-  //   return () => window.removeEventListener('mouseup', handleMouseUp);
-  // }, [handleMouseUp]);
 
 
   // prettier upstream errors
@@ -464,14 +450,18 @@ export function ChatMessage(props: {
 
 
       {/* Edit / Blocks */}
-      {!isEditing ? (
+      {isEditing
 
-        <Box
+        ? <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
+
+        : <Box
+          onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
           onDoubleClick={event => (doubleClickToEdit && props.onMessageEdit) ? handleOpsEdit(event) : null}
           sx={{
             ...blockSx,
             flexGrow: 0,
             overflowX: 'auto',
+            ...(!!props.filterOnlyCode && { boxShadow: 'md' }),
           }}>
 
           {props.showDate === true && (
@@ -485,34 +475,30 @@ export function ChatMessage(props: {
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
-          {errorMessage
-            ? (
-              <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
-                <InlineError error={errorMessage} />
-              </Tooltip>
-            ) : (
-              <Box
-                // ref={contentRef}
-                onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && !!props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
-              >
-                {parseBlocks(collapsedText, fromSystem, diffs).map((block, index) =>
-                  block.type === 'html'
-                    ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
-                    : block.type === 'code'
-                      ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
-                      : block.type === 'image'
-                        ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsRunAgain} />
-                        : block.type === 'latex'
-                          ? <RenderLatex key={'latex-' + index} latexBlock={block} />
-                          : block.type === 'diff'
-                            ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                            : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
-                              ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                              : <RenderText key={'text-' + index} textBlock={block} />,
-                )}
-              </Box>
-            )
-          }
+          {errorMessage && (
+            <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
+              <InlineError error={errorMessage} />
+            </Tooltip>
+          )}
+
+          {/* sequence of render components, for each Block */}
+          {!errorMessage && parseBlocks(collapsedText, fromSystem, diffs)
+            .filter(block => block.type === 'code' || !props.filterOnlyCode)
+            .map(
+              (block, index) =>
+                block.type === 'html'
+                  ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
+                  : block.type === 'code'
+                    ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
+                    : block.type === 'image'
+                      ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsRunAgain} />
+                      : block.type === 'latex'
+                        ? <RenderLatex key={'latex-' + index} latexBlock={block} />
+                        : block.type === 'diff'
+                          ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
+                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
+                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                            : <RenderText key={'text-' + index} textBlock={block} />)}
 
           {isCollapsed && (
             <Button variant='plain' color='neutral' onClick={handleUncollapse}>... expand ...</Button>
@@ -525,12 +511,7 @@ export function ChatMessage(props: {
           {/*</Chip>*/}
 
         </Box>
-
-      ) : (
-
-        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
-
-      )}
+      }
 
 
       {/* Overlay copy icon */}
@@ -604,7 +585,7 @@ export function ChatMessage(props: {
         </CloseableMenu>
       )}
 
-      {/* Selection Menu */}
+      {/* Selection (Contextual) Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
           placement='bottom-start' sx={{ minWidth: 220 }}
