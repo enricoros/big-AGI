@@ -78,7 +78,7 @@ function RenderCodeImpl(props: {
 
       // check for syntax errors
       if (svg.includes('>Syntax Error?</text>'))
-        throw new Error('syntax issue (it happens!). Please regenerate.');
+        throw new Error('syntax issue (it happens!). Please regenerate or change generator model.');
 
       return svg;
     },
