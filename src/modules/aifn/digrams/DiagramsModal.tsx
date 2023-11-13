@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { GoodModal } from '~/common/components/GoodModal';
-import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, Divider, Grid, IconButton } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -9,17 +8,19 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import type { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 import { ChatMessage } from '../../../apps/chat/components/message/ChatMessage';
 import { streamChat } from '~/modules/llms/transports/streamChat';
 
+import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { useLlmTypeSelector } from '~/common/components/useLlmTypeSelector';
+import { useFormRadio } from '~/common/components/forms/useFormRadio';
+import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
+
+import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
 
-type DiagramType = 'auto' | 'mind';
-
+// Used by the callers to setup the diagam session
 export interface DiagramConfig {
   conversationId: string;
   messageId: string,
@@ -27,50 +28,28 @@ export interface DiagramConfig {
 }
 
 
-const bigDiagramPrompt = (diagramType: DiagramType, systemPrompt: string, subject: string): VChatMessageIn[] => [
-  {
-    role: 'system', content:
-      'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by' +
-      (diagramType === 'auto'
-        ? ` "@startuml" and "@enduml", ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram type—sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, or flowchart.`
-        : ` "@startmindmap" and "@endmindmap", ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.`) +
-      ' Your output is strictly enclosed in a Markdown block.',
-  },
-  { role: 'system', content: systemPrompt },
-  { role: 'assistant', content: subject },
-  {
-    role: 'user', content: diagramType === 'auto'
-      ? 'Generate the PlantUML code for the diagram type that best represents the preceding assistant message.'
-      : 'Generate the PlantUML code for a mind map based on the preceding assistant message.',
-  },
-];
-
-
-/**
- * This method fixes issues in the generation output. Very heuristic.
- */
+// This method fixes issues in the generation output. Very heuristic.
 function hotFixMessage(message: DMessage) {
   if (message.text.includes('@endmindmap\n@enduml'))
     message.text = message.text.replace('@endmindmap\n@enduml', '@endmindmap');
 }
+
 
 export function DiagramsModal(props: { config: DiagramConfig, onClose: () => void; }) {
 
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [message, setMessage] = React.useState<DMessage | null>(null);
-  const [diagramType, setDiagramType] = React.useState<DiagramType>('auto');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Diagram Type');
+  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Diagram Language');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
   // external state
-  const { chosenLlm, selectorComponent } = useLlmTypeSelector('Generator');
+  const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator');
 
   // derived state
-  const { conversationId, messageId, text: subject } = props.config;
-
-
-  const handleToggleOptions = () => setShowOptions(options => !options);
+  const { conversationId, text: subject } = props.config;
 
 
   /**
@@ -81,10 +60,10 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       return;
 
     const conversation = useChatStore.getState().conversations.find(c => c.id === conversationId);
-    if (!conversation || !messageId || !chosenLlm)
-      return setErrorMessage('Invalid configuration');
+    if (!diagramType || !diagramLanguage || !diagramLlm || !conversation)
+      return setErrorMessage('Invalid diagram Type, Language, Generator, or conversation.');
 
-    const systemMessage = conversation.messages?.length > 0 ? conversation.messages[0] : null;
+    const systemMessage = conversation?.messages?.length ? conversation.messages[0] : null;
     if (systemMessage?.role !== 'system')
       return setErrorMessage('No System message in this conversation');
 
@@ -92,14 +71,15 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     let assistantMessage = createDMessage('assistant', '');
     assistantMessage.purposeId = conversation.systemPurposeId;
+    setMessage(assistantMessage);
 
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
 
-    const diagramPrompt = bigDiagramPrompt(diagramType, systemMessage.text, subject);
+    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject);
 
     try {
-      await streamChat(chosenLlm.id, diagramPrompt, stepAbortController.signal,
+      await streamChat(diagramLlm.id, diagramPrompt, stepAbortController.signal,
         (update: Partial<{ text: string, typing: boolean, originLLM: string }>) => {
           if (update.originLLM)
             update.originLLM = '(diagram)'; // `(diagram) ${update.originLLM}`;
@@ -115,7 +95,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, chosenLlm, conversationId, diagramType, messageId, subject]);
+  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject]);
 
 
   // [Effect] Auto-abort on unmount
@@ -128,11 +108,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     };
   }, [abortController]);
 
-  // // Automatic generation, with anti-react strict mode
-  // React.useEffect(() => {
-  //   const timeout = setTimeout(() => handleGenerateNew(), 100);
-  //   return () => clearTimeout(timeout);
-  // }, [handleGenerateNew]);
 
   const handleInsertAndClose = () => {
     if (!message || !message.text)
@@ -158,19 +133,13 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     {showOptions && (
       <Grid container spacing={2}>
         <Grid xs={12} md={6}>
-          <FormControl>
-            <FormLabel>Diagram Type</FormLabel>
-            <RadioGroup
-              orientation='horizontal'
-              value={diagramType}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDiagramType(event.target.value as DiagramType)}>
-              <Radio value='auto' label='Auto' />
-              <Radio value='mind' label='Mind Map' />
-            </RadioGroup>
-          </FormControl>
+          {diagramComponent}
         </Grid>
         <Grid xs={12} md={6}>
-          {selectorComponent}
+          {languageComponent}
+        </Grid>
+        <Grid xs={12} md={6}>
+          {llmComponent}
         </Grid>
       </Grid>
     )}
@@ -179,15 +148,14 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       <Button
         fullWidth
         variant={abortController ? 'soft' : 'solid'} color='primary'
-        disabled={!chosenLlm}
+        disabled={!diagramLlm}
         onClick={abortController ? () => abortController.abort() : handleGenerateNew}
         endDecorator={abortController ? <StopOutlinedIcon /> : message ? <ReplayIcon /> : <AccountTreeIcon />}
-        // loading={!!abortController}
         sx={{ minWidth: 200 }}
       >
         {abortController ? 'Stop' : message ? 'Regenerate' : 'Generate'}
       </Button>
-      <IconButton onClick={handleToggleOptions}>
+      <IconButton onClick={() => setShowOptions(options => !options)}>
         {showOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </IconButton>
     </ButtonGroup>
