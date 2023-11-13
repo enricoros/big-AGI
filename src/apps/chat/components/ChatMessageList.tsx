@@ -16,7 +16,6 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { ChatMessage } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { ToolsPanel } from './ToolsPanel';
 
 
 /**
@@ -24,7 +23,6 @@ import { ToolsPanel } from './ToolsPanel';
  */
 export function ChatMessageList(props: {
   conversationId: string | null,
-  showTools?: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onExecuteChatHistory: (conversationId: string, history: DMessage[]) => void,
   onDiagramFromText: (diagramConfig: DiagramConfig | null) => Promise<any>,
@@ -36,13 +34,9 @@ export function ChatMessageList(props: {
   const [isImagining, setIsImagining] = React.useState(false);
   const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
-  const [toolDiffOn, setToolDiffOn] = React.useState<boolean>(false);
 
   // external state
-  const { experimentalLabs, showSystemMessages } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs,
-    showSystemMessages: state.showSystemMessages,
-  }));
+  const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
   const { messages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -90,19 +84,6 @@ export function ChatMessageList(props: {
   };
 
 
-  const filteredMessages = messages
-    .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
-    .reverse(); // 'reverse' is because flexDirection: 'column-reverse' to auto-snap-to-bottom
-
-  // when there are no messages, show the purpose selector
-  if (!filteredMessages.length)
-    return props.conversationId ? (
-      <Box sx={props.sx || {}}>
-        <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
-      </Box>
-    ) : null;
-
-
   // message menu methods proxy
 
   const handleMessageDelete = (messageId: string) =>
@@ -141,23 +122,32 @@ export function ChatMessageList(props: {
   };
 
 
-  // text tools: pass the diff text to most recent assistant message, if enabled
+  // text-diff functionality, find the messages to diff with
 
-  const showTextTools = !!props.showTools || experimentalLabs;
-  let diffMessage: DMessage | undefined;
-  let diffText: string | undefined;
-  if (toolDiffOn && showTextTools) {
-    const [msgB, msgA] = filteredMessages.filter(m => m.role === 'assistant');
-    if (!msgB.typing && msgB?.text && msgA?.text) {
+  const { diffMessage, diffText } = React.useMemo(() => {
+    const [msgB, msgA] = messages.filter(m => m.role === 'assistant').reverse();
+    if (msgB?.text && msgA?.text && !msgB?.typing) {
       const textA = msgA.text, textB = msgB.text;
       const lenA = textA.length, lenB = textB.length;
-      if (lenA > 80 && lenB > 80 && lenA > lenB / 2 && lenB > lenA / 2) {
-        diffMessage = msgB;
-        diffText = textA;
-      }
+      if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
+        return { diffMessage: msgB, diffText: textA };
     }
-  }
+    return { diffMessage: undefined, diffText: undefined };
+  }, [messages]);
 
+  // no content: show the persona selector
+
+  const filteredMessages = messages
+    .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
+    .reverse(); // 'reverse' is because flexDirection: 'column-reverse' to auto-snap-to-bottom
+
+  // when there are no messages, show the purpose selector
+  if (!filteredMessages.length)
+    return props.conversationId ? (
+      <Box sx={props.sx || {}}>
+        <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
+      </Box>
+    ) : null;
 
   return (
     <List sx={{
@@ -183,7 +173,7 @@ export function ChatMessageList(props: {
           <ChatMessage
             key={'msg-' + message.id}
             message={message}
-            diffText={message === diffMessage ? diffText : undefined}
+            diffPreviousText={message === diffMessage ? diffText : undefined}
             isBottom={idx === 0}
             isImagining={isImagining} isSpeaking={isSpeaking}
             onMessageDelete={() => handleMessageDelete(message.id)}
@@ -195,8 +185,6 @@ export function ChatMessageList(props: {
 
         ),
       )}
-
-      {showTextTools && <ToolsPanel showDiff={toolDiffOn} setShowDiff={setToolDiffOn} />}
 
       {/* Header at the bottom because of 'row-reverse' */}
       {props.isMessageSelectionMode && (

@@ -3,11 +3,12 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DifferenceIcon from '@mui/icons-material/Difference';
 import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import FastForwardIcon from '@mui/icons-material/FastForward';
@@ -30,6 +31,8 @@ import { copyToClipboard } from '~/common/util/copyToClipboard';
 import { cssRainbowColorKeyframes, hideOnMobile } from '~/common/theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import { useChatMessageShowDiff } from '../../state/store-appchat';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -166,10 +169,10 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   return { errorMessage, isAssistantError };
 }
 
-function useSanityTextDiffs(text: string, diffText: string | undefined) {
+function useSanityTextDiffs(text: string, diffText: string | undefined, enabled: boolean) {
   const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
   React.useEffect(() => {
-    if (!diffText)
+    if (!diffText || !enabled)
       return setDiffs(null);
     setDiffs(
       cleanupEfficiency(makeDiff(diffText, text, {
@@ -177,7 +180,7 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
         checkLines: true,
       }), 4),
     );
-  }, [text, diffText]);
+  }, [text, diffText, enabled]);
   return diffs;
 }
 
@@ -192,7 +195,7 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
  */
 export function ChatMessage(props: {
   message: DMessage,
-  showDate?: boolean, diffText?: string,
+  showDate?: boolean, diffPreviousText?: string,
   hideAvatars?: boolean, codeBackground?: string,
   noMarkdown?: boolean, filterOnlyCode?: boolean,
   isBottom?: boolean, noBottomBorder?: boolean,
@@ -220,7 +223,8 @@ export function ChatMessage(props: {
     renderMarkdown: state.renderMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
-  const diffs = useSanityTextDiffs(props.message.text, props.diffText);
+  const [showDiff, setShowDiff] = useChatMessageShowDiff();
+  const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
 
   // derived state
   const {
@@ -275,6 +279,8 @@ export function ChatMessage(props: {
     e.preventDefault();
     closeOperationsMenu();
   };
+
+  const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
 
   const handleOpsDiagram = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -482,7 +488,7 @@ export function ChatMessage(props: {
           )}
 
           {/* sequence of render components, for each Block */}
-          {!errorMessage && parseBlocks(collapsedText, fromSystem, diffs)
+          {!errorMessage && parseBlocks(collapsedText, fromSystem, textDiffs)
             .filter(block => block.type === 'code' || !props.filterOnlyCode)
             .map(
               (block, index) =>
@@ -548,6 +554,14 @@ export function ChatMessage(props: {
               Copy
             </MenuItem>
           </Box>
+          {!!props.diffPreviousText && <ListDivider />}
+          {!!props.diffPreviousText && (
+            <MenuItem onClick={handleOpsToggleShowDiff}>
+              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
+              Show difference
+              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
+            </MenuItem>
+          )}
           <ListDivider />
           {!!props.onMessageRunFrom && (
             <MenuItem onClick={handleOpsRunAgain}>
