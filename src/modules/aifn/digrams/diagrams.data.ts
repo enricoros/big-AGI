@@ -19,8 +19,8 @@ export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
 
 function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
   let promptDetails = diagramType === 'auto'
-    ? 'You create a valid Mermaid diagram string, enclosed by "```mermaid" and "```", ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram string from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git, or mindmap.'
-    : 'You create a valid Mermaid mindmap string, enclosed by "```mermaid" and "```", ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.';
+    ? 'You create a valid Mermaid diagram markdown ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram string from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git, or mindmap.'
+    : 'You create a valid Mermaid mindmap markdown ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.';
   return {
     sys: `You are an AI that writes Mermaid code based on provided text. ${promptDetails}`,
     usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that represents the preceding assistant message.`,
@@ -45,7 +45,7 @@ function plantumlDiagramPrompt(diagramType: DiagramType): { sys: string, usr: st
 export function bigDiagramPrompt(diagramType: DiagramType, diagramLanguage: DiagramLanguage, chatSystemPrompt: string, subject: string): VChatMessageIn[] {
   const { sys, usr } = diagramLanguage === 'mermaid' ? mermaidDiagramPrompt(diagramType) : plantumlDiagramPrompt(diagramType);
   return [
-    { role: 'system', content: sys + ' Your output is strictly enclosed in a Markdown block.' },
+    { role: 'system', content: sys + ' Your output is strictly markdown and nothing else.' },
     { role: 'system', content: chatSystemPrompt },
     { role: 'assistant', content: subject },
     { role: 'user', content: usr },
