@@ -35,7 +35,7 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
               <Radio key={option.value} disabled={!!option.experimental && !experimentalLabs} value={option.value} label={option.label} />)}
           </RadioGroup>
         </FormControl>,
-    [handleChange, hidden, label, options, value],
+    [experimentalLabs, handleChange, hidden, label, options, value],
   );
 
   return [value, component];
