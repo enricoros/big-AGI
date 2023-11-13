@@ -23,5 +23,5 @@ export const useGlobalShortcut = (shortcutKey: string | undefined, useCtrl: bool
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [callback, shortcutKey, useCtrl, useShift]);
+  }, [callback, shortcutKey, useAlt, useCtrl, useShift]);
 };
