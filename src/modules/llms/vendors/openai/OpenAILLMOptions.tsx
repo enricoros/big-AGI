@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
-import { settingsCol1Width, settingsGap } from '~/common/app.theme';
+import { settingsCol1Width } from '~/common/app.theme';
 
 import { DLLM, useModelsStore } from '../../store-llms';
 import { LLMOptionsOpenAI } from './openai.vendor';
@@ -21,7 +21,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <Box sx={{ minWidth: settingsCol1Width }}>
@@ -51,5 +51,5 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
       />
     </FormControl>
 
-  </Box>;
+  </>;
 }

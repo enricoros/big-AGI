@@ -1,17 +1,32 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Button, ButtonGroup, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutLLMOptions } from '~/common/layout/store-applayout';
+import { settingsGap } from '~/common/app.theme';
 
-import { VendorLLMOptions } from './VendorLLMOptions';
+
+function VendorLLMOptions(props: { llmId: DLLMId }) {
+  // get LLM (warning: this will refresh all children components on every change of any LLM field)
+  const llm = useModelsStore(state => state.llms.find(llm => llm.id === props.llmId), shallow);
+  if (!llm)
+    return 'Options issue: LLM not found for id ' + props.llmId;
+
+  // get vendor
+  const vendor = findVendorById(llm._source.vId);
+  if (!vendor)
+    return 'Options issue: Vendor not found for LLM ' + props.llmId + ', source ' + llm._source.id;
+
+  return <vendor.LLMOptionsComponent llm={llm} />;
+}
 
 
 export function LLMOptionsModal(props: { id: DLLMId }) {
@@ -63,7 +78,9 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
       }
     >
 
-      <VendorLLMOptions id={props.id} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+        <VendorLLMOptions llmId={props.id} />
+      </Box>
 
       <Divider />
 

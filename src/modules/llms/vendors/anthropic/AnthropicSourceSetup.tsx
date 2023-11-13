@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Box } from '@mui/joy';
+import { Alert } from '@mui/joy';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -8,7 +8,6 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
@@ -41,7 +40,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     staleTime: Infinity,
   });
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <FormInputKey
       id='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
@@ -80,5 +79,5 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
     {isError && <InlineError error={error} />}
 
-  </Box>;
+  </>;
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button } from '@mui/joy';
+import { Button } from '@mui/joy';
 
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
@@ -8,7 +8,6 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
 import { asValidURL } from '~/common/util/urlUtils';
-import { settingsGap } from '~/common/app.theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { ModelVendorOllama } from './ollama.vendor';
@@ -39,7 +38,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
     staleTime: Infinity,
   });
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <FormTextField
       title='Ollama Host'
@@ -63,5 +62,5 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
     {adminOpen && <OllamaAdmin access={access} onClose={() => setAdminOpen(false)} />}
 
-  </Box>;
+  </>;
 }
