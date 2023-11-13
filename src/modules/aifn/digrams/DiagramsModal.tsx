@@ -30,8 +30,10 @@ export interface DiagramConfig {
 
 // This method fixes issues in the generation output. Very heuristic.
 function hotFixMessage(message: DMessage) {
-  if (message.text.includes('@endmindmap\n@enduml'))
-    message.text = message.text.replace('@endmindmap\n@enduml', '@endmindmap');
+  message.text = message.text
+    .replaceAll('@endmindmap\n@enduml', '@endmindmap')
+    .replaceAll('```\n```', '```');
+  return message;
 }
 
 
@@ -40,8 +42,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [message, setMessage] = React.useState<DMessage | null>(null);
-  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Diagram Type');
-  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Diagram Language');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Exploration');
+  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Style');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
@@ -70,7 +72,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     setErrorMessage(null);
 
     let assistantMessage = createDMessage('assistant', '');
-    assistantMessage.purposeId = conversation.systemPurposeId;
     setMessage(assistantMessage);
 
     const stepAbortController = new AbortController();
@@ -81,10 +82,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     try {
       await streamChat(diagramLlm.id, diagramPrompt, stepAbortController.signal,
         (update: Partial<{ text: string, typing: boolean, originLLM: string }>) => {
-          if (update.originLLM)
-            update.originLLM = '(diagram)'; // `(diagram) ${update.originLLM}`;
           assistantMessage = { ...assistantMessage, ...update };
-          hotFixMessage(assistantMessage);
           setMessage(assistantMessage);
         },
       );
@@ -92,6 +90,12 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setMessage(null);
       setErrorMessage(error?.name !== 'AbortError' ? error?.message : 'Interrupted.');
     } finally {
+      setMessage({
+        ...hotFixMessage(assistantMessage),
+        purposeId: conversation.systemPurposeId,
+        typing: false,
+        originLLM: 'diagram',
+      });
       setAbortController(null);
     }
 
@@ -118,7 +122,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
 
   return <GoodModal
-    title='Generate Diagram'
+    title='Generate Diagram' noTitleBar
     open onClose={props.onClose}
     sx={{ maxWidth: { xs: '100vw', md: '95vw' } }}
     startButton={
@@ -128,8 +132,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     }
   >
 
-    <Divider />
-
     {showOptions && (
       <Grid container spacing={2}>
         <Grid xs={12} md={6}>
@@ -138,7 +140,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <Grid xs={12} md={6}>
           {languageComponent}
         </Grid>
-        <Grid xs={12} md={6}>
+        <Grid xs={12}>
           {llmComponent}
         </Grid>
       </Grid>
