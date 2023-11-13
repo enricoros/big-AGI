@@ -19,8 +19,8 @@ export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
 
 function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
   let promptDetails = diagramType === 'auto'
-    ? 'You create a valid Mermaid diagram markdown ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram string from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git, or mindmap.'
-    : 'You create a valid Mermaid mindmap markdown ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.';
+    ? 'You create a valid Mermaid diagram markdown (```mermaid\n...) ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram string from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git, or mindmap.'
+    : 'You create a valid Mermaid mindmap markdown (```mermaid\n...) ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.';
   return {
     sys: `You are an AI that writes Mermaid code based on provided text. ${promptDetails}`,
     usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that represents the preceding assistant message.`,
