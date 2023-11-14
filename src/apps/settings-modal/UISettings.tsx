@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Switch } from '@mui/joy';
+import { FormControl, Radio, RadioGroup, Stack, Switch } from '@mui/joy';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ScienceIcon from '@mui/icons-material/Science';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
-
-import { Link } from '~/common/components/Link';
-import { closeLayoutPreferences } from '~/common/layout/store-applayout';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { hideOnMobile, settingsGap } from '~/common/app.theme';
 import { isPwa } from '~/common/util/pwaUtils';
+import { navigateToLabs } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -58,10 +57,8 @@ export function UISettings() {
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
       {!isPwa() && <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Centering</FormLabel>
-          <FormHelperText>{centerMode === 'full' ? 'Full screen chat' : centerMode === 'narrow' ? 'Narrow chat' : 'Wide'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Centering'
+                        description={centerMode === 'full' ? 'Full screen chat' : centerMode === 'narrow' ? 'Narrow chat' : 'Wide'} />
         <RadioGroup orientation='horizontal' value={centerMode} onChange={handleCenterModeChange}>
           <Radio value='narrow' label={<WidthNormalIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
           <Radio value='wide' label={<WidthWideIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
@@ -70,50 +67,40 @@ export function UISettings() {
       </FormControl>}
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Enter to send</FormLabel>
-          <FormHelperText>{enterIsNewline ? 'New line' : <>Sends message<TelegramIcon /></>}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Enter to send'
+                        description={enterIsNewline ? 'New line' : <>Sends message<TelegramIcon /></>} />
         <Switch checked={!enterIsNewline} onChange={handleEnterIsNewlineChange}
                 endDecorator={enterIsNewline ? 'Off' : 'On'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Double click to edit</FormLabel>
-          <FormHelperText>{doubleClickToEdit ? 'Double click' : 'Three dots'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Double click to edit'
+                        description={doubleClickToEdit ? 'Double click' : 'Three dots'} />
         <Switch checked={doubleClickToEdit} onChange={handleDoubleClickToEditChange}
                 endDecorator={doubleClickToEdit ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Markdown</FormLabel>
-          <FormHelperText>{renderMarkdown ? 'Render markdown' : 'As text'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Markdown'
+                        description={renderMarkdown ? 'Render markdown' : 'As text'} />
         <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
                 endDecorator={renderMarkdown ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>
 
       {SHOW_PURPOSE_FINDER && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Purpose finder</FormLabel>
-          <FormHelperText>{showPurposeFinder ? 'Show search bar' : 'Hide search bar'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Purpose finder'
+                        description={showPurposeFinder ? 'Show search bar' : 'Hide search bar'} />
         <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
                 endDecorator={showPurposeFinder ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
       </FormControl>}
 
       <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel>Appearance</FormLabel>
-          <FormHelperText>{zenMode === 'clean' ? 'Show senders' : 'Minimal UI'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Appearance'
+                        description={zenMode === 'clean' ? 'Show senders' : 'Minimal UI'} />
         <RadioGroup orientation='horizontal' value={zenMode} onChange={handleZenModeChange}>
           {/*<Radio value='clean' label={<Face6Icon sx={{ width: 24, height: 24, mt: -0.25 }} />} />*/}
           <Radio value='clean' label='Clean' />
@@ -122,13 +109,9 @@ export function UISettings() {
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <FormLabel component={Link} href='/labs' onClick={closeLayoutPreferences}>
-            <u>Experiments</u>
-            <InfoOutlinedIcon sx={{ mx: 0.5 }} />
-          </FormLabel>
-          <FormHelperText>{experimentalLabs ? <>Enabled <ScienceIcon /></> : 'Disabled'}</FormHelperText>
-        </Box>
+        <FormLabelStart title={<>Experiments <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
+                        description={experimentalLabs ? <>Enabled <ScienceIcon /></> : 'Disabled'}
+                        onClick={navigateToLabs} />
         <Switch checked={experimentalLabs} onChange={handleExperimentalLabsChange}
                 endDecorator={experimentalLabs ? 'On' : 'Off'}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />

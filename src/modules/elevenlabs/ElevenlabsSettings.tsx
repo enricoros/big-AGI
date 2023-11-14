@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, Stack, Tooltip } from '@mui/joy';
+import { FormControl, Radio, RadioGroup, Stack } from '@mui/joy';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
-import { settingsCol1Width, settingsGap } from '~/common/app.theme';
+import { settingsGap } from '~/common/app.theme';
 
 import { isElevenLabsEnabled, requireUserKeyElevenLabs } from './elevenlabs.client';
 import { useElevenlabsStore } from './store-elevenlabs';
@@ -36,16 +37,9 @@ export function ElevenlabsSettings() {
 
       {/* LanguageSelect: moved from the UI settings (where it logically belongs), just to group things better from an UX perspective */}
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Tooltip title='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.'>
-            <FormLabel>
-              Language
-            </FormLabel>
-          </Tooltip>
-          <FormHelperText>
-            ASR and TTS
-          </FormHelperText>
-        </Box>
+        <FormLabelStart title='Language'
+                        description='ASR and TTS'
+                        tooltip='Currently for Microphone input and Voice output. Microphone support varies by browser (iPhone/Safari lacks speech input). We will use the ElevenLabs MultiLanguage model if a language other than English is selected.' />
         <LanguageSelect />
       </FormControl>
 
@@ -57,17 +51,12 @@ export function ElevenlabsSettings() {
       />
 
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabel sx={{ minWidth: settingsCol1Width }}>
-          Assistant Voice
-        </FormLabel>
+        <FormLabelStart title='Assistant Voice' />
         {voicesDropdown}
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ minWidth: settingsCol1Width }}>
-          <FormLabel>Speak Responses</FormLabel>
-          <FormHelperText>{autoSpeak === 'off' ? 'Off' : 'First paragraph'}</FormHelperText>
-        </Box>
+        <FormLabelStart title='Speak Responses' description={autoSpeak === 'off' ? 'Off' : 'First paragraph'} />
         <RadioGroup orientation='horizontal' value={autoSpeak} onChange={handleAutoSpeakChange}>
           <Radio disabled={!hasVoices} value='off' label='Off' />
           <Radio disabled={!hasVoices} value='firstLine' label='Start' />

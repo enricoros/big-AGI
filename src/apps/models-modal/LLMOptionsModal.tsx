@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, ButtonGroup, Divider, FormControl, FormLabel, Input, Switch, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -9,6 +9,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutLLMOptions } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
@@ -85,16 +86,12 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
       <Divider />
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabel sx={{ minWidth: 80 }}>
-          Name
-        </FormLabel>
+        <FormLabelStart title='Name' sx={{ minWidth: 80 }} />
         <Input variant='outlined' value={llm.label} onChange={handleLlmLabelSet} />
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabel sx={{ minWidth: 80 }}>
-          Defaults
-        </FormLabel>
+        <FormLabelStart title='Defaults' sx={{ minWidth: 80 }} />
         <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
           <Button variant={isChatLLM ? 'solid' : undefined} onClick={() => setChatLLMId(isChatLLM ? null : props.id)}>Chat</Button>
           <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
@@ -103,9 +100,7 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabel sx={{ minWidth: 80 }}>
-          Visible
-        </FormLabel>
+        <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
         <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
                 endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
                 slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
@@ -113,17 +108,13 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
       </FormControl>
 
       {/*<FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>*/}
-      {/*  <FormLabel sx={{ minWidth: 80 }}>*/}
-      {/*    Flags*/}
-      {/*  </FormLabel>*/}
+      {/* <FormLabelStart title='Flags' sx={{ minWidth: 80 }} /> >*/}
       {/*  <Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
       {/*  <Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
       {/*</FormControl>*/}
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
-        <FormLabel onClick={() => setShowDetails(!showDetails)} sx={{ minWidth: 80, cursor: 'pointer', textDecoration: 'underline' }}>
-          Details
-        </FormLabel>
+        <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
         {showDetails && <Typography level='body-sm' sx={{ display: 'block' }}>
           [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `}
           {llm.contextTokens && `context tokens: ${llm.contextTokens.toLocaleString()} · `}

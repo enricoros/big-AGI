@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, Switch } from '@mui/joy';
+import { FormControl, Switch } from '@mui/joy';
 
-import { settingsCol1Width } from '../../app.theme';
+import { FormLabelStart } from './FormLabelStart';
 
 
 /**
@@ -14,14 +14,7 @@ export function FormSwitchControl(props: {
 }) {
   return (
     <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          {props.title}
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          {props.description}
-        </FormHelperText>
-      </Box>
+      <FormLabelStart title={props.title} description={props.description} />
       <Switch
         checked={props.value}
         onChange={event => props.onChange(event.target.checked)}

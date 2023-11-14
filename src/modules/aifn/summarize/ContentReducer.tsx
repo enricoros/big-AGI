@@ -1,17 +1,18 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormHelperText, FormLabel, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
 import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
 
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { GoodModal } from '~/common/components/GoodModal';
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/util/token-counter';
 
 import { summerizeToFitContextBudget } from './summerize';
-import { GoodModal } from '~/common/components/GoodModal';
 
 
 function TokenUsageAlert({ usedTokens, tokenLimit }: { usedTokens: number, tokenLimit: number }) {
@@ -95,10 +96,8 @@ export function ContentReducer(props: {
           </Typography>
 
           <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box sx={{ minWidth: 120 }}>
-              <FormLabel>Reducer model</FormLabel>
-              <FormHelperText>{llms.find(llm => llm.id === reducerModelId)?.description?.slice(0, 10) ?? null}</FormHelperText>
-            </Box>
+            <FormLabelStart title='Reducer model'
+                            description={llms.find(llm => llm.id === reducerModelId)?.description?.slice(0, 10) ?? '[select]'} />
             {reducerModelId && <Select value={reducerModelId} onChange={handleReducerModelChange} sx={{ minWidth: 140 }}>
               {llms.map((llm: DLLM) => (
                 <Option key={llm.id} value={llm.id}>
@@ -109,10 +108,8 @@ export function ContentReducer(props: {
           </FormControl>
 
           <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-            <Box sx={{ minWidth: 120 }}>
-              <FormLabel>Compression</FormLabel>
-              <FormHelperText>{compressionLevel < 2 ? 'Low' : compressionLevel > 4 ? 'High' : 'Medium'}</FormHelperText>
-            </Box>
+            <FormLabelStart title='Compression'
+                            description={compressionLevel < 2 ? 'Low' : compressionLevel > 4 ? 'High' : 'Medium'} />
             <Slider
               color='neutral' disabled
               min={1} max={5} defaultValue={3}

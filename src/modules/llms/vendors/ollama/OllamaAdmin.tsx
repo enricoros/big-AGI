@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { Box, Button, Divider, FormControl, FormHelperText, FormLabel, Input, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, FormHelperText, Input, Option, Select, Typography } from '@mui/joy';
 
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/app.theme';
@@ -50,9 +51,7 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
 
         <Box sx={{ display: 'flex', gap: 1, mt: settingsGap }}>
           <FormControl sx={{ flexGrow: 1 }}>
-            <FormLabel>
-              Name
-            </FormLabel>
+            <FormLabelStart title='Name' />
             <Select value={pullModel || ''} onChange={(_event: any, value: string | null) => setPullModel(value)}>
               {pullable?.pullable.map(p =>
                 <Option key={p.id} value={p.id}>{p.id}</Option>,
@@ -60,9 +59,7 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
             </Select>
           </FormControl>
           <FormControl sx={{ flexGrow: 1 }}>
-            <FormLabel>
-              Tag
-            </FormLabel>
+            <FormLabelStart title='Tag' />
             <Input
               variant='outlined' placeholder='latest'
               value={pullTag || ''} onChange={event => setPullTag(event.target.value)}
