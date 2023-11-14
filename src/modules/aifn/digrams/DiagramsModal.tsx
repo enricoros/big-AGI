@@ -46,7 +46,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [message, setMessage] = React.useState<DMessage | null>(null);
-  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Visualization');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Visualize');
   const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Style');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
@@ -146,7 +146,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             {languageComponent}
           </Grid>
         )}
-        <Grid xs={12}>
+        <Grid xs={12} xl={6}>
           {llmComponent}
         </Grid>
       </Grid>
