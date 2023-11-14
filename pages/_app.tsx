@@ -4,12 +4,15 @@ import { MyAppProps } from 'next/app';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 
 import { Brand } from '~/common/app.config';
-import { Providers } from '~/common/state/Providers';
 import { apiQuery } from '~/common/util/trpc.client';
 
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
+
+import { ProviderBackend } from '~/common/state/ProviderBackend';
+import { ProviderTRPCQueryClient } from '~/common/state/ProviderTRPCQueryClient';
+import { ProviderTheming } from '~/common/state/ProviderTheming';
 
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
@@ -20,9 +23,13 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
       <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
     </Head>
 
-    <Providers emotionCache={emotionCache}>
-      <Component {...pageProps} />
-    </Providers>
+    <ProviderTheming emotionCache={emotionCache}>
+      <ProviderTRPCQueryClient>
+        <ProviderBackend>
+          <Component {...pageProps} />
+        </ProviderBackend>
+      </ProviderTRPCQueryClient>
+    </ProviderTheming>;
 
     <VercelAnalytics debug={false} />
 
