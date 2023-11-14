@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Container, useTheme } from '@mui/joy';
+import { Box, Container } from '@mui/joy';
 
 import { ModelsModal } from '../../apps/models-modal/ModelsModal';
 import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
@@ -19,7 +19,6 @@ export function AppLayout(props: {
   children: React.ReactNode,
 }) {
   // external state
-  const theme = useTheme();
   const { centerMode } = useUIPreferencesStore(state => ({ centerMode: isPwa() ? 'full' : state.centerMode }), shallow);
 
   // usage counter, for progressive disclosure of features
@@ -35,8 +34,8 @@ export function AppLayout(props: {
         sx={{
           boxShadow: {
             xs: 'none',
-            md: centerMode === 'narrow' ? theme.shadow.md : 'none',
-            xl: centerMode !== 'full' ? theme.shadow.lg : 'none',
+            md: centerMode === 'narrow' ? 'md' : 'none',
+            xl: centerMode !== 'full' ? 'lg' : 'none',
           },
         }}>
 
