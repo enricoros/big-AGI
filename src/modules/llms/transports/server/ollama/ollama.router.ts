@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env';
 import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { LLM_IF_OAI_Chat } from '../../../store-llms';
@@ -22,7 +23,7 @@ const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
 
 export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
 
-  const ollamaHost = fixupHost(access.ollamaHost || process.env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
+  const ollamaHost = fixupHost(access.ollamaHost || env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
 
   return {
     headers: {
