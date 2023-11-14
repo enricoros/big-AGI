@@ -46,7 +46,6 @@ export function AppLayout(props: {
 
           {!props.noAppBar && <AppBar sx={{
             zIndex: 20, // position: 'sticky', top: 0,
-            // ...(process.env.NODE_ENV === 'development' ? { background: theme.palette.danger.solidBg } : {}),
           }} />}
 
           {props.children}
