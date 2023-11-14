@@ -1,56 +1,32 @@
 import * as React from 'react';
 import Head from 'next/head';
+import { MyAppProps } from 'next/app';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
-import { AppProps } from 'next/app';
-import { CacheProvider, EmotionCache } from '@emotion/react';
-import { CssBaseline, CssVarsProvider } from '@mui/joy';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Brand } from '~/common/app.config';
+import { Providers } from '~/common/state/Providers';
 import { apiQuery } from '~/common/util/trpc.client';
-import { appTheme, createEmotionCache } from '~/common/app.theme';
 
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
 
 
-// Client-side cache, shared for the whole session of the user in the browser.
-const clientSideEmotionCache = createEmotionCache();
+const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
+  <>
 
-export interface MyAppProps extends AppProps {
-  emotionCache?: EmotionCache;
-}
+    <Head>
+      <title>{Brand.Title.Common}</title>
+      <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
+    </Head>
 
-function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
-  const [queryClient] = React.useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  }));
-  return <>
-    <CacheProvider value={emotionCache}>
-      <Head>
-        <title>{Brand.Title.Common}</title>
-        <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
-      </Head>
-      {/* Rect-query provider */}
-      <QueryClientProvider client={queryClient}>
-        <CssVarsProvider defaultMode='light' theme={appTheme}>
-          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-          <CssBaseline />
-          <Component {...pageProps} />
-        </CssVarsProvider>
-      </QueryClientProvider>
-    </CacheProvider>
+    <Providers emotionCache={emotionCache}>
+      <Component {...pageProps} />
+    </Providers>
+
     <VercelAnalytics debug={false} />
-  </>;
-}
 
-// enables the react-query api invocation
+  </>;
+
+// enables the React Query API invocation
 export default apiQuery.withTRPC(MyApp);
