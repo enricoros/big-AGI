@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Divider, FormControl, FormHelperText, Input, Option, Select, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, FormHelperText, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
@@ -43,13 +43,13 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
 
       <Divider />
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Stack direction='column' sx={{ gap: settingsGap }}>
         <Typography level='body-sm'>
           We assume your Ollama host is running and models are already available.
           However we provide a way to pull models from the Ollama host, for convenience.
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 1, mt: settingsGap }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <FormControl sx={{ flexGrow: 1 }}>
             <FormLabelStart title='Name' />
             <Select value={pullModel || ''} onChange={(_event: any, value: string | null) => setPullModel(value)}>
@@ -90,7 +90,7 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
           </Button>
         </Box>
 
-      </Box>
+      </Stack>
 
       <Divider />
 
