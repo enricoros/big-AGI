@@ -37,10 +37,10 @@ mindmap
 
 function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
   let promptDetails = diagramType === 'auto'
-    ? 'You create a valid Mermaid diagram markdown (```mermaid\\n...), ready to be rendered into a diagram or mindmap. Ensure the code contains no external references, and all names are properly enclosed in double quotes and escaped if necessary. Choose the most suitable diagram type from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git, or mindmap.'
+    ? 'You create a valid Mermaid diagram markdown (```mermaid\\n...), ready to be rendered into a diagram. Ensure the code contains no external references, and all names are properly enclosed in double quotes and escaped if necessary. Choose the most suitable diagram type from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git.'
     : 'You create a valid Mermaid mindmap markdown (```mermaid\\n...), ready to be rendered into a mind map. Ensure the code contains no external references, and all names are properly enclosed in double quotes and escaped if necessary. For example:\n' + mermaidMindmapExample + '\n';
   return {
-    sys: `You are an AI that generates Mermaid code based on provided text. ${promptDetails}`,
+    sys: `You are an AI that generates correct Mermaid code based on provided text. ${promptDetails}`,
     usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that represents the preceding assistant message.`,
   };
 }

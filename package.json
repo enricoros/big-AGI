@@ -31,7 +31,6 @@
     "@trpc/server": "^10.43.3",
     "@vercel/analytics": "^1.1.1",
     "browser-fs-access": "^0.35.0",
-    "dompurify": "^3.0.6",
     "eventsource-parser": "^1.1.1",
     "idb-keyval": "^6.2.1",
     "mermaid": "^10.6.1",

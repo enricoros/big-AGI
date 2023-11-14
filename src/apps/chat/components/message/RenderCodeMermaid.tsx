@@ -1,71 +1,93 @@
 import * as React from 'react';
-import type { MermaidConfig } from 'mermaid';
 
 import { Box } from '@mui/joy';
-import { SxProps } from '@mui/system';
+
+import { appTheme } from '~/common/app.theme';
 
 
 const RenderMermaidDynamic = React.lazy(async () => {
+
+  // dynamic import
   const { default: mermaidAPI } = await import('mermaid');
-  const { default: DOMPurify } = await import('dompurify');
 
-  const mermaidConfig: MermaidConfig = {
+  mermaidAPI.initialize({
     startOnLoad: false,
-    theme: 'default',
-    // ... any other Mermaid configuration options
-  };
 
-  mermaidAPI.initialize(mermaidConfig);
+    // gfx options
+    fontFamily: appTheme.fontFamily.code,
+    altFontFamily: appTheme.fontFamily.body,
+
+    // style configuration
+    fontSize: 8,
+    htmlLabels: true,
+    securityLevel: 'loose',
+    theme: 'forest',
+
+    // per-chart configuration
+    mindmap: { useMaxWidth: false },
+    flowchart: { useMaxWidth: false },
+    sequence: { useMaxWidth: false },
+    timeline: { useMaxWidth: false },
+    class: { useMaxWidth: false },
+    state: { useMaxWidth: false },
+    pie: { useMaxWidth: false },
+    er: { useMaxWidth: false },
+    gantt: { useMaxWidth: false },
+    gitGraph: { useMaxWidth: false },
+  });
+
 
   const MermaidDiagram = React.memo((props: { mermaidCode: string }) => {
 
     // state
+    const isMounted = React.useRef(false);
     const [svgCode, setSvgCode] = React.useState<string | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const mermaidContainerRef = React.useRef<HTMLDivElement>(null);
 
+
+    // [effect] re-render on code changes
     React.useEffect(() => {
-      let isMounted = true;
 
-      // Generate a unique ID for each diagram
-      const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
+      const updateSvgCode = () =>
+        mermaidAPI
+          .render(
+            `mermaid-${Math.random().toString(36).substring(2, 9)}`,
+            props.mermaidCode,
+            mermaidContainerRef.current!,
+          )
+          .then(({ svg /*, bindFunctions*/ }) => {
+            if (mermaidContainerRef.current && isMounted.current) {
+              setSvgCode(svg);
+              // bindFunctions?.(mermaidContainerRef.current);
+            }
+          })
+          .catch((error) =>
+            console.error('Mermaid rendering failed:', error),
+          );
 
-      // Render the diagram
-
-      mermaidAPI
-        .render(id, props.mermaidCode)
-        .then(renderResult => {
-          if (!isMounted) return;
-          const svg = DOMPurify.sanitize(renderResult.svg);
-          setSvgCode(svg);
-          // if (mermaidContainerRef.current)
-          //   renderResult.bindFunctions?.(mermaidContainerRef.current);
-        })
-        .catch(error => {
-          console.error('Mermaid rendering failed:', error);
-          setError('Mermaid rendering issue: ' + JSON.stringify(error));
-        })
-        .finally(() => {
-          // ...
-        });
-
+      // mounting state and 'strict mode' debounce
+      isMounted.current = true;
+      const timeout = setTimeout(updateSvgCode, 0);
       return () => {
-        isMounted = false;
+        isMounted.current = false;
+        clearTimeout(timeout);
       };
     }, [props.mermaidCode]);
+
 
     if (error)
       return <div>Error: {error}</div>;
 
     return (
-      <Box component='div'
-           ref={mermaidContainerRef}
-           dangerouslySetInnerHTML={{ __html: svgCode || 'Loading diagram...' }}
+      <Box
+        component='div'
+        ref={mermaidContainerRef}
+        dangerouslySetInnerHTML={{ __html: svgCode || 'Loading Diagram...' }}
       />
     );
   });
 
-  // Assign a displayName to the component for better debugging
   MermaidDiagram.displayName = 'MermaidDiagram';
 
   return { default: MermaidDiagram };
