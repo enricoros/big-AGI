@@ -495,7 +495,7 @@ export function ChatMessage(props: {
                 block.type === 'html'
                   ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
                   : block.type === 'code'
-                    ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
+                    ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.filterOnlyCode} />
                     : block.type === 'image'
                       ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsRunAgain} />
                       : block.type === 'latex'
