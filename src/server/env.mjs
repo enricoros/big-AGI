@@ -1,5 +1,5 @@
 import { createEnv } from '@t3-oss/env-nextjs';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 
 export const env = createEnv({
   server: {
@@ -49,7 +49,7 @@ export const env = createEnv({
 
   },
 
-  onValidationError: (error: ZodError): never => {
+  onValidationError: error => {
     console.error('❌ Invalid environment variables:', error.issues);
     throw new Error('Invalid environment variable');
   },

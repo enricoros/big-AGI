@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParseCallback, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
 import { createEmptyReadableStream, debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE, serverFetchOrThrow } from '~/server/wire';
-import { env } from '~/server/env';
+import { env } from '~/server/env.mjs';
 
 import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
 import type { OpenAIWire } from './openai.wiretypes';
