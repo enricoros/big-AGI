@@ -27,6 +27,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
       title='Temperature' ariaLabel='Model Temperature'
       description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       min={0} max={1} step={0.1} defaultValue={0.5}
+      valueLabelDisplay='on'
       value={llmTemperature}
       onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value })}
     />
