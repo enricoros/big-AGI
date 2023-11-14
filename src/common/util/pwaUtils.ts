@@ -6,7 +6,7 @@ export const isBrowser = typeof window !== 'undefined';
 // this sort of detection is brittle, but we use it for very optional features
 const safeUA = isBrowser ? window.navigator?.userAgent || '' : '';
 export const isIPhoneUser = /iPhone|iPod/.test(safeUA);
-export const isMacUser = true; // /Macintosh|MacIntel|MacPPC|Mac68K/.test(safeUA);
+export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K/.test(safeUA);
 export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('Mobile') === -1;
 
 
