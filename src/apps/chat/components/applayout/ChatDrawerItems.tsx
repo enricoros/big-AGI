@@ -93,7 +93,7 @@ export function ChatDrawerItems(props: {
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         New
-        {/*<KeyStroke light combo='Ctrl + Alt + N' sx={hideOnMobile} />*/}
+        {/*<KeyStroke light combo='Ctrl + Alt + N' />*/}
       </Box>
     </MenuItem>
 

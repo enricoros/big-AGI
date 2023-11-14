@@ -7,6 +7,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
+
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { hideOnMobile, settingsGap } from '~/common/app.theme';
 import { isPwa } from '~/common/util/pwaUtils';

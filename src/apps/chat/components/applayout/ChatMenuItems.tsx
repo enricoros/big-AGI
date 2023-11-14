@@ -12,7 +12,6 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
-import { hideOnMobile } from '~/common/app.theme';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -120,7 +119,7 @@ export function ChatMenuItems(props: {
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Reset
-        {!disabled && <KeyStroke light combo='Ctrl + Alt + X' sx={hideOnMobile} />}
+        {!disabled && <KeyStroke light combo='Ctrl + Alt + X' />}
       </Box>
     </MenuItem>
 
