@@ -41,12 +41,7 @@ export const env = createEnv({
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),
-
-
-    // non-app specific, but from the runtime
-    NODE_ENV: z.enum(['development', 'test', 'production', undefined /* on Vercel */]),
-    // VERCEL_URL: z.string().url().optional(),
-
+    
   },
 
   onValidationError: error => {
