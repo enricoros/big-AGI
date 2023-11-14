@@ -11,7 +11,7 @@ import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/mo
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { hideOnDesktop, hideOnMobile } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
@@ -43,6 +43,7 @@ export function ModelsSourceSelector(props: {
   const [confirmDeletionSourceId, setConfirmDeletionSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
+  const isMobile = useIsMobile();
   const { modelSources, addModelSource, removeModelSource } = useModelsStore(state => ({
     modelSources: state.sources,
     addModelSource: state.addSource, removeModelSource: state.removeSource,
@@ -115,9 +116,9 @@ export function ModelsSourceSelector(props: {
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
 
       {/* Models: [Select] Add Delete */}
-      <Typography sx={{ mr: 1, ...hideOnMobile }}>
+      {!isMobile && <Typography sx={{ mr: 1 }}>
         Service:
-      </Typography>
+      </Typography>}
 
       <Select
         variant='outlined'
@@ -133,12 +134,15 @@ export function ModelsSourceSelector(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-      <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
-        <AddIcon />
-      </IconButton>
-      <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
-        Add
-      </Button>
+      {isMobile ? (
+        <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+          <AddIcon />
+        </IconButton>
+      ) : (
+        <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
+          Add
+        </Button>
+      )}
 
       <IconButton
         variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
