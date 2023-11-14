@@ -119,7 +119,7 @@ export function ChatMenuItems(props: {
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Reset
-        {!disabled && <KeyStroke light combo='Ctrl + Alt + X' />}
+        {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
       </Box>
     </MenuItem>
 

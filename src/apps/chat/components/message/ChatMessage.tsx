@@ -572,7 +572,7 @@ export function ChatMessage(props: {
                   ? 'Retry from here'
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                     Retry
-                    <KeyStroke light combo='Ctrl + Shift + R' />
+                    <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>
               }
             </MenuItem>

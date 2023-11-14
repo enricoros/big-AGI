@@ -7,22 +7,22 @@ import { shallow } from 'zustand/shallow';
 export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
 
 /// Describe the chat modes
-export const ChatModeItems: { [key in ChatModeId]: { label: string; description: string | React.JSX.Element; experimental?: boolean } } = {
+export const ChatModeItems: {
+  [key in ChatModeId]: {
+    label: string;
+    description: string | React.JSX.Element;
+    shortcut?: string;
+    experimental?: boolean
+  }
+} = {
   'immediate': {
     label: 'Chat',
-    description: 'Persona answers',
-  },
-  'immediate-follow-up': {
-    label: 'Chat Plus',
-    description: 'Augmented chat (diagrams)',
+    description: 'Persona replies',
   },
   'write-user': {
     label: 'Write',
-    description: 'Just append a message',
-  },
-  'react': {
-    label: 'Reason+Act',
-    description: 'Answer your questions with ReAct and search',
+    description: 'Appends a message',
+    shortcut: 'Alt + Enter',
   },
   'draw-imagine': {
     label: 'Draw',
@@ -31,6 +31,15 @@ export const ChatModeItems: { [key in ChatModeId]: { label: string; description:
   'draw-imagine-plus': {
     label: 'Assisted Draw',
     description: 'Assisted Image Generation',
+    experimental: true,
+  },
+  'immediate-follow-up': {
+    label: 'Chat Plus · α',
+    description: 'Augmented chat with auto-diagrams',
+  },
+  'react': {
+    label: 'Reason + Act · α',
+    description: 'Answers questions in multiple steps',
   },
 };
 
