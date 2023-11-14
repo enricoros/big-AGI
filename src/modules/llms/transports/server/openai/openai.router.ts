@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Brand } from '~/common/app.config';
@@ -282,8 +283,8 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
   switch (access.dialect) {
 
     case 'azure':
-      const azureKey = access.oaiKey || process.env.AZURE_OPENAI_API_KEY || '';
-      const azureHost = fixupHost(access.oaiHost || process.env.AZURE_OPENAI_API_ENDPOINT || '', apiPath);
+      const azureKey = access.oaiKey || env.AZURE_OPENAI_API_KEY || '';
+      const azureHost = fixupHost(access.oaiHost || env.AZURE_OPENAI_API_ENDPOINT || '', apiPath);
       if (!azureKey || !azureHost)
         throw new Error('Missing Azure API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -309,16 +310,16 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'localai':
     case 'oobabooga':
     case 'openai':
-      const oaiKey = access.oaiKey || process.env.OPENAI_API_KEY || '';
-      const oaiOrg = access.oaiOrg || process.env.OPENAI_API_ORG_ID || '';
-      let oaiHost = fixupHost(access.oaiHost || process.env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
+      const oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
+      const oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
+      let oaiHost = fixupHost(access.oaiHost || env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
       // warn if no key - only for default (non-overridden) hosts
       if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
         throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
       // [Helicone]
       // We don't change the host (as we do on Anthropic's), as we expect the user to have a custom host.
-      let heliKey = access.heliKey || process.env.HELICONE_API_KEY || false;
+      let heliKey = access.heliKey || env.HELICONE_API_KEY || false;
       if (heliKey) {
         if (oaiHost.includes(DEFAULT_OPENAI_HOST)) {
           oaiHost = `https://${DEFAULT_HELICONE_OPENAI_HOST}`;
@@ -361,7 +362,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'openrouter':
-      const orKey = access.oaiKey || process.env.OPENROUTER_API_KEY || '';
+      const orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
       const orHost = fixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
       if (!orKey || !orHost)
         throw new Error('Missing OpenRouter API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');

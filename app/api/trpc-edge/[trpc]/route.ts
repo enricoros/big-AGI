@@ -2,6 +2,7 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouterEdge } from '~/server/api/trpc.router';
 import { createTRPCFetchContext } from '~/server/api/trpc.server';
+import { env } from '~/server/env';
 
 const handlerEdgeRoutes = (req: Request) =>
   fetchRequestHandler({
@@ -10,7 +11,7 @@ const handlerEdgeRoutes = (req: Request) =>
     req,
     createContext: createTRPCFetchContext,
     onError:
-      process.env.NODE_ENV === 'development'
+      env.NODE_ENV === 'development'
         ? ({ path, error }) => console.error(`❌ tRPC-edge failed on ${path ?? '<no-path>'}:`, error)
         : undefined,
   });
