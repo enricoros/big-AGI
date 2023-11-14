@@ -29,7 +29,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
           <Component {...pageProps} />
         </ProviderBackend>
       </ProviderTRPCQueryClient>
-    </ProviderTheming>;
+    </ProviderTheming>
 
     <VercelAnalytics debug={false} />
 
