@@ -1,6 +1,7 @@
-import { apiAsync } from '~/common/util/trpc.client';
+import { backendCaps } from '~/modules/backend/state-backend';
 
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { AnthropicAccessSchema } from '../../transports/server/anthropic/anthropic.router';
@@ -27,7 +28,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptions
   rank: 13,
   location: 'cloud',
   instanceLimit: 1,
-  hasServerKey: !!process.env.HAS_SERVER_KEY_ANTHROPIC,
+  hasBackendCap: () => backendCaps().hasLlmAnthropic,
 
   // components
   Icon: AnthropicIcon,

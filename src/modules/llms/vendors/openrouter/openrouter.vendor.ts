@@ -1,3 +1,5 @@
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { OpenRouterIcon } from '~/common/components/icons/OpenRouterIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -36,7 +38,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptio
   rank: 12,
   location: 'cloud',
   instanceLimit: 1,
-  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENROUTER,
+  hasBackendCap: () => backendCaps().hasLlmOpenRouter,
 
   // components
   Icon: OpenRouterIcon,

@@ -28,7 +28,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = access;
 
-  const needsUserKey = !ModelVendorAnthropic.hasServerKey;
+  const needsUserKey = !ModelVendorAnthropic.hasBackendCap?.();
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);

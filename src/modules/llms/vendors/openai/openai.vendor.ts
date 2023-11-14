@@ -1,6 +1,7 @@
-import { apiAsync } from '~/common/util/trpc.client';
+import { backendCaps } from '~/modules/backend/state-backend';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
@@ -33,7 +34,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI
   rank: 10,
   location: 'cloud',
   instanceLimit: 1,
-  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENAI,
+  hasBackendCap: () => backendCaps().hasLlmOpenAI,
 
   // components
   Icon: OpenAIIcon,
