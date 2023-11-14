@@ -23,7 +23,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
 
-  const needsUserKey = !ModelVendorAzure.hasServerKey;
+  const needsUserKey = !ModelVendorAzure.hasBackendCap?.();
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
   const hostValid = !!asValidURL(azureEndpoint);

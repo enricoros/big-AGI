@@ -23,7 +23,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey } = access;
 
-  const needsUserKey = !ModelVendorOpenRouter.hasServerKey;
+  const needsUserKey = !ModelVendorOpenRouter.hasBackendCap?.();
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;

@@ -34,7 +34,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const needsUserKey = !ModelVendorOpenAI.hasServerKey;
+  const needsUserKey = !ModelVendorOpenAI.hasBackendCap?.();
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
