@@ -9,6 +9,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import StayPrimaryLandscapeIcon from '@mui/icons-material/StayPrimaryLandscape';
 import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
 
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
@@ -17,15 +19,16 @@ import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DEFAULT_PRODIA_RESOLUTION, HARDCODED_PRODIA_RESOLUTIONS, useProdiaStore } from './store-prodia';
-import { isValidProdiaApiKey, requireUserKeyProdia } from './prodia.client';
+import { isValidProdiaApiKey } from './prodia.client';
 
 
 export function ProdiaSettings() {
 
-  // local state
+  // state
   const advanced = useToggleableBoolean();
 
   // external state
+  const backendHasProdia = backendCaps().hasImagingProdia;
   const { apiKey, setApiKey, modelId, setModelId, modelGen, setModelGen, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, prodiaResolution, setProdiaResolution, seed, setSeed } = useProdiaStore(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
@@ -39,8 +42,10 @@ export function ProdiaSettings() {
     seed: state.prodiaSeed, setSeed: state.setProdiaSeed,
   }), shallow);
 
-  const requiresKey = requireUserKeyProdia;
-  const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : !requiresKey;
+
+  // derived state
+  const isValidKey = apiKey ? isValidProdiaApiKey(apiKey) : backendHasProdia;
+  const selectedIsXL = modelGen === 'sdxl';
 
   // load models, if the server has a key, or the user provided one
   const { data: modelsData, isLoading: loadingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
@@ -56,6 +61,7 @@ export function ProdiaSettings() {
     }
   }, [modelsData, modelId, setModelId, setModelGen]);
 
+
   const handleModelChange = (_event: any, value: string | null) => {
     if (value) {
       const prodiaModel = modelsData?.models?.find(model => model.id === value) ?? null;
@@ -69,9 +75,6 @@ export function ProdiaSettings() {
   const handleResolutionChange = (_event: any, value: string | null) => value && setProdiaResolution(value);
 
 
-  // reference the currently selected model
-  const selectedIsXL = modelGen === 'sdxl';
-
   return (
     <Stack direction='column' sx={{ gap: settingsGap }}>
 
@@ -81,9 +84,9 @@ export function ProdiaSettings() {
 
       <FormInputKey
         id='prodia-key' label='Prodia API Key'
-        rightLabel={requiresKey ? 'required' : '✔️ already set in server'}
+        rightLabel={backendHasProdia ? '✔️ already set in server' : 'required'}
         value={apiKey} onChange={setApiKey}
-        required={requiresKey} isError={!isValidKey}
+        required={!backendHasProdia} isError={!isValidKey}
       />
 
       {isError && <InlineError error={error} />}

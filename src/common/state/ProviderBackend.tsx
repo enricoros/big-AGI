@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useBackendCapabilitiesLoader } from '~/modules/backend/state-backend';
+import { useBackendCapsLoader } from '~/modules/backend/state-backend';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
@@ -8,7 +8,7 @@ import { apiQuery } from '~/common/util/trpc.client';
 export function ProviderBackend(props: { children: React.ReactNode }) {
 
   // external state
-  const [loaded, setCapabilties] = useBackendCapabilitiesLoader();
+  const [loaded, setCapabilties] = useBackendCapsLoader();
 
 
   // load from the backend

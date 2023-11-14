@@ -44,10 +44,10 @@ const useBackendStore = create<BackendState>()(
 );
 
 
-export function useBackendCapabilitiesLoader(): [boolean, (capabilities: Partial<BackendCapabilities>) => void] {
+export function useBackendCapsLoader(): [boolean, (capabilities: Partial<BackendCapabilities>) => void] {
   return useBackendStore(state => [state.loadedCapabilities, state.setCapabilities], shallow);
 }
 
-// export function backendCapabilities(): BackendCapabilities {
-//   return useBackendStore.getState();
-// }
+export function backendCaps(): BackendCapabilities {
+  return useBackendStore.getState();
+}
