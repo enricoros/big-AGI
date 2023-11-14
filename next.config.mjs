@@ -36,8 +36,14 @@ let nextConfig = {
   },
 };
 
-// conditionally enable the nextjs bundle analyzer
-if (process.env.ANALYZE_BUNDLE)
-  nextConfig = require('@next/bundle-analyzer')()(nextConfig);
+// Validate environment variables, if set at build time. Will be actually read and used at runtime.
+// This is the reason both this file and the servr/env.mjs files have this extension.
+await import('./src/server/env.mjs');
 
-module.exports = nextConfig;
+// conditionally enable the nextjs bundle analyzer
+if (process.env.ANALYZE_BUNDLE) {
+  const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer');
+  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig);
+}
+
+export default nextConfig;

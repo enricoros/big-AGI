@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { env } from '~/server/env';
+import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Brand } from '~/common/app.config';

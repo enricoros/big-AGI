@@ -2,7 +2,7 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouterNode } from '~/server/api/trpc.router';
 import { createTRPCFetchContext } from '~/server/api/trpc.server';
-import { env } from '~/server/env';
+import { env } from '~/server/env.mjs';
 
 const handlerNodeRoutes = (req: Request) =>
   fetchRequestHandler({
