@@ -1,5 +1,9 @@
-import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
+import { shallow } from 'zustand/shallow';
+
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';
+import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -7,20 +11,18 @@ import type { SpeechInputSchema } from './elevenlabs.router';
 import { useElevenlabsStore } from './store-elevenlabs';
 
 
-export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
-
-export const canUseElevenLabs = (): boolean => !!useElevenlabsStore.getState().elevenLabsVoiceId || !requireUserKeyElevenLabs;
-
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
-export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLabsApiKey(apiKey) : !requireUserKeyElevenLabs;
+export const isElevenLabsEnabled = (apiKey?: string) => apiKey
+  ? isValidElevenLabsApiKey(apiKey)
+  : backendCaps().hasVoiceElevenLabs;
 
 
 export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
-  const clientApiKey = useElevenlabsStore(state => state.elevenLabsApiKey);
-  const isConfiguredServerSide = !requireUserKeyElevenLabs;
+  const [clientApiKey, hasVoices] = useElevenlabsStore(state => [state.elevenLabsApiKey, !!state.elevenLabsVoiceId], shallow);
+  const isConfiguredServerSide = backendCaps().hasVoiceElevenLabs;
   const isConfiguredClientSide = clientApiKey ? isValidElevenLabsApiKey(clientApiKey) : false;
-  const mayWork = isConfiguredServerSide || isConfiguredClientSide;
+  const mayWork = isConfiguredServerSide || isConfiguredClientSide || hasVoices;
   return { mayWork, isConfiguredServerSide, isConfiguredClientSide };
 }
 

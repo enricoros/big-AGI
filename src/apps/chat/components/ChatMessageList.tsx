@@ -5,12 +5,12 @@ import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
-import { canUseElevenLabs, speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { canUseProdia } from '~/modules/prodia/prodia.client';
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
+import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/components/useCapabilities';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatMessage } from './message/ChatMessage';
@@ -46,8 +46,8 @@ export function ChatMessageList(props: {
     };
   }, shallow);
   const { chatLLM } = useChatLLM();
-  const isImaginable = canUseProdia();
-  const isSpeakable = canUseElevenLabs();
+  const { mayWork: isImaginable } = useCapabilityProdia();
+  const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
 
   // text actions
