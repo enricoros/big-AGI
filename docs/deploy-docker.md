@@ -6,8 +6,20 @@ Docker ensures faster development cycles, easier collaboration, and seamless env
 ## 🔧 Local Build & Deployment
 
 1. **Clone big-AGI**
-2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile. The command is typically `docker build -t big-agi .`
-3. **Run the Docker Container**: Start a Docker container using the built image with the command `docker run -d -p 3000:3000 big-agi`
+   ```bash
+   git clone https://github.com/enricoros/big-agi.git
+   cd big-agi
+   ``` 
+2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile:
+   ```bash
+   docker build -t big-agi .
+   ```
+3. **Run the Docker Container**: start a Docker container from the newly built image,
+   and expose its http port 3000 to your `localhost:3000` using:
+   ```bash
+   docker run -d -p 3000:3000 big-agi
+   ```
+4. Browse to [http://localhost:3000](http://localhost:3000)
 
 > Note: If the Docker container is built without setting environment variables,
 > the frontend UI will be unaware of them, despite the backend being able to use them at runtime.
