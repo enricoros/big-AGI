@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import { isBrowser, isChromeDesktop, isIPhoneUser } from '~/common/util/pwaUtils';
+
 import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
-import { isChromeOnDesktop, isIPhone } from '../util/pwaUtils';
 import { useGlobalShortcut } from './useGlobalShortcut';
 import { useUIPreferencesStore } from '../state/store-ui';
 
@@ -22,7 +23,7 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
       mayWork: isApiAvailable && !isDeviceNotSupported,
       isApiAvailable,
       isDeviceNotSupported,
-      warnings: isIPhone() ? ['Not tested on this browser/device.'] : [],
+      warnings: isIPhoneUser ? ['Not tested on this browser/device.'] : [],
     };
   }
   return cachedCapability;
@@ -58,7 +59,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
   // create the Recognition engine
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!isBrowser) return;
 
     // do not re-initialize, just update the language (if we're here there's a high chance the language has changed)
     if (refRecognition.current) {
@@ -85,7 +86,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     const instance = new webSpeechAPI();
     instance.lang = preferredLanguage;
-    instance.interimResults = isChromeOnDesktop() && softStopTimeout > 0;
+    instance.interimResults = isChromeDesktop && softStopTimeout > 0;
     instance.maxAlternatives = 1;
     instance.continuous = true;
 
@@ -240,7 +241,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
 
 function getSpeechRecognition(): ISpeechRecognition | null {
-  if (typeof window !== 'undefined') {
+  if (isBrowser) {
     // noinspection JSUnresolvedReference
     return (
       (window as any).SpeechRecognition ||
