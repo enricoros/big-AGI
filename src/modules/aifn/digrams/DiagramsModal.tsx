@@ -176,7 +176,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     {!!message && (!abortController || showOptions) && (
       <ChatMessage
-        message={message} hideAvatars noBottomBorder noMarkdown filterOnlyCode
+        message={message} hideAvatars noBottomBorder noMarkdown diagramMode
         codeBackground='background.surface'
         onMessageEdit={(text) => setMessage({ ...message, text })}
         sx={{
