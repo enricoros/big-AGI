@@ -63,7 +63,7 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
   <Tooltip placement='top' title={
     <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
       Voice input<br />
-      <KeyStroke light combo='Ctrl + M' />
+      <KeyStroke combo='Ctrl + M' />
     </Box>
   }>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
@@ -592,7 +592,7 @@ export function Composer(props: {
 
 
             {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
-            {isDesktop && <Box sx={{ flexGrow: 1, flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
+            {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
               {isChat && <CallButtonDesktop disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}

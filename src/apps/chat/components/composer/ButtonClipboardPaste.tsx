@@ -10,7 +10,7 @@ const pasteClipboardLegend =
   <Box sx={{ p: 1, lineHeight: 2 }}>
     <b>Paste as 📚 Markdown attachment</b><br />
     Also converts Code and Tables<br />
-    <KeyStroke light combo='Ctrl + Shift + V' />
+    <KeyStroke combo='Ctrl + Shift + V' />
   </Box>;
 
 export function ButtonClipboardPaste(props: { isMobile: boolean, isDeveloperMode: boolean, onPaste: () => void }) {

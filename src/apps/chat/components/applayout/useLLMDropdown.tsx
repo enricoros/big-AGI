@@ -56,7 +56,7 @@ function AppBarLLMDropdown(props: {
           <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
             Models
-            <KeyStroke light combo='Ctrl + Shift + M' />
+            <KeyStroke combo='Ctrl + Shift + M' />
           </Box>
         </ListItemButton>
 
