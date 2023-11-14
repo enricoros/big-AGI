@@ -20,7 +20,7 @@ export function LanguageSelect() {
     setPreferredLanguage(newValue as string);
 
     // NOTE: disabled, to make sure the code can be adapted at runtime - will re-enable to trigger translations, if not dynamically switchable
-    //if (typeof window !== 'undefined')
+    //if (isBrowser)
     //  window.location.reload();
   };
 
