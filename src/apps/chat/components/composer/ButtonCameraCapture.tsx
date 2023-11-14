@@ -5,7 +5,7 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
 import { CameraCaptureModal } from './CameraCaptureModal';
 
-const CAMERA_ENABLE_ON_DESKTOP = false; // process.env.NODE_ENV === 'development';
+const CAMERA_ENABLE_ON_DESKTOP = false;
 
 
 export function ButtonCameraCapture(props: { isMobile: boolean, onOCR: (ocrText: string) => void }) {
