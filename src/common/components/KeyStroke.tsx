@@ -3,13 +3,22 @@ import * as React from 'react';
 import { Chip } from '@mui/joy';
 import { SxProps } from '@mui/system';
 
+import { hideOnMobile } from '~/common/app.theme';
+import { isMacUser } from '~/common/util/pwaUtils';
+
 /**
  * Shows a shortcut combo in a nicely presented dark box.
  */
 export function KeyStroke(props: { combo: string, light?: boolean, sx?: SxProps }) {
+  let combo = props.combo;
+  if (isMacUser) {
+    combo = combo.replace('Ctrl', '⌘');
+    // combo = combo.replace('Alt', '⌥');
+    // combo = combo.replace('Shift', '⇧');
+  }
   return (
-    <Chip variant={props.light ? 'outlined' : 'solid'} color='neutral' sx={props.sx}>
-      {props.combo}
+    <Chip variant={props.light ? 'outlined' : 'solid'} color='neutral' sx={{ ...hideOnMobile, ...props.sx }}>
+      {combo}
     </Chip>
     // <Box sx={{
     //   position: 'relative', display: 'inline-block', px: 1, py: 0.5,

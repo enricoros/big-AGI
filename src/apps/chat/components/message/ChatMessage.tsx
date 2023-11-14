@@ -28,7 +28,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { cssRainbowColorKeyframes, hideOnMobile } from '~/common/app.theme';
+import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -572,7 +572,7 @@ export function ChatMessage(props: {
                   ? 'Retry from here'
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                     Retry
-                    <KeyStroke light combo='Ctrl + Shift + R' sx={hideOnMobile} />
+                    <KeyStroke light combo='Ctrl + Shift + R' />
                   </Box>
               }
             </MenuItem>
