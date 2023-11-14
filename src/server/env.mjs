@@ -44,7 +44,7 @@ export const env = createEnv({
 
 
     // non-app specific, but from the runtime
-    NODE_ENV: z.enum(['development', 'test', 'production']),
+    NODE_ENV: z.enum(['development', 'test', 'production', undefined /* on Vercel */]),
     // VERCEL_URL: z.string().url().optional(),
 
   },
