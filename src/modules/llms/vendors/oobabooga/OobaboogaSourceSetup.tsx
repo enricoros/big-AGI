@@ -25,8 +25,11 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    enabled: false, // !hasModels && !!asValidURL(normSetup.oaiHost),
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 

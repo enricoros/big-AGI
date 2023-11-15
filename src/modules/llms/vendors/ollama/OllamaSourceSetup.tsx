@@ -34,7 +34,10 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOllama.listModels.useQuery({ access }, {
     enabled: false, // !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 

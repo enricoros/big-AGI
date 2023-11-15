@@ -31,8 +31,11 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false, //!sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    enabled: false, // !sourceHasLLMs && shallFetchSucceed,
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 
