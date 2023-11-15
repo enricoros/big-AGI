@@ -64,7 +64,7 @@ interface ModelsData {
 }
 
 interface ModelsActions {
-  addLLMs: (llms: DLLM[]) => void;
+  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
@@ -98,10 +98,15 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
         set(state => updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, id)),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
-      // this will replace existing llms with the same id
-      addLLMs: (llms: DLLM[]) =>
+      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) =>
         set(state => {
-          const newLlms = [...llms, ...state.llms.filter(llm => !llms.find(m => m.id === llm.id))];
+
+          const otherLlms = preserveExpired === true
+            ? state.llms
+            : state.llms.filter(llm => llm.sId !== sourceId);
+
+          // replace existing llms with the same id
+          const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
           return {
             llms: newLlms,
             ...updateSelectedIds(newLlms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
