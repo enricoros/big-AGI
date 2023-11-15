@@ -116,6 +116,7 @@ const DrawOptionsButtonDesktop = (props: { onClick: () => void, sx?: SxProps }) 
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
+  composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   onNewMessage: (chatModeId: ChatModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
@@ -467,6 +468,7 @@ export function Composer(props: {
                       ...(isSpeechEnabled && { pr: { md: 5 } }),
                       mb: 0.5,
                     },
+                    ref: props.composerTextAreaRef,
                   },
                 }}
                 sx={{
