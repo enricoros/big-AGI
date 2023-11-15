@@ -226,6 +226,8 @@ export function Composer(props: {
       const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
       if (autoSend)
         props.onNewMessage(chatModeId, props.conversationId!, newText);
+      else if (newText)
+        props.composerTextAreaRef.current?.focus();
 
       // set the text (or clear if auto-sent)
       setComposeText(autoSend ? '' : newText);
