@@ -71,7 +71,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
   return summarizedChunks.join('\n');
 }
 
-async function cleanUpContent(chunk: string, llmId: DLLMId, ignored_was_targetWordCount: number): Promise<string> {
+async function cleanUpContent(chunk: string, llmId: DLLMId, _ignored_was_targetWordCount: number): Promise<string> {
 
   // auto-adjust the tokens assuming the output would be half the size of the input (a bit dangerous,
   // but at this stage we are not guaranteed the input nor output would fit)

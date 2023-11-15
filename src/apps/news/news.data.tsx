@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Typography } from '@mui/joy';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 

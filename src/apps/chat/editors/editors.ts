@@ -4,7 +4,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../data';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 
 
-export function createAssistantTypingMessage(conversationId: string, assistantLlmLabel: DLLMId | 'prodia' | 'react-...' | string, assistantPurposeId: SystemPurposeId | undefined, text: string): string {
+export function createAssistantTypingMessage(conversationId: string, assistantLlmLabel: DLLMId | 'prodia' | 'react-...', assistantPurposeId: SystemPurposeId | undefined, text: string): string {
   const assistantMessage: DMessage = createDMessage('assistant', text);
   assistantMessage.typing = true;
   assistantMessage.purposeId = assistantPurposeId;

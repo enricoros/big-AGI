@@ -3,26 +3,22 @@ import { shallow } from 'zustand/shallow';
 
 import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
-import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
-import ComputerIcon from '@mui/icons-material/Computer';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { IModelVendor, ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
-import { ModelVendorOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
+import { type DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { type IModelVendor, type ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
 import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
-function locationIcon(vendor?: IModelVendor | null) {
-  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasServerKey)
+/*function locationIcon(vendor?: IModelVendor | null) {
+  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasBackendCap?.())
     return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
-}
+}*/
 
 function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
   let icon: React.JSX.Element | null = null;
@@ -47,6 +43,7 @@ export function ModelsSourceSelector(props: {
   const [confirmDeletionSourceId, setConfirmDeletionSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
+  const isMobile = useIsMobile();
   const { modelSources, addModelSource, removeModelSource } = useModelsStore(state => ({
     modelSources: state.sources,
     addModelSource: state.addSource, removeModelSource: state.removeSource,
@@ -67,7 +64,7 @@ export function ModelsSourceSelector(props: {
   }, [addModelSource, props]);
 
 
-  const enableDeleteButton = !!props.selectedSourceId && (modelSources.length > 1 /*|| (process.env.NODE_ENV === 'development')*/);
+  const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
 
   const handleDeleteSource = (id: DModelSourceId) => setConfirmDeletionSourceId(id);
 
@@ -93,7 +90,7 @@ export function ModelsSourceSelector(props: {
           component: (
             <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
               <ListItemDecorator>
-                {vendorIcon(vendor, !!vendor.hasServerKey)}
+                {vendorIcon(vendor, !!vendor.hasBackendCap && vendor.hasBackendCap())}
               </ListItemDecorator>
               {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
             </MenuItem>
@@ -107,7 +104,7 @@ export function ModelsSourceSelector(props: {
   const sourceItems = React.useMemo(() => modelSources.map(source => {
     return {
       source,
-      icon: locationIcon(findVendorById(source.vId)),
+      icon: vendorIcon(findVendorById(source.vId), false),
       component: <Option key={source.id} value={source.id}>{source.label}</Option>,
     };
   }), [modelSources]);
@@ -119,9 +116,9 @@ export function ModelsSourceSelector(props: {
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
 
       {/* Models: [Select] Add Delete */}
-      <Typography sx={{ mr: 1, ...hideOnMobile }}>
-        Vendor:
-      </Typography>
+      {!isMobile && <Typography sx={{ mr: 1 }}>
+        Service:
+      </Typography>}
 
       <Select
         variant='outlined'
@@ -137,12 +134,15 @@ export function ModelsSourceSelector(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-      <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
-        <AddIcon />
-      </IconButton>
-      <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
-        Add
-      </Button>
+      {isMobile ? (
+        <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+          <AddIcon />
+        </IconButton>
+      ) : (
+        <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
+          Add
+        </Button>
+      )}
 
       <IconButton
         variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}

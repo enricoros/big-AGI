@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
+import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useModelsStore } from '~/modules/llms/store-llms';
@@ -34,13 +35,14 @@ export function AppChat() {
 
   // state
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
+  const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
   const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, hasAnyContent, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, isConversationEmpty, hasAnyContent, newConversation, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     const isConversationEmpty = conversation ? !conversation.messages.length : true;
     const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
@@ -48,6 +50,7 @@ export function AppChat() {
       activeConversationId: state.activeConversationId,
       isConversationEmpty,
       hasAnyContent,
+      newConversation: state.createConversationOrSwitch,
       duplicateConversation: state.duplicateConversation,
       deleteAllConversations: state.deleteAllConversations,
       setMessages: state.setMessages,
@@ -123,6 +126,8 @@ export function AppChat() {
   const handleExecuteChatHistory = async (conversationId: string, history: DMessage[]) =>
     await handleExecuteConversation('immediate', conversationId, history);
 
+  const handleDiagramFromText = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+
   const handleImagineFromText = async (conversationId: string, messageText: string) => {
     const conversation = _findConversation(conversationId);
     if (conversation)
@@ -146,10 +151,20 @@ export function AppChat() {
       }
     }
   };
-  useGlobalShortcut('r', true, true, handleRegenerateAssistant);
+  useGlobalShortcut('r', true, true, false, handleRegenerateAssistant);
 
+
+  const handleImportConversation = () => setTradeConfig({ dir: 'import' });
+
+  const handleExportConversation = (conversationId: string | null) => setTradeConfig({ dir: 'export', conversationId });
+
+  const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
+
+
+  useGlobalShortcut('n', true, false, true, () => newConversation());
 
   const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
+  useGlobalShortcut('x', true, false, true, () => isConversationEmpty || setClearConfirmationId(activeConversationId));
 
   const handleConfirmedClearConversation = () => {
     if (clearConfirmationId) {
@@ -170,13 +185,6 @@ export function AppChat() {
       setDeleteConfirmationId(null);
     }
   };
-
-
-  const handleImportConversation = () => setTradeConfig({ dir: 'import' });
-
-  const handleExportConversation = (conversationId: string | null) => setTradeConfig({ dir: 'export', conversationId });
-
-  const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
 
 
   // Pluggable ApplicationBar components
@@ -215,6 +223,7 @@ export function AppChat() {
       conversationId={activeConversationId}
       isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
       onExecuteChatHistory={handleExecuteChatHistory}
+      onDiagramFromText={handleDiagramFromText}
       onImagineFromText={handleImagineFromText}
       sx={{
         flexGrow: 1,
@@ -245,11 +254,15 @@ export function AppChat() {
       }} />
 
 
-    {/* Import / Export  */}
-    {!!tradeConfig && <TradeModal config={tradeConfig} onClose={() => setTradeConfig(null)} />}
+    {/* Diagrams */}
+    {!!diagramConfig && <DiagramsModal config={diagramConfig} onClose={() => setDiagramConfig(null)} />}
 
     {/* Flatten */}
     {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
+
+    {/* Import / Export  */}
+    {!!tradeConfig && <TradeModal config={tradeConfig} onClose={() => setTradeConfig(null)} />}
+
 
     {/* [confirmation] Reset Conversation */}
     {!!clearConfirmationId && <ConfirmationModal

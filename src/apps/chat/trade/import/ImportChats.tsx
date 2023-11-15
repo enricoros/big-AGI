@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, FormControl, FormLabel, Input, Sheet, Typography } from '@mui/joy';
+import { Box, Button, FormControl, Input, Sheet, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
@@ -58,7 +59,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     }
 
     // import conversations (warning - will overwrite things)
-    for (let conversation of [...outcome.conversations].reverse()) {
+    for (const conversation of [...outcome.conversations].reverse()) {
       if (conversation.success)
         useChatStore.getState().importConversation(conversation.conversation, false);
     }
@@ -93,7 +94,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     conversation.autoTitle = data.title;
     conversation.messages = data.linear_conversation.map(msgNode => {
       const message = msgNode.message;
-      if (message && message.content.parts) {
+      if (message?.content.parts) {
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
@@ -153,9 +154,7 @@ export function ImportConversations(props: { onClose: () => void }) {
       </Box>
 
       <FormControl>
-        <FormLabel>
-          Shared Chat URL
-        </FormLabel>
+        <FormLabelStart title='Shared Chat URL' />
         <Input
           variant='outlined' placeholder='https://chat.openai.com/share/...'
           required error={!chatGptUrlValid}

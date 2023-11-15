@@ -8,14 +8,14 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LinkIcon from '@mui/icons-material/Link';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { getChatLinkRelativePath } from '~/common/routes';
+import { getChatLinkRelativePath } from '~/common/app.routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
@@ -54,9 +54,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
     setCopied(true);
   };
 
-  const onNative = async () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl,
-    () => setNative(true));
-
+  const onNativeShare = () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl, () => setNative(true));
 
   const onDeleteNow = () => setConfirmDeletion(true);
 
@@ -112,7 +110,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
           {webSharePresent() &&
             <Tooltip title='Share the link using your device'>
               <Button
-                variant={native ? 'soft' : 'solid'} onClick={onNative}
+                variant={native ? 'soft' : 'solid'} onClick={onNativeShare}
                 color={native ? 'success' : undefined} endDecorator={native ? <DoneIcon /> : <IosShareIcon />}
                 sx={{ flexGrow: 1 }}
               >

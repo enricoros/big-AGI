@@ -164,7 +164,7 @@ For more detailed information on deploying with Docker, please refer to the [doc
 
 ```bash
 docker build -t big-agi .
-docker run --detach 'big-agi'
+docker run -d -p 3000:3000 big-agi
 ``` 
 
 ### Pre-built image

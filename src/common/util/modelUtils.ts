@@ -9,5 +9,8 @@ export function prettyBaseModel(model: string | undefined): string {
   if (model.includes('gpt-3.5-turbo-16k')) return '3.5 Turbo 16k';
   if (model.includes('gpt-3.5-turbo')) return '3.5 Turbo';
   if (model.endsWith('.bin')) return model.slice(0, -4);
+  // [Ollama]
+  if (model.includes(':'))
+    return model.replace(':latest', '').replaceAll(':', ' ');
   return model;
 }

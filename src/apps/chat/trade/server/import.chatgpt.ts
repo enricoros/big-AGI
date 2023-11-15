@@ -66,7 +66,7 @@ const chatGptSharedChatPage = z.object({
 });
 
 
-export async function chatGptImportConversation(htmlPage: string) {
+export function chatGptParseConversation(htmlPage: string) {
   // extract embedded JSON string
   const jsonString = htmlPage.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/)?.[1];
   if (!jsonString)

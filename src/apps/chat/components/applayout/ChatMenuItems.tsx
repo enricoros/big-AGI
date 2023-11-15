@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Badge, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -10,6 +10,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -24,7 +25,7 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
-  const { novel: shareBadge, touch: shareTouch } = useUICounter('export-share');
+  const { touch: shareTouch } = useUICounter('export-share');
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
@@ -109,16 +110,17 @@ export function ChatMenuItems(props: {
 
     <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
-        <Badge color='danger' invisible={!shareBadge || !props.hasConversations}>
-          <FileDownloadIcon />
-        </Badge>
+        <FileDownloadIcon />
       </ListItemDecorator>
       Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      Reset
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        Reset
+        {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
+      </Box>
     </MenuItem>
 
   </>;

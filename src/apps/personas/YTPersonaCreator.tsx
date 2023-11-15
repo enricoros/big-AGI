@@ -1,22 +1,21 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Modal, ModalDialog, Radio, RadioGroup, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
-import { useModelsStore } from '~/modules/llms/store-llms';
-
 import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
 
 
 function extractVideoID(videoURL: string): string | null {
-  let regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
-  let match = videoURL.match(regExp);
+  const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
+  const match = videoURL.match(regExp);
   return (match && match[1]?.length == 11) ? match[1] : null;
 }
 
@@ -66,21 +65,11 @@ const YouTubePersonaSteps: LLMChainStep[] = [
 export function YTPersonaCreator() {
   // state
   const [videoURL, setVideoURL] = React.useState('');
-  const [selectedModelType, setSelectedModelType] = React.useState<'chat' | 'fast'>('fast');
-  // const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
   const [videoID, setVideoID] = React.useState('');
   const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
 
   // external state
-  const { chatLLM, fastLLM } = useModelsStore(state => {
-    const { chatLLMId, fastLLMId } = state;
-    const chatLLM = state.llms.find(llm => llm.id === chatLLMId) ?? null;
-    const fastLLM = state.llms.find(llm => llm.id === fastLLMId) ?? null;
-    return {
-      chatLLM: chatLLM,
-      fastLLM: /*chatLLM === fastLLM ? null :*/ fastLLM,
-    };
-  }, shallow);
+  const [diagramLlm, llmComponent] = useFormRadioLlmType();
 
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
@@ -88,9 +77,8 @@ export function YTPersonaCreator() {
   React.useEffect(() => setPersonaTranscript(transcript), [transcript]);
 
   // use the transformation sequence to create a persona
-  const llm = selectedModelType === 'chat' ? chatLLM : fastLLM;
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(YouTubePersonaSteps, llm?.id, personaTranscript ?? undefined);
+    useLLMChain(YouTubePersonaSteps, diagramLlm?.id, personaTranscript ?? undefined);
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -142,17 +130,7 @@ export function YTPersonaCreator() {
     </form>
 
     {/* LLM selector (chat vs fast) */}
-    {!isTransforming && !isFinished && !!chatLLM && !!fastLLM && (
-      <RadioGroup
-        orientation='horizontal'
-        value={selectedModelType}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSelectedModelType(event.target.value as 'chat' | 'fast')}
-      >
-        <Radio value='chat' label={chatLLM.label.startsWith('GPT-4') ? chatLLM.label + ' (slow, accurate)' : chatLLM.label} />
-        <Radio value='fast' label={fastLLM.label} />
-      </RadioGroup>
-    )}
-
+    {!isTransforming && !isFinished && llmComponent}
 
     {/* 1. Transcript*/}
     {personaTranscript && (
@@ -239,28 +217,26 @@ export function YTPersonaCreator() {
 
 
     {/* Embodiment Progress */}
-    {isTransforming && <Modal open>
-      <ModalDialog>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
-          <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
-        </Box>
-        <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
-          Embodying Persona ...
-        </Typography>
-        <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
-          {chainStepName}
-        </Typography>
-        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
-        <Typography level='title-sm'>
-          This may take 1-2 minutes. Do not close this window or the progress will be lost.
-          If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
-          please try again with faster/smaller models.
-        </Typography>
-        <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
-          Cancel
-        </Button>
-      </ModalDialog>
-    </Modal>}
+    {isTransforming && <GoodModal open>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
+        <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
+      </Box>
+      <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
+        Embodying Persona ...
+      </Typography>
+      <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
+        {chainStepName}
+      </Typography>
+      <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
+      <Typography level='title-sm'>
+        This may take 1-2 minutes. Do not close this window or the progress will be lost.
+        If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
+        please try again with faster/smaller models.
+      </Typography>
+      <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
+        Cancel
+      </Button>
+    </GoodModal>}
 
   </>;
 }

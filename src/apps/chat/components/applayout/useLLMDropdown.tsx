@@ -9,7 +9,6 @@ import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/sto
 
 import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { hideOnMobile } from '~/common/theme';
 import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
 
 
@@ -57,7 +56,7 @@ function AppBarLLMDropdown(props: {
           <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
             Models
-            <KeyStroke light combo='Ctrl + Shift + M' sx={hideOnMobile} />
+            <KeyStroke combo='Ctrl + Shift + M' />
           </Box>
         </ListItemButton>
 
