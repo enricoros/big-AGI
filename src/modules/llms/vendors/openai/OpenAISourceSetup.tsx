@@ -44,7 +44,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     enabled: !sourceHasLLMs && shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().setLLMs(
       models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId, true,
+      props.sourceId,
     ),
     staleTime: Infinity,
   });
