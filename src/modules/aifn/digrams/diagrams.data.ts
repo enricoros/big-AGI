@@ -14,7 +14,7 @@ export const diagramTypes: FormRadioOption<DiagramType>[] = [
 
 export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
   { label: 'PlantUML', value: 'plantuml' },
-  { label: 'Mermaid (labs)', value: 'mermaid', experimental: true },
+  { label: 'Mermaid (mindmaps)', value: 'mermaid' },
 ];
 
 const mermaidMindmapExample = `

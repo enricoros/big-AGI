@@ -133,7 +133,7 @@ export function RenderCodeMermaid(props: { mermaidCode: string }) {
           }
         })
         .catch((error) =>
-          console.warn('Mermaid code is invalid, please try again:', error),
+          console.warn('The AI-generated Mermaid code is invalid, please try again. Details below:\n >>', error.message),
         );
     };
 

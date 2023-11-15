@@ -130,8 +130,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     open onClose={props.onClose}
     sx={{ maxWidth: { xs: '100vw', md: '95vw' } }}
     startButton={
-      <Button variant='solid' color='primary' disabled={!message || !!abortController} endDecorator={<TelegramIcon />} onClick={handleInsertAndClose}>
-        Insert in Chat
+      <Button variant='soft' color='success' disabled={!message || !!abortController} endDecorator={<TelegramIcon />} onClick={handleInsertAndClose}>
+        Add To Chat
       </Button>
     }
   >
