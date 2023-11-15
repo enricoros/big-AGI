@@ -148,6 +148,16 @@ export const llmOllamaRouter = createTRPCRouter({
       return { status: lastStatus, error: lastError };
     }),
 
+  /* Ollama: delete a model */
+  adminDelete: publicProcedure
+    .input(adminPullModelSchema)
+    .mutation(async ({ input }) => {
+      const { headers, url } = ollamaAccess(input.access, '/api/delete');
+      const deleteOutput = await fetchTextOrTRPCError(url, 'DELETE', headers, { 'name': input.name }, 'Ollama::delete');
+      if (deleteOutput?.length && deleteOutput !== 'null')
+        throw new Error('Ollama delete issue: ' + deleteOutput);
+    }),
+
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
