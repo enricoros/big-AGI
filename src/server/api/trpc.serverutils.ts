@@ -15,7 +15,7 @@ export const fetchJsonOrTRPCError: <TOut extends object, TPostBody extends objec
 // Text fetcher
 export const fetchTextOrTRPCError: <TPostBody extends object | undefined>(
   url: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   headers: HeadersInit,
   body: TPostBody,
   moduleName: string,
@@ -23,7 +23,7 @@ export const fetchTextOrTRPCError: <TPostBody extends object | undefined>(
 
 
 // internal safe fetch implementation
-function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => Promise<TOut>, parserName: string): (url: string, method: 'GET' | 'POST', headers: HeadersInit, body: TPostBody | undefined, moduleName: string) => Promise<TOut> {
+function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => Promise<TOut>, parserName: string): (url: string, method: 'GET' | 'POST' | 'DELETE', headers: HeadersInit, body: TPostBody | undefined, moduleName: string) => Promise<TOut> {
   return async (url, method, headers, body, moduleName) => {
     // Fetch
     let response: Response;
