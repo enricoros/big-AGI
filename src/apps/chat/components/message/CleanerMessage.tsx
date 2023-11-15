@@ -85,7 +85,7 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
         <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} />
       </Box>}
 
-      <Box sx={{ display: 'flex', minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
+      <Box sx={{ display: { xs: 'none', sm: 'flex' }, minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
         {avatarEl}
       </Box>
 
@@ -97,7 +97,15 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
         <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
       </Box>}
 
-      <Typography sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+      <Typography level='body-md' sx={{
+        flexGrow: 1,
+        textOverflow: 'ellipsis', overflow: 'hidden',
+        // whiteSpace: 'nowrap',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        maxHeight: '2.9em',
+      }}>
         {messageText}
       </Typography>
 
