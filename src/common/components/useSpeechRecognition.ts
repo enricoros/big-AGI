@@ -36,7 +36,7 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
  * @param softStopTimeout - FOR INTERIM LISTENING, on desktop: delay since the last word before sending the final result
  * @param useShortcutCtrlKey - the key to use as a shortcut to start/stop the speech recognition (e.g. 'm' for "Ctrl + M")
  */
-export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey?: string) => {
+export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey: string | false) => {
   // enablers
   const refRecognition = React.useRef<ISpeechRecognition | null>(null);
   const onResultCallbackRef = React.useRef(onResultCallback);

@@ -113,7 +113,7 @@ export function CallUI(props: {
         setCallMessages(messages => [...messages, createDMessage('user', transcribed)]);
     }
   }, []);
-  const { isSpeechEnabled, isRecording, isRecordingAudio, isRecordingSpeech, startRecording, stopRecording, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 1000);
+  const { isSpeechEnabled, isRecording, isRecordingAudio, isRecordingSpeech, startRecording, stopRecording, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 1000, false);
 
   // derived state
   const isRinging = stage === 'ring';

@@ -1,5 +1,12 @@
 import * as React from 'react';
 
+export const GlobalShortcut = {
+  Esc: 'Escape',
+  Left: 'ArrowLeft',
+  Right: 'ArrowRight',
+};
+
+
 /**
  * Registers a global keyboard shortcut (if not undefined) to activate a callback.
  *
@@ -9,7 +16,7 @@ import * as React from 'react';
  * @param useAlt If true, the Alt key must be pressed for the shortcut to be activated.
  * @param callback Make sure this is a memoized callback, otherwise the effect will be re-registered every time.
  */
-export const useGlobalShortcut = (shortcutKey: string | undefined, useCtrl: boolean, useShift: boolean, useAlt: boolean, callback: () => void) => {
+export const useGlobalShortcut = (shortcutKey: string | false, useCtrl: boolean, useShift: boolean, useAlt: boolean, callback: () => void) => {
   React.useEffect(() => {
     if (!shortcutKey) return;
     const lcShortcut = shortcutKey.toLowerCase();
