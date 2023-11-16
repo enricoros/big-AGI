@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Chip, CircularProgress, FormControl, FormHelperText, Input, Option, Radio, RadioGroup, Select, Slider, Stack, Switch } from '@mui/joy';
+import { Chip, CircularProgress, FormControl, Input, Option, Radio, RadioGroup, Select, Slider, Switch } from '@mui/joy';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import StayPrimaryLandscapeIcon from '@mui/icons-material/StayPrimaryLandscape';
 import StayPrimaryPortraitIcon from '@mui/icons-material/StayPrimaryPortrait';
@@ -15,7 +14,6 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/app.theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DEFAULT_PRODIA_RESOLUTION, HARDCODED_PRODIA_RESOLUTIONS, useProdiaStore } from './store-prodia';
@@ -75,138 +73,132 @@ export function ProdiaSettings() {
   const handleResolutionChange = (_event: any, value: string | null) => value && setProdiaResolution(value);
 
 
-  return (
-    <Stack direction='column' sx={{ gap: settingsGap }}>
+  return <>
 
-      <FormHelperText>
-        🎨 Turn text into pictures and /imagine anything
-      </FormHelperText>
+    {!backendHasProdia && <FormInputKey
+      id='prodia-key' label='Prodia API Key'
+      rightLabel={backendHasProdia ? '✔️ already set in server' : 'required'}
+      value={apiKey} onChange={setApiKey}
+      required={!backendHasProdia} isError={!isValidKey}
+    />}
 
-      <FormInputKey
-        id='prodia-key' label='Prodia API Key'
-        rightLabel={backendHasProdia ? '✔️ already set in server' : 'required'}
-        value={apiKey} onChange={setApiKey}
-        required={!backendHasProdia} isError={!isValidKey}
+    {isError && <InlineError error={error} />}
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Diffusion Model' />
+      <Select
+        variant='outlined' placeholder={isValidKey ? 'Select a model' : 'Enter API Key'}
+        value={modelId} onChange={handleModelChange}
+        startDecorator={<FormatPaintIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
+        endDecorator={isValidKey && loadingModels && <CircularProgress size='sm' />}
+        indicator={<KeyboardArrowDownIcon />}
+        slotProps={{
+          root: { sx: { width: '100%' } },
+          indicator: { sx: { opacity: 0.5 } },
+          button: { sx: { whiteSpace: 'inherit' } },
+        }}
+      >
+        {!!modelsData && modelsData.models?.map((model, idx) => (
+          <Option key={'prodia-model-' + idx} value={model.id} sx={model.priority ? { fontWeight: 500 } : undefined}>
+            {model.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {model.label}
+          </Option>
+        ))}
+      </Select>
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Negative Prompt'
+                      description={negativePrompt ? 'Custom' : 'Not set'}
+                      tooltip='Avoid these image traits: comma-separated names & adjectives that you want the images to Not have. Example: ugly, blurry, malformed' />
+      <Input
+        aria-label='Image Generation Negative Prompt'
+        variant='outlined' placeholder='ugly, blurry, ...'
+        value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)}
+        slotProps={{ input: { sx: { width: '100%' } } }}
+        sx={{ width: '100%' }}
       />
+    </FormControl>
 
-      {isError && <InlineError error={error} />}
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Diffusion Steps'
+                      description={steps === 25 ? 'Default' : steps > 30 ? (steps > 40 ? 'May be unnecessary' : 'More detail') : steps <= 15 ? 'Less detail' : 'Balanced'}
+                      tooltip='More steps boost image detail & quality but risk oversaturation and cost increase. Start from 20 steps, and increase gradually. Defaults to 25.' />
+      <Slider
+        aria-label='Image Generation steps' valueLabelDisplay='auto'
+        value={steps} onChange={(_event, value) => setSteps(value as number)}
+        min={10} max={50} step={1} defaultValue={25}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title='Diffusion Model' />
-        <Select
-          variant='outlined' placeholder={isValidKey ? 'Select a model' : 'Enter API Key'}
-          value={modelId} onChange={handleModelChange}
-          startDecorator={<FormatPaintIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
-          endDecorator={isValidKey && loadingModels && <CircularProgress size='sm' />}
-          indicator={<KeyboardArrowDownIcon />}
-          slotProps={{
-            root: { sx: { width: '100%' } },
-            indicator: { sx: { opacity: 0.5 } },
-            button: { sx: { whiteSpace: 'inherit' } },
-          }}
-        >
-          {!!modelsData && modelsData.models?.map((model, idx) => (
-            <Option key={'prodia-model-' + idx} value={model.id} sx={model.priority ? { fontWeight: 500 } : undefined}>
-              {model.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {model.label}
-            </Option>
-          ))}
-        </Select>
-      </FormControl>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Cfg-Scale'
+                      description={cfgScale === 7 ? 'Default' : cfgScale >= 9 ? (cfgScale >= 12 ? 'Heavy guidance' : 'Intense guidance') : cfgScale <= 5 ? 'More freedom' : 'Balanced'}
+                      tooltip='Adjust the prompt intensity for generation. Low values deviate, high values overfit. Default: 7 - a balanced start.' />
+      <Slider
+        aria-label='Image Generation Guidance' valueLabelDisplay='auto'
+        value={cfgScale} onChange={(_event, value) => setCfgScale(value as number)}
+        min={1} max={15} step={0.5} defaultValue={7}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title={<>Negative Prompt <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
-                        description={negativePrompt ? 'Custom' : 'Not set'}
-                        tooltip='Avoid these image traits: comma-separated names & adjectives that you want the images to Not have. Example: ugly, blurry, malformed' />
-        <Input
-          aria-label='Image Generation Negative Prompt'
-          variant='outlined' placeholder='ugly, blurry, ...'
-          value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)}
-          slotProps={{ input: { sx: { width: '100%' } } }}
-          sx={{ width: '100%' }}
-        />
-      </FormControl>
+    {advanced.on && selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='[SDXL] Resolution' />
+      <Select
+        variant='outlined'
+        value={prodiaResolution || DEFAULT_PRODIA_RESOLUTION} onChange={handleResolutionChange}
+        // indicator={<KeyboardArrowDownIcon />}
+        slotProps={{
+          root: { sx: { width: '100%' } },
+          indicator: { sx: { opacity: 0.5 } },
+          button: { sx: { whiteSpace: 'inherit' } },
+        }}
+      >
+        {HARDCODED_PRODIA_RESOLUTIONS.map((resolution) => (
+          <Option key={'sdxl-res-' + resolution} value={resolution}>
+            {resolution.replace('x', ' x ')}
+          </Option>
+        ))}
+      </Select>
+    </FormControl>}
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <FormLabelStart title={<>Diffusion Steps <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
-                        description={steps === 25 ? 'Default' : steps > 30 ? (steps > 40 ? 'May be unnecessary' : 'More detail') : steps <= 15 ? 'Less detail' : 'Balanced'}
-                        tooltip='More steps boost image detail & quality but risk oversaturation and cost increase. Start from 20 steps, and increase gradually. Defaults to 25.' />
-        <Slider
-          aria-label='Image Generation steps' valueLabelDisplay='auto'
-          value={steps} onChange={(_event, value) => setSteps(value as number)}
-          min={10} max={50} step={1} defaultValue={25}
-          sx={{ width: '100%' }}
-        />
-      </FormControl>
+    {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='[SD] Aspect Ratio' description={prodiaAspectRatio === 'square' ? 'Square' : prodiaAspectRatio === 'portrait' ? 'Portrait' : 'Landscape'} />
+      <RadioGroup orientation='horizontal' value={prodiaAspectRatio} onChange={(e) => setProdiaAspectRatio(e.target.value as 'square' | 'portrait' | 'landscape')}>
+        <Radio value='square' label={<CropSquareIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+        <Radio value='portrait' label={<StayPrimaryPortraitIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+        <Radio value='landscape' label={<StayPrimaryLandscapeIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
+      </RadioGroup>
+    </FormControl>}
 
-      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <FormLabelStart title={<>Cfg-Scale <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
-                        description={cfgScale === 7 ? 'Default' : cfgScale >= 9 ? (cfgScale >= 12 ? 'Heavy guidance' : 'Intense guidance') : cfgScale <= 5 ? 'More freedom' : 'Balanced'}
-                        tooltip='Adjust the prompt intensity for generation. Low values deviate, high values overfit. Default: 7 - a balanced start.' />
-        <Slider
-          aria-label='Image Generation Guidance' valueLabelDisplay='auto'
-          value={cfgScale} onChange={(_event, value) => setCfgScale(value as number)}
-          min={1} max={15} step={0.5} defaultValue={7}
-          sx={{ width: '100%' }}
-        />
-      </FormControl>
+    {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='[SD] Upscale'
+                      description={upscale ? '1024px' : 'Default'} />
+      <Switch checked={upscale} onChange={(e) => setUpscale(e.target.checked)}
+              endDecorator={upscale ? '2x' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>}
 
-      {advanced.on && selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title='[SDXL] Resolution' />
-        <Select
-          variant='outlined'
-          value={prodiaResolution || DEFAULT_PRODIA_RESOLUTION} onChange={handleResolutionChange}
-          // indicator={<KeyboardArrowDownIcon />}
-          slotProps={{
-            root: { sx: { width: '100%' } },
-            indicator: { sx: { opacity: 0.5 } },
-            button: { sx: { whiteSpace: 'inherit' } },
-          }}
-        >
-          {HARDCODED_PRODIA_RESOLUTIONS.map((resolution) => (
-            <Option key={'sdxl-res-' + resolution} value={resolution}>
-              {resolution.replace('x', ' x ')}
-            </Option>
-          ))}
-        </Select>
-      </FormControl>}
+    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Noise Seed'
+                      description={seed ? 'Custom' : 'Random'}
+                      tooltip='Set value for reproducible images. Different by default.' />
+      <Input
+        aria-label='Image Generation Seed'
+        variant='outlined' placeholder='Random'
+        value={seed || ''} onChange={(e) => setSeed(e.target.value || '')}
+        slotProps={{
+          input: {
+            type: 'number',
+            sx: { width: '100%' },
+          },
+        }}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>}
 
-      {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <FormLabelStart title='[SD] Aspect Ratio' description={prodiaAspectRatio === 'square' ? 'Square' : prodiaAspectRatio === 'portrait' ? 'Portrait' : 'Landscape'} />
-        <RadioGroup orientation='horizontal' value={prodiaAspectRatio} onChange={(e) => setProdiaAspectRatio(e.target.value as 'square' | 'portrait' | 'landscape')}>
-          <Radio value='square' label={<CropSquareIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-          <Radio value='portrait' label={<StayPrimaryPortraitIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-          <Radio value='landscape' label={<StayPrimaryLandscapeIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-        </RadioGroup>
-      </FormControl>}
+    <FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />
 
-      {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-        <FormLabelStart title={<>[SD] Upscale <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
-                        description={upscale ? '1024px' : 'Default'} />
-        <Switch checked={upscale} onChange={(e) => setUpscale(e.target.checked)}
-                endDecorator={upscale ? '2x' : 'Off'}
-                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-      </FormControl>}
-
-      {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title={<>Noise Seed <InfoOutlinedIcon sx={{ mx: 0.5 }} /></>}
-                        description={seed ? 'Custom' : 'Random'}
-                        tooltip='Set value for reproducible images. Different by default.' />
-        <Input
-          aria-label='Image Generation Seed'
-          variant='outlined' placeholder='Random'
-          value={seed || ''} onChange={(e) => setSeed(e.target.value || '')}
-          slotProps={{
-            input: {
-              type: 'number',
-              sx: { width: '100%' },
-            },
-          }}
-          sx={{ width: '100%' }}
-        />
-      </FormControl>}
-
-      <FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />
-
-    </Stack>
-  );
+  </>;
 }
