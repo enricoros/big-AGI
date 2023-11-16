@@ -492,7 +492,7 @@ export function ChatMessage(props: {
 
           {/* sequence of render components, for each Block */}
           {!errorMessage && parseBlocks(collapsedText, fromSystem, textDiffs)
-            .filter(block => !props.diagramMode || block.type === 'code')
+            .filter((block, _, blocks) => !props.diagramMode || block.type === 'code' || blocks.length === 1)
             .map(
               (block, index) =>
                 block.type === 'html'
