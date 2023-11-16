@@ -1,9 +1,9 @@
 import { useGoogleSearchStore } from '~/modules/google/store-google';
 
-import { Search } from './search.types';
-import { apiAsync } from '~/modules/trpc/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
-export const requireUserKeyGoogleCse = !process.env.HAS_SERVER_KEYS_GOOGLE_CSE;
+import { Search } from './search.types';
+
 
 export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
 export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;

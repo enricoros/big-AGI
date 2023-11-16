@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
-import { fetchJsonOrTRPCError } from '~/modules/trpc/trpc.serverutils';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env.mjs';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 
 export const speechInputSchema = z.object({
@@ -86,7 +87,7 @@ export const elevenlabsRouter = createTRPCRouter({
         ...(nonEnglish && { model_id: 'eleven_multilingual_v1' }),
       };
 
-      const response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(body) });
+      const response = await fetchBufferOrTRPCError(url, headers, method: 'POST', body: JSON.stringify(body), ... });
       await rethrowElevenLabsError(response);
       return await response.arrayBuffer();
     }),*/
@@ -96,12 +97,12 @@ export const elevenlabsRouter = createTRPCRouter({
 
 export function elevenlabsAccess(elevenKey: string | undefined, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
-  elevenKey = (elevenKey || process.env.ELEVENLABS_API_KEY || '').trim();
+  elevenKey = (elevenKey || env.ELEVENLABS_API_KEY || '').trim();
   if (!elevenKey)
     throw new Error('Missing ElevenLabs API key.');
 
   // API host
-  let host = (process.env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim();
+  let host = (env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim();
   if (!host.startsWith('http'))
     host = `https://${host}`;
   if (host.endsWith('/') && apiPath.startsWith('/'))
@@ -117,7 +118,7 @@ export function elevenlabsAccess(elevenKey: string | undefined, apiPath: string)
 }
 
 export function elevenlabsVoiceId(voiceId?: string): string {
-  return voiceId?.trim() || process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+  return voiceId?.trim() || env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
 }
 
 

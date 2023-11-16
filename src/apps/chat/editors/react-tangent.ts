@@ -1,5 +1,5 @@
 import { Agent } from '~/modules/aifn/react/react';
-import { DLLMId } from '~/modules/llms/llm.types';
+import { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 

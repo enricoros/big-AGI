@@ -7,13 +7,17 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-mermaid';
+import 'prismjs/components/prism-plant-uml';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-typescript';
 
+// NOTE: must match Prism components imports
+const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'mermaid', 'plant-uml', 'python', 'typescript'];
 
 const hFileExtensionsMap: { [key: string]: string } = {
   cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
-  md: 'markdown', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
+  md: 'markdown', mmd: 'mermaid', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
 };
 
 const hCodeIncipitMap: { starts: string[], language: string }[] = [
@@ -24,10 +28,8 @@ const hCodeIncipitMap: { starts: string[], language: string }[] = [
   { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
   { starts: ['package '], language: 'java' },
   { starts: ['using '], language: 'csharp' },
+  { starts: ['@startuml', '@startmindmap', '@startsalt', '@startwbs', '@startgantt'], language: 'plant-uml' },
 ];
-
-// NOTE: must match Prism components imports
-const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'python', 'typescript'];
 
 
 export function inferCodeLanguage(blockTitle: string, code: string): string | null {
@@ -50,6 +52,8 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
       return codeIncipit.language;
 
   // or, use Prism with language tokenization to and-detect the language
+  // FIXME: this is a very poor way to detect the language, as it's tokenizing it in any language
+  //        and getting the one with the most tokens - which may as well be the wrong one
   let detectedLanguage: string | null = null;
   let maxTokens = 0;
   hPrismLanguages.forEach((language) => {
@@ -74,6 +78,7 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
 }
 
 export function highlightCode(inferredCodeLanguage: string | null, blockCode: string): string {
+  // NOTE: to save power, we could skip highlighting until the block is complete (future feature)
   const safeHighlightLanguage = inferredCodeLanguage || 'typescript';
   return Prism.highlight(
     blockCode,

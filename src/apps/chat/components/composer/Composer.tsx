@@ -1,44 +1,46 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
-import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
-import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
-import DataArrayIcon from '@mui/icons-material/DataArray';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
+import CallIcon from '@mui/icons-material/Call';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { APP_CALL_ENABLED } from '../../../call/AppCall';
+
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
-import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { launchAppCall } from '~/common/app.routes';
+import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
+import { useDebouncer } from '~/common/components/useDebouncer';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { CameraCaptureButton } from './CameraCaptureButton';
-import { ChatModeId } from '../../AppChat';
+import { ButtonCameraCapture } from './ButtonCameraCapture';
+import { ButtonClipboardPaste } from './ButtonClipboardPaste';
+import { ButtonFileAttach } from './ButtonFileAttach';
+import { ChatModeId, useComposerStartupText } from './store-composer';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useComposerStore } from './store-composer';
 
 
 /// Text template helpers
@@ -57,94 +59,52 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 };
 
 
-const attachFileLegend =
-  <Stack sx={{ p: 1, gap: 1 }}>
-    <Box sx={{ mb: 1, textAlign: 'center' }}>
-      <b>Attach a file to the message</b>
-    </Box>
-    <table>
-      <tbody>
-      <tr>
-        <td width={32}><PictureAsPdfIcon /></td>
-        <td><b>PDF</b></td>
-        <td width={36} align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📝 Text (summarized)</td>
-      </tr>
-      <tr>
-        <td><DataArrayIcon /></td>
-        <td><b>Code</b></td>
-        <td align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📚 Markdown</td>
-      </tr>
-      <tr>
-        <td><FormatAlignCenterIcon /></td>
-        <td><b>Text</b></td>
-        <td align='center' style={{ opacity: 0.5 }}>→</td>
-        <td>📝 As-is</td>
-      </tr>
-      </tbody>
-    </table>
-    <Box sx={{ mt: 1, fontSize: '14px' }}>
-      Drag & drop in chat for faster loads ⚡
-    </Box>
-  </Stack>;
-
-const pasteClipboardLegend =
-  <Box sx={{ p: 1 }}>
-    Converts Code and Tables to 📚 Markdown
-  </Box>;
-
-
 const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip title='CTRL + M' placement='top'>
+  <Tooltip placement='top' title={
+    <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
+      Voice input<br />
+      <KeyStroke combo='Ctrl + M' />
+    </Box>
+  }>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <MicIcon />
     </IconButton>
   </Tooltip>;
 
-
-const SentMessagesMenu = (props: {
-  anchorEl: HTMLAnchorElement, onClose: () => void,
-  messages: { date: number; text: string; count: number }[],
-  onPaste: (text: string) => void,
-  onClear: () => void,
-}) =>
-  <CloseableMenu
-    placement='top-end' maxHeightGapPx={56 * 3} noTopPadding sx={{ minWidth: 320, maxWidth: '100dvw' }}
-    open={!!props.anchorEl} anchorEl={props.anchorEl} onClose={props.onClose}
-  >
-
-    <MenuItem variant='solid' selected>
-      Reuse messages 💬
-    </MenuItem>
-
-    <Box sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-      {props.messages.map((item, index) =>
-        <MenuItem
-          key={'composer-sent-' + index}
-          onClick={() => {
-            props.onPaste(item.text);
-            props.onClose();
-          }}
-          sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', overflowX: 'hidden' }}
-        >
-          {item.count > 1 && <span style={{ marginRight: 1 }}>({item.count})</span>} {item.text?.length > 70 ? item.text.slice(0, 68) + '...' : item.text}
-        </MenuItem>)}
+const MicContinuationButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
+  <Tooltip placement='bottom' title={
+    <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
+      Voice Continuation
     </Box>
+  }>
+    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
+      <AutoModeIcon />
+    </IconButton>
+  </Tooltip>;
 
-    <ListDivider />
+const CallButtonMobile = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
+  <IconButton variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} sx={props.sx}>
+    <CallIcon />
+  </IconButton>;
 
-    <MenuItem onClick={props.onClear}>
-      <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-      Clear sent messages history
-    </MenuItem>
+const CallButtonDesktop = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
+  <Button variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} endDecorator={<CallIcon />} sx={props.sx}>
+    Call
+  </Button>;
 
-  </CloseableMenu>;
+const DrawOptionsButtonMobile = (props: { onClick: () => void, sx?: SxProps }) =>
+  <IconButton variant='soft' color='warning' onClick={props.onClick} sx={props.sx}>
+    <FormatPaintIcon />
+  </IconButton>;
+
+const DrawOptionsButtonDesktop = (props: { onClick: () => void, sx?: SxProps }) =>
+  <Button variant='soft' color='warning' onClick={props.onClick} endDecorator={<FormatPaintIcon />} sx={props.sx}>
+    Options
+  </Button>;
 
 
 /**
  * A React component for composing and sending messages in a chat-like interface.
- * Supports pasting text and code from the clipboard, and a local log of sent messages.
  *
  * Note: Useful bash trick to generate code from a list of files:
  *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
@@ -155,109 +115,144 @@ const SentMessagesMenu = (props: {
  */
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
-  chatModeId: ChatModeId, setChatModeId: (chatModeId: ChatModeId) => void;
   isDeveloperMode: boolean;
-  onSendMessage: (conversationId: string, text: string) => void;
+  onNewMessage: (chatModeId: ChatModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
   // state
-  const [composeText, setComposeText] = React.useState('');
+  const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
+  const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [reducerText, setReducerText] = React.useState('');
   const [reducerTextTokens, setReducerTextTokens] = React.useState(0);
   const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const [sentMessagesAnchor, setSentMessagesAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const [confirmClearSent, setConfirmClearSent] = React.useState(false);
-  const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // external state
-  const theme = useTheme();
-  const { enterToSend, experimentalLabs } = useUIPreferencesStore(state => ({
-    enterToSend: state.enterToSend,
-    experimentalLabs: state.experimentalLabs,
-  }), shallow);
-  const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
-  const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
+  const isMobile = useIsMobile();
+  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
+  const [startupText, setStartupText] = useComposerStartupText();
+  const [enterIsNewline, experimentalLabs] = useUIPreferencesStore(state => [state.enterIsNewline, state.experimentalLabs], shallow);
+  const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
+      systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
       stopTyping: state.stopTyping,
     };
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
 
-  // Effect: load initial text if queued up (e.g. by /share)
+  // Effect: load initial text if queued up (e.g. by /launch)
   React.useEffect(() => {
     if (startupText) {
       setStartupText(null);
       setComposeText(startupText);
     }
-  }, [startupText, setStartupText]);
+  }, [setComposeText, setStartupText, startupText]);
+
 
   // derived state
+  const isDesktop = !isMobile;
   const tokenLimit = chatLLM?.contextTokens || 0;
   const directTokens = React.useMemo(() => {
-    return (!composeText || !chatLLMId) ? 4 : 4 + countModelTokens(composeText, chatLLMId, 'composer text');
-  }, [chatLLMId, composeText]);
+    return (!debouncedText || !chatLLMId) ? 4 : 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
+  }, [chatLLMId, debouncedText]);
   const historyTokens = conversationTokenCount;
   const responseTokens = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
-  const handleSendClicked = () => {
+  const handleSendClicked = (_chatModeId: ChatModeId) => {
     const text = (composeText || '').trim();
     if (text.length && props.conversationId) {
       setComposeText('');
-      props.onSendMessage(props.conversationId, text);
-      appendSentMessage(text);
+      props.onNewMessage(_chatModeId, props.conversationId, text);
     }
   };
+
+
+  const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
+
+  const handleDrawOptionsClicked = () => openLayoutPreferences(2);
+
 
   const handleToggleChatMode = (event: React.MouseEvent<HTMLAnchorElement>) =>
     setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
 
   const handleHideChatMode = () => setChatModeMenuAnchor(null);
 
-  const handleSetChatModeId = (chatModeId: ChatModeId) => {
+  const handleSetChatModeId = (_chatModeId: ChatModeId) => {
     handleHideChatMode();
-    props.setChatModeId(chatModeId);
+    setChatModeId(_chatModeId);
   };
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      const shiftOrAlt = e.shiftKey || e.altKey;
-      if (enterToSend ? !shiftOrAlt : shiftOrAlt) {
-        if (!assistantTyping)
-          handleSendClicked();
-        e.preventDefault();
-      }
+    if (e.key !== 'Enter')
+      return;
+
+    // Alt: append the message
+    if (e.altKey) {
+      handleSendClicked('write-user');
+      return e.preventDefault();
+    }
+
+    // Shift: toggles the 'enter is newline'
+    if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+      if (!assistantTyping)
+        handleSendClicked(chatModeId);
+      return e.preventDefault();
     }
   };
 
 
+  const micIsRunning = !!speechInterimResult;
+  const micTurnBackOn = !assistantTyping && !micIsRunning && micContinuation;
+  const micIsContinuing = micIsRunning && micContinuation;
+
   const onSpeechResultCallback = React.useCallback((result: SpeechResult) => {
     setSpeechInterimResult(result.done ? null : { ...result });
     if (result.done) {
-      setComposeText(prevText => {
-        prevText = prevText.trim();
-        const transcript = result.transcript.trim();
-        return prevText ? prevText + ' ' + transcript : transcript;
-      });
+      // append the transcript
+      const transcript = result.transcript.trim();
+      let newText = (composeText || '').trim();
+      newText = newText ? newText + ' ' + transcript : transcript;
+
+      // auto-send if requested
+      const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
+      if (autoSend)
+        props.onNewMessage(chatModeId, props.conversationId!, newText);
+
+      // set the text (or clear if auto-sent)
+      setComposeText(autoSend ? '' : newText);
     }
-  }, []);
+  }, [chatModeId, composeText, micContinuation, props, setComposeText]);
 
-  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 2000, 'm');
+  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
+    useSpeechRecognition(onSpeechResultCallback, 2000, 'm');
 
-  const handleMicClicked = () => toggleRecording();
+  const handleMicClicked = () => {
+    if (micIsContinuing)
+      setMicContinuation(false);
+    toggleRecording();
+  };
+
+  const handleToggleMicContinuation = () => setMicContinuation(continued => !continued);
+
+  // autostart the microphone if the assistant stopped typing
+  React.useEffect(() => {
+    if (micTurnBackOn)
+      toggleRecording();
+  }, [toggleRecording, micTurnBackOn]);
 
   const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'neutral' : 'neutral';
   const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'outlined' : 'plain';
 
-  async function loadAndAttachFiles(files: FileList, overrideFileNames: string[]) {
+
+  async function loadAndAttachFiles(files: FileList, overrideFileNames?: string[]): Promise<void> {
 
     // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
     //       to the common root, but the files[].webkitRelativePath property is not providing that information
@@ -266,7 +261,7 @@ export function Composer(props: {
     let newText = '';
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileName = overrideFileNames.length === files.length ? overrideFileNames[i] : file.name;
+      const fileName = overrideFileNames?.length === files.length ? overrideFileNames[i] : file.name;
       let fileText = '';
       try {
         if (file.type === 'application/pdf')
@@ -274,10 +269,10 @@ export function Composer(props: {
         else
           fileText = await file.text();
         newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: fileName, fileText })(newText);
-      } catch (error) {
+      } catch (error: any) {
         // show errors in the prompt box itself - FUTURE: show in a toast
         console.error(error);
-        newText = `${newText}\n\nError loading file ${fileName}: ${error}\n`;
+        newText = `${newText}\n\nError loading file ${fileName}: ${JSON.stringify(error)}\n`;
       }
     }
 
@@ -306,20 +301,9 @@ export function Composer(props: {
     setComposeText(text => text + newText);
   };
 
-  const handleShowFilePicker = () => attachmentFileInputRef.current?.click();
-
-  const handleLoadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target?.files;
-    if (files && files.length >= 1)
-      await loadAndAttachFiles(files, []);
-
-    // this is needed to allow the same file to be selected again
-    e.target.value = '';
-  };
-
   const handleCameraOCR = (text: string) => text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
 
-  const handlePasteButtonClicked = async () => {
+  const handlePasteClipboard = React.useCallback(async () => {
     for (const clipboardItem of await navigator.clipboard.read()) {
 
       // when pasting html, only process tables as markdown (e.g. from Excel), or fallback to text
@@ -327,7 +311,7 @@ export function Composer(props: {
         const htmlItem = await clipboardItem.getType('text/html');
         const htmlString = await htmlItem.text();
         // paste tables as markdown
-        if (htmlString.indexOf('<table') == 0) {
+        if (htmlString.startsWith('<table')) {
           const markdownString = htmlTableToMarkdown(htmlString);
           setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
           continue;
@@ -350,34 +334,20 @@ export function Composer(props: {
       // no text/html or text/plain item found
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  };
+  }, [setComposeText]);
 
-  const handleTextareaCtrlV = async (e: React.ClipboardEvent) => {
+  useGlobalShortcut('v', true, true, false, handlePasteClipboard);
+
+  const handleTextareaCtrlV = async (event: React.ClipboardEvent) => {
 
     // paste local files
-    if (e.clipboardData.files.length > 0) {
-      e.preventDefault();
-      await loadAndAttachFiles(e.clipboardData.files, []);
+    if (event.clipboardData.files?.length) {
+      event.preventDefault();
+      await loadAndAttachFiles(event.clipboardData.files, []);
       return;
     }
 
     // paste not intercepted, continue with default behavior
-  };
-
-
-  const showSentMessages = (event: React.MouseEvent<HTMLAnchorElement>) => setSentMessagesAnchor(event.currentTarget);
-
-  const hideSentMessages = () => setSentMessagesAnchor(null);
-
-  const handlePasteSent = (text: string) => setComposeText(text);
-
-  const handleClearSent = () => setConfirmClearSent(true);
-
-  const handleCancelClearSent = () => setConfirmClearSent(false);
-
-  const handleConfirmedClearSent = () => {
-    setConfirmClearSent(false);
-    clearSentMessages();
   };
 
 
@@ -430,70 +400,48 @@ export function Composer(props: {
     console.log('Unhandled Drop event. Contents: ', e.dataTransfer.types.map(t => `${t}: ${e.dataTransfer.getData(t)}`));
   };
 
-  // const prodiaApiKey = isValidProdiaApiKey(useSettingsStore(state => state.prodiaApiKey));
-  // const isProdiaConfigured = !requireUserKeyProdia || prodiaApiKey;
-  const textPlaceholder: string = props.isDeveloperMode
-    ? 'Chat with me · drop source files · attach code...'
-    : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
-  // const isImmediate = props.chatModeId === 'immediate';
-  const isFollowUp = props.chatModeId === 'immediate-follow-up';
-  const isReAct = props.chatModeId === 'react';
-  const isWriteUser = props.chatModeId === 'write-user';
+  const isImmediate = chatModeId === 'immediate';
+  const isWriteUser = chatModeId === 'write-user';
+  const isChat = isImmediate || isWriteUser;
+  const isFollowUp = chatModeId === 'immediate-follow-up';
+  const isReAct = chatModeId === 'react';
+  const isDraw = chatModeId === 'draw-imagine';
+  const isDrawPlus = chatModeId === 'draw-imagine-plus';
 
-  const chatButton = (
-    <Button
-      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
-      onClick={handleSendClicked} onDoubleClick={handleToggleChatMode}
-      endDecorator={isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
-    >
-      {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isFollowUp ? 'Chat+' : 'Chat'}
-    </Button>
-  );
+  const textPlaceholder: string =
+    isDrawPlus
+      ? 'Write a subject, and we\'ll add detail...'
+      : isDraw
+        ? 'Describe an idea or a drawing...'
+        : isReAct
+          ? 'Multi-step reasoning question...'
+          : props.isDeveloperMode
+            ? 'Chat with me · drop source files · attach code...'
+            : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
+
 
   return (
     <Box sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
-        {/* Left pane (buttons and Textarea) */}
+        {/* Button column and composer Text (mobile: top, desktop: left and center) */}
         <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
-          {/* Vertical Buttons Bar */}
+          {/* Vertical buttons */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
-            {/*<Typography level='body-xs' sx={{mb: 2}}>Context</Typography>*/}
+            {/* [mobile] Mic button */}
+            {isMobile && isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />}
 
-            {isSpeechEnabled && <Box sx={hideOnDesktop}>
-              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />
-            </Box>}
+            {/* Responsive Camera OCR button */}
+            <ButtonCameraCapture isMobile={isMobile} onOCR={handleCameraOCR} />
 
-            <CameraCaptureButton onOCR={handleCameraOCR} />
+            {/* Responsive Attach button */}
+            <ButtonFileAttach isMobile={isMobile} onAttachFiles={loadAndAttachFiles} />
 
-            <IconButton onClick={handleShowFilePicker} sx={{ ...hideOnDesktop }}>
-              <AttachFileOutlinedIcon />
-            </IconButton>
-            <Tooltip
-              variant='solid' placement='top-start'
-              title={attachFileLegend}>
-              <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<AttachFileOutlinedIcon />}
-                      sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
-                Attach
-              </Button>
-            </Tooltip>
-
-            <IconButton onClick={handlePasteButtonClicked} sx={{ ...hideOnDesktop }}>
-              <ContentPasteGoIcon />
-            </IconButton>
-            <Tooltip
-              variant='solid' placement='top-start'
-              title={pasteClipboardLegend}>
-              <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={handlePasteButtonClicked}
-                      sx={{ ...hideOnMobile, justifyContent: 'flex-start' }}>
-                {props.isDeveloperMode ? 'Paste code' : 'Paste'}
-              </Button>
-            </Tooltip>
-
-            <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadAttachment} />
+            {/* Responsive Paste button */}
+            <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handlePasteClipboard} />
 
           </Box>
 
@@ -503,7 +451,7 @@ export function Composer(props: {
             <Box sx={{ position: 'relative' }}>
 
               <Textarea
-                variant='outlined' color={isReAct ? 'success' : 'neutral'}
+                variant='outlined' color={(isDraw || isDrawPlus) ? 'warning' : isReAct ? 'success' : 'neutral'}
                 autoFocus
                 minRows={5} maxRows={10}
                 placeholder={textPlaceholder}
@@ -514,9 +462,9 @@ export function Composer(props: {
                 onPasteCapture={handleTextareaCtrlV}
                 slotProps={{
                   textarea: {
-                    enterKeyHint: enterToSend ? 'send' : 'enter',
+                    enterKeyHint: enterIsNewline ? 'enter' : 'send',
                     sx: {
-                      ...(isSpeechEnabled ? { pr: { md: 5 } } : {}),
+                      ...(isSpeechEnabled && { pr: { md: 5 } }),
                       mb: 0.5,
                     },
                   },
@@ -535,31 +483,46 @@ export function Composer(props: {
             </Box>
 
             {isSpeechEnabled && (
-              <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} sx={{
-                ...hideOnMobile,
+              <Box sx={{
                 position: 'absolute', top: 0, right: 0,
                 zIndex: 21,
                 m: 1,
-              }} />
+                display: 'flex', flexDirection: 'column', gap: 1,
+              }}>
+                {isDesktop && <MicButton variant={micVariant} color={micColor} onClick={handleMicClicked} />}
+
+                {micIsRunning && (
+                  <MicContinuationButton
+                    variant={micContinuation ? 'plain' : 'plain'} color={micContinuation ? 'primary' : 'neutral'}
+                    onClick={handleToggleMicContinuation}
+                  />
+                )}
+              </Box>
             )}
 
-            {!!tokenLimit && <TokenBadge directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit} absoluteBottomRight />}
+            {!!tokenLimit && (
+              <TokenBadge
+                directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit}
+                showExcess absoluteBottomRight
+              />
+            )}
 
-            {!!speechInterimResult && (
+            {micIsRunning && (
               <Card
                 color='primary' invertedColors variant='soft'
                 sx={{
                   display: 'flex',
                   position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
                   // alignItems: 'center', justifyContent: 'center',
-                  border: `1px solid ${theme.palette.primary.solidBg}`,
-                  borderRadius: theme.radius.xs,
+                  border: `1px solid`,
+                  borderColor: 'primary.solidBg',
+                  borderRadius: 'sm',
                   zIndex: 20,
                   px: 1.5, py: 1,
                 }}>
                 <Typography>
                   {speechInterimResult.transcript}{' '}
-                  <span style={{ opacity: 0.5 }}>{speechInterimResult.interimTranscript}</span>
+                  <span style={{ opacity: 0.8 }}>{speechInterimResult.interimTranscript}</span>
                 </Typography>
               </Card>
             )}
@@ -571,7 +534,7 @@ export function Composer(props: {
                 position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
                 alignItems: 'center', justifyContent: 'space-evenly',
                 border: '2px dashed',
-                borderRadius: theme.radius.xs,
+                borderRadius: 'xs',
                 zIndex: 10,
               }}
               onDragLeave={handleOverlayDragLeave}
@@ -587,20 +550,20 @@ export function Composer(props: {
 
         </Stack></Grid>
 
-        {/* Send pane */}
+        {/* Send pane (mobile: bottom, desktop: right) */}
         <Grid xs={12} md={3}>
-          <Stack spacing={2}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
 
-            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            {/* first row of buttons */}
+            <Box sx={{ display: 'flex' }}>
 
-              {/* [mobile-only] Sent messages arrow */}
-              {sentMessages.length > 0 && (
-                <IconButton disabled={!!sentMessagesAnchor} onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
-                  <KeyboardArrowUpIcon />
-                </IconButton>
-              )}
+              {/* [mobile, corner] Call secondary button */}
+              {isMobile && isChat && <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
 
-              {/* Send / Stop */}
+              {/* [mobile, corner] Draw Options secondary button */}
+              {isMobile && (isDraw || isDrawPlus) && <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
+
+              {/* Responsive Send/Stop buttons */}
               {assistantTyping
                 ? (
                   <Button
@@ -611,8 +574,15 @@ export function Composer(props: {
                     Stop
                   </Button>
                 ) : (
-                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : isFollowUp ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
-                    {chatButton}
+                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                    <Button
+                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                      onClick={() => handleSendClicked(chatModeId)}
+                      endDecorator={micIsContinuing ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+                    >
+                      {micIsContinuing && 'Voice '}
+                      {isWriteUser ? 'Write' : isFollowUp ? 'Chat+' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
+                    </Button>
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
                       <ExpandLessIcon />
                     </IconButton>
@@ -620,16 +590,19 @@ export function Composer(props: {
                 )}
             </Box>
 
-            {/* [desktop-only] row with Sent Messages button */}
-            <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
-              {sentMessages.length > 0 && (
-                <Button disabled={!!sentMessagesAnchor} fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showSentMessages}>
-                  History
-                </Button>
-              )}
-            </Stack>
 
-          </Stack>
+            {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
+            {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
+
+              {/* [desktop] Call secondary button */}
+              {isChat && <CallButtonDesktop disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+
+              {/* [desktop] Draw Options secondary button */}
+              {(isDraw || isDrawPlus) && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}
+
+            </Box>}
+
+          </Box>
         </Grid>
 
 
@@ -638,15 +611,7 @@ export function Composer(props: {
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleHideChatMode}
             experimental={experimentalLabs}
-            chatModeId={props.chatModeId} onSetChatModeId={handleSetChatModeId}
-          />
-        )}
-
-        {/* Sent messages menu */}
-        {!!sentMessagesAnchor && (
-          <SentMessagesMenu
-            anchorEl={sentMessagesAnchor} messages={sentMessages} onClose={hideSentMessages}
-            onPaste={handlePasteSent} onClear={handleClearSent}
+            chatModeId={chatModeId} onSetChatModeId={handleSetChatModeId}
           />
         )}
 
@@ -657,12 +622,6 @@ export function Composer(props: {
             onReducedText={handleContentReducerText} onClose={handleContentReducerClose}
           />
         }
-
-        {/* Clear confirmation modal */}
-        <ConfirmationModal
-          open={confirmClearSent} onClose={handleCancelClearSent} onPositive={handleConfirmedClearSent}
-          confirmationText={'Are you sure you want to clear all your sent messages?'} positiveActionText={'Clear all'}
-        />
 
       </Grid>
     </Box>

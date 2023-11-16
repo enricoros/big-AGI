@@ -27,7 +27,7 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
   acc[key] = tileCols[index] * (value + 8 * tileSpacing) - 8 * tileSpacing;
   return acc;
 }, {} as Record<string, number>);
-const bpTileGap = { xs: 2, md: 3 };
+const bpTileGap = { xs: 0.5, md: 1 };
 
 
 // Add this utility function to get a random array element
@@ -45,10 +45,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { experimentalLabs, showFinder } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs,
-    showFinder: state.showPurposeFinder,
-  }), shallow);
+  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -187,7 +184,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
             </Grid>
           ))}
           {/* Button to start the YouTube persona creator */}
-          {experimentalLabs && <Grid>
+          <Grid>
             <Button
               variant='soft' color='neutral'
               component={Link} noLinkStyle href='/personas'
@@ -210,7 +207,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
                 YouTube persona creator
               </div>
             </Button>
-          </Grid>}
+          </Grid>
         </Grid>
 
         <Typography

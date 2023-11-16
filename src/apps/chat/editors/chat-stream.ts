@@ -1,8 +1,9 @@
-import { DLLMId } from '~/modules/llms/llm.types';
 import { SystemPurposeId } from '../../../data';
+import { DLLMId } from '~/modules/llms/store-llms';
+import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { streamChat } from '~/modules/llms/llm.client';
+import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';
@@ -13,7 +14,7 @@ import { createAssistantTypingMessage, updatePurposeInHistory } from './editors'
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, _autoSuggestions: boolean) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, enableFollowUps: boolean) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -33,9 +34,13 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // clear to send, again
   startTyping(conversationId, null);
 
-  // update text, if needed
+  // auto-suggestions (fire/forget)
+  if (enableFollowUps)
+    autoSuggestions(conversationId, assistantMessageId);
+
+  // update text, if needed (fire/forget)
   if (_autoTitle)
-    await autoTitle(conversationId);
+    autoTitle(conversationId);
 }
 
 
@@ -63,7 +68,8 @@ async function streamAssistantMessage(
         if (cutPoint > 100 && cutPoint < 400) {
           firstLineSpoken = true;
           const firstParagraph = updatedMessage.text.substring(0, cutPoint);
-          speakText(firstParagraph).then(() => false /* fire and forget, we don't want to stall this loop */);
+          // fire/forget: we don't want to stall this loop
+          void speakText(firstParagraph);
         }
       }
     });

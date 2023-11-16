@@ -1,6 +1,9 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env.mjs';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Search } from './search.types';
 
@@ -23,19 +26,21 @@ export const googleSearchRouter = createTRPCRouter({
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
-        cx: (input.cx || process.env.GOOGLE_CSE_ID || '').trim(),
-        key: (input.key || process.env.GOOGLE_CLOUD_API_KEY || '').trim(),
+        cx: (input.cx || env.GOOGLE_CSE_ID || '').trim(),
+        key: (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim(),
         num: 5,
       };
 
       if (!customSearchParams.key || !customSearchParams.cx)
         throw new Error('Missing API Key or Custom Search Engine ID');
 
-      const response = await fetch(`https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`);
-      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await response.json();
-
+      const url = `https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`;
+      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCError(url, 'GET', {}, undefined, 'Google Custom Search');
       if (data.error)
-        throw new Error(`Google Custom Search API error: ${data.error?.message}`);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Google Custom Search API error: ${data.error?.message}`,
+        });
 
       return {
         pages: data.items?.map((result): Search.API.BriefResult => ({

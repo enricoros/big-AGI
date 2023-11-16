@@ -32,8 +32,6 @@ function PrimitiveRender({ name, value }: { name: string, value: string | number
     return <StateLine><b>{name}</b>: <b>{value}</b></StateLine>;
   else if (typeof value === 'boolean')
     return <StateLine><b>{name}</b>: <b>{value ? 'true' : 'false'}</b></StateLine>;
-  else if (typeof value === 'symbol')
-    return <StateLine><b>{name}</b>: <b>{value.toString()}</b></StateLine>;
   else
     return <StateLine><b>{name}</b>: unknown?</StateLine>;
 }

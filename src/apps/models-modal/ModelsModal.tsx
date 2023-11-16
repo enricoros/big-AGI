@@ -1,19 +1,27 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Checkbox, Divider } from '@mui/joy';
+import { Box, Checkbox, Divider } from '@mui/joy';
+
+import { DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStateStore } from '~/common/state/store-ui';
-
-import { DModelSourceId } from '~/modules/llms/llm.types';
-import { createModelSourceForDefaultVendor } from '~/modules/llms/vendor.registry';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { settingsGap } from '~/common/app.theme';
+import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsSourceSelector } from './ModelsSourceSelector';
-import { VendorSourceSetup } from './VendorSourceSetup';
+
+
+function VendorSourceSetup(props: { source: DModelSource }) {
+  const vendor = findVendorById(props.source.vId);
+  if (!vendor)
+    return 'Configuration issue: Vendor not found for Source ' + props.source.id;
+  return <vendor.SourceSetupComponent sourceId={props.source.id} />;
+}
 
 
 export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
@@ -23,11 +31,12 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
-  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
+  const [modelsSetupOpen, llmOptionsId] = useLayoutModelsSetup();
   const { modelSources, llmCount } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
   }), shallow);
+  useGlobalShortcut('m', true, true, false, openLayoutModelsSetup);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
@@ -40,15 +49,15 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   // if no sources at startup, open the modal
   React.useEffect(() => {
     if (!selectedSourceId && !props.suspendAutoModelsSetup)
-      openModelsSetup();
-  }, [selectedSourceId, openModelsSetup, props.suspendAutoModelsSetup]);
+      openLayoutModelsSetup();
+  }, [selectedSourceId, props.suspendAutoModelsSetup]);
 
   // add the default source on cold - will require setup
   React.useEffect(() => {
     const { addSource, sources } = useModelsStore.getState();
-    if (!sources.length)
+    if (!sources.length && !props.suspendAutoModelsSetup)
       addSource(createModelSourceForDefaultVendor(sources));
-  }, []);
+  }, [props.suspendAutoModelsSetup]);
 
 
   return <>
@@ -62,14 +71,18 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
           checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
         /> : undefined
       }
-      open={modelsSetupOpen} onClose={closeModelsSetup}
+      open onClose={closeLayoutModelsSetup}
     >
 
       <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
       {!!activeSource && <Divider />}
 
-      {!!activeSource && <VendorSourceSetup source={activeSource} />}
+      {!!activeSource && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+          <VendorSourceSetup source={activeSource} />
+        </Box>
+      )}
 
       {!!llmCount && <Divider />}
 

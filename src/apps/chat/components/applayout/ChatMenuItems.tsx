@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -10,13 +10,13 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
-import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { KeyStroke } from '~/common/components/KeyStroke';
+import { closeLayoutMenu } from '~/common/layout/store-applayout';
+import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 export function ChatMenuItems(props: {
-  conversationId: string | null, isConversationEmpty: boolean,
+  conversationId: string | null, isConversationEmpty: boolean, hasConversations: boolean,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onClearConversation: (conversationId: string) => void,
   onDuplicateConversation: (conversationId: string) => void,
@@ -25,39 +25,38 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
+  const { touch: shareTouch } = useUICounter('export-share');
   const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
     showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
   }), shallow);
-  const maxConversationsReached: boolean = useChatStore(state => state.conversations.length >= MAX_CONVERSATIONS);
 
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
-
-  const closeContextMenu = () => setLayoutMenuAnchor(null);
 
   const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
   const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.onExportConversation(!disabled ? props.conversationId : null);
+    shareTouch();
   };
 
   const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onDuplicateConversation(props.conversationId);
   };
 
   const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.conversationId && props.onFlattenConversation(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
     e.stopPropagation();
-    closeContextMenu();
+    closeLayoutMenu();
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
@@ -82,13 +81,13 @@ export function ChatMenuItems(props: {
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled || maxConversationsReached} onClick={handleConversationDuplicate}>
+    <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
       <ListItemDecorator>
         {/*<Badge size='sm' color='success'>*/}
         <ForkRightIcon color='success' />
         {/*</Badge>*/}
       </ListItemDecorator>
-      Duplicate{maxConversationsReached && ' (max reached)'}
+      Duplicate
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
@@ -109,16 +108,19 @@ export function ChatMenuItems(props: {
       </span>
     </MenuItem>
 
-    <MenuItem onClick={handleConversationExport}>
+    <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
         <FileDownloadIcon />
       </ListItemDecorator>
-      Export
+      Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      Reset
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        Reset
+        {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
+      </Box>
     </MenuItem>
 
   </>;

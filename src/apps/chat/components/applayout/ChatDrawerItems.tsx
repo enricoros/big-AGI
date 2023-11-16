@@ -1,17 +1,17 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, ListDivider, ListItemDecorator, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { MAX_CONVERSATIONS, useChatStore } from '~/common/state/store-chats';
-import { setLayoutDrawerAnchor } from '~/common/layout/store-applayout';
+import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { closeLayoutDrawer } from '~/common/layout/store-applayout';
+import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ConversationItem } from './ConversationItem';
-import { OpenAIIcon } from '~/modules/llms/openai/OpenAIIcon';
 
 
 type ListGrouping = 'off' | 'persona';
@@ -26,14 +26,12 @@ export function ChatDrawerItems(props: {
   const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const conversationIDs = useChatStore(state => state.conversations.map(
-    conversation => conversation.id,
-  ), shallow);
-  const { topNewConversationId, maxChatMessages, setActiveConversationId, createConversation, deleteConversation } = useChatStore(state => ({
+  const { conversationIDs, topNewConversationId, maxChatMessages, setActiveConversationId, createConversationOrSwitch, deleteConversation } = useChatStore(state => ({
+    conversationIDs: state.conversations.map(conversation => conversation.id),
     topNewConversationId: state.conversations.length ? state.conversations[0].messages.length === 0 ? state.conversations[0].id : null : null,
     maxChatMessages: state.conversations.reduce((longest, conversation) => Math.max(longest, conversation.messages.length), 0),
     setActiveConversationId: state.setActiveConversationId,
-    createConversation: state.createConversation,
+    createConversationOrSwitch: state.createConversationOrSwitch,
     deleteConversation: state.deleteConversation,
   }), shallow);
   const { experimentalLabs, showSymbols } = useUIPreferencesStore(state => ({
@@ -45,31 +43,23 @@ export function ChatDrawerItems(props: {
   const totalConversations = conversationIDs.length;
   const hasChats = totalConversations > 0;
   const singleChat = totalConversations === 1;
-  const maxReached = totalConversations >= MAX_CONVERSATIONS;
-
-  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
+  const softMaxReached = totalConversations >= 50;
 
   const handleNew = () => {
-    // if the first in the stack is a new conversation, just activate it
-    if (topNewConversationId)
-      setActiveConversationId(topNewConversationId);
-    else
-      createConversation();
-    closeDrawerMenu();
+    createConversationOrSwitch();
+    closeLayoutDrawer();
   };
 
   const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
     if (closeMenu)
-      closeDrawerMenu();
+      closeLayoutDrawer();
   }, [setActiveConversationId]);
 
   const handleConversationDelete = React.useCallback((conversationId: string) => {
     if (!singleChat && conversationId)
       deleteConversation(conversationId);
   }, [deleteConversation, singleChat]);
-
-  const NewPrefix = maxReached && <Tooltip title={`Maximum limit: ${MAX_CONVERSATIONS} chats. Proceeding will remove the oldest chat.`}><Box sx={{ mr: 2 }}>⚠️</Box></Tooltip>;
 
   // grouping
   let sortedIds = conversationIDs;
@@ -99,9 +89,12 @@ export function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem disabled={maxReached || (!!topNewConversationId && topNewConversationId === props.conversationId)} onClick={handleNew}>
+    <MenuItem disabled={!!topNewConversationId && topNewConversationId === props.conversationId} onClick={handleNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
-      {NewPrefix}New
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        New
+        {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
+      </Box>
     </MenuItem>
 
     <ListDivider sx={{ mb: 0 }} />
@@ -128,7 +121,7 @@ export function ChatDrawerItems(props: {
           isActive={conversationId === props.conversationId}
           isSingle={singleChat}
           showSymbols={showSymbols}
-          maxChatMessages={experimentalLabs ? maxChatMessages : 0}
+          maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
           conversationActivate={handleConversationActivate}
           conversationDelete={handleConversationDelete}
         />)}
@@ -147,7 +140,7 @@ export function ChatDrawerItems(props: {
     <MenuItem disabled={!hasChats} onClick={props.onDeleteAllConversations}>
       <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
       <Typography>
-        Delete all ({totalConversations}/{MAX_CONVERSATIONS})
+        Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
       </Typography>
     </MenuItem>
 

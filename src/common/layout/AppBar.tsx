@@ -9,15 +9,14 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { Brand } from '~/common/brand';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { Link } from '~/common/components/Link';
-import { LogoSquircle } from '~/common/components/LogoSquircle';
-import { useUIStateStore } from '~/common/state/store-ui';
+import { Brand } from '../app.config';
+import { CloseableMenu } from '../components/CloseableMenu';
+import { Link } from '../components/Link';
+import { LogoSquircle } from '../components/LogoSquircle';
 
 // import { AppBarSupportItem } from './AppBarSupportItem';
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';
-import { setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
+import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
 
 
 function AppBarTitle() {
@@ -46,7 +45,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
-    useUIStateStore.getState().openSettings();
+    openLayoutPreferences();
     props.onClose();
   };
 
@@ -64,6 +63,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
     {/*</MenuItem>*/}
 
     {/* Preferences |...| Dark Mode Toggle */}
+    {/*<Tooltip title={<KeyStroke combo='Ctrl + Shift + P' />}>*/}
     <MenuItem onClick={handleShowSettings}>
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
@@ -75,6 +75,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
         {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
       </IconButton>
     </MenuItem>
+    {/*</Tooltip>*/}
 
   </>;
 }
@@ -92,15 +93,10 @@ export function AppBar(props: { sx?: SxProps }) {
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  // const { push } = useRouter();
   const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
 
-  const closeDrawerMenu = () => setLayoutDrawerAnchor(null);
-
-  const closeMenuMenu = () => setLayoutMenuAnchor(null);
-
   const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeMenuMenu} />, []);
+    <CommonMenuItems onClose={closeLayoutMenu} />, []);
 
   return <>
 
@@ -114,7 +110,7 @@ export function AppBar(props: { sx?: SxProps }) {
       }}>
 
       {/* Drawer Anchor */}
-      {!centerItems ? (
+      {!drawerItems ? (
         <IconButton component={Link} href='/' noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
@@ -139,7 +135,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Drawer Menu */}
     {!!drawerItems && <CloseableMenu
       maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeDrawerMenu}
+      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeLayoutDrawer}
       placement='bottom-start'
     >
       {drawerItems}
@@ -148,7 +144,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Menu Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeMenuMenu}
+      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeLayoutMenu}
       placement='bottom-end'
     >
       {commonMenuItems}

@@ -1,4 +1,4 @@
-import { callChatGenerate } from '~/modules/llms/llm.client';
+import { callChatGenerate } from '~/modules/llms/transports/chatGenerate';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 
