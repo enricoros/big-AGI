@@ -7,6 +7,7 @@ import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { createAssistantTypingMessage, updatePurposeInHistory } from './editors';
 
@@ -14,7 +15,7 @@ import { createAssistantTypingMessage, updatePurposeInHistory } from './editors'
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, _autoTitle: boolean, enableFollowUps: boolean) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, enableFollowUps: boolean) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -39,7 +40,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     autoSuggestions(conversationId, assistantMessageId);
 
   // update text, if needed (fire/forget)
-  if (_autoTitle)
+  const { autoSetChatTitle } = useUIPreferencesStore.getState();
+  if (autoSetChatTitle)
     autoTitle(conversationId);
 }
 
