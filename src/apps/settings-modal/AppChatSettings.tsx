@@ -83,6 +83,14 @@ export function AppChatSettings() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
 
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Auto Chat Title'
+                      description={autosetChatTitle ? 'LLM Titling' : 'Manual only'} />
+      <Switch checked={autosetChatTitle} onChange={handleAutoSetChatTitleChange}
+              endDecorator={autosetChatTitle ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
     <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
       <FormLabelStart title='Appearance'
                       description={zenMode === 'clean' ? 'Show senders' : 'Minimal UI'} />
@@ -102,15 +110,6 @@ export function AppChatSettings() {
         <Radio value='full' label='Full' />
       </RadioGroup>
     </FormControl>}
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Automatic Set the Chat Title'
-                      description={autosetChatTitle ? 'Use the LLM to automatically set chat title' : 'Do not use LLM to automatically set chat title'} />
-      <Switch checked={!autosetChatTitle} onChange={handleAutoSetChatTitleChange}
-              endDecorator={autosetChatTitle ? 'Off' : 'On'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
-
 
   </>;
 }
