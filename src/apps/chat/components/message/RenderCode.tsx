@@ -8,7 +8,7 @@ import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';

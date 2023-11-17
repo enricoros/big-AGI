@@ -14,7 +14,7 @@ import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { getChatLinkRelativePath } from '~/common/app.routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
