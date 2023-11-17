@@ -24,6 +24,7 @@ export function AppChatSettings() {
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
+    autosetChatTitle, setAutoSetChatTitle,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
@@ -31,6 +32,7 @@ export function AppChatSettings() {
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
+    autosetChatTitle: state.autoSetChatTitle, setAutoSetChatTitle: state.setAutoSetChatTitle,
   }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
@@ -44,6 +46,8 @@ export function AppChatSettings() {
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+
+  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSetChatTitle(event.target.checked);
 
   return <>
 
@@ -78,6 +82,14 @@ export function AppChatSettings() {
               endDecorator={showPurposeFinder ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Auto Chat Title'
+                      description={autosetChatTitle ? 'LLM Titling' : 'Manual only'} />
+      <Switch checked={autosetChatTitle} onChange={handleAutoSetChatTitleChange}
+              endDecorator={autosetChatTitle ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
 
     <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
       <FormLabelStart title='Appearance'
