@@ -1,49 +1,45 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-
 // UI Counters
 
 interface UICountersStore {
-
   actionCounters: Record<string, number>;
   incrementActionCounter: (key: string) => void;
   clearActionCounter: (key: string) => void;
   clearAllActionCounters: () => void;
-
 }
 
 const useUICountersStore = create<UICountersStore>()(
   persist(
     (set) => ({
-
       actionCounters: {},
-      incrementActionCounter: (key: string) => set(state => ({
-        actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
-      })),
-      clearActionCounter: (key: string) => set(state => ({
-        actionCounters: { ...state.actionCounters, [key]: 0 },
-      })),
+      incrementActionCounter: (key: string) =>
+        set((state) => ({
+          actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
+        })),
+      clearActionCounter: (key: string) =>
+        set((state) => ({
+          actionCounters: { ...state.actionCounters, [key]: 0 },
+        })),
       clearAllActionCounters: () => set({ actionCounters: {} }),
-
     }),
     {
       name: 'app-ui-counters',
-    }),
+    },
+  ),
 );
 
 type UiCounterKey = 'export-share' | 'share-chat-link' | 'call-wizard';
 
 export function useUICounter(key: UiCounterKey) {
-  const value = useUICountersStore(state => state.actionCounters[key] || 0);
+  const value = useUICountersStore((state) => state.actionCounters[key] || 0);
   return { value, novel: !value, touch: () => useUICountersStore.getState().incrementActionCounter(key) };
 }
-
 
 // UI Preferences
 
 interface UIPreferencesStore {
-
   preferredLanguage: string;
   setPreferredLanguage: (preferredLanguage: string) => void;
 
@@ -71,6 +67,8 @@ interface UIPreferencesStore {
   zenMode: 'clean' | 'cleaner';
   setZenMode: (zenMode: 'clean' | 'cleaner') => void;
 
+  autoSetChatTitle: boolean;
+  setAutoSetChatTitle: (autoSetChatTitle: boolean) => void;
 }
 
 export const useUIPreferencesStore = create<UIPreferencesStore>()(
@@ -104,6 +102,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
+      autoSetChatTitle: true,
+      setAutoSetChatTitle: (autoSetChatTitle) => set({ autoSetChatTitle }),
+          
     }),
     {
       name: 'app-ui',
