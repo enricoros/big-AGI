@@ -24,6 +24,7 @@ export function AppChatSettings() {
     renderMarkdown, setRenderMarkdown,
     showPurposeFinder, setShowPurposeFinder,
     zenMode, setZenMode,
+    autosetChatTitle, setAutoSetChatTitle,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
@@ -31,6 +32,7 @@ export function AppChatSettings() {
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
+    autosetChatTitle: state.autoSetChatTitle, setAutoSetChatTitle: state.setAutoSetChatTitle,
   }), shallow);
 
   const handleCenterModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setCenterMode(event.target.value as 'narrow' | 'wide' | 'full' || 'wide');
@@ -44,6 +46,8 @@ export function AppChatSettings() {
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+
+  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSetChatTitle(event.target.checked);
 
   return <>
 
@@ -98,6 +102,15 @@ export function AppChatSettings() {
         <Radio value='full' label='Full' />
       </RadioGroup>
     </FormControl>}
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Automatic Set the Chat Title'
+                      description={autosetChatTitle ? 'Use the LLM to automatically set chat title' : 'Do not use LLM to automatically set chat title'} />
+      <Switch checked={!autosetChatTitle} onChange={handleAutoSetChatTitleChange}
+              endDecorator={autosetChatTitle ? 'Off' : 'On'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
 
   </>;
 }

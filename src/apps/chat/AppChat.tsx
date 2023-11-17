@@ -12,6 +12,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
@@ -60,6 +61,11 @@ export function AppChat() {
     };
   }, shallow);
 
+    // external state
+  const { autoSetChatTitle } = useUIPreferencesStore(state => ({
+      autoSetChatTitle: state.autoSetChatTitle
+    }), shallow);
+
 
   const handleExecuteConversation = async (chatModeId: ChatModeId, conversationId: string, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();
@@ -93,7 +99,7 @@ export function AppChat() {
       switch (chatModeId) {
         case 'immediate':
         case 'immediate-follow-up':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, autoSetChatTitle, chatModeId === 'immediate-follow-up');
         case 'write-user':
           return setMessages(conversationId, history);
         case 'react':
