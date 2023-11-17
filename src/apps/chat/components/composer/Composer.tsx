@@ -167,7 +167,7 @@ export function Composer(props: {
 
   const handleSendClicked = (_chatModeId: ChatModeId) => {
     const text = (composeText || '').trim();
-    if (text.length && props.conversationId) {
+    if (text.length && props.conversationId && chatLLMId) {
       setComposeText('');
       props.onNewMessage(_chatModeId, props.conversationId, text);
     }
