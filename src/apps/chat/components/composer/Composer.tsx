@@ -24,6 +24,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
+import { getClipboardItems, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { launchAppCall } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
@@ -307,7 +308,7 @@ export function Composer(props: {
   const handleCameraOCR = (text: string) => text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
 
   const handlePasteClipboard = React.useCallback(async () => {
-    for (const clipboardItem of await navigator.clipboard.read()) {
+    for (const clipboardItem of await getClipboardItems()) {
 
       // when pasting html, only process tables as markdown (e.g. from Excel), or fallback to text
       try {
@@ -339,7 +340,7 @@ export function Composer(props: {
     }
   }, [setComposeText]);
 
-  useGlobalShortcut('v', true, true, false, handlePasteClipboard);
+  useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, handlePasteClipboard);
 
   const handleTextareaCtrlV = async (event: React.ClipboardEvent) => {
 
@@ -444,7 +445,7 @@ export function Composer(props: {
             <ButtonFileAttach isMobile={isMobile} onAttachFiles={loadAndAttachFiles} />
 
             {/* Responsive Paste button */}
-            <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handlePasteClipboard} />
+            {supportsClipboardRead && <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handlePasteClipboard} />}
 
           </Box>
 

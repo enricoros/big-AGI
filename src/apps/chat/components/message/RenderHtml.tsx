@@ -5,7 +5,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WebIcon from '@mui/icons-material/Web';
 
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import { HtmlBlock } from './blocks';
 import { overlayButtonsSx } from './RenderCode';
