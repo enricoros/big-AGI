@@ -93,7 +93,7 @@ export function AppChat() {
       switch (chatModeId) {
         case 'immediate':
         case 'immediate-follow-up':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, true, chatModeId === 'immediate-follow-up');
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, chatModeId === 'immediate-follow-up');
         case 'write-user':
           return setMessages(conversationId, history);
         case 'react':
