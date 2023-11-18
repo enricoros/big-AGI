@@ -15,7 +15,6 @@ function isTextItem(item: any): item is { str: string } {
  * @param file - The PDF file to extract text from
  */
 export const pdfToText = async (file: File): Promise<string> => {
-
   // Dynamically import the 'pdfjs-dist' library [nextjs]
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
@@ -24,16 +23,16 @@ export const pdfToText = async (file: File): Promise<string> => {
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await getDocument(arrayBuffer).promise;
-  let text = '';
+  const textPages: string[] = []; // Initialize an array to hold text from all pages
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const strings = content.items
       .filter(isTextItem) // Use the type guard to filter out items with the 'str' property
-      .map(item => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
-    text += strings.join(' ') + '\n';
+      .map((item) => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
+    textPages.push(strings.join(' ') + '\n'); // Add the joined strings to the array
   }
 
-  return text;
+  return textPages.join(''); // Join all the page texts at the end
 };
