@@ -45,7 +45,7 @@ const useAppChatStore = create<AppChatState>()(persist(
     autoSuggestQuestions: false,
     setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => set({ autoSuggestQuestions }),
 
-    autoTitleChat: false,
+    autoTitleChat: true,
     setautoTitleChat: (autoTitleChat: boolean) => set({ autoTitleChat }),
 
     showTextDiff: false,
