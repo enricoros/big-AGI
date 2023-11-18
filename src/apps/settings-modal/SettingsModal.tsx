@@ -16,7 +16,8 @@ import { closeLayoutPreferences, openLayoutModelsSetup, openLayoutPreferences, u
 import { settingsGap } from '~/common/app.theme';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
-import { AppChatSettings } from './AppChatSettings';
+import { AppChatSettingsAI } from './AppChatSettingsAI';
+import { AppChatSettingsUI } from './AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
 
@@ -51,7 +52,12 @@ function Topic(props: { title: string, icon?: string | React.ReactNode, startCol
   return (
     <Accordion
       expanded={expanded}
-      onChange={(event, expanded) => setExpanded(expanded)}
+      onChange={(_event, expanded) => setExpanded(expanded)}
+      sx={{
+        '&:last-child': {
+          borderBottom: 'none',
+        },
+      }}
     >
 
       <AccordionSummary
@@ -73,7 +79,7 @@ function Topic(props: { title: string, icon?: string | React.ReactNode, startCol
       </AccordionSummary>
 
       <AccordionDetails>
-        <Stack sx={{ gap: settingsGap }}>
+        <Stack sx={{ gap: settingsGap, border: 'none' }}>
           {props.children}
         </Stack>
       </AccordionDetails>
@@ -141,9 +147,12 @@ export function SettingsModal() {
         </TabList>
 
         <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
-          <Topics disableDivider>
-            <Topic icon={<TelegramIcon />} title='Chat settings'>
-              <AppChatSettings />
+          <Topics>
+            <Topic icon={<TelegramIcon />} title='Chat UI'>
+              <AppChatSettingsUI />
+            </Topic>
+            <Topic icon='🧠' title='Chat AI' startCollapsed>
+              <AppChatSettingsAI />
             </Topic>
             <Topic icon={<ScienceIcon />} title='Labs' startCollapsed>
               <UxLabsSettings />
@@ -152,7 +161,7 @@ export function SettingsModal() {
         </TabPanel>
 
         <TabPanel value={3} sx={{ p: 'var(--Tabs-gap)' }}>
-          <Topics disableDivider>
+          <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
             </Topic>
@@ -163,7 +172,7 @@ export function SettingsModal() {
         </TabPanel>
 
         <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
-          <Topics disableDivider>
+          <Topics>
             <Topic icon='🖍️️' title='Prodia API'>
               <ProdiaSettings />
             </Topic>
@@ -171,7 +180,7 @@ export function SettingsModal() {
         </TabPanel>
 
         <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
-          <Topics disableDivider>
+          <Topics>
             <Topic icon={<SearchIcon />} title='Google Search API'>
               <GoogleSearchSettings />
             </Topic>
