@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { FormControl, Radio, RadioGroup, Switch } from '@mui/joy';
+import { Button, FormControl, Radio, RadioGroup, Switch } from '@mui/joy';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { hideOnMobile } from '~/common/app.theme';
 import { isPwa } from '~/common/util/pwaUtils';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import { ShortcutsModal } from './ShortcutsModal';
 
 
 // configuration
@@ -16,7 +18,12 @@ const SHOW_PURPOSE_FINDER = false;
 
 
 export function AppChatSettingsUI() {
+
+  // local state
+  const [showShortcuts, setShowShortcuts] = React.useState<boolean>(false);
+
   // external state
+  const isMobile = useIsMobile();
   const {
     centerMode, setCenterMode,
     doubleClickToEdit, setDoubleClickToEdit,
@@ -89,7 +96,7 @@ export function AppChatSettingsUI() {
       </RadioGroup>
     </FormControl>
 
-    {!isPwa() && <FormControl orientation='horizontal' sx={{ ...hideOnMobile, alignItems: 'center', justifyContent: 'space-between' }}>
+    {!isPwa() && !isMobile && <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
       <FormLabelStart title='Page Size'
                       description={centerMode === 'full' ? 'Full screen chat' : centerMode === 'narrow' ? 'Narrow chat' : 'Wide'} />
       <RadioGroup orientation='horizontal' value={centerMode} onChange={handleCenterModeChange}>
@@ -98,6 +105,12 @@ export function AppChatSettingsUI() {
         <Radio value='full' label='Full' />
       </RadioGroup>
     </FormControl>}
+
+    {!isMobile && <Button variant='soft' onClick={() => setShowShortcuts(true)} sx={{ ml: 'auto' }}>
+      👉 See Shortcuts
+    </Button>}
+
+    {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)}/>}
 
   </>;
 }
