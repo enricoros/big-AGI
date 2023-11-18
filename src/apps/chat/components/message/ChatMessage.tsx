@@ -32,7 +32,7 @@ import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { useChatMessageShowDiff } from '../../state/store-appchat';
+import { useChatShowTextDiff } from '../../store-appchat';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -223,7 +223,7 @@ export function ChatMessage(props: {
     renderMarkdown: state.renderMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
-  const [showDiff, setShowDiff] = useChatMessageShowDiff();
+  const [showDiff, setShowDiff] = useChatShowTextDiff();
   const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
 
   // derived state

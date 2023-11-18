@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
@@ -12,7 +11,9 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
-import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/state/store-ui';
+
+import { useChatShowSystemMessages } from '../../store-appchat';
 
 
 export function ChatMenuItems(props: {
@@ -26,9 +27,7 @@ export function ChatMenuItems(props: {
 
   // external state
   const { touch: shareTouch } = useUICounter('export-share');
-  const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
-    showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
-  }), shallow);
+  const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;

@@ -54,6 +54,9 @@ function Topic(props: { title: string, icon?: string | React.ReactNode, startCol
       expanded={expanded}
       onChange={(_event, expanded) => setExpanded(expanded)}
       sx={{
+        '&:not(:last-child)': {
+          borderBottomColor: 'primary.softActiveBg',
+        },
         '&:last-child': {
           borderBottom: 'none',
         },
@@ -148,7 +151,7 @@ export function SettingsModal() {
 
         <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
           <Topics>
-            <Topic icon={<TelegramIcon />} title='Chat UI'>
+            <Topic icon={<TelegramIcon />} title='User Interface'>
               <AppChatSettingsUI />
             </Topic>
             <Topic icon='🧠' title='Chat AI' startCollapsed>

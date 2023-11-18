@@ -61,14 +61,9 @@ interface UIPreferencesStore {
   showPurposeFinder: boolean;
   setShowPurposeFinder: (showPurposeFinder: boolean) => void;
 
-  showSystemMessages: boolean;
-  setShowSystemMessages: (showSystemMessages: boolean) => void;
-
   zenMode: 'clean' | 'cleaner';
   setZenMode: (zenMode: 'clean' | 'cleaner') => void;
 
-  autoSetChatTitle: boolean;
-  setAutoSetChatTitle: (autoSetChatTitle: boolean) => void;
 }
 
 export const useUIPreferencesStore = create<UIPreferencesStore>()(
@@ -93,18 +88,13 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
+      // Deprecated
       showPurposeFinder: false,
       setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
-
-      showSystemMessages: false,
-      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
 
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
-      autoSetChatTitle: true,
-      setAutoSetChatTitle: (autoSetChatTitle) => set({ autoSetChatTitle }),
-          
     }),
     {
       name: 'app-ui',

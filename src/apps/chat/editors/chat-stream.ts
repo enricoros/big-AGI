@@ -1,5 +1,5 @@
-import { SystemPurposeId } from '../../../data';
 import { DLLMId } from '~/modules/llms/store-llms';
+import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
@@ -7,15 +7,15 @@ import { streamChat } from '~/modules/llms/transports/streamChat';
 import { useElevenlabsStore } from '~/modules/elevenlabs/store-elevenlabs';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { createAssistantTypingMessage, updatePurposeInHistory } from './editors';
+import { getChatAutoAI } from '../store-appchat';
 
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, enableFollowUps: boolean) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) {
 
   // update the system message from the active Purpose, if not manually edited
   history = updatePurposeInHistory(conversationId, history, systemPurpose);
@@ -35,14 +35,14 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // clear to send, again
   startTyping(conversationId, null);
 
-  // auto-suggestions (fire/forget)
-  if (enableFollowUps)
-    autoSuggestions(conversationId, assistantMessageId);
+  // ai follow-up operations (fire/forget)
+  const { autoSetChatTitle, autoSuggestDiagrams, autoSuggestQuestions } = getChatAutoAI();
 
-  // update text, if needed (fire/forget)
-  const { autoSetChatTitle } = useUIPreferencesStore.getState();
   if (autoSetChatTitle)
     autoTitle(conversationId);
+
+  if (autoSuggestDiagrams || autoSuggestQuestions)
+    autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
 }
 
 
