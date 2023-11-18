@@ -32,7 +32,7 @@ import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { useChatShowTextDiff } from '../../store-appchat';
+import { useChatShowTextDiff } from '../../store-app-chat';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';

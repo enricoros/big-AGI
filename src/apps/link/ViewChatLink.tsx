@@ -5,7 +5,7 @@ import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
-import { useChatShowSystemMessages } from '../chat/store-appchat';
+import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';

@@ -3,18 +3,23 @@ import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
 
+export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
+
 interface AppChatState {
 
   // Chat AI
 
-  autoSetChatTitle: boolean;
-  setAutoSetChatTitle: (autoSetChatTitle: boolean) => void;
+  autoSpeak: ChatAutoSpeakType;
+  setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void;
 
   autoSuggestDiagrams: boolean,
   setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => void;
 
   autoSuggestQuestions: boolean,
   setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void;
+
+  autoTitleChat: boolean;
+  setautoTitleChat: (autoTitleChat: boolean) => void;
 
   // Chat
 
@@ -29,14 +34,19 @@ interface AppChatState {
 const useAppChatStore = create<AppChatState>()(persist(
   (set) => ({
 
-    autoSetChatTitle: true,
-    setAutoSetChatTitle: (autoSetChatTitle: boolean) => set({ autoSetChatTitle }),
+    // Chat AI
+
+    autoSpeak: 'off',
+    setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => set({ autoSpeak }),
 
     autoSuggestDiagrams: false,
     setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => set({ autoSuggestDiagrams }),
 
     autoSuggestQuestions: false,
     setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => set({ autoSuggestQuestions }),
+
+    autoTitleChat: false,
+    setautoTitleChat: (autoTitleChat: boolean) => set({ autoTitleChat }),
 
     showTextDiff: false,
     setShowTextDiff: (showTextDiff: boolean) => set({ showTextDiff }),
@@ -59,26 +69,30 @@ const useAppChatStore = create<AppChatState>()(persist(
 // Chat AI
 
 export const useChatAutoAI = (): {
-  autoSetChatTitle: boolean,
+  autoSpeak: ChatAutoSpeakType,
   autoSuggestDiagrams: boolean,
   autoSuggestQuestions: boolean,
-  setAutoSetChatTitle: (autoSetChatTitle: boolean) => void,
+  autoTitleChat: boolean,
+  setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void,
   setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => void,
-  setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void
-} =>
-  useAppChatStore(state => ({
-    autoSetChatTitle: state.autoSetChatTitle,
-    autoSuggestDiagrams: state.autoSuggestDiagrams,
-    autoSuggestQuestions: state.autoSuggestQuestions,
-    setAutoSetChatTitle: state.setAutoSetChatTitle,
-    setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
-    setAutoSuggestQuestions: state.setAutoSuggestQuestions,
-  }), shallow);
+  setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void,
+  setautoTitleChat: (autoTitleChat: boolean) => void,
+} => useAppChatStore(state => ({
+  autoSpeak: state.autoSpeak,
+  autoSuggestDiagrams: state.autoSuggestDiagrams,
+  autoSuggestQuestions: state.autoSuggestQuestions,
+  autoTitleChat: state.autoTitleChat,
+  setAutoSpeak: state.setAutoSpeak,
+  setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
+  setAutoSuggestQuestions: state.setAutoSuggestQuestions,
+  setautoTitleChat: state.setautoTitleChat,
+}), shallow);
 
 export const getChatAutoAI = (): {
-  autoSetChatTitle: boolean,
+  autoSpeak: ChatAutoSpeakType,
   autoSuggestDiagrams: boolean,
   autoSuggestQuestions: boolean,
+  autoTitleChat: boolean,
 } => useAppChatStore.getState();
 
 // Chat
