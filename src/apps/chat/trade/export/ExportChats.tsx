@@ -23,6 +23,7 @@ import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJ
 
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
+import { getChatShowSystemMessages } from '../../store-appchat';
 
 
 export type ExportConfig = { dir: 'export', conversationId: string | null };
@@ -114,7 +115,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     if (!conversation) return;
 
     setPublishUploading(true);
-    const markdownContent = conversationToMarkdown(conversation, !useUIPreferencesStore.getState().showSystemMessages);
+    const showSystemMessages = getChatShowSystemMessages();
+    const markdownContent = conversationToMarkdown(conversation, !showSystemMessages);
     try {
       const paste = await apiAsyncNode.trade.publishTo.mutate({
         to: 'paste.gg',

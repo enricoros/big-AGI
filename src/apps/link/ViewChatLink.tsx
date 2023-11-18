@@ -5,6 +5,7 @@ import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
+import { useChatShowSystemMessages } from '../chat/store-appchat';
 
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
@@ -22,7 +23,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const listBottomRef = React.useRef<HTMLDivElement>(null);
 
   // external state
-  const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
+  const [showSystemMessages] = useChatShowSystemMessages();
   const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
 
   // derived state

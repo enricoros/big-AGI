@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 
 
-export type ChatModeId = 'immediate' | 'immediate-follow-up' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
+export type ChatModeId = 'immediate' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
 
 /// Describe the chat modes
 export const ChatModeItems: {
@@ -32,10 +32,6 @@ export const ChatModeItems: {
     label: 'Assisted Draw',
     description: 'Assisted Image Generation',
     experimental: true,
-  },
-  'immediate-follow-up': {
-    label: 'Chat Plus · α',
-    description: 'Augmented chat with auto-diagrams',
   },
   'react': {
     label: 'Reason + Act · α',
