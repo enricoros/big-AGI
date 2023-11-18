@@ -30,18 +30,12 @@ export function UxLabsSettings() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <div />
-      <Button
-        variant='soft'
-        onClick={() => {
-          closeLayoutPreferences();
-          void navigateToLabs();
-        }}
-      >
-        👉 See Experiments
-      </Button>
-    </FormControl>
+    <Button variant='soft' onClick={() => {
+      closeLayoutPreferences();
+      void navigateToLabs();
+    }} sx={{ ml: 'auto' }}>
+      👉 See Experiments
+    </Button>
 
   </>;
 }
