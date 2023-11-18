@@ -228,12 +228,12 @@ export function Composer(props: {
       const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
       if (autoSend) {
         props.onNewMessage(chatModeId, props.conversationId!, newText);
-        playSoundUrl('/sounds/mic-off.mp3');
+        playSoundUrl('/sounds/mic-off-mid.mp3');
       } else {
         if (newText)
           props.composerTextAreaRef.current?.focus();
         if (!micContinuation)
-          playSoundUrl('/sounds/mic-off.mp3');
+          playSoundUrl('/sounds/mic-off-mid.mp3');
       }
 
       // set the text (or clear if auto-sent)
