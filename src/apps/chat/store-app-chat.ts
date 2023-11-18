@@ -56,11 +56,19 @@ const useAppChatStore = create<AppChatState>()(persist(
 
   }), {
     name: 'app-app-chat',
+    version: 1,
 
     // for now, let text diff be off by default
     onRehydrateStorage: () => (state) => {
       if (state)
         state.showTextDiff = false;
+    },
+
+    migrate: (state: any, fromVersion: number): AppChatState => {
+      // 0 -> 1: autoTitleChat was off by mistake - turn it on [Remove past Dec 1, 2023]
+      if (state && fromVersion < 1)
+        state.autoTitleChat = true;
+      return state;
     },
   },
 ));
