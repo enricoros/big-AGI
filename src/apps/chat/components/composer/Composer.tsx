@@ -29,6 +29,7 @@ import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { launchAppCall } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { pdfToText } from '~/common/util/pdfToText';
+import { playSoundUrl } from '~/common/util/audioUtils';
 import { useChatStore } from '~/common/state/store-chats';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -225,10 +226,15 @@ export function Composer(props: {
 
       // auto-send if requested
       const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
-      if (autoSend)
+      if (autoSend) {
         props.onNewMessage(chatModeId, props.conversationId!, newText);
-      else if (newText)
-        props.composerTextAreaRef.current?.focus();
+        playSoundUrl('/sounds/mic-off.mp3');
+      } else {
+        if (newText)
+          props.composerTextAreaRef.current?.focus();
+        if (!micContinuation)
+          playSoundUrl('/sounds/mic-off.mp3');
+      }
 
       // set the text (or clear if auto-sent)
       setComposeText(autoSend ? '' : newText);
