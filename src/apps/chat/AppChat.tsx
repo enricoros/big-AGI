@@ -166,6 +166,9 @@ export function AppChat() {
     composerTextAreaRef.current?.focus();
   });
 
+  const handleCloneConversation = (conversationId: string) => duplicateConversation(conversationId);
+  useGlobalShortcut('f', true, false, true, () => isConversationEmpty || activeConversationId && handleCloneConversation(activeConversationId));
+
   const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
   useGlobalShortcut('x', true, false, true, () => isConversationEmpty || setClearConfirmationId(activeConversationId));
 
@@ -188,6 +191,7 @@ export function AppChat() {
       setDeleteConfirmationId(null);
     }
   };
+  useGlobalShortcut('d', true, false, true, () => isConversationEmpty || setDeleteConfirmationId(activeConversationId));
 
 
   // Pluggable ApplicationBar components
