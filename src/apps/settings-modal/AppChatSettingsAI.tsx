@@ -3,18 +3,15 @@ import * as React from 'react';
 import { FormControl, Switch } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { useChatAutoAI } from '../chat/store-appchat';
+import { useChatAutoAI } from '../chat/store-app-chat';
 
 
 export function AppChatSettingsAI() {
 
   // external state
-  const {
-    autoSetChatTitle, autoSuggestDiagrams, autoSuggestQuestions,
-    setAutoSetChatTitle, setAutoSuggestDiagrams, setAutoSuggestQuestions,
-  } = useChatAutoAI();
+  const { autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestQuestions, setautoTitleChat } = useChatAutoAI();
 
-  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSetChatTitle(event.target.checked);
+  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setautoTitleChat(event.target.checked);
 
   const handleAutoSuggestDiagramsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestDiagrams(event.target.checked);
 
@@ -24,9 +21,9 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'
-                      description={autoSetChatTitle ? 'LLM Titling' : 'Manual only'} />
-      <Switch checked={autoSetChatTitle} onChange={handleAutoSetChatTitleChange}
-              endDecorator={autoSetChatTitle ? 'On' : 'Off'}
+                      description={autoTitleChat ? 'LLM Titling' : 'Manual only'} />
+      <Switch checked={autoTitleChat} onChange={handleAutoSetChatTitleChange}
+              endDecorator={autoTitleChat ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 

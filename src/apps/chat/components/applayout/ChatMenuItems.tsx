@@ -13,7 +13,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
 import { useUICounter } from '~/common/state/store-ui';
 
-import { useChatShowSystemMessages } from '../../store-appchat';
+import { useChatShowSystemMessages } from '../../store-app-chat';
 
 
 export function ChatMenuItems(props: {

@@ -23,7 +23,7 @@ import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJ
 
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
-import { getChatShowSystemMessages } from '../../store-appchat';
+import { getChatShowSystemMessages } from '../../store-app-chat';
 
 
 export type ExportConfig = { dir: 'export', conversationId: string | null };

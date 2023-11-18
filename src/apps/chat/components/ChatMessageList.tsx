@@ -16,7 +16,7 @@ import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/component
 import { ChatMessage } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { useChatShowSystemMessages } from '../store-appchat';
+import { useChatShowSystemMessages } from '../store-app-chat';
 
 
 /**

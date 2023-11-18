@@ -5,7 +5,7 @@ import { MenuItem, Switch, Typography } from '@mui/joy';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { useChatShowSystemMessages } from '../chat/store-appchat';
+import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 
 /**
