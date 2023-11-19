@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Typography } from '@mui/joy';
+import { Box, Button, Card, CardContent, Grid, Typography } from '@mui/joy';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
@@ -8,26 +9,79 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 5;
+export const incrementalVersion: number = 6;
 
-const B = (props: { children: React.ReactNode }) => <Typography color='danger' sx={{ fontWeight: 600 }}>{props.children}</Typography>;
+const B = (props: { href?: string, children: React.ReactNode }) => {
+  const boldText = <Typography color={!!props.href ? 'primary' : 'warning'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
+  return props.href ?
+    <Link href={props.href + clientUtmSource()} target='_blank' sx={{ /*textDecoration: 'underline'*/ }}>{boldText} <LaunchIcon sx={{ ml: 1 }} /></Link> :
+    boldText;
+};
+
+const { OpenRepo, OpenProject } = Brand.URIs;
+const RCode = `${OpenRepo}/blob/main`;
+const RIssues = `${OpenRepo}/issues`;
+
+// callout, for special occasions
+export const newsCallout =
+  <Card>
+    <CardContent sx={{ gap: 2 }}>
+      <Typography level='h2'>
+        Open Roadmap ✨
+      </Typography>
+      <Typography>
+        The roadmap is officially out. For the first time you get a look at what&apos;s brewing, up and coming, and get a chance to pick up cool features!
+      </Typography>
+      <Grid container spacing={1}>
+        <Grid xs={12} sm={7}>
+          <Button
+            fullWidth variant='solid' color='primary' size='lg' endDecorator={<LaunchIcon />}
+            component={Link} href={OpenProject} noLinkStyle target='_blank'
+          >
+            Explore the Roadmap
+          </Button>
+        </Grid>
+        <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
+          <Button
+            fullWidth variant='outlined' color='primary' endDecorator={<LaunchIcon />}
+            component={Link} href={RIssues + '/new?template=roadmap-request.md&title=%5BSuggestion%5D'} noLinkStyle target='_blank'
+          >
+            Suggest a Feature
+          </Button>
+        </Grid>
+      </Grid>
+    </CardContent>
+  </Card>;
+
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
     versionName: 'NEXT',
     items: [
-      { text: <>CloudFlare OpenAI API Gateway</> },
-      { text: <>Helicone Anthropic support</> },
-      { text: <>Highlight differneces (Labs)</> },
-      { text: <>(Labs mode) YouTube personas creator</> },
+      { text: <><B href='...'>Voice Calling</B> ...</> },
     ],
   },*/
+  {
+    versionName: '1.5.0',
+    text: 'Enjoy what\'s new:',
+    items: [
+      { text: <><B href={RIssues + '/190'}>Continued Voice</B> for hands-free interaction</> },
+      { text: <><B href={RIssues + '/192'}>Visualization</B> Tool for data representations</> },
+      { text: <><B href={RCode + '/docs/config-ollama.md'}>Ollama (guide)</B> local models support</> },
+      { text: <><B href={RIssues + '/194'}>Text Tools</B> including highlight differences</> },
+      { text: <><B href='https://mermaid.js.org/'>Mermaid</B> Diagramming Rendering</> },
+      { text: <><B>OpenAI 1106</B> Chat Models</> },
+      { text: <><B>SDXL</B> support with Prodia</> },
+      { text: <>Cloudflare OpenAI API Gateway</> },
+      { text: <>Helicone for Anthropic</> },
+    ],
+  },
   {
     versionName: '1.4.0',
     items: [
       { text: <><B>Share and clone</B> conversations, with public links</> },
-      { text: <><B>Azure</B> models <Link href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>full support</Link>, incl. gpt-4-32k</> },
+      { text: <><B href={RCode + '/docs/config-azure-openai.md'}>Azure</B> models, incl. gpt-4-32k</> },
       { text: <><B>OpenRouter</B> models full support, incl. gpt-4-32k</> },
       { text: <>Latex Rendering</> },
       { text: <>Augmented Chat modes (Labs)</> },
@@ -50,7 +104,7 @@ export const NewsItems: NewsItem[] = [
       { text: <><B>Flattener</B> - 4-mode conversations summarizer</> },
       { text: <><B>Forking</B> - branch your conversations</> },
       { text: <><B>/s</B> and <B>/a</B> to append a <i>system</i> or <i>assistant</i> message</> },
-      { text: <>Local LLMs with <Link href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-oobabooga.md' target='_blank'>Oobabooga server</Link></> },
+      { text: <>Local LLMs with <Link href={RCode + '/docs/config-local-oobabooga.md'} target='_blank'>Oobabooga server</Link></> },
       { text: 'NextJS STOP bug.. squashed, with Vercel!' },
     ],
   },
