@@ -57,9 +57,10 @@ export const newsCallout =
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-    versionName: 'NEXT',
+  // https://github.com/enricoros/big-agi/milestone/6
+  // https://github.com/users/enricoros/projects/4/views/2
+    versionName: '1.6.0',
     items: [
-      { text: <><B href='...'>Voice Calling</B> ...</> },
     ],
   },*/
   {

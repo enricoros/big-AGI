@@ -4,6 +4,9 @@ This is a high-level changelog. Calls out some of the high level features batche
 by release.
  - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
+### 1.6.0 - Dec 2023
+- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4) 
+- milestone: [1.6.0](https://github.com/enricoros/big-agi/milestone/6)
 
 ### ✨ What's New in 1.5.0 👊 - Nov 19, 2023
 
