@@ -7,7 +7,7 @@ import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
-import { NewsItems } from './news.data';
+import { newsCallout, NewsItems } from './news.data';
 
 
 export function AppNews() {
@@ -39,8 +39,10 @@ export function AppNews() {
         </Typography>
 
         <Typography>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionName}. Enjoy what&apos;s new:
+          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionName}.
         </Typography>
+
+        {!!newsCallout && <Container disableGutters maxWidth='sm'>{newsCallout}</Container>}
 
         {!!news && <Container disableGutters maxWidth='sm'>
           {news?.map((ni, idx) => {
@@ -62,7 +64,7 @@ export function AppNews() {
                   </li>)}
                 </ul>}
 
-                {!firstCard && (
+                {/*!firstCard &&*/ (
                   <Typography level='body-sm' sx={{ position: 'absolute', right: 0, top: 0 }}>
                     {ni.versionName}
                   </Typography>
