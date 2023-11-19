@@ -568,11 +568,13 @@ export function Composer(props: {
             {/* first row of buttons */}
             <Box sx={{ display: 'flex' }}>
 
-              {/* [mobile, corner] Call secondary button */}
-              {isMobile && isChat && <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
-
-              {/* [mobile, corner] Draw Options secondary button */}
-              {isMobile && (isDraw || isDrawPlus) && <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
+              {/* [mobile] bottom-corner secondary button */}
+              {isMobile && (isChat
+                  ? <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  : (isDraw || isDrawPlus)
+                    ? <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                    : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
+              )}
 
               {/* Responsive Send/Stop buttons */}
               {assistantTyping
