@@ -23,7 +23,7 @@ The development of big-AGI is an open book: our **[public roadmap](https://githu
 ## ✨ key Features 👊
 
 ![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
-[More](docs/pixels/big-AGI-compo2b.png), [screenshots](docs/pixels/).
+[More](docs/pixels/big-AGI-compo2b.png), [screenshots](docs/pixels).
 
 - **AI Personas**: Tailor your AI interactions with customizable personas
 - **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface

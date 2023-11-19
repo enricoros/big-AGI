@@ -14,7 +14,7 @@ import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { conversationTitle, useChatStore } from '~/common/state/store-chats';
 import { isBrowser } from '~/common/util/pwaUtils';
-import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/state/store-ui';
 
 import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
 

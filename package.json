@@ -50,7 +50,7 @@
     "zustand": "~4.3.9"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
+    "@types/node": "^20.9.2",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.3",
     "@types/react": "^18.2.37",
