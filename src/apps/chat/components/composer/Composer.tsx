@@ -228,11 +228,12 @@ export function Composer(props: {
       const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
       if (autoSend) {
         props.onNewMessage(chatModeId, props.conversationId!, newText);
-        playSoundUrl('/sounds/mic-off-mid.mp3');
+        if (result.doneReason !== 'manual')
+          playSoundUrl('/sounds/mic-off-mid.mp3');
       } else {
         if (newText)
           props.composerTextAreaRef.current?.focus();
-        if (!micContinuation)
+        if (!micContinuation && result.doneReason !== 'manual')
           playSoundUrl('/sounds/mic-off-mid.mp3');
       }
 
