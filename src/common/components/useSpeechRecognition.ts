@@ -7,10 +7,19 @@ import { useGlobalShortcut } from './useGlobalShortcut';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
+type DoneReason =
+  undefined               // upon start: not done yet
+  | 'manual'              // user clicked the stop button
+  | 'continuous-deadline' // we hit our `softStopTimeout` while listening continuously
+  | 'api-unknown-timeout' // a timeout has occurred
+  | 'api-error'           // underlying .onerror
+  | 'api-no-speech';      // underlying .onerror, user did not speak
+
 export interface SpeechResult {
   transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
   interimTranscript: string;  // for the continuous (interim) listening, this is the current transcript
   done: boolean;              // true if the recognition is done - no more updates after this
+  doneReason: DoneReason;     // the reason why the recognition is done
 }
 
 let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
@@ -38,7 +47,7 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
  */
 export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey: string | false) => {
   // enablers
-  const refRecognition = React.useRef<ISpeechRecognition | null>(null);
+  const refRecognition = React.useRef<SpeechRecoControls | null>(null);
   const onResultCallbackRef = React.useRef(onResultCallback);
 
   // session
@@ -63,7 +72,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     // do not re-initialize, just update the language (if we're here there's a high chance the language has changed)
     if (refRecognition.current) {
-      refRecognition.current.lang = preferredLanguage;
+      refRecognition.current.setLang(preferredLanguage);
       return;
     }
 
@@ -82,6 +91,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       transcript: '',
       interimTranscript: '',
       done: false,
+      doneReason: undefined,
     };
 
     const instance = new webSpeechAPI();
@@ -100,10 +110,11 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       }
     };
 
-    const reloadInactivityTimeout = (timeoutMs: number) => {
+    const reloadInactivityTimeout = (timeoutMs: number, doneReason: DoneReason) => {
       clearInactivityTimeout();
       inactivityTimeoutId = setTimeout(() => {
         inactivityTimeoutId = null;
+        speechResult.doneReason = doneReason;
         instance.stop();
       }, timeoutMs);
     };
@@ -122,6 +133,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       speechResult.transcript = '';
       speechResult.interimTranscript = 'Listening...';
       speechResult.done = false;
+      speechResult.doneReason = undefined;
       onResultCallbackRef.current(speechResult);
       // let the system handle the first stop (as long as possible)
       // if (instance.interimResults)
@@ -134,13 +146,17 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       clearInactivityTimeout();
       speechResult.interimTranscript = '';
       speechResult.done = true;
+      speechResult.doneReason = speechResult.doneReason ?? 'api-unknown-timeout';
       onResultCallbackRef.current(speechResult);
     };
 
     instance.onerror = event => {
-      if (event.error !== 'no-speech') {
+      if (event.error === 'no-speech') {
+        speechResult.doneReason = 'api-no-speech';
+      } else {
         console.error('Error occurred during speech recognition:', event.error);
         setIsSpeechError(true);
+        speechResult.doneReason = 'api-error';
       }
     };
 
@@ -181,11 +197,18 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
       // auto-stop
       if (instance.interimResults)
-        reloadInactivityTimeout(softStopTimeout);
+        reloadInactivityTimeout(softStopTimeout, 'continuous-deadline');
     };
 
-    // save the instance
-    refRecognition.current = instance;
+    // store the control interface
+    refRecognition.current = {
+      setLang: (lang: string) => instance.lang = lang,
+      start: () => instance.start(),
+      stop: (reason: DoneReason) => {
+        speechResult.doneReason = reason;
+        instance.stop();
+      },
+    };
     refStarted.current = false;
     setIsSpeechEnabled(true);
 
@@ -215,7 +238,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     if (!refStarted.current)
       return console.error('stopRecording: Stop recording called while not recording.');
 
-    refRecognition.current.stop();
+    refRecognition.current.stop('manual');
   }, []);
 
   const toggleRecording = React.useCallback(() => {
@@ -281,4 +304,10 @@ interface ISpeechRecognition extends EventTarget {
 interface ISpeechRecognitionEvent extends Event {
   // readonly resultIndex: number;
   readonly results: SpeechRecognitionResult[];
+}
+
+interface SpeechRecoControls {
+  setLang: (lang: string) => void;
+  start: () => void;
+  stop: (reason: DoneReason) => void;
 }
