@@ -242,13 +242,10 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
           controller.terminate();
           return;
         }
-        const secretSep = '<*j3-.fd@>'; // hack to not need to rewrite the parser
         try {
           const { text, close, functionCall } = vendorTextParser(event.data);
-          if (text)
-            controller.enqueue(textEncoder.encode(text));
-          if (functionCall)
-            controller.enqueue(textEncoder.encode(secretSep + JSON.stringify(functionCall) + secretSep));
+          if (text || functionCall)
+            controller.enqueue(textEncoder.encode(JSON.stringify({ text, functionCall }) + '\n'));
           if (close)
             controller.terminate();
         } catch (error: any) {

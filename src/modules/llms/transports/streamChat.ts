@@ -123,24 +123,23 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
     // normal exit condition
     if (done) break;
 
-    let newText = textDecoder.decode(value, { stream: true });
-    //plain & fxn call can be in same packet
-    let startOfFxnCall = newText.indexOf('<*j3-.fd@>');
-    if (startOfFxnCall !== -1)
-      incrementalText += newText.substring(0, startOfFxnCall);
-    else
-      incrementalText += newText;
+    const decoded = textDecoder.decode(value);
+    // console.log('Decoded:', decoded);
 
-    if (newText.includes('<*j3-.fd@>')) {
-      // console.log('Parsing fcall...', fcall, newText)
-      const splits = newText.substring(startOfFxnCall + 10).split('<*j3-.fd@>');
-      const fcallDeltas = splits.filter(s => s.trim().length > 0).map(s => JSON.parse(s));
+    let fCallDeltas = [];
+    for (const packet of decoded.split('\n')) {
+      if (!packet) continue; // since newline will be at the end, packet is empty string
+      const parsed = JSON.parse(packet);
+      if (parsed.text) incrementalText += parsed.text;
+      if (parsed.functionCall) fCallDeltas.push(parsed.functionCall);
+    }
+    if (fCallDeltas.length > 0) {
       // console.log('fcallDeltas', fcallDeltas)
-      for (const fcallDelta of fcallDeltas) {
-        if (fcallDelta?.name?.length > 0)
-          fcall['name'] = fcallDelta?.name;
-        if (fcallDelta?.arguments?.length > 0)
-          fcall['arguments'] += fcallDelta?.arguments;
+      for (const fCallDelta of fCallDeltas) {
+        if (fCallDelta?.name?.length > 0)
+          fcall['name'] = fCallDelta?.name;
+        if (fCallDelta?.arguments?.length > 0)
+          fcall['arguments'] += fCallDelta?.arguments;
       }
     }
 
@@ -166,7 +165,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       onUpdate({ text: incrementalText }, false);
   }
   if (fcall.name.length > 0) {
-    console.log('final fcall from vendorStreamChat:', { function_call: { name: fcall.name, arguments: JSON.parse(fcall.arguments) } })
+    // console.log('final fcall from vendorStreamChat:', { function_call: { name: fcall.name, arguments: JSON.parse(fcall.arguments) } })
     return {
       function_call: { name: fcall.name, arguments: fcall.arguments },
       role: 'assistant', content: null

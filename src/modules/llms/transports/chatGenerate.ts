@@ -4,9 +4,10 @@ import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
 
 export interface VChatMessageIn {
-  role: 'assistant' | 'system' | 'user'; // | 'function';
+  role: 'assistant' | 'system' | 'user' | 'function';
   content: string;
-  //name?: string; // when role: 'function'
+  name?: string; // when role: 'function'
+  function_call?: { name: string, arguments: object };
 }
 
 export type VChatFunctionIn = OpenAIWire.ChatCompletion.RequestFunctionDef;
