@@ -1,5 +1,3 @@
-import { shallow } from 'zustand/shallow';
-
 import { backendCaps } from '~/modules/backend/state-backend';
 
 import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';

@@ -6,7 +6,7 @@ import { keyframes } from '@emotion/react';
 
 // CSS utils
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
+// export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 // Dimensions
 export const settingsGap = 2;
