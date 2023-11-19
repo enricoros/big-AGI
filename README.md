@@ -59,9 +59,10 @@ The development of big-AGI is an open book: our **[public roadmap](https://githu
 - **Ollama Local Models**
 - **OpenAI Nov.2023** Models
 - **Mermaid Language** Rendring
-- **Cloudflare API Gateway** support
-- **Helicone for Anthropic** support
 - **Text Tools** - incl. highlight differences
+- **SDXL support** - for Prodia image generation
+- Cloudflare OpenAI API Gateway
+- Helicone for Anthropic
 
 #### 1.4.0: Sept/Oct: scale OUT
 
