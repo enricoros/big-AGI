@@ -26,9 +26,9 @@ export namespace OpenAIWire {
     }
 
     export interface RequestMessage {
-      role: 'assistant' | 'system' | 'user'; // | 'function';
+      role: 'assistant' | 'system' | 'user' | 'function';
       content: string;
-      //name?: string; // when role: 'function'
+      name?: string; // when role: 'function'
     }
 
     export interface RequestFunctionDef { // [FN0613]
@@ -86,7 +86,7 @@ export namespace OpenAIWire {
       model: string;
       choices: {
         index: number;
-        delta: Partial<ResponseMessage>;
+        delta: Partial<ResponseMessage> & Partial<ResponseFunctionCall>; // [FN0613]
         finish_reason: 'stop' | 'length' | null;
       }[];
       // undocumented, but can be present, e.g. "This model version is deprecated and a newer version \'gpt-4-0613\' is available. Migrate before..."

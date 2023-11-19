@@ -8,7 +8,7 @@ import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
 import type { OpenAIWire } from './openai.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from '../anthropic/anthropic.router';
 import { ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from '../ollama/ollama.router';
-import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
+import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema, openAIFunctionsSchema } from './openai.router';
 import { wireOllamaGenerationSchema } from '../ollama/ollama.wiretypes';
 
 
@@ -20,7 +20,7 @@ import { wireOllamaGenerationSchema } from '../ollama/ollama.wiretypes';
  * The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
  * communicate parameters before the text starts flowing to the client.
  */
-export type AIStreamParser = (data: string) => { text: string, close: boolean };
+export type AIStreamParser = (data: string) => { text?: string, close: boolean, functionCall?: OpenAIWire.ChatCompletion.ResponseFunctionCall['function_call'] };
 
 type EventStreamFormat = 'sse' | 'json-nl';
 
@@ -28,6 +28,7 @@ type EventStreamFormat = 'sse' | 'json-nl';
 const chatStreamInputSchema = z.object({
   access: z.union([anthropicAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
   model: openAIModelSchema, history: openAIHistorySchema,
+  functions: openAIFunctionsSchema.optional(),
 });
 export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
 
@@ -40,7 +41,7 @@ export type ChatStreamFirstPacketSchema = z.infer<typeof chatStreamFirstPacketSc
 export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { access, model, history } = chatStreamInputSchema.parse(await req.json());
+  const { access, model, history, functions } = chatStreamInputSchema.parse(await req.json());
 
   // begin event streaming from the OpenAI API
   let headersUrl: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
@@ -71,7 +72,7 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
       case 'openai':
       case 'openrouter':
         headersUrl = openAIAccess(access, model.id, '/v1/chat/completions');
-        body = openAIChatCompletionPayload(model, history, null, null, 1, true);
+        body = openAIChatCompletionPayload(model, history, functions || null, null, 1, true);
         vendorStreamParser = createOpenAIStreamParser();
         break;
     }
@@ -191,6 +192,7 @@ function createOpenAIStreamParser(): AIStreamParser {
     if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
       throw new Error(`Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
+    const functionCall = json.choices[0].delta?.function_call;
 
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
@@ -201,7 +203,7 @@ function createOpenAIStreamParser(): AIStreamParser {
 
     // [LocalAI] workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
     const close = !!json.choices[0].finish_reason;
-    return { text, close };
+    return { text, close, functionCall };
   };
 }
 
@@ -240,11 +242,13 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
           controller.terminate();
           return;
         }
-
+        const secretSep = '<*j3-.fd@>'; // hack to not need to rewrite the parser
         try {
-          const { text, close } = vendorTextParser(event.data);
+          const { text, close, functionCall } = vendorTextParser(event.data);
           if (text)
             controller.enqueue(textEncoder.encode(text));
+          if (functionCall)
+            controller.enqueue(textEncoder.encode(secretSep + JSON.stringify(functionCall) + secretSep));
           if (close)
             controller.terminate();
         } catch (error: any) {

@@ -5,7 +5,7 @@ import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
 import type { ChatStreamFirstPacketSchema, ChatStreamInputSchema } from './server/openai/openai.streaming';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
-import type { VChatMessageIn } from './chatGenerate';
+import type { VChatMessageIn, VChatFunctionIn } from './chatGenerate';
 
 
 /**
@@ -25,10 +25,11 @@ export async function streamChat(
   messages: VChatMessageIn[],
   abortSignal: AbortSignal,
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
-): Promise<void> {
+  functions?: VChatFunctionIn[],
+): Promise<void | OpenAIWire.ChatCompletion.ResponseFunctionCall> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
   const access = vendor.getAccess(llm._source.setup) as ChatStreamInputSchema['access'];
-  return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate);
+  return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate, functions);
 }
 
 
@@ -38,7 +39,8 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   messages: VChatMessageIn[],
   abortSignal: AbortSignal,
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
-) {
+  functions?: VChatFunctionIn[],
+): Promise<void | OpenAIWire.ChatCompletion.ResponseFunctionCall> {
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API
   if (access.dialect === 'openai') {
@@ -92,6 +94,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       maxTokens: llmResponseTokens,
     },
     history: messages,
+    functions: functions ?? undefined,
   };
 
   // connect to the server-side streaming endpoint
@@ -113,13 +116,33 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   // loop forever until the read is done, or the abort controller is triggered
   let incrementalText = '';
   let parsedFirstPacket = false;
+  const fcall = { 'name': '', 'arguments': '' };
   while (true) {
     const { value, done } = await responseReader.read();
 
     // normal exit condition
     if (done) break;
 
-    incrementalText += textDecoder.decode(value, { stream: true });
+    let newText = textDecoder.decode(value, { stream: true });
+    //plain & fxn call can be in same packet
+    let startOfFxnCall = newText.indexOf('<*j3-.fd@>');
+    if (startOfFxnCall !== -1)
+      incrementalText += newText.substring(0, startOfFxnCall);
+    else
+      incrementalText += newText;
+
+    if (newText.includes('<*j3-.fd@>')) {
+      // console.log('Parsing fcall...', fcall, newText)
+      const splits = newText.substring(startOfFxnCall + 10).split('<*j3-.fd@>');
+      const fcallDeltas = splits.filter(s => s.trim().length > 0).map(s => JSON.parse(s));
+      // console.log('fcallDeltas', fcallDeltas)
+      for (const fcallDelta of fcallDeltas) {
+        if (fcallDelta?.name?.length > 0)
+          fcall['name'] = fcallDelta?.name;
+        if (fcallDelta?.arguments?.length > 0)
+          fcall['arguments'] += fcallDelta?.arguments;
+      }
+    }
 
     // (streaming workaround) there may be a JSON object at the beginning of the message,
     // injected by us to transmit the model name
@@ -141,5 +164,12 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
 
     if (incrementalText)
       onUpdate({ text: incrementalText }, false);
+  }
+  if (fcall.name.length > 0) {
+    console.log('final fcall from vendorStreamChat:', { function_call: { name: fcall.name, arguments: JSON.parse(fcall.arguments) } })
+    return {
+      function_call: { name: fcall.name, arguments: fcall.arguments },
+      role: 'assistant', content: null
+    };
   }
 }
