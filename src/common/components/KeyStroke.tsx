@@ -8,7 +8,7 @@ import { isMacUser } from '~/common/util/pwaUtils';
 
 
 export function platformAwareKeystrokes(text: string) {
-  return !isMacUser
+  return isMacUser
     ? text
       .replaceAll('Ctrl', '⌘')
       .replaceAll('Alt', '⌥')
