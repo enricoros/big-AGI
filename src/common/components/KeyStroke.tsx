@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Chip } from '@mui/joy';
-import { SxProps } from '@mui/system';
+import { SxProps } from '@mui/joy/styles/types';
 
 import { hideOnMobile } from '~/common/app.theme';
 import { isMacUser } from '~/common/util/pwaUtils';
