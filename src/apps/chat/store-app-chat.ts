@@ -19,9 +19,7 @@ interface AppChatState {
   setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void;
 
   autoTitleChat: boolean;
-  setautoTitleChat: (autoTitleChat: boolean) => void;
-
-  // Chat
+  setAutoTitleChat: (autoTitleChat: boolean) => void;
 
   showTextDiff: boolean;
   setShowTextDiff: (showTextDiff: boolean) => void;
@@ -46,7 +44,7 @@ const useAppChatStore = create<AppChatState>()(persist(
     setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => set({ autoSuggestQuestions }),
 
     autoTitleChat: true,
-    setautoTitleChat: (autoTitleChat: boolean) => set({ autoTitleChat }),
+    setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
 
     showTextDiff: false,
     setShowTextDiff: (showTextDiff: boolean) => set({ showTextDiff }),
@@ -93,7 +91,7 @@ export const useChatAutoAI = (): {
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
-  setautoTitleChat: state.setautoTitleChat,
+  setAutoTitleChat: state.setAutoTitleChat,
 }), shallow);
 
 export const getChatAutoAI = (): {
@@ -102,8 +100,6 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
-
-// Chat
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
   useAppChatStore(state => [state.showTextDiff, state.setShowTextDiff], shallow);

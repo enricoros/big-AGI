@@ -11,9 +11,9 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 export function AppChatSettingsAI() {
 
   // external state
-  const { autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestQuestions, setautoTitleChat } = useChatAutoAI();
+  const { autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestQuestions, setAutoTitleChat } = useChatAutoAI();
 
-  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setautoTitleChat(event.target.checked);
+  const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoTitleChat(event.target.checked);
 
   const handleAutoSuggestDiagramsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestDiagrams(event.target.checked);
 
