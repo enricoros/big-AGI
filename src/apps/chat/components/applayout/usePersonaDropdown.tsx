@@ -9,8 +9,8 @@ import { APP_CALL_ENABLED } from '../../../call/AppCall';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { AppBarDropdown } from '~/common/layout/AppBarDropdown';
+import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { launchAppCall } from '~/common/app.routes';
-import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -52,7 +52,7 @@ function AppBarPersonaDropdown(props: {
 
 }
 
-export function usePersonaIdDropdown(conversationId: string | null) {
+export function usePersonaIdDropdown(conversationId: DConversationId | null) {
 
   // external state
   const { systemPurposeId } = useChatStore(state => {

@@ -6,7 +6,40 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatModeId, ChatModeItems } from './store-composer';
+import { ChatModeId } from '../../AppChat';
+
+
+interface ChatModeDescription {
+  label: string;
+  description: string | React.JSX.Element;
+  shortcut?: string;
+  experimental?: boolean;
+}
+
+const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
+  'immediate': {
+    label: 'Chat',
+    description: 'Persona replies',
+  },
+  'write-user': {
+    label: 'Write',
+    description: 'Appends a message',
+    shortcut: 'Alt + Enter',
+  },
+  'draw-imagine': {
+    label: 'Draw',
+    description: 'AI Image Generation',
+  },
+  'draw-imagine-plus': {
+    label: 'Assisted Draw',
+    description: 'Assisted Image Generation',
+    experimental: true,
+  },
+  'react': {
+    label: 'Reason + Act · α',
+    description: 'Answers questions in multiple steps',
+  },
+};
 
 
 function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
@@ -15,7 +48,7 @@ function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
   return shortcut;
 }
 
-export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) => {
+export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) {
 
   // external state
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -43,10 +76,10 @@ export const ChatModeMenu = (props: { anchorEl: HTMLAnchorElement | null, onClos
               <Typography level='body-xs'>{data.description}</Typography>
             </Box>
             {(key === props.chatModeId || !!data.shortcut) && (
-              <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : "ENTER", enterIsNewline)} />
+              <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline)} />
             )}
           </Box>
         </MenuItem>)}
 
   </CloseableMenu>;
-};
+}

@@ -14,6 +14,7 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { ChatModeId } from '../../AppChat';
 import { APP_CALL_ENABLED } from '../../../call/AppCall';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
@@ -39,10 +40,10 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { ButtonCameraCapture } from './ButtonCameraCapture';
 import { ButtonClipboardPaste } from './ButtonClipboardPaste';
 import { ButtonFileAttach } from './ButtonFileAttach';
-import { ChatModeId, useComposerStartupText } from './store-composer';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
+import { useComposerStartupText } from './store-composer';
 
 
 /// Text template helpers
@@ -211,7 +212,7 @@ export function Composer(props: {
   const handleModeSelectorShow = (event: React.MouseEvent<HTMLAnchorElement>) =>
     setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
 
-  const handleModeSetId = (_chatModeId: ChatModeId) => {
+  const handleModeChange = (_chatModeId: ChatModeId) => {
     handleModeSelectorHide();
     setChatModeId(_chatModeId);
   };
@@ -638,7 +639,7 @@ export function Composer(props: {
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
             experimental={experimentalLabs}
-            chatModeId={chatModeId} onSetChatModeId={handleModeSetId}
+            chatModeId={chatModeId} onSetChatModeId={handleModeChange}
           />
         )}
 
