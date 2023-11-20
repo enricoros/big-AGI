@@ -9,6 +9,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
+import type { DConversationId } from '~/common/state/store-chats';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { closeLayoutMenu } from '~/common/layout/store-applayout';
 import { useUICounter } from '~/common/state/store-ui';
@@ -17,12 +18,15 @@ import { useChatShowSystemMessages } from '../../store-app-chat';
 
 
 export function ChatMenuItems(props: {
-  conversationId: string | null, isConversationEmpty: boolean, hasConversations: boolean,
-  isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-  onClearConversation: (conversationId: string) => void,
-  onDuplicateConversation: (conversationId: string) => void,
-  onExportConversation: (conversationId: string | null) => void,
-  onFlattenConversation: (conversationId: string) => void,
+  conversationId: DConversationId | null,
+  hasConversations: boolean,
+  isConversationEmpty: boolean,
+  isMessageSelectionMode: boolean,
+  setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
+  onClearConversation: (conversationId: DConversationId) => void,
+  onCloneConversation: (conversationId: DConversationId) => void,
+  onExportConversation: (conversationId: DConversationId | null) => void,
+  onFlattenConversation: (conversationId: DConversationId) => void,
 }) {
 
   // external state
@@ -32,37 +36,40 @@ export function ChatMenuItems(props: {
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
 
-  const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
 
-  const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
+  const closeMenu = (event: React.MouseEvent) => {
+    event.stopPropagation();
     closeLayoutMenu();
+  };
+
+  const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.conversationId && props.onClearConversation(props.conversationId);
+  };
+
+  const handleConversationClone = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.conversationId && props.onCloneConversation(props.conversationId);
+  };
+
+  const handleConversationExport = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
     props.onExportConversation(!disabled ? props.conversationId : null);
     shareTouch();
   };
 
-  const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    closeLayoutMenu();
-    props.conversationId && props.onDuplicateConversation(props.conversationId);
-  };
-
-  const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    closeLayoutMenu();
+  const handleConversationFlatten = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
     props.conversationId && props.onFlattenConversation(props.conversationId);
   };
 
-  const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    closeLayoutMenu();
+  const handleToggleMessageSelectionMode = (event: React.MouseEvent) => {
+    closeMenu(event);
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
-  const handleConversationClear = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    props.conversationId && props.onClearConversation(props.conversationId);
-  };
+  const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
+
 
   return <>
 
@@ -72,15 +79,15 @@ export function ChatMenuItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem onClick={handleSystemMessagesToggle}>
+    <MenuItem onClick={handleToggleSystemMessages}>
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
       System message
-      <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
+      <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
     </MenuItem>
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
+    <MenuItem disabled={disabled} onClick={handleConversationClone}>
       <ListItemDecorator>
         {/*<Badge size='sm' color='success'>*/}
         <ForkRightIcon color='success' />
