@@ -17,7 +17,8 @@ import { ConversationItem } from './ConversationItem';
 type ListGrouping = 'off' | 'persona';
 
 export function ChatDrawerItems(props: {
-  conversationId: string | null
+  activeConversationId: string | null,
+  setActiveConversationId: (conversationId: string) => void,
   onDeleteAllConversations: () => void,
   onImportConversation: () => void,
 }) {
@@ -26,11 +27,10 @@ export function ChatDrawerItems(props: {
   const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const { conversationIDs, topNewConversationId, maxChatMessages, setActiveConversationId, createConversationOrSwitch, deleteConversation } = useChatStore(state => ({
+  const { conversationIDs, topNewConversationId, maxChatMessages, createConversationOrSwitch, deleteConversation } = useChatStore(state => ({
     conversationIDs: state.conversations.map(conversation => conversation.id),
     topNewConversationId: state.conversations.length ? state.conversations[0].messages.length === 0 ? state.conversations[0].id : null : null,
     maxChatMessages: state.conversations.reduce((longest, conversation) => Math.max(longest, conversation.messages.length), 0),
-    setActiveConversationId: state.setActiveConversationId,
     createConversationOrSwitch: state.createConversationOrSwitch,
     deleteConversation: state.deleteConversation,
   }), shallow);
@@ -50,6 +50,7 @@ export function ChatDrawerItems(props: {
     closeLayoutDrawer();
   };
 
+  const { setActiveConversationId } = props;
   const handleConversationActivate = React.useCallback((conversationId: string, closeMenu: boolean) => {
     setActiveConversationId(conversationId);
     if (closeMenu)
@@ -89,7 +90,7 @@ export function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem disabled={!!topNewConversationId && topNewConversationId === props.conversationId} onClick={handleNew}>
+    <MenuItem disabled={!!topNewConversationId && topNewConversationId === props.activeConversationId} onClick={handleNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         New
@@ -118,7 +119,7 @@ export function ChatDrawerItems(props: {
         <ConversationItem
           key={'c-id-' + conversationId}
           conversationId={conversationId}
-          isActive={conversationId === props.conversationId}
+          isActive={conversationId === props.activeConversationId}
           isSingle={singleChat}
           showSymbols={showSymbols}
           maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
