@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Chip, ColorPaletteProp, VariantProp } from '@mui/joy';
-import { SxProps } from '@mui/system';
+import { SxProps } from '@mui/joy/styles/types';
 
 import { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 
