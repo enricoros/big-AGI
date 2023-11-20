@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
@@ -8,6 +9,8 @@ import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
 
+
+export type DConversationId = string;
 
 /**
  * Conversation, a list of messages between humans and bots

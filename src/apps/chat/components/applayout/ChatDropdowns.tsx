@@ -1,11 +1,13 @@
 import * as React from 'react';
 
+import type { DConversationId } from '~/common/state/store-chats';
+
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
 
 
 export function ChatDropdowns(props: {
-  conversationId: string | null
+  conversationId: DConversationId | null
 }) {
 
   // state
