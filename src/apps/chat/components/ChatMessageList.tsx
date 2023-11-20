@@ -10,7 +10,7 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { GlobalShortcut, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
-import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/components/useCapabilities';
 
@@ -24,11 +24,11 @@ import { useChatShowSystemMessages } from '../store-app-chat';
  * A list of ChatMessages
  */
 export function ChatMessageList(props: {
-  conversationId: string | null,
+  conversationId: DConversationId | null,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-  onExecuteChatHistory: (conversationId: string, history: DMessage[]) => void,
+  onExecuteChatHistory: (conversationId: DConversationId, history: DMessage[]) => void,
   onDiagramFromText: (diagramConfig: DiagramConfig | null) => Promise<any>,
-  onImagineFromText: (conversationId: string, selectedText: string) => Promise<any>,
+  onImagineFromText: (conversationId: DConversationId, selectedText: string) => Promise<any>,
   sx?: SxProps
 }) {
 

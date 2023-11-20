@@ -7,8 +7,8 @@ import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { Link } from '~/common/components/Link';
-import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -38,7 +38,7 @@ const getRandomElement = <T, >(array: T[]): T | undefined =>
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PersonaSelector(props: { conversationId: string, runExample: (example: string) => void }) {
+export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: string) => void }) {
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
