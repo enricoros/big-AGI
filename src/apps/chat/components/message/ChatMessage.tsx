@@ -27,12 +27,12 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { useChatMessageShowDiff } from '../../state/store-appchat';
+import { useChatShowTextDiff } from '../../store-app-chat';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -223,7 +223,7 @@ export function ChatMessage(props: {
     renderMarkdown: state.renderMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
-  const [showDiff, setShowDiff] = useChatMessageShowDiff();
+  const [showDiff, setShowDiff] = useChatShowTextDiff();
   const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
 
   // derived state
@@ -492,7 +492,7 @@ export function ChatMessage(props: {
 
           {/* sequence of render components, for each Block */}
           {!errorMessage && parseBlocks(collapsedText, fromSystem, textDiffs)
-            .filter(block => !props.diagramMode || block.type === 'code')
+            .filter((block, _, blocks) => !props.diagramMode || block.type === 'code' || blocks.length === 1)
             .map(
               (block, index) =>
                 block.type === 'html'

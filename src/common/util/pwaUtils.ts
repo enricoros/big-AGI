@@ -8,6 +8,7 @@ const safeUA = isBrowser ? window.navigator?.userAgent || '' : '';
 export const isIPhoneUser = /iPhone|iPod/.test(safeUA);
 export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K/.test(safeUA);
 export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('Mobile') === -1;
+export const isFirefox = safeUA.indexOf('Firefox') > -1;
 
 
 /**

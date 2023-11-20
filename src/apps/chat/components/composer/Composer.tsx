@@ -24,10 +24,12 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
+import { getClipboardItems, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { launchAppCall } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { pdfToText } from '~/common/util/pdfToText';
+import { playSoundUrl } from '~/common/util/audioUtils';
 import { useChatStore } from '~/common/state/store-chats';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -116,6 +118,7 @@ const DrawOptionsButtonDesktop = (props: { onClick: () => void, sx?: SxProps }) 
 export function Composer(props: {
   conversationId: string | null; messageId: string | null;
   isDeveloperMode: boolean;
+  composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   onNewMessage: (chatModeId: ChatModeId, conversationId: string, text: string) => void;
   sx?: SxProps;
 }) {
@@ -166,7 +169,7 @@ export function Composer(props: {
 
   const handleSendClicked = (_chatModeId: ChatModeId) => {
     const text = (composeText || '').trim();
-    if (text.length && props.conversationId) {
+    if (text.length && props.conversationId && chatLLMId) {
       setComposeText('');
       props.onNewMessage(_chatModeId, props.conversationId, text);
     }
@@ -223,8 +226,16 @@ export function Composer(props: {
 
       // auto-send if requested
       const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
-      if (autoSend)
+      if (autoSend) {
         props.onNewMessage(chatModeId, props.conversationId!, newText);
+        if (result.doneReason !== 'manual')
+          playSoundUrl('/sounds/mic-off-mid.mp3');
+      } else {
+        if (newText)
+          props.composerTextAreaRef.current?.focus();
+        if (!micContinuation && result.doneReason !== 'manual')
+          playSoundUrl('/sounds/mic-off-mid.mp3');
+      }
 
       // set the text (or clear if auto-sent)
       setComposeText(autoSend ? '' : newText);
@@ -304,7 +315,7 @@ export function Composer(props: {
   const handleCameraOCR = (text: string) => text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
 
   const handlePasteClipboard = React.useCallback(async () => {
-    for (const clipboardItem of await navigator.clipboard.read()) {
+    for (const clipboardItem of await getClipboardItems()) {
 
       // when pasting html, only process tables as markdown (e.g. from Excel), or fallback to text
       try {
@@ -336,7 +347,7 @@ export function Composer(props: {
     }
   }, [setComposeText]);
 
-  useGlobalShortcut('v', true, true, false, handlePasteClipboard);
+  useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, handlePasteClipboard);
 
   const handleTextareaCtrlV = async (event: React.ClipboardEvent) => {
 
@@ -404,7 +415,6 @@ export function Composer(props: {
   const isImmediate = chatModeId === 'immediate';
   const isWriteUser = chatModeId === 'write-user';
   const isChat = isImmediate || isWriteUser;
-  const isFollowUp = chatModeId === 'immediate-follow-up';
   const isReAct = chatModeId === 'react';
   const isDraw = chatModeId === 'draw-imagine';
   const isDrawPlus = chatModeId === 'draw-imagine-plus';
@@ -441,7 +451,7 @@ export function Composer(props: {
             <ButtonFileAttach isMobile={isMobile} onAttachFiles={loadAndAttachFiles} />
 
             {/* Responsive Paste button */}
-            <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handlePasteClipboard} />
+            {supportsClipboardRead && <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handlePasteClipboard} />}
 
           </Box>
 
@@ -467,6 +477,7 @@ export function Composer(props: {
                       ...(isSpeechEnabled && { pr: { md: 5 } }),
                       mb: 0.5,
                     },
+                    ref: props.composerTextAreaRef,
                   },
                 }}
                 sx={{
@@ -557,11 +568,13 @@ export function Composer(props: {
             {/* first row of buttons */}
             <Box sx={{ display: 'flex' }}>
 
-              {/* [mobile, corner] Call secondary button */}
-              {isMobile && isChat && <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
-
-              {/* [mobile, corner] Draw Options secondary button */}
-              {isMobile && (isDraw || isDrawPlus) && <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />}
+              {/* [mobile] bottom-corner secondary button */}
+              {isMobile && (isChat
+                  ? <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  : (isDraw || isDrawPlus)
+                    ? <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                    : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
+              )}
 
               {/* Responsive Send/Stop buttons */}
               {assistantTyping
@@ -574,14 +587,14 @@ export function Composer(props: {
                     Stop
                   </Button>
                 ) : (
-                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
                     <Button
-                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isFollowUp || isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
+                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM}
                       onClick={() => handleSendClicked(chatModeId)}
                       endDecorator={micIsContinuing ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                     >
                       {micIsContinuing && 'Voice '}
-                      {isWriteUser ? 'Write' : isFollowUp ? 'Chat+' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
+                      {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
                     </Button>
                     <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleToggleChatMode}>
                       <ExpandLessIcon />

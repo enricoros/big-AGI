@@ -1,6 +1,6 @@
 {
   "name": "big-agi",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -19,9 +19,9 @@
     "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.16",
-    "@mui/joy": "^5.0.0-beta.14",
-    "@next/bundle-analyzer": "^14.0.2",
-    "@prisma/client": "^5.5.2",
+    "@mui/joy": "^5.0.0-beta.15",
+    "@next/bundle-analyzer": "^14.0.3",
+    "@prisma/client": "^5.6.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.7.1",
     "@tanstack/react-query": "^4.36.1",
@@ -33,8 +33,8 @@
     "browser-fs-access": "^0.35.0",
     "eventsource-parser": "^1.1.1",
     "idb-keyval": "^6.2.1",
-    "next": "^14.0.2",
-    "pdfjs-dist": "3.11.174",
+    "next": "^14.0.3",
+    "pdfjs-dist": "4.0.189",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
@@ -50,7 +50,7 @@
     "zustand": "~4.3.9"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
+    "@types/node": "^20.9.2",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.3",
     "@types/react": "^18.2.37",
@@ -58,10 +58,10 @@
     "@types/react-katex": "^3.0.3",
     "@types/react-timeago": "^4.1.6",
     "@types/uuid": "^9.0.7",
-    "eslint": "^8.53.0",
-    "eslint-config-next": "^14.0.2",
+    "eslint": "^8.54.0",
+    "eslint-config-next": "^14.0.3",
     "prettier": "^3.1.0",
-    "prisma": "^5.5.2",
+    "prisma": "^5.6.0",
     "typescript": "^5.2.2"
   },
   "engines": {

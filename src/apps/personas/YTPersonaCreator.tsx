@@ -7,7 +7,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { apiQuery } from '~/common/util/trpc.client';
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -11,7 +10,7 @@ import { playSoundUrl } from '~/common/util/audioUtils';
 
 import { VoiceSchema } from './elevenlabs.router';
 import { isElevenLabsEnabled } from './elevenlabs.client';
-import { useElevenlabsStore } from './store-elevenlabs';
+import { useElevenLabsApiKey, useElevenLabsVoiceId } from './store-module-elevenlabs';
 
 
 function VoicesDropdown(props: {
@@ -50,25 +49,34 @@ function VoicesDropdown(props: {
 }
 
 
-export function useVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
+export function useElevenLabsVoices() {
+  const [apiKey] = useElevenLabsApiKey();
 
-  // external state
-  const { apiKey, voiceId } = useElevenlabsStore(state => ({
-    apiKey: state.elevenLabsApiKey,
-    voiceId: state.elevenLabsVoiceId,
-  }), shallow);
+  const isConfigured = isElevenLabsEnabled(apiKey);
 
-  // derived state
-  const isValidKey = isElevenLabsEnabled(apiKey);
-
-  // remote state
   const { data, isLoading, isError } = apiQuery.elevenlabs.listVoices.useQuery({ elevenKey: apiKey }, {
-    enabled: isValidKey,
+    enabled: isConfigured,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // global voice
-  const voice: VoiceSchema | undefined = data?.voices.find(voice => voice.id === voiceId);
+  return {
+    isConfigured,
+    isLoading,
+    isError,
+    hasVoices: !isLoading && !!data?.voices.length,
+    voices: data?.voices || [],
+  };
+}
+
+
+export function useElevenLabsVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
+
+  // external state
+  const { isConfigured, isLoading, isError, hasVoices, voices } = useElevenLabsVoices();
+  const [voiceId, setVoiceId] = useElevenLabsVoiceId();
+
+  // derived state
+  const voice: VoiceSchema | undefined = voices.find(voice => voice.id === voiceId);
 
   // [E] autoSpeak
   const previewUrl = (autoSpeak && voice?.previewUrl) || null;
@@ -79,15 +87,15 @@ export function useVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
-        isValidKey={isValidKey} isLoadingVoices={isLoading} isErrorVoices={isError} disabled={disabled}
-        voices={data?.voices || []}
-        voiceId={voiceId} setVoiceId={(voiceId) => useElevenlabsStore.getState().setElevenLabsVoiceId(voiceId)}
+        isValidKey={isConfigured} isLoadingVoices={isLoading} isErrorVoices={isError} disabled={disabled}
+        voices={voices}
+        voiceId={voiceId} setVoiceId={setVoiceId}
       />,
-    [data?.voices, disabled, isError, isLoading, isValidKey, voiceId],
+    [disabled, isConfigured, isError, isLoading, setVoiceId, voiceId, voices],
   );
 
   return {
-    hasVoices: !isLoading && data?.voices.length,
+    hasVoices,
     voiceId,
     voiceName: voice?.name,
     voicesDropdown,
