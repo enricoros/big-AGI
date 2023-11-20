@@ -43,12 +43,13 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, hasAnyContent, newConversation, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
+  const { activeConversationId, setActiveConversationId, isConversationEmpty, hasAnyContent, newConversation, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
     const isConversationEmpty = conversation ? !conversation.messages.length : true;
     const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
     return {
       activeConversationId: state.activeConversationId,
+      setActiveConversationId: state.setActiveConversationId,
       isConversationEmpty,
       hasAnyContent,
       newConversation: state.createConversationOrSwitch,
@@ -203,11 +204,12 @@ export function AppChat() {
 
   const drawerItems = React.useMemo(() =>
       <ChatDrawerItems
-        conversationId={activeConversationId}
+        activeConversationId={activeConversationId}
+        setActiveConversationId={setActiveConversationId}
         onImportConversation={handleImportConversation}
         onDeleteAllConversations={handleDeleteAllConversations}
       />,
-    [activeConversationId],
+    [activeConversationId, setActiveConversationId],
   );
 
   const menuItems = React.useMemo(() =>
