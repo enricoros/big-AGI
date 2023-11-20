@@ -9,6 +9,7 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { GlobalShortcut, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/components/useCapabilities';
@@ -148,11 +149,13 @@ export function ChatMessageList(props: {
 
   // when there are no messages, show the purpose selector
   if (!filteredMessages.length)
-    return props.conversationId ? (
-      <Box sx={props.sx || {}}>
-        <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
+    return (
+      <Box sx={{ ...props.sx }}>
+        {props.conversationId
+          ? <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
+          : <InlineError severity='info' error='Select an active conversation for this window' sx={{ m: 2 }} />}
       </Box>
-    ) : null;
+    );
 
   return (
     <List sx={{
