@@ -44,16 +44,16 @@ export function ChatDrawerItems(props: {
   const softMaxReached = totalConversations >= 50;
 
 
-  const handleNew = React.useCallback(() => {
+  const handleButtonNew = React.useCallback(() => {
     onNewConversation();
     closeLayoutDrawer();
   }, [onNewConversation]);
 
-  const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
+  const handleItemDelete = React.useCallback((conversationId: DConversationId) => {
     !singleChat && conversationId && onDeleteConversation(conversationId);
   }, [onDeleteConversation, singleChat]);
 
-  const handleConversationSelect = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
+  const handleItemSelect = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onSelectConversation(conversationId);
     if (closeMenu)
       closeLayoutDrawer();
@@ -88,7 +88,7 @@ export function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem disabled={props.disableNewButton} onClick={handleNew}>
+    <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         New
@@ -121,8 +121,8 @@ export function ChatDrawerItems(props: {
           isLonely={singleChat}
           maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
           showSymbols={showSymbols}
-          onDeleteConversation={handleConversationDelete}
-          onSelectConversation={handleConversationSelect}
+          onDeleteConversation={handleItemDelete}
+          onSelectConversation={handleItemSelect}
         />)}
     </Box>
 
