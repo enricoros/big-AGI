@@ -6,27 +6,26 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import IosShareIcon from '@mui/icons-material/IosShare';
 
+import { getChatShowSystemMessages } from '../../apps/chat/store-app-chat';
+
 import { backendCaps } from '~/modules/backend/state-backend';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { conversationTitle, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { useUICounter } from '~/common/state/store-ui';
 
-import type { PublishedSchema, StoragePutSchema } from '../server/trade.router';
-
-import { addChatLinkItem, useLinkStorageOwnerId } from '../store-sharing';
-import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from '../trade.client';
-
+import type { PublishedSchema, StoragePutSchema } from './server/trade.router';
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
-import { getChatShowSystemMessages } from '../../store-app-chat';
+import { addChatLinkItem, useLinkStorageOwnerId } from './store-trade';
+import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade.client';
 
 
-export type ExportConfig = { dir: 'export', conversationId: string | null };
+export type ExportConfig = { dir: 'export', conversationId: DConversationId | null };
 
 /// Returns a pretty link to the current page, for promo
 function linkToOrigin() {
@@ -39,10 +38,6 @@ function linkToOrigin() {
   return origin;
 }
 
-function findConversation(conversationId: string) {
-  return conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
-}
-
 
 /**
  * Export Buttons and functionality
@@ -52,10 +47,10 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   // state
   const [downloadedState, setDownloadedState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
-  const [chatLinkConfirmId, setChatLinkConfirmId] = React.useState<string | null>(null);
+  const [chatLinkConfirmId, setChatLinkConfirmId] = React.useState<DConversationId | null>(null);
   const [chatLinkUploading, setChatLinkUploading] = React.useState(false);
   const [chatLinkResponse, setChatLinkResponse] = React.useState<StoragePutSchema | null>(null);
-  const [publishConversationId, setPublishConversationId] = React.useState<string | null>(null);
+  const [publishConversationId, setPublishConversationId] = React.useState<DConversationId | null>(null);
   const [publishUploading, setPublishUploading] = React.useState(false);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
 
@@ -72,7 +67,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const handleChatLinkConfirmed = async () => {
     if (!chatLinkConfirmId) return;
 
-    const conversation = findConversation(chatLinkConfirmId);
+    const conversation = getConversation(chatLinkConfirmId);
     setChatLinkConfirmId(null);
     if (!conversation) return;
 
@@ -110,7 +105,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const handlePublishConfirmed = async () => {
     if (!publishConversationId) return;
 
-    const conversation = findConversation(publishConversationId);
+    const conversation = getConversation(publishConversationId);
     setPublishConversationId(null);
     if (!conversation) return;
 
@@ -143,7 +138,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   const handleDownloadConversation = () => {
     if (!props.config.conversationId) return;
-    const conversation = findConversation(props.config.conversationId);
+    const conversation = getConversation(props.config.conversationId);
     if (!conversation) return;
     downloadConversationJson(conversation)
       .then(() => setDownloadedState('ok'))

@@ -19,8 +19,8 @@ import { getChatLinkRelativePath } from '~/common/app.routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
-import { removeChatLinkItem } from '../store-sharing';
-import { type StorageDeleteSchema, type StoragePutSchema } from '../server/trade.router';
+import type { StorageDeleteSchema, StoragePutSchema } from './server/trade.router';
+import { removeChatLinkItem } from './store-trade';
 
 
 export function ExportedChatLink(props: { onClose: () => void, response: StoragePutSchema, open: boolean }) {

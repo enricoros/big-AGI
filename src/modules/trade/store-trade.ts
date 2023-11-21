@@ -11,7 +11,7 @@ interface ChatLinkItem {
   deletionKey: string;
 }
 
-interface StoreSharing {
+interface StoreTrade {
 
   // ID assigned by the server upon first PUT
   linkStorageOwnerId: string | undefined;
@@ -24,7 +24,7 @@ interface StoreSharing {
 
 }
 
-const useSharingStore = create<StoreSharing>()(
+const useTradeStore = create<StoreTrade>()(
   persist(
     (set) => ({
 
@@ -46,13 +46,15 @@ const useSharingStore = create<StoreSharing>()(
   ),
 );
 
-export const useLinkStorageOwnerId = () => ({
-  linkStorageOwnerId: useSharingStore(state => state.linkStorageOwnerId),
-  setLinkStorageOwnerId: useSharingStore.getState().setLinkStorageOwnerId,
-});
+// by Export
+export const useLinkStorageOwnerId = () =>
+  useTradeStore(state => ({
+    linkStorageOwnerId: state.linkStorageOwnerId,
+    setLinkStorageOwnerId: state.setLinkStorageOwnerId,
+  }), shallow);
+export const addChatLinkItem = useTradeStore.getState().addChatLinkItem;
+export const removeChatLinkItem = useTradeStore.getState().removeChatLinkItem;
 
-
-export const useChatLinkItems = () => useSharingStore(state => state.chatLinkItems, shallow);
-export const useHasChatLinkItems = () => useSharingStore(state => state.chatLinkItems.length > 0);
-export const addChatLinkItem = useSharingStore.getState().addChatLinkItem;
-export const removeChatLinkItem = useSharingStore.getState().removeChatLinkItem;
+// by AppChatLink
+export const useChatLinkItems = () => useTradeStore(state => state.chatLinkItems, shallow);
+export const useHasChatLinkItems = () => useTradeStore(state => state.chatLinkItems.length > 0);

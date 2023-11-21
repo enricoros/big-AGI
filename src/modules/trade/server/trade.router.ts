@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { chatGptParseConversation, chatGptSharedChatSchema } from './import.chatgpt';
-import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './publish.pastegg';
-import { storageDeleteOutputSchema, storageGetProcedure, storageMarkAsDeletedProcedure, storagePutOutputSchema, storagePutProcedure } from './storage.server';
+import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
+import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
+import { storageDeleteOutputSchema, storageGetProcedure, storageMarkAsDeletedProcedure, storagePutOutputSchema, storagePutProcedure } from './link';
 
 
 export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;

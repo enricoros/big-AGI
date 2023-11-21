@@ -4,16 +4,15 @@ import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { Box, Button, FormControl, Input, Sheet, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { apiAsyncNode } from '~/common/util/trpc.client';
-
 import { Brand } from '~/common/app.config';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { apiAsyncNode } from '~/common/util/trpc.client';
+import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 
-import type { ChatGptSharedChatSchema } from '../server/import.chatgpt';
-import { loadAllConversationsFromJson } from '../trade.client';
+import type { ChatGptSharedChatSchema } from './server/chatgpt';
+import { loadAllConversationsFromJson } from './trade.client';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
 
@@ -77,7 +76,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     const outcome: ImportedOutcome = { conversations: [] };
 
     // load the conversation
-    let conversationId: string, data: ChatGptSharedChatSchema;
+    let conversationId: DConversationId, data: ChatGptSharedChatSchema;
     try {
       ({ conversationId, data } = await apiAsyncNode.trade.importChatGptShare.query({ url: chatGptUrl }));
     } catch (error) {
