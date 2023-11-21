@@ -6,6 +6,7 @@ import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsMod
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -50,10 +51,14 @@ export function AppChat() {
   const { focusedChatPane, openConversationInFocusedPane } = usePanesManager();
   const focusedConversationId = focusedChatPane?.conversationId ?? null;
   const {
-    isChatEmpty: isFocusedChatEmpty, areChatsEmpty, newConversationId,
+    isChatEmpty: isFocusedChatEmpty,
+    areChatsEmpty,
+    newConversationId,
     _remove_systemPurposeId: focusedSystemPurposeId,
-    prependNewConversation, duplicateConversation,
-    deleteConversation, wipeAllConversations,
+    prependNewConversation,
+    branchConversation,
+    deleteConversation,
+    wipeAllConversations,
     setMessages,
   } = useConversation(focusedConversationId);
 
@@ -67,7 +72,7 @@ export function AppChat() {
 
   // Execution
 
-  const handleExecuteConversation = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
+  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();
     if (!chatModeId || !conversationId || !chatLLMId) return;
 
@@ -129,43 +134,47 @@ export function AppChat() {
   const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: DConversationId, userText: string) => {
     const conversation = getConversation(conversationId);
     if (conversation)
-      return await handleExecuteConversation(chatModeId, conversationId, [
+      return await _handleExecute(chatModeId, conversationId, [
         ...conversation.messages,
         createDMessage('user', userText),
       ]);
   };
 
-  const handleExecuteChatHistory = async (conversationId: DConversationId, history: DMessage[]) =>
-    await handleExecuteConversation('immediate', conversationId, history);
+  const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
+    await _handleExecute('immediate', conversationId, history);
 
-  const handleDiagramFromText = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+  const handleMessageRegenerateLast = React.useCallback(async () => {
+    const focusedConversation = getConversation(focusedConversationId);
+    if (focusedConversation?.messages?.length) {
+      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
+      return await _handleExecute('immediate', focusedConversation.id, lastMessage.role === 'assistant'
+        ? focusedConversation.messages.slice(0, -1)
+        : [...focusedConversation.messages],
+      );
+    }
+  }, [focusedConversationId, _handleExecute]);
 
-  const handleImagineFromText = async (conversationId: DConversationId, messageText: string) => {
+  useGlobalShortcut('r', true, true, false, handleMessageRegenerateLast);
+
+  const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+
+  const handleTextImaginePlus = async (conversationId: DConversationId, messageText: string) => {
     const conversation = getConversation(conversationId);
     if (conversation)
-      return await handleExecuteConversation('draw-imagine-plus', conversationId, [
+      return await _handleExecute('draw-imagine-plus', conversationId, [
         ...conversation.messages,
         createDMessage('user', messageText),
       ]);
   };
 
-  const handleRegenerateAssistant = React.useCallback(async () => {
-    const focusedConversation = getConversation(focusedConversationId);
-    if (focusedConversation?.messages?.length) {
-      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      return await handleExecuteConversation('immediate', focusedConversation.id, lastMessage.role === 'assistant'
-        ? focusedConversation.messages.slice(0, -1)
-        : [...focusedConversation.messages],
-      );
-    }
-  }, [focusedConversationId, handleExecuteConversation]);
-
-  useGlobalShortcut('r', true, true, false, handleRegenerateAssistant);
+  const handleTextSpeak = async (text: string) => {
+    await speakText(text);
+  };
 
 
   // Chat actions
 
-  const handleNewConversation = React.useCallback(() => {
+  const handleConversationNew = React.useCallback(() => {
     // activate an existing new conversation if present, or create another
     setFocusedConversationId(newConversationId
       ? newConversationId
@@ -174,21 +183,21 @@ export function AppChat() {
     composerTextAreaRef.current?.focus();
   }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
-  useGlobalShortcut('n', true, false, true, handleNewConversation);
+  useGlobalShortcut('n', true, false, true, handleConversationNew);
 
-  const handleImportConversation = () => setTradeConfig({ dir: 'import' });
+  const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
-  const handleExportConversation = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
+  const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
 
-  const handleFlattenConversation = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
-
-
-  const handleCloneConversation = React.useCallback((conversationId: DConversationId) => {
-    setFocusedConversationId(duplicateConversation(conversationId));
-  }, [duplicateConversation, setFocusedConversationId]);
+  const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null) => {
+    const branchedConversationId = branchConversation(conversationId, messageId);
+    setFocusedConversationId(branchedConversationId);
+  }, [branchConversation, setFocusedConversationId]);
 
   useGlobalShortcut('f', true, false, true, () =>
-    isFocusedChatEmpty || focusedConversationId && handleCloneConversation(focusedConversationId));
+    isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null));
+
+  const handleConversationFlatten = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
 
 
   const handleConfirmedClearConversation = React.useCallback(() => {
@@ -198,10 +207,10 @@ export function AppChat() {
     }
   }, [clearConversationId, setMessages]);
 
-  const handleClearConversation = (conversationId: DConversationId) => setClearConversationId(conversationId);
+  const handleConversationClear = (conversationId: DConversationId) => setClearConversationId(conversationId);
 
   useGlobalShortcut('x', true, false, true, () =>
-    isFocusedChatEmpty || focusedConversationId && handleClearConversation(focusedConversationId));
+    isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId));
 
 
   const handleConfirmedDeleteConversation = () => {
@@ -216,12 +225,12 @@ export function AppChat() {
     }
   };
 
-  const handleDeleteAllConversations = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
 
-  const handleDeleteConversation = (conversationId: DConversationId) => setDeleteConversationId(conversationId);
+  const handleConversationDelete = (conversationId: DConversationId) => setDeleteConversationId(conversationId);
 
   useGlobalShortcut('d', true, false, true, () =>
-    focusedConversationId && handleDeleteConversation(focusedConversationId));
+    focusedConversationId && handleConversationDelete(focusedConversationId));
 
 
   // Pluggable ApplicationBar components
@@ -235,13 +244,13 @@ export function AppChat() {
       <ChatDrawerItems
         conversationId={focusedConversationId}
         disableNewButton={isFocusedChatEmpty}
-        onDeleteAllConversations={handleDeleteAllConversations}
-        onDeleteConversation={handleDeleteConversation}
-        onImportConversation={handleImportConversation}
-        onNewConversation={handleNewConversation}
-        onSelectConversation={setFocusedConversationId}
+        onConversationActivate={setFocusedConversationId}
+        onConversationDelete={handleConversationDelete}
+        onConversationImportDialog={handleConversationImportDialog}
+        onConversationNew={handleConversationNew}
+        onConversationsDeleteAll={handleConversationsDeleteAll}
       />,
-    [focusedConversationId, handleNewConversation, isFocusedChatEmpty, setFocusedConversationId],
+    [focusedConversationId, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -251,12 +260,12 @@ export function AppChat() {
         isConversationEmpty={isFocusedChatEmpty}
         isMessageSelectionMode={isMessageSelectionMode}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onClearConversation={handleClearConversation}
-        onCloneConversation={handleCloneConversation}
-        onExportConversation={handleExportConversation}
-        onFlattenConversation={handleFlattenConversation}
+        onConversationBranch={handleConversationBranch}
+        onConversationClear={handleConversationClear}
+        onConversationExport={handleConversationExport}
+        onConversationFlatten={handleConversationFlatten}
       />,
-    [areChatsEmpty, focusedConversationId, handleCloneConversation, isFocusedChatEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
   useLayoutPluggable(centerItems, drawerItems, menuItems);
@@ -267,9 +276,11 @@ export function AppChat() {
       conversationId={focusedConversationId}
       isMessageSelectionMode={isMessageSelectionMode}
       setIsMessageSelectionMode={setIsMessageSelectionMode}
-      onDiagramFromText={handleDiagramFromText}
-      onExecuteChatHistory={handleExecuteChatHistory}
-      onImagineFromText={handleImagineFromText}
+      onConversationBranch={handleConversationBranch}
+      onConversationExecuteHistory={handleConversationExecuteHistory}
+      onTextDiagram={handleTextDiagram}
+      onTextImagine={handleTextImaginePlus}
+      onTextSpeak={handleTextSpeak}
       sx={{
         flexGrow: 1,
         backgroundColor: 'background.level1',

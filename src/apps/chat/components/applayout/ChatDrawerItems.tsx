@@ -19,15 +19,15 @@ type ListGrouping = 'off' | 'persona';
 export function ChatDrawerItems(props: {
   conversationId: DConversationId | null,
   disableNewButton: boolean,
-  onDeleteAllConversations: () => void,
-  onDeleteConversation: (conversationId: DConversationId) => void,
-  onImportConversation: () => void,
-  onNewConversation: () => void,
-  onSelectConversation: (conversationId: DConversationId) => void,
+  onConversationActivate: (conversationId: DConversationId) => void,
+  onConversationDelete: (conversationId: DConversationId) => void,
+  onConversationImportDialog: () => void,
+  onConversationNew: () => void,
+  onConversationsDeleteAll: () => void,
 }) {
 
   // local state
-  const { onDeleteConversation, onNewConversation, onSelectConversation } = props;
+  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
   const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
@@ -45,19 +45,19 @@ export function ChatDrawerItems(props: {
 
 
   const handleButtonNew = React.useCallback(() => {
-    onNewConversation();
+    onConversationNew();
     closeLayoutDrawer();
-  }, [onNewConversation]);
+  }, [onConversationNew]);
 
-  const handleItemDelete = React.useCallback((conversationId: DConversationId) => {
-    !singleChat && conversationId && onDeleteConversation(conversationId);
-  }, [onDeleteConversation, singleChat]);
-
-  const handleItemSelect = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
-    onSelectConversation(conversationId);
+  const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
+    onConversationActivate(conversationId);
     if (closeMenu)
       closeLayoutDrawer();
-  }, [onSelectConversation]);
+  }, [onConversationActivate]);
+
+  const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
+    !singleChat && conversationId && onConversationDelete(conversationId);
+  }, [onConversationDelete, singleChat]);
 
 
   // grouping
@@ -121,14 +121,14 @@ export function ChatDrawerItems(props: {
           isLonely={singleChat}
           maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
           showSymbols={showSymbols}
-          onDeleteConversation={handleItemDelete}
-          onSelectConversation={handleItemSelect}
+          onConversationActivate={handleConversationActivate}
+          onConversationDelete={handleConversationDelete}
         />)}
     </Box>
 
     <ListDivider sx={{ mt: 0 }} />
 
-    <MenuItem onClick={props.onImportConversation}>
+    <MenuItem onClick={props.onConversationImportDialog}>
       <ListItemDecorator>
         <FileUploadIcon />
       </ListItemDecorator>
@@ -136,7 +136,7 @@ export function ChatDrawerItems(props: {
       <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
     </MenuItem>
 
-    <MenuItem disabled={!hasChats} onClick={props.onDeleteAllConversations}>
+    <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
       <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
       <Typography>
         Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}

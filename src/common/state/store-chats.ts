@@ -117,7 +117,7 @@ interface ChatActions {
   // store setters
   prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
-  duplicateConversation: (conversationId: DConversationId) => DConversationId | null;
+  branchConversation: (conversationId: DConversationId, messageId: string | null) => DConversationId | null;
   deleteConversation: (conversationId: DConversationId) => DConversationId | null;
   wipeAllConversations: (personaId: SystemPurposeId | undefined) => DConversationId;
 
@@ -188,7 +188,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         return conversation.id;
       },
 
-      duplicateConversation: (conversationId: DConversationId): DConversationId | null => {
+      branchConversation: (conversationId: DConversationId, messageId: string | null): DConversationId | null => {
         const { conversations } = _get();
         const conversation = conversations.find(_c => _c.id === conversationId);
         if (!conversation)
@@ -196,27 +196,42 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 
         // create a deep copy of the conversation
         const deepCopy: DConversation = JSON.parse(JSON.stringify(conversation));
-        const duplicate: DConversation = {
+        let messageIndex = deepCopy.messages.length; // By default, include all messages if messageId is null
+        if (messageId !== null) {
+          messageIndex = deepCopy.messages.findIndex(_m => _m.id === messageId);
+          messageIndex = messageIndex >= 0 ? messageIndex + 1 : deepCopy.messages.length; // If message is found, include it
+        }
+
+        // title this branched chat differently
+        const newTitle = getNextBranchTitle(conversationTitle(conversation));
+
+        const branched: DConversation = {
           ...deepCopy,
-          id: uuidv4(),
-          messages: deepCopy.messages.map((message: DMessage): DMessage => ({
-            ...message,
-            id: uuidv4(),
-            typing: false,
-          })),
+          id: uuidv4(), // roll conversation ID
+          messages: deepCopy.messages
+            .slice(0, messageIndex)
+            .map((message: DMessage): DMessage => ({
+              ...message,
+              id: uuidv4(), // roll message ID
+              typing: false,
+            })),
           updated: Date.now(),
+          // Set the new title for the branched conversation
+          autoTitle: newTitle,
+          // reset ephemerals
           abortController: null,
           ephemerals: [],
+          // TODO: set references to parent conversation & message?
         };
 
         _set({
           conversations: [
-            duplicate,
+            branched,
             ...conversations,
           ],
         });
 
-        return duplicate.id;
+        return branched.id;
       },
 
       deleteConversation: (conversationId: DConversationId): DConversationId | null => {
@@ -464,6 +479,16 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 export const conversationTitle = (conversation: DConversation, fallback?: string): string =>
   conversation.userTitle || conversation.autoTitle || fallback || ''; // 👋💬🗨️
 
+function getNextBranchTitle(currentTitle: string): string {
+  const numberPrefixRegex = /^\((\d+)\)\s+/; // Regex to find "(number) " at the beginning of the title
+  const match = currentTitle.match(numberPrefixRegex);
+
+  if (match) {
+    const number = parseInt(match[1], 10) + 1;
+    return currentTitle.replace(numberPrefixRegex, `(${number}) `);
+  } else
+    return `(1) ${currentTitle}`;
+}
 
 /**
  * Returns the chats stored in the localStorage, and rename the key for
@@ -527,7 +552,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     newConversationId,
     _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
     prependNewConversation: state.prependNewConversation,
-    duplicateConversation: state.duplicateConversation,
+    branchConversation: state.branchConversation,
     deleteConversation: state.deleteConversation,
     wipeAllConversations: state.wipeAllConversations,
     setMessages: state.setMessages,
