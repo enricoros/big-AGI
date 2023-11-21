@@ -7,13 +7,10 @@ import { llmAnthropicRouter } from '~/modules/llms/transports/server/anthropic/a
 import { llmOllamaRouter } from '~/modules/llms/transports/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/transports/server/openai/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
-import { tradeRouter } from '~/modules/trade/server/trade.router';
 import { ytPersonaRouter } from '../../apps/personas/ytpersona.router';
 
 /**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
+ * Primary rooter, and will be sitting on an Edge Runtime.
  */
 export const appRouterEdge = createTRPCRouter({
   backend: backendRouter,
@@ -26,10 +23,5 @@ export const appRouterEdge = createTRPCRouter({
   ytpersona: ytPersonaRouter,
 });
 
-export const appRouterNode = createTRPCRouter({
-  trade: tradeRouter,
-});
-
 // export type definition of API
 export type AppRouterEdge = typeof appRouterEdge;
-export type AppRouterNode = typeof appRouterNode;
