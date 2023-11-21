@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Divider, ListDivider, ListItemDecorator, Option, Select } from '@mui/joy';
+import { Box, Divider, ListDivider, listItemButtonClasses, ListItemDecorator, Option, optionClasses, Select } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -52,6 +52,12 @@ export function AppBarDropdown<TValue extends string>(props: {
           // do not exceed the height of the screen (minus top bar) with any listbox menu
           maxHeight: 'calc(100dvh - 56px)',
           maxWidth: '90dvw',
+          [`& .${optionClasses.root}`]: {
+            minWidth: 160,
+          },
+          [`& .${listItemButtonClasses.root}`]: {
+            minWidth: 160,
+          },
         },
       },
     }}
