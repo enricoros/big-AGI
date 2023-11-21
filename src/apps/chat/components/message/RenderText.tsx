@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Chip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { extractCommands } from '../../commands';
+import { extractCommands } from '../../editors/commands';
 
 import { TextBlock } from './blocks';
 
