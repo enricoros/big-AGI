@@ -26,8 +26,8 @@ const RIssues = `${OpenRepo}/issues`;
 export const newsCallout =
   <Card>
     <CardContent sx={{ gap: 2 }}>
-      <Typography level='h2'>
-        Open Roadmap ✨
+      <Typography level='h3'>
+        Open Roadmap
       </Typography>
       <Typography>
         The roadmap is officially out. For the first time you get a look at what&apos;s brewing, up and coming, and get a chance to pick up cool features!
@@ -35,7 +35,7 @@ export const newsCallout =
       <Grid container spacing={1}>
         <Grid xs={12} sm={7}>
           <Button
-            fullWidth variant='solid' color='primary' size='lg' endDecorator={<LaunchIcon />}
+            fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
             component={Link} href={OpenProject} noLinkStyle target='_blank'
           >
             Explore the Roadmap
@@ -43,7 +43,7 @@ export const newsCallout =
         </Grid>
         <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
           <Button
-            fullWidth variant='outlined' color='primary' endDecorator={<LaunchIcon />}
+            fullWidth variant='plain' color='primary' endDecorator={<LaunchIcon />}
             component={Link} href={RIssues + '/new?template=roadmap-request.md&title=%5BSuggestion%5D'} noLinkStyle target='_blank'
           >
             Suggest a Feature
