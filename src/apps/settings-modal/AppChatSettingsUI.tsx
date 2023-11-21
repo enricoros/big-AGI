@@ -2,25 +2,35 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { Button, FormControl, Radio, RadioGroup, Switch } from '@mui/joy';
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { isPwa } from '~/common/util/pwaUtils';
+import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-
-import { ShortcutsModal } from './ShortcutsModal';
 
 
 // configuration
 const SHOW_PURPOSE_FINDER = false;
 
 
-export function AppChatSettingsUI() {
+const ModelOptionsButton = () =>
+  <Button
+    // variant='soft' color='success'
+    onClick={openLayoutModelsSetup}
+    startDecorator={<BuildCircleIcon />}
+    sx={{
+      '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+    }}
+  >
+    Models
+  </Button>;
 
-  // local state
-  const [showShortcuts, setShowShortcuts] = React.useState<boolean>(false);
+
+export function AppChatSettingsUI() {
 
   // external state
   const isMobile = useIsMobile();
@@ -53,6 +63,12 @@ export function AppChatSettingsUI() {
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
 
   return <>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='AI Models'
+                      description='Setup' />
+      <ModelOptionsButton />
+    </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Enter sends ⏎'
@@ -105,12 +121,6 @@ export function AppChatSettingsUI() {
         <Radio value='full' label='Full' />
       </RadioGroup>
     </FormControl>}
-
-    {!isMobile && <Button variant='soft' onClick={() => setShowShortcuts(true)} sx={{ ml: 'auto' }}>
-      👉 See Shortcuts
-    </Button>}
-
-    {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)}/>}
 
   </>;
 }
