@@ -24,7 +24,7 @@ import { Ephemerals } from './components/Ephemerals';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
-import { useChatWindowManager } from './store-app-chat';
+import { usePanesManager } from './store-app-chat-panes';
 
 
 /**
@@ -41,21 +41,28 @@ export function AppChat() {
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
-  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
-  const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
-  const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
+  const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
+  const [deleteConversationId, setDeleteConversationId] = React.useState<DConversationId | null>(null);
+  const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { currentPane, openChatInFocusedPane } = useChatWindowManager();
-  const focusedConversationId = currentPane?.conversationId ?? null;
+  const { focusedChatPane, openConversationInFocusedPane } = usePanesManager();
+  const focusedConversationId = focusedChatPane?.conversationId ?? null;
   const {
     isChatEmpty: isFocusedChatEmpty, areChatsEmpty, newConversationId,
-    _remove_systemPurposeId,
+    _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation, duplicateConversation,
     deleteConversation, wipeAllConversations,
     setMessages,
   } = useConversation(focusedConversationId);
+
+
+  // Window actions
+
+  const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
+    conversationId && openConversationInFocusedPane(conversationId);
+  }, [openConversationInFocusedPane]);
 
 
   // Execution
@@ -88,10 +95,10 @@ export function AppChat() {
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (chatLLMId && _remove_systemPurposeId) {
+    if (chatLLMId && focusedSystemPurposeId) {
       switch (chatModeId) {
         case 'immediate':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, _remove_systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId);
         case 'write-user':
           return setMessages(conversationId, history);
         case 'react':
@@ -117,7 +124,7 @@ export function AppChat() {
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
     console.log('handleExecuteConversation: issue running', chatModeId, conversationId, lastMessage);
     setMessages(conversationId, history);
-  }, [_remove_systemPurposeId, setMessages]);
+  }, [focusedSystemPurposeId, setMessages]);
 
   const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: DConversationId, userText: string) => {
     const conversation = getConversation(conversationId);
@@ -156,23 +163,16 @@ export function AppChat() {
   useGlobalShortcut('r', true, true, false, handleRegenerateAssistant);
 
 
-  // Window actions
-
-  const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
-    conversationId && openChatInFocusedPane(conversationId);
-  }, [openChatInFocusedPane]);
-
-
   // Chat actions
 
   const handleNewConversation = React.useCallback(() => {
     // activate an existing new conversation if present, or create another
     setFocusedConversationId(newConversationId
       ? newConversationId
-      : prependNewConversation(_remove_systemPurposeId ?? undefined),
+      : prependNewConversation(focusedSystemPurposeId ?? undefined),
     );
     composerTextAreaRef.current?.focus();
-  }, [_remove_systemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
+  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
   useGlobalShortcut('n', true, false, true, handleNewConversation);
 
@@ -192,33 +192,33 @@ export function AppChat() {
 
 
   const handleConfirmedClearConversation = React.useCallback(() => {
-    if (clearConfirmationId) {
-      setMessages(clearConfirmationId, []);
-      setClearConfirmationId(null);
+    if (clearConversationId) {
+      setMessages(clearConversationId, []);
+      setClearConversationId(null);
     }
-  }, [clearConfirmationId, setMessages]);
+  }, [clearConversationId, setMessages]);
 
-  const handleClearConversation = (conversationId: DConversationId) => setClearConfirmationId(conversationId);
+  const handleClearConversation = (conversationId: DConversationId) => setClearConversationId(conversationId);
 
   useGlobalShortcut('x', true, false, true, () =>
     isFocusedChatEmpty || focusedConversationId && handleClearConversation(focusedConversationId));
 
 
   const handleConfirmedDeleteConversation = () => {
-    if (deleteConfirmationId) {
-      let nextConversationId: DConversationId | null = null;
-      if (deleteConfirmationId === SPECIAL_ID_WIPE_ALL)
-        nextConversationId = wipeAllConversations(_remove_systemPurposeId ?? undefined);
+    if (deleteConversationId) {
+      let nextConversationId: DConversationId | null;
+      if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
+        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined);
       else
-        nextConversationId = deleteConversation(deleteConfirmationId);
+        nextConversationId = deleteConversation(deleteConversationId);
       setFocusedConversationId(nextConversationId);
-      setDeleteConfirmationId(null);
+      setDeleteConversationId(null);
     }
   };
 
-  const handleDeleteAllConversations = () => setDeleteConfirmationId(SPECIAL_ID_WIPE_ALL);
+  const handleDeleteAllConversations = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
 
-  const handleDeleteConversation = (conversationId: DConversationId) => setDeleteConfirmationId(conversationId);
+  const handleDeleteConversation = (conversationId: DConversationId) => setDeleteConversationId(conversationId);
 
   useGlobalShortcut('d', true, false, true, () =>
     focusedConversationId && handleDeleteConversation(focusedConversationId));
@@ -288,7 +288,7 @@ export function AppChat() {
 
     <Composer
       conversationId={focusedConversationId}
-      isDeveloperMode={_remove_systemPurposeId === 'Developer'}
+      isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       composerTextAreaRef={composerTextAreaRef}
       onNewMessage={handleComposerNewMessage}
       sx={{
@@ -311,18 +311,18 @@ export function AppChat() {
 
 
     {/* [confirmation] Reset Conversation */}
-    {!!clearConfirmationId && <ConfirmationModal
-      open onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+    {!!clearConversationId && <ConfirmationModal
+      open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
     />}
 
     {/* [confirmation] Delete All */}
-    {!!deleteConfirmationId && <ConfirmationModal
-      open onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
-      confirmationText={deleteConfirmationId === SPECIAL_ID_WIPE_ALL
+    {!!deleteConversationId && <ConfirmationModal
+      open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
+      confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
         ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
         : 'Are you sure you want to delete this conversation?'}
-      positiveActionText={deleteConfirmationId === SPECIAL_ID_WIPE_ALL
+      positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
         ? 'Yes, delete all'
         : 'Delete conversation'}
     />}
