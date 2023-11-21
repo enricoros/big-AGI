@@ -11,7 +11,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
 import { isValidGoogleCloudApiKey, isValidGoogleCseId } from './search.client';
-import { useGoogleSearchStore } from './store-google';
+import { useGoogleSearchStore } from './store-module-google';
 
 
 export function GoogleSearchSettings() {

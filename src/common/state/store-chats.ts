@@ -141,7 +141,9 @@ interface ChatActions {
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
 }
 
-export const useChatStore = create<ChatState & ChatActions>()(devtools(
+type ConversationsStore = ChatState & ChatActions;
+
+export const useChatStore = create<ConversationsStore>()(devtools(
   persist(
     (_set, _get) => ({
 
@@ -414,7 +416,7 @@ export const useChatStore = create<ChatState & ChatActions>()(devtools(
       storage: createJSONStorage(() => idbStateStorage),
 
       // Migrations
-      migrate: (persistedState: unknown, fromVersion: number): ChatState & ChatActions => {
+      migrate: (persistedState: unknown, fromVersion: number): ConversationsStore => {
         // -1 -> 3: migration loading from localStorage to IndexedDB
         if (fromVersion === IDB_MIGRATION_INITIAL)
           return _migrateLocalStorageData() as any;

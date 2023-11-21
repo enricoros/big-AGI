@@ -11,7 +11,7 @@ interface ChatLinkItem {
   deletionKey: string;
 }
 
-interface StoreTrade {
+interface ModuleTradeStore {
 
   // ID assigned by the server upon first PUT
   linkStorageOwnerId: string | undefined;
@@ -24,7 +24,7 @@ interface StoreTrade {
 
 }
 
-const useTradeStore = create<StoreTrade>()(
+const useTradeStore = create<ModuleTradeStore>()(
   persist(
     (set) => ({
 

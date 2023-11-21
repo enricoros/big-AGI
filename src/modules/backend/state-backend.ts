@@ -14,12 +14,12 @@ export interface BackendCapabilities {
   hasVoiceElevenLabs: boolean;
 }
 
-type BackendState = {
+type BackendStore = {
   loadedCapabilities: boolean;
   setCapabilities: (capabilities: Partial<BackendCapabilities>) => void;
 } & BackendCapabilities;
 
-const useBackendStore = create<BackendState>()(
+const useBackendStore = create<BackendStore>()(
   (set) => ({
 
     // capabilities
