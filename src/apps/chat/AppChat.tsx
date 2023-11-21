@@ -24,7 +24,7 @@ import { Ephemerals } from './components/Ephemerals';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
-import { usePanesManager } from './store-app-chat-panes';
+import { usePanesManager } from './components/usePanesManager';
 
 
 /**

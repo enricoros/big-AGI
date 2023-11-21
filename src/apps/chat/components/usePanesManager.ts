@@ -10,7 +10,7 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 const MAX_HISTORY_LENGTH = 20;
 
 
-export interface Pane {
+interface ChatPane {
 
   conversationId: DConversationId | null;
 
@@ -22,7 +22,7 @@ export interface Pane {
 interface AppChatPanesStore {
 
   // state
-  chatPanes: Pane[];
+  chatPanes: ChatPane[];
   chatPaneFocusIndex: number | null;
   chatPaneInputMode: 'focused' | 'broadcast';
 
@@ -36,11 +36,19 @@ interface AppChatPanesStore {
 
 }
 
+function createPane(conversationId: DConversationId | null = null): ChatPane {
+  return {
+    conversationId,
+    history: conversationId ? [conversationId] : [],
+    historyIndex: conversationId ? 0 : -1,
+  };
+}
+
 const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
   (_set, _get) => ({
 
     // Initial state: no panes
-    chatPanes: [] as Pane[],
+    chatPanes: [] as ChatPane[],
     chatPaneFocusIndex: null as number | null,
     chatPaneInputMode: 'focused' as 'focused' | 'broadcast',
 
@@ -126,13 +134,18 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         };
       }),
 
+    /**
+     * This function is vital, as is invoked when the conversationId[] changes in the global chats store.
+     * It takes care of `creating the first pane` as well as `removing invalid history items, reassiging
+     * conversationIds, and re-focusing the pane`.
+     */
     onConversationsChanged: (conversationIds: DConversationId[]) =>
       _set(state => {
         const { chatPanes, chatPaneFocusIndex } = state;
 
         // handle panes
         let untouched = true;
-        const newPanes: Pane[] = chatPanes.map(chatPane => {
+        const newPanes: ChatPane[] = chatPanes.map(chatPane => {
           const { conversationId, history, historyIndex } = chatPane;
 
           // adjust history if any is deleted
@@ -167,7 +180,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         }).filter(pane => !!pane.conversationId);
 
         // if untouched, return state as-is
-        if (untouched)
+        if (untouched && newPanes.length >= 1)
           return state;
 
         // play it safe, and make sure a pane exists, and is focused
@@ -182,13 +195,6 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
   },
 ));
 
-function createPane(conversationId: DConversationId | null = null): Pane {
-  return {
-    conversationId,
-    history: conversationId ? [conversationId] : [],
-    historyIndex: conversationId ? 0 : -1,
-  };
-}
 
 export function usePanesManager() {
   // use Panes
@@ -196,7 +202,7 @@ export function usePanesManager() {
     const { chatPaneFocusIndex, chatPanes, openConversationInFocusedPane, onConversationsChanged } = state;
     const focusedChatPane = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex] ?? null : null;
     return {
-      chatPanes: chatPanes as Readonly<Pane[]>,
+      // chatPanes: chatPanes as Readonly<ChatPane[]>,
       focusedChatPane,
       openConversationInFocusedPane,
       onConversationsChanged,
