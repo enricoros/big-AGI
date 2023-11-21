@@ -78,7 +78,9 @@ interface ModelsActions {
   setFuncLLMId: (id: DLLMId | null) => void;
 }
 
-export const useModelsStore = create<ModelsData & ModelsActions>()(
+type LlmsStore = ModelsData & ModelsActions;
+
+export const useModelsStore = create<LlmsStore>()(
   persist(
     (set) => ({
 
@@ -175,7 +177,7 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
        *  1: adds maxOutputTokens (default to half of contextTokens)
        */
       version: 1,
-      migrate: (state: any, fromVersion: number): ModelsData & ModelsActions => {
+      migrate: (state: any, fromVersion: number): LlmsStore => {
 
         // 0 -> 1: add 'maxOutputTokens' where missing,
         if (state && fromVersion === 0)

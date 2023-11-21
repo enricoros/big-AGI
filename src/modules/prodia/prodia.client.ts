@@ -3,7 +3,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { CapabilityProdiaImageGeneration } from '~/common/components/useCapabilities';
 import { apiAsync } from '~/common/util/trpc.client';
 
-import { useProdiaStore } from './store-prodia';
+import { useProdiaStore } from './store-module-prodia';
 
 
 export const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 36;

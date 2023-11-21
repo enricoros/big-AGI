@@ -22,7 +22,7 @@ export function createStoredTaggetList<TItem extends TaggedListItem<string, stri
     [K in TTag]?: TId;
   };
 
-  type State = {
+  type TaggedListState = {
     // State
     items: TItem[];
     selections: SelectionMap; // Maps TTag to selected TId
@@ -36,28 +36,28 @@ export function createStoredTaggetList<TItem extends TaggedListItem<string, stri
     selectItemForTag: (tag: TTag, itemId: TId) => void;
   };
 
-  return create<State>()(persist((set, get) => ({
+  return create<TaggedListState>()(persist((set, get) => ({
 
         items: [] as TItem[],
         selections: {} as SelectionMap,
 
 
-        addItem: (item: TItem) => set((state: State) => ({
+        addItem: (item: TItem) => set((state: TaggedListState) => ({
           items: [...state.items, item],
         })),
 
-        removeItem: (itemId: TId) => set((state: State) => ({
+        removeItem: (itemId: TId) => set((state: TaggedListState) => ({
           items: state.items.filter((item: TItem) => item.id !== itemId),
           selections: Object.fromEntries(
             Object.entries(state.selections).filter(([, selectedId]) => selectedId !== itemId),
           ) as SelectionMap,
         })),
 
-        modifyItem: (itemId: TId, changes: Partial<TItem>) => set((state: State) => ({
+        modifyItem: (itemId: TId, changes: Partial<TItem>) => set((state: TaggedListState) => ({
           items: state.items.map((item: TItem) => item.id === itemId ? { ...item, ...changes } : item),
         })),
 
-        modifyItemDeep: (itemId: TId, updater: (item: TItem) => TItem) => set((state: State) => ({
+        modifyItemDeep: (itemId: TId, updater: (item: TItem) => TItem) => set((state: TaggedListState) => ({
           items: state.items.map((item: TItem) => item.id === itemId ? updater(item) : item),
         })),
 

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 
 
-interface ElevenlabsStore {
+interface ModuleElevenlabsStore {
 
   // ElevenLabs Text to Speech settings
 
@@ -15,7 +15,7 @@ interface ElevenlabsStore {
 
 }
 
-const useElevenlabsStore = create<ElevenlabsStore>()(
+const useElevenlabsStore = create<ModuleElevenlabsStore>()(
   persist(
     (set) => ({
 

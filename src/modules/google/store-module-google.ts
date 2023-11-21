@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
-interface GoogleSearchStore {
+interface ModuleGoogleSearchStore {
 
   // Google Custom Search settings
 
@@ -14,7 +14,7 @@ interface GoogleSearchStore {
 
 }
 
-export const useGoogleSearchStore = create<GoogleSearchStore>()(
+export const useGoogleSearchStore = create<ModuleGoogleSearchStore>()(
   persist(
     (set) => ({
 

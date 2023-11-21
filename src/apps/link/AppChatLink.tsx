@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/joy';
 
 import { createConversationFromJsonV1 } from '~/modules/trade/trade.client';
-import { useHasChatLinkItems } from '~/modules/trade/store-trade';
+import { useHasChatLinkItems } from '~/modules/trade/store-module-trade';
 
 import { Brand } from '~/common/app.config';
 import { InlineError } from '~/common/components/InlineError';
