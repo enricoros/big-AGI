@@ -22,8 +22,8 @@ export function ConversationItem(props: {
   isLonely: boolean,
   maxChatMessages: number,
   showSymbols: boolean,
-  onDeleteConversation: (conversationId: DConversationId) => void,
-  onSelectConversation: (conversationId: DConversationId, closeMenu: boolean) => void,
+  onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
+  onConversationDelete: (conversationId: DConversationId) => void,
 }) {
 
   // state
@@ -59,7 +59,7 @@ export function ConversationItem(props: {
   const { isNew, messageCount, assistantTyping, setUserTitle, systemPurposeId, title } = cState;
 
 
-  const handleSelectConversation = () => props.onSelectConversation(props.conversationId, true);
+  const handleConversationActivate = () => props.onConversationActivate(props.conversationId, true);
 
   const handleTitleEdit = () => setIsEditingTitle(true);
 
@@ -68,22 +68,22 @@ export function ConversationItem(props: {
     setUserTitle(props.conversationId, text);
   };
 
-  const handleDeleteConversation = (event: React.MouseEvent) => {
-    if (deleteArmed) {
-      setDeleteArmed(false);
-      event.stopPropagation();
-      props.onDeleteConversation(props.conversationId);
-    }
+  const handleDeleteButtonShow = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!props.isActive)
+      props.onConversationActivate(props.conversationId, false);
+    else
+      setDeleteArmed(true);
   };
 
   const handleDeleteButtonHide = () => setDeleteArmed(false);
 
-  const handleDeleteButtonShow = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!props.isActive)
-      props.onSelectConversation(props.conversationId, false);
-    else
-      setDeleteArmed(true);
+  const handleConversationDelete = (event: React.MouseEvent) => {
+    if (deleteArmed) {
+      setDeleteArmed(false);
+      event.stopPropagation();
+      props.onConversationDelete(props.conversationId);
+    }
   };
 
 
@@ -96,7 +96,7 @@ export function ConversationItem(props: {
     <MenuItem
       variant={props.isActive ? 'solid' : 'plain'} color='neutral'
       selected={props.isActive}
-      onClick={handleSelectConversation}
+      onClick={handleConversationActivate}
       sx={{
         // py: 0,
         position: 'relative',
@@ -169,7 +169,7 @@ export function ConversationItem(props: {
 
       {/* Delete / Cancel buttons */}
       {!props.isLonely && deleteArmed && <>
-        <IconButton size='sm' variant='solid' color='danger' sx={buttonSx} onClick={handleDeleteConversation}>
+        <IconButton size='sm' variant='solid' color='danger' sx={buttonSx} onClick={handleConversationDelete}>
           <DeleteOutlineIcon />
         </IconButton>
         <IconButton size='sm' variant='solid' color='neutral' sx={buttonSx} onClick={handleDeleteButtonHide}>

@@ -5,7 +5,6 @@ import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 import { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { GlobalShortcut, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -26,9 +25,11 @@ import { useChatShowSystemMessages } from '../store-app-chat';
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-  onExecuteChatHistory: (conversationId: DConversationId, history: DMessage[]) => void,
-  onDiagramFromText: (diagramConfig: DiagramConfig | null) => Promise<any>,
-  onImagineFromText: (conversationId: DConversationId, selectedText: string) => Promise<any>,
+  onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => void,
+  onTextDiagram: (diagramConfig: DiagramConfig | null) => Promise<any>,
+  onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<any>,
+  onTextSpeak: (selectedText: string) => Promise<any>,
   sx?: SxProps
 }) {
 
@@ -54,12 +55,30 @@ export function ChatMessageList(props: {
 
   // text actions
 
-  const handleAppendMessage = (text: string) =>
-    props.conversationId && props.onExecuteChatHistory(props.conversationId, [...messages, createDMessage('user', text)]);
+  const handleRunExample = (text: string) =>
+    props.conversationId && props.onConversationExecuteHistory(props.conversationId, [...messages, createDMessage('user', text)]);
+
+
+  // message menu methods proxy
+
+  const handleConversationBranch = (messageId: string) => {
+    props.conversationId && props.onConversationBranch(props.conversationId, messageId);
+  };
+
+  const handleConversationRestartFrom = (messageId: string, offset: number) => {
+    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
+    props.conversationId && props.onConversationExecuteHistory(props.conversationId, truncatedHistory);
+  };
+
+  const handleMessageDelete = (messageId: string) =>
+    props.conversationId && deleteMessage(props.conversationId, messageId);
+
+  const handleMessageEdit = (messageId: string, newText: string) =>
+    props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
 
   const handleTextDiagram = async (messageId: string, text: string) => {
     if (props.conversationId) {
-      await props.onDiagramFromText({ conversationId: props.conversationId, messageId, text });
+      await props.onTextDiagram({ conversationId: props.conversationId, messageId, text });
     } else
       return Promise.reject('No conversation');
   };
@@ -69,7 +88,7 @@ export function ChatMessageList(props: {
       openLayoutPreferences(2);
     } else if (props.conversationId) {
       setIsImagining(true);
-      await props.onImagineFromText(props.conversationId, text);
+      await props.onTextImagine(props.conversationId, text);
       setIsImagining(false);
     } else
       return Promise.reject('No conversation');
@@ -80,23 +99,9 @@ export function ChatMessageList(props: {
       openLayoutPreferences(3);
     } else {
       setIsSpeaking(true);
-      await speakText(text);
+      await props.onTextSpeak(text);
       setIsSpeaking(false);
     }
-  };
-
-
-  // message menu methods proxy
-
-  const handleMessageDelete = (messageId: string) =>
-    props.conversationId && deleteMessage(props.conversationId, messageId);
-
-  const handleMessageEdit = (messageId: string, newText: string) =>
-    props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
-
-  const handleMessageRestartFrom = (messageId: string, offset: number) => {
-    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-    props.conversationId && props.onExecuteChatHistory(props.conversationId, truncatedHistory);
   };
 
 
@@ -152,7 +157,7 @@ export function ChatMessageList(props: {
     return (
       <Box sx={{ ...props.sx }}>
         {props.conversationId
-          ? <PersonaSelector conversationId={props.conversationId} runExample={handleAppendMessage} />
+          ? <PersonaSelector conversationId={props.conversationId} runExample={handleRunExample} />
           : <InlineError severity='info' error='Select an active conversation for this window' sx={{ m: 2 }} />}
       </Box>
     );
@@ -184,11 +189,13 @@ export function ChatMessageList(props: {
             diffPreviousText={message === diffMessage ? diffText : undefined}
             isBottom={idx === 0}
             isImagining={isImagining} isSpeaking={isSpeaking}
-            onMessageDelete={() => handleMessageDelete(message.id)}
-            onMessageEdit={newText => handleMessageEdit(message.id, newText)}
-            onMessageRunFrom={(offset: number) => handleMessageRestartFrom(message.id, offset)}
-            onTextDiagram={(text: string) => handleTextDiagram(message.id, text)}
-            onTextImagine={handleTextImagine} onTextSpeak={handleTextSpeak}
+            onConversationBranch={handleConversationBranch}
+            onConversationRestartFrom={handleConversationRestartFrom}
+            onMessageDelete={handleMessageDelete}
+            onMessageEdit={handleMessageEdit}
+            onTextDiagram={handleTextDiagram}
+            onTextImagine={handleTextImagine}
+            onTextSpeak={handleTextSpeak}
           />
 
         ),

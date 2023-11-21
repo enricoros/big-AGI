@@ -23,10 +23,10 @@ export function ChatMenuItems(props: {
   isConversationEmpty: boolean,
   isMessageSelectionMode: boolean,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-  onClearConversation: (conversationId: DConversationId) => void,
-  onCloneConversation: (conversationId: DConversationId) => void,
-  onExportConversation: (conversationId: DConversationId | null) => void,
-  onFlattenConversation: (conversationId: DConversationId) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
+  onConversationClear: (conversationId: DConversationId) => void,
+  onConversationExport: (conversationId: DConversationId | null) => void,
+  onConversationFlatten: (conversationId: DConversationId) => void,
 }) {
 
   // external state
@@ -44,23 +44,23 @@ export function ChatMenuItems(props: {
 
   const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
-    props.conversationId && props.onClearConversation(props.conversationId);
+    props.conversationId && props.onConversationClear(props.conversationId);
   };
 
-  const handleConversationClone = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleConversationBranch = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
-    props.conversationId && props.onCloneConversation(props.conversationId);
+    props.conversationId && props.onConversationBranch(props.conversationId, null);
   };
 
   const handleConversationExport = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
-    props.onExportConversation(!disabled ? props.conversationId : null);
+    props.onConversationExport(!disabled ? props.conversationId : null);
     shareTouch();
   };
 
   const handleConversationFlatten = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
-    props.conversationId && props.onFlattenConversation(props.conversationId);
+    props.conversationId && props.onConversationFlatten(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (event: React.MouseEvent) => {
@@ -87,21 +87,13 @@ export function ChatMenuItems(props: {
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled} onClick={handleConversationClone}>
-      <ListItemDecorator>
-        {/*<Badge size='sm' color='success'>*/}
-        <ForkRightIcon color='success' />
-        {/*</Badge>*/}
-      </ListItemDecorator>
-      Duplicate
+    <MenuItem disabled={disabled} onClick={handleConversationBranch}>
+      <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
+      Branch
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
-      <ListItemDecorator>
-        {/*<Badge size='sm' color='success'>*/}
-        <CompressIcon color='success' />
-        {/*</Badge>*/}
-      </ListItemDecorator>
+      <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
       Flatten
     </MenuItem>
 
