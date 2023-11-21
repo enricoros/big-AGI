@@ -8,6 +8,7 @@ import { Link } from '~/common/components/Link';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { newsCallout, NewsItems } from './news.data';
+import { ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 export function AppNews() {
@@ -42,6 +43,17 @@ export function AppNews() {
           {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionName}.
         </Typography>
 
+        <Box>
+          <Button
+            variant='solid' color='neutral' size='lg'
+            component={Link} href={ROUTE_APP_CHAT} noLinkStyle
+            endDecorator='✨'
+            sx={{ minWidth: 200 }}
+          >
+            Sweet
+          </Button>
+        </Box>
+
         {!!newsCallout && <Container disableGutters maxWidth='sm'>{newsCallout}</Container>}
 
         {!!news && <Container disableGutters maxWidth='sm'>
@@ -52,7 +64,7 @@ export function AppNews() {
             const addPadding = !firstCard; // || showExpander;
             return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
               <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                {!!ni.text && <Typography component='div'>
+                {!!ni.text && <Typography level='title-lg' component='div'>
                   {ni.text}
                 </Typography>}
 
@@ -84,12 +96,6 @@ export function AppNews() {
             </Card>;
           })}
         </Container>}
-
-        <Box>
-          <Button variant='solid' color='neutral' size='lg' component={Link} href='/' noLinkStyle>
-            Got it!
-          </Button>
-        </Box>
 
         {/*<Typography sx={{ textAlign: 'center' }}>*/}
         {/*  Enjoy!*/}
