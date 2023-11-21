@@ -7,7 +7,7 @@ import { llmAnthropicRouter } from '~/modules/llms/transports/server/anthropic/a
 import { llmOllamaRouter } from '~/modules/llms/transports/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/transports/server/openai/openai.router';
 import { prodiaRouter } from '~/modules/prodia/prodia.router';
-import { tradeRouter } from '../../apps/chat/trade/server/trade.router';
+import { tradeRouter } from '~/modules/trade/server/trade.router';
 import { ytPersonaRouter } from '../../apps/personas/ytpersona.router';
 
 /**
