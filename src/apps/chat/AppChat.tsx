@@ -12,7 +12,7 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
+import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
@@ -48,10 +48,11 @@ export function AppChat() {
   const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
   const [deleteConversationId, setDeleteConversationId] = React.useState<DConversationId | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
+  const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { focusedChatPane, openConversationInFocusedPane, navigateHistory } = usePanesManager();
+  const { focusedChatPane, openConversationInFocusedPane, navigateHistoryInFocusedPane } = usePanesManager();
   const focusedConversationId = focusedChatPane?.conversationId ?? null;
   const {
     title: focusedChatTitle,
@@ -73,10 +74,16 @@ export function AppChat() {
     conversationId && openConversationInFocusedPane(conversationId);
   }, [openConversationInFocusedPane]);
 
+  const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
+    if (navigateHistoryInFocusedPane(direction))
+      showNextTitle.current = true;
+  }, [navigateHistoryInFocusedPane]);
+
   React.useEffect(() => {
-    if (focusedChatTitle) {
-      // const id = addSnackbar({ key: 'focused-title', message: focusedChatTitle, type: 'title' });
-      // return () => removeSnackbar(id);
+    if (showNextTitle.current) {
+      showNextTitle.current = false;
+      const id = addSnackbar({ key: 'focused-title', message: focusedChatTitle || 'New Chat', type: 'title' });
+      return () => removeSnackbar(id);
     }
   }, [focusedChatTitle]);
 
@@ -246,9 +253,9 @@ export function AppChat() {
     ['b', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null)],
     ['x', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId)],
     ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId)],
-    [ShortcutKeyName.Left, true, false, true, () => navigateHistory('back')],
-    [ShortcutKeyName.Right, true, false, true, () => navigateHistory('forward')],
-  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, isFocusedChatEmpty, navigateHistory]);
+    [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
+    [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
+  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
 

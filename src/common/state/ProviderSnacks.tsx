@@ -28,7 +28,7 @@ const defaultTypeConfig: {
   },
   title: {
     color: 'neutral',
-    variant: 'soft',
+    variant: 'plain',
     autoHideDuration: 2000,
     clickAway: false,
     closeButton: false,
@@ -85,12 +85,16 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
             <CloseIcon />
           </IconButton>
         )}
-        sx={{
+        sx={theme => ({
           ...(type === 'title' && {
             '--Snackbar-inset': '64px',
+            borderRadius: 'md',
+            boxShadow: 'md',
+            bgcolor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.1)`,
+            backdropFilter: 'blur(6px)',
           }),
           // '--Snackbar-padding': config.closeButton ? '0.5rem' : '1rem',
-        }}
+        })}
       >
         {message}
       </Snackbar>
