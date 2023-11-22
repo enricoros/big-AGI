@@ -14,7 +14,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
@@ -51,7 +51,7 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { focusedChatPane, openConversationInFocusedPane } = usePanesManager();
+  const { focusedChatPane, openConversationInFocusedPane, navigateHistory } = usePanesManager();
   const focusedConversationId = focusedChatPane?.conversationId ?? null;
   const {
     title: focusedChatTitle,
@@ -246,7 +246,9 @@ export function AppChat() {
     ['b', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null)],
     ['x', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId)],
     ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId)],
-  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, isFocusedChatEmpty]);
+    [ShortcutKeyName.Left, true, false, true, () => navigateHistory('back')],
+    [ShortcutKeyName.Right, true, false, true, () => navigateHistory('forward')],
+  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, isFocusedChatEmpty, navigateHistory]);
   useGlobalShortcuts(shortcuts);
 
 
