@@ -12,9 +12,10 @@ export function FormSwitchControl(props: {
   title: string | React.JSX.Element, description?: string | React.JSX.Element,
   on?: string, off?: string, fullWidth?: boolean,
   checked: boolean, onChange: (on: boolean) => void,
+  disabled?: boolean,
 }) {
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title={props.title} description={props.description} />
       <Switch
         checked={props.checked}
