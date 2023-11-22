@@ -4,6 +4,7 @@ import { FormControl, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { Link } from '~/common/components/Link';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
@@ -32,7 +33,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        Auto Diagrams · Relative chat size · Text Tools
+        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools
       </Typography>
     </FormControl>
 
