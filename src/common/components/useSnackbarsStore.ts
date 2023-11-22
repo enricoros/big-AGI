@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { create } from 'zustand';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export const SNACKBAR_ANIMATION_DURATION = 200;
@@ -20,9 +21,10 @@ interface SnackbarStore {
   snackbarQueue: SnackbarMessage[];
 
   // actions
-  addSnackbar: (snackbar: SnackbarMessage) => void;
+  addSnackbar: (snackbar: SnackbarMessage) => string;
   animateCloseSnackbar: () => void;
   closeSnackbar: () => void;
+  removeSnackbar: (key: string) => void;
 
 }
 
@@ -34,23 +36,26 @@ export const useSnackbarsStore = create<SnackbarStore>()(
     activeSnackbarOpen: true,
     snackbarQueue: [],
 
-    addSnackbar: (snackbar: SnackbarMessage) =>
-      _set((state) => {
-        const newSnackbar = {
-          ...snackbar,
-          key: snackbar.key + '_' + new Date().getTime(),
-        };
-        if (state.activeSnackbar === null) {
-          return {
-            activeSnackbar: newSnackbar,
-            activeSnackbarOpen: true,
-          };
-        } else {
-          return {
-            snackbarQueue: [...state.snackbarQueue, newSnackbar],
-          };
+    addSnackbar: (snackbar: SnackbarMessage): string => {
+      const { activeSnackbar } = _get();
+      let { key, ...rest } = snackbar;
+
+      // unique key
+      key += '-' + uuidv4();
+
+      // append the snackbar
+      const newSnackbar = { key, ...rest };
+      _set(activeSnackbar === null
+        ? {
+          activeSnackbar: newSnackbar,
+          activeSnackbarOpen: true,
         }
-      }),
+        : {
+          snackbarQueue: [..._get().snackbarQueue, newSnackbar],
+        });
+
+      return key;
+    },
 
     closeSnackbar: () =>
       _set((state) => {
@@ -74,8 +79,32 @@ export const useSnackbarsStore = create<SnackbarStore>()(
       }, SNACKBAR_ANIMATION_DURATION); // Delay needs to match match your CSS animation duration
     },
 
+    // mostly added for useEffect's unmounts
+    removeSnackbar: (key: string) =>
+      _set((state) => {
+        let nextActiveSnackbar = state.activeSnackbar;
+        let nextQueue = [...state.snackbarQueue];
+        if (nextActiveSnackbar?.key === key) {
+          if (nextQueue.length > 0)
+            nextActiveSnackbar = nextQueue.shift() as SnackbarMessage; // Remove the first snackbar from the queue
+          else
+            nextActiveSnackbar = null;
+          return {
+            activeSnackbar: nextActiveSnackbar,
+            activeSnackbarOpen: nextActiveSnackbar !== null,
+            snackbarQueue: nextQueue,
+          };
+        }
+        return {
+          snackbarQueue: nextQueue.filter(snackbar => snackbar.key !== key),
+        };
+      }),
+
   }),
 );
 
 export const addSnackbar = (snackbar: SnackbarMessage) =>
   useSnackbarsStore.getState().addSnackbar(snackbar);
+
+export const removeSnackbar = (key: string) =>
+  useSnackbarsStore.getState().removeSnackbar(key);
