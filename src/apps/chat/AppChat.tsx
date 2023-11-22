@@ -62,8 +62,10 @@ export function AppChat() {
     openConversationInSplitPane,
     setFocusedPaneIndex,
   } = usePanesManager();
+
   const {
     title: focusedChatTitle,
+    chatIdx: focusedChatNumber,
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
     newConversationId,
@@ -100,10 +102,11 @@ export function AppChat() {
   React.useEffect(() => {
     if (showNextTitle.current) {
       showNextTitle.current = false;
-      const id = addSnackbar({ key: 'focused-title', message: focusedChatTitle || 'New Chat', type: 'title' });
+      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'title' });
       return () => removeSnackbar(id);
     }
-  }, [focusedChatTitle]);
+  }, [focusedChatNumber, focusedChatTitle]);
 
 
   // Execution
