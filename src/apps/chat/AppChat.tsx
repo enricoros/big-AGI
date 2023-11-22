@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import ForkRightIcon from '@mui/icons-material/ForkRight';
+
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
@@ -10,6 +12,7 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
@@ -191,6 +194,13 @@ export function AppChat() {
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null) => {
     const branchedConversationId = branchConversation(conversationId, messageId);
+    addSnackbar({
+      key: 'branch-conversation',
+      message: 'Branched started.',
+      type: 'success',
+      autoHideDuration: 3000,
+      startDecorator: <ForkRightIcon />,
+    });
     setFocusedConversationId(branchedConversationId);
   }, [branchConversation, setFocusedConversationId]);
 
