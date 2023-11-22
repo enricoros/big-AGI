@@ -7,7 +7,7 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 
 
 // change this to increase/decrease the number history steps per pane
-const MAX_HISTORY_LENGTH = 20;
+const MAX_HISTORY_LENGTH = 10;
 
 
 interface ChatPane {
@@ -70,9 +70,12 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         if (focusedPane.conversationId === conversationId)
           return state;
 
+        // Truncate the future history before adding the new conversation.
+        const truncatedHistory = focusedPane.history.slice(0, focusedPane.historyIndex + 1);
+        const newHistory = [...truncatedHistory, conversationId].slice(-MAX_HISTORY_LENGTH);
+
         // Update the focused pane with the new conversation.
         const newPanes = [...chatPanes];
-        const newHistory = [...focusedPane.history, conversationId].slice(-MAX_HISTORY_LENGTH);
         newPanes[chatPaneFocusIndex] = {
           ...focusedPane,
           conversationId,
@@ -121,6 +124,8 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
           newHistoryIndex--;
         else if (direction === 'forward' && newHistoryIndex < focusedPane.history.length - 1)
           newHistoryIndex++;
+        else
+          return state;
 
         const newPanes = [...chatPanes];
         newPanes[chatPaneFocusIndex] = {
@@ -198,13 +203,14 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
 export function usePanesManager() {
   // use Panes
-  const { focusedChatPane, openConversationInFocusedPane, onConversationsChanged } = useAppChatPanesStore(state => {
-    const { chatPaneFocusIndex, chatPanes, openConversationInFocusedPane, onConversationsChanged } = state;
+  const { onConversationsChanged, ...panesFunctions } = useAppChatPanesStore(state => {
+    const { chatPaneFocusIndex, chatPanes, openConversationInFocusedPane, navigateHistory, onConversationsChanged } = state;
     const focusedChatPane = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex] ?? null : null;
     return {
       // chatPanes: chatPanes as Readonly<ChatPane[]>,
       focusedChatPane,
       openConversationInFocusedPane,
+      navigateHistory,
       onConversationsChanged,
     };
   }, shallow);
@@ -220,7 +226,6 @@ export function usePanesManager() {
   }, [conversationIDs, onConversationsChanged]);
 
   return {
-    focusedChatPane,
-    openConversationInFocusedPane,
+    ...panesFunctions,
   };
 }

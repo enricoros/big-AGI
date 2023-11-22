@@ -9,22 +9,24 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 const shortcutsMd = `
 
-| Shortcut         | Description                                     |
-|------------------|-------------------------------------------------|
-| **Edit**         |                                                 | 
-| Shift + Enter    | Newline (don't send)                            |
-| Alt + Enter      | Append message (don't send)                     |
-| Ctrl + Shift + R | Regenerate answer                               |
-| Ctrl + Shift + V | Attach clipboard (better than Ctrl + V)         |
-| Ctrl + M         | Microphone (voice typing)                       |
-| **Chats**        |                                                 | 
-| Ctrl + Alt + N   | **New** chat                                    |
-| Ctrl + Alt + X   | **Reset** chat                                  |
-| Ctrl + Alt + D   | **Delete** chat                                 |
-| Ctrl + Alt + B   | **Branch** chat                                 |
-| **Settings**     |                                                 |
-| Ctrl + Shift + M | 🧠 Models                                       |
-| Ctrl + Shift + P | ⚙️ Preferences                                  |
+| Shortcut            | Description                                     |
+|---------------------|-------------------------------------------------|
+| **Edit**            |                                                 | 
+| Shift + Enter       | Newline (don't send)                            |
+| Alt + Enter         | Append message (don't send)                     |
+| Ctrl + Shift + R    | Regenerate answer                               |
+| Ctrl + Shift + V    | Attach clipboard (better than Ctrl + V)         |
+| Ctrl + M            | Microphone (voice typing)                       |
+| **Chats**           |                                                 | 
+| Ctrl + Alt + Left   | **Previous** chat (in history)                  |
+| Ctrl + Alt + Right  | **Next** chat (in history)                      |
+| Ctrl + Alt + N      | **New** chat                                    |
+| Ctrl + Alt + X      | **Reset** chat                                  |
+| Ctrl + Alt + D      | **Delete** chat                                 |
+| Ctrl + Alt + B      | **Branch** chat                                 |
+| **Settings**        |                                                 |
+| Ctrl + Shift + M    | 🧠 Models                                       |
+| Ctrl + Shift + P    | ⚙️ Preferences                                  |
 
 `.trim();
 
@@ -33,7 +35,7 @@ const shortcutsMessage = createDMessage('assistant', platformAwareKeystrokes(sho
 
 export const ShortcutsModal = (props: { onClose: () => void }) =>
   <GoodModal
-    open title='Desktop Shortcuts' 
+    open title='Desktop Shortcuts'
     onClose={props.onClose}
   >
     <ChatMessage message={shortcutsMessage} hideAvatars noBottomBorder sx={{ p: 0, m: 0 }} />
