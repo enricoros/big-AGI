@@ -54,6 +54,7 @@ export function AppChat() {
   const { focusedChatPane, openConversationInFocusedPane } = usePanesManager();
   const focusedConversationId = focusedChatPane?.conversationId ?? null;
   const {
+    title: focusedChatTitle,
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
     newConversationId,
@@ -71,6 +72,13 @@ export function AppChat() {
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
   }, [openConversationInFocusedPane]);
+
+  React.useEffect(() => {
+    if (focusedChatTitle) {
+      // const id = addSnackbar({ key: 'focused-title', message: focusedChatTitle, type: 'title' });
+      // return () => removeSnackbar(id);
+    }
+  }, [focusedChatTitle]);
 
 
   // Execution
