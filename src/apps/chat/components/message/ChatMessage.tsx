@@ -186,6 +186,8 @@ function useSanityTextDiffs(text: string, diffText: string | undefined, enabled:
 }
 
 
+export const ChatMessageMemo = React.memo(ChatMessage);
+
 /**
  * The Message component is a customizable chat message UI component that supports
  * different roles (user, assistant, and system), text editing, syntax highlighting,
