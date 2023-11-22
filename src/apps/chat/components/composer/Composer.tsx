@@ -160,7 +160,7 @@ export function Composer(props: {
   const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
 
 
-  // Effect: load initial text if queued up (e.g. by /launch)
+  // Effect: load initial text if queued up (e.g. by /link/share_targe)
   React.useEffect(() => {
     if (startupText) {
       setStartupText(null);
