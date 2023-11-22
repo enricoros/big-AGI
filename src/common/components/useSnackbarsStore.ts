@@ -7,7 +7,7 @@ export const SNACKBAR_ANIMATION_DURATION = 200;
 export interface SnackbarMessage {
   key: string;
   message: string;
-  type: 'success' | 'issue';
+  type: 'success' | 'issue' | 'title';
   autoHideDuration?: number | null;
   startDecorator?: React.ReactNode;
 }
