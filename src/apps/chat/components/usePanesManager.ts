@@ -9,6 +9,9 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 // change this to increase/decrease the number history steps per pane
 const MAX_HISTORY_LENGTH = 10;
 
+// change to true to enable verbose console logging
+const DEBUG_PANES_MANAGER = false;
+
 
 interface ChatPane {
 
@@ -67,8 +70,11 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
         // Check if the conversation is already open in the focused pane.
         const focusedPane = chatPanes[chatPaneFocusIndex];
-        if (focusedPane.conversationId === conversationId)
+        if (focusedPane.conversationId === conversationId) {
+          if (DEBUG_PANES_MANAGER)
+            console.log(`openConversationInFocusedPane: ${conversationId} is open in focused pane`);
           return state;
+        }
 
         // Truncate the future history before adding the new conversation.
         const truncatedHistory = focusedPane.history.slice(0, focusedPane.historyIndex + 1);
@@ -82,6 +88,9 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
           history: newHistory,
           historyIndex: newHistory.length - 1,
         };
+
+        if (DEBUG_PANES_MANAGER)
+          console.log(`openConversationInFocusedPane: set ${conversationId} in focused pane`);
 
         // Return the updated state.
         return {
@@ -102,8 +111,11 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         newHistoryIndex--;
       else if (direction === 'forward' && newHistoryIndex < focusedPane.history.length - 1)
         newHistoryIndex++;
-      else
+      else {
+        if (DEBUG_PANES_MANAGER)
+          console.log(`navigateHistoryInFocusedPane: no history ${direction} for`, focusedPane);
         return false;
+      }
 
       const newPanes = [...chatPanes];
       newPanes[chatPaneFocusIndex] = {
@@ -111,6 +123,9 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         conversationId: focusedPane.history[newHistoryIndex],
         historyIndex: newHistoryIndex,
       };
+
+      if (DEBUG_PANES_MANAGER)
+        console.log(`navigateHistoryInFocusedPane: ${direction} to`, focusedPane, newPanes);
 
       _set({
         chatPanes: newPanes,
