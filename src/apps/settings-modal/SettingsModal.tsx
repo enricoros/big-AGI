@@ -10,9 +10,8 @@ import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { closeLayoutPreferences, openLayoutPreferences, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
+import { closeLayoutPreferences, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
@@ -109,7 +108,6 @@ export function SettingsModal() {
   // external state
   const isMobile = useIsMobile();
   const settingsTabIndex = useLayoutPreferencesTab();
-  useGlobalShortcut('p', true, true, false, openLayoutPreferences);
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
