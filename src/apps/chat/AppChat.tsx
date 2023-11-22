@@ -19,7 +19,7 @@ import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/commo
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
+import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -294,8 +294,8 @@ export function AppChat() {
   );
 
   const drawerItems = React.useMemo(() =>
-      <ChatDrawerItems
-        conversationId={focusedConversationId}
+      <ChatDrawerItemsMemo
+        activeConversationId={focusedConversationId}
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
