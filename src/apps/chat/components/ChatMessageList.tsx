@@ -9,11 +9,11 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
-import { createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/components/useCapabilities';
 
-import { ChatMessage } from './message/ChatMessage';
+import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
@@ -40,10 +40,10 @@ export function ChatMessageList(props: {
 
   // external state
   const [showSystemMessages] = useChatShowSystemMessages();
-  const { messages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
+  const { conversationMessages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      messages: conversation ? conversation.messages : [],
+      conversationMessages: conversation ? conversation.messages : [],
       editMessage: state.editMessage, deleteMessage: state.deleteMessage,
       historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
@@ -52,57 +52,59 @@ export function ChatMessageList(props: {
   const { mayWork: isImaginable } = useCapabilityProdia();
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
+  // derived state
+  const { conversationId, onConversationExecuteHistory, onConversationBranch, onTextDiagram, onTextImagine, onTextSpeak } = props;
+
 
   // text actions
 
   const handleRunExample = (text: string) =>
-    props.conversationId && props.onConversationExecuteHistory(props.conversationId, [...messages, createDMessage('user', text)]);
+    conversationId && onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)]);
 
 
   // message menu methods proxy
 
-  const handleConversationBranch = (messageId: string) => {
-    props.conversationId && props.onConversationBranch(props.conversationId, messageId);
-  };
+  const handleConversationBranch = React.useCallback((messageId: string) => {
+    conversationId && onConversationBranch(conversationId, messageId);
+  }, [conversationId, onConversationBranch]);
 
-  const handleConversationRestartFrom = (messageId: string, offset: number) => {
-    const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-    props.conversationId && props.onConversationExecuteHistory(props.conversationId, truncatedHistory);
-  };
-
-  const handleMessageDelete = (messageId: string) =>
-    props.conversationId && deleteMessage(props.conversationId, messageId);
-
-  const handleMessageEdit = (messageId: string, newText: string) =>
-    props.conversationId && editMessage(props.conversationId, messageId, { text: newText }, true);
-
-  const handleTextDiagram = async (messageId: string, text: string) => {
-    if (props.conversationId) {
-      await props.onTextDiagram({ conversationId: props.conversationId, messageId, text });
-    } else
-      return Promise.reject('No conversation');
-  };
-
-  const handleTextImagine = async (text: string) => {
-    if (!isImaginable) {
-      openLayoutPreferences(2);
-    } else if (props.conversationId) {
-      setIsImagining(true);
-      await props.onTextImagine(props.conversationId, text);
-      setIsImagining(false);
-    } else
-      return Promise.reject('No conversation');
-  };
-
-  const handleTextSpeak = async (text: string) => {
-    if (!isSpeakable) {
-      openLayoutPreferences(3);
-    } else {
-      setIsSpeaking(true);
-      await props.onTextSpeak(text);
-      setIsSpeaking(false);
+  const handleConversationRestartFrom = React.useCallback((messageId: string, offset: number) => {
+    const messages = getConversation(conversationId)?.messages;
+    if (messages) {
+      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
+      conversationId && onConversationExecuteHistory(conversationId, truncatedHistory);
     }
-  };
+  }, [conversationId, onConversationExecuteHistory]);
+
+  const handleMessageDelete = React.useCallback((messageId: string) => {
+    conversationId && deleteMessage(conversationId, messageId);
+  }, [conversationId, deleteMessage]);
+
+  const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
+    conversationId && editMessage(conversationId, messageId, { text: newText }, true);
+  }, [conversationId, editMessage]);
+
+  const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
+    conversationId && await onTextDiagram({ conversationId: conversationId, messageId, text });
+  }, [conversationId, onTextDiagram]);
+
+  const handleTextImagine = React.useCallback(async (text: string) => {
+    if (!isImaginable)
+      return openLayoutPreferences(2);
+    if (conversationId) {
+      setIsImagining(true);
+      await onTextImagine(conversationId, text);
+      setIsImagining(false);
+    }
+  }, [conversationId, isImaginable, onTextImagine]);
+
+  const handleTextSpeak = React.useCallback(async (text: string) => {
+    if (!isSpeakable)
+      return openLayoutPreferences(3);
+    setIsSpeaking(true);
+    await onTextSpeak(text);
+    setIsSpeaking(false);
+  }, [isSpeakable, onTextSpeak]);
 
 
   // operate on the local selection set
@@ -110,7 +112,7 @@ export function ChatMessageList(props: {
   const handleSelectAll = (selected: boolean) => {
     const newSelected = new Set<string>();
     if (selected)
-      for (const message of messages)
+      for (const message of conversationMessages)
         newSelected.add(message.id);
     setSelectedMessages(newSelected);
   };
@@ -122,9 +124,9 @@ export function ChatMessageList(props: {
   };
 
   const handleSelectionDelete = () => {
-    if (props.conversationId)
+    if (conversationId)
       for (const selectedMessage of selectedMessages)
-        deleteMessage(props.conversationId, selectedMessage);
+        deleteMessage(conversationId, selectedMessage);
     setSelectedMessages(new Set());
   };
 
@@ -136,7 +138,7 @@ export function ChatMessageList(props: {
   // text-diff functionality, find the messages to diff with
 
   const { diffMessage, diffText } = React.useMemo(() => {
-    const [msgB, msgA] = messages.filter(m => m.role === 'assistant').reverse();
+    const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
     if (msgB?.text && msgA?.text && !msgB?.typing) {
       const textA = msgA.text, textB = msgB.text;
       const lenA = textA.length, lenB = textB.length;
@@ -144,21 +146,20 @@ export function ChatMessageList(props: {
         return { diffMessage: msgB, diffText: textA };
     }
     return { diffMessage: undefined, diffText: undefined };
-  }, [messages]);
+  }, [conversationMessages]);
 
   // no content: show the persona selector
 
-  const filteredMessages = messages
+  const filteredMessages = conversationMessages
     .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
     .reverse(); // 'reverse' is because flexDirection: 'column-reverse' to auto-snap-to-bottom
 
-  // when there are no messages, show the purpose selector
   if (!filteredMessages.length)
     return (
       <Box sx={{ ...props.sx }}>
-        {props.conversationId
-          ? <PersonaSelector conversationId={props.conversationId} runExample={handleRunExample} />
-          : <InlineError severity='info' error='Select an active conversation for this window' sx={{ m: 2 }} />}
+        {conversationId
+          ? <PersonaSelector conversationId={conversationId} runExample={handleRunExample} />
+          : <InlineError severity='info' error='Select a conversation' sx={{ m: 2 }} />}
       </Box>
     );
 
@@ -183,7 +184,7 @@ export function ChatMessageList(props: {
 
         ) : (
 
-          <ChatMessage
+          <ChatMessageMemo
             key={'msg-' + message.id}
             message={message}
             diffPreviousText={message === diffMessage ? diffText : undefined}
