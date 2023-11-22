@@ -3,7 +3,7 @@ import * as React from 'react';
 import { IconButton, Snackbar, SnackbarTypeMap } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { SnackbarMessage, useSnackbarsStore } from '~/common/components/useSnackbarsStore';
+import { SNACKBAR_ANIMATION_DURATION, SnackbarMessage, useSnackbarsStore } from '../components/useSnackbarsStore';
 
 
 const defaultTypeConfig: {
@@ -15,9 +15,9 @@ const defaultTypeConfig: {
   success: {
     color: 'success',
     variant: 'soft',
-    autoHideDuration: 5000, //5000,
+    autoHideDuration: 5000,
     clickAway: false,
-    closeButton: false,
+    closeButton: true,
   },
   issue: {
     color: 'warning',
@@ -35,39 +35,40 @@ const defaultTypeConfig: {
 export const ProviderSnacks = (props: { children: React.ReactNode }) => {
 
   // external state
-  const { activeSnackbar, closeSnackbar } = useSnackbarsStore();
+  const { activeSnackbar, activeSnackbarOpen, animateCloseSnackbar } = useSnackbarsStore();
 
   // Memoize the rendered snack bars to prevent unnecessary re-renders
   const memoizedSnackbar = React.useMemo(() => {
     if (!activeSnackbar)
       return null;
 
-    const { key, message, type, startDecorator } = activeSnackbar;
+    const { key, message, type, autoHideDuration, startDecorator } = activeSnackbar;
 
     const config = {
       ...defaultTypeConfig[type],
-      // ...activeSnackbar.configOverrides,
+      autoHideDuration: autoHideDuration ?? defaultTypeConfig[type].autoHideDuration,
+      startDecorator: startDecorator ?? defaultTypeConfig[type].startDecorator,
     };
 
     return (
       <Snackbar
         key={key}
-        open
+        open={activeSnackbarOpen}
         color={config.color}
         variant={config.variant}
         autoHideDuration={config.autoHideDuration ?? null}
-        animationDuration={200}
+        animationDuration={SNACKBAR_ANIMATION_DURATION}
         invertedColors
         anchorOrigin={{ vertical: 'bottom', horizontal: type === 'issue' ? 'center' : 'right' }}
         onClose={(_event, reason) => {
           if (reason === 'timeout' || ((reason === 'clickaway' || reason === 'escapeKeyDown') && config.clickAway)) {
-            closeSnackbar();
+            animateCloseSnackbar();
           }
         }}
-        startDecorator={startDecorator}
+        startDecorator={config.startDecorator}
         endDecorator={!config.closeButton ? undefined : (
           <IconButton
-            onClick={closeSnackbar}
+            onClick={animateCloseSnackbar}
             size='sm'
             sx={{ my: '-0.4rem' }}
           >
@@ -81,7 +82,7 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
         {message}
       </Snackbar>
     );
-  }, [activeSnackbar, closeSnackbar]);
+  }, [activeSnackbar, activeSnackbarOpen, animateCloseSnackbar]);
 
   return <>
     {props.children}
