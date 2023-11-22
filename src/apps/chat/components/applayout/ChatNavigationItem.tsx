@@ -16,7 +16,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 const DEBUG_CONVERSATION_IDs = false;
 
 
-export function ConversationNavigationItem(props: {
+export function ChatNavigationItem(props: {
   conversationId: DConversationId,
   isActive: boolean,
   isLonely: boolean,
@@ -25,6 +25,8 @@ export function ConversationNavigationItem(props: {
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
 }) {
+
+  const { isActive } = props;
 
   // state
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
@@ -50,9 +52,9 @@ export function ConversationNavigationItem(props: {
   // NOTE: there currently is a bug (race condition) where the menu closes on a new item right after opening
   //       because the isActive prop is not yet updated
   React.useEffect(() => {
-    if (deleteArmed && !props.isActive)
+    if (deleteArmed && !isActive)
       setDeleteArmed(false);
-  }, [deleteArmed, props.isActive]);
+  }, [deleteArmed, isActive]);
 
   // sanity check: shouldn't happen, but just in case
   if (!cState) return null;
@@ -70,7 +72,7 @@ export function ConversationNavigationItem(props: {
 
   const handleDeleteButtonShow = (event: React.MouseEvent) => {
     event.stopPropagation();
-    if (!props.isActive)
+    if (!isActive)
       props.onConversationActivate(props.conversationId, false);
     else
       setDeleteArmed(true);
@@ -88,20 +90,21 @@ export function ConversationNavigationItem(props: {
 
 
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
-  const buttonSx: SxProps = { ml: 1, ...(props.isActive ? { color: 'white' } : {}) };
+  const buttonSx: SxProps = { ml: 1, ...(isActive ? { color: 'white' } : {}) };
 
   const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
 
   return (
     <MenuItem
-      variant={props.isActive ? 'solid' : 'plain'} color='neutral'
-      selected={props.isActive}
+      variant={isActive ? 'solid' : 'plain'} color='neutral'
+      selected={isActive}
       onClick={handleConversationActivate}
       sx={{
         // py: 0,
         position: 'relative',
         border: 'none', // note, there's a default border of 1px and invisible.. hmm
         '&:hover > button': { opacity: 1 },
+        ...(isActive ? { bgcolor: 'red' } : {}),
       }}
     >
 
@@ -160,7 +163,7 @@ export function ConversationNavigationItem(props: {
       {/* Delete Arming */}
       {!props.isLonely && !deleteArmed && (
         <IconButton
-          variant={props.isActive ? 'solid' : 'outlined'} color='neutral'
+          variant={isActive ? 'solid' : 'outlined'} color='neutral'
           size='sm' sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.3s', ...buttonSx }}
           onClick={handleDeleteButtonShow}>
           <DeleteOutlineIcon />
