@@ -35,7 +35,7 @@ by release.
 - **Backup/Restore** - save chats, and restore them later
 - **[Local model support with Oobabooga server](../docs/config-local-oobabooga)** - run your own LLMs!
 - **Flatten conversations** - conversations summarizer with 4 modes
-- **Fork conversations** - create a new chat, to experiment with different endings
+- **Fork conversations** - create a new chat, to try with different endings
 - New commands: /s to add a System message, and /a for an Assistant message
 - New Chat modes: Write-only - just appends the message, without assistant response
 - Fix STOP generation - in sync with the Vercel team to fix a long-standing NextJS issue

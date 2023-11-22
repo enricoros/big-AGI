@@ -1,41 +1,40 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Button, FormControl, Switch } from '@mui/joy';
+import { FormControl, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { closeLayoutPreferences } from '~/common/layout/store-applayout';
-import { navigateToLabs } from '~/common/app.routes';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 export function UxLabsSettings() {
+
   // external state
-  const {
-    experimentalLabs, setExperimentalLabs,
-  } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs, setExperimentalLabs: state.setExperimentalLabs,
-  }), shallow);
-
-  const handleExperimentalLabsChange = (event: React.ChangeEvent<HTMLInputElement>) => setExperimentalLabs(event.target.checked);
-
+  const { /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator } = useUXLabsStore();
 
   return <>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Experiments'
-                      description={experimentalLabs ? 'Enabled' : 'Disabled'} />
-      <Switch checked={experimentalLabs} onChange={handleExperimentalLabsChange}
-              endDecorator={experimentalLabs ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
+    <FormSwitchControl
+      title='YouTube Personas' description={labsPersonaYTCreator ? 'Creator Enabled' : 'Disabled'}
+      checked={labsPersonaYTCreator} onChange={setLabsPersonaYTCreator}
+    />
 
-    <Button variant='soft' onClick={() => {
-      closeLayoutPreferences();
-      void navigateToLabs();
-    }} sx={{ ml: 'auto' }}>
-      👉 See Experiments
-    </Button>
+    {/*<FormSwitchControl*/}
+    {/*  title='Enhanced UI' description={labsEnhancedUI ? 'Enabled' : 'Disabled'}*/}
+    {/*  checked={labsEnhancedUI} onChange={setLabsEnhancedUI}*/}
+    {/*/>*/}
+
+    <FormSwitchControl
+      title='Assisted Draw' description={labsMagicDraw ? 'Enabled' : 'Disabled'}
+      checked={labsMagicDraw} onChange={setLabsMagicDraw}
+    />
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Graduated' />
+      <Typography level='body-xs'>
+        Auto Diagrams · Relative chat size · Text Tools
+      </Typography>
+    </FormControl>
 
   </>;
 }
