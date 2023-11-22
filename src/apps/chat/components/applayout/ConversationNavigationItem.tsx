@@ -16,7 +16,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 const DEBUG_CONVERSATION_IDs = false;
 
 
-export function ConversationItem(props: {
+export function ConversationNavigationItem(props: {
   conversationId: DConversationId,
   isActive: boolean,
   isLonely: boolean,
@@ -105,7 +105,7 @@ export function ConversationItem(props: {
       }}
     >
 
-      {/* Optional prgoress bar */}
+      {/* Optional progress bar, underlay */}
       {progress > 0 && (
         <Box sx={{
           backgroundColor: 'neutral.softActiveBg',

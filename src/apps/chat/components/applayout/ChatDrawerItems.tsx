@@ -12,7 +12,7 @@ import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ConversationItem } from './ConversationItem';
+import { ConversationNavigationItem } from './ConversationNavigationItem';
 
 
 type ListGrouping = 'off' | 'persona';
@@ -116,7 +116,7 @@ export function ChatDrawerItems(props: {
       {/*</ListItem>*/}
 
       {sortedIds.map(conversationId =>
-        <ConversationItem
+        <ConversationNavigationItem
           key={'c-id-' + conversationId}
           conversationId={conversationId}
           isActive={conversationId === props.conversationId}
