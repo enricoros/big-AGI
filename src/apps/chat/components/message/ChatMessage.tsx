@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Badge, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -11,7 +11,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
-import FastForwardIcon from '@mui/icons-material/FastForward';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -20,6 +19,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
@@ -579,9 +579,9 @@ export function ChatMessage(props: {
           <ListDivider />
           {!!props.onConversationRestartFrom && (
             <MenuItem onClick={handleOpsConversationRestartFrom}>
-              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
+              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <TelegramIcon />}</ListItemDecorator>
               {!fromAssistant
-                ? <>Respond <span style={{ opacity: 0.5 }}>from here</span></>
+                ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
                   ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
@@ -594,7 +594,7 @@ export function ChatMessage(props: {
           {!!props.onConversationBranch && (
             <MenuItem onClick={handleOpsConversationBranch} disabled={fromSystem}>
               <ListItemDecorator>
-                  <ForkRightIcon />
+                <ForkRightIcon />
               </ListItemDecorator>
               Branch {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
             </MenuItem>
