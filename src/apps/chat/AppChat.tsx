@@ -264,7 +264,12 @@ export function AppChat() {
 
   const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
 
-  const handleConversationDelete = (conversationId: DConversationId) => setDeleteConversationId(conversationId);
+  const handleConversationDelete = React.useCallback((conversationId: DConversationId, bypassConfirmation: boolean) => {
+    if (bypassConfirmation)
+      setFocusedConversationId(deleteConversation(conversationId));
+    else
+      setDeleteConversationId(conversationId);
+  }, [deleteConversation, setFocusedConversationId]);
 
 
   // Shortcuts
@@ -274,10 +279,10 @@ export function AppChat() {
     ['n', true, false, true, handleConversationNew],
     ['b', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null)],
     ['x', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId)],
-    ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId)],
+    ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
-  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, isFocusedChatEmpty]);
+  ], [focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
 
