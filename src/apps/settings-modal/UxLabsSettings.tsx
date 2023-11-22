@@ -1,6 +1,9 @@
 import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -11,24 +14,32 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 export function UxLabsSettings() {
 
   // external state
-  const { /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator } = useUXLabsStore();
+  const {
+    /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
+    /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
+  } = useUXLabsStore();
 
   return <>
 
     <FormSwitchControl
-      title='YouTube Personas' description={labsPersonaYTCreator ? 'Creator Enabled' : 'Disabled'}
+      title={<><YouTubeIcon /> YouTube Personas</>} description={labsPersonaYTCreator ? 'Creator Enabled' : 'Disabled'}
       checked={labsPersonaYTCreator} onChange={setLabsPersonaYTCreator}
+    />
+
+    <FormSwitchControl
+      title={<><FormatPaintIcon />Assisted Draw</>} description={labsMagicDraw ? 'Enabled' : 'Disabled'}
+      checked={labsMagicDraw} onChange={setLabsMagicDraw}
+    />
+
+    <FormSwitchControl
+      title={<><VerticalSplitIcon /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'} disabled
+      checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
     {/*<FormSwitchControl*/}
     {/*  title='Enhanced UI' description={labsEnhancedUI ? 'Enabled' : 'Disabled'}*/}
     {/*  checked={labsEnhancedUI} onChange={setLabsEnhancedUI}*/}
     {/*/>*/}
-
-    <FormSwitchControl
-      title='Assisted Draw' description={labsMagicDraw ? 'Enabled' : 'Disabled'}
-      checked={labsMagicDraw} onChange={setLabsMagicDraw}
-    />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
