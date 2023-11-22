@@ -225,6 +225,7 @@ export function AppChat() {
   const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null) => {
+    showNextTitle.current = true;
     const branchedConversationId = branchConversation(conversationId, messageId);
     addSnackbar({
       key: 'branch-conversation',
