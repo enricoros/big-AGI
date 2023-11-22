@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { create } from 'zustand';
 
-import type { SnackbarTypeMap } from '@mui/joy';
 
+export const SNACKBAR_ANIMATION_DURATION = 200;
 
 export interface SnackbarMessage {
   key: string;
   message: string;
   type: 'success' | 'issue';
+  autoHideDuration?: number | null;
   startDecorator?: React.ReactNode;
 }
 
@@ -15,19 +16,22 @@ interface SnackbarStore {
 
   // state
   activeSnackbar: SnackbarMessage | null;
+  activeSnackbarOpen: boolean;
   snackbarQueue: SnackbarMessage[];
 
   // actions
   addSnackbar: (snackbar: SnackbarMessage) => void;
+  animateCloseSnackbar: () => void;
   closeSnackbar: () => void;
 
 }
 
 
 export const useSnackbarsStore = create<SnackbarStore>()(
-  (_set) => ({
+  (_set, _get) => ({
 
     activeSnackbar: null,
+    activeSnackbarOpen: true,
     snackbarQueue: [],
 
     addSnackbar: (snackbar: SnackbarMessage) =>
@@ -39,6 +43,7 @@ export const useSnackbarsStore = create<SnackbarStore>()(
         if (state.activeSnackbar === null) {
           return {
             activeSnackbar: newSnackbar,
+            activeSnackbarOpen: true,
           };
         } else {
           return {
@@ -55,9 +60,19 @@ export const useSnackbarsStore = create<SnackbarStore>()(
           nextActiveSnackbar = nextQueue.shift(); // Remove the first snackbar from the queue
         return {
           activeSnackbar: nextActiveSnackbar,
+          activeSnackbarOpen: nextActiveSnackbar !== null,
           snackbarQueue: nextQueue,
         };
       }),
+
+    animateCloseSnackbar: () => {
+      _set({
+        activeSnackbarOpen: false,
+      });
+      setTimeout(() => {
+        _get().closeSnackbar();
+      }, SNACKBAR_ANIMATION_DURATION); // Delay needs to match match your CSS animation duration
+    },
 
   }),
 );
