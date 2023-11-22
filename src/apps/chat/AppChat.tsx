@@ -23,12 +23,12 @@ import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
-import { Ephemerals } from './components/Ephemerals';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
 import { usePanesManager } from './components/usePanesManager';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 /**
@@ -312,15 +312,6 @@ export function AppChat() {
         backgroundColor: 'background.level1',
         overflowY: 'auto', // overflowY: 'hidden'
         minHeight: 96,
-      }} />
-
-    <Ephemerals
-      conversationId={focusedConversationId}
-      sx={{
-        // flexGrow: 0.1,
-        flexShrink: 0.5,
-        overflowY: 'auto',
-        minHeight: 64,
       }} />
 
     <Composer
