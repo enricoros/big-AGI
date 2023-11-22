@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { Box } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
@@ -16,6 +17,7 @@ import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsSto
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
@@ -23,12 +25,12 @@ import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
+import { Ephemerals } from './components/Ephemerals';
+import { usePanesManager } from './components/usePanesManager';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
-import { usePanesManager } from './components/usePanesManager';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 /**
@@ -52,8 +54,14 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { focusedChatPane, openConversationInFocusedPane, navigateHistoryInFocusedPane } = usePanesManager();
-  const focusedConversationId = focusedChatPane?.conversationId ?? null;
+  const {
+    chatPanes,
+    focusedConversationId,
+    navigateHistoryInFocusedPane,
+    openConversationInFocusedPane,
+    openConversationInSplitPane,
+    setFocusedPaneIndex,
+  } = usePanesManager();
   const {
     title: focusedChatTitle,
     isChatEmpty: isFocusedChatEmpty,
@@ -70,9 +78,19 @@ export function AppChat() {
 
   // Window actions
 
+  const chatPaneIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
+
+  const setActivePaneIndex = React.useCallback((idx: number) => {
+    setFocusedPaneIndex(idx);
+  }, [setFocusedPaneIndex]);
+
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
   }, [openConversationInFocusedPane]);
+
+  const openSplitConversationId = React.useCallback((conversationId: DConversationId | null) => {
+    conversationId && openConversationInSplitPane(conversationId);
+  }, [openConversationInSplitPane]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -212,8 +230,12 @@ export function AppChat() {
       autoHideDuration: 3000,
       startDecorator: <ForkRightIcon />,
     });
-    setFocusedConversationId(branchedConversationId);
-  }, [branchConversation, setFocusedConversationId]);
+    const branchInAltPanel = useUXLabsStore.getState().labsSplitBranching;
+    if (branchInAltPanel)
+      openSplitConversationId(branchedConversationId);
+    else
+      setFocusedConversationId(branchedConversationId);
+  }, [branchConversation, openSplitConversationId, setFocusedConversationId]);
 
   const handleConversationFlatten = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
 
@@ -298,21 +320,57 @@ export function AppChat() {
 
   return <>
 
-    <ChatMessageList
-      conversationId={focusedConversationId}
-      isMessageSelectionMode={isMessageSelectionMode}
-      setIsMessageSelectionMode={setIsMessageSelectionMode}
-      onConversationBranch={handleConversationBranch}
-      onConversationExecuteHistory={handleConversationExecuteHistory}
-      onTextDiagram={handleTextDiagram}
-      onTextImagine={handleTextImaginePlus}
-      onTextSpeak={handleTextSpeak}
-      sx={{
-        flexGrow: 1,
-        backgroundColor: 'background.level1',
-        overflowY: 'auto', // overflowY: 'hidden'
-        minHeight: 96,
-      }} />
+    <Box sx={{
+      flexGrow: 1,
+      display: 'flex', flexDirection: { xs: 'column', md: 'row' },
+      overflow: 'clip',
+    }}>
+
+      {chatPaneIDs.map((_conversationId, idx) => (
+        <Box key={'chat-pane-' + idx} onClick={() => setActivePaneIndex(idx)} sx={{
+          flexGrow: 1, flexBasis: 1,
+          display: 'flex', flexDirection: 'column',
+          overflow: 'clip',
+        }}>
+
+          <ChatMessageList
+            conversationId={_conversationId}
+            isMessageSelectionMode={isMessageSelectionMode}
+            setIsMessageSelectionMode={setIsMessageSelectionMode}
+            onConversationBranch={handleConversationBranch}
+            onConversationExecuteHistory={handleConversationExecuteHistory}
+            onTextDiagram={handleTextDiagram}
+            onTextImagine={handleTextImaginePlus}
+            onTextSpeak={handleTextSpeak}
+            sx={{
+              flexGrow: 1,
+              backgroundColor: 'background.level1',
+              overflowY: 'auto',
+              minHeight: 96,
+              // outline the current focused pane
+              ...(chatPaneIDs.length < 2 ? {}
+                : (_conversationId === focusedConversationId)
+                  ? {
+                    border: '2px solid',
+                    borderColor: 'primary.solidBg',
+                  } : {
+                    padding: '2px',
+                  }),
+            }}
+          />
+
+          <Ephemerals
+            conversationId={_conversationId}
+            sx={{
+              // flexGrow: 0.1,
+              flexShrink: 0.5,
+              overflowY: 'auto',
+              minHeight: 64,
+            }} />
+
+        </Box>
+      ))}
+    </Box>
 
     <Composer
       conversationId={focusedConversationId}
