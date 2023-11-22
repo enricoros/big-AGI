@@ -10,6 +10,7 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ConversationItem } from './ConversationItem';
 
@@ -35,7 +36,8 @@ export function ChatDrawerItems(props: {
     conversationIDs: state.conversations.map(_c => _c.id),
     maxChatMessages: state.conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 0),
   }), shallow);
-  const [experimentalLabs, showSymbols] = useUIPreferencesStore(state => [state.experimentalLabs, state.zenMode !== 'cleaner'], shallow);
+  const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
+  const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
   // derived state
   const totalConversations = conversationIDs.length;
@@ -119,7 +121,7 @@ export function ChatDrawerItems(props: {
           conversationId={conversationId}
           isActive={conversationId === props.conversationId}
           isLonely={singleChat}
-          maxChatMessages={(experimentalLabs || softMaxReached) ? maxChatMessages : 0}
+          maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
           showSymbols={showSymbols}
           onConversationActivate={handleConversationActivate}
           onConversationDelete={handleConversationDelete}

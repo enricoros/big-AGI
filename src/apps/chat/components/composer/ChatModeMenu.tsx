@@ -5,6 +5,7 @@ import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatModeId } from '../../AppChat';
 
@@ -48,10 +49,11 @@ function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
   return shortcut;
 }
 
-export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, experimental: boolean, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) {
+export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) {
 
   // external state
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const labsMagicDraw = useUXLabsStore(state => state.labsMagicDraw);
 
   return <CloseableMenu
     placement='top-end' sx={{ minWidth: 320 }}
@@ -66,7 +68,7 @@ export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClos
 
     {/* ChatMode items */}
     {Object.entries(ChatModeItems)
-      .filter(([, { experimental }]) => props.experimental || !experimental)
+      .filter(([, { experimental }]) => labsMagicDraw || !experimental)
       .map(([key, data]) =>
         <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>

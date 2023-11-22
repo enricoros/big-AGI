@@ -10,6 +10,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { Link } from '~/common/components/Link';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
@@ -46,6 +47,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // external state
   const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const labsPersonaYTCreator = useUXLabsStore(state => state.labsPersonaYTCreator);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -184,7 +186,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             </Grid>
           ))}
           {/* Button to start the YouTube persona creator */}
-          <Grid>
+          {labsPersonaYTCreator && <Grid>
             <Button
               variant='soft' color='neutral'
               component={Link} noLinkStyle href='/personas'
@@ -207,9 +209,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 YouTube persona creator
               </div>
             </Button>
-          </Grid>
+          </Grid>}
         </Grid>
-
         <Typography
           level='body-sm'
           sx={{

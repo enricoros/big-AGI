@@ -137,7 +137,7 @@ export function Composer(props: {
   const isMobile = useIsMobile();
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [startupText, setStartupText] = useComposerStartupText();
-  const [enterIsNewline, experimentalLabs] = useUIPreferencesStore(state => [state.enterIsNewline, state.experimentalLabs], shallow);
+  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
@@ -638,7 +638,6 @@ export function Composer(props: {
         {!!chatModeMenuAnchor && (
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
-            experimental={experimentalLabs}
             chatModeId={chatModeId} onSetChatModeId={handleModeChange}
           />
         )}
