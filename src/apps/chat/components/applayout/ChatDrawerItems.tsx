@@ -21,7 +21,7 @@ export function ChatDrawerItems(props: {
   conversationId: DConversationId | null,
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
-  onConversationDelete: (conversationId: DConversationId) => void,
+  onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
@@ -58,7 +58,7 @@ export function ChatDrawerItems(props: {
   }, [onConversationActivate]);
 
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
-    !singleChat && conversationId && onConversationDelete(conversationId);
+    !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
 
