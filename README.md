@@ -13,10 +13,10 @@ Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
-## 🗺️ Explore the Roadmap
+## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2)
 
-The development of big-AGI is an open book. Our **[public roadmap](https://github.com/users/enricoros/projects/4/views/2)** is
-live, providing a detailed look at the current and future development of the application.
+big-AGI is an open book; our **[public roadmap](https://github.com/users/enricoros/projects/4/views/2)**
+shows the current developments and future ideas.
 
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
