@@ -2,10 +2,12 @@
 
 This is a high-level changelog. Calls out some of the high level features batched
 by release.
- - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
+
+- For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
 ### 1.6.0 - Dec 2023
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4) 
+
+- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 - milestone: [1.6.0](https://github.com/enricoros/big-agi/milestone/6)
 
 ### ✨ What's New in 1.5.0 👊 - Nov 19, 2023
@@ -19,6 +21,17 @@ by release.
 - **SDXL Support**: Enhance your image generation with SDXL support for Prodia
 - **Cloudflare OpenAI API Gateway**: Integrate with Cloudflare for a robust API gateway
 - **Helicone for Anthropic**: Utilize Helicone's tools for Anthropic models
+
+For Developers:
+
+- Runtime Server-Side configuration:  https://github.com/enricoros/big-agi/issues/189. Env vars are
+  not required to be set at build time anymore. The frontend will roundtrip to the backend at the
+  first request to get the configuration. See
+  https://github.com/enricoros/big-agi/blob/main/src/modules/backend/backend.router.ts.
+- CloudFlare developers: please change the deployment command to
+  `rm app/api/trpc-node/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`,
+  as we transitioned to the App router in NextJS 14. The documentation in
+  [docs/deploy-cloudflare.md](../docs/deploy-cloudflare.md) is updated
 
 ### 1.4.0: Sept/Oct: scale OUT
 
