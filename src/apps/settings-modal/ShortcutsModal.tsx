@@ -21,7 +21,7 @@ const shortcutsMd = `
 | Ctrl + Alt + N   | **New** chat                                    |
 | Ctrl + Alt + X   | **Reset** chat                                  |
 | Ctrl + Alt + D   | **Delete** chat                                 |
-| Ctrl + Alt + F   | **Clone** chat                                  |
+| Ctrl + Alt + B   | **Branch** chat                                 |
 | **Settings**     |                                                 |
 | Ctrl + Shift + M | 🧠 Models                                       |
 | Ctrl + Shift + P | ⚙️ Preferences                                  |

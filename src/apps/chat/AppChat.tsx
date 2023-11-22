@@ -14,7 +14,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 
 import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
@@ -165,8 +165,6 @@ export function AppChat() {
     }
   }, [focusedConversationId, _handleExecute]);
 
-  useGlobalShortcut('r', true, true, false, handleMessageRegenerateLast);
-
   const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
 
   const handleTextImaginePlus = async (conversationId: DConversationId, messageText: string) => {
@@ -194,8 +192,6 @@ export function AppChat() {
     composerTextAreaRef.current?.focus();
   }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
-  useGlobalShortcut('n', true, false, true, handleConversationNew);
-
   const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
   const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
@@ -204,16 +200,13 @@ export function AppChat() {
     const branchedConversationId = branchConversation(conversationId, messageId);
     addSnackbar({
       key: 'branch-conversation',
-      message: 'Branched started.',
+      message: 'Branch started.',
       type: 'success',
       autoHideDuration: 3000,
       startDecorator: <ForkRightIcon />,
     });
     setFocusedConversationId(branchedConversationId);
   }, [branchConversation, setFocusedConversationId]);
-
-  useGlobalShortcut('f', true, false, true, () =>
-    isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null));
 
   const handleConversationFlatten = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
 
@@ -226,9 +219,6 @@ export function AppChat() {
   }, [clearConversationId, setMessages]);
 
   const handleConversationClear = (conversationId: DConversationId) => setClearConversationId(conversationId);
-
-  useGlobalShortcut('x', true, false, true, () =>
-    isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId));
 
 
   const handleConfirmedDeleteConversation = () => {
@@ -247,8 +237,17 @@ export function AppChat() {
 
   const handleConversationDelete = (conversationId: DConversationId) => setDeleteConversationId(conversationId);
 
-  useGlobalShortcut('d', true, false, true, () =>
-    focusedConversationId && handleConversationDelete(focusedConversationId));
+
+  // Shortcuts
+
+  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+    ['r', true, true, false, handleMessageRegenerateLast],
+    ['n', true, false, true, handleConversationNew],
+    ['b', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null)],
+    ['x', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId)],
+    ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId)],
+  ], [focusedConversationId, handleConversationBranch, handleConversationNew, handleMessageRegenerateLast, isFocusedChatEmpty]);
+  useGlobalShortcuts(shortcuts);
 
 
   // Pluggable ApplicationBar components

@@ -9,7 +9,6 @@ import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llm
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
@@ -36,7 +35,6 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     modelSources: state.sources,
     llmCount: state.llms.length,
   }), shallow);
-  useGlobalShortcut('m', true, true, false, openLayoutModelsSetup);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded

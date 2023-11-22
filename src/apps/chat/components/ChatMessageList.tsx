@@ -7,7 +7,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { GlobalShortcut, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
@@ -128,7 +128,7 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   };
 
-  useGlobalShortcut(props.isMessageSelectionMode && GlobalShortcut.Esc, false, false, false, () => {
+  useGlobalShortcut(props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
     props.setIsMessageSelectionMode(false);
   });
 

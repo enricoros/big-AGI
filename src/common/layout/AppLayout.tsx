@@ -11,7 +11,9 @@ import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AppBar } from './AppBar';
+import { GlobalShortcutItem, useGlobalShortcuts } from '../components/useGlobalShortcut';
 import { NoSSR } from '../components/NoSSR';
+import { openLayoutModelsSetup, openLayoutPreferences } from './store-applayout';
 
 
 export function AppLayout(props: {
@@ -23,6 +25,13 @@ export function AppLayout(props: {
 
   // usage counter, for progressive disclosure of features
   useAppStateStore(state => state.usageCount);
+
+  // global shortcuts for modals
+  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+    ['m', true, true, false, openLayoutModelsSetup],
+    ['p', true, true, false, openLayoutPreferences],
+  ], []);
+  useGlobalShortcuts(shortcuts);
 
   return (
     // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
