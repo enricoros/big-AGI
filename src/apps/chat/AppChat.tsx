@@ -303,7 +303,7 @@ export function AppChat() {
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}
       />,
-    [focusedConversationId, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
