@@ -19,6 +19,7 @@ interface AppLayoutStore {
   preferencesTab: number; // 0: closed, 1..N: tab index
   modelsSetupOpen: boolean;
   llmOptionsId: DLLMId | null;
+  shortcutsOpen: boolean;
 
 }
 
@@ -35,6 +36,7 @@ const useAppLayoutStore = create<AppLayoutStore>()(
     preferencesTab: 0,
     modelsSetupOpen: false,
     llmOptionsId: null,
+    shortcutsOpen: false,
 
   }),
 );
@@ -75,3 +77,6 @@ export const openLayoutModelsSetup = () => useAppLayoutStore.setState({ modelsSe
 export const closeLayoutModelsSetup = () => useAppLayoutStore.setState({ modelsSetupOpen: false });
 export const openLayoutLLMOptions = (llmId: DLLMId) => useAppLayoutStore.setState({ llmOptionsId: llmId });
 export const closeLayoutLLMOptions = () => useAppLayoutStore.setState({ llmOptionsId: null });
+export const useLayoutShortcuts = () => useAppLayoutStore(state => state.shortcutsOpen);
+export const openLayoutShortcuts = () => useAppLayoutStore.setState({ shortcutsOpen: true });
+export const closeLayoutShortcuts = () => useAppLayoutStore.setState({ shortcutsOpen: false });

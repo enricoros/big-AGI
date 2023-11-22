@@ -5,6 +5,7 @@ import { Box, Container } from '@mui/joy';
 
 import { ModelsModal } from '../../apps/models-modal/ModelsModal';
 import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
+import { ShortcutsModal } from '../../apps/settings-modal/ShortcutsModal';
 
 import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
@@ -13,7 +14,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { AppBar } from './AppBar';
 import { GlobalShortcutItem, useGlobalShortcuts } from '../components/useGlobalShortcut';
 import { NoSSR } from '../components/NoSSR';
-import { openLayoutModelsSetup, openLayoutPreferences } from './store-applayout';
+import { openLayoutModelsSetup, openLayoutPreferences, openLayoutShortcuts } from './store-applayout';
 
 
 export function AppLayout(props: {
@@ -30,6 +31,7 @@ export function AppLayout(props: {
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     ['m', true, true, false, openLayoutModelsSetup],
     ['p', true, true, false, openLayoutPreferences],
+    ['?', true, true, false, openLayoutShortcuts],
   ], []);
   useGlobalShortcuts(shortcuts);
 
@@ -68,6 +70,9 @@ export function AppLayout(props: {
 
       {/* Overlay Models (& Model Options )*/}
       <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+
+      {/* Overlay Shortcuts */}
+      <ShortcutsModal />
 
     </NoSSR>
   );
