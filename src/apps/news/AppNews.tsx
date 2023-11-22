@@ -5,10 +5,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
+import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { newsCallout, NewsItems } from './news.data';
-import { ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 export function AppNews() {
@@ -46,7 +46,7 @@ export function AppNews() {
         <Box>
           <Button
             variant='solid' color='neutral' size='lg'
-            component={Link} href={ROUTE_APP_CHAT} noLinkStyle
+            component={Link} href={ROUTE_INDEX} noLinkStyle
             endDecorator='✨'
             sx={{ minWidth: 200 }}
           >
