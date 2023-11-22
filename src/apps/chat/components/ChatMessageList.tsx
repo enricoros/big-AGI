@@ -15,7 +15,6 @@ import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/component
 
 import { ChatMessage } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
-import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
 
@@ -31,7 +30,6 @@ export function ChatMessageList(props: {
   onTextDiagram: (diagramConfig: DiagramConfig | null) => Promise<any>,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<any>,
   onTextSpeak: (selectedText: string) => Promise<any>,
-  ephemeralsSx?: SxProps,
   sx?: SxProps,
 }) {
 
@@ -164,14 +162,13 @@ export function ChatMessageList(props: {
       </Box>
     );
 
-  return <>
-
+  return (
     <List sx={{
       p: 0, ...(props.sx || {}),
       // this makes sure that the the window is scrolled to the bottom (column-reverse)
       display: 'flex', flexDirection: 'column-reverse',
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
-      marginBottom: '-1px',
+      // marginBottom: '-1px',
     }}>
 
       {filteredMessages.map((message, idx) =>
@@ -217,10 +214,5 @@ export function ChatMessageList(props: {
       )}
 
     </List>
-
-    <Ephemerals
-      conversationId={props.conversationId}
-      sx={props.ephemeralsSx} />
-
-  </>;
+  );
 }
