@@ -6,19 +6,40 @@ const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 
 export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
   {
+    id: 'claude-2.1',
+    label: 'Claude 2.1',
+    created: roundTime('2023-11-21'),
+    description: 'Superior performance on tasks that require complex reasoning, with reduced model hallucination rates',
+    contextWindow: 200000,
+    pricing: {
+      cpmPrompt: 0.008,
+      cpmCompletion: 0.024,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
     id: 'claude-2.0',
     label: 'Claude 2',
     created: roundTime('2023-07-11'),
-    description: 'Claude-2 is the latest version of Claude',
+    description: 'Superior performance on tasks that require complex reasoning',
     contextWindow: 100000,
+    pricing: {
+      cpmPrompt: 0.008,
+      cpmCompletion: 0.024,
+    },
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'claude-instant-1.2',
     label: 'Claude Instant 1.2',
     created: roundTime('2023-08-09'),
-    description: 'Precise and faster',
+    description: 'Low-latency, high throughput model',
     contextWindow: 100000,
+    pricing: {
+      cpmPrompt: 0.00163,
+      cpmCompletion: 0.00551,
+    },
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
