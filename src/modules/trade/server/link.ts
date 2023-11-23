@@ -72,6 +72,10 @@ export const storageDeleteOutputSchema = z.object({
 });
 
 
+export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;
+export type StorageDeleteSchema = z.infer<typeof storageDeleteOutputSchema>;
+
+
 /// tRPC procedures
 
 /**

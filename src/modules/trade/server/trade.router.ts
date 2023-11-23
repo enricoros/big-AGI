@@ -6,33 +6,41 @@ import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
-import { storageDeleteOutputSchema, storageGetProcedure, storageMarkAsDeletedProcedure, storagePutOutputSchema, storagePutProcedure } from './link';
+import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure } from './link';
 
 
-export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;
-
-export type StorageDeleteSchema = z.infer<typeof storageDeleteOutputSchema>;
-
-export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
+export const importChatGptShareInputSchema = z.union([
+  z.object({
+    url: z.string().url().startsWith('https://chat.openai.com/share/'),
+  }),
+  z.object({
+    htmlPage: z.string(),
+  }),
+]);
 
 
 export const tradeRouter = createTRPCRouter({
 
-  /**
-   * ChatGPT Shared Chats Importer
-   */
+  /** ChatGPT Shared Chats Importer */
   importChatGptShare: publicProcedure
-    .input(z.object({ url: z.string().url().startsWith('https://chat.openai.com/share/') }))
+    .input(importChatGptShareInputSchema)
     .output(z.object({ data: chatGptSharedChatSchema, conversationId: z.string() }))
-    .query(async ({ input: { url } }) => {
+    .mutation(async ({ input }) => {
 
-      // add headers that make it closest to a browser request
-      const htmlPage = await fetchTextOrTRPCError(url, 'GET', {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-      }, undefined, 'ChatGPT Importer');
+      // download the page if URL is given, else use the source
+      let htmlPage: string;
+
+      if ('htmlPage' in input) {
+        htmlPage = input.htmlPage;
+      } else {
+        // add headers that make it closest to a browser request
+        htmlPage = await fetchTextOrTRPCError(input.url, 'GET', {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        }, undefined, 'ChatGPT Importer');
+      }
 
       const data = chatGptParseConversation(htmlPage);
 
