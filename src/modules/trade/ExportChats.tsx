@@ -18,7 +18,8 @@ import { conversationTitle, DConversationId, getConversation } from '~/common/st
 import { isBrowser } from '~/common/util/pwaUtils';
 import { useUICounter } from '~/common/state/store-ui';
 
-import type { PublishedSchema, StoragePutSchema } from './server/trade.router';
+import type { PublishedSchema } from './server/pastegg';
+import type { StoragePutSchema } from './server/link';
 import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
 import { addChatLinkItem, useLinkStorageOwnerId } from './store-module-trade';

@@ -18,6 +18,7 @@ export const publishToOutputSchema = z.object({
   created: z.string(),
 });
 
+export type PublishedSchema = z.infer<typeof publishToOutputSchema>;
 
 /**
  * Post a paste to paste.gg
