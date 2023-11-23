@@ -20,7 +20,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // update the system message from the active Purpose, if not manually edited
-  history = updatePurposeInHistory(conversationId, history, systemPurpose);
+  history = updatePurposeInHistory(conversationId, history, assistantLlmId, systemPurpose);
 
   // create a blank and 'typing' message for the assistant
   const assistantMessageId = createAssistantTypingMessage(conversationId, assistantLlmId, history[0].purposeId, '...');
