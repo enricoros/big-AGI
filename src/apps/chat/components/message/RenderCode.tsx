@@ -115,7 +115,7 @@ function RenderCodeImpl(props: {
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(blockCode);
+    copyToClipboard(blockCode, 'Code');
   };
 
   return (

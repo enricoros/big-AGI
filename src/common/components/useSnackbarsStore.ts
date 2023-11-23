@@ -1,6 +1,7 @@
-import * as React from 'react';
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
+
+import type { SnackbarTypeMap } from '@mui/joy';
 
 
 export const SNACKBAR_ANIMATION_DURATION = 200;
@@ -9,8 +10,8 @@ export interface SnackbarMessage {
   key: string;
   message: string;
   type: 'success' | 'issue' | 'title';
-  autoHideDuration?: number | null;
-  startDecorator?: React.ReactNode;
+  closeButton?: boolean,
+  overrides?: Partial<SnackbarTypeMap['props']>;
 }
 
 interface SnackbarStore {

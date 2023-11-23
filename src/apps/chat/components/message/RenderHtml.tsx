@@ -59,7 +59,7 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(props.htmlBlock.html);
+    copyToClipboard(props.htmlBlock.html, 'HTML');
   };
 
   return (

@@ -231,8 +231,10 @@ export function AppChat() {
       key: 'branch-conversation',
       message: 'Branch started.',
       type: 'success',
-      autoHideDuration: 3000,
-      startDecorator: <ForkRightIcon />,
+      overrides: {
+        autoHideDuration: 3000,
+        startDecorator: <ForkRightIcon />,
+      },
     });
     const branchInAltPanel = useUXLabsStore.getState().labsSplitBranching;
     if (branchInAltPanel)

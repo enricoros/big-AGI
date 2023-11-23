@@ -50,7 +50,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
   const onOpen = () => setOpened(true);
 
   const onCopy = () => {
-    copyToClipboard(fullUrl);
+    copyToClipboard(fullUrl, 'Public link');
     setCopied(true);
   };
 
