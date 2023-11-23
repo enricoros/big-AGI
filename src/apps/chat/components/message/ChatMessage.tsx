@@ -272,7 +272,7 @@ export function ChatMessage(props: {
   const closeOperationsMenu = () => setOpsMenuAnchor(null);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
-    copyToClipboard(textSel);
+    copyToClipboard(textSel, 'Text');
     e.preventDefault();
     closeOperationsMenu();
     closeSelectionMenu();

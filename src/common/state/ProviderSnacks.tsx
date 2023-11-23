@@ -32,6 +32,7 @@ const defaultTypeConfig: {
     autoHideDuration: 2000,
     clickAway: false,
     closeButton: false,
+    anchorOrigin: { vertical: 'top', horizontal: 'center' },
   },
 };
 
@@ -49,12 +50,12 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
     if (!activeSnackbar)
       return null;
 
-    const { key, message, type, autoHideDuration, startDecorator } = activeSnackbar;
+    const { key, message, type, closeButton, overrides } = activeSnackbar;
 
     const config = {
       ...defaultTypeConfig[type],
-      autoHideDuration: autoHideDuration ?? defaultTypeConfig[type].autoHideDuration,
-      startDecorator: startDecorator ?? defaultTypeConfig[type].startDecorator,
+      ...overrides,
+      ...(closeButton === undefined ? {} : { closeButton }),
     };
 
     return (
@@ -66,10 +67,7 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
         autoHideDuration={config.autoHideDuration ?? null}
         animationDuration={SNACKBAR_ANIMATION_DURATION}
         invertedColors={config.closeButton}
-        anchorOrigin={{
-          vertical: type === 'title' ? 'top' : 'bottom',
-          horizontal: type === 'title' ? 'center' : 'right',
-        }}
+        anchorOrigin={config.anchorOrigin || { vertical: 'bottom', horizontal: 'right' }}
         onClose={(_event, reason) => {
           if (reason === 'timeout' || ((reason === 'clickaway' || reason === 'escapeKeyDown') && config.clickAway)) {
             animateCloseSnackbar();

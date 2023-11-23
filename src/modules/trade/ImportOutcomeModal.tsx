@@ -6,7 +6,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import type { DConversation } from '~/common/state/store-chats';
 import { GoodModal } from '~/common/components/GoodModal';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
 
 
 type ConversationOutcome = {
@@ -37,14 +36,8 @@ export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: s
   const hasAnyFailures = failures.length > 0;
 
   const handleCopyRawJson = () => {
-    if (props.rawJson) {
-      copyToClipboard(props.rawJson);
-      addSnackbar({
-        key: 'import-chatgpt-json',
-        message: 'JSON copied to clipboard',
-        type: 'success',
-      });
-    }
+    if (props.rawJson)
+      copyToClipboard(props.rawJson, 'ChatGPT JSON');
   };
 
   return (
