@@ -4,7 +4,7 @@
 
 import { DLLMId } from '~/modules/llms/store-llms';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
-import { callBrowseFetchSinglePage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 
 
@@ -187,7 +187,7 @@ async function search(query: string): Promise<string> {
 
 async function browse(url: string): Promise<string> {
   try {
-    const data = await callBrowseFetchSinglePage(url);
+    const data = await callBrowseFetchPage(url);
     return JSON.stringify(data ? { text: data } : { error: 'Issue reading the page' });
   } catch (error) {
     console.error('Error browsing:', (error as Error).message);

@@ -6,7 +6,18 @@ import { apiAsyncNode } from '~/common/util/trpc.client';
 export const CmdRunBrowse: string[] = ['/browse'];
 
 
-export async function callBrowseFetchSinglePage(url: string): Promise<string | null> {
+export async function callBrowseFetchPage(url: string): Promise<string | null> {
+
+  // thow if no URL is provided
+  url = url?.trim() || '';
+  if (!url)
+    throw new Error('Invalid URL');
+
+  // assume https if no protocol is provided
+  // noinspection HttpUrlsUsage
+  if (!url.startsWith('http://') && !url.startsWith('https://'))
+    url = 'https://' + url;
+
   try {
 
     const clientWssEndpoint = useBrowseStore.getState().wssEndpoint;

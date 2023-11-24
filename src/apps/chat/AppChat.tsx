@@ -11,6 +11,7 @@ import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -131,7 +132,7 @@ export function AppChat() {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
-        if (CmdRunBrowse.includes(command) && prompt?.trim()) {
+        if (CmdRunBrowse.includes(command) && prompt?.trim() && useBrowseStore.getState().enableCommandBrowse) {
           setMessages(conversationId, history);
           return await runBrowseUpdatingState(conversationId, prompt);
         }

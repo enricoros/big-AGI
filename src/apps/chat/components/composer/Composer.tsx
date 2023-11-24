@@ -19,7 +19,7 @@ import type { ChatModeId } from '../../AppChat';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
-import { callBrowseFetchSinglePage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
@@ -284,7 +284,7 @@ export function Composer(props: {
     setIsDownloading(true);
     let urlContent: string | null;
     try {
-      urlContent = await callBrowseFetchSinglePage(url);
+      urlContent = await callBrowseFetchPage(url);
     } catch (error: any) {
       // ignore errors
       urlContent = `[Web Download] Issue loading website: ${error?.message || typeof error === 'string' ? error : JSON.stringify(error)}`;
