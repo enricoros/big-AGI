@@ -59,7 +59,7 @@ export const browseRouter = createTRPCRouter({
           results.push({
             url: subject.url,
             content: '',
-            error: error?.message || error?.toString() || 'Unknown fetch error',
+            error: error?.message || JSON.stringify(error) || 'Unknown fetch error',
             stopReason: 'error',
           });
         }
@@ -151,6 +151,13 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
     };
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);
+  }
+
+  // close the page
+  try {
+    await page.close();
+  } catch (error: any) {
+    console.error('workerPuppeteer: page.close', error);
   }
 
   // close the browse (important!)
