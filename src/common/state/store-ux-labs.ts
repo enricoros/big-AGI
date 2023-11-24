@@ -12,6 +12,9 @@ import { persist } from 'zustand/middleware';
  */
 interface UXLabsStore {
 
+  labsCalling: boolean;
+  setLabsCalling: (labsCalling: boolean) => void;
+
   labsEnhancedUI: boolean;
   setLabsEnhancedUI: (labsEnhancedUI: boolean) => void;
 
@@ -29,6 +32,9 @@ interface UXLabsStore {
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
+
+      labsCalling: false,
+      setLabsCalling: (labsCalling: boolean) => set({ labsCalling }),
 
       labsEnhancedUI: false,
       setLabsEnhancedUI: (labsEnhancedUI: boolean) => set({ labsEnhancedUI }),

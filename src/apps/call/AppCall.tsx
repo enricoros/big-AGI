@@ -10,9 +10,6 @@ import { CallUI } from './CallUI';
 import { CallWizard } from './CallWizard';
 
 
-export const APP_CALL_ENABLED = false;
-
-
 export function AppCall() {
   // external state
   const { query } = useRouter();
