@@ -1,4 +1,7 @@
+import { useBrowseStore } from '~/modules/browse/store-module-browsing';
+
 import { apiAsyncNode } from '~/common/util/trpc.client';
+
 
 export const CmdRunBrowse: string[] = ['/browse'];
 
@@ -6,8 +9,13 @@ export const CmdRunBrowse: string[] = ['/browse'];
 export async function callBrowseFetchSinglePage(url: string): Promise<string | null> {
   try {
 
+    const clientWssEndpoint = useBrowseStore.getState().wssEndpoint;
+
     const results = await apiAsyncNode.browse.fetchPages.mutate({
-      access: { dialect: 'browse-wss' },
+      access: {
+        dialect: 'browse-wss',
+        ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
+      },
       subjects: [{ url }],
     });
 

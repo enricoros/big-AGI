@@ -43,6 +43,8 @@ PRODIA_API_KEY=
 # Google Custom Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
+# Browse
+PUPPETEER_WSS_ENDPOINT=
 ```
 
 ## Variables Documentation
@@ -104,6 +106,8 @@ Enable the app to Talk, Draw, and Google things up.
 | `GOOGLE_CSE_ID`          | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
 | **Text-To-Image**        | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
 | `PRODIA_API_KEY`         | Prodia API Key - used with '/imagine ...'                                                                               |
+| **Browse**               |                                                                                                                         |
+| `PUPPETEER_WSS_ENDPOINT` | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
 
 ---
 

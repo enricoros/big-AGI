@@ -15,8 +15,6 @@ const WORKER_TIMEOUT = 10 * 1000; // 10 seconds
 const browseAccessSchema = z.object({
   dialect: z.enum(['browse-wss']),
   wssEndpoint: z.string().trim().optional(),
-  wssKey: z.string().trim().optional(),
-  userAgent: z.string().optional(),
 });
 
 const fetchPageInputSchema = z.object({

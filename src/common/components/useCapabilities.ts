@@ -40,3 +40,18 @@ export interface CapabilityProdiaImageGeneration {
 }
 
 export { useCapability as useCapabilityProdia } from '~/modules/prodia/prodia.client';
+
+
+/// Browsing
+
+export interface CapabilityBrowsing {
+  mayWork: boolean;
+  isServerConfig: boolean;
+  isClientConfig: boolean;
+  isClientValid: boolean;
+  inComposer: boolean;
+  inReact: boolean;
+  inPersonas: boolean;
+}
+
+// export { useBrowseCapability as useCapabilityBrowse } from '~/modules/browse/store-module-browsing';

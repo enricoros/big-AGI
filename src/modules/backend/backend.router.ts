@@ -15,6 +15,7 @@ export const backendRouter = createTRPCRouter({
     .query(async () => {
       return {
         hasDB: !!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING,
+        hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
         hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
         hasImagingProdia: !!env.PRODIA_API_KEY,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
