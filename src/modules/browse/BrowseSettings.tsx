@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Checkbox, FormControl, FormHelperText } from '@mui/joy';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { Link } from '~/common/components/Link';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
@@ -22,6 +23,12 @@ export function BrowseSettings() {
   }), shallow);
 
   return <>
+
+    <FormHelperText sx={{ display: 'block' }}>
+      Configure a browsing service to enable loading links and pages. See the <Link
+      href='https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md' target='_blank' noLinkStyle>
+      browse functionality guide</Link> for more information.
+    </FormHelperText>
 
     {!isServerConfig && <FormInputKey
       id='browse-wss' label='WSS Endpoint' noKey
