@@ -34,7 +34,7 @@ export async function callBrowseFetchPage(url: string): Promise<string | null> {
       return `Browsing error: expected 1 result, got ${results.objects.length}`;
 
     const firstResult = results.objects[0];
-    return !firstResult.error ? firstResult.content : `Browsing service error: ${firstResult.error}`;
+    return !firstResult.error ? firstResult.content : `Browsing service error: ${JSON.stringify(firstResult)}`;
 
   } catch (error: any) {
     return `Browsing error: ${error?.message || error?.toString() || 'Unknown fetch error'}`;
