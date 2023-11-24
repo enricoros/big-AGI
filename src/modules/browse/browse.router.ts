@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { connect, TimeoutError } from '@cloudflare/puppeteer';
+import { connect, Page, TimeoutError } from '@cloudflare/puppeteer';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -94,7 +94,15 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // [puppeteer] start the remote session
   const browser = await connect({ browserWSEndpoint });
-  const page = await browser.newPage();
+
+  // for local testing, open an incognito context, to seaparate cookies
+  let page: Page;
+  if (browserWSEndpoint.startsWith('ws://')) {
+    const context = await browser.createIncognitoBrowserContext();
+    page = await context.newPage();
+  } else {
+    page = await browser.newPage();
+  }
 
   // open url
   try {
