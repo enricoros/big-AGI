@@ -25,7 +25,7 @@ export function BrowseSettings() {
     {!isServerConfig && <FormInputKey
       id='browse-wss' label='WSS Endpoint' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
-      rightLabel={!isServerConfig ? 'missing' : '✔️ already set in server'}
+      rightLabel={!isServerConfig ? 'must be valid' : '✔️ already set in server'}
       required={!isServerConfig} isError={!isClientValid}
       placeholder='wss://...'
     />}
