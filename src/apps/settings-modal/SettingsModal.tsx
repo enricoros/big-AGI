@@ -5,6 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 
+import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
@@ -185,7 +186,10 @@ export function SettingsModal() {
 
         <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
           <Topics>
-            <Topic icon={<SearchIcon />} title='Google Search API'>
+            <Topic icon={<SearchIcon />} title='Browsing' startCollapsed>
+              <BrowseSettings />
+            </Topic>
+            <Topic icon={<SearchIcon />} title='Google Search API' startCollapsed>
               <GoogleSearchSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}

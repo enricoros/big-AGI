@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 
 export interface BackendCapabilities {
   hasDB: boolean;
+  hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
   hasImagingProdia: boolean;
   hasLlmAnthropic: boolean;
@@ -24,6 +25,7 @@ const useBackendStore = create<BackendStore>()(
 
     // capabilities
     hasDB: false,
+    hasBrowsing: false,
     hasGoogleCustomSearch: false,
     hasImagingProdia: false,
     hasLlmAnthropic: false,
