@@ -12,10 +12,11 @@ import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
 export function BrowseSettings() {
 
   // external state
-  const { mayWork, isServerConfig, isClientValid, inComposer, inReact } = useBrowseCapability();
-  const { wssEndpoint, setWssEndpoint, setEnableComposerAttach, setEnableReactTool } = useBrowseStore(state => ({
+  const { mayWork, isServerConfig, isClientValid, inCommand, inComposer, inReact } = useBrowseCapability();
+  const { wssEndpoint, setWssEndpoint, setEnableCommandBrowse, setEnableComposerAttach, setEnableReactTool } = useBrowseStore(state => ({
     wssEndpoint: state.wssEndpoint,
     setWssEndpoint: state.setWssEndpoint,
+    setEnableCommandBrowse: state.setEnableCommandBrowse,
     setEnableComposerAttach: state.setEnableComposerAttach,
     setEnableReactTool: state.setEnableReactTool,
   }), shallow);
@@ -33,6 +34,11 @@ export function BrowseSettings() {
     <FormControl disabled={!mayWork}>
       <Checkbox variant='outlined' label='Attach URLs' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
       <FormHelperText>{platformAwareKeystrokes('Load and attach a web page on Ctrl + V')}</FormHelperText>
+    </FormControl>
+
+    <FormControl disabled={!mayWork}>
+      <Checkbox variant='outlined' label='/browse' checked={inCommand} onChange={(event) => setEnableCommandBrowse(event.target.checked)} />
+      <FormHelperText>{platformAwareKeystrokes('Enable the /browse command')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>

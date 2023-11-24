@@ -6,7 +6,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { setComposerStartupText } from '../../src/apps/chat/components/composer/store-composer';
 
-import { callBrowseFetchSinglePage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { AppLayout } from '~/common/layout/AppLayout';
 import { LogoProgress } from '~/common/components/LogoProgress';
@@ -74,7 +74,7 @@ function AppShareTarget() {
   React.useEffect(() => {
     if (intentURL) {
       setIsDownloading(true);
-      callBrowseFetchSinglePage(intentURL)
+      callBrowseFetchPage(intentURL)
         .then(pageContent => {
           if (pageContent)
             queueComposerTextAndLaunchApp('\n\n```' + intentURL + '\n' + pageContent + '\n```\n');

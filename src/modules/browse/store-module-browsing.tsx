@@ -10,6 +10,9 @@ interface BrowseState {
   wssEndpoint: string;
   setWssEndpoint: (url: string) => void;
 
+  enableCommandBrowse: boolean;
+  setEnableCommandBrowse: (value: boolean) => void;
+
   enableComposerAttach: boolean;
   setEnableComposerAttach: (value: boolean) => void;
 
@@ -27,6 +30,9 @@ export const useBrowseStore = create<BrowseState>()(
 
       wssEndpoint: '', // default WSS endpoint
       setWssEndpoint: (wssEndpoint: string) => set(() => ({ wssEndpoint })),
+
+      enableCommandBrowse: true,
+      setEnableCommandBrowse: (enableCommandBrowse: boolean) => set(() => ({ enableCommandBrowse })),
 
       enableComposerAttach: true,
       setEnableComposerAttach: (enableComposerAttach: boolean) => set(() => ({ enableComposerAttach })),
@@ -50,7 +56,7 @@ export function useBrowseCapability(): CapabilityBrowsing {
   const isServerConfig = backendCaps().hasBrowsing;
 
   // external client state
-  const { wssEndpoint, enableComposerAttach, enableReactTool, enablePersonaTool } = useBrowseStore();
+  const { wssEndpoint, enableCommandBrowse, enableComposerAttach, enableReactTool, enablePersonaTool } = useBrowseStore();
 
   // derived state
   const isClientConfig = !!wssEndpoint;
@@ -62,6 +68,7 @@ export function useBrowseCapability(): CapabilityBrowsing {
     isServerConfig,
     isClientConfig,
     isClientValid,
+    inCommand: mayWork && enableCommandBrowse,
     inComposer: mayWork && enableComposerAttach,
     inReact: mayWork && enableReactTool,
     inPersonas: mayWork && enablePersonaTool,
