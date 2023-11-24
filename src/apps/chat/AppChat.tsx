@@ -24,7 +24,7 @@ import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
-import { CmdAddRoleMessage, extractCommands } from './editors/commands';
+import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
 import { usePanesManager } from './components/usePanesManager';
@@ -140,6 +140,9 @@ export function AppChat() {
           lastMessage.sender = 'Bot';
           lastMessage.text = prompt;
           return setMessages(conversationId, history);
+        }
+        if (CmdHelp.includes(command)) {
+          return setMessages(conversationId, [...history, createCommandsHelpMessage()]);
         }
       }
     }
