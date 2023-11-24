@@ -33,17 +33,17 @@ export function BrowseSettings() {
 
     <FormControl disabled={!mayWork}>
       <Checkbox variant='outlined' label='Attach URLs' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Load and attach a web page on Ctrl + V')}</FormHelperText>
+      <FormHelperText>{platformAwareKeystrokes('Load and attach a page when pasting a URL')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>
       <Checkbox variant='outlined' label='/browse' checked={inCommand} onChange={(event) => setEnableCommandBrowse(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Enable the /browse command')}</FormHelperText>
+      <FormHelperText>{platformAwareKeystrokes('Use /browse to load a web page')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>
       <Checkbox variant='outlined' label='ReAct' checked={inReact} onChange={(event) => setEnableReactTool(event.target.checked)} />
-      <FormHelperText>Enable the loadURL() tool in ReAct</FormHelperText>
+      <FormHelperText>Enables loadURL() in ReAct</FormHelperText>
     </FormControl>
 
     {/*<FormControl disabled>*/}
