@@ -15,7 +15,6 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import type { ChatModeId } from '../../AppChat';
-import { APP_CALL_ENABLED } from '../../../call/AppCall';
 
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 import { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
@@ -36,6 +35,7 @@ import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ButtonCameraCapture } from './ButtonCameraCapture';
 import { ButtonClipboardPaste } from './ButtonClipboardPaste';
@@ -135,6 +135,7 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const labsCalling = useUXLabsStore(state => state.labsCalling);
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -585,7 +586,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
-                  ? <CallButtonMobile disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <CallButtonMobile disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : (isDraw || isDrawPlus)
                     ? <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
@@ -623,7 +624,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <CallButtonDesktop disabled={!APP_CALL_ENABLED || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+              {isChat && <CallButtonDesktop disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {(isDraw || isDrawPlus) && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}

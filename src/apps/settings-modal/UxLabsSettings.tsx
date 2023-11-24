@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
+import CallIcon from '@mui/icons-material/Call';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -15,8 +16,8 @@ export function UxLabsSettings() {
 
   // external state
   const {
-    /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
-    /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
+    labsCalling, /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
+    setLabsCalling, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
@@ -29,6 +30,11 @@ export function UxLabsSettings() {
     <FormSwitchControl
       title={<><FormatPaintIcon />Assisted Draw</>} description={labsMagicDraw ? 'Enabled' : 'Disabled'}
       checked={labsMagicDraw} onChange={setLabsMagicDraw}
+    />
+
+    <FormSwitchControl
+      title={<><CallIcon /> Voice Calls</>} description={labsCalling ? 'Call AGI' : 'Disabled'}
+      checked={labsCalling} onChange={setLabsCalling}
     />
 
     <FormSwitchControl
