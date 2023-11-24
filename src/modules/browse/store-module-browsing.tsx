@@ -60,7 +60,7 @@ export function useBrowseCapability(): CapabilityBrowsing {
 
   // derived state
   const isClientConfig = !!wssEndpoint;
-  const isClientValid = (wssEndpoint?.startsWith('wss://') && wssEndpoint?.length > 10) || false;
+  const isClientValid = (wssEndpoint?.startsWith('wss://') && wssEndpoint?.length > 10) || (wssEndpoint?.startsWith('ws://') && wssEndpoint?.length > 9);
   const mayWork = isServerConfig || (isClientConfig && isClientValid);
 
   return {

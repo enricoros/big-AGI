@@ -78,7 +78,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
-  if (!browserWSEndpoint || !browserWSEndpoint.startsWith('wss://'))
+  if (!browserWSEndpoint || !(browserWSEndpoint.startsWith('wss://') || browserWSEndpoint.startsWith('ws://')))
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Invalid wss:// endpoint',
