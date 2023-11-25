@@ -8,11 +8,11 @@ First of all, you need to procure a Puppteer web browsing service endpoint. `big
 - [BrightData](https://brightdata.com/products/scraping-browser) Scraping Browser
 - [Cloudflare](https://developers.cloudflare.com/browser-rendering/) Browser Rendering, or
 - any other Puppeteer-based service that provides a WebSocket endpoint (WSS)
-- **including [your own browser](#your-own-chrome-browser)!**
+- **including [your own browser](#your-own-chrome-browser)**
 
 ## Configuration
 
-1. **Procure and Endpoint**: Ensure that your browsing service is running and has a WebSocket endpoint available:
+1. **Procure an Endpoint**: Ensure that your browsing service is running and has a WebSocket endpoint available:
     - this mustbe in the form: `wss://${auth}@{some host}:{port}`
 
 2. **Configure `big-AGI`**:  navigate to **Preferences** > **Tools** > **Browse** and enter the 'wss://...' connection
