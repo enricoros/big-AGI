@@ -57,8 +57,8 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
 
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
-    useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat();
+    const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
+    await navigateToChat(importedId);
     setCloning(false);
   };
 
