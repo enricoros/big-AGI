@@ -6,8 +6,11 @@
 
 import Router from 'next/router';
 
+import type { DConversationId } from '~/common/state/store-chats';
+
+
 export const ROUTE_INDEX = '/';
-export const ROUTE_APP_CHAT = '/chat';
+export const ROUTE_APP_CHAT = '/';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
 
@@ -19,7 +22,21 @@ const navigateFn = (path: string) => (replace?: boolean): Promise<boolean> =>
   Router[replace ? 'replace' : 'push'](path);
 
 export const navigateToIndex = navigateFn(ROUTE_INDEX);
-export const navigateToChat = async () => await Router.push(ROUTE_APP_CHAT);
+export const navigateToChat = async (conversationId?: DConversationId) => {
+  if (conversationId) {
+    await Router.push(
+      {
+        pathname: ROUTE_APP_CHAT,
+        query: {
+          conversationId,
+        },
+      },
+      ROUTE_APP_CHAT,
+    );
+  } else {
+    await Router.push(ROUTE_APP_CHAT, ROUTE_APP_CHAT);
+  }
+};
 export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
 
 export const navigateBack = Router.back;
