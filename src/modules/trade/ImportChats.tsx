@@ -29,7 +29,7 @@ const chatGptMedia: FormRadioOption<'source' | 'link'>[] = [
  * Components and functionality to import conversations
  * Supports our own JSON files, and ChatGPT Share Links
  */
-export function ImportConversations(props: { onClose: () => void }) {
+export function ImportConversations(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
 
   // state
   const [importMedia, importMediaControl] = useFormRadio('link', chatGptMedia);
@@ -71,8 +71,10 @@ export function ImportConversations(props: { onClose: () => void }) {
 
     // import conversations (warning - will overwrite things)
     for (const conversation of [...outcome.conversations].reverse()) {
-      if (conversation.success)
-        useChatStore.getState().importConversation(conversation.conversation, false);
+      if (conversation.success) {
+        const conversationId: DConversationId = useChatStore.getState().importConversation(conversation.conversation, false);
+        props.onConversationActivate(conversationId);
+      }
     }
 
     // show the outcome of the import
@@ -128,6 +130,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     const success = conversation.messages.length >= 1;
     if (success) {
       useChatStore.getState().importConversation(conversation, false);
+      props.onConversationActivate(conversationId);
       outcome.conversations.push({ success: true, fileName: 'chatgpt', conversation });
     } else
       outcome.conversations.push({ success: false, fileName: 'chatgpt', error: `Empty conversation` });
