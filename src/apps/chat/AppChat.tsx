@@ -414,7 +414,7 @@ export function AppChat() {
     {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
 
     {/* Import / Export  */}
-    {!!tradeConfig && <TradeModal config={tradeConfig} onClose={() => setTradeConfig(null)} />}
+    {!!tradeConfig && <TradeModal config={tradeConfig} onConversationActivate={setFocusedConversationId} onClose={() => setTradeConfig(null)} />}
 
 
     {/* [confirmation] Reset Conversation */}
