@@ -28,9 +28,9 @@ function VoicesDropdown(props: {
   return (
     <Select
       value={props.voiceId} onChange={handleVoiceChange}
-      variant='outlined' disabled={props.disabled}
+      variant='outlined' disabled={props.disabled || !props.voices.length}
       // color={props.isErrorVoices ? 'danger' : undefined}
-      placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Enter valid API Key'}
+      placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Missing API Key'}
       startDecorator={<RecordVoiceOverIcon />}
       endDecorator={props.isValidKey && props.isLoadingVoices && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
