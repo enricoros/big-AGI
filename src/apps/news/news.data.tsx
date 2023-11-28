@@ -67,7 +67,7 @@ export const NewsItems: NewsItem[] = [
   },*/
   {
     versionName: '1.6.0',
-    text: 'Surf\'s Up in Chat Waves:',
+    text: 'Enjoy what\'s new:',
     items: [
       { text: <><B href={RIssues + '/237'}>Web Browsing</B> support, see the <B href={RCode + '/docs/config-browse.md'}>browsing user guide</B></> },
       { text: <><B href={RIssues + '/235'}>Branching Discussions</B> at any message</> },
@@ -81,7 +81,6 @@ export const NewsItems: NewsItem[] = [
   },
   {
     versionName: '1.5.0',
-    text: 'Enjoy what\'s new:',
     items: [
       { text: <><B href={RIssues + '/190'}>Continued Voice</B> for hands-free interaction</> },
       { text: <><B href={RIssues + '/192'}>Visualization</B> Tool for data representations</> },
