@@ -1,35 +1,48 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
+import { Box } from '@mui/joy';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
+
+import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
+import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
+import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
+import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ChatDrawerItems } from './components/applayout/ChatDrawerItems';
+import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatModeId } from './components/composer/store-composer';
-import { CmdAddRoleMessage, extractCommands } from './commands';
+import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
+import { usePanesManager } from './components/usePanesManager';
 
-import { TradeConfig, TradeModal } from './trade/TradeModal';
 import { runAssistantUpdatingState } from './editors/chat-stream';
+import { runBrowseUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
 
 
-const SPECIAL_ID_ALL_CHATS = 'all-chats';
+/**
+ * Mode: how to treat the input from the Composer
+ */
+export type ChatModeId = 'immediate' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
 
+
+const SPECIAL_ID_WIPE_ALL: DConversationId = 'wipe-chats';
 
 export function AppChat() {
 
@@ -37,31 +50,71 @@ export function AppChat() {
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
-  const [clearConfirmationId, setClearConfirmationId] = React.useState<string | null>(null);
-  const [deleteConfirmationId, setDeleteConfirmationId] = React.useState<string | null>(null);
-  const [flattenConversationId, setFlattenConversationId] = React.useState<string | null>(null);
+  const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
+  const [deleteConversationId, setDeleteConversationId] = React.useState<DConversationId | null>(null);
+  const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
+  const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
-  const { activeConversationId, isConversationEmpty, hasAnyContent, newConversation, duplicateConversation, deleteAllConversations, setMessages, systemPurposeId, setAutoTitle } = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === state.activeConversationId);
-    const isConversationEmpty = conversation ? !conversation.messages.length : true;
-    const hasAnyContent = state.conversations.length > 1 || !isConversationEmpty;
-    return {
-      activeConversationId: state.activeConversationId,
-      isConversationEmpty,
-      hasAnyContent,
-      newConversation: state.createConversationOrSwitch,
-      duplicateConversation: state.duplicateConversation,
-      deleteAllConversations: state.deleteAllConversations,
-      setMessages: state.setMessages,
-      systemPurposeId: conversation?.systemPurposeId ?? null,
-      setAutoTitle: state.setAutoTitle,
-    };
-  }, shallow);
+  const {
+    chatPanes,
+    focusedConversationId,
+    navigateHistoryInFocusedPane,
+    openConversationInFocusedPane,
+    openConversationInSplitPane,
+    setFocusedPaneIndex,
+  } = usePanesManager();
+
+  const {
+    title: focusedChatTitle,
+    chatIdx: focusedChatNumber,
+    isChatEmpty: isFocusedChatEmpty,
+    areChatsEmpty,
+    newConversationId,
+    _remove_systemPurposeId: focusedSystemPurposeId,
+    prependNewConversation,
+    branchConversation,
+    deleteConversation,
+    wipeAllConversations,
+    setMessages,
+  } = useConversation(focusedConversationId);
 
 
-  const handleExecuteConversation = async (chatModeId: ChatModeId, conversationId: string, history: DMessage[]) => {
+  // Window actions
+
+  const chatPaneIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
+
+  const setActivePaneIndex = React.useCallback((idx: number) => {
+    setFocusedPaneIndex(idx);
+  }, [setFocusedPaneIndex]);
+
+  const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
+    conversationId && openConversationInFocusedPane(conversationId);
+  }, [openConversationInFocusedPane]);
+
+  const openSplitConversationId = React.useCallback((conversationId: DConversationId | null) => {
+    conversationId && openConversationInSplitPane(conversationId);
+  }, [openConversationInSplitPane]);
+
+  const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
+    if (navigateHistoryInFocusedPane(direction))
+      showNextTitle.current = true;
+  }, [navigateHistoryInFocusedPane]);
+
+  React.useEffect(() => {
+    if (showNextTitle.current) {
+      showNextTitle.current = false;
+      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'title' });
+      return () => removeSnackbar(id);
+    }
+  }, [focusedChatNumber, focusedChatTitle]);
+
+
+  // Execution
+
+  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
     const { chatLLMId } = useModelsStore.getState();
     if (!chatModeId || !conversationId || !chatLLMId) return;
 
@@ -79,20 +132,27 @@ export function AppChat() {
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, prompt, chatLLMId);
         }
+        if (CmdRunBrowse.includes(command) && prompt?.trim() && useBrowseStore.getState().enableCommandBrowse) {
+          setMessages(conversationId, history);
+          return await runBrowseUpdatingState(conversationId, prompt);
+        }
         if (CmdAddRoleMessage.includes(command)) {
           lastMessage.role = command.startsWith('/s') ? 'system' : command.startsWith('/a') ? 'assistant' : 'user';
           lastMessage.sender = 'Bot';
           lastMessage.text = prompt;
           return setMessages(conversationId, history);
         }
+        if (CmdHelp.includes(command)) {
+          return setMessages(conversationId, [...history, createCommandsHelpMessage()]);
+        }
       }
     }
 
     // synchronous long-duration tasks, which update the state as they go
-    if (chatLLMId && systemPurposeId) {
+    if (chatLLMId && focusedSystemPurposeId) {
       switch (chatModeId) {
         case 'immediate':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId);
         case 'write-user':
           return setMessages(conversationId, history);
         case 'react':
@@ -118,139 +178,225 @@ export function AppChat() {
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
     console.log('handleExecuteConversation: issue running', chatModeId, conversationId, lastMessage);
     setMessages(conversationId, history);
-  };
+  }, [focusedSystemPurposeId, setMessages]);
 
-  const _findConversation = (conversationId: string) =>
-    conversationId ? useChatStore.getState().conversations.find(c => c.id === conversationId) ?? null : null;
-
-  const handleExecuteChatHistory = async (conversationId: string, history: DMessage[]) =>
-    await handleExecuteConversation('immediate', conversationId, history);
-
-  const handleDiagramFromText = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
-
-  const handleImagineFromText = async (conversationId: string, messageText: string) => {
-    const conversation = _findConversation(conversationId);
+  const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: DConversationId, userText: string) => {
+    const conversation = getConversation(conversationId);
     if (conversation)
-      return await handleExecuteConversation('draw-imagine-plus', conversationId, [...conversation.messages, createDMessage('user', messageText)]);
+      return await _handleExecute(chatModeId, conversationId, [
+        ...conversation.messages,
+        createDMessage('user', userText),
+      ]);
   };
 
-  const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: string, userText: string) => {
-    const conversation = _findConversation(conversationId);
-    if (conversation)
-      return await handleExecuteConversation(chatModeId, conversationId, [...conversation.messages, createDMessage('user', userText)]);
-  };
+  const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
+    await _handleExecute('immediate', conversationId, history);
 
-  const handleRegenerateAssistant = async () => {
-    const conversation = activeConversationId ? _findConversation(activeConversationId) : null;
-    if (conversation?.messages?.length) {
-      const lastMessage = conversation.messages[conversation.messages.length - 1];
-      if (lastMessage.role === 'assistant') {
-        const newMessages = [...conversation.messages];
-        newMessages.pop();
-        return await handleExecuteConversation('immediate', conversation.id, newMessages);
-      }
+  const handleMessageRegenerateLast = React.useCallback(async () => {
+    const focusedConversation = getConversation(focusedConversationId);
+    if (focusedConversation?.messages?.length) {
+      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
+      return await _handleExecute('immediate', focusedConversation.id, lastMessage.role === 'assistant'
+        ? focusedConversation.messages.slice(0, -1)
+        : [...focusedConversation.messages],
+      );
     }
+  }, [focusedConversationId, _handleExecute]);
+
+  const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+
+  const handleTextImaginePlus = async (conversationId: DConversationId, messageText: string) => {
+    const conversation = getConversation(conversationId);
+    if (conversation)
+      return await _handleExecute('draw-imagine-plus', conversationId, [
+        ...conversation.messages,
+        createDMessage('user', messageText),
+      ]);
   };
-  useGlobalShortcut('r', true, true, false, handleRegenerateAssistant);
+
+  const handleTextSpeak = async (text: string) => {
+    await speakText(text);
+  };
 
 
-  const handleImportConversation = () => setTradeConfig({ dir: 'import' });
+  // Chat actions
 
-  const handleExportConversation = (conversationId: string | null) => setTradeConfig({ dir: 'export', conversationId });
-
-  const handleFlattenConversation = (conversationId: string) => setFlattenConversationId(conversationId);
-
-
-  useGlobalShortcut('n', true, false, true, () => {
-    newConversation();
+  const handleConversationNew = React.useCallback(() => {
+    // activate an existing new conversation if present, or create another
+    setFocusedConversationId(newConversationId
+      ? newConversationId
+      : prependNewConversation(focusedSystemPurposeId ?? undefined),
+    );
     composerTextAreaRef.current?.focus();
-  });
+  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
-  const handleCloneConversation = (conversationId: string) => duplicateConversation(conversationId);
-  useGlobalShortcut('f', true, false, true, () => isConversationEmpty || activeConversationId && handleCloneConversation(activeConversationId));
+  const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
-  const handleClearConversation = (conversationId: string) => setClearConfirmationId(conversationId);
-  useGlobalShortcut('x', true, false, true, () => isConversationEmpty || setClearConfirmationId(activeConversationId));
+  const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
 
-  const handleConfirmedClearConversation = () => {
-    if (clearConfirmationId) {
-      setMessages(clearConfirmationId, []);
-      setAutoTitle(clearConfirmationId, '');
-      setClearConfirmationId(null);
+  const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
+    showNextTitle.current = true;
+    const branchedConversationId = branchConversation(conversationId, messageId);
+    addSnackbar({
+      key: 'branch-conversation',
+      message: 'Branch started.',
+      type: 'success',
+      overrides: {
+        autoHideDuration: 3000,
+        startDecorator: <ForkRightIcon />,
+      },
+    });
+    const branchInAltPanel = useUXLabsStore.getState().labsSplitBranching;
+    if (branchInAltPanel)
+      openSplitConversationId(branchedConversationId);
+    else
+      setFocusedConversationId(branchedConversationId);
+    return branchedConversationId;
+  }, [branchConversation, openSplitConversationId, setFocusedConversationId]);
+
+  const handleConversationFlatten = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
+
+
+  const handleConfirmedClearConversation = React.useCallback(() => {
+    if (clearConversationId) {
+      setMessages(clearConversationId, []);
+      setClearConversationId(null);
     }
-  };
+  }, [clearConversationId, setMessages]);
 
-  const handleDeleteAllConversations = () => setDeleteConfirmationId(SPECIAL_ID_ALL_CHATS);
+  const handleConversationClear = (conversationId: DConversationId) => setClearConversationId(conversationId);
+
 
   const handleConfirmedDeleteConversation = () => {
-    if (deleteConfirmationId) {
-      if (deleteConfirmationId === SPECIAL_ID_ALL_CHATS) {
-        deleteAllConversations();
-      }// else
-      //  deleteConversation(deleteConfirmationId);
-      setDeleteConfirmationId(null);
+    if (deleteConversationId) {
+      let nextConversationId: DConversationId | null;
+      if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
+        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined);
+      else
+        nextConversationId = deleteConversation(deleteConversationId);
+      setFocusedConversationId(nextConversationId);
+      setDeleteConversationId(null);
     }
   };
-  useGlobalShortcut('d', true, false, true, () => isConversationEmpty || setDeleteConfirmationId(activeConversationId));
+
+  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+
+  const handleConversationDelete = React.useCallback((conversationId: DConversationId, bypassConfirmation: boolean) => {
+    if (bypassConfirmation)
+      setFocusedConversationId(deleteConversation(conversationId));
+    else
+      setDeleteConversationId(conversationId);
+  }, [deleteConversation, setFocusedConversationId]);
+
+
+  // Shortcuts
+
+  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+    ['r', true, true, false, handleMessageRegenerateLast],
+    ['n', true, false, true, handleConversationNew],
+    ['b', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationBranch(focusedConversationId, null)],
+    ['x', true, false, true, () => isFocusedChatEmpty || focusedConversationId && handleConversationClear(focusedConversationId)],
+    ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
+    [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
+    [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
+  ], [focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, isFocusedChatEmpty]);
+  useGlobalShortcuts(shortcuts);
 
 
   // Pluggable ApplicationBar components
 
   const centerItems = React.useMemo(() =>
-      <ChatDropdowns conversationId={activeConversationId} />,
-    [activeConversationId],
+      <ChatDropdowns conversationId={focusedConversationId} />,
+    [focusedConversationId],
   );
 
   const drawerItems = React.useMemo(() =>
-      <ChatDrawerItems
-        conversationId={activeConversationId}
-        onImportConversation={handleImportConversation}
-        onDeleteAllConversations={handleDeleteAllConversations}
+      <ChatDrawerItemsMemo
+        activeConversationId={focusedConversationId}
+        disableNewButton={isFocusedChatEmpty}
+        onConversationActivate={setFocusedConversationId}
+        onConversationDelete={handleConversationDelete}
+        onConversationImportDialog={handleConversationImportDialog}
+        onConversationNew={handleConversationNew}
+        onConversationsDeleteAll={handleConversationsDeleteAll}
       />,
-    [activeConversationId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
       <ChatMenuItems
-        conversationId={activeConversationId} isConversationEmpty={isConversationEmpty} hasConversations={hasAnyContent}
-        isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-        onClearConversation={handleClearConversation}
-        onDuplicateConversation={duplicateConversation}
-        onExportConversation={handleExportConversation}
-        onFlattenConversation={handleFlattenConversation}
+        conversationId={focusedConversationId}
+        hasConversations={!areChatsEmpty}
+        isConversationEmpty={isFocusedChatEmpty}
+        isMessageSelectionMode={isMessageSelectionMode}
+        setIsMessageSelectionMode={setIsMessageSelectionMode}
+        onConversationBranch={handleConversationBranch}
+        onConversationClear={handleConversationClear}
+        onConversationExport={handleConversationExport}
+        onConversationFlatten={handleConversationFlatten}
       />,
-    [activeConversationId, duplicateConversation, hasAnyContent, isConversationEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
   useLayoutPluggable(centerItems, drawerItems, menuItems);
 
   return <>
 
-    <ChatMessageList
-      conversationId={activeConversationId}
-      isMessageSelectionMode={isMessageSelectionMode} setIsMessageSelectionMode={setIsMessageSelectionMode}
-      onExecuteChatHistory={handleExecuteChatHistory}
-      onDiagramFromText={handleDiagramFromText}
-      onImagineFromText={handleImagineFromText}
-      sx={{
-        flexGrow: 1,
-        backgroundColor: 'background.level1',
-        overflowY: 'auto', // overflowY: 'hidden'
-        minHeight: 96,
-      }} />
+    <Box sx={{
+      flexGrow: 1,
+      display: 'flex', flexDirection: { xs: 'column', md: 'row' },
+      overflow: 'clip',
+    }}>
 
-    <Ephemerals
-      conversationId={activeConversationId}
-      sx={{
-        // flexGrow: 0.1,
-        flexShrink: 0.5,
-        overflowY: 'auto',
-        minHeight: 64,
-      }} />
+      {chatPaneIDs.map((_conversationId, idx) => (
+        <Box key={'chat-pane-' + idx} onClick={() => setActivePaneIndex(idx)} sx={{
+          flexGrow: 1, flexBasis: 1,
+          display: 'flex', flexDirection: 'column',
+          overflow: 'clip',
+        }}>
+
+          <ChatMessageList
+            conversationId={_conversationId}
+            isMessageSelectionMode={isMessageSelectionMode}
+            setIsMessageSelectionMode={setIsMessageSelectionMode}
+            onConversationBranch={handleConversationBranch}
+            onConversationExecuteHistory={handleConversationExecuteHistory}
+            onTextDiagram={handleTextDiagram}
+            onTextImagine={handleTextImaginePlus}
+            onTextSpeak={handleTextSpeak}
+            sx={{
+              flexGrow: 1,
+              backgroundColor: 'background.level1',
+              overflowY: 'auto',
+              minHeight: 96,
+              // outline the current focused pane
+              ...(chatPaneIDs.length < 2 ? {}
+                : (_conversationId === focusedConversationId)
+                  ? {
+                    border: '2px solid',
+                    borderColor: 'primary.solidBg',
+                  } : {
+                    padding: '2px',
+                  }),
+            }}
+          />
+
+          <Ephemerals
+            conversationId={_conversationId}
+            sx={{
+              // flexGrow: 0.1,
+              flexShrink: 0.5,
+              overflowY: 'auto',
+              minHeight: 64,
+            }} />
+
+        </Box>
+      ))}
+    </Box>
 
     <Composer
-      conversationId={activeConversationId} messageId={null}
-      isDeveloperMode={systemPurposeId === 'Developer'}
+      conversationId={focusedConversationId}
+      isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       composerTextAreaRef={composerTextAreaRef}
       onNewMessage={handleComposerNewMessage}
       sx={{
@@ -266,25 +412,31 @@ export function AppChat() {
     {!!diagramConfig && <DiagramsModal config={diagramConfig} onClose={() => setDiagramConfig(null)} />}
 
     {/* Flatten */}
-    {!!flattenConversationId && <FlattenerModal conversationId={flattenConversationId} onClose={() => setFlattenConversationId(null)} />}
+    {!!flattenConversationId && (
+      <FlattenerModal
+        conversationId={flattenConversationId}
+        onConversationBranch={handleConversationBranch}
+        onClose={() => setFlattenConversationId(null)}
+      />
+    )}
 
     {/* Import / Export  */}
-    {!!tradeConfig && <TradeModal config={tradeConfig} onClose={() => setTradeConfig(null)} />}
+    {!!tradeConfig && <TradeModal config={tradeConfig} onConversationActivate={setFocusedConversationId} onClose={() => setTradeConfig(null)} />}
 
 
     {/* [confirmation] Reset Conversation */}
-    {!!clearConfirmationId && <ConfirmationModal
-      open onClose={() => setClearConfirmationId(null)} onPositive={handleConfirmedClearConversation}
+    {!!clearConversationId && <ConfirmationModal
+      open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
       confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
     />}
 
     {/* [confirmation] Delete All */}
-    {!!deleteConfirmationId && <ConfirmationModal
-      open onClose={() => setDeleteConfirmationId(null)} onPositive={handleConfirmedDeleteConversation}
-      confirmationText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+    {!!deleteConversationId && <ConfirmationModal
+      open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
+      confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
         ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
         : 'Are you sure you want to delete this conversation?'}
-      positiveActionText={deleteConfirmationId === SPECIAL_ID_ALL_CHATS
+      positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
         ? 'Yes, delete all'
         : 'Delete conversation'}
     />}

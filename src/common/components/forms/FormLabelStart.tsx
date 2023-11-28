@@ -1,9 +1,10 @@
 import * as React from 'react';
 
-import { Box, FormHelperText, FormLabel, Tooltip } from '@mui/joy';
+import { Box, FormHelperText, FormLabel } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import InfoIcon from '@mui/icons-material/Info';
 
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { settingsCol1Width } from '~/common/app.theme';
 
 
@@ -28,9 +29,9 @@ export const FormLabelStart = (props: {
         }}
       >
         {props.title} {props.tooltip && (
-        <Tooltip title={props.tooltip} sx={{ maxWidth: { sm: '50vw', md: '25vw' } }}>
+        <GoodTooltip title={props.tooltip}>
           <InfoIcon sx={{ mx: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
-        </Tooltip>
+        </GoodTooltip>
       )}
       </FormLabel>
 

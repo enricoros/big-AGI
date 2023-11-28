@@ -1,38 +1,50 @@
 import * as React from 'react';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, FormControl, Input, Sheet, Typography } from '@mui/joy';
+import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { apiAsyncNode } from '~/common/util/trpc.client';
-
 import { Brand } from '~/common/app.config';
-import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { InlineError } from '~/common/components/InlineError';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { createDConversation, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { apiAsyncNode } from '~/common/util/trpc.client';
+import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
-import type { ChatGptSharedChatSchema } from '../server/import.chatgpt';
-import { loadAllConversationsFromJson } from '../trade.client';
+import type { ChatGptSharedChatSchema } from './server/chatgpt';
+import { loadAllConversationsFromJson } from './trade.client';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
 
 
 export type ImportConfig = { dir: 'import' };
 
+
+const chatGptMedia: FormRadioOption<'source' | 'link'>[] = [
+  { label: 'Shared Chat URL', value: 'link' },
+  { label: 'Page Source', value: 'source' },
+];
+
 /**
  * Components and functionality to import conversations
  * Supports our own JSON files, and ChatGPT Share Links
  */
-export function ImportConversations(props: { onClose: () => void }) {
+export function ImportConversations(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
 
   // state
+  const [importMedia, importMediaControl] = useFormRadio('link', chatGptMedia);
   const [chatGptEdit, setChatGptEdit] = React.useState(false);
   const [chatGptUrl, setChatGptUrl] = React.useState('');
+  const [chatGptSource, setChatGptSource] = React.useState('');
+  const [importJson, setImportJson] = React.useState<string | null>(null);
   const [importOutcome, setImportOutcome] = React.useState<ImportedOutcome | null>(null);
 
   // derived state
+  const isUrl = importMedia === 'link';
+  const isSource = importMedia === 'source';
   const chatGptUrlValid = chatGptUrl.startsWith('https://chat.openai.com/share/') && chatGptUrl.length > 40;
+
 
   const handleImportFromFiles = async () => {
     // pick file(s)
@@ -60,31 +72,38 @@ export function ImportConversations(props: { onClose: () => void }) {
 
     // import conversations (warning - will overwrite things)
     for (const conversation of [...outcome.conversations].reverse()) {
-      if (conversation.success)
-        useChatStore.getState().importConversation(conversation.conversation, false);
+      if (conversation.success) {
+        const conversationId: DConversationId = useChatStore.getState().importConversation(conversation.conversation, false);
+        props.onConversationActivate(conversationId);
+      }
     }
 
     // show the outcome of the import
     setImportOutcome(outcome);
   };
 
+
   const handleChatGptToggleShown = () => setChatGptEdit(!chatGptEdit);
 
-  const handleChatGptLoadFromURL = async () => {
-    if (!chatGptUrlValid)
+  const handleChatGptLoad = async () => {
+    setImportJson(null);
+    if ((isUrl && !chatGptUrlValid) || (isSource && !chatGptSource))
       return;
 
     const outcome: ImportedOutcome = { conversations: [] };
 
     // load the conversation
-    let conversationId: string, data: ChatGptSharedChatSchema;
+    let conversationId: DConversationId, data: ChatGptSharedChatSchema;
     try {
-      ({ conversationId, data } = await apiAsyncNode.trade.importChatGptShare.query({ url: chatGptUrl }));
+      ({ conversationId, data } = await apiAsyncNode.trade.importChatGptShare.mutate(isUrl ? { url: chatGptUrl } : { htmlPage: chatGptSource }));
     } catch (error) {
       outcome.conversations.push({ fileName: 'chatgpt', success: false, error: (error as any)?.message || error?.toString() || 'unknown error' });
       setImportOutcome(outcome);
       return;
     }
+
+    // save as JSON
+    setImportJson(JSON.stringify(data, null, 2));
 
     // transform to our data structure
     const conversation = createDConversation();
@@ -112,6 +131,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     const success = conversation.messages.length >= 1;
     if (success) {
       useChatStore.getState().importConversation(conversation, false);
+      props.onConversationActivate(conversationId);
       outcome.conversations.push({ success: true, fileName: 'chatgpt', conversation });
     } else
       outcome.conversations.push({ success: false, fileName: 'chatgpt', error: `Empty conversation` });
@@ -149,24 +169,31 @@ export function ImportConversations(props: { onClose: () => void }) {
     {chatGptEdit && <Sheet variant='soft' color='primary' sx={{ display: 'flex', flexDirection: 'column', borderRadius: 'md', p: 1, gap: 1 }}>
 
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-        <InlineError error='Note: this operation may be unreliable as OpenAI is often blocking imports.' severity='warning' />
-        <OpenAIIcon sx={{ mx: 'auto', my: 1 }} />
+        {importMediaControl}
+        <OpenAIIcon sx={{ ml: 'auto', my: 1 }} />
       </Box>
 
+      {isUrl && <InlineError error='Note: this operation may be unreliable as OpenAI is often blocking imports.' severity='warning' sx={{ mt: 0 }} />}
+
       <FormControl>
-        <FormLabelStart title='Shared Chat URL' />
-        <Input
+        {isUrl && <Input
           variant='outlined' placeholder='https://chat.openai.com/share/...'
           required error={!chatGptUrlValid}
           value={chatGptUrl} onChange={event => setChatGptUrl(event.target.value)}
-        />
+        />}
+        {isSource && <Textarea
+          variant='outlined' placeholder='Paste the page source here'
+          required
+          minRows={4} maxRows={8}
+          value={chatGptSource} onChange={event => setChatGptSource(event.target.value)}
+        />}
       </FormControl>
 
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button variant='soft' color='primary' onClick={handleChatGptToggleShown} sx={{ mr: 'auto' }}>
           Cancel
         </Button>
-        <Button color='primary' disabled={!chatGptUrlValid} onClick={handleChatGptLoadFromURL} sx={{ minWidth: 150 }}>
+        <Button color='primary' disabled={(isUrl && !chatGptUrlValid) || (isSource && chatGptSource?.length < 100)} onClick={handleChatGptLoad} sx={{ minWidth: 150 }}>
           Import Chat
         </Button>
       </Box>
@@ -174,7 +201,7 @@ export function ImportConversations(props: { onClose: () => void }) {
     </Sheet>}
 
     {/* import outcome */}
-    {!!importOutcome && <ImportOutcomeModal outcome={importOutcome} onClose={handleImportOutcomeClosed} />}
+    {!!importOutcome && <ImportOutcomeModal outcome={importOutcome} rawJson={importJson} onClose={handleImportOutcomeClosed} />}
 
   </>;
 }

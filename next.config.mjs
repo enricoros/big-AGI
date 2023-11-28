@@ -9,6 +9,11 @@ let nextConfig = {
   //   },
   // },
 
+  // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
+  experimental: {
+    serverComponentsExternalPackages: ['puppeteer-core'],
+  },
+
   webpack: (config, _options) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';

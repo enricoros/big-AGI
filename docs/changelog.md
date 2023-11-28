@@ -2,13 +2,25 @@
 
 This is a high-level changelog. Calls out some of the high level features batched
 by release.
- - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.6.0 - Dec 2023
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4) 
-- milestone: [1.6.0](https://github.com/enricoros/big-agi/milestone/6)
+- For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### ✨ What's New in 1.5.0 👊 - Nov 19, 2023
+### 1.7.0 - Dec 2023
+
+- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+- milestone: [1.7.0](https://github.com/enricoros/big-agi/milestone/7)
+
+### ✨ What's New in 1.6.0 👊 - Nov 28, 2023
+
+- **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Branching Discussions**: Create new conversations from any message
+- **Keyboard Navigation**: Swift chat navigation with new shortcuts (e.g. ctrl+alt+left/right)
+- **Performance Boost**: Faster rendering for a smoother experience
+- **UI Enhancements**: Refined interface based on user feedback
+- **New Features**: Anthropic Claude 2.1, `/help` command, and Flattener tool
+- **For Developers**: Code quality upgrades and snackbar notifications
+
+### What's New in 1.5.0 - Nov 19, 2023
 
 - **Continued Voice**: Engage with hands-free interaction for a seamless experience
 - **Visualization Tool**: Create data representations with our new visualization capabilities
@@ -19,6 +31,17 @@ by release.
 - **SDXL Support**: Enhance your image generation with SDXL support for Prodia
 - **Cloudflare OpenAI API Gateway**: Integrate with Cloudflare for a robust API gateway
 - **Helicone for Anthropic**: Utilize Helicone's tools for Anthropic models
+
+For Developers:
+
+- Runtime Server-Side configuration:  https://github.com/enricoros/big-agi/issues/189. Env vars are
+  not required to be set at build time anymore. The frontend will roundtrip to the backend at the
+  first request to get the configuration. See
+  https://github.com/enricoros/big-agi/blob/main/src/modules/backend/backend.router.ts.
+- CloudFlare developers: please change the deployment command to
+  `rm app/api/trpc-node/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`,
+  as we transitioned to the App router in NextJS 14. The documentation in
+  [docs/deploy-cloudflare.md](../docs/deploy-cloudflare.md) is updated
 
 ### 1.4.0: Sept/Oct: scale OUT
 
@@ -35,7 +58,7 @@ by release.
 - **Backup/Restore** - save chats, and restore them later
 - **[Local model support with Oobabooga server](../docs/config-local-oobabooga)** - run your own LLMs!
 - **Flatten conversations** - conversations summarizer with 4 modes
-- **Fork conversations** - create a new chat, to experiment with different endings
+- **Fork conversations** - create a new chat, to try with different endings
 - New commands: /s to add a System message, and /a for an Assistant message
 - New Chat modes: Write-only - just appends the message, without assistant response
 - Fix STOP generation - in sync with the Vercel team to fix a long-standing NextJS issue

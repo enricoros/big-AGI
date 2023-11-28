@@ -4,11 +4,14 @@ import { useRouter } from 'next/router';
 import { Alert, Box, Button, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { setComposerStartupText } from '../src/apps/chat/components/composer/store-composer';
+import { setComposerStartupText } from '../../src/apps/chat/components/composer/store-composer';
+
+import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { AppLayout } from '~/common/layout/AppLayout';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
+import { navigateToIndex } from '~/common/app.routes';
 
 
 /**
@@ -28,13 +31,13 @@ function AppShareTarget() {
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   // external state
-  const { query, push: routerPush, replace: routerReplace } = useRouter();
+  const { query } = useRouter();
 
 
   const queueComposerTextAndLaunchApp = React.useCallback((text: string) => {
     setComposerStartupText(text);
-    void routerReplace('/');
-  }, [routerReplace]);
+    void navigateToIndex(true);
+  }, []);
 
 
   // Detect the share Intent from the query
@@ -71,10 +74,7 @@ function AppShareTarget() {
   React.useEffect(() => {
     if (intentURL) {
       setIsDownloading(true);
-      // TEMP: until the Browse module is ready, just use the URL, verbatim
-      queueComposerTextAndLaunchApp(intentURL);
-      setIsDownloading(false);
-      /*callBrowseFetchSinglePage(intentURL)
+      callBrowseFetchPage(intentURL)
         .then(pageContent => {
           if (pageContent)
             queueComposerTextAndLaunchApp('\n\n```' + intentURL + '\n' + pageContent + '\n```\n');
@@ -82,7 +82,7 @@ function AppShareTarget() {
             setErrorMessage('Could not read any data');
         })
         .catch(error => setErrorMessage(error?.message || error || 'Unknown error'))
-        .finally(() => setIsDownloading(false));*/
+        .finally(() => setIsDownloading(false));
     }
   }, [intentURL, queueComposerTextAndLaunchApp]);
 
@@ -110,7 +110,7 @@ function AppShareTarget() {
         </Alert>
         <Button
           variant='solid' color='danger'
-          onClick={() => routerPush('/')}
+          onClick={() => navigateToIndex()}
           endDecorator={<ArrowBackIcon />}
           sx={{ mt: 2 }}
         >
@@ -130,7 +130,7 @@ function AppShareTarget() {
 
 /**
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
- * Example URL: https://get.big-agi.com/launch?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
+ * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
 export default function LaunchPage() {
   return (

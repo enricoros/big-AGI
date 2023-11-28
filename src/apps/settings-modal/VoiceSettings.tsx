@@ -1,23 +1,29 @@
 import * as React from 'react';
 
-import { FormControl, Radio, RadioGroup } from '@mui/joy';
+import { FormControl } from '@mui/joy';
 
-import { ChatAutoSpeakType, useChatAutoAI } from '../chat/store-app-chat';
+import { useChatAutoAI, useChatMicTimeoutMs } from '../chat/store-app-chat';
 
 import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 export function VoiceSettings() {
 
   // external state
+  const isMobile = useIsMobile();
   const { autoSpeak, setAutoSpeak } = useChatAutoAI();
   const { hasVoices } = useElevenLabsVoices();
+  const [chatTimeoutMs, setChatTimeoutMs] = useChatMicTimeoutMs();
 
 
-  const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as ChatAutoSpeakType);
+  // this converts from string keys to numbers and vice versa
+  const chatTimeoutValue: string = '' + chatTimeoutMs;
+  const setChatTimeoutValue = (value: string) => value && setChatTimeoutMs(parseInt(value));
 
   return <>
 
@@ -29,16 +35,29 @@ export function VoiceSettings() {
       <LanguageSelect />
     </FormControl>
 
-    <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-      <FormLabelStart title='Speak Responses'
-                      description={autoSpeak === 'off' ? 'Off' : 'First paragraph'}
-                      tooltip={!hasVoices ? 'No voices available, please configure a voice synthesis service' : undefined} />
-      <RadioGroup orientation='horizontal' value={autoSpeak} onChange={handleAutoSpeakChange}>
-        <Radio disabled={!hasVoices} value='off' label='Off' />
-        <Radio disabled={!hasVoices} value='firstLine' label='Start' />
-        <Radio disabled={!hasVoices} value='all' label='Full' />
-      </RadioGroup>
-    </FormControl>
+    {!isMobile && <FormRadioControl
+      title='Mic Timeout'
+      description={chatTimeoutMs < 1000 ? 'Best for quick calls' : chatTimeoutMs > 5000 ? 'Best for thinking' : 'Standard'}
+      options={[
+        { value: '600', label: '.6s' },
+        { value: '2000', label: '2s' },
+        { value: '15000', label: '15s' },
+      ]}
+      value={chatTimeoutValue} onChange={setChatTimeoutValue}
+    />}
+
+    <FormRadioControl
+      title='Speak Responses'
+      description={autoSpeak === 'off' ? 'Off' : 'First paragraph'}
+      tooltip={!hasVoices ? 'No voices available, please configure a voice synthesis service' : undefined}
+      disabled={!hasVoices}
+      options={[
+        { value: 'off', label: 'Off' },
+        { value: 'firstLine', label: 'Start' },
+        { value: 'all', label: 'Full' },
+      ]}
+      value={autoSpeak} onChange={setAutoSpeak}
+    />
 
   </>;
 }

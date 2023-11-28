@@ -182,8 +182,8 @@ export const llmOllamaRouter = createTRPCRouter({
         const wireOllamaModelInfoSchema = z.object({
           license: z.string().optional(),
           modelfile: z.string(),
-          parameters: z.string(),
-          template: z.string(),
+          parameters: z.string().optional(),
+          template: z.string().optional(),
         });
         const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
         return { ...model, ...modelInfo };

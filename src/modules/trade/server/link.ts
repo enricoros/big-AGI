@@ -1,10 +1,10 @@
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
 import { db } from '~/server/db';
 import { publicProcedure } from '~/server/api/trpc.server';
-import { v4 as uuidv4 } from 'uuid';
 
 
 // configuration
@@ -70,6 +70,10 @@ export const storageDeleteOutputSchema = z.object({
   type: z.enum(['success', 'error']),
   error: z.string().optional(),
 });
+
+
+export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;
+export type StorageDeleteSchema = z.infer<typeof storageDeleteOutputSchema>;
 
 
 /// tRPC procedures

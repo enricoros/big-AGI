@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 
 export interface BackendCapabilities {
   hasDB: boolean;
+  hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
   hasImagingProdia: boolean;
   hasLlmAnthropic: boolean;
@@ -14,16 +15,17 @@ export interface BackendCapabilities {
   hasVoiceElevenLabs: boolean;
 }
 
-type BackendState = {
+type BackendStore = {
   loadedCapabilities: boolean;
   setCapabilities: (capabilities: Partial<BackendCapabilities>) => void;
 } & BackendCapabilities;
 
-const useBackendStore = create<BackendState>()(
+const useBackendStore = create<BackendStore>()(
   (set) => ({
 
     // capabilities
     hasDB: false,
+    hasBrowsing: false,
     hasGoogleCustomSearch: false,
     hasImagingProdia: false,
     hasLlmAnthropic: false,

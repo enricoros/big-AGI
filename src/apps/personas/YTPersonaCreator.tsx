@@ -177,7 +177,7 @@ export function YTPersonaCreator() {
           </Alert>
           <Tooltip title='Copy system prompt' variant='solid'>
             <IconButton
-              variant='outlined' color='neutral' onClick={() => copyToClipboard(chainOutput)}
+              variant='outlined' color='neutral' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')}
               sx={{
                 position: 'absolute', right: 0, zIndex: 10,
                 // opacity: 0, transition: 'opacity 0.3s',

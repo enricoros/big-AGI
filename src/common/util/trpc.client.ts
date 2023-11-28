@@ -10,7 +10,8 @@ import { createTRPCProxyClient, httpBatchLink, httpLink, loggerLink } from '@trp
 import { createTRPCNext } from '@trpc/next';
 import superjson from 'superjson';
 
-import { type AppRouterEdge, type AppRouterNode } from '~/server/api/trpc.router';
+import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
+import type { AppRouterNode } from '~/server/api/trpc.router-node';
 
 import { getBaseUrl } from './urlUtils';
 

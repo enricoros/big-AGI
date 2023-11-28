@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { FormControl, Input } from '@mui/joy';
+import { FormControl, FormHelperText, Input } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -11,7 +11,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
 import { isValidGoogleCloudApiKey, isValidGoogleCseId } from './search.client';
-import { useGoogleSearchStore } from './store-google';
+import { useGoogleSearchStore } from './store-module-google';
 
 
 export function GoogleSearchSettings() {
@@ -35,6 +35,10 @@ export function GoogleSearchSettings() {
 
 
   return <>
+
+    <FormHelperText sx={{ display: 'block' }}>
+      Configure the Programmable Search Engine to enable searching the web for links.
+    </FormHelperText>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='GCP API Key'

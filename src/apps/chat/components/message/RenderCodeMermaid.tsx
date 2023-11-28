@@ -31,10 +31,12 @@ declare global {
   }
 }
 
-const useMermaidStore = create<{
+interface MermaidAPIStore {
   mermaidAPI: MermaidAPI | null,
   loadingError: string | null,
-}>()(
+}
+
+const useMermaidStore = create<MermaidAPIStore>()(
   () => ({
     mermaidAPI: null,
     loadingError: null,

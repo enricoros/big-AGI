@@ -3,7 +3,7 @@ import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
 import { MenuList, styled, VariantProp } from '@mui/joy';
-import { SxProps } from '@mui/system';
+import { SxProps } from '@mui/joy/styles/types';
 
 
 // adds the 'sx' prop to the Popper, and defaults zIndex to 1000

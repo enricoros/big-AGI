@@ -1,5 +1,6 @@
 import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/store-llms';
+import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { createDEphemeral, DMessage, useChatStore } from '~/common/state/store-chats';
 
@@ -11,6 +12,7 @@ import { createAssistantTypingMessage } from './editors';
  */
 export async function runReActUpdatingState(conversationId: string, question: string, assistantLlmId: DLLMId) {
 
+  const { enableReactTool: enableBrowse } = useBrowseStore.getState();
   const { appendEphemeral, updateEphemeralText, updateEphemeralState, deleteEphemeral, editMessage } = useChatStore.getState();
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
@@ -30,15 +32,13 @@ export async function runReActUpdatingState(conversationId: string, question: st
     ephemeralText += (text.length > 300 ? text.slice(0, 300) + '...' : text) + '\n';
     updateEphemeralText(conversationId, ephemeral.id, ephemeralText);
   };
+  const showStateInEphemeral = (state: object) => updateEphemeralState(conversationId, ephemeral.id, state);
 
   try {
 
     // react loop
     const agent = new Agent();
-    const reactResult = await agent.reAct(question, assistantLlmId, 5,
-      logToEphemeral,
-      (state: object) => updateEphemeralState(conversationId, ephemeral.id, state),
-    );
+    const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
     setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 2 * 1000);
     updateAssistantMessage({ text: reactResult, typing: false });

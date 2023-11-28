@@ -5,9 +5,10 @@ import { persist } from 'zustand/middleware';
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
 
-interface AppChatState {
 
-  // Chat AI
+// Chat Settings (Chat AI & Chat UI)
+
+interface AppChatStore {
 
   autoSpeak: ChatAutoSpeakType;
   setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void;
@@ -19,9 +20,10 @@ interface AppChatState {
   setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void;
 
   autoTitleChat: boolean;
-  setautoTitleChat: (autoTitleChat: boolean) => void;
+  setAutoTitleChat: (autoTitleChat: boolean) => void;
 
-  // Chat
+  micTimeoutMs: number;
+  setMicTimeoutMs: (micTimeoutMs: number) => void;
 
   showTextDiff: boolean;
   setShowTextDiff: (showTextDiff: boolean) => void;
@@ -31,40 +33,43 @@ interface AppChatState {
 
 }
 
-const useAppChatStore = create<AppChatState>()(persist(
-  (set) => ({
 
-    // Chat AI
+const useAppChatStore = create<AppChatStore>()(persist(
+  (_set, _get) => ({
 
     autoSpeak: 'off',
-    setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => set({ autoSpeak }),
+    setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => _set({ autoSpeak }),
 
     autoSuggestDiagrams: false,
-    setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => set({ autoSuggestDiagrams }),
+    setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => _set({ autoSuggestDiagrams }),
 
     autoSuggestQuestions: false,
-    setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => set({ autoSuggestQuestions }),
+    setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => _set({ autoSuggestQuestions }),
 
     autoTitleChat: true,
-    setautoTitleChat: (autoTitleChat: boolean) => set({ autoTitleChat }),
+    setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
+
+    micTimeoutMs: 2000,
+    setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
     showTextDiff: false,
-    setShowTextDiff: (showTextDiff: boolean) => set({ showTextDiff }),
+    setShowTextDiff: (showTextDiff: boolean) => _set({ showTextDiff }),
 
     showSystemMessages: false,
-    setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
+    setShowSystemMessages: (showSystemMessages: boolean) => _set({ showSystemMessages }),
 
   }), {
     name: 'app-app-chat',
     version: 1,
 
-    // for now, let text diff be off by default
     onRehydrateStorage: () => (state) => {
-      if (state)
-        state.showTextDiff = false;
+      if (!state) return;
+
+      // for now, let text diff be off by default
+      state.showTextDiff = false;
     },
 
-    migrate: (state: any, fromVersion: number): AppChatState => {
+    migrate: (state: any, fromVersion: number): AppChatStore => {
       // 0 -> 1: autoTitleChat was off by mistake - turn it on [Remove past Dec 1, 2023]
       if (state && fromVersion < 1)
         state.autoTitleChat = true;
@@ -74,18 +79,7 @@ const useAppChatStore = create<AppChatState>()(persist(
 ));
 
 
-// Chat AI
-
-export const useChatAutoAI = (): {
-  autoSpeak: ChatAutoSpeakType,
-  autoSuggestDiagrams: boolean,
-  autoSuggestQuestions: boolean,
-  autoTitleChat: boolean,
-  setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void,
-  setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => void,
-  setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void,
-  setautoTitleChat: (autoTitleChat: boolean) => void,
-} => useAppChatStore(state => ({
+export const useChatAutoAI = () => useAppChatStore(state => ({
   autoSpeak: state.autoSpeak,
   autoSuggestDiagrams: state.autoSuggestDiagrams,
   autoSuggestQuestions: state.autoSuggestQuestions,
@@ -93,7 +87,7 @@ export const useChatAutoAI = (): {
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
-  setautoTitleChat: state.setautoTitleChat,
+  setAutoTitleChat: state.setAutoTitleChat,
 }), shallow);
 
 export const getChatAutoAI = (): {
@@ -103,12 +97,17 @@ export const getChatAutoAI = (): {
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
 
-// Chat
+export const getChatTimeoutMs = (): number =>
+  useAppChatStore.getState().micTimeoutMs;
+
+export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
+  useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
   useAppChatStore(state => [state.showTextDiff, state.setShowTextDiff], shallow);
 
-export const getChatShowSystemMessages = (): boolean => useAppChatStore.getState().showSystemMessages;
+export const getChatShowSystemMessages = (): boolean =>
+  useAppChatStore.getState().showSystemMessages;
 
 export const useChatShowSystemMessages = (): [boolean, (showSystemMessages: boolean) => void] =>
   useAppChatStore(state => [state.showSystemMessages, state.setShowSystemMessages], shallow);

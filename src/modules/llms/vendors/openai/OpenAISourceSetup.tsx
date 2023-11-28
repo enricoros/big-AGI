@@ -95,12 +95,12 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Alert>}
 
     {advanced.on && <FormSwitchControl
-      title='Moderation'
+      title='Moderation' on='Enabled' fullWidth
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
         {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
       </>}
-      value={moderationCheck}
+      checked={moderationCheck}
       onChange={on => updateSetup({ moderationCheck: on })}
     />}
 

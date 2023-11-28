@@ -7,7 +7,7 @@ export const HARDCODED_PRODIA_RESOLUTIONS: string[] = ['1024x1024', '1152x896', 
 export const DEFAULT_PRODIA_RESOLUTION = HARDCODED_PRODIA_RESOLUTIONS[0];
 
 
-interface ProdiaStore {
+interface ModuleProdiaStore {
 
   // Prodia Image Generation settings
 
@@ -43,7 +43,7 @@ interface ProdiaStore {
 
 }
 
-export const useProdiaStore = create<ProdiaStore>()(
+export const useProdiaStore = create<ModuleProdiaStore>()(
   persist(
     (set) => ({
 

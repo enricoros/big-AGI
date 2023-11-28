@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Card, CardContent, Grid, Typography } from '@mui/joy';
+import { Box, Button, Card, CardContent, Chip, Grid, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Brand } from '~/common/app.config';
@@ -9,7 +9,7 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 6;
+export const incrementalVersion: number = 7;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
   const boldText = <Typography color={!!props.href ? 'primary' : 'warning'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
@@ -26,8 +26,8 @@ const RIssues = `${OpenRepo}/issues`;
 export const newsCallout =
   <Card>
     <CardContent sx={{ gap: 2 }}>
-      <Typography level='h2'>
-        Open Roadmap ✨
+      <Typography level='h3'>
+        Open Roadmap
       </Typography>
       <Typography>
         The roadmap is officially out. For the first time you get a look at what&apos;s brewing, up and coming, and get a chance to pick up cool features!
@@ -35,7 +35,7 @@ export const newsCallout =
       <Grid container spacing={1}>
         <Grid xs={12} sm={7}>
           <Button
-            fullWidth variant='solid' color='primary' size='lg' endDecorator={<LaunchIcon />}
+            fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
             component={Link} href={OpenProject} noLinkStyle target='_blank'
           >
             Explore the Roadmap
@@ -43,7 +43,7 @@ export const newsCallout =
         </Grid>
         <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
           <Button
-            fullWidth variant='outlined' color='primary' endDecorator={<LaunchIcon />}
+            fullWidth variant='plain' color='primary' endDecorator={<LaunchIcon />}
             component={Link} href={RIssues + '/new?template=roadmap-request.md&title=%5BSuggestion%5D'} noLinkStyle target='_blank'
           >
             Suggest a Feature
@@ -57,15 +57,30 @@ export const newsCallout =
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-  // https://github.com/enricoros/big-agi/milestone/6
+  // https://github.com/enricoros/big-agi/milestone/7
   // https://github.com/users/enricoros/projects/4/views/2
-    versionName: '1.6.0',
+    versionName: '1.7.0',
     items: [
+    // multi-window support
+    // phone calls
     ],
   },*/
   {
-    versionName: '1.5.0',
+    versionName: '1.6.0',
     text: 'Enjoy what\'s new:',
+    items: [
+      { text: <><B href={RIssues + '/237'}>Web Browsing</B> support, see the <B href={RCode + '/docs/config-browse.md'}>browsing user guide</B></> },
+      { text: <><B href={RIssues + '/235'}>Branching Discussions</B> at any message</> },
+      { text: <><B href={RIssues + '/207'}>Keyboard Navigation</B>: use Ctrl+Shift+Left/Right to navigate chats</> },
+      { text: <><B href={RIssues + '/236'}>UI fixes</B> (thanks to the first sponsor)</> },
+      { text: <>Added support for Anthropic Claude 2.1</> },
+      { text: <>Large rendering performance optimization</> },
+      { text: <>More: <Chip>/help</Chip>, import ChatGPT from source, new Flattener</> },
+      { text: <>Devs: improved code quality, snackbar framework</>, dev: true },
+    ],
+  },
+  {
+    versionName: '1.5.0',
     items: [
       { text: <><B href={RIssues + '/190'}>Continued Voice</B> for hands-free interaction</> },
       { text: <><B href={RIssues + '/192'}>Visualization</B> Tool for data representations</> },
@@ -126,5 +141,6 @@ interface NewsItem {
   text?: string | React.JSX.Element;
   items?: {
     text: string | React.JSX.Element;
+    dev?: boolean;
   }[];
 }
