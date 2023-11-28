@@ -15,6 +15,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import type { ChatModeId } from '../../AppChat';
+import { getChatTimeoutMs } from '../../store-app-chat';
 
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
@@ -256,7 +257,7 @@ export function Composer(props: {
   }, [chatModeId, composeText, micContinuation, props, setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
-    useSpeechRecognition(onSpeechResultCallback, 2000, 'm');
+    useSpeechRecognition(onSpeechResultCallback, getChatTimeoutMs() || 2000, 'm');
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantTyping;

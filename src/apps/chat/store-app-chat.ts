@@ -22,6 +22,9 @@ interface AppChatStore {
   autoTitleChat: boolean;
   setAutoTitleChat: (autoTitleChat: boolean) => void;
 
+  micTimeoutMs: number;
+  setMicTimeoutMs: (micTimeoutMs: number) => void;
+
   showTextDiff: boolean;
   setShowTextDiff: (showTextDiff: boolean) => void;
 
@@ -45,6 +48,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
+
+    micTimeoutMs: 2000,
+    setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
     showTextDiff: false,
     setShowTextDiff: (showTextDiff: boolean) => _set({ showTextDiff }),
@@ -90,6 +96,12 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
+
+export const getChatTimeoutMs = (): number =>
+  useAppChatStore.getState().micTimeoutMs;
+
+export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
+  useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
   useAppChatStore(state => [state.showTextDiff, state.setShowTextDiff], shallow);
