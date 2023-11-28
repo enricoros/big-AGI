@@ -34,7 +34,6 @@ import { getClipboardItems, supportsClipboardRead } from '~/common/util/clipboar
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { launchAppCall } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
-import { pdfToText } from '~/common/util/pdfToText';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -48,6 +47,7 @@ import { ButtonFileAttach } from './ButtonFileAttach';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
+import { pdfToText } from '../attachments/pdfToText';
 import { useComposerStartupText } from './store-composer';
 
 
