@@ -513,9 +513,10 @@ export function Composer(props: {
 
           </Box>
 
-          {/* Edit box, with Drop overlay */}
+          {/* Edit box, with overlays */}
           <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
+            {/* Edit box with inner Token Progress bar */}
             <Box sx={{ position: 'relative' }}>
 
               <Textarea
@@ -547,7 +548,16 @@ export function Composer(props: {
                   lineHeight: 1.75,
                 }} />
 
-              {tokenLimit > 0 && (directTokens > 0 || (historyTokens + responseTokens) > 0) && <TokenProgressbar history={historyTokens} response={responseTokens} direct={directTokens} limit={tokenLimit} />}
+              {tokenLimit > 0 && (directTokens > 0 || (historyTokens + responseTokens) > 0) && (
+                <TokenProgressbar history={historyTokens} response={responseTokens} direct={directTokens} limit={tokenLimit} />
+              )}
+
+              {!!tokenLimit && (
+                <TokenBadge
+                  directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit}
+                  showExcess absoluteBottomRight
+                />
+              )}
 
             </Box>
 
@@ -567,13 +577,6 @@ export function Composer(props: {
                   />
                 )}
               </Box>
-            )}
-
-            {!!tokenLimit && (
-              <TokenBadge
-                directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit}
-                showExcess absoluteBottomRight
-              />
             )}
 
             {micIsRunning && (
