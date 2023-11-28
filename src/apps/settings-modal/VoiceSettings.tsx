@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { FormControl, Radio, RadioGroup } from '@mui/joy';
+import { FormControl } from '@mui/joy';
 
-import { ChatAutoSpeakType, useChatAutoAI } from '../chat/store-app-chat';
+import { useChatAutoAI } from '../chat/store-app-chat';
 
 import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
 
 
@@ -16,8 +17,6 @@ export function VoiceSettings() {
   const { autoSpeak, setAutoSpeak } = useChatAutoAI();
   const { hasVoices } = useElevenLabsVoices();
 
-
-  const handleAutoSpeakChange = (e: React.ChangeEvent<HTMLInputElement>) => setAutoSpeak((e.target.value || 'off') as ChatAutoSpeakType);
 
   return <>
 
@@ -29,16 +28,18 @@ export function VoiceSettings() {
       <LanguageSelect />
     </FormControl>
 
-    <FormControl orientation='horizontal' sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-      <FormLabelStart title='Speak Responses'
-                      description={autoSpeak === 'off' ? 'Off' : 'First paragraph'}
-                      tooltip={!hasVoices ? 'No voices available, please configure a voice synthesis service' : undefined} />
-      <RadioGroup orientation='horizontal' value={autoSpeak} onChange={handleAutoSpeakChange}>
-        <Radio disabled={!hasVoices} value='off' label='Off' />
-        <Radio disabled={!hasVoices} value='firstLine' label='Start' />
-        <Radio disabled={!hasVoices} value='all' label='Full' />
-      </RadioGroup>
-    </FormControl>
+    <FormRadioControl
+      title='Speak Responses'
+      description={autoSpeak === 'off' ? 'Off' : 'First paragraph'}
+      tooltip={!hasVoices ? 'No voices available, please configure a voice synthesis service' : undefined}
+      disabled={!hasVoices}
+      options={[
+        { value: 'off', label: 'Off' },
+        { value: 'firstLine', label: 'Start' },
+        { value: 'all', label: 'Full' },
+      ]}
+      value={autoSpeak} onChange={setAutoSpeak}
+    />
 
   </>;
 }

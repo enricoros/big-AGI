@@ -2,8 +2,7 @@ import * as React from 'react';
 
 import { FormControl, FormLabel, Radio, RadioGroup } from '@mui/joy';
 
-
-export type FormRadioOption<T extends string> = { label: string, value: T, disabled?: boolean };
+import { FormRadioOption } from './FormRadioControl';
 
 
 /**

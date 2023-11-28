@@ -1,6 +1,6 @@
 import type { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 
-import type { FormRadioOption } from '~/common/components/forms/useFormRadio';
+import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 
 
 export type DiagramType = 'auto' | 'mind';

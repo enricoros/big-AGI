@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Chip, CircularProgress, FormControl, Input, Option, Radio, RadioGroup, Select, Slider, Switch } from '@mui/joy';
+import { Chip, CircularProgress, FormControl, Input, Option, Select, Slider, Switch } from '@mui/joy';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -12,6 +12,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
@@ -163,14 +164,16 @@ export function ProdiaSettings() {
       </Select>
     </FormControl>}
 
-    {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='[SD] Aspect Ratio' description={prodiaAspectRatio === 'square' ? 'Square' : prodiaAspectRatio === 'portrait' ? 'Portrait' : 'Landscape'} />
-      <RadioGroup orientation='horizontal' value={prodiaAspectRatio} onChange={(e) => setProdiaAspectRatio(e.target.value as 'square' | 'portrait' | 'landscape')}>
-        <Radio value='square' label={<CropSquareIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-        <Radio value='portrait' label={<StayPrimaryPortraitIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-        <Radio value='landscape' label={<StayPrimaryLandscapeIcon sx={{ width: 25, height: 24, mt: -0.25 }} />} />
-      </RadioGroup>
-    </FormControl>}
+    {advanced.on && !selectedIsXL && <FormRadioControl
+      title='[SD] Aspect Ratio'
+      description={prodiaAspectRatio === 'square' ? 'Square' : prodiaAspectRatio === 'portrait' ? 'Portrait' : 'Landscape'}
+      options={[
+        { value: 'square', label: <CropSquareIcon sx={{ width: 25, height: 24, mt: -0.25 }} /> },
+        { value: 'portrait', label: <StayPrimaryPortraitIcon sx={{ width: 25, height: 24, mt: -0.25 }} /> },
+        { value: 'landscape', label: <StayPrimaryLandscapeIcon sx={{ width: 25, height: 24, mt: -0.25 }} /> },
+      ]}
+      value={prodiaAspectRatio} onChange={setProdiaAspectRatio}
+    />}
 
     {advanced.on && !selectedIsXL && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='[SD] Upscale'
