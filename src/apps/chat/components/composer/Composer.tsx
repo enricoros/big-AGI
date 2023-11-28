@@ -496,7 +496,7 @@ export function Composer(props: {
         {/* Button column and composer Text (mobile: top, desktop: left and center) */}
         <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
-          {/* Vertical buttons */}
+          {/* Vertical (attach) buttons */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
             {/* [mobile] Mic button */}
@@ -513,7 +513,7 @@ export function Composer(props: {
 
           </Box>
 
-          {/* Edit box, with overlays */}
+          {/* Edit box + mic buttons + overlays */}
           <Box sx={{ flexGrow: 1, position: 'relative' }}>
 
             {/* Edit box with inner Token Progress bar */}
@@ -561,6 +561,7 @@ export function Composer(props: {
 
             </Box>
 
+            {/* Mic & Mic Continuation Buttons */}
             {isSpeechEnabled && (
               <Box sx={{
                 position: 'absolute', top: 0, right: 0,
@@ -579,6 +580,7 @@ export function Composer(props: {
               </Box>
             )}
 
+            {/* overlay: Mic */}
             {micIsRunning && (
               <Card
                 color='primary' invertedColors variant='soft'
@@ -599,6 +601,7 @@ export function Composer(props: {
               </Card>
             )}
 
+            {/* overlay: Drag & Drop*/}
             <Card
               color='primary' invertedColors variant='soft'
               sx={{
