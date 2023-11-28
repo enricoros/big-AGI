@@ -69,7 +69,7 @@ export function AppNews() {
                 </Typography>}
 
                 {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
-                  {ni.items.map((item, idx) => <li key={idx}>
+                  {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
                     <Typography component='div'>
                       {item.text}
                     </Typography>

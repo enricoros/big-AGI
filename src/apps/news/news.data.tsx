@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Card, CardContent, Grid, Typography } from '@mui/joy';
+import { Box, Button, Card, CardContent, Chip, Grid, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Brand } from '~/common/app.config';
@@ -9,7 +9,7 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 6;
+export const incrementalVersion: number = 7;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
   const boldText = <Typography color={!!props.href ? 'primary' : 'warning'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
@@ -57,12 +57,28 @@ export const newsCallout =
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-  // https://github.com/enricoros/big-agi/milestone/6
+  // https://github.com/enricoros/big-agi/milestone/7
   // https://github.com/users/enricoros/projects/4/views/2
-    versionName: '1.6.0',
+    versionName: '1.7.0',
     items: [
+    // multi-window support
+    // phone calls
     ],
   },*/
+  {
+    versionName: '1.6.0',
+    text: 'Surf\'s Up in Chat Waves:',
+    items: [
+      { text: <><B href={RIssues + '/237'}>Web Browsing</B> support, see the <B href={RCode + '/docs/config-browse.md'}>browsing user guide</B></> },
+      { text: <><B href={RIssues + '/235'}>Branching Discussions</B> at any message</> },
+      { text: <><B href={RIssues + '/207'}>Keyboard Navigation</B>: use Ctrl+Shift+Left/Right to navigate chats</> },
+      { text: <><B href={RIssues + '/236'}>UI fixes</B> (thanks to the first sponsor)</> },
+      { text: <>Added support for Anthropic Claude 2.1</> },
+      { text: <>Large rendering performance optimization</> },
+      { text: <>More: <Chip>/help</Chip>, import ChatGPT from source, new Flattener</> },
+      { text: <>Devs: improved code quality, snackbar framework</>, dev: true },
+    ],
+  },
   {
     versionName: '1.5.0',
     text: 'Enjoy what\'s new:',
@@ -126,5 +142,6 @@ interface NewsItem {
   text?: string | React.JSX.Element;
   items?: {
     text: string | React.JSX.Element;
+    dev?: boolean;
   }[];
 }

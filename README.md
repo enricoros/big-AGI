@@ -21,7 +21,17 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-### What's New in 1.5.0 🌟
+### What's New in 1.6.0 - Nov 28, 2023 🌟
+
+- **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Branching Discussions**: Create new conversations from any message
+- **Keyboard Navigation**: Swift chat navigation with new shortcuts (e.g. ctrl+alt+left/right)
+- **Performance Boost**: Faster rendering for a smoother experience
+- **UI Enhancements**: Refined interface based on user feedback
+- **New Features**: Anthropic Claude 2.1, `/help` command, and Flattener tool
+- **For Developers**: Code quality upgrades and snackbar notifications
+
+### What's New in 1.5.0 - Nov 19, 2023
 
 - **Continued Voice**: Engage with hands-free interaction for a seamless experience
 - **Visualization Tool**: Create data representations with our new visualization capabilities
