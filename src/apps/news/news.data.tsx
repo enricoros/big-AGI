@@ -126,5 +126,6 @@ interface NewsItem {
   text?: string | React.JSX.Element;
   items?: {
     text: string | React.JSX.Element;
+    dev?: boolean;
   }[];
 }
