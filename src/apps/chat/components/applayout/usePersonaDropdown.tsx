@@ -74,7 +74,7 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null) {
             launchAppCall(conversationId, systemPurposeId);
         } : undefined}
       /> : null,
-    [conversationId, systemPurposeId],
+    [conversationId, labsCalling, systemPurposeId],
   );
 
   return { personaDropdown };
