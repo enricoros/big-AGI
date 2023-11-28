@@ -1,15 +1,18 @@
 import * as React from 'react';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormLabel, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Typography } from '@mui/joy';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
 import ReplayIcon from '@mui/icons-material/Replay';
 
+import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
+
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { createDMessage, DConversation, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
-import { flattenConversation } from './flatten';
 
 
 function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedStyle: (type: FlattenStyleType) => void }) {
@@ -41,12 +44,12 @@ function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedS
   );
 }
 
-function FlatteningProgress(props: { llmLabel: string }) {
+function FlatteningProgress(props: { llmLabel: string, partialText: string | null }) {
   return (
     <Box sx={{ mx: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <CircularProgress />
       <Typography>
-        Flattening...
+        {props.partialText?.length ? `${props.partialText.length} characters` : 'Flattening'}...
       </Typography>
       <Typography level='body-sm'>
         This may take up to a minute.
@@ -59,60 +62,87 @@ function FlatteningProgress(props: { llmLabel: string }) {
 }
 
 
-export function FlattenerModal(props: { conversationId: string | null, onClose: () => void }) {
+function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[]): string {
+  let encodedMessages = '';
+
+  for (const message of messages) {
+    if (message.role === 'system') continue;
+    const author = message.role === 'user' ? 'User' : 'Assistant';
+    const text = message.text.replace(/\n/g, '\n\n');
+    encodedMessages += `---${author}---\n${text}\n\n`;
+  }
+
+  return userPrompt ? userPrompt + '\n\n' + encodedMessages.trim() : encodedMessages.trim();
+}
+
+
+export function FlattenerModal(props: {
+  conversationId: string | null,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => DConversationId | null,
+  onClose: () => void,
+}) {
 
   // state
   const [selectedStyle, setSelectedStyle] = React.useState<FlattenStyleType | null>(null);
   const [selectedLLMLabel, setSelectedLLMLabel] = React.useState<string | null>(null);
-  const [flattenedText, setFlattenedText] = React.useState<string | null>(null);
+  const [confirmOverwrite, setConfirmOverwrite] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // external state
-  const [diagramLlm, llmComponent] = useFormRadioLlmType();
+  const [llm, llmComponent] = useFormRadioLlmType();
+  const {
+    isStreaming, text: flattenedText, partialText, streamError,
+    startStreaming, setText, resetText,
+  } = useStreamChatText();
 
-  const handlePerformFlattening = async (type: FlattenStyleType) => {
-    if (!props.conversationId || !type) return;
-    const conversation: DConversation | undefined = useChatStore.getState().conversations.find(c => c.id === props.conversationId);
-    if (!conversation) return;
 
-    // begin working...
-    setSelectedStyle(type);
+  const handlePerformFlattening = React.useCallback(async (flattenStyle: FlattenStyleType) => {
 
-    // select model
-    if (!diagramLlm) {
-      setErrorMessage('No model selected');
-      return;
-    }
-    setSelectedLLMLabel(diagramLlm.label);
+    // validate config (or set error)
+    const conversation = getConversation(props.conversationId);
+    const messages = conversation?.messages;
+    if (!messages || !messages.length)
+      return setErrorMessage('No messages in conversation');
+    if (!llm)
+      return setErrorMessage('No model selected');
+    const flattenProfile = FLATTEN_PROFILES.find(s => s.type === flattenStyle);
+    if (!flattenProfile)
+      return setErrorMessage('No style selected');
 
-    let text: string | null = null;
-    try {
-      text = await flattenConversation(diagramLlm.id, conversation, type);
-    } catch (error: any) {
-      setErrorMessage(error?.message || error?.toString() || 'Unknown error');
-    }
+    setSelectedStyle(flattenStyle);
+    setSelectedLLMLabel(llm.label);
+    setErrorMessage(null);
 
-    // ...got the message (or error)
-    setFlattenedText(text || 'Issue: the flattened text was blank.');
-  };
+    // start (auto-abort previous and at unmount)
+    await startStreaming(llm.id, [
+      { role: 'system', content: flattenProfile.systemPrompt },
+      { role: 'user', content: encodeConversationAsUserMessage(flattenProfile.userPrompt, messages) },
+    ]);
 
-  const handleReplaceConversation = () => {
-    if (!props.conversationId || !selectedStyle || !flattenedText) return;
-    const newRootMessage = createDMessage('user', flattenedText);
-    useChatStore.getState().setMessages(props.conversationId, [newRootMessage]);
-    props.onClose();
-  };
+  }, [llm, props.conversationId, startStreaming]);
+
 
   const handleErrorRetry = () => {
     setSelectedStyle(null);
-    setFlattenedText(null);
     setErrorMessage(null);
+    resetText();
   };
 
 
-  const isFlattening = selectedStyle && !flattenedText;
-  const isDone = !!flattenedText || !!errorMessage;
-  const isError = !!errorMessage;
+  const handleReplaceConversation = (branch: boolean) => {
+    if (!props.conversationId || !selectedStyle || !flattenedText) return;
+    let newConversationId: string | null = props.conversationId;
+    if (branch)
+      newConversationId = props.onConversationBranch(props.conversationId, null);
+    if (newConversationId) {
+      const newRootMessage = createDMessage('user', flattenedText);
+      useChatStore.getState().setMessages(newConversationId, [newRootMessage]);
+    }
+    props.onClose();
+  };
+
+  const isSuccess = !!flattenedText;
+  const isError = !!errorMessage || !!streamError;
 
   return (
     <GoodModal
@@ -128,44 +158,59 @@ export function FlattenerModal(props: { conversationId: string | null, onClose: 
       </FormControl>
 
       {/* Progress indicator */}
-      {isFlattening && !!selectedLLMLabel && <FlatteningProgress llmLabel={selectedLLMLabel} />}
+      {isStreaming && !!selectedLLMLabel && (
+        <FlatteningProgress llmLabel={selectedLLMLabel} partialText={partialText} />
+      )}
 
       {/* Group post-execution */}
-      {isDone && <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1 }}>
+      {(isSuccess || isError) && <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1 }}>
 
         {/* Possible Error */}
-        {errorMessage && <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+        {isError && <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
           <Alert variant='soft' color='danger' sx={{ my: 1, flexGrow: 1 }}>
-            <Typography>{errorMessage}</Typography>
+            {!!errorMessage && <Typography>{errorMessage}</Typography>}
+            {!!streamError && <Typography>LLM issue: {streamError}</Typography>}
           </Alert>
           <IconButton variant='solid' color='danger' onClick={handleErrorRetry}>
             <ReplayIcon />
           </IconButton>
         </Box>}
 
-        {/* Review Text */}
-        {!!flattenedText && <InlineTextarea initialText={flattenedText} onEdit={setFlattenedText} />}
-
         {/* Proceed*/}
-        {isDone && !isError && <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
-          <IconButton
-            variant={isError ? 'solid' : 'plain'} color={isError ? 'danger' : 'primary'}
-            onClick={handleErrorRetry}
-          >
-            <ReplayIcon />
-          </IconButton>
+        {isSuccess && !isError && (
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+            <IconButton
+              variant={isError ? 'solid' : 'plain'} color={isError ? 'danger' : 'primary'}
+              onClick={handleErrorRetry}
+            >
+              <ReplayIcon />
+            </IconButton>
 
-          {/* TODO: ask confirmation? */}
-          <Button onClick={handleReplaceConversation} sx={{ minWidth: 142 }}>
-            Looks Good
-          </Button>
-        </Box>}
+            <Button variant='outlined' onClick={() => setConfirmOverwrite(true)} sx={{ ml: 'auto' }}>
+              Replace Chat
+            </Button>
+            <Button variant='solid' onClick={() => handleReplaceConversation(true)} startDecorator={<ForkRightIcon />}>
+              Branch
+            </Button>
+          </Box>
+        )}
+
+        {/* Review or Edit Text */}
+        {isSuccess && <InlineTextarea initialText={flattenedText} onEdit={setText} />}
 
       </Box>}
 
-      {!isDone && !isFlattening && !!llmComponent && <Divider />}
+      {!isSuccess && !isStreaming && !!llmComponent && <Divider />}
 
-      {!isDone && !isFlattening && llmComponent}
+      {!isSuccess && !isStreaming && llmComponent}
+
+
+      {/* [confirmation] Overwrite Conversation */}
+      {confirmOverwrite && <ConfirmationModal
+        open onClose={() => setConfirmOverwrite(false)} onPositive={() => handleReplaceConversation(false)}
+        confirmationText='Are you sure you want to overwrite the conversation with the flattened text?'
+        positiveActionText='Replace conversation'
+      />}
 
     </GoodModal>
   );
