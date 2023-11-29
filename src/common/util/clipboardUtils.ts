@@ -27,5 +27,10 @@ export const supportsClipboardRead = !isFirefox;
 export async function getClipboardItems(): Promise<ClipboardItem[]> {
   if (!isBrowser || !window.navigator.clipboard?.read)
     return [];
-  return await window.navigator.clipboard.read();
+  try {
+    return await window.navigator.clipboard.read();
+  } catch (error: any) {
+    console.warn('Failed to read clipboard: ', error);
+    return [];
+  }
 }
