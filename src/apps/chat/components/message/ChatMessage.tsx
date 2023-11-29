@@ -20,6 +20,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
@@ -205,6 +206,7 @@ export function ChatMessage(props: {
   isImagining?: boolean, isSpeaking?: boolean,
   onConversationBranch?: (messageId: string) => void,
   onConversationRestartFrom?: (messageId: string, offset: number) => void,
+  onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
@@ -326,7 +328,12 @@ export function ChatMessage(props: {
     }
   };
 
-  const handleOpsDelete = (e: React.MouseEvent) => {
+  const handleOpsTruncate = (_e: React.MouseEvent) => {
+    props.onConversationTruncate && props.onConversationTruncate(messageId);
+    closeOperationsMenu();
+  };
+
+  const handleOpsDelete = (_e: React.MouseEvent) => {
     props.onMessageDelete && props.onMessageDelete(messageId);
   };
 
@@ -615,10 +622,16 @@ export function ChatMessage(props: {
             Speak
           </MenuItem>}
           {!!props.onConversationRestartFrom && <ListDivider />}
+          {!!props.onConversationTruncate && (
+            <MenuItem onClick={handleOpsTruncate}>
+              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+              Truncate <span style={{ opacity: 0.5 }}>after</span>
+            </MenuItem>
+          )}
           {!!props.onMessageDelete && (
             <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
+              Delete <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
         </CloseableMenu>
