@@ -40,12 +40,14 @@ export function ChatMessageList(props: {
 
   // external state
   const [showSystemMessages] = useChatShowSystemMessages();
-  const { conversationMessages, editMessage, deleteMessage, historyTokenCount } = useChatStore(state => {
+  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
-      editMessage: state.editMessage, deleteMessage: state.deleteMessage,
       historyTokenCount: conversation ? conversation.tokenCount : 0,
+      deleteMessage: state.deleteMessage,
+      editMessage: state.editMessage,
+      setMessages: state.setMessages,
     };
   }, shallow);
   const { chatLLM } = useChatLLM();
@@ -53,7 +55,7 @@ export function ChatMessageList(props: {
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
-  const { conversationId, onConversationExecuteHistory, onConversationBranch, onTextDiagram, onTextImagine, onTextSpeak } = props;
+  const { conversationId, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
 
 
   // text actions
@@ -75,6 +77,14 @@ export function ChatMessageList(props: {
       conversationId && onConversationExecuteHistory(conversationId, truncatedHistory);
     }
   }, [conversationId, onConversationExecuteHistory]);
+
+  const handleConversationTruncate = React.useCallback((messageId: string) => {
+    const messages = getConversation(conversationId)?.messages;
+    if (conversationId && messages) {
+      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+      setMessages(conversationId, truncatedHistory);
+    }
+  }, [conversationId, setMessages]);
 
   const handleMessageDelete = React.useCallback((messageId: string) => {
     conversationId && deleteMessage(conversationId, messageId);
@@ -192,6 +202,7 @@ export function ChatMessageList(props: {
             isImagining={isImagining} isSpeaking={isSpeaking}
             onConversationBranch={handleConversationBranch}
             onConversationRestartFrom={handleConversationRestartFrom}
+            onConversationTruncate={handleConversationTruncate}
             onMessageDelete={handleMessageDelete}
             onMessageEdit={handleMessageEdit}
             onTextDiagram={handleTextDiagram}
