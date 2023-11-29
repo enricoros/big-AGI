@@ -106,6 +106,12 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
 
         </Box>
 
+        {/* Warnings */}
+        {isPulling && <Typography color='warning' level='body-sm'>
+          Pulling maybe slow and TIME OUT as the operation will download many GBs from the internet. In case of a
+          timeout, the server is still downloading the model. Check back again later and the model should be available.
+        </Typography>}
+
       </Stack>
 
     </GoodModal>
