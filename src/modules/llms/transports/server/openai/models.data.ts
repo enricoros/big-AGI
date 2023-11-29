@@ -296,7 +296,7 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
   'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', cw: 9000, cp: 0.00163, cc: 0.00551, old: true },
 };
 
-const orModelFamilyOrder = ['mistralai/', 'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'openai/', 'meta-llama/', 'phind/', 'openrouter/'];
+const orModelFamilyOrder = ['mistralai/', 'huggingfaceh4/', 'undi95/', 'openchat/', 'anthropic/', 'google/', 'openai/', 'meta-llama/', 'phind/', 'openrouter/'];
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
