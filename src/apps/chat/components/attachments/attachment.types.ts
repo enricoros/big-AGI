@@ -10,17 +10,21 @@ export type AttachmentId = string;
 
 // export type AttachmentStatus = 'pending' | 'converting' | 'completed' | 'failed';
 
+export type AttachmentDTOrigin = 'drop' | 'paste';
+export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
+
 export type AttachmentSource = {
   type: 'url';
   url: string;
   refName: string;
 } | {
   type: 'file';
+  origin: AttachmentFileOrigin,
   fileWithHandle: FileWithHandle;
   name: string;
 } | {
   type: 'text';
-  method: 'drop' | 'paste' | 'clipItem';
+  method: 'clipboard-read' | AttachmentDTOrigin;
   textPlain?: string;
   textHtml?: string;
 };

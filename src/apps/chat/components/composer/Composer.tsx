@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
@@ -24,14 +25,11 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
-import { asValidURL } from '~/common/util/urlUtils';
 import { countModelTokens } from '~/common/util/token-counter';
-import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
-import { getClipboardItems, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { playSoundUrl } from '~/common/util/audioUtils';
+import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -116,7 +114,6 @@ export function Composer(props: {
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const { AttachmentsList, attachFromDialog, attachFromSources, attachmentsReady } = useAttachments();
 
   // external state
   const isMobile = useIsMobile();
@@ -136,6 +133,13 @@ export function Composer(props: {
     };
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
+  const {
+    AttachmentsComponent,
+    attachAppendClipboardItems,
+    attachAppendDataTransfer,
+    attachAppendFile,
+    attachmentsReady,
+  } = useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
   // derived state
   const isDesktop = !isMobile;
@@ -261,137 +265,25 @@ export function Composer(props: {
 
   // Attachments
 
-  const enableUrlAttachments = browsingInComposer && !composeText.startsWith('/');
-
-  const attachDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: 'drop' | 'paste', attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
-
-    // attach File(s)
-    if (dataTransfer.files.length >= 1) {
-      // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
-      let overrideFileNames: string[] = [];
-      if (dataTransfer.types.includes('text/plain')) {
-        const plainText = dataTransfer.getData('text/plain');
-        overrideFileNames = extractFilePathsWithCommonRadix(plainText);
-      }
-
-      // attach as Files
-      attachFromSources(Array.from(dataTransfer.files).map((file, idx) => ({
-        type: 'file',
-        fileWithHandle: file,
-        name: overrideFileNames.length === dataTransfer.files.length ? overrideFileNames[idx] || file.name : file.name,
-      })));
-      return 'as_files';
-    }
-
-    // attach as URL
-    const textPlain = dataTransfer.getData('text/plain') || '';
-    if (textPlain && enableUrlAttachments) {
-      const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl && textPlainUrl.trim()) {
-        attachFromSources([{
-          type: 'url', url: textPlainUrl.trim(), refName: textPlain,
-        }]);
-        return 'as_url';
-      }
-    }
-
-    // attach as Text/Html (further conversion, e.g. to markdown is done later)
-    const textHtml = dataTransfer.getData('text/html') || '';
-    if (attachText && (textHtml || textPlain)) {
-      attachFromSources([{
-        type: 'text', method, textHtml, textPlain,
-      }]);
-      return 'as_text';
-    }
-
-    if (attachText)
-      console.log(`Unhandled ${method} event: `, dataTransfer.types?.map(t => `${t}: ${dataTransfer.getData(t)}`));
-
-    // did not attach anything from this data transfer
-    return false;
-  }, [attachFromSources, enableUrlAttachments]);
-
-  const handleTextareaCtrlV = React.useCallback((event: React.ClipboardEvent) => {
-    if (attachDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
+  const handleAttachCtrlV = React.useCallback((event: React.ClipboardEvent) => {
+    if (attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
       event.preventDefault();
-  }, [attachDataTransfer]);
+  }, [attachAppendDataTransfer]);
 
-  const handleAttachCameraImage = React.useCallback((file: File) => {
-    attachFromSources([{
-      type: 'file',
-      fileWithHandle: file,
-      name: file.name,
-    }]);
-  }, [attachFromSources]);
+  const handleAttachCameraImage = React.useCallback((file: FileWithHandle) => {
+    attachAppendFile('camera', file);
+  }, [attachAppendFile]);
 
-  const handleAttachFromClipboard = React.useCallback(async () => {
-
-    // if there's an issue accessing the clipboard, show it passively
-    const clipboardItems = await getClipboardItems();
-    if (clipboardItems === null) {
-      addSnackbar({
-        key: 'clipboard-issue',
-        type: 'issue',
-        message: 'Clipboard empty or access denied',
-        overrides: {
-          autoHideDuration: 4000,
-        },
-      });
-      return;
+  const handleAttachFilePicker = React.useCallback(async () => {
+    try {
+      const selectedFiles: FileWithHandle[] = await fileOpen({ multiple: true });
+      selectedFiles.forEach(file => attachAppendFile('file-open', file));
+    } catch (error) {
+      // ignore...
     }
+  }, [attachAppendFile]);
 
-    // loop on all the possible attachments
-    for (const clipboardItem of clipboardItems) {
-
-      // attach as image
-      let imageAttached = false;
-      for (const mimeType of clipboardItem.types) {
-        if (mimeType.startsWith('image/')) {
-          try {
-            const imageBlob = await clipboardItem.getType(mimeType);
-            const imageFile = new File([imageBlob], 'clipboard.png', { type: mimeType });
-            attachFromSources([{
-              type: 'file',
-              fileWithHandle: imageFile,
-              name: 'clipboard.png',
-            }]);
-            imageAttached = true;
-          } catch (error) {
-            // ignore getType error..
-          }
-        }
-      }
-      if (imageAttached)
-        continue;
-
-      // get the Plain text
-      const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
-
-      // attach as URL
-      if (textPlain && enableUrlAttachments) {
-        const textPlainUrl = asValidURL(textPlain);
-        if (textPlainUrl && textPlainUrl.trim()) {
-          attachFromSources([{
-            type: 'url', url: textPlainUrl.trim(), refName: textPlain,
-          }]);
-          continue;
-        }
-      }
-
-      // attach as Text
-      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
-      if (textHtml || textPlain) {
-        attachFromSources([{
-          type: 'text', method: 'clipItem', textHtml, textPlain,
-        }]);
-        continue;
-      }
-
-      console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
-    }
-  }, [attachFromSources, enableUrlAttachments]);
-
-  useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, handleAttachFromClipboard);
+  useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
 
   // Drag & Drop
@@ -416,7 +308,7 @@ export function Composer(props: {
     // e.dataTransfer.dropEffect = 'copy';
   };
 
-  const handleOverlayDrop = async (event: React.DragEvent) => {
+  const handleOverlayDrop = React.useCallback(async (event: React.DragEvent) => {
     eatDragEvent(event);
     setIsDragging(false);
 
@@ -427,8 +319,8 @@ export function Composer(props: {
       return setComposeText(test => test + 'Dragging files from VSCode is not supported! Fixme: anyone?');
 
     // textarea drop
-    attachDataTransfer(dataTransfer, 'drop', true);
-  };
+    attachAppendDataTransfer(dataTransfer, 'drop', true);
+  }, [attachAppendDataTransfer, setComposeText]);
 
 
   const isImmediate = chatModeId === 'immediate';
@@ -467,10 +359,10 @@ export function Composer(props: {
             <ButtonCameraCapture isMobile={isMobile} onAttachImage={handleAttachCameraImage} />
 
             {/* Responsive Open Files button */}
-            <ButtonFileAttach isMobile={isMobile} onAttachFilePicker={attachFromDialog} />
+            <ButtonFileAttach isMobile={isMobile} onAttachFilePicker={handleAttachFilePicker} />
 
             {/* Responsive Paste button */}
-            {supportsClipboardRead && <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={handleAttachFromClipboard} />}
+            {supportsClipboardRead && <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={attachAppendClipboardItems} />}
 
           </Box>
 
@@ -492,7 +384,7 @@ export function Composer(props: {
                   onChange={(event) => setComposeText(event.target.value)}
                   onDragEnter={handleTextareaDragEnter}
                   onKeyDown={handleTextareaKeyDown}
-                  onPasteCapture={handleTextareaCtrlV}
+                  onPasteCapture={handleAttachCtrlV}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
@@ -588,7 +480,7 @@ export function Composer(props: {
             </Box>
 
             {/* Render any Attachments */}
-            {AttachmentsList}
+            {AttachmentsComponent}
 
           </Box>
 
