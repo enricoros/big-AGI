@@ -86,7 +86,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
-    content: '(no content)',
+    content: '',
     error: undefined,
     stopReason: 'error',
     screenshot: undefined,
@@ -113,7 +113,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
     const isExpected: boolean = error instanceof TimeoutError;
     result.stopReason = isExpected ? 'timeout' : 'error';
     if (!isExpected) {
-      result.error = '[Puppeteer] Loading issue: ' + error?.message || error?.toString() || 'Unknown error';
+      result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
       console.error('workerPuppeteer: page.goto', error);
     }
   }
@@ -129,6 +129,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
       });
     }
   } catch (error: any) {
+    result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
     console.error('workerPuppeteer: page.evaluate', error);
   }
 
