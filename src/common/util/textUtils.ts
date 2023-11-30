@@ -9,3 +9,16 @@ export function createBase36Uid(checkDuplicates: string[]): string {
   } while (checkDuplicates.includes(id));
   return id;
 }
+
+/*export function ellipsizeFront(text: string, maxLength: number) {
+  if (text.length <= maxLength)
+    return text;
+  return '…' + text.slice(-(maxLength - 1));
+}*/
+
+export function ellipsizeMiddle(text: string, maxLength: number) {
+  if (text.length <= maxLength)
+    return text;
+  const half = Math.floor(maxLength / 2);
+  return text.slice(0, half) + '…' + text.slice(-(maxLength - half - 1));
+}

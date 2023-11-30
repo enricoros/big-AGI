@@ -1,4 +1,4 @@
-import { AttachmentConversion, ConversionOutputType } from './conversions';
+import { AttachmentConversion } from './conversions';
 import { FileWithHandle } from 'browser-fs-access';
 
 
@@ -12,6 +12,7 @@ export type AttachmentId = string;
 
 export type AttachmentDTOrigin = 'drop' | 'paste';
 export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
+
 
 export type AttachmentSource = {
   type: 'url';
@@ -29,32 +30,45 @@ export type AttachmentSource = {
   textHtml?: string;
 };
 
+
+export type AttachmentInput = {
+  mimeType: string; // Original MIME type of the file
+  data: string | ArrayBuffer; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
+  dataSize: number; // Size of the original data in bytes
+  altMimeType?: string; // Alternative MIME type for the input
+  altData?: string; // Alternative data for the input
+  // preview?: AttachmentPreview; // Preview of the input
+};
+
+
 export type Attachment = {
   readonly id: AttachmentId;
-  // label: string | undefined;
+  label: string;
+
+  // source: URL / File / text; content and type to be resolved later
   readonly source: AttachmentSource,
   sourceLoading: boolean;
   sourceError: string | null;
-  inputs: {
-    mimeType: string; // Original MIME type of the file
-    data: string; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
-    // preview?: AttachmentPreview; // Preview of the input
-  }[];
+
+  // set after the source has been loaded/processe
+  input?: AttachmentInput;
+
+  // options to convert the input
   availableConversions?: AttachmentConversion[]; // List of available conversions for this attachment
-  conversion?: AttachmentConversion; // The conversion currently being applied or last applied
-  output?: {
-    outputType: ConversionOutputType; // The type of the output after conversion
-    dataTitle: string; // outputType dependent
-    data: string; // outputType dependent
-    preview?: AttachmentPreview; // Preview of the output
+
+  outputs?: {
+    // outputType: ConversionOutputType; // The type of the output after conversion
+    // dataTitle: string; // outputType dependent
+    // data: string; // outputType dependent
+    // preview?: AttachmentPreview; // Preview of the output
     isEjectable: boolean; // Whether the attachment can be inlined as text
-  };
-  metadata: {
-    size?: number; // Size of the attachment in bytes
-    creationDate?: Date; // Creation date of the file
-    modifiedDate?: Date; // Last modified date of the file
-    altText?: string; // Alternative text for images for screen readers
-  };
+  }[];
+  // metadata: {
+  //   size?: number; // Size of the attachment in bytes
+  //   creationDate?: Date; // Creation date of the file
+  //   modifiedDate?: Date; // Last modified date of the file
+  //   altText?: string; // Alternative text for images for screen readers
+  // };
 };
 
 export type AttachmentPreview = {
