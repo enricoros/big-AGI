@@ -134,10 +134,10 @@ export function Composer(props: {
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
   const {
-    AttachmentsComponent,
     attachAppendClipboardItems,
     attachAppendDataTransfer,
     attachAppendFile,
+    attachmentsComponent,
     attachmentsReady,
   } = useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
@@ -480,7 +480,7 @@ export function Composer(props: {
             </Box>
 
             {/* Render any Attachments */}
-            {AttachmentsComponent}
+            {attachmentsComponent}
 
           </Box>
 

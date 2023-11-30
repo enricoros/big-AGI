@@ -51,7 +51,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
 
   // Components
-  const component = React.useMemo(() => {
+  const attachmentsComponent = React.useMemo(() => {
     return <Attachments attachments={attachments} setAttachments={setAttachments} />;
   }, [attachments, setAttachments]);
 
@@ -65,7 +65,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
   // Convenience functions
 
-  const _attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) =>
+  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) =>
     attachAppendSources([{
       type: 'file',
       origin,
@@ -73,7 +73,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       name: overrideName || fileWithHandle.name,
     }]), [attachAppendSources]);
 
-  const _attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+  const attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
     // attach File(s)
     if (dataTransfer.files.length >= 1) {
@@ -87,7 +87,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       // attach as Files
       const overrideNames = overrideFileNames.length === dataTransfer.files.length;
       for (let i = 0; i < dataTransfer.files.length; i++)
-        _attachAppendFile(method, dataTransfer.files[i], overrideNames ? overrideFileNames[i] || undefined : undefined);
+        attachAppendFile(method, dataTransfer.files[i], overrideNames ? overrideFileNames[i] || undefined : undefined);
       return 'as_files';
     }
 
@@ -117,9 +117,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
     // did not attach anything from this data transfer
     return false;
-  }, [_attachAppendFile, attachAppendSources, enableUrlAttachments]);
+  }, [attachAppendFile, attachAppendSources, enableUrlAttachments]);
 
-  const _attachAppendClipboardItems = React.useCallback(async () => {
+  const attachAppendClipboardItems = React.useCallback(async () => {
 
     // if there's an issue accessing the clipboard, show it passively
     const clipboardItems = await getClipboardItems();
@@ -145,7 +145,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
           try {
             const imageBlob = await clipboardItem.getType(mimeType);
             const imageFile = new File([imageBlob], 'clipboard.png', { type: mimeType });
-            _attachAppendFile('clipboard-read', imageFile, imageFile.name?.replace('image.', 'clipboard.'));
+            attachAppendFile('clipboard-read', imageFile, imageFile.name?.replace('image.', 'clipboard.'));
             imageAttached = true;
           } catch (error) {
             // ignore getType error..
@@ -180,7 +180,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_attachAppendFile, attachAppendSources, enableUrlAttachments]);
+  }, [attachAppendFile, attachAppendSources, enableUrlAttachments]);
 
 
   const attachFromClipboard = React.useCallback(async () => {
@@ -256,13 +256,13 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
 
   return {
-    // component
-    AttachmentsComponent: component,
-
     // attach methods
-    attachAppendClipboardItems: _attachAppendClipboardItems,
-    attachAppendDataTransfer: _attachAppendDataTransfer,
-    attachAppendFile: _attachAppendFile,
+    attachAppendClipboardItems,
+    attachAppendDataTransfer,
+    attachAppendFile,
+
+    // component
+    attachmentsComponent,
 
     // state
     attachmentsReady: false,
