@@ -31,13 +31,15 @@ export type AttachmentSource = {
 
 export type Attachment = {
   readonly id: AttachmentId;
-  label: string | undefined;
+  // label: string | undefined;
   readonly source: AttachmentSource,
-  input?: {
-    // data: string; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
+  sourceLoading: boolean;
+  sourceError: string | null;
+  inputs: {
     mimeType: string; // Original MIME type of the file
+    data: string; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
     // preview?: AttachmentPreview; // Preview of the input
-  };
+  }[];
   availableConversions?: AttachmentConversion[]; // List of available conversions for this attachment
   conversion?: AttachmentConversion; // The conversion currently being applied or last applied
   output?: {

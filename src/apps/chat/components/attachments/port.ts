@@ -40,47 +40,6 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 
 
 /*
-  // Attachments: Files
-
-           {isDownloading && <Card
-              color='success' invertedColors variant='soft'
-              sx={{
-                display: 'flex',
-                position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                alignItems: 'center', justifyContent: 'center',
-                border: '1px solid',
-                borderColor: 'success.solidBg',
-                borderRadius: 'xs',
-                zIndex: 20,
-              }}>
-              <CircularProgress />
-              <Typography level='title-md' sx={{ mt: 1 }}>
-                Loading & Attaching Website
-              </Typography>
-              <Typography level='body-xs'>
-                This will take up to 15 seconds
-              </Typography>
-            </Card>}
-
-
-const [isDownloading, setIsDownloading] = React.useState(false);
-
-  const handleAttachWebpage = React.useCallback(async (url: string, fileName: string) => {
-    setIsDownloading(true);
-    let urlContent: string | null;
-    try {
-      urlContent = await callBrowseFetchPage(url);
-    } catch (error: any) {
-      // ignore errors
-      urlContent = `[Web Download] Issue loading website: ${error?.message || typeof error === 'string' ? error : JSON.stringify(error)}`;
-    }
-    setIsDownloading(false);
-    if (urlContent) {
-      setComposeText(expandPromptTemplate(PromptTemplates.PasteFile, { fileName, fileText: urlContent }));
-      return true;
-    }
-    return false;
-  }, [setComposeText]);
 
   const handleAttachFiles = async (files: FileList, overrideFileNames?: string[]): Promise<void> => {
 

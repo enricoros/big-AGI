@@ -68,7 +68,7 @@ export function Attachments(props: {
   return <>
 
     {/* Attachments bar */}
-    <Box sx={{ display: 'flex', gap: 1, alignItems: 'start' }}>
+    <Box sx={{ display: 'flex', gap: 1 }}>
 
       {/* Overall Menu button */}
       <IconButton variant='soft' color='neutral' size='sm' onClick={handleOverallMenuToggle} sx={{ borderRadius: 'xs' }}>

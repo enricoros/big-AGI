@@ -16,8 +16,8 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
   // state
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
     attachments: state.attachments,
-    createAttachment: state.createAttachment,
     clearAttachments: state.clearAttachments,
+    createAttachment: state.createAttachment,
     removeAttachment: state.removeAttachment,
   }), shallow);
 
@@ -141,68 +141,6 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
   }, [attachAppendFile, createAttachment, enableUrlAttachments]);
-
-
-  // when pasting html, onley process tables as markdown (e.g. from Excel), or fallback to text
-  /*try {
-    const htmlItem = await clipboardItem.getType('text/html');
-    const htmlString = await htmlItem.text();
-    // paste tables as markdown
-    if (htmlString.startsWith('<table')) {
-      console.log('Pasting html table as markdown', htmlString);
-      // const markdownString = htmlTableToMarkdown(htmlString);
-      // setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
-      continue;
-    }
-    // TODO: paste html to markdown (tried Turndown, but the gfm plugin is not good - need to find another lib with minimal footprint)
-  } catch (error) {
-    // ignore missing html: fallback to text/plain
-  }
-  */
-  /*
-        // find the text/plain item if any
-        try {
-          const textItem = await clipboardItem.getType('text/plain');
-          const textString = await textItem.text();
-          const textIsUrl = asValidURL(textString);
-          if (browsingInComposer) {
-            if (textIsUrl && await handleAttachWebpage(textIsUrl, textString))
-              continue;
-          }
-          setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
-          continue;
-        } catch (error) {
-          // ignore missing text
-        }
-  */
-
-
-  const attachFiles = React.useCallback(async (files: { fileWithHandle: FileWithHandle, overrideName?: string }[]): Promise<void> => {
-
-    // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
-    //       to the common root, but the files[].webkitRelativePath property is not providing that information
-
-    // perform loading and expansion
-    let newText = '';
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileName = overrideFileNames?.length === files.length ? overrideFileNames[i] : file.name;
-      let fileText = '';
-      try {
-        if (file.type === 'application/pdf')
-          fileText = await pdfToText(file);
-        else
-          fileText = await file.text();
-        newText = expandPromptTemplate(PromptTemplates.PasteFile, { fileName: fileName, fileText })(newText);
-      } catch (error: any) {
-        // show errors in the prompt box itself - FUTURE: show in a toast
-        console.error(error);
-        newText = `${newText}\n\nError loading file ${fileName}: ${JSON.stringify(error)}\n`;
-      }
-    }
-
-
-  }, []);
 
 
   return {

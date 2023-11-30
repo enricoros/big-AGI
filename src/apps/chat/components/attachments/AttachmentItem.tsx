@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import { Button, Divider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Button, CircularProgress, ColorPaletteProp, Divider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 
-import { Attachment } from './attachment.types';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+
+import type { Attachment } from './attachment.types';
 
 
 export function AttachmentItem(props: {
@@ -16,8 +18,10 @@ export function AttachmentItem(props: {
   const [menuAnchor, setMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derived state
-  const { attachment: { id: attachmendId }, onAttachmentRemove } = props;
+  const { attachment, onAttachmentRemove } = props;
 
+  const isLoading = attachment.sourceLoading;
+  const isError = !!attachment.sourceError;
 
   // menu
 
@@ -31,30 +35,35 @@ export function AttachmentItem(props: {
 
   const handleRemoveAttachment = React.useCallback(() => {
     handleMenuHide();
-    onAttachmentRemove(attachmendId);
-  }, [onAttachmentRemove, attachmendId]);
+    onAttachmentRemove(attachment.id);
+  }, [onAttachmentRemove, attachment.id]);
+
+  const tooltip = isError ? attachment.sourceError : isLoading ? 'Loading' : null;
+  const variant = isError ? 'soft' : isLoading ? 'outlined' : 'soft';
+  const color: ColorPaletteProp = isError ? 'danger' : isLoading ? 'success' : 'neutral';
 
 
-  return (
-
+  return <GoodTooltip title={tooltip} isError={isError}>
     <Button
-      variant='soft' color='neutral' size='sm'
+      variant={variant} color={color} size='sm'
       onClick={handleMenuToggle}
       sx={{
         borderRadius: 'xs',
         flexDirection: 'column',
         fontWeight: 'normal',
+        minWidth: 64,
         px: 1, py: 0.5,
       }}
     >
+      {isLoading && <CircularProgress color='success' />}
 
-      <Typography level='title-sm'>
-        {props.attachment.source.type}
-      </Typography>
+      {!isLoading && props.attachment.source.type}
 
-      <Typography level='body-xs'>
-        {props.attachment.id} {props.attachment.label} {props.attachment.input?.mimeType} {props.attachment.output?.outputType}
-      </Typography>
+      {!isLoading && <Typography level='body-xs'>
+        {/*{props.attachment.label}*/}
+        {props.attachment.inputs.map(input => input.mimeType + ': ' + input.data.length.toLocaleString())}
+        {props.attachment.output?.outputType}
+      </Typography>}
 
       {/* Item Menu */}
       {!!menuAnchor && (
@@ -62,16 +71,10 @@ export function AttachmentItem(props: {
           placement='top' sx={{ minWidth: 200 }}
           open anchorEl={menuAnchor} onClose={handleMenuHide}
         >
-          <MenuItem>
-            aa
-          </MenuItem>
-          <MenuItem>
-            aa
+          <MenuItem disabled>
+            Type ...
           </MenuItem>
           <Divider />
-          <MenuItem>
-            aa
-          </MenuItem>
           <MenuItem onClick={handleRemoveAttachment}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Remove
@@ -79,9 +82,6 @@ export function AttachmentItem(props: {
         </CloseableMenu>
       )}
 
-      {/*{open && <CloseableMenu open anchorEl={} onClose={}}*/}
-
     </Button>
-
-  );
+  </GoodTooltip>;
 }
