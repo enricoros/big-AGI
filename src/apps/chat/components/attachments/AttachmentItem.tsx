@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, CircularProgress, ColorPaletteProp, Divider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Divider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -43,45 +43,49 @@ export function AttachmentItem(props: {
   const color: ColorPaletteProp = isError ? 'danger' : isLoading ? 'success' : 'neutral';
 
 
-  return <GoodTooltip title={tooltip} isError={isError}>
-    <Button
-      variant={variant} color={color} size='sm'
-      onClick={handleMenuToggle}
-      sx={{
-        borderRadius: 'xs',
-        flexDirection: 'column',
-        fontWeight: 'normal',
-        minWidth: 64,
-        px: 1, py: 0.5,
-      }}
-    >
-      {isLoading && <CircularProgress color='success' />}
+  return <Box>
 
-      {!isLoading && props.attachment.source.type}
+    <GoodTooltip title={tooltip} isError={isError}>
+      <Button
+        variant={variant} color={color} size='sm'
+        onClick={handleMenuToggle}
+        sx={{
+          borderRadius: 'xs',
+          flexDirection: 'column',
+          fontWeight: 'normal',
+          minWidth: 64,
+          px: 1, py: 0.5,
+        }}
+      >
+        {isLoading && <CircularProgress color='success' />}
 
-      {!isLoading && <Typography level='body-xs'>
-        {/*{props.attachment.label}*/}
-        {props.attachment.inputs.map(input => input.mimeType + ': ' + input.data.length.toLocaleString())}
-        {props.attachment.output?.outputType}
-      </Typography>}
+        {!isLoading && props.attachment.source.type}
 
-      {/* Item Menu */}
-      {!!menuAnchor && (
-        <CloseableMenu
-          placement='top' sx={{ minWidth: 200 }}
-          open anchorEl={menuAnchor} onClose={handleMenuHide}
-        >
-          <MenuItem disabled>
-            Type ...
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleRemoveAttachment}>
-            <ListItemDecorator><ClearIcon /></ListItemDecorator>
-            Remove
-          </MenuItem>
-        </CloseableMenu>
-      )}
+        {!isLoading && <Typography level='body-xs'>
+          {/*{props.attachment.label}*/}
+          {props.attachment.inputs.map(input => input.mimeType + ': ' + input.data.length.toLocaleString())}
+          {props.attachment.output?.outputType}
+        </Typography>}
 
-    </Button>
-  </GoodTooltip>;
+      </Button>
+    </GoodTooltip>
+
+    {/* Item Menu */}
+    {!!menuAnchor && (
+      <CloseableMenu
+        placement='top' sx={{ minWidth: 200 }}
+        open anchorEl={menuAnchor} onClose={handleMenuHide}
+      >
+        <MenuItem disabled>
+          Type ...
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleRemoveAttachment}>
+          <ListItemDecorator><ClearIcon /></ListItemDecorator>
+          Remove
+        </MenuItem>
+      </CloseableMenu>
+    )}
+
+  </Box>;
 }
