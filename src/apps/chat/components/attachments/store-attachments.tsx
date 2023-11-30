@@ -117,11 +117,17 @@ async function resolveInputAsync(source: AttachmentSource, edit: (changes: Parti
     // Attach file as input
     case 'file':
       edit({ label: source.name });
+      let mimeType = source.fileWithHandle.type;
+      if (!mimeType) {
+        // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
+        console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.name);
+        mimeType = 'text/plain';
+      }
       try {
         const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
         edit({
           input: {
-            mimeType: source.fileWithHandle.type,
+            mimeType,
             data: fileArrayBuffer,
             dataSize: fileArrayBuffer.byteLength,
           },
@@ -134,7 +140,7 @@ async function resolveInputAsync(source: AttachmentSource, edit: (changes: Parti
     case 'text':
       if (source.textHtml && source.textPlain) {
         edit({
-          label: 'Text+',
+          label: 'Rich Text',
           input: {
             mimeType: 'text/plain',
             data: source.textPlain,
@@ -175,5 +181,3 @@ function defineConversions(input: AttachmentInput, edit: (changes: Partial<Attac
 
   return undefined;
 }
-
-
