@@ -40,7 +40,7 @@ const fetchPageWorkerOutputSchema = z.object({
 });
 
 const fetchPagesOutputSchema = z.object({
-  objects: z.array(fetchPageWorkerOutputSchema),
+  pages: z.array(fetchPageWorkerOutputSchema),
 });
 
 
@@ -50,13 +50,13 @@ export const browseRouter = createTRPCRouter({
     .input(fetchPageInputSchema)
     .output(fetchPagesOutputSchema)
     .mutation(async ({ input: { access, subjects } }) => {
-      const results: FetchPageWorkerOutputSchema[] = [];
+      const pages: FetchPageWorkerOutputSchema[] = [];
 
       for (const subject of subjects) {
         try {
-          results.push(await workerPuppeteer(access, subject.url));
+          pages.push(await workerPuppeteer(access, subject.url));
         } catch (error: any) {
-          results.push({
+          pages.push({
             url: subject.url,
             content: '',
             error: error?.message || JSON.stringify(error) || 'Unknown fetch error',
@@ -65,7 +65,7 @@ export const browseRouter = createTRPCRouter({
         }
       }
 
-      return { objects: results };
+      return { pages };
     }),
 
 });
