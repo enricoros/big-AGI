@@ -30,13 +30,13 @@ export function BrowseSettings() {
       browse configuration guide</Link> for more information.
     </FormHelperText>
 
-    {(!isServerConfig || !!wssEndpoint) && <FormInputKey
+    <FormInputKey
       id='browse-wss' label='Puppeteer Endpoint' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
       rightLabel={!isServerConfig ? 'required' : '✔️ already set in server'}
-      required={!isServerConfig} isError={!isClientValid}
+      required={!isServerConfig} isError={!isClientValid && !isServerConfig}
       placeholder='wss://...'
-    />}
+    />
 
     <FormControl disabled={!mayWork}>
       <Checkbox variant='outlined' label='Attach URLs' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
