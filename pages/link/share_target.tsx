@@ -75,11 +75,11 @@ function AppShareTarget() {
     if (intentURL) {
       setIsDownloading(true);
       callBrowseFetchPage(intentURL)
-        .then(pageContent => {
-          if (pageContent)
-            queueComposerTextAndLaunchApp('\n\n```' + intentURL + '\n' + pageContent + '\n```\n');
+        .then(page => {
+          if (page.stopReason !== 'error')
+            queueComposerTextAndLaunchApp('\n\n```' + intentURL + '\n' + page.content + '\n```\n');
           else
-            setErrorMessage('Could not read any data');
+            setErrorMessage('Could not read any data' + page.error ? ': ' + page.error : '');
         })
         .catch(error => setErrorMessage(error?.message || error || 'Unknown error'))
         .finally(() => setIsDownloading(false));

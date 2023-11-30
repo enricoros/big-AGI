@@ -187,8 +187,8 @@ async function search(query: string): Promise<string> {
 
 async function browse(url: string): Promise<string> {
   try {
-    const data = await callBrowseFetchPage(url);
-    return JSON.stringify(data ? { text: data } : { error: 'Issue reading the page' });
+    const page = await callBrowseFetchPage(url);
+    return JSON.stringify(page.content ? { text: page.content } : { error: 'Issue reading the page' });
   } catch (error) {
     console.error('Error browsing:', (error as Error).message);
     return 'An error occurred while browsing to the URL. Missing WSS Key?';

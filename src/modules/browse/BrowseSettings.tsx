@@ -8,7 +8,6 @@ import { Link } from '~/common/components/Link';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
-import LaunchIcon from '@mui/icons-material/Launch';
 
 
 export function BrowseSettings() {
@@ -31,7 +30,7 @@ export function BrowseSettings() {
       browse configuration guide</Link> for more information.
     </FormHelperText>
 
-    {!isServerConfig && <FormInputKey
+    {(!isServerConfig || !!wssEndpoint) && <FormInputKey
       id='browse-wss' label='Puppeteer Endpoint' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
       rightLabel={!isServerConfig ? 'required' : '✔️ already set in server'}
