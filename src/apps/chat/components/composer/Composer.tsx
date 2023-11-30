@@ -24,6 +24,7 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
 import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
@@ -324,7 +325,44 @@ export function Composer(props: {
   }, [attachFromSources]);
 
   const handleAttachFromClipboard = React.useCallback(async () => {
-    for (const clipboardItem of await getClipboardItems()) {
+
+    // if there's an issue accessing the clipboard, show it passively
+    const clipboardItems = await getClipboardItems();
+    if (clipboardItems === null) {
+      addSnackbar({
+        key: 'clipboard-issue',
+        type: 'issue',
+        message: 'Clipboard empty or access denied',
+        overrides: {
+          autoHideDuration: 4000,
+        },
+      });
+      return;
+    }
+
+    // loop on all the possible attachments
+    for (const clipboardItem of clipboardItems) {
+
+      // attach as image
+      let imageAttached = false;
+      for (const mimeType of clipboardItem.types) {
+        if (mimeType.startsWith('image/')) {
+          try {
+            const imageBlob = await clipboardItem.getType(mimeType);
+            const imageFile = new File([imageBlob], 'clipboard.png', { type: mimeType });
+            attachFromSources([{
+              type: 'file',
+              fileWithHandle: imageFile,
+              name: 'clipboard.png',
+            }]);
+            imageAttached = true;
+          } catch (error) {
+            // ignore getType error..
+          }
+        }
+      }
+      if (imageAttached)
+        continue;
 
       // get the Plain text
       const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
