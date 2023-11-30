@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { connect, Page, TimeoutError } from '@cloudflare/puppeteer';
+import { BrowserContext, connect, TimeoutError } from '@cloudflare/puppeteer';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -97,13 +97,10 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
   const browser = await connect({ browserWSEndpoint });
 
   // for local testing, open an incognito context, to seaparate cookies
-  let page: Page;
-  if (isLocalBrowser) {
-    const incognitoContext = await browser.createIncognitoBrowserContext();
-    page = await incognitoContext.newPage();
-  } else {
-    page = await browser.newPage();
-  }
+  let incognitoContext: BrowserContext | null = null;
+  if (isLocalBrowser)
+    incognitoContext = await browser.createIncognitoBrowserContext();
+  const page = incognitoContext ? await incognitoContext.newPage() : await browser.newPage();
   page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
 
   // open url
@@ -163,6 +160,15 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
     await page.close();
   } catch (error: any) {
     console.error('workerPuppeteer: page.close', error);
+  }
+
+  // close the incognito context
+  if (incognitoContext) {
+    try {
+      await incognitoContext.close();
+    } catch (error: any) {
+      console.error('workerPuppeteer: incognitoContext.close', error);
+    }
   }
 
   // close the browse (important!)
