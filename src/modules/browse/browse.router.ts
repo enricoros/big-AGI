@@ -78,7 +78,8 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
-  if (!browserWSEndpoint || !(browserWSEndpoint.startsWith('wss://') || browserWSEndpoint.startsWith('ws://')))
+  const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
+  if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Invalid wss:// endpoint',
@@ -97,25 +98,29 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // for local testing, open an incognito context, to seaparate cookies
   let page: Page;
-  if (browserWSEndpoint.startsWith('ws://')) {
-    const context = await browser.createIncognitoBrowserContext();
-    page = await context.newPage();
+  if (isLocalBrowser) {
+    const incognitoContext = await browser.createIncognitoBrowserContext();
+    page = await incognitoContext.newPage();
   } else {
     page = await browser.newPage();
   }
+  page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
 
   // open url
   try {
-    page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
-    await page.goto(targetUrl);
-    result.stopReason = 'end';
+    const response = await page.goto(targetUrl);
+    const contentType = response?.headers()?.['content-type'];
+    const isWebPage = contentType?.startsWith('text/html') || contentType?.startsWith('text/plain') || false;
+    if (!isWebPage) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(`Invalid content-type: ${contentType}`);
+    } else
+      result.stopReason = 'end';
   } catch (error: any) {
-    const isExpected: boolean = error instanceof TimeoutError;
-    result.stopReason = isExpected ? 'timeout' : 'error';
-    if (!isExpected) {
+    const isTimeout: boolean = error instanceof TimeoutError;
+    result.stopReason = isTimeout ? 'timeout' : 'error';
+    if (!isTimeout)
       result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
-      console.error('workerPuppeteer: page.goto', error);
-    }
   }
 
   // transform the content of the page as text
@@ -130,7 +135,6 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
     }
   } catch (error: any) {
     result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
-    console.error('workerPuppeteer: page.evaluate', error);
   }
 
   // get a screenshot of the page
@@ -162,10 +166,12 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
   }
 
   // close the browse (important!)
-  try {
-    await browser.close();
-  } catch (error: any) {
-    console.error('workerPuppeteer: browser.close', error);
+  if (!isLocalBrowser) {
+    try {
+      await browser.close();
+    } catch (error: any) {
+      console.error('workerPuppeteer: browser.close', error);
+    }
   }
 
   return result;
