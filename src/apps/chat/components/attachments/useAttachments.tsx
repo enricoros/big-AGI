@@ -1,79 +1,36 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { Box, Sheet, Typography } from '@mui/joy';
-
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
+import { asValidURL } from '~/common/util/urlUtils';
+import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { Attachment, AttachmentDTOrigin, AttachmentFileOrigin, AttachmentId, AttachmentSource } from './attachment.types';
-import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
-import { asValidURL } from '~/common/util/urlUtils';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
-
-
-function Attachments(props: { attachments: Attachment[], setAttachments: (attachments: Attachment[]) => void }) {
-  if (!props.attachments.length) return null;
-
-  return (
-    <Box sx={{ display: 'flex', overflowX: 'auto' }}>
-      {props.attachments.map((attachment) => (
-        <Sheet invertedColors key={attachment.id} sx={{ mb: 1 }}>
-          <Typography>
-            {attachment.id} {attachment.name} {attachment.input?.mimeType} {attachment.output?.outputType}
-          </Typography>
-        </Sheet>
-      ))}
-    </Box>
-  );
-}
+import { AttachmentDTOrigin, AttachmentFileOrigin } from './attachment.types';
+import { useAttachmentsStore } from './store-attachments';
 
 
 export const useAttachments = (enableUrlAttachments: boolean) => {
 
   // state
-  const [attachments, setAttachments] = React.useState<Attachment[]>([]);
-
-  const removeAttachment = React.useCallback((id: AttachmentId) => {
-    setAttachments(currentAttachments => currentAttachments.filter(a => a.id !== id));
-  }, []);
-
-
-  // Function to process the attachment queue
-  const processAttachmentQueue = React.useCallback(() => {
-    // Process the queue here, including showing conversion modals if necessary
-
-  }, []);
-
-  // Call processQueue when the conversionQueue changes
-  React.useEffect(() => {
-    processAttachmentQueue();
-  }, [attachments, processAttachmentQueue]);
-
-
-  // Components
-  const attachmentsComponent = React.useMemo(() => {
-    return <Attachments attachments={attachments} setAttachments={setAttachments} />;
-  }, [attachments, setAttachments]);
-
-
-  const attachAppendSources = React.useCallback((sources: AttachmentSource[]) => {
-
-    sources.forEach((source, idx) => {
-      console.log('attachAppendSources', idx, source);
-    });
-
-  }, []);
+  const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
+    attachments: state.attachments,
+    clearAttachments: state.clearAttachments,
+    createAttachment: state.createAttachment,
+    removeAttachment: state.removeAttachment,
+  }), shallow);
 
 
   // Convenience functions
 
   const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) =>
-    attachAppendSources([{
+    createAttachment({
       type: 'file',
       origin,
       fileWithHandle,
       name: overrideName || fileWithHandle.name,
-    }]), [attachAppendSources]);
+    }), [createAttachment]);
 
   const attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
@@ -98,9 +55,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
     if (textPlain && enableUrlAttachments) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl && textPlainUrl.trim()) {
-        attachAppendSources([{
+        createAttachment({
           type: 'url', url: textPlainUrl.trim(), refName: textPlain,
-        }]);
+        });
         return 'as_url';
       }
     }
@@ -108,9 +65,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
     const textHtml = dataTransfer.getData('text/html') || '';
     if (attachText && (textHtml || textPlain)) {
-      attachAppendSources([{
+      createAttachment({
         type: 'text', method, textHtml, textPlain,
-      }]);
+      });
       return 'as_text';
     }
 
@@ -119,7 +76,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
     // did not attach anything from this data transfer
     return false;
-  }, [attachAppendFile, attachAppendSources, enableUrlAttachments]);
+  }, [attachAppendFile, createAttachment, enableUrlAttachments]);
 
   const attachAppendClipboardItems = React.useCallback(async () => {
 
@@ -164,9 +121,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       if (textPlain && enableUrlAttachments) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
-          attachAppendSources([{
+          createAttachment({
             type: 'url', url: textPlainUrl.trim(), refName: textPlain,
-          }]);
+          });
           continue;
         }
       }
@@ -174,59 +131,49 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       // attach as Text
       const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
       if (textHtml || textPlain) {
-        attachAppendSources([{
+        createAttachment({
           type: 'text', method: 'clipboard-read', textHtml, textPlain,
-        }]);
+        });
         continue;
       }
 
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [attachAppendFile, attachAppendSources, enableUrlAttachments]);
+  }, [attachAppendFile, createAttachment, enableUrlAttachments]);
 
 
-  const attachFromClipboard = React.useCallback(async () => {
-    const newVar = await getClipboardItems();
-    if (!newVar) return;
-    for (const clipboardItem of newVar) {
-
-      clipboardItem.types;
-
-      // when pasting html, onley process tables as markdown (e.g. from Excel), or fallback to text
-      try {
-        const htmlItem = await clipboardItem.getType('text/html');
-        const htmlString = await htmlItem.text();
-        // paste tables as markdown
-        if (htmlString.startsWith('<table')) {
-          console.log('Pasting html table as markdown', htmlString);
-          // const markdownString = htmlTableToMarkdown(htmlString);
-          // setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
-          continue;
-        }
-        // TODO: paste html to markdown (tried Turndown, but the gfm plugin is not good - need to find another lib with minimal footprint)
-      } catch (error) {
-        // ignore missing html: fallback to text/plain
-      }
-      /*
-            // find the text/plain item if any
-            try {
-              const textItem = await clipboardItem.getType('text/plain');
-              const textString = await textItem.text();
-              const textIsUrl = asValidURL(textString);
-              if (browsingInComposer) {
-                if (textIsUrl && await handleAttachWebpage(textIsUrl, textString))
-                  continue;
-              }
-              setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
-              continue;
-            } catch (error) {
-              // ignore missing text
-            }
-      */
-      // no text/html or text/plain item found
-      console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
+  // when pasting html, onley process tables as markdown (e.g. from Excel), or fallback to text
+  /*try {
+    const htmlItem = await clipboardItem.getType('text/html');
+    const htmlString = await htmlItem.text();
+    // paste tables as markdown
+    if (htmlString.startsWith('<table')) {
+      console.log('Pasting html table as markdown', htmlString);
+      // const markdownString = htmlTableToMarkdown(htmlString);
+      // setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: markdownString }));
+      continue;
     }
-  }, []);
+    // TODO: paste html to markdown (tried Turndown, but the gfm plugin is not good - need to find another lib with minimal footprint)
+  } catch (error) {
+    // ignore missing html: fallback to text/plain
+  }
+  */
+  /*
+        // find the text/plain item if any
+        try {
+          const textItem = await clipboardItem.getType('text/plain');
+          const textString = await textItem.text();
+          const textIsUrl = asValidURL(textString);
+          if (browsingInComposer) {
+            if (textIsUrl && await handleAttachWebpage(textIsUrl, textString))
+              continue;
+          }
+          setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
+          continue;
+        } catch (error) {
+          // ignore missing text
+        }
+  */
 
 
   const attachFiles = React.useCallback(async (files: { fileWithHandle: FileWithHandle, overrideName?: string }[]): Promise<void> => {
@@ -263,13 +210,12 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
     attachAppendDataTransfer,
     attachAppendFile,
 
-    // component
-    attachmentsComponent,
-
     // state
-    attachmentsReady: false,
+    attachments,
+    attachmentsReady: !attachments.length || attachments.every(a => !!a.output),
 
     // operations
-    inlineAttachments: () => null,
+    clearAttachments,
+    removeAttachment,
   };
 };

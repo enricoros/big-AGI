@@ -36,6 +36,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import { Attachments } from '../attachments/Attachments';
 import { ButtonCameraCapture } from './ButtonCameraCapture';
 import { ButtonClipboardPaste } from './ButtonClipboardPaste';
 import { ButtonFileAttach } from './ButtonFileAttach';
@@ -137,8 +138,10 @@ export function Composer(props: {
     attachAppendClipboardItems,
     attachAppendDataTransfer,
     attachAppendFile,
-    attachmentsComponent,
+    attachments,
     attachmentsReady,
+    clearAttachments,
+    removeAttachment,
   } = useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
   // derived state
@@ -374,10 +377,14 @@ export function Composer(props: {
           </Box>
 
           {/* Vertical stacked Edit box and Attachments */}
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{
+            flexGrow: 1,
+            display: 'flex', flexDirection: 'column', gap: 1,
+            overflowX: 'clip',
+          }}>
 
-            {/* Edit box + mic buttons + overlays */}
-            <Box sx={{ flexGrow: 1, position: 'relative' }}>
+            {/* Edit box + Overlays + Mic buttons */}
+            <Box sx={{ position: 'relative' }}>
 
               {/* Edit box with inner Token Progress bar */}
               <Box sx={{ position: 'relative' }}>
@@ -487,8 +494,13 @@ export function Composer(props: {
 
             </Box>
 
-            {/* Render any Attachments */}
-            {attachmentsComponent}
+            {/* Render any Attachments & menu items */}
+            <Attachments
+              attachments={attachments}
+              onAttachmentsClear={clearAttachments}
+              onAttachmentsInline={() => console.warn('TODO: inline attachments')}
+              onAttachmentRemove={removeAttachment}
+            />
 
           </Box>
 

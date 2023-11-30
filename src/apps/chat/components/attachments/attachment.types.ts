@@ -30,15 +30,15 @@ export type AttachmentSource = {
 };
 
 export type Attachment = {
-  id: AttachmentId;
-  name: string;
-  source: AttachmentSource,
-  input: {
-    data: string; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
+  readonly id: AttachmentId;
+  label: string | undefined;
+  readonly source: AttachmentSource,
+  input?: {
+    // data: string; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
     mimeType: string; // Original MIME type of the file
-    preview?: AttachmentPreview; // Preview of the input
+    // preview?: AttachmentPreview; // Preview of the input
   };
-  availableConversions: AttachmentConversion[]; // List of available conversions for this attachment
+  availableConversions?: AttachmentConversion[]; // List of available conversions for this attachment
   conversion?: AttachmentConversion; // The conversion currently being applied or last applied
   output?: {
     outputType: ConversionOutputType; // The type of the output after conversion
