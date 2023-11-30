@@ -434,7 +434,7 @@ export function AppChat() {
     {/* [confirmation] Reset Conversation */}
     {!!clearConversationId && <ConfirmationModal
       open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
-      confirmationText={'Are you sure you want to discard all the messages?'} positiveActionText={'Clear conversation'}
+      confirmationText={'Are you sure you want to discard all messages?'} positiveActionText={'Clear conversation'}
     />}
 
     {/* [confirmation] Delete All */}
