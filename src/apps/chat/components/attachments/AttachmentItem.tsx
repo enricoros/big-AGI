@@ -1,12 +1,47 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, Divider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Divider, ListItemDecorator, MenuItem, Sheet, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
 
 import type { Attachment } from './attachment.types';
+
+
+// default attachment width
+const ATTACHMENT_MIN_WIDTH = 64;
+
+
+const ellipsizeLabel = (label: string) =>
+  ellipsizeMiddle(label.replace(/https?:\/\/(?:www\.)?/, ''), 30)
+    .replace('…', '…\n…');
+
+
+/**
+ * Displayed while a source is loading
+ */
+function LoadingIndicator(props: { label: string }) {
+  return <Sheet
+    color='success' variant='soft'
+    sx={{
+      border: '1px solid',
+      borderColor: 'success.solidBg',
+      borderRadius: 'xs',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+      height: '100%',
+      minWidth: ATTACHMENT_MIN_WIDTH,
+      px: 1,
+      py: 0.5,
+    }}>
+    <CircularProgress color='success' size='sm' />
+    <Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>
+      {ellipsizeLabel(props.label)}
+    </Typography>
+  </Sheet>;
+}
 
 
 export function AttachmentItem(props: {
@@ -19,9 +54,24 @@ export function AttachmentItem(props: {
 
   // derived state
   const { attachment, onAttachmentRemove } = props;
+  const {
+    id: aId,
+    label: aLabel,
+    input: aInput,
+    availableConversions: aConversions,
+    outputs: aOutputs,
+  } = attachment;
 
-  const isLoading = attachment.sourceLoading;
-  const isError = !!attachment.sourceError;
+  console.log('AttachmentItem', attachment);
+
+  const isSourceLoading = attachment.sourceLoading;
+  const isSourceError = !!attachment.sourceError;
+  const isMissingConversions = aConversions?.length === 0;
+
+  const hasInput = !!aInput;
+  const hasOutputs = aOutputs ? aOutputs.length >= 1 : false;
+
+  const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
 
   // menu
 
@@ -35,39 +85,70 @@ export function AttachmentItem(props: {
 
   const handleRemoveAttachment = React.useCallback(() => {
     handleMenuHide();
-    onAttachmentRemove(attachment.id);
-  }, [onAttachmentRemove, attachment.id]);
+    onAttachmentRemove(aId);
+  }, [onAttachmentRemove, aId]);
 
-  const tooltip = isError ? attachment.sourceError : isLoading ? 'Loading' : null;
-  const variant = isError ? 'soft' : isLoading ? 'outlined' : 'soft';
-  const color: ColorPaletteProp = isError ? 'danger' : isLoading ? 'success' : 'neutral';
+  let tooltip: string;
+  let variant: 'soft' | 'outlined' | 'contained';
+  let color: ColorPaletteProp;
+
+  // compose tooltip
+  tooltip = `${aLabel}`;
+  if (hasInput)
+    tooltip += `\n - ${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes`;
+  if (hasOutputs)
+    tooltip += `\n\n${JSON.stringify(aOutputs)}`;
+
+  if (isSourceLoading) {
+    variant = 'soft';
+    color = 'success';
+  } else if (isSourceError) {
+    tooltip = `Issue loading the attachment: ${attachment.sourceError}\n\n${tooltip}`;
+    variant = 'soft';
+    color = 'danger';
+  } else if (isMissingConversions) {
+    tooltip = `Attachments of type '${aInput?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
+    variant = 'soft';
+    color = 'warning';
+  } else {
+    tooltip = attachment.source.type;
+    variant = 'soft';
+    color = 'neutral';
+  }
 
 
   return <Box>
 
-    <GoodTooltip title={tooltip} isError={isError}>
-      <Button
-        variant={variant} color={color} size='sm'
-        onClick={handleMenuToggle}
-        sx={{
-          borderRadius: 'xs',
-          flexDirection: 'column',
-          fontWeight: 'normal',
-          minWidth: 64,
-          px: 1, py: 0.5,
-        }}
-      >
-        {isLoading && <CircularProgress color='success' />}
+    <GoodTooltip title={tooltip} isError={isSourceError} isWarning={isMissingConversions} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
+      {isSourceLoading
+        ? <LoadingIndicator label={aLabel} />
+        : <Button
+          variant={variant} color={color} size='sm'
+          onClick={handleMenuToggle}
+          sx={{
+            borderRadius: 'xs',
+            flexDirection: 'column',
+            fontWeight: 'normal',
+            height: '100%',
+            px: 1, py: 0.5,
+          }}
+        >
+          {isSourceError
+            ? <WarningRoundedIcon sx={{ color: 'danger.solidBg', minWidth: ATTACHMENT_MIN_WIDTH }} />
+            : <Typography level='title-sm' sx={{ whiteSpace: 'break-spaces' }}>{ellipsizeLabel(aLabel)}</Typography>
+          }
 
-        {!isLoading && props.attachment.source.type}
+          {/*{props.attachment.source.type}*/}
 
-        {!isLoading && <Typography level='body-xs'>
-          {/*{props.attachment.label}*/}
-          {props.attachment.inputs.map(input => input.mimeType + ': ' + input.data.length.toLocaleString())}
-          {props.attachment.output?.outputType}
-        </Typography>}
+          {hasInput && <Typography level='body-xs'>
+            {aInput.mimeType} - {aInput.dataSize.toLocaleString()}
+          </Typography>}
 
-      </Button>
+          {hasOutputs && <Typography level='body-sm'>
+            {JSON.stringify(aOutputs)}
+          </Typography>}
+
+        </Button>}
     </GoodTooltip>
 
     {/* Item Menu */}

@@ -67,7 +67,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
     const textHtml = dataTransfer.getData('text/html') || '';
     if (attachText && (textHtml || textPlain)) {
       createAttachment({
-        type: 'text', method, textHtml, textPlain,
+        type: 'text', method, textPlain, textHtml,
       });
       return 'as_text';
     }
@@ -133,7 +133,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
       if (textHtml || textPlain) {
         createAttachment({
-          type: 'text', method: 'clipboard-read', textHtml, textPlain,
+          type: 'text', method: 'clipboard-read', textPlain, textHtml,
         });
         continue;
       }
@@ -146,7 +146,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
   return {
     // state
     attachments,
-    attachmentsReady: !attachments.length || attachments.every(attachment => !!attachment.output),
+    attachmentsReady: !attachments.length || attachments.every(attachment => !!attachment.outputs && attachment.outputs.every(output => output.isEjectable)),
 
     // create attachments
     attachAppendClipboardItems,
