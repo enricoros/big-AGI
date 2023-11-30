@@ -8,7 +8,7 @@ import { CameraCaptureModal } from './CameraCaptureModal';
 const CAMERA_ENABLE_ON_DESKTOP = false;
 
 
-export function ButtonCameraCapture(props: { isMobile: boolean, onOCR: (ocrText: string) => void }) {
+export function ButtonCameraCapture(props: { isMobile: boolean, onAttachImage: (file: File) => void }) {
   // state
   const [open, setOpen] = React.useState(false);
 
@@ -28,7 +28,7 @@ export function ButtonCameraCapture(props: { isMobile: boolean, onOCR: (ocrText:
     ) : undefined}
 
     {/* The actual capture dialog, which will stream the video */}
-    {open && <CameraCaptureModal onCloseModal={() => setOpen(false)} onOCR={props.onOCR} />}
+    {open && <CameraCaptureModal onCloseModal={() => setOpen(false)} onAttachImage={props.onAttachImage} />}
 
   </>;
 }

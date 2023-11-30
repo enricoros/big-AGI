@@ -1,6 +1,8 @@
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/joy';
 import * as React from 'react';
+
+import { Box, Button, IconButton, Stack, Tooltip } from '@mui/joy';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
+
 
 const attachFileLegend =
   <Stack sx={{ p: 1, gap: 1 }}>
@@ -32,39 +34,16 @@ const attachFileLegend =
   </Stack>;
 
 
-export function ButtonFileAttach(props: { isMobile: boolean, onAttachFiles: (files: FileList) => Promise<void> }) {
-
-  // state
-  const attachmentFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleShowFilePicker = () => attachmentFileInputRef.current?.click();
-
-  const handleLoadAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // NOTE: resetting the target value allows for the selector dialog to pop-up again
-    const files = event.target?.files;
-    if (files && files.length >= 1)
-      props.onAttachFiles(files).finally(() => event.target.value = '');
-    else
-      event.target.value = '';
-  };
-
-  return <>
-
-    {/* Mobile icon or Desktop button */}
-    {props.isMobile ? (
-      <IconButton onClick={handleShowFilePicker}>
-        <AttachFileOutlinedIcon />
-      </IconButton>
-    ) : (
-      <Tooltip variant='solid' placement='top-start' title={attachFileLegend}>
-        <Button fullWidth variant='plain' color='neutral' onClick={handleShowFilePicker} startDecorator={<AttachFileOutlinedIcon />}
-                sx={{ justifyContent: 'flex-start' }}>
-          Attach
-        </Button>
-      </Tooltip>
-    )}
-
-    <input type='file' multiple hidden ref={attachmentFileInputRef} onChange={handleLoadAttachment} />
-
-  </>;
-}
+export const ButtonFileAttach = (props: { isMobile: boolean, onAttachFilePicker: () => void }) =>
+  props.isMobile ? (
+    <IconButton onClick={props.onAttachFilePicker}>
+      <AttachFileOutlinedIcon />
+    </IconButton>
+  ) : (
+    <Tooltip variant='solid' placement='top-start' title={attachFileLegend}>
+      <Button fullWidth variant='plain' color='neutral' onClick={props.onAttachFilePicker} startDecorator={<AttachFileOutlinedIcon />}
+              sx={{ justifyContent: 'flex-start' }}>
+        Attach
+      </Button>
+    </Tooltip>
+  );
