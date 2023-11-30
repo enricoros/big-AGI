@@ -16,21 +16,22 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
   // state
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
     attachments: state.attachments,
-    clearAttachments: state.clearAttachments,
     createAttachment: state.createAttachment,
+    clearAttachments: state.clearAttachments,
     removeAttachment: state.removeAttachment,
   }), shallow);
 
 
   // Convenience functions
 
-  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) =>
+  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) => {
     createAttachment({
       type: 'file',
       origin,
       fileWithHandle,
       name: overrideName || fileWithHandle.name,
-    }), [createAttachment]);
+    });
+  }, [createAttachment]);
 
   const attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
@@ -88,7 +89,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
         type: 'issue',
         message: 'Clipboard empty or access denied',
         overrides: {
-          autoHideDuration: 4000,
+          autoHideDuration: 2000,
         },
       });
       return;
@@ -205,16 +206,16 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
 
   return {
-    // attach methods
+    // state
+    attachments,
+    attachmentsReady: !attachments.length || attachments.every(attachment => !!attachment.output),
+
+    // create attachments
     attachAppendClipboardItems,
     attachAppendDataTransfer,
     attachAppendFile,
 
-    // state
-    attachments,
-    attachmentsReady: !attachments.length || attachments.every(a => !!a.output),
-
-    // operations
+    // manage attachments
     clearAttachments,
     removeAttachment,
   };

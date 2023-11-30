@@ -11,7 +11,7 @@ export async function callBrowseFetchPage(url: string) {
   // thow if no URL is provided
   url = url?.trim() || '';
   if (!url)
-    throw new Error('Invalid URL');
+    throw new Error('Browsing error: Invalid URL');
 
   // assume https if no protocol is provided
   // noinspection HttpUrlsUsage
@@ -35,7 +35,7 @@ export async function callBrowseFetchPage(url: string) {
   if (page.error) {
     console.warn('Browsing service error:', page.error);
     if (!page.content)
-      throw new Error(`Browsing service error: ${page.error}`);
+      throw new Error(page.error);
   }
 
   return page;
