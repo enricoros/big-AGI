@@ -58,7 +58,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
   const attachAppendSources = React.useCallback((sources: AttachmentSource[]) => {
 
-    console.log('attachFromSources', sources);
+    sources.forEach((source, idx) => {
+      console.log('attachAppendSources', idx, source);
+    });
 
   }, []);
 

@@ -294,8 +294,15 @@ export function Composer(props: {
   };
 
   const handleTextareaDragEnter = (e: React.DragEvent) => {
-    eatDragEvent(e);
-    setIsDragging(true);
+    const isFromSelf = e.dataTransfer.types.includes('x-app/agi');
+    if (!isFromSelf) {
+      eatDragEvent(e);
+      setIsDragging(true);
+    }
+  };
+
+  const handleTextareaDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('x-app/agi', 'do-not-intercept');
   };
 
   const handleOverlayDragLeave = (e: React.DragEvent) => {
@@ -383,6 +390,7 @@ export function Composer(props: {
                   value={composeText}
                   onChange={(event) => setComposeText(event.target.value)}
                   onDragEnter={handleTextareaDragEnter}
+                  onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
                   slotProps={{
