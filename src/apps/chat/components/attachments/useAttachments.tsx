@@ -46,8 +46,13 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
       // attach as Files
       const overrideNames = overrideFileNames.length === dataTransfer.files.length;
-      for (let i = 0; i < dataTransfer.files.length; i++)
+      for (let i = 0; i < dataTransfer.files.length; i++) {
+        // drag/drop of folders (or .tsx from IntelliJ) will have no type
+        if (!dataTransfer.files[i].type) {
+          // NOTE: we are fixing it in resolveInputAsync, but would be better to do it here
+        }
         attachAppendFile(method, dataTransfer.files[i], overrideNames ? overrideFileNames[i] || undefined : undefined);
+      }
       return 'as_files';
     }
 
@@ -73,7 +78,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
     }
 
     if (attachText)
-      console.log(`Unhandled ${method} event: `, dataTransfer.types?.map(t => `${t}: ${dataTransfer.getData(t)}`));
+      console.warn(`Unhandled '${method}' attachment: `, dataTransfer.types?.map(t => `${t}: ${dataTransfer.getData(t)}`));
 
     // did not attach anything from this data transfer
     return false;
@@ -138,7 +143,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
         continue;
       }
 
-      console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
+      console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
   }, [attachAppendFile, createAttachment, enableUrlAttachments]);
 

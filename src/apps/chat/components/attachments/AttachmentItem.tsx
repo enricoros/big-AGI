@@ -23,8 +23,8 @@ const ellipsizeLabel = (label: string) =>
 /**
  * Displayed while a source is loading
  */
-function LoadingIndicator(props: { label: string }) {
-  return <Sheet
+const LoadingIndicator = React.forwardRef((props: { label: string }, ref) =>
+  <Sheet
     color='success' variant='soft'
     sx={{
       border: '1px solid',
@@ -35,13 +35,23 @@ function LoadingIndicator(props: { label: string }) {
       minWidth: ATTACHMENT_MIN_WIDTH,
       px: 1,
       py: 0.5,
-    }}>
+    }}
+  >
     <CircularProgress color='success' size='sm' />
     <Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>
       {ellipsizeLabel(props.label)}
     </Typography>
-  </Sheet>;
-}
+  </Sheet>,
+);
+LoadingIndicator.displayName = 'LoadingIndicator';
+
+const SourceErrorIndicator = () =>
+  <WarningRoundedIcon
+    sx={{
+      color: 'danger.solidBg',
+      minWidth: ATTACHMENT_MIN_WIDTH,
+    }}
+  />;
 
 
 export function AttachmentItem(props: {
@@ -93,9 +103,9 @@ export function AttachmentItem(props: {
   let color: ColorPaletteProp;
 
   // compose tooltip
-  tooltip = `${aLabel}`;
+  tooltip = `${props.attachment.source.type !== 'text' ? props.attachment.source.type + ': ' : ''}${aLabel}`;
   if (hasInput)
-    tooltip += `\n - ${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes`;
+    tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
   if (hasOutputs)
     tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
@@ -134,11 +144,9 @@ export function AttachmentItem(props: {
           }}
         >
           {isSourceError
-            ? <WarningRoundedIcon sx={{ color: 'danger.solidBg', minWidth: ATTACHMENT_MIN_WIDTH }} />
+            ? <SourceErrorIndicator />
             : <Typography level='title-sm' sx={{ whiteSpace: 'break-spaces' }}>{ellipsizeLabel(aLabel)}</Typography>
           }
-
-          {/*{props.attachment.source.type}*/}
 
           {hasInput && <Typography level='body-xs'>
             {aInput.mimeType} - {aInput.dataSize.toLocaleString()}
