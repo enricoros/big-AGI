@@ -1,9 +1,14 @@
 import * as React from 'react';
+import type { FileWithHandle } from 'browser-fs-access';
 
 import { Box, Sheet, Typography } from '@mui/joy';
-import { Attachment, AttachmentId, AttachmentSource } from './attachment.types';
-import { fileOpen, FileWithHandle } from 'browser-fs-access';
-import { getClipboardItems, supportsClipboardRead } from '~/common/util/clipboardUtils';
+
+import { getClipboardItems } from '~/common/util/clipboardUtils';
+
+import { Attachment, AttachmentDTOrigin, AttachmentFileOrigin, AttachmentId, AttachmentSource } from './attachment.types';
+import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
+import { asValidURL } from '~/common/util/urlUtils';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 
 
 function Attachments(props: { attachments: Attachment[], setAttachments: (attachments: Attachment[]) => void }) {
@@ -23,7 +28,7 @@ function Attachments(props: { attachments: Attachment[], setAttachments: (attach
 }
 
 
-export const useAttachments = () => {
+export const useAttachments = (enableUrlAttachments: boolean) => {
 
   // state
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
@@ -31,9 +36,6 @@ export const useAttachments = () => {
   const removeAttachment = React.useCallback((id: AttachmentId) => {
     setAttachments(currentAttachments => currentAttachments.filter(a => a.id !== id));
   }, []);
-
-
-
 
 
   // Function to process the attachment queue
@@ -54,54 +56,139 @@ export const useAttachments = () => {
   }, [attachments, setAttachments]);
 
 
-
-
-  const attachFromSources = React.useCallback((sources: AttachmentSource[]) => {
+  const attachAppendSources = React.useCallback((sources: AttachmentSource[]) => {
 
     console.log('attachFromSources', sources);
 
   }, []);
 
-  const attachFromDialog = React.useCallback(async () => {
-    try {
-      let files: FileWithHandle[] = await fileOpen({ multiple: true });
 
+  // Convenience functions
 
-      // TODO ...
-      console.log(files);
-    } catch (error) {
-      // ignore...
+  const _attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) =>
+    attachAppendSources([{
+      type: 'file',
+      origin,
+      fileWithHandle,
+      name: overrideName || fileWithHandle.name,
+    }]), [attachAppendSources]);
+
+  const _attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+
+    // attach File(s)
+    if (dataTransfer.files.length >= 1) {
+      // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
+      let overrideFileNames: string[] = [];
+      if (dataTransfer.types.includes('text/plain')) {
+        const plainText = dataTransfer.getData('text/plain');
+        overrideFileNames = extractFilePathsWithCommonRadix(plainText);
+      }
+
+      // attach as Files
+      const overrideNames = overrideFileNames.length === dataTransfer.files.length;
+      for (let i = 0; i < dataTransfer.files.length; i++)
+        _attachAppendFile(method, dataTransfer.files[i], overrideNames ? overrideFileNames[i] || undefined : undefined);
+      return 'as_files';
     }
-  }, []);
 
-  const attachFromClipboard = React.useCallback(async () => {
-    for (const clipboardItem of await getClipboardItems()) {
+    // attach as URL
+    const textPlain = dataTransfer.getData('text/plain') || '';
+    if (textPlain && enableUrlAttachments) {
+      const textPlainUrl = asValidURL(textPlain);
+      if (textPlainUrl && textPlainUrl.trim()) {
+        attachAppendSources([{
+          type: 'url', url: textPlainUrl.trim(), refName: textPlain,
+        }]);
+        return 'as_url';
+      }
+    }
 
-      clipboardItem.types
+    // attach as Text/Html (further conversion, e.g. to markdown is done later)
+    const textHtml = dataTransfer.getData('text/html') || '';
+    if (attachText && (textHtml || textPlain)) {
+      attachAppendSources([{
+        type: 'text', method, textHtml, textPlain,
+      }]);
+      return 'as_text';
+    }
 
+    if (attachText)
+      console.log(`Unhandled ${method} event: `, dataTransfer.types?.map(t => `${t}: ${dataTransfer.getData(t)}`));
 
+    // did not attach anything from this data transfer
+    return false;
+  }, [_attachAppendFile, attachAppendSources, enableUrlAttachments]);
 
-      console.log('clipboardItem', clipboardItem);
+  const _attachAppendClipboardItems = React.useCallback(async () => {
 
+    // if there's an issue accessing the clipboard, show it passively
+    const clipboardItems = await getClipboardItems();
+    if (clipboardItems === null) {
+      addSnackbar({
+        key: 'clipboard-issue',
+        type: 'issue',
+        message: 'Clipboard empty or access denied',
+        overrides: {
+          autoHideDuration: 4000,
+        },
+      });
+      return;
+    }
 
+    // loop on all the possible attachments
+    for (const clipboardItem of clipboardItems) {
 
-      /*
+      // attach as image
+      let imageAttached = false;
+      for (const mimeType of clipboardItem.types) {
+        if (mimeType.startsWith('image/')) {
+          try {
+            const imageBlob = await clipboardItem.getType(mimeType);
+            const imageFile = new File([imageBlob], 'clipboard.png', { type: mimeType });
+            _attachAppendFile('clipboard-read', imageFile, imageFile.name?.replace('image.', 'clipboard.'));
+            imageAttached = true;
+          } catch (error) {
+            // ignore getType error..
+          }
+        }
+      }
+      if (imageAttached)
+        continue;
 
+      // get the Plain text
+      const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
 
-      // when pasting images, attach them as images
-      try {
-        const imageItem = await clipboardItem.getType('image/png');
-        const imageFile = new File([imageItem], 'clipboard.png', { type: 'image/png' });
-        attachFromSource([{
-          type: 'file',
-          file: imageFile,
-          overrideName: 'clipboard.png',
+      // attach as URL
+      if (textPlain && enableUrlAttachments) {
+        const textPlainUrl = asValidURL(textPlain);
+        if (textPlainUrl && textPlainUrl.trim()) {
+          attachAppendSources([{
+            type: 'url', url: textPlainUrl.trim(), refName: textPlain,
+          }]);
+          continue;
+        }
+      }
+
+      // attach as Text
+      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
+      if (textHtml || textPlain) {
+        attachAppendSources([{
+          type: 'text', method: 'clipboard-read', textHtml, textPlain,
         }]);
         continue;
-      } catch (error) {
-        // ignore missing image/png
       }
-*/
+
+      console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
+    }
+  }, [_attachAppendFile, attachAppendSources, enableUrlAttachments]);
+
+
+  const attachFromClipboard = React.useCallback(async () => {
+    const newVar = await getClipboardItems();
+    if (!newVar) return;
+    for (const clipboardItem of newVar) {
+
+      clipboardItem.types;
 
       // when pasting html, onley process tables as markdown (e.g. from Excel), or fallback to text
       try {
@@ -118,38 +205,29 @@ export const useAttachments = () => {
       } catch (error) {
         // ignore missing html: fallback to text/plain
       }
-/*
-      // find the text/plain item if any
-      try {
-        const textItem = await clipboardItem.getType('text/plain');
-        const textString = await textItem.text();
-        const textIsUrl = asValidURL(textString);
-        if (browsingInComposer) {
-          if (textIsUrl && await handleAttachWebpage(textIsUrl, textString))
-            continue;
-        }
-        setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
-        continue;
-      } catch (error) {
-        // ignore missing text
-      }
-*/
+      /*
+            // find the text/plain item if any
+            try {
+              const textItem = await clipboardItem.getType('text/plain');
+              const textString = await textItem.text();
+              const textIsUrl = asValidURL(textString);
+              if (browsingInComposer) {
+                if (textIsUrl && await handleAttachWebpage(textIsUrl, textString))
+                  continue;
+              }
+              setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: textString }));
+              continue;
+            } catch (error) {
+              // ignore missing text
+            }
+      */
       // no text/html or text/plain item found
       console.log('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
   }, []);
 
 
-
   const attachFiles = React.useCallback(async (files: { fileWithHandle: FileWithHandle, overrideName?: string }[]): Promise<void> => {
-    for (const file of files) {
-      attachFromSources([{
-        type: 'file',
-        file: file.file,
-        overrideName: file.overrideName || file.name,
-      }]);
-    }
-
 
     // NOTE: we tried to get the common 'root prefix' of the files here, so that we could attach files with a name that's relative
     //       to the common root, but the files[].webkitRelativePath property is not providing that information
@@ -176,30 +254,15 @@ export const useAttachments = () => {
 
   }, []);
 
-  const attachURLs = React.useCallback(async (urls: { url: string, refName: string }[]) => {
-    for (const url of urls) {
-      attachFromSources([{
-        type: 'url',
-        url: url.url,
-        refName: url.refName,
-      }]);
-    }
-  }, [attachFromSources]);
-
 
   return {
     // component
-    AttachmentsList: component,
+    AttachmentsComponent: component,
 
     // attach methods
-    attachFromDialog,
-    attachFromSources,
-
-    // attachClipboard: async () => null,
-    // attachFiles, // +attachFilesDialog? (ported from the attach button)
-    // attachFilesPicker,
-    // attachImages: async () => null,
-    // attachURLs,
+    attachAppendClipboardItems: _attachAppendClipboardItems,
+    attachAppendDataTransfer: _attachAppendDataTransfer,
+    attachAppendFile: _attachAppendFile,
 
     // state
     attachmentsReady: false,
