@@ -8,10 +8,10 @@ import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, Attach
 export function createAttachment(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
   return {
     id: createBase36Uid(checkDuplicates),
-    label: 'Loading...',
     source: source,
-    sourceLoading: false,
-    sourceError: null,
+    label: 'Loading...',
+    inputLoading: false,
+    inputError: null,
     input: undefined,
     conversions: [],
     conversionIdx: null,
@@ -20,12 +20,14 @@ export function createAttachment(source: AttachmentSource, checkDuplicates: Atta
   };
 }
 
+
 const plainTextFileExtensions: string[] = ['.ts', '.tsx'];
 
-// .source -> .label, .input, .sourceError, .sourceLoading,
-export async function attachmentResolveInputAsync(source: AttachmentSource, edit: (changes: Partial<Attachment>) => void) {
+
+// Source -> Input
+export async function attachmentLoadInputAsync(source: AttachmentSource, edit: (changes: Partial<Attachment>) => void) {
   // show the loading indicator
-  edit({ sourceLoading: true });
+  edit({ inputLoading: true });
 
   switch (source.type) {
 
@@ -44,9 +46,9 @@ export async function attachmentResolveInputAsync(source: AttachmentSource, edit
             },
           });
         } else
-          edit({ sourceError: 'No content found at this link' });
+          edit({ inputError: 'No content found at this link' });
       } catch (error: any) {
-        edit({ sourceError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
+        edit({ inputError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
       break;
 
@@ -78,7 +80,7 @@ export async function attachmentResolveInputAsync(source: AttachmentSource, edit
           },
         });
       } catch (error: any) {
-        edit({ sourceError: `Issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
+        edit({ inputError: `Issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
       break;
 
@@ -109,10 +111,10 @@ export async function attachmentResolveInputAsync(source: AttachmentSource, edit
   }
 
   // sleep 1 second
-  await new Promise(resolve => setTimeout(resolve, 160));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   // done loading
-  edit({ sourceLoading: false });
+  edit({ inputLoading: false });
 }
 
 
@@ -166,6 +168,70 @@ export async function attachmentDefineConversions(
 
   edit({
     conversions,
-    conversionIdx: conversions.length ? 0 : null,
   });
+}
+
+
+// Input & Conversion -> Outputs
+export async function attachmentConvert(
+  attachment: Attachment,
+  conversionIdx: number | null,
+  edit: (changes: Partial<Attachment>) => void,
+) {
+
+  // check bounds
+  conversionIdx = (conversionIdx !== null && conversionIdx >= 0 && conversionIdx < attachment.conversions.length) ? conversionIdx : null;
+
+  // clear the current outputs too
+  edit({
+    conversionIdx,
+    outputs: undefined,
+  });
+
+  // get the conversion
+  const conversion = conversionIdx !== null ? attachment.conversions[conversionIdx] : null;
+  if (!conversion)
+    return;
+
+
+  /*
+    // use the conversion
+    const conversion = attachment.conversions[conversionIdx];
+
+    const outputs: AttachmentOutput[] = [];
+
+    switch (conversion.id) {
+      case 'text':
+
+
+
+        outputs.push({
+          type: 'text',
+          text: attachment.input!.data || '',
+          isEjectable: true,
+        })
+        break;
+
+      case 'rich-text':
+        edit({
+          outputs: {
+            html: attachment.input?.altData || attachment.input?.data,
+          },
+        });
+        break;
+
+      case 'rich-text-table':
+        edit({
+          outputs: {
+            html: attachment.input?.altData || attachment.input?.data,
+          },
+        });
+        break;
+
+      default:
+        console.warn(`Unhandled attachment conversion ${conversion.id}`);
+        break;
+    }
+  */
+
 }
