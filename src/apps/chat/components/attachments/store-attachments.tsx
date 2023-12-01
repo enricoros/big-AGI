@@ -1,11 +1,89 @@
 import { create } from 'zustand';
+import type { FileWithHandle } from 'browser-fs-access';
 
-import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import type { AttachmentConversion } from './logic/conversions';
+import { attachmentDefineConversions, attachmentResolveInputAsync, createAttachment } from './logic';
 
-import { createBase36Uid } from '~/common/util/textUtils';
 
-import { Attachment, AttachmentId, AttachmentInput, AttachmentSource } from './attachment.types';
+// Attachment Types
 
+export type AttachmentId = string;
+export type AttachmentDTOrigin = 'drop' | 'paste';
+export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
+type AttachmenTextOrigin = 'clipboard-read' | AttachmentDTOrigin;
+
+export type AttachmentSource = {
+  type: 'url';
+  url: string;
+  refName: string;
+} | {
+  type: 'file';
+  origin: AttachmentFileOrigin,
+  fileWithHandle: FileWithHandle;
+  name: string;
+} | {
+  type: 'text';
+  method: AttachmenTextOrigin;
+  textPlain?: string;
+  textHtml?: string;
+};
+
+export type AttachmentInput = {
+  mimeType: string; // Original MIME type of the file
+  data: string | ArrayBuffer; // The original data of the attachment (...string | Blob | ArrayBuffer ?)
+  dataSize: number; // Size of the original data in bytes
+  altMimeType?: string; // Alternative MIME type for the input
+  altData?: string; // Alternative data for the input
+  // preview?: AttachmentPreview; // Preview of the input
+};
+
+export type Attachment = {
+  readonly id: AttachmentId;
+  label: string;
+
+  // source: URL / File / text; content and type to be resolved later
+  readonly source: AttachmentSource,
+  sourceLoading: boolean;
+  sourceError: string | null;
+
+  // set after the source has been loaded/processe
+  input?: AttachmentInput;
+
+  // options to convert the input
+  conversions: AttachmentConversion[]; // List of available conversions for this attachment
+  conversionIdx: number | null; // Index of the selected conversion
+
+  outputs?: {
+    // outputType: ConversionOutputType; // The type of the output after conversion
+    // dataTitle: string; // outputType dependent
+    // data: string; // outputType dependent
+    // preview?: AttachmentPreview; // Preview of the output
+    isEjectable: boolean; // Whether the attachment can be inlined as text
+  }[];
+  // metadata: {
+  //   size?: number; // Size of the attachment in bytes
+  //   creationDate?: Date; // Creation date of the file
+  //   modifiedDate?: Date; // Last modified date of the file
+  //   altText?: string; // Alternative text for images for screen readers
+  // };
+};
+
+/*export type AttachmentPreview = {
+  renderer: 'noPreview',
+  title: string; // A title for the preview
+} | {
+  renderer: 'textPreview'
+  fileName: string; // The name of the file
+  snippet: string; // A text snippet for documents
+  tooltip?: string; // A tooltip for the preview
+} | {
+  renderer: 'imagePreview'
+  thumbnail: string; // A thumbnail preview for images, videos, etc.
+  tooltip?: string; // A tooltip for the preview
+};*/
+
+
+/// Store
 
 interface AttachmentsStore {
 
@@ -31,21 +109,20 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
     createAttachment: (source: AttachmentSource) => {
       const { attachments, editAttachment } = _get();
       const attachment = createAttachment(source, attachments.map(a => a.id));
+      const attachmentId = attachment.id;
 
       _set({
         attachments: [...attachments, attachment],
       });
 
-      const edit = (changes: Partial<Attachment>) => editAttachment(attachment.id, changes);
+      const edit = (changes: Partial<Attachment>) => editAttachment(attachmentId, changes);
 
-      resolveInputAsync(attachment.source, edit)
-        .then(() => {
-          const updatedAttachment = _get().getAttachment(attachment.id);
-          if (updatedAttachment?.input)
-            defineConversions(updatedAttachment.input, edit);
-          // else
-          //   edit({ sourceError: 'No content found' });
-        });
+      attachmentResolveInputAsync(attachment.source, edit).then(() => {
+        const attachment = _get().getAttachment(attachmentId);
+        if (attachment?.input)
+          attachmentDefineConversions(attachment.input, edit);
+        // no need for an 'else' case, as a loading error was set for sure
+      });
     },
 
     clearAttachments: () => _set({
@@ -68,116 +145,3 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
 
   }),
 );
-
-
-function createAttachment(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
-  return {
-    id: createBase36Uid(checkDuplicates),
-    label: 'Loading...',
-    source: source,
-    sourceLoading: false,
-    sourceError: null,
-    input: undefined,
-    availableConversions: undefined,
-    outputs: undefined,
-    // metadata: {},
-  };
-}
-
-/**
- * Source (URL, file, ..) -> Input data
- */
-async function resolveInputAsync(source: AttachmentSource, edit: (changes: Partial<Attachment>) => void) {
-  // show the loading indicator
-  edit({ sourceLoading: true });
-
-  switch (source.type) {
-
-    // Download URL (page, file, ..) and attach as input
-    case 'url':
-      edit({ label: source.refName });
-      try {
-        const page = await callBrowseFetchPage(source.url);
-        if (page.content) {
-          edit({
-            input: {
-              mimeType: 'text/plain',
-              data: page.content,
-              dataSize: page.content.length,
-              // preview...
-            },
-          });
-        } else
-          edit({ sourceError: 'No content found at this link' });
-      } catch (error: any) {
-        edit({ sourceError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
-      }
-      break;
-
-    // Attach file as input
-    case 'file':
-      edit({ label: source.name });
-      let mimeType = source.fileWithHandle.type;
-      if (!mimeType) {
-        // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
-        console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.name);
-        mimeType = 'text/plain';
-      }
-      try {
-        const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
-        edit({
-          input: {
-            mimeType,
-            data: fileArrayBuffer,
-            dataSize: fileArrayBuffer.byteLength,
-          },
-        });
-      } catch (error: any) {
-        edit({ sourceError: `Issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
-      }
-      break;
-
-    case 'text':
-      if (source.textHtml && source.textPlain) {
-        edit({
-          label: 'Rich Text',
-          input: {
-            mimeType: 'text/plain',
-            data: source.textPlain,
-            dataSize: source.textPlain!.length,
-            altMimeType: 'text/html',
-            altData: source.textHtml,
-          },
-        });
-      } else {
-        const text = source.textHtml || source.textPlain || '';
-        edit({
-          label: 'Text',
-          input: {
-            mimeType: 'text/plain',
-            data: text,
-            dataSize: text.length,
-          },
-        });
-      }
-      break;
-  }
-
-  // done loading
-  edit({ sourceLoading: false });
-}
-
-/**
- * Input data -> Conversions
- */
-function defineConversions(input: AttachmentInput, edit: (changes: Partial<Attachment>) => void) {
-
-  edit({
-    availableConversions: [],
-  });
-
-  console.log('defineConversions', input);
-  // setComposeText(expandPromptTemplate(PromptTemplates.PasteFile, { fileName, fileText: urlContent }));
-
-  return undefined;
-}

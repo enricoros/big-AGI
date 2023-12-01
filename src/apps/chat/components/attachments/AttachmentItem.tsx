@@ -8,7 +8,7 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { Attachment } from './attachment.types';
+import type { Attachment } from './store-attachments';
 
 
 // default attachment width
@@ -68,15 +68,13 @@ export function AttachmentItem(props: {
     id: aId,
     label: aLabel,
     input: aInput,
-    availableConversions: aConversions,
+    conversions: aConversions,
     outputs: aOutputs,
   } = attachment;
 
-  console.log('AttachmentItem', attachment);
-
   const isSourceLoading = attachment.sourceLoading;
   const isSourceError = !!attachment.sourceError;
-  const isMissingConversions = aConversions?.length === 0;
+  const isUnsupported = aConversions.length === 0;
 
   const hasInput = !!aInput;
   const hasOutputs = aOutputs ? aOutputs.length >= 1 : false;
@@ -116,7 +114,7 @@ export function AttachmentItem(props: {
     tooltip = `Issue loading the attachment: ${attachment.sourceError}\n\n${tooltip}`;
     variant = 'soft';
     color = 'danger';
-  } else if (isMissingConversions) {
+  } else if (isUnsupported) {
     tooltip = `Attachments of type '${aInput?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
     variant = 'soft';
     color = 'warning';
@@ -129,7 +127,7 @@ export function AttachmentItem(props: {
 
   return <Box>
 
-    <GoodTooltip title={tooltip} isError={isSourceError} isWarning={isMissingConversions} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
+    <GoodTooltip title={tooltip} isError={isSourceError} isWarning={isUnsupported} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
       {isSourceLoading
         ? <LoadingIndicator label={aLabel} />
         : <Button
