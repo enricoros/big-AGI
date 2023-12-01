@@ -70,6 +70,9 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
           mimeType = 'text/plain';
       }
 
+      // UX: just a hint of a loading state
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       try {
         const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
         edit({
@@ -109,9 +112,6 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
       }
       break;
   }
-
-  // UX: just a hint of a loading state
-  await new Promise(resolve => setTimeout(resolve, 100));
 
   edit({ inputLoading: false });
 }
