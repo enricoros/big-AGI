@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
+import { FormControl, Input } from '@mui/joy';
 
-import { settingsCol1Width } from '~/common/theme';
+import { FormLabelStart } from './FormLabelStart';
 
 
 /**
@@ -15,14 +15,7 @@ export function FormTextField(props: {
 }) {
   return (
     <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          {props.title}
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          {props.description}
-        </FormHelperText>
-      </Box>
+      <FormLabelStart title={props.title} description={props.description} />
       <Input
         variant='outlined' placeholder={props.placeholder} error={props.isError}
         value={props.value} onChange={event => props.onChange(event.target.value)}

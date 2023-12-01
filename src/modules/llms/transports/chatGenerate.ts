@@ -1,5 +1,5 @@
-import type { OpenAI } from './server/openai.wiretypes';
-import { DLLMId } from '../store-llms';
+import type { DLLMId } from '../store-llms';
+import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
 
@@ -9,7 +9,7 @@ export interface VChatMessageIn {
   //name?: string; // when role: 'function'
 }
 
-export type VChatFunctionIn = OpenAI.Wire.ChatCompletion.RequestFunctionDef;
+export type VChatFunctionIn = OpenAIWire.ChatCompletion.RequestFunctionDef;
 
 export interface VChatMessageOut {
   role: 'assistant' | 'system' | 'user';

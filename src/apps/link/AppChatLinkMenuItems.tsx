@@ -5,6 +5,8 @@ import { MenuItem, Switch, Typography } from '@mui/joy';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { useChatShowSystemMessages } from '../chat/store-app-chat';
+
 
 /**
  * Menu Items are the settings for the chat.
@@ -12,12 +14,11 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 export function AppChatLinkMenuItems() {
 
   // external state
+  const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const {
-    showSystemMessages, setShowSystemMessages,
     renderMarkdown, setRenderMarkdown,
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
-    showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);

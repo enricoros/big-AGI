@@ -4,9 +4,9 @@ import { Button, SvgIcon, Tooltip } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 // import GitHubIcon from '@mui/icons-material/GitHub';
 
-// import { Brand } from '../brand';
+// import { Brand } from '..//common/app.brand';
 import { Link } from '../components/Link';
-import { cssRainbowColorKeyframes } from '../theme';
+import { cssRainbowColorKeyframes } from '../app.theme';
 
 
 // missing from MUI, using Tabler for Discord

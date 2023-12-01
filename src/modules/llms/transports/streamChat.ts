@@ -3,8 +3,8 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { DLLM, DLLMId } from '../store-llms';
 import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
 
-import type { ChatStreamInputSchema } from './server/openai.streaming';
-import type { OpenAI } from './server/openai.wiretypes';
+import type { ChatStreamFirstPacketSchema, ChatStreamInputSchema } from './server/openai/openai.streaming';
+import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { VChatMessageIn } from './chatGenerate';
 
 
@@ -46,7 +46,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
     const useModeration = access.moderationCheck && lastMessage && lastMessage.role === 'user';
     if (useModeration) {
       try {
-        const moderationResult: OpenAI.Wire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({
+        const moderationResult: OpenAIWire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({
           access, text: lastMessage.content,
         });
         const issues = moderationResult.results.reduce((acc, result) => {
@@ -81,7 +81,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llm.options as any) || {};
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
-    throw new Error(`Error in configuration for model ${llm.id}: ${llm.options}`);
+    throw new Error(`Error in configuration for model ${llm.id}: ${JSON.stringify(llm.options)}`);
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate
   const input: ChatStreamInputSchema = {
@@ -131,7 +131,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       incrementalText = incrementalText.substring(endOfJson + 1);
       parsedFirstPacket = true;
       try {
-        const parsed: OpenAI.API.Chat.StreamingFirstResponse = JSON.parse(json);
+        const parsed: ChatStreamFirstPacketSchema = JSON.parse(json);
         onUpdate({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore

@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Badge, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -10,61 +9,67 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
-import { setLayoutMenuAnchor } from '~/common/layout/store-applayout';
-import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
+import type { DConversationId } from '~/common/state/store-chats';
+import { KeyStroke } from '~/common/components/KeyStroke';
+import { closeLayoutMenu } from '~/common/layout/store-applayout';
+import { useUICounter } from '~/common/state/store-ui';
+
+import { useChatShowSystemMessages } from '../../store-app-chat';
 
 
 export function ChatMenuItems(props: {
-  conversationId: string | null, isConversationEmpty: boolean, hasConversations: boolean,
-  isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-  onClearConversation: (conversationId: string) => void,
-  onDuplicateConversation: (conversationId: string) => void,
-  onExportConversation: (conversationId: string | null) => void,
-  onFlattenConversation: (conversationId: string) => void,
+  conversationId: DConversationId | null,
+  hasConversations: boolean,
+  isConversationEmpty: boolean,
+  isMessageSelectionMode: boolean,
+  setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
+  onConversationClear: (conversationId: DConversationId) => void,
+  onConversationExport: (conversationId: DConversationId | null) => void,
+  onConversationFlatten: (conversationId: DConversationId) => void,
 }) {
 
   // external state
-  const { novel: shareBadge, touch: shareTouch } = useUICounter('export-share');
-  const { showSystemMessages, setShowSystemMessages } = useUIPreferencesStore(state => ({
-    showSystemMessages: state.showSystemMessages, setShowSystemMessages: state.setShowSystemMessages,
-  }), shallow);
+  const { touch: shareTouch } = useUICounter('export-share');
+  const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
 
-  const closeContextMenu = () => setLayoutMenuAnchor(null);
 
-  const handleSystemMessagesToggle = () => setShowSystemMessages(!showSystemMessages);
+  const closeMenu = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeLayoutMenu();
+  };
 
-  const handleConversationExport = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    closeContextMenu();
-    props.onExportConversation(!disabled ? props.conversationId : null);
+  const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.conversationId && props.onConversationClear(props.conversationId);
+  };
+
+  const handleConversationBranch = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.conversationId && props.onConversationBranch(props.conversationId, null);
+  };
+
+  const handleConversationExport = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.onConversationExport(!disabled ? props.conversationId : null);
     shareTouch();
   };
 
-  const handleConversationDuplicate = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    closeContextMenu();
-    props.conversationId && props.onDuplicateConversation(props.conversationId);
+  const handleConversationFlatten = (event: React.MouseEvent<HTMLDivElement>) => {
+    closeMenu(event);
+    props.conversationId && props.onConversationFlatten(props.conversationId);
   };
 
-  const handleConversationFlatten = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    closeContextMenu();
-    props.conversationId && props.onFlattenConversation(props.conversationId);
-  };
-
-  const handleToggleMessageSelectionMode = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    closeContextMenu();
+  const handleToggleMessageSelectionMode = (event: React.MouseEvent) => {
+    closeMenu(event);
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
-  const handleConversationClear = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    props.conversationId && props.onClearConversation(props.conversationId);
-  };
+  const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
+
 
   return <>
 
@@ -74,29 +79,21 @@ export function ChatMenuItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem onClick={handleSystemMessagesToggle}>
+    <MenuItem onClick={handleToggleSystemMessages}>
       <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
       System message
-      <Switch checked={showSystemMessages} onChange={handleSystemMessagesToggle} sx={{ ml: 'auto' }} />
+      <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
     </MenuItem>
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled} onClick={handleConversationDuplicate}>
-      <ListItemDecorator>
-        {/*<Badge size='sm' color='success'>*/}
-        <ForkRightIcon color='success' />
-        {/*</Badge>*/}
-      </ListItemDecorator>
-      Duplicate
+    <MenuItem disabled={disabled} onClick={handleConversationBranch}>
+      <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
+      Branch
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
-      <ListItemDecorator>
-        {/*<Badge size='sm' color='success'>*/}
-        <CompressIcon color='success' />
-        {/*</Badge>*/}
-      </ListItemDecorator>
+      <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
       Flatten
     </MenuItem>
 
@@ -111,16 +108,17 @@ export function ChatMenuItems(props: {
 
     <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
       <ListItemDecorator>
-        <Badge color='danger' invisible={!shareBadge || !props.hasConversations}>
-          <FileDownloadIcon />
-        </Badge>
+        <FileDownloadIcon />
       </ListItemDecorator>
       Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      Reset
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        Reset
+        {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
+      </Box>
     </MenuItem>
 
   </>;

@@ -1,42 +1,56 @@
-# Test
-FROM node:18-alpine as test-target
-ENV NODE_ENV=development
-ENV PATH $PATH:/usr/src/app/node_modules/.bin
+# Base
+FROM node:18-alpine AS base
+ENV NEXT_TELEMETRY_DISABLED 1
 
-WORKDIR /usr/src/app
+# Dependencies
+FROM base AS deps
+WORKDIR /app
 
-COPY package*.json prisma/ ./
+# Dependency files
+COPY package*.json ./
+COPY prisma ./prisma
 
-# CI and release builds should use npm ci to fully respect the lockfile.
-# Local development may use npm install for opportunistic package updates.
-ARG npm_install_command=ci
-RUN npm $npm_install_command
+# Install dependencies, including dev (release builds should use npm ci)
+ENV NODE_ENV development
+RUN npm ci
 
+# Builder
+FROM base AS builder
+WORKDIR /app
+
+# Copy development deps and source
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build
-FROM test-target as build-target
-ENV NODE_ENV=production
-
-# Use build tools, installed as development packages, to produce a release build.
+# Build the application
+ENV NODE_ENV production
 RUN npm run build
 
-# Reduce installed packages to production-only.
+# Reduce installed packages to production-only
 RUN npm prune --production
 
-# Archive
-FROM node:18-alpine as archive-target
-ENV NODE_ENV=production
-ENV PATH $PATH:/usr/src/app/node_modules/.bin
+# Runner
+FROM base AS runner
+WORKDIR /app
 
-WORKDIR /usr/src/app
+# As user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Include only the release build and production packages.
-COPY --from=build-target /usr/src/app/node_modules node_modules
-COPY --from=build-target /usr/src/app/.next .next
-COPY --from=build-target /usr/src/app/public public
+# Copy Built app
+COPY --from=builder --chown=nextjs:nodejs /app/public public
+COPY --from=builder --chown=nextjs:nodejs /app/.next .next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules node_modules
+
+# Minimal ENV for production
+ENV NODE_ENV production
+ENV PATH $PATH:/app/node_modules/.bin
+
+# Run as non-root user
+USER nextjs
 
 # Expose port 3000 for the application to listen on
 EXPOSE 3000
 
+# Start the application
 CMD ["next", "start"]

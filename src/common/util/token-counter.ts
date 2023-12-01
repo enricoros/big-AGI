@@ -27,7 +27,14 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
         tokenEncoders[openaiModel] = get_encoding('cl100k_base');
       }
     }
-    const count = tokenEncoders[openaiModel]?.encode(text)?.length || 0;
+    let count: number = 0;
+    // Note: the try/catch shouldn't be necessary, but there could be corner cases where the tiktoken library throws
+    // https://github.com/enricoros/big-agi/issues/182
+    try {
+      count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
+    } catch (e) {
+      console.error(`countModelTokens: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
+    }
     if (DEBUG_TOKEN_COUNT)
       console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
     return count;

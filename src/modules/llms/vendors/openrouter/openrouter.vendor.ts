@@ -1,7 +1,9 @@
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { OpenRouterIcon } from '~/common/components/icons/OpenRouterIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai.router';
+import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';
@@ -36,7 +38,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptio
   rank: 12,
   location: 'cloud',
   instanceLimit: 1,
-  hasServerKey: !!process.env.HAS_SERVER_KEY_OPENROUTER,
+  hasBackendCap: () => backendCaps().hasLlmOpenRouter,
 
   // components
   Icon: OpenRouterIcon,

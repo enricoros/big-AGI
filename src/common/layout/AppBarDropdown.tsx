@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Divider, ListDivider, ListItemDecorator, Option, Select } from '@mui/joy';
+import { Box, Divider, ListDivider, listItemButtonClasses, ListItemDecorator, Option, optionClasses, Select } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -26,7 +26,7 @@ export function AppBarDropdown<TValue extends string>(props: {
   sx?: SxProps
 }) {
   return <Select
-    variant='solid' color='neutral'
+    variant='plain'
     value={props.value} onChange={props.onChange}
     placeholder={props.placeholder}
     indicator={<KeyboardArrowDownIcon />}
@@ -39,18 +39,25 @@ export function AppBarDropdown<TValue extends string>(props: {
       },
       indicator: {
         sx: {
-          '--Icon-color': 'rgba(255,255,255, 0.5)',
+          color: 'rgba(255,255,255, 0.5)',
         },
       },
       listbox: {
-        variant: 'outlined', color: 'neutral',
-        disablePortal: false,
+        variant: 'outlined',
         sx: {
+          // these 3 are copied from JoyMenuList.root - to simulate the same appearance
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
           '--ListItem-minHeight': '3rem',
           '--ListItemDecorator-size': (props.showSymbols && !props.appendOption) ? '2.2rem' : '2.75rem',
+          // do not exceed the height of the screen (minus top bar) with any listbox menu
           maxHeight: 'calc(100dvh - 56px)',
           maxWidth: '90dvw',
+          [`& .${optionClasses.root}`]: {
+            minWidth: 160,
+          },
+          [`& .${listItemButtonClasses.root}`]: {
+            minWidth: 160,
+          },
         },
       },
     }}
@@ -67,8 +74,8 @@ export function AppBarDropdown<TValue extends string>(props: {
       {Object.keys(props.items).map((key: string, idx: number) => <React.Fragment key={'key-' + idx}>
         {props.items[key].type === 'separator'
           ? <ListDivider />
-          : <Option variant='plain' value={key} sx={{ whiteSpace: 'nowrap' }}>
-            {props.showSymbols && <ListItemDecorator>{props.items[key]?.symbol + ' '}</ListItemDecorator>}
+          : <Option value={key} sx={{ whiteSpace: 'nowrap' }}>
+            {props.showSymbols && <ListItemDecorator sx={{ fontSize: 'xl' }}>{props.items[key]?.symbol + ' '}</ListItemDecorator>}
             {props.items[key].title}
             {/*{key === props.value && (*/}
             {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}

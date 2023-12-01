@@ -16,6 +16,7 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   description: string;
   tags: string[]; // UNUSED for now
   contextTokens: number;
+  maxOutputTokens: number;
   hidden: boolean;
 
   // llm -> source
@@ -30,6 +31,7 @@ export type DLLMId = string;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
+export const LLM_IF_OAI_Vision = 'oai-vision';
 export const LLM_IF_OAI_Fn = 'oai-fn';
 export const LLM_IF_OAI_Complete = 'oai-complete';
 
@@ -62,7 +64,7 @@ interface ModelsData {
 }
 
 interface ModelsActions {
-  addLLMs: (llms: DLLM[]) => void;
+  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
@@ -76,7 +78,9 @@ interface ModelsActions {
   setFuncLLMId: (id: DLLMId | null) => void;
 }
 
-export const useModelsStore = create<ModelsData & ModelsActions>()(
+type LlmsStore = ModelsData & ModelsActions;
+
+export const useModelsStore = create<LlmsStore>()(
   persist(
     (set) => ({
 
@@ -96,10 +100,15 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
         set(state => updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, id)),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
-      // this will replace existing llms with the same id
-      addLLMs: (llms: DLLM[]) =>
+      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) =>
         set(state => {
-          const newLlms = [...llms, ...state.llms.filter(llm => !llms.find(m => m.id === llm.id))];
+
+          const otherLlms = preserveExpired === true
+            ? state.llms
+            : state.llms.filter(llm => llm.sId !== sourceId);
+
+          // replace existing llms with the same id
+          const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
           return {
             llms: newLlms,
             ...updateSelectedIds(newLlms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
@@ -164,6 +173,21 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
     {
       name: 'app-models',
 
+      /* versioning:
+       *  1: adds maxOutputTokens (default to half of contextTokens)
+       */
+      version: 1,
+      migrate: (state: any, fromVersion: number): LlmsStore => {
+
+        // 0 -> 1: add 'maxOutputTokens' where missing,
+        if (state && fromVersion === 0)
+          for (const llm of state.llms)
+            if (!llm.maxOutputTokens)
+              llm.maxOutputTokens = Math.round((llm.contextTokens || 4096) / 2);
+
+        return state;
+      },
+
       // Pre-saving: omit the memory references from the persisted state
       partialize: (state) => ({
         ...state,
@@ -187,9 +211,9 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
 );
 
 
-const defaultChatSuffixPreference = ['gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
-const defaultFastSuffixPreference = ['gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
-const defaultFuncSuffixPreference = ['gpt-3.5-turbo-0613', 'gpt-4-0613'];
+const defaultChatSuffixPreference = ['gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
+const defaultFastSuffixPreference = ['gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
+const defaultFuncSuffixPreference = ['gpt-4-1106-preview', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-4-0613'];
 
 export function findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId: DLLMId): DLLM<TSourceSetup, TLLMOptions> {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);

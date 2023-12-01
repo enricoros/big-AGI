@@ -3,7 +3,7 @@
 This document provides an explanation of the environment variables used in the big-AGI application.
 
 **All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
-which take place over _defaults_. This file is kept in sync with [`../src/common/types/env.d.ts`](../src/common/types/env.d.ts).
+which take place over _defaults_. This file is kept in sync with [`../src/server/env.mjs`](../src/server/env.mjs).
 
 ### Setting Environment Variables
 
@@ -28,6 +28,7 @@ AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_API_HOST=
+OLLAMA_API_HOST=
 OPENROUTER_API_KEY=
 
 # Model Observability: Helicone
@@ -37,11 +38,13 @@ HELICONE_API_KEY=
 ELEVENLABS_API_KEY=
 ELEVENLABS_API_HOST=
 ELEVENLABS_VOICE_ID=
+# Text-To-Image
+PRODIA_API_KEY=
 # Google Custom Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
-# Text-To-Image
-PRODIA_API_KEY=
+# Browse
+PUPPETEER_WSS_ENDPOINT=
 ```
 
 ## Variables Documentation
@@ -73,6 +76,7 @@ requiring the user to enter an API key
 | `AZURE_OPENAI_API_KEY`      | Azure OpenAI API key, see [config-azure-openai.md](config-azure-openai.md)                                                    | Optional, but if set `AZURE_OPENAI_API_ENDPOINT` must also be set |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                                     | Optional                                                          |
 | `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as [config-aws-bedrock.md](config-aws-bedrock.md) | Optional                                                          |
+| `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-ollama.md](config-ollama.md)                                      |                                                                   |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                                    | Optional                                                          |
 
 ### Model Observability: Helicone
@@ -102,6 +106,8 @@ Enable the app to Talk, Draw, and Google things up.
 | `GOOGLE_CSE_ID`          | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
 | **Text-To-Image**        | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
 | `PRODIA_API_KEY`         | Prodia API Key - used with '/imagine ...'                                                                               |
+| **Browse**               |                                                                                                                         |
+| `PUPPETEER_WSS_ENDPOINT` | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
 
 ---
 

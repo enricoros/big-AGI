@@ -3,35 +3,48 @@
 Utilize Docker containers to deploy the big-AGI application for an efficient and automated deployment process.
 Docker ensures faster development cycles, easier collaboration, and seamless environment management.
 
-## 🔧 Local Build & Deployment
+## Build and run your container 🔧
 
 1. **Clone big-AGI**
-2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile. The command is typically `docker build -t big-agi .`
-3. **Run the Docker Container**: Start a Docker container using the built image with the command `docker run -d -p 3000:3000 big-agi`
-
-> Note: If the Docker container is built without setting environment variables,
-> the frontend UI will be unaware of them, despite the backend being able to use them at runtime.
-> Therefore, ensure all necessary environment variables are set during the build process.
+   ```bash
+   git clone https://github.com/enricoros/big-agi.git
+   cd big-agi
+   ``` 
+2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile:
+   ```bash
+   docker build -t big-agi .
+   ```
+3. **Run the Docker Container**: start a Docker container from the newly built image,
+   and expose its http port 3000 to your `localhost:3000` using:
+   ```bash
+   docker run -d -p 3000:3000 big-agi
+   ```
+4. Browse to [http://localhost:3000](http://localhost:3000)
 
 ## Documentation
 
 The big-AGI repository includes a Dockerfile and a GitHub Actions workflow for building and publishing a
 Docker image of the application.
 
-### Dockerfile: Containers
+### Dockerfile
 
-> A local build is recommended, as the 'ghcr' container is built without environment variables.
-
-The [`Dockerfile`](../Dockerfile) is used to create a Docker image. It establishes a Node.js environment,
+The [`Dockerfile`](../Dockerfile) describes how to create a Docker image. It establishes a Node.js environment,
 installs dependencies, and creates a production-ready version of the application as a local container.
 
-### GitHub Actions workflow
+### Official container images
 
 The [`.github/workflows/docker-image.yml`](../.github/workflows/docker-image.yml) file automates the
 building and publishing of the Docker images to the GitHub Container Registry (ghcr) when changes are
 pushed to the `main` branch.
 
-### Docker Compose
+Official pre-built containers: [ghcr.io/enricoros/big-agi](https://github.com/enricoros/big-agi/pkgs/container/big-agi)
+
+Run official pre-built containers:
+```bash
+docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi
+```
+
+### Run official containers
 
 In addition, the repository also includes a `docker-compose.yaml` file, configured to run the pre-built
 'ghcr image'. This file is used to define the `big-agi` service, the ports to expose, and the command to run.

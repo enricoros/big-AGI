@@ -4,10 +4,11 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 
 const inputSchema = z.object({
-  videoId: z.string().nonempty(),
+  videoId: z.string().min(1),
 });
 
 const youtubeTranscriptionSchema = z.object({
@@ -37,43 +38,36 @@ export const ytPersonaRouter = createTRPCRouter({
     .input(inputSchema)
     .query(async ({ input }) => {
       const { videoId } = input;
-      try {
 
-        // 1. find the cpations URL within the video HTML page
-        const data = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-        const html = await data.text();
-        const captionsUrlEnc = extractFromTo(html, 'https://www.youtube.com/api/timedtext', '"', 'Captions URL');
-        const captionsUrl = decodeURIComponent(captionsUrlEnc.replaceAll('\\u0026', '&'));
-        const thumbnailUrl = extractFromTo(html, 'https://i.ytimg.com/vi/', '"', 'Thumbnail URL').replaceAll('maxres', 'hq');
-        const videoTitle = extractFromTo(html, '<title>', '</title>', 'Video Title').slice(7).replaceAll(' - YouTube', '').trim();
+      // 1. find the cpations URL within the video HTML page
+      const html = await fetchTextOrTRPCError(`https://www.youtube.com/watch?v=${videoId}`, 'GET', {}, undefined, 'YouTube Transcript');
 
-        // 2. fetch the captions
-        // note: the desktop player appends this much: &fmt=json3&xorb=2&xobt=3&xovt=3&cbr=Chrome&cbrver=114.0.0.0&c=WEB&cver=2.20230628.07.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP
-        const captionsData = await fetch(captionsUrl + `&fmt=json3`);
-        const captions = await captionsData.json();
-        const safeData = youtubeTranscriptionSchema.safeParse(captions);
-        if (!safeData.success) {
-          console.error(safeData.error);
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '[YouTube API Issue] Could not parse the captions' });
-        }
+      const captionsUrlEnc = extractFromTo(html, 'https://www.youtube.com/api/timedtext', '"', 'Captions URL');
+      const captionsUrl = decodeURIComponent(captionsUrlEnc.replaceAll('\\u0026', '&'));
+      const thumbnailUrl = extractFromTo(html, 'https://i.ytimg.com/vi/', '"', 'Thumbnail URL').replaceAll('maxres', 'hq');
+      const videoTitle = extractFromTo(html, '<title>', '</title>', 'Video Title').slice(7).replaceAll(' - YouTube', '').trim();
 
-        // 3. flatten to text
-        const transcript = safeData.data.events
-          .flatMap(event => event.segs ?? [])
-          .map(seg => seg.utf8)
-          .join('');
-
-        return {
-          videoId,
-          videoTitle,
-          thumbnailUrl,
-          transcript,
-        };
-
-      } catch (error: any) {
-        throw error instanceof TRPCError ? error
-          : new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[YouTube Transcript Issue] Error: ${error?.message || error?.toString() || 'unknown'}` });
+      // 2. fetch the captions
+      // note: the desktop player appends this much: &fmt=json3&xorb=2&xobt=3&xovt=3&cbr=Chrome&cbrver=114.0.0.0&c=WEB&cver=2.20230628.07.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP
+      const captions = await fetchJsonOrTRPCError(captionsUrl + `&fmt=json3`, 'GET', {}, undefined, 'YouTube Captions');
+      const safeData = youtubeTranscriptionSchema.safeParse(captions);
+      if (!safeData.success) {
+        console.error(safeData.error);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '[YouTube API Issue] Could not parse the captions' });
       }
+
+      // 3. flatten to text
+      const transcript = safeData.data.events
+        .flatMap(event => event.segs ?? [])
+        .map(seg => seg.utf8)
+        .join('');
+
+      return {
+        videoId,
+        videoTitle,
+        thumbnailUrl,
+        transcript,
+      };
     }),
 
 });

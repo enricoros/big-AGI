@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Chip, IconButton, List, ListItem, ListItemButton, Tooltip, Typography } from '@mui/joy';
+import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
@@ -9,29 +9,36 @@ import { DLLM, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms'
 import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
-import { useUIStateStore } from '~/common/state/store-ui';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { openLayoutLLMOptions } from '~/common/layout/store-applayout';
 
 
 function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, chipFast: boolean, chipFunc: boolean }) {
 
-  // external state
-  const openLLMOptions = useUIStateStore(state => state.openLLMOptions);
-
   // derived
   const llm = props.llm;
   const label = llm.label;
-  const tooltip = `${llm._source.label}${llm.description ? ' - ' + llm.description : ''} - ${llm.contextTokens?.toLocaleString() || 'unknown tokens size'}`;
+  let tooltip = llm._source.label;
+  if (llm.description)
+    tooltip += ' - ' + llm.description;
+  tooltip += ' - ';
+  if (llm.contextTokens) {
+    tooltip += llm.contextTokens.toLocaleString() + ' tokens';
+    // if (llm.maxOutputTokens)
+    //   tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max';
+  } else
+    tooltip += 'unknown tokens size';
 
   return (
     <ListItem>
-      <ListItemButton onClick={() => openLLMOptions(llm.id)} sx={{ alignItems: 'center', gap: 1 }}>
+      <ListItemButton onClick={() => openLayoutLLMOptions(llm.id)} sx={{ alignItems: 'center', gap: 1 }}>
 
         {/* Model Name */}
-        <Tooltip title={tooltip}>
+        <GoodTooltip title={tooltip}>
           <Typography sx={llm.hidden ? { color: 'neutral.plainDisabledColor' } : undefined}>
             {label}
           </Typography>
-        </Tooltip>
+        </GoodTooltip>
 
         {/* --> */}
         <Box sx={{ flex: 1 }} />
