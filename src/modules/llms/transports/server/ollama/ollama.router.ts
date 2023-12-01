@@ -11,7 +11,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
 
-import { OLLAMA_BASE_MODELS } from './ollama.models';
+import { OLLAMA_BASE_MODELS, OLLAMA_LAST_UPDATE } from './ollama.models';
 import { wireOllamaGenerationSchema } from './ollama.wiretypes';
 
 
@@ -104,6 +104,7 @@ const listPullableOutputSchema = z.object({
     label: z.string(),
     tag: z.string(),
     description: z.string(),
+    isNew: z.boolean(),
   })),
 });
 
@@ -116,11 +117,12 @@ export const llmOllamaRouter = createTRPCRouter({
     .output(listPullableOutputSchema)
     .query(async ({}) => {
       return {
-        pullable: Object.entries(OLLAMA_BASE_MODELS).map(([model, description]) => ({
-          id: model,
-          label: capitalizeFirstLetter(model),
+        pullable: Object.entries(OLLAMA_BASE_MODELS).map(([model_id, model]) => ({
+          id: model_id,
+          label: capitalizeFirstLetter(model_id),
           tag: 'latest',
-          description,
+          description: model.description,
+          isNew: !!model.added && model.added >= OLLAMA_LAST_UPDATE,
         })),
       };
     }),
@@ -196,7 +198,7 @@ export const llmOllamaRouter = createTRPCRouter({
 
           // pretty label and description
           const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` · ${modelTag}` : '');
-          const description = OLLAMA_BASE_MODELS[modelName] ?? 'Model unknown';
+          const description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
 
           // console.log('>>> ollama model', model.name, model.template, model.modelfile, '\n');
 

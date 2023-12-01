@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { Box, Button, Chip, FormControl, Input, Option, Select, Stack, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
@@ -52,7 +52,9 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
             <FormLabelStart title='Name' />
             <Select value={modelName || ''} onChange={(_event: any, value: string | null) => setModelName(value)}>
               {pullable?.pullable.map(p =>
-                <Option key={p.id} value={p.id}>{p.id}</Option>,
+                <Option key={p.id} value={p.id}>
+                  {p.isNew === true && <Chip size='sm' variant='outlined'>New</Chip>} {p.label}
+                </Option>,
               )}
             </Select>
           </FormControl>
@@ -103,6 +105,12 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
           </Box>
 
         </Box>
+
+        {/* Warnings */}
+        {isPulling && <Typography color='warning' level='body-sm'>
+          Pulling maybe slow and TIME OUT as the operation will download many GBs from the internet. In case of a
+          timeout, the server is still downloading the model. Check back again later and the model should be available.
+        </Typography>}
 
       </Stack>
 
