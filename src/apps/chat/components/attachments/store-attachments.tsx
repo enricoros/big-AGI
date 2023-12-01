@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { attachmentDefineConversions, attachmentResolveInputAsync, createAttachment } from './logic';
+import { attachmentConvert, attachmentDefineConversions, attachmentLoadInputAsync, createAttachment } from './logic';
 
 
 // Attachment Types
@@ -9,7 +9,6 @@ import { attachmentDefineConversions, attachmentResolveInputAsync, createAttachm
 export type AttachmentId = string;
 export type AttachmentDTOrigin = 'drop' | 'paste';
 export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
-type AttachmenTextOrigin = 'clipboard-read' | AttachmentDTOrigin;
 
 export type AttachmentSource = {
   type: 'url';
@@ -22,7 +21,7 @@ export type AttachmentSource = {
   name: string;
 } | {
   type: 'text';
-  method: AttachmenTextOrigin;
+  method: 'clipboard-read' | AttachmentDTOrigin;
   textPlain?: string;
   textHtml?: string;
 };
@@ -39,8 +38,6 @@ export type AttachmentInput = {
 export type AttachmentConversion = {
   id: 'text' | 'rich-text' | 'rich-text-table',
   name: string;
-
-
   // cname: ConversionName; // The type of conversion
   // outputType: ConversionOutputType; // The type of the output after conversion
   // status: 'pending' | 'converting' | 'completed' | 'failed'; // The status of the conversion
@@ -50,29 +47,35 @@ export type AttachmentConversion = {
   // errorMessage?: string; // Error message if the conversion failed
 }
 
+export type AttachmentOutput = {
+  type: 'text',
+  text: string,
+  isEjectable: true,
+}
+
 export type Attachment = {
   readonly id: AttachmentId;
+  readonly source: AttachmentSource,
   label: string;
 
-  // source: URL / File / text; content and type to be resolved later
-  readonly source: AttachmentSource,
-  sourceLoading: boolean;
-  sourceError: string | null;
-
-  // set after the source has been loaded/processe
+  inputLoading: boolean;
+  inputError: string | null;
   input?: AttachmentInput;
 
   // options to convert the input
   conversions: AttachmentConversion[]; // List of available conversions for this attachment
   conversionIdx: number | null; // Index of the selected conversion
 
-  outputs?: {
-    // outputType: ConversionOutputType; // The type of the output after conversion
-    // dataTitle: string; // outputType dependent
-    // data: string; // outputType dependent
-    // preview?: AttachmentPreview; // Preview of the output
-    isEjectable: boolean; // Whether the attachment can be inlined as text
-  }[];
+  outputs?: AttachmentOutput[];
+  // {
+  // outputType: 'text',
+  // outputType: ConversionOutputType; // The type of the output after conversion
+  // dataTitle: string; // outputType dependent
+  // data: string; // outputType dependent
+  // preview?: AttachmentPreview; // Preview of the output
+  // isEjectable: boolean; // Whether the attachment can be inlined as text
+  // }[];
+
   // metadata: {
   //   size?: number; // Size of the attachment in bytes
   //   creationDate?: Date; // Creation date of the file
@@ -80,6 +83,7 @@ export type Attachment = {
   //   altText?: string; // Alternative text for images for screen readers
   // };
 };
+
 
 /*export type AttachmentPreview = {
   renderer: 'noPreview',
@@ -106,6 +110,7 @@ interface AttachmentsStore {
   clearAttachments: () => void;
   removeAttachment: (attachmentId: AttachmentId) => void;
   moveAttachment: (attachmentId: AttachmentId, delta: 1 | -1) => void;
+  setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => void;
 
   _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) => void;
   _getAttachment: (attachmentId: AttachmentId) => Attachment | undefined;
@@ -128,15 +133,19 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
 
       const editFn = (changes: Partial<Attachment>) => _editAttachment(attachmentId, changes);
 
-      attachmentResolveInputAsync(attachment.source, editFn).then(() => {
+      // 1.Resolve the input
+      attachmentLoadInputAsync(attachment.source, editFn).then(() => {
         const attachment = _get()._getAttachment(attachmentId);
-        if (attachment?.input)
+        if (attachment?.input) {
+          // 2. Define the conversions
           attachmentDefineConversions(attachment.source.type, attachment.input, editFn).then(() => {
             const attachment = _get()._getAttachment(attachmentId);
-            console.log('done?', attachment);
-            // if (attachment?.conversions.length >= 1)
-            //   editFn({ conversionIdx: 0 });
+            if (attachment && attachment.conversions.length >= 1 && attachment.conversionIdx === null) {
+              // 3. Auto-select the first conversion
+              _get().setConversionIdx(attachmentId, 0);
+            }
           });
+        }
       });
     },
 
@@ -164,6 +173,20 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
 
         return { attachments };
       }),
+
+    setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => {
+      const { _getAttachment, _editAttachment } = _get();
+      const attachment = _getAttachment(attachmentId);
+      if (!attachment || attachment.conversionIdx === conversionIdx)
+        return;
+
+      const editFn = (changes: Partial<Attachment>) => _editAttachment(attachmentId, changes);
+
+      attachmentConvert(attachment, conversionIdx, editFn).then(() => {
+        // Done now
+        // console.log('conversion done', _get()._getAttachment(attachmentId));
+      });
+    },
 
     _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) =>
       _set(state => ({

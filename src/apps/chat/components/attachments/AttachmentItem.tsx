@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItem, ListItemDecorator, MenuItem, Sheet, Typography } from '@mui/joy';
-import CheckIcon from '@mui/icons-material/Check';
+import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Sheet, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -57,7 +56,7 @@ const LoadingIndicator = React.forwardRef((props: { label: string }, _ref) =>
 LoadingIndicator.displayName = 'LoadingIndicator';
 
 
-const SourceErrorIndicator = () =>
+const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
@@ -137,14 +136,21 @@ export function AttachmentItem(props: {
     useAttachmentsStore.getState().removeAttachment(aId);
   }, [aId]);
 
+  const handleSetConversionIdx = React.useCallback((conversionIdx: number | null) => {
+    useAttachmentsStore.getState().setConversionIdx(aId, conversionIdx);
+  }, [aId]);
 
-  const isSourceLoading = attachment.sourceLoading;
-  const isSourceError = !!attachment.sourceError;
+
+  const isUnmoveable = props.isPositionFirst && props.isPositionLast;
+
+  const isInputLoading = attachment.inputLoading;
+  const isInputError = !!attachment.inputError;
+  const hasInput = !!aInput;
+
   const isUnsupported = aConversions.length === 0;
 
   const conversion = (aConversionIdx !== null ? aConversions[aConversionIdx] : null) || null;
 
-  const hasInput = !!aInput;
   const hasOutputs = aOutputs ? aOutputs.length >= 1 : false;
 
   const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
@@ -163,11 +169,11 @@ export function AttachmentItem(props: {
   if (hasOutputs)
     tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
-  if (isSourceLoading) {
+  if (isInputLoading) {
     variant = 'soft';
     color = 'success';
-  } else if (isSourceError) {
-    tooltip = `Issue loading the attachment: ${attachment.sourceError}\n\n${tooltip}`;
+  } else if (isInputError) {
+    tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
     variant = 'soft';
     color = 'danger';
   } else if (isUnsupported) {
@@ -178,14 +184,14 @@ export function AttachmentItem(props: {
     // all good
     tooltip = null;
     variant = 'outlined';
-    color = 'primary';
+    color = /*menuAnchor ? 'primary' :*/ 'neutral';
   }
 
 
   return <Box>
 
-    <GoodTooltip title={tooltip} isError={isSourceError} isWarning={isUnsupported} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
-      {isSourceLoading
+    <GoodTooltip title={tooltip} isError={isInputError} isWarning={isUnsupported} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
+      {isInputLoading
         ? <LoadingIndicator label={aLabel} />
         : (
           <Button
@@ -203,8 +209,8 @@ export function AttachmentItem(props: {
               display: 'flex', flexDirection: 'row', gap: 1,
             }}
           >
-            {isSourceError
-              ? <SourceErrorIndicator />
+            {isInputError
+              ? <InputErrorIndicator />
               : <>
                 {attachmentIcon(conversion)}
                 <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
@@ -225,7 +231,7 @@ export function AttachmentItem(props: {
       >
 
         {/* Move Arrows */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {!isUnmoveable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <MenuItem
             disabled={props.isPositionFirst}
             onClick={handleMoveUp}
@@ -240,24 +246,32 @@ export function AttachmentItem(props: {
           >
             <KeyboardArrowRightIcon />
           </MenuItem>
-        </Box>
+        </Box>}
 
-        <ListDivider />
+        {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
 
         {/* Render Conversions as menu items */}
-        <ListItem>
+        {!isUnsupported && <ListItem>
           <Typography level='body-md'>
             Attach as:
           </Typography>
-        </ListItem>
-        {aConversions.map((conversion, idx) =>
-          <MenuItem key={'c-' + conversion.id} disabled={idx > 0 || true}>
-            <ListItemDecorator>{idx === aConversionIdx ? <CheckIcon /> : undefined}</ListItemDecorator>
-            {conversion.name}
+        </ListItem>}
+        {!isUnsupported && aConversions.map((conversion, idx) =>
+          <MenuItem
+            // disabled={aConversions.length === 1}
+            key={'c-' + conversion.id}
+            onClick={() => idx !== aConversionIdx && handleSetConversionIdx(idx)}
+          >
+            <ListItemDecorator>
+              <Radio checked={idx === aConversionIdx} />
+            </ListItemDecorator>
+            <Typography level={idx === aConversionIdx ? 'title-md' : 'body-md'}>
+              {conversion.name}
+            </Typography>
           </MenuItem>,
         )}
 
-        <ListDivider />
+        {!isUnsupported && <ListDivider />}
 
         {/* Destructive Operations */}
         <MenuItem onClick={handleInline}>
