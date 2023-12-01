@@ -120,11 +120,12 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
   // return all the possible conversions for the input
   const conversions: AttachmentConversion[] = [];
 
-  switch (input.mimeType) {
+  switch (true) {
 
     // plain text types
-    case 'text/csv':
-    case 'text/plain':
+    case input.mimeType === 'application/json':
+    case input.mimeType === 'text/csv':
+    case input.mimeType === 'text/plain':
 
       // handle a secondary layer of HTML 'text' origins (drop, paste, clipboard-read)
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
@@ -153,7 +154,13 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
       }
       break;
 
-    // catch-all for unsupported types
+    // images
+    case input.mimeType.startsWith('image/'):
+      conversions.push({ id: 'image', name: `Image (GPT Vision)` });
+      conversions.push({ id: 'image-ocr', name: 'As OCR' });
+      break;
+
+    // catch-all
     default:
       conversions.push({ id: 'unhandled', name: `Unsupported ${input.mimeType}` });
       conversions.push({ id: 'text', name: 'As Text' });
@@ -183,6 +190,7 @@ export function attachmentConvert(attachment: Readonly<Attachment>, conversionId
   // apply conversion to the input
   const outputs: AttachmentOutput[] = [];
   switch (conversion.id) {
+
     // text as-is
     case 'text':
       outputs.push({
@@ -215,6 +223,14 @@ export function attachmentConvert(attachment: Readonly<Attachment>, conversionId
         text: mdTable,
         isEjectable: true,
       });
+      break;
+
+    case 'image':
+      // TODO: extract base64
+      break;
+
+    case 'image-ocr':
+      // TODO: port
       break;
 
     case 'unhandled':

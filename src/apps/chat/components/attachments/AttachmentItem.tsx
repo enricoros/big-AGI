@@ -1,8 +1,11 @@
 import * as React from 'react';
 
 import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Sheet, Typography } from '@mui/joy';
+import AbcIcon from '@mui/icons-material/Abc';
 import ClearIcon from '@mui/icons-material/Clear';
+import CloseIcon from '@mui/icons-material/Close';
 import CodeIcon from '@mui/icons-material/Code';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
@@ -14,7 +17,7 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import { Attachment, AttachmentConversion, useAttachmentsStore } from './store-attachments';
+import { Attachment, useAttachmentsStore } from './store-attachments';
 
 
 // default attachment width
@@ -62,20 +65,25 @@ const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
-function attachmentIcon(conversion: AttachmentConversion | null) {
-  const iconSx = {
-    width: 24,
-    height: 24,
-  };
-  switch (conversion?.id) {
+function attachmentIcon(attachment: Attachment) {
+  const conversion = attachment.conversionIdx !== null ? attachment.conversions[attachment.conversionIdx] ?? null : null;
+  if (!conversion)
+    return null;
+  const iconSx = { width: 24, height: 24 };
+  switch (conversion.id) {
     case 'text':
       return <TextFieldsIcon sx={iconSx} />;
     case 'rich-text':
       return <CodeIcon sx={iconSx} />;
     case 'rich-text-table':
       return <PivotTableChartIcon sx={iconSx} />;
-    // case 'image':
-    //   return <img src={conversion.url} alt={conversion.name} style={{ maxHeight: '100%', maxWidth: '100%' }} />;
+    case 'image':
+      //   return <img src={conversion.url} alt={conversion.name} style={{ maxHeight: '100%', maxWidth: '100%' }} />;
+      return <ImageOutlinedIcon sx={iconSx} />;
+    case 'image-ocr':
+      return <AbcIcon sx={iconSx} />;
+    case 'unhandled':
+      return <CloseIcon sx={iconSx} color='warning' />;
     default:
       return null;
   }
@@ -149,13 +157,10 @@ export function AttachmentItem(props: {
   const isInputError = !!attachment.inputError;
   const hasInput = !!aInput;
 
-  const isUnsupported = aConversions.length === 0;
+  const isUnconverted = aConversions.length === 0;
 
-  const conversion = (aConversionIdx !== null ? aConversions[aConversionIdx] : null) || null;
-
-  const hasOutputs = aOutputs ? aOutputs.length >= 1 : false;
-
-  const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
+  const isNoOutput = aOutputs?.length === 0;
+  // const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
 
 
   let variant: 'soft' | 'outlined' | 'contained';
@@ -168,8 +173,8 @@ export function AttachmentItem(props: {
   tooltip += aLabel;
   if (hasInput)
     tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
-  if (hasOutputs)
-    tooltip += `\n\n${JSON.stringify(aOutputs)}`;
+  // if (aOutputs && aOutputs.length >= 1)
+  //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
   if (isInputLoading) {
     variant = 'soft';
@@ -178,8 +183,12 @@ export function AttachmentItem(props: {
     tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
     variant = 'soft';
     color = 'danger';
-  } else if (isUnsupported) {
+  } else if (isUnconverted) {
     tooltip = `Attachments of type '${aInput?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
+    variant = 'soft';
+    color = 'warning';
+  } else if (isNoOutput) {
+    tooltip = 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
     variant = 'soft';
     color = 'warning';
   } else {
@@ -192,7 +201,12 @@ export function AttachmentItem(props: {
 
   return <Box>
 
-    <GoodTooltip title={tooltip} isError={isInputError} isWarning={isUnsupported} sx={{ p: 1, whiteSpace: 'break-spaces' }}>
+    <GoodTooltip
+      title={tooltip}
+      isError={isInputError}
+      isWarning={isUnconverted || isNoOutput}
+      sx={{ p: 1, whiteSpace: 'break-spaces' }}
+    >
       {isInputLoading
         ? <LoadingIndicator label={aLabel} />
         : (
@@ -214,7 +228,7 @@ export function AttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentIcon(conversion)}
+                {attachmentIcon(attachment)}
                 <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
                   {attachmentText(attachment)}
                 </Typography>
@@ -253,12 +267,12 @@ export function AttachmentItem(props: {
         {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
 
         {/* Render Conversions as menu items */}
-        {!isUnsupported && <ListItem>
-          <Typography level='body-md'>
-            Attach as:
-          </Typography>
-        </ListItem>}
-        {!isUnsupported && aConversions.map((conversion, idx) =>
+        {/*{!isUnconverted && <ListItem>*/}
+        {/*  <Typography level='body-md'>*/}
+        {/*    Attach as:*/}
+        {/*  </Typography>*/}
+        {/*</ListItem>}*/}
+        {!isUnconverted && aConversions.map((conversion, idx) =>
           <MenuItem
             // disabled={aConversions.length === 1}
             key={'c-' + conversion.id}
@@ -267,13 +281,14 @@ export function AttachmentItem(props: {
             <ListItemDecorator>
               <Radio checked={idx === aConversionIdx} />
             </ListItemDecorator>
-            <Typography level={idx === aConversionIdx ? 'title-md' : 'body-md'}>
+            {/*<Typography level={idx === aConversionIdx ? 'title-md' : 'body-md'}>*/}
+            <Typography>
               {conversion.name}
             </Typography>
           </MenuItem>,
         )}
 
-        {!isUnsupported && <ListDivider />}
+        {!isUnconverted && <ListDivider />}
 
         {/* Destructive Operations */}
         <MenuItem onClick={handleInline}>
