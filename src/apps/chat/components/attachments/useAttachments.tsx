@@ -7,8 +7,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { AttachmentDTOrigin, AttachmentFileOrigin } from './attachment.types';
-import { useAttachmentsStore } from './store-attachments';
+import { AttachmentDTOrigin, AttachmentFileOrigin, useAttachmentsStore } from './store-attachments';
 
 
 export const useAttachments = (enableUrlAttachments: boolean) => {
