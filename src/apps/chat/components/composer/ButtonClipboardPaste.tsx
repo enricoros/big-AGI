@@ -13,7 +13,7 @@ const pasteClipboardLegend =
     <KeyStroke combo='Ctrl + Shift + V' />
   </Box>;
 
-export function ButtonClipboardPaste(props: { isMobile: boolean, isDeveloperMode: boolean, onPaste: () => void }) {
+export function ButtonClipboardPaste(props: { isMobile?: boolean, onPaste: () => void }) {
   return props.isMobile ? (
     <IconButton onClick={props.onPaste}>
       <ContentPasteGoIcon />
@@ -24,7 +24,7 @@ export function ButtonClipboardPaste(props: { isMobile: boolean, isDeveloperMode
       title={pasteClipboardLegend}>
       <Button fullWidth variant='plain' color='neutral' startDecorator={<ContentPasteGoIcon />} onClick={props.onPaste}
               sx={{ justifyContent: 'flex-start' }}>
-        {props.isDeveloperMode ? 'Paste code' : 'Paste'}
+        Paste
       </Button>
     </Tooltip>
   );

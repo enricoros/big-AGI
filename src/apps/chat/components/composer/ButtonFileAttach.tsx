@@ -34,7 +34,7 @@ const attachFileLegend =
   </Stack>;
 
 
-export const ButtonFileAttach = (props: { isMobile: boolean, onAttachFilePicker: () => void }) =>
+export const ButtonFileAttach = (props: { isMobile?: boolean, onAttachFilePicker: () => void }) =>
   props.isMobile ? (
     <IconButton onClick={props.onAttachFilePicker}>
       <AttachFileOutlinedIcon />
@@ -43,7 +43,7 @@ export const ButtonFileAttach = (props: { isMobile: boolean, onAttachFilePicker:
     <Tooltip variant='solid' placement='top-start' title={attachFileLegend}>
       <Button fullWidth variant='plain' color='neutral' onClick={props.onAttachFilePicker} startDecorator={<AttachFileOutlinedIcon />}
               sx={{ justifyContent: 'flex-start' }}>
-        Attach
+        File
       </Button>
     </Tooltip>
   );
