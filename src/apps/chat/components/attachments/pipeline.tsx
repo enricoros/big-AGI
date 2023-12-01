@@ -127,7 +127,7 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
   switch (true) {
 
     // plain text types
-    case ['text/plain', 'text/html', 'text/markdown', 'text/csv'].includes(input.mimeType):
+    case ['text/plain', 'text/html', 'text/markdown', 'text/csv', 'application/json'].includes(input.mimeType):
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
@@ -169,7 +169,7 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
     // catch-all
     default:
-      conversions.push({ id: 'unhandled', name: `Unsupported ${input.mimeType}` });
+      conversions.push({ id: 'unhandled', name: `${input.mimeType}`, unsupported: true });
       conversions.push({ id: 'text', name: 'As Text' });
       break;
   }
