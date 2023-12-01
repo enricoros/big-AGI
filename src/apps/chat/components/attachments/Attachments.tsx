@@ -19,7 +19,6 @@ export function Attachments(props: {
   attachments: Attachment[]
   onAttachmentsClear: () => void,
   onAttachmentsInline: () => void,
-  onAttachmentRemove: (attachmentId: string) => void
 }) {
 
   // state
@@ -27,7 +26,7 @@ export function Attachments(props: {
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derive state
-  const { attachments, onAttachmentsClear, onAttachmentsInline, onAttachmentRemove } = props;
+  const { attachments, onAttachmentsClear, onAttachmentsInline } = props;
   const hasAttachments = attachments.length >= 1;
 
 
@@ -37,13 +36,6 @@ export function Attachments(props: {
 
   const handleOverallMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) =>
     setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
-
-
-  // individual operations
-
-  const handleRemoveAttachment = React.useCallback((attachmentId: string) => {
-    onAttachmentRemove(attachmentId);
-  }, [onAttachmentRemove]);
 
 
   // overall operations
@@ -61,6 +53,15 @@ export function Attachments(props: {
     onAttachmentsClear();
   }, [onAttachmentsClear]);
 
+
+  // individual operations
+
+  const handleAttachmentInline = React.useCallback((attachmentId: string) => {
+    // (attachmentId);
+    console.log('Not implemented: handleAttachmentInline', attachmentId);
+  }, []);
+
+
   // no components without attachments
   if (!hasAttachments)
     return null;
@@ -71,17 +72,19 @@ export function Attachments(props: {
     <Box sx={{ display: 'flex', gap: 1 }}>
 
       {/* Overall Menu button */}
-      <IconButton variant='soft' color='neutral' size='sm' onClick={handleOverallMenuToggle} sx={{ borderRadius: 'xs' }}>
+      <IconButton variant='soft' color='neutral' size='sm' onClick={handleOverallMenuToggle} sx={{ borderRadius: 'sm' }}>
         <ExpandLessIcon />
       </IconButton>
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1 }}>
-        {attachments.map(attachment =>
+        {attachments.map((attachment, idx) =>
           <AttachmentItem
             key={attachment.id}
             attachment={attachment}
-            onAttachmentRemove={handleRemoveAttachment}
+            isPositionFirst={idx === 0}
+            isPositionLast={idx === attachments.length - 1}
+            onAttachmentInline={handleAttachmentInline}
           />,
         )}
       </Box>
@@ -93,8 +96,9 @@ export function Attachments(props: {
       <CloseableMenu
         placement='top-start'
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
+        noTopPadding noBottomPadding
       >
-        <MenuItem disabled onClick={handleInlineAttachments}>
+        <MenuItem onClick={handleInlineAttachments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline <span style={{ opacity: 0.5 }}>attachments</span>
         </MenuItem>

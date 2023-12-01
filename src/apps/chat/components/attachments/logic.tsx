@@ -2,7 +2,7 @@ import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { createBase36Uid } from '~/common/util/textUtils';
 
-import { Attachment, AttachmentId, AttachmentInput, AttachmentSource } from './store-attachments';
+import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentSource } from './store-attachments';
 
 
 export function createAttachment(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
@@ -19,6 +19,8 @@ export function createAttachment(source: AttachmentSource, checkDuplicates: Atta
     // metadata: {},
   };
 }
+
+const plainTextFileExtensions: string[] = ['.ts', '.tsx'];
 
 // .source -> .label, .input, .sourceError, .sourceLoading,
 export async function attachmentResolveInputAsync(source: AttachmentSource, edit: (changes: Partial<Attachment>) => void) {
@@ -51,12 +53,21 @@ export async function attachmentResolveInputAsync(source: AttachmentSource, edit
     // Attach file as input
     case 'file':
       edit({ label: source.name });
+
+      // fix missing mimetypes
       let mimeType = source.fileWithHandle.type;
       if (!mimeType) {
         // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
         console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.name);
         mimeType = 'text/plain';
       }
+      // possibly fix wrongly assigned mimetypes (from the extension alone)
+      else {
+        const shallBePlainText = plainTextFileExtensions.some(ext => source.name.endsWith(ext));
+        if (shallBePlainText && !mimeType.startsWith('text/'))
+          mimeType = 'text/plain';
+      }
+
       try {
         const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
         edit({
@@ -97,37 +108,64 @@ export async function attachmentResolveInputAsync(source: AttachmentSource, edit
       break;
   }
 
+  // sleep 1 second
+  await new Promise(resolve => setTimeout(resolve, 160));
+
   // done loading
   edit({ sourceLoading: false });
 }
 
 
 // Input data -> Conversions
-export function attachmentDefineConversions(input: AttachmentInput, edit: (changes: Partial<Attachment>) => void) {
+export async function attachmentDefineConversions(
+  sourceType: AttachmentSource['type'],
+  input: AttachmentInput,
+  edit: (changes: Partial<Attachment>) => void,
+) {
+  const { mimeType, data, dataSize, altMimeType, altData } = input;
 
-  switch (input.mimeType) {
+  const conversions: AttachmentConversion[] = [];
 
+  switch (mimeType) {
+
+    // plain text types
+    case 'text/csv':
     case 'text/plain':
+
+      // handle a secondary layer of HTML 'text' origins (drop, paste, clipboard-read)
+      const textOriginHtml = sourceType === 'text' && altMimeType === 'text/html' && altData;
+      const isHtmlTable = !!altData && altData.startsWith('<table');
+
+      // p1: Tables
+      if (textOriginHtml && isHtmlTable) {
+        conversions.push({
+          id: 'rich-text-table',
+          name: 'Table',
+        });
+      }
+
+      // p2: Text
+      conversions.push({
+        id: 'text',
+        name: 'Text',
+      });
+
+      // p3: Html
+      if (textOriginHtml && !isHtmlTable) {
+        conversions.push({
+          id: 'rich-text',
+          name: 'Html',
+        });
+      }
       break;
 
-
     default:
-      console.warn()
-      console.log('defineConversions', input);
+      console.warn(`Unhandled attachment type ${mimeType} (${dataSize} bytes): ${data.slice(0, 10)}...`);
       break;
   }
 
-
-
-
-
-
-
-  // edit({
-  //
-  // });
-
-  // setComposeText(expandPromptTemplate(PromptTemplates.PasteFile, { fileName, fileText: urlContent }));
-
-  return undefined;
+  edit({
+    conversions,
+    conversionIdx: conversions.length ? 0 : null,
+  });
 }

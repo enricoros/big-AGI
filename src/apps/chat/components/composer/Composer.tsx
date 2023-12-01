@@ -144,7 +144,6 @@ export function Composer(props: {
     attachments,
     attachmentsReady,
     clearAttachments,
-    removeAttachment,
   } = useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
   // derived state
@@ -521,7 +520,6 @@ export function Composer(props: {
               attachments={attachments}
               onAttachmentsClear={clearAttachments}
               onAttachmentsInline={() => console.warn('TODO: inline attachments')}
-              onAttachmentRemove={removeAttachment}
             />
 
           </Box>

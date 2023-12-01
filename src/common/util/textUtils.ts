@@ -10,11 +10,11 @@ export function createBase36Uid(checkDuplicates: string[]): string {
   return id;
 }
 
-/*export function ellipsizeFront(text: string, maxLength: number) {
+export function ellipsizeFront(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
   return '…' + text.slice(-(maxLength - 1));
-}*/
+}
 
 export function ellipsizeMiddle(text: string, maxLength: number) {
   if (text.length <= maxLength)
