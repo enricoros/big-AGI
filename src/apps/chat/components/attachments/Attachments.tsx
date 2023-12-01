@@ -69,15 +69,10 @@ export function Attachments(props: {
   return <>
 
     {/* Attachments bar */}
-    <Box sx={{ display: 'flex', gap: 1 }}>
-
-      {/* Overall Menu button */}
-      <IconButton variant='soft' color='neutral' size='sm' onClick={handleOverallMenuToggle} sx={{ borderRadius: 'sm' }}>
-        <ExpandLessIcon />
-      </IconButton>
+    <Box sx={{ position: 'relative' }}>
 
       {/* Horizontally scrollable Attachments */}
-      <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1 }}>
+      <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
         {attachments.map((attachment, idx) =>
           <AttachmentItem
             key={attachment.id}
@@ -88,6 +83,19 @@ export function Attachments(props: {
           />,
         )}
       </Box>
+
+      {/* Overall Menu button */}
+      <IconButton
+        variant='plain' onClick={handleOverallMenuToggle}
+        sx={{
+          // borderRadius: 'sm',
+          borderRadius: 0,
+          position: 'absolute', right: 0, top: 0,
+          backgroundColor: 'neutral.softDisabledBg',
+        }}
+      >
+        <ExpandLessIcon />
+      </IconButton>
 
     </Box>
 

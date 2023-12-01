@@ -28,7 +28,7 @@ const DEBUG_ATTACHMENTS = true;
 // default attachment width
 const ATTACHMENT_MIN_STYLE = {
   height: '100%',
-  minHeight: '36px',
+  minHeight: '40px',
   minWidth: '64px',
 };
 
