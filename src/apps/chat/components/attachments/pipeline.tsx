@@ -21,6 +21,7 @@ export function attachmentCreate(source: AttachmentSource, checkDuplicates: Atta
     input: undefined,
     conversions: [],
     conversionIdx: null,
+    outputsLoading: false,
     outputs: undefined,
     // metadata: {},
   };
@@ -178,6 +179,14 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 }
 
 
+function dataToString(data: string | ArrayBuffer | null | undefined): string {
+  if (typeof data === 'string')
+    return data;
+  if (data instanceof ArrayBuffer)
+    return new TextDecoder().decode(data);
+  return '';
+}
+
 // Input & Conversion -> Outputs
 export async function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
 
@@ -193,6 +202,10 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
   const conversion = conversionIdx !== null ? attachment.conversions[conversionIdx] : null;
   if (!conversion || !input)
     return;
+
+  edit({
+    outputsLoading: true,
+  });
 
   // apply conversion to the input
   const outputs: AttachmentOutput[] = [];
@@ -256,7 +269,30 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       break;
 
     case 'image-ocr':
-      // TODO: port
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for Image OCR conversion, got:', typeof input.data);
+        break;
+      }
+      try {
+        const { recognize } = await import('tesseract.js');
+        const buffer = Buffer.from(input.data);
+        const result = await recognize(buffer, undefined, {
+          errorHandler: e => console.error(e),
+          logger: (m) => {
+            // noinspection SuspiciousTypeOfGuard
+            // if (typeof m.progress === 'number')
+            //   setOCRProgress(m.progress);
+            console.log('PDF to text progress:', m.progress);
+          },
+        });
+        outputs.push({
+          type: 'text-block',
+          text: result.data.text,
+          isEjectable: true,
+        });
+      } catch (error) {
+        console.error(error);
+      }
       break;
 
     case 'unhandled':
@@ -265,14 +301,8 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
   }
 
   // update
-  edit({ outputs });
-}
-
-
-function dataToString(data: string | ArrayBuffer | null | undefined): string {
-  if (typeof data === 'string')
-    return data;
-  if (data instanceof ArrayBuffer)
-    return new TextDecoder().decode(data);
-  return '';
+  edit({
+    outputsLoading: false,
+    outputs,
+  });
 }
