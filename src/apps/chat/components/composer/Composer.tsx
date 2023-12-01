@@ -276,13 +276,15 @@ export function Composer(props: {
   }, [attachAppendDataTransfer]);
 
   const handleAttachCameraImage = React.useCallback((file: FileWithHandle) => {
-    attachAppendFile('camera', file);
+    void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
   const handleAttachFilePicker = React.useCallback(async () => {
     try {
       const selectedFiles: FileWithHandle[] = await fileOpen({ multiple: true });
-      selectedFiles.forEach(file => attachAppendFile('file-open', file));
+      selectedFiles.forEach(file =>
+        void attachAppendFile('file-open', file),
+      );
     } catch (error) {
       // ignore...
     }
@@ -379,7 +381,7 @@ export function Composer(props: {
 
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 1 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}

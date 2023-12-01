@@ -23,65 +23,65 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
   // Convenience functions
 
-  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideName?: string) => {
-    createAttachment({
-      type: 'file',
-      origin,
-      fileWithHandle,
-      name: overrideName || fileWithHandle.name,
-    });
-  }, [createAttachment]);
+  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideFileName?: string) =>
+      createAttachment({
+        media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
+      })
+    , [createAttachment]);
 
-  const attachAppendDataTransfer = React.useCallback((dataTransfer: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+
+  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
     // attach File(s)
-    if (dataTransfer.files.length >= 1) {
+    if (dt.files.length >= 1) {
       // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
       let overrideFileNames: string[] = [];
-      if (dataTransfer.types.includes('text/plain')) {
-        const plainText = dataTransfer.getData('text/plain');
+      if (dt.types.includes('text/plain')) {
+        const plainText = dt.getData('text/plain');
         overrideFileNames = extractFilePathsWithCommonRadix(plainText);
       }
+      const overrideNames = overrideFileNames.length === dt.files.length;
 
-      // attach as Files
-      const overrideNames = overrideFileNames.length === dataTransfer.files.length;
-      for (let i = 0; i < dataTransfer.files.length; i++) {
+      // attach as Files (paste and drop keep the original filename)
+      for (let i = 0; i < dt.files.length; i++) {
+        const file = dt.files[i];
         // drag/drop of folders (or .tsx from IntelliJ) will have no type
-        if (!dataTransfer.files[i].type) {
-          // NOTE: we are fixing it in resolveInputAsync, but would be better to do it here
+        if (!file.type) {
+          // NOTE: we are fixing it in attachmentLoadInputAsync, but would be better to do it here
         }
-        attachAppendFile(method, dataTransfer.files[i], overrideNames ? overrideFileNames[i] || undefined : undefined);
+        void attachAppendFile(method, file, overrideNames ? overrideFileNames[i] || undefined : undefined);
       }
       return 'as_files';
     }
 
     // attach as URL
-    const textPlain = dataTransfer.getData('text/plain') || '';
+    const textPlain = dt.getData('text/plain') || '';
     if (textPlain && enableUrlAttachments) {
       const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl && textPlainUrl.trim()) {
-        createAttachment({
-          type: 'url', url: textPlainUrl.trim(), refName: textPlain,
+      if (textPlainUrl && textPlainUrl) {
+        void createAttachment({
+          media: 'url', url: textPlainUrl, refUrl: textPlain,
         });
         return 'as_url';
       }
     }
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
-    const textHtml = dataTransfer.getData('text/html') || '';
+    const textHtml = dt.getData('text/html') || '';
     if (attachText && (textHtml || textPlain)) {
-      createAttachment({
-        type: 'text', method, textPlain, textHtml,
+      void createAttachment({
+        media: 'text', method, textPlain, textHtml,
       });
       return 'as_text';
     }
 
     if (attachText)
-      console.warn(`Unhandled '${method}' attachment: `, dataTransfer.types?.map(t => `${t}: ${dataTransfer.getData(t)}`));
+      console.warn(`Unhandled '${method}' attachment: `, dt.types?.map(t => `${t}: ${dt.getData(t)}`));
 
     // did not attach anything from this data transfer
     return false;
   }, [attachAppendFile, createAttachment, enableUrlAttachments]);
+
 
   const attachAppendClipboardItems = React.useCallback(async () => {
 
@@ -108,8 +108,9 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
         if (mimeType.startsWith('image/')) {
           try {
             const imageBlob = await clipboardItem.getType(mimeType);
-            const imageFile = new File([imageBlob], 'clipboard.png', { type: mimeType });
-            attachAppendFile('clipboard-read', imageFile, imageFile.name?.replace('image.', 'clipboard.'));
+            const imageName = mimeType.replace('image/', 'clipboard.').replaceAll('/', '.') || 'clipboard.png';
+            const imageFile = new File([imageBlob], imageName, { type: mimeType });
+            void attachAppendFile('clipboard-read', imageFile);
             imageAttached = true;
           } catch (error) {
             // ignore getType error..
@@ -126,8 +127,8 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       if (textPlain && enableUrlAttachments) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
-          createAttachment({
-            type: 'url', url: textPlainUrl.trim(), refName: textPlain,
+          void createAttachment({
+            media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
           });
           continue;
         }
@@ -136,8 +137,8 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       // attach as Text
       const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
       if (textHtml || textPlain) {
-        createAttachment({
-          type: 'text', method: 'clipboard-read', textPlain, textHtml,
+        void createAttachment({
+          media: 'text', method: 'clipboard-read', textPlain, textHtml,
         });
         continue;
       }

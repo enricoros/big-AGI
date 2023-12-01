@@ -25,9 +25,11 @@ const ATTACHMENT_MIN_STYLE = {
 };
 
 
-const ellipsizeLabel = (label: string) =>
-  ellipsizeMiddle(label.replace(/https?:\/\/(?:www\.)?/, ''), 30)
-    .replace('…', '…\n…');
+const ellipsizeLabel = (label?: string) => {
+  if (!label)
+    return '';
+  return ellipsizeMiddle((label || '').replace(/https?:\/\/(?:www\.)?/, ''), 30).replace('…', '…\n…');
+};
 
 
 /**
@@ -161,8 +163,8 @@ export function AttachmentItem(props: {
 
   // compose tooltip
   let tooltip: string | null = '';
-  if (props.attachment.source.type !== 'text')
-    tooltip += props.attachment.source.type + ': ';
+  if (props.attachment.source.media !== 'text')
+    tooltip += props.attachment.source.media + ': ';
   tooltip += aLabel;
   if (hasInput)
     tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;

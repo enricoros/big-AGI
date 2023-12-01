@@ -1,11 +1,16 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { createBase36Uid } from '~/common/util/textUtils';
+import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 
-import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentSource } from './store-attachments';
+import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentOutput, AttachmentSource } from './store-attachments';
 
 
-export function createAttachment(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
+// extensions to treat as plain text
+const PLAIN_TEXT_EXTENSIONS: string[] = ['.ts', '.tsx'];
+
+
+export function attachmentCreate(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
   return {
     id: createBase36Uid(checkDuplicates),
     source: source,
@@ -21,19 +26,15 @@ export function createAttachment(source: AttachmentSource, checkDuplicates: Atta
 }
 
 
-const plainTextFileExtensions: string[] = ['.ts', '.tsx'];
-
-
 // Source -> Input
-export async function attachmentLoadInputAsync(source: AttachmentSource, edit: (changes: Partial<Attachment>) => void) {
-  // show the loading indicator
+export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource>, edit: (changes: Partial<Attachment>) => void) {
   edit({ inputLoading: true });
 
-  switch (source.type) {
+  switch (source.media) {
 
     // Download URL (page, file, ..) and attach as input
     case 'url':
-      edit({ label: source.refName });
+      edit({ label: source.refUrl });
       try {
         const page = await callBrowseFetchPage(source.url);
         if (page.content) {
@@ -42,7 +43,6 @@ export async function attachmentLoadInputAsync(source: AttachmentSource, edit: (
               mimeType: 'text/plain',
               data: page.content,
               dataSize: page.content.length,
-              // preview...
             },
           });
         } else
@@ -54,19 +54,17 @@ export async function attachmentLoadInputAsync(source: AttachmentSource, edit: (
 
     // Attach file as input
     case 'file':
-      edit({ label: source.name });
+      edit({ label: source.refPath });
 
-      // fix missing mimetypes
+      // fix missing/wrong mimetypes
       let mimeType = source.fileWithHandle.type;
       if (!mimeType) {
         // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
-        console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.name);
+        console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.refPath);
         mimeType = 'text/plain';
-      }
-      // possibly fix wrongly assigned mimetypes (from the extension alone)
-      else {
-        const shallBePlainText = plainTextFileExtensions.some(ext => source.name.endsWith(ext));
-        if (shallBePlainText && !mimeType.startsWith('text/'))
+      } else {
+        // possibly fix wrongly assigned mimetypes (from the extension alone)
+        if (!mimeType.startsWith('text/') && PLAIN_TEXT_EXTENSIONS.some(e => source.refPath.endsWith(e)))
           mimeType = 'text/plain';
       }
 
@@ -110,33 +108,27 @@ export async function attachmentLoadInputAsync(source: AttachmentSource, edit: (
       break;
   }
 
-  // sleep 1 second
+  // UX: just a hint of a loading state
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // done loading
   edit({ inputLoading: false });
 }
 
 
 // Input data -> Conversions
-export async function attachmentDefineConversions(
-  sourceType: AttachmentSource['type'],
-  input: AttachmentInput,
-  edit: (changes: Partial<Attachment>) => void,
-) {
-  const { mimeType, data, dataSize, altMimeType, altData } = input;
-
+export function attachmentDefineConversions(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
+  // return all the possible conversions for the input
   const conversions: AttachmentConversion[] = [];
 
-  switch (mimeType) {
+  switch (input.mimeType) {
 
     // plain text types
     case 'text/csv':
     case 'text/plain':
 
       // handle a secondary layer of HTML 'text' origins (drop, paste, clipboard-read)
-      const textOriginHtml = sourceType === 'text' && altMimeType === 'text/html' && altData;
-      const isHtmlTable = !!altData && altData.startsWith('<table');
+      const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
+      const isHtmlTable = !!input.altData?.startsWith('<table');
 
       // p1: Tables
       if (textOriginHtml && isHtmlTable) {
@@ -161,77 +153,84 @@ export async function attachmentDefineConversions(
       }
       break;
 
+    // catch-all for unsupported types
     default:
-      console.warn(`Unhandled attachment type ${mimeType} (${dataSize} bytes): ${data.slice(0, 10)}...`);
+      conversions.push({ id: 'unhandled', name: `Unsupported ${input.mimeType}` });
+      conversions.push({ id: 'text', name: 'As Text' });
       break;
   }
 
-  edit({
-    conversions,
-  });
+  edit({ conversions });
 }
 
 
 // Input & Conversion -> Outputs
-export async function attachmentConvert(
-  attachment: Attachment,
-  conversionIdx: number | null,
-  edit: (changes: Partial<Attachment>) => void,
-) {
+export function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
 
-  // check bounds
+  // set conversion index
   conversionIdx = (conversionIdx !== null && conversionIdx >= 0 && conversionIdx < attachment.conversions.length) ? conversionIdx : null;
-
-  // clear the current outputs too
   edit({
     conversionIdx,
     outputs: undefined,
   });
 
-  // get the conversion
+  // get conversion
+  const { input } = attachment;
   const conversion = conversionIdx !== null ? attachment.conversions[conversionIdx] : null;
-  if (!conversion)
+  if (!conversion || !input)
     return;
 
+  // apply conversion to the input
+  const outputs: AttachmentOutput[] = [];
+  switch (conversion.id) {
+    // text as-is
+    case 'text':
+      outputs.push({
+        type: 'text',
+        text: dataToString(input.data),
+        isEjectable: true,
+      });
+      break;
 
-  /*
-    // use the conversion
-    const conversion = attachment.conversions[conversionIdx];
+    // html as-is
+    case 'rich-text':
+      outputs.push({
+        type: 'text',
+        text: input.altData!,
+        isEjectable: true,
+      });
+      break;
 
-    const outputs: AttachmentOutput[] = [];
+    // html to markdown table
+    case 'rich-text-table':
+      let mdTable: string;
+      try {
+        mdTable = htmlTableToMarkdown(input.altData!);
+      } catch (error) {
+        // fallback to text/plain
+        mdTable = dataToString(input.data);
+      }
+      outputs.push({
+        type: 'text',
+        text: mdTable,
+        isEjectable: true,
+      });
+      break;
 
-    switch (conversion.id) {
-      case 'text':
+    case 'unhandled':
+      // force the user to explicitly select 'as text' if they want to proceed
+      break;
+  }
+
+  // update
+  edit({ outputs });
+}
 
 
-
-        outputs.push({
-          type: 'text',
-          text: attachment.input!.data || '',
-          isEjectable: true,
-        })
-        break;
-
-      case 'rich-text':
-        edit({
-          outputs: {
-            html: attachment.input?.altData || attachment.input?.data,
-          },
-        });
-        break;
-
-      case 'rich-text-table':
-        edit({
-          outputs: {
-            html: attachment.input?.altData || attachment.input?.data,
-          },
-        });
-        break;
-
-      default:
-        console.warn(`Unhandled attachment conversion ${conversion.id}`);
-        break;
-    }
-  */
-
+function dataToString(data: string | ArrayBuffer | null | undefined): string {
+  if (typeof data === 'string')
+    return data;
+  if (data instanceof ArrayBuffer)
+    return new TextDecoder().decode(data);
+  return '';
 }
