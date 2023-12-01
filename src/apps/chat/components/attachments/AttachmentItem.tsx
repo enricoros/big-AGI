@@ -168,6 +168,7 @@ export function AttachmentItem(props: {
 
   const isUnconverted = aConversions.length === 0;
 
+  const isOutputLoading = attachment.outputsLoading;
   const isNoOutput = aOutputs?.length === 0;
   // const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
 
@@ -185,7 +186,7 @@ export function AttachmentItem(props: {
   // if (aOutputs && aOutputs.length >= 1)
   //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
-  if (isInputLoading) {
+  if (isInputLoading || isOutputLoading) {
     variant = 'soft';
     color = 'success';
   } else if (isInputError) {
@@ -238,9 +239,11 @@ export function AttachmentItem(props: {
               ? <InputErrorIndicator />
               : <>
                 {attachmentIcon(attachment)}
-                <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                  {attachmentText(attachment)}
-                </Typography>
+                {isOutputLoading
+                  ? <>Converting <CircularProgress color='success' size='sm' /></>
+                  : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>s
+                    {attachmentText(attachment)}
+                  </Typography>}
               </>}
           </Button>
         )}
@@ -298,7 +301,7 @@ export function AttachmentItem(props: {
         )}
         {!isUnconverted && <ListDivider />}
 
-        {DEBUG_ATTACHMENTS && (
+        {DEBUG_ATTACHMENTS && !!aInput && (
           <MenuItem onClick={handleCopyOutputToClipboard}>
             <Box>
               {!!aInput && <Typography level='body-xs'>
@@ -313,10 +316,10 @@ export function AttachmentItem(props: {
             </Box>
           </MenuItem>
         )}
-        {DEBUG_ATTACHMENTS && <ListDivider />}
+        {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
         {/* Destructive Operations */}
-        <MenuItem onClick={handleInline}>
+        <MenuItem onClick={handleInline} disabled={isUnconverted || isNoOutput}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline
         </MenuItem>

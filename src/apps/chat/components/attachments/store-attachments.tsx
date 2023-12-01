@@ -71,6 +71,7 @@ export type Attachment = {
   conversions: AttachmentConversion[]; // List of available conversions for this attachment
   conversionIdx: number | null; // Index of the selected conversion
 
+  outputsLoading: boolean;
   outputs?: AttachmentOutput[];
   // {
   // dataTitle: string; // outputType dependent
