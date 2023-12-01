@@ -155,7 +155,7 @@ export function AttachmentItem(props: {
   const handleCopyOutputToClipboard = React.useCallback(() => {
     if (aOutputs && aOutputs.length >= 1) {
       const concat = aOutputs.map(output => output.text).join('\n');
-      copyToClipboard(concat, 'Attachment');
+      copyToClipboard(concat, 'Converted attachment');
     }
   }, [aOutputs]);
 
@@ -180,8 +180,8 @@ export function AttachmentItem(props: {
   if (props.attachment.source.media !== 'text')
     tooltip += props.attachment.source.media + ': ';
   tooltip += aLabel;
-  if (hasInput)
-    tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
+  // if (hasInput)
+  //   tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
   // if (aOutputs && aOutputs.length >= 1)
   //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
