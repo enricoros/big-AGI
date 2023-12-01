@@ -251,8 +251,8 @@ export function Composer(props: {
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantTyping;
-  const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'neutral' : 'neutral';
-  const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'outlined' : 'plain';
+  const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
+  const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';
 
   const handleToggleMic = () => {
     if (micIsRunning && micContinuation)
@@ -462,14 +462,15 @@ export function Composer(props: {
                 <Box sx={{
                   position: 'absolute', top: 0, right: 0,
                   zIndex: 21,
-                  m: 1,
-                  display: 'flex', flexDirection: 'column', gap: 1,
+                  mt: 0.25,
+                  mr: 0.25,
+                  display: 'flex', flexDirection: 'column', gap: 0.25,
                 }}>
-                  {isDesktop && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+                  {isDesktop && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} sx={{ background: 'none' }} />}
 
                   {micIsRunning && (
                     <MicContinuationButton
-                      variant={micContinuation ? 'plain' : 'plain'} color={micContinuation ? 'primary' : 'neutral'}
+                      variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
                       onClick={handleToggleMicContinuation}
                     />
                   )}
