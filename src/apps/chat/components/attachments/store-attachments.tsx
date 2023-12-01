@@ -11,7 +11,7 @@ export type AttachmentDTOrigin = 'drop' | 'paste';
 export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
 export type AttachmentConversionType =
   | 'text' | 'rich-text' | 'rich-text-table'
-  | 'pdf-text'
+  | 'pdf-text' | 'pdf-images'
   | 'image' | 'image-ocr'
   | 'unhandled';
 
@@ -43,6 +43,7 @@ export type AttachmentInput = {
 export type AttachmentConversion = {
   id: AttachmentConversionType;
   name: string;
+  disabled?: boolean;
   // outputType: ConversionOutputType; // The type of the output after conversion
   // isAutonomous: boolean; // Whether the conversion does not require user input
   // isAsync: boolean; // Whether the conversion is asynchronous
@@ -51,7 +52,7 @@ export type AttachmentConversion = {
 }
 
 export type AttachmentOutput = {
-  type: 'text',
+  type: 'text-block',
   text: string,
   isEjectable: true,
 }
@@ -111,7 +112,7 @@ interface AttachmentsStore {
   clearAttachments: () => void;
   removeAttachment: (attachmentId: AttachmentId) => void;
   moveAttachment: (attachmentId: AttachmentId, delta: 1 | -1) => void;
-  setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => void;
+  setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => Promise<void>;
 
   _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) => void;
   _getAttachment: (attachmentId: AttachmentId) => Attachment | undefined;
@@ -147,7 +148,8 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
         return;
 
       // 3. Select the first Conversion
-      setConversionIdx(attachment.id, 0);
+      const firstEnabledIndex = defined.conversions.findIndex(_c => !_c.disabled);
+      await setConversionIdx(attachment.id, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
     },
 
     clearAttachments: () => _set({
@@ -175,7 +177,7 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
         return { attachments };
       }),
 
-    setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => {
+    setConversionIdx: async (attachmentId: AttachmentId, conversionIdx: number | null) => {
       const { _getAttachment, _editAttachment } = _get();
       const attachment = _getAttachment(attachmentId);
       if (!attachment || attachment.conversionIdx === conversionIdx)
@@ -183,7 +185,7 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
 
       const editFn = (changes: Partial<Attachment>) => _editAttachment(attachmentId, changes);
 
-      attachmentConvert(attachment, conversionIdx, editFn);
+      await attachmentConvert(attachment, conversionIdx, editFn);
     },
 
     _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) =>

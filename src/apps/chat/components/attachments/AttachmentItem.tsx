@@ -16,10 +16,14 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
 import { Attachment, AttachmentConversionType, useAttachmentsStore } from './store-attachments';
 
+
+// enable for debugging
+const DEBUG_ATTACHMENTS = true;
 
 // default attachment width
 const ATTACHMENT_MIN_STYLE = {
@@ -71,6 +75,7 @@ const conversionTypeToIconMap: { [key in AttachmentConversionType]: React.Compon
   'rich-text': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
   'pdf-text': PictureAsPdfIcon,
+  'pdf-images': PictureAsPdfIcon,
   'image': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'unhandled': TextureIcon,
@@ -143,9 +148,16 @@ export function AttachmentItem(props: {
     useAttachmentsStore.getState().removeAttachment(aId);
   }, [aId]);
 
-  const handleSetConversionIdx = React.useCallback((conversionIdx: number | null) => {
-    useAttachmentsStore.getState().setConversionIdx(aId, conversionIdx);
-  }, [aId]);
+  const handleSetConversionIdx = React.useCallback(async (conversionIdx: number | null) =>
+      useAttachmentsStore.getState().setConversionIdx(aId, conversionIdx)
+    , [aId]);
+
+  const handleCopyOutputToClipboard = React.useCallback(() => {
+    if (aOutputs && aOutputs.length >= 1) {
+      const concat = aOutputs.map(output => output.text).join('\n');
+      copyToClipboard(concat, 'Attachment');
+    }
+  }, [aOutputs]);
 
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
@@ -259,7 +271,6 @@ export function AttachmentItem(props: {
             <KeyboardArrowRightIcon />
           </MenuItem>
         </Box>}
-
         {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
 
         {/* Render Conversions as menu items */}
@@ -270,21 +281,34 @@ export function AttachmentItem(props: {
         {/*</ListItem>}*/}
         {!isUnconverted && aConversions.map((conversion, idx) =>
           <MenuItem
-            // disabled={aConversions.length === 1}
+            disabled={conversion.disabled}
             key={'c-' + conversion.id}
-            onClick={() => idx !== aConversionIdx && handleSetConversionIdx(idx)}
+            onClick={async () => idx !== aConversionIdx && await handleSetConversionIdx(idx)}
           >
             <ListItemDecorator>
               <Radio checked={idx === aConversionIdx} />
             </ListItemDecorator>
-            {/*<Typography level={idx === aConversionIdx ? 'title-md' : 'body-md'}>*/}
-            <Typography>
-              {conversion.name}
-            </Typography>
+            {conversion.name}
           </MenuItem>,
         )}
-
         {!isUnconverted && <ListDivider />}
+
+        {DEBUG_ATTACHMENTS && (
+          <MenuItem onClick={handleCopyOutputToClipboard}>
+            <Box>
+              {!!aInput && <Typography level='body-xs'>
+                🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
+              </Typography>}
+              {/*<Typography level='body-xs'>*/}
+              {/*  Conversions: {aConversions.map(((conversion, idx) => ` ${conversion.id}${(idx === aConversionIdx) ? '*' : ''}`)).join(', ')}*/}
+              {/*</Typography>*/}
+              <Typography level='body-xs'>
+                🡒 {isNoOutput ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.text.length.toLocaleString()} bytes`).join(' · ')}
+              </Typography>
+            </Box>
+          </MenuItem>
+        )}
+        {DEBUG_ATTACHMENTS && <ListDivider />}
 
         {/* Destructive Operations */}
         <MenuItem onClick={handleInline}>
@@ -295,6 +319,7 @@ export function AttachmentItem(props: {
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
           Remove
         </MenuItem>
+
       </CloseableMenu>
     )}
 
