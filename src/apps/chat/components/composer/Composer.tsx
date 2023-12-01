@@ -36,14 +36,14 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { Attachments } from '../attachments/Attachments';
+import { Attachments } from './attachments/Attachments';
 import { ButtonCameraCapture } from './ButtonCameraCapture';
 import { ButtonClipboardPaste } from './ButtonClipboardPaste';
 import { ButtonFileAttach } from './ButtonFileAttach';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useAttachments } from '../attachments/useAttachments';
+import { useAttachments } from './attachments/useAttachments';
 import { useComposerStartupText } from './store-composer';
 
 

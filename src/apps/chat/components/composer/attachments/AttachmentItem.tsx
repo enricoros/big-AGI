@@ -160,11 +160,11 @@ export function AttachmentItem(props: {
   }, [aOutputs]);
 
 
-  const isUnmoveable = props.isPositionFirst && props.isPositionLast;
+  const isUnmovable = props.isPositionFirst && props.isPositionLast;
 
   const isInputLoading = attachment.inputLoading;
   const isInputError = !!attachment.inputError;
-  const hasInput = !!aInput;
+  // const hasInput = !!aInput;
 
   const isUnconverted = aConversions.length === 0;
 
@@ -258,7 +258,7 @@ export function AttachmentItem(props: {
       >
 
         {/* Move Arrows */}
-        {!isUnmoveable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {!isUnmovable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <MenuItem
             disabled={props.isPositionFirst}
             onClick={handleMoveUp}
@@ -274,7 +274,7 @@ export function AttachmentItem(props: {
             <KeyboardArrowRightIcon />
           </MenuItem>
         </Box>}
-        {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
+        {!isUnmovable && <ListDivider sx={{ mt: 0 }} />}
 
         {/* Render Conversions as menu items */}
         {/*{!isUnconverted && <ListItem>*/}
