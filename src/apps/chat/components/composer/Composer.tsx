@@ -118,7 +118,10 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const labsCalling = useUXLabsStore(state => state.labsCalling);
+  const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
+    labsCalling: state.labsCalling,
+    labsCameraDesktop: state.labsCameraDesktop,
+  }), shallow);
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -360,21 +363,40 @@ export function Composer(props: {
         <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
 
           {/* Vertical (insert) buttons */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
+          {isMobile ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 2 } }}>
 
-            {/* [mobile] Mic button */}
-            {isMobile && isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+              {/* [mobile] Mic button */}
+              {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
-            {/* Responsive Camera OCR button */}
-            <ButtonCameraCapture isMobile={isMobile} onAttachImage={handleAttachCameraImage} />
+              {/* Responsive Camera OCR button */}
+              <ButtonCameraCapture isMobile onAttachImage={handleAttachCameraImage} />
 
-            {/* Responsive Open Files button */}
-            <ButtonFileAttach isMobile={isMobile} onAttachFilePicker={handleAttachFilePicker} />
+              {/* Responsive Open Files button */}
+              <ButtonFileAttach isMobile onAttachFilePicker={handleAttachFilePicker} />
 
-            {/* Responsive Paste button */}
-            {supportsClipboardRead && <ButtonClipboardPaste isMobile={isMobile} isDeveloperMode={props.isDeveloperMode} onPaste={attachAppendClipboardItems} />}
+              {/* Responsive Paste button */}
+              {supportsClipboardRead && <ButtonClipboardPaste isMobile onPaste={attachAppendClipboardItems} />}
 
-          </Box>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0, md: 1 } }}>
+
+              {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
+              {/*  Attach*/}
+              {/*</FormHelperText>*/}
+
+              {/* Responsive Open Files button */}
+              <ButtonFileAttach onAttachFilePicker={handleAttachFilePicker} />
+
+              {/* Responsive Paste button */}
+              {supportsClipboardRead && <ButtonClipboardPaste onPaste={attachAppendClipboardItems} />}
+
+              {/* Responsive Camera OCR button */}
+              {labsCameraDesktop && <ButtonCameraCapture onAttachImage={handleAttachCameraImage} />}
+
+            </Box>
+          )}
 
           {/* Vertical stacked Edit box and Attachments */}
           <Box sx={{
