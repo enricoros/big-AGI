@@ -23,7 +23,7 @@ export const FormLabelStart = (props: {
       <FormLabel
         onClick={props.onClick}
         sx={{
-          width: settingsCol1Width,
+          minWidth: settingsCol1Width,
           ...(!!props.onClick && { cursor: 'pointer', textDecoration: 'underline' }),
           ...props.sx,
         }}
