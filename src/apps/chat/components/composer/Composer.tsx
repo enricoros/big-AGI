@@ -343,6 +343,7 @@ export function Composer(props: {
   const isReAct = chatModeId === 'react';
   const isDraw = chatModeId === 'draw-imagine';
   const isDrawPlus = chatModeId === 'draw-imagine-plus';
+  const buttonColor: ColorPaletteProp = isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary';
 
   const textPlaceholder: string =
     isDrawPlus
@@ -554,9 +555,16 @@ export function Composer(props: {
                     Stop
                   </Button>
                 ) : (
-                  <ButtonGroup variant={isWriteUser ? 'solid' : 'solid'} color={isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary'} sx={{ flexGrow: 1 }}>
+                  <ButtonGroup
+                    variant={isWriteUser ? 'outlined' : 'solid'}
+                    color={buttonColor}
+                    sx={{
+                      flexGrow: 1,
+                      boxShadow: isMobile ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 30%)`,
+                    }}
+                  >
                     <Button
-                      fullWidth variant={isWriteUser ? 'soft' : 'solid'} color={isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary'} disabled={!props.conversationId || !chatLLM || !attachmentsReady}
+                      fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsReady}
                       onClick={() => handleSendClicked(chatModeId)}
                       endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                     >
