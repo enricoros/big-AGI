@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import type { AttachmentConversion } from './logic/conversions';
 import { attachmentDefineConversions, attachmentResolveInputAsync, createAttachment } from './logic';
 
 
@@ -36,6 +35,20 @@ export type AttachmentInput = {
   altData?: string; // Alternative data for the input
   // preview?: AttachmentPreview; // Preview of the input
 };
+
+export type AttachmentConversion = {
+  id: 'text' | 'rich-text' | 'rich-text-table',
+  name: string;
+
+
+  // cname: ConversionName; // The type of conversion
+  // outputType: ConversionOutputType; // The type of the output after conversion
+  // status: 'pending' | 'converting' | 'completed' | 'failed'; // The status of the conversion
+  // isAutonomous: boolean; // Whether the conversion does not require user input
+  // isAsync: boolean; // Whether the conversion is asynchronous
+  // progress: number; // Conversion progress percentage (0..1)
+  // errorMessage?: string; // Error message if the conversion failed
+}
 
 export type Attachment = {
   readonly id: AttachmentId;
@@ -89,12 +102,13 @@ interface AttachmentsStore {
 
   attachments: Attachment[];
 
-  getAttachment: (attachmentId: AttachmentId) => Attachment | undefined;
-
   createAttachment: (sources: AttachmentSource) => void;
   clearAttachments: () => void;
   removeAttachment: (attachmentId: AttachmentId) => void;
-  editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) => void;
+  moveAttachment: (attachmentId: AttachmentId, delta: 1 | -1) => void;
+
+  _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) => void;
+  _getAttachment: (attachmentId: AttachmentId) => Attachment | undefined;
 
 }
 
@@ -103,11 +117,8 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
 
     attachments: [],
 
-    getAttachment: (attachmentId: AttachmentId) =>
-      _get().attachments.find(a => a.id === attachmentId),
-
     createAttachment: (source: AttachmentSource) => {
-      const { attachments, editAttachment } = _get();
+      const { attachments, _editAttachment } = _get();
       const attachment = createAttachment(source, attachments.map(a => a.id));
       const attachmentId = attachment.id;
 
@@ -115,13 +126,17 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
         attachments: [...attachments, attachment],
       });
 
-      const edit = (changes: Partial<Attachment>) => editAttachment(attachmentId, changes);
+      const editFn = (changes: Partial<Attachment>) => _editAttachment(attachmentId, changes);
 
-      attachmentResolveInputAsync(attachment.source, edit).then(() => {
-        const attachment = _get().getAttachment(attachmentId);
+      attachmentResolveInputAsync(attachment.source, editFn).then(() => {
+        const attachment = _get()._getAttachment(attachmentId);
         if (attachment?.input)
-          attachmentDefineConversions(attachment.input, edit);
-        // no need for an 'else' case, as a loading error was set for sure
+          attachmentDefineConversions(attachment.source.type, attachment.input, editFn).then(() => {
+            const attachment = _get()._getAttachment(attachmentId);
+            console.log('done?', attachment);
+            // if (attachment?.conversions.length >= 1)
+            //   editFn({ conversionIdx: 0 });
+          });
       });
     },
 
@@ -134,7 +149,23 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
         attachments: state.attachments.filter(attachment => attachment.id !== attachmentId),
       })),
 
-    editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) =>
+    moveAttachment: (attachmentId: AttachmentId, delta: 1 | -1) =>
+      _set(state => {
+        const attachments = [...state.attachments];
+        const currentIdx = attachments.findIndex(a => a.id === attachmentId);
+
+        // If the attachment is not found, or if trying to move beyond the array boundaries, no move is needed
+        if (currentIdx === -1 || (currentIdx === 0 && delta === -1) || (currentIdx === attachments.length - 1 && delta === 1))
+          return state;
+
+        // Swap the attachment with the adjacent one in the direction of delta
+        const targetIdx = currentIdx + delta;
+        [attachments[currentIdx], attachments[targetIdx]] = [attachments[targetIdx], attachments[currentIdx]];
+
+        return { attachments };
+      }),
+
+    _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) =>
       _set(state => ({
         attachments: state.attachments.map((attachment: Attachment): Attachment =>
           attachment.id === attachmentId
@@ -142,6 +173,9 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
             : attachment,
         ),
       })),
+
+    _getAttachment: (attachmentId: AttachmentId) =>
+      _get().attachments.find(a => a.id === attachmentId),
 
   }),
 );
