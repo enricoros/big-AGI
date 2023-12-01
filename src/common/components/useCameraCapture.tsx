@@ -43,7 +43,7 @@ export function useCameraCapture() {
   // (once) enumerate video devices and auto-select the back-facing camera
   React.useEffect(() => {
     if (!navigator.mediaDevices) return;
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
+    void navigator.mediaDevices.enumerateDevices().then((devices) => {
       // get video devices
       const newVideoDevices = devices.filter(device => device.kind === 'videoinput');
       setCameras(newVideoDevices);

@@ -7,9 +7,10 @@ import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { Link } from '~/common/components/Link';
-import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
@@ -27,7 +28,7 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
   acc[key] = tileCols[index] * (value + 8 * tileSpacing) - 8 * tileSpacing;
   return acc;
 }, {} as Record<string, number>);
-const bpTileGap = { xs: 2, md: 3 };
+const bpTileGap = { xs: 0.5, md: 1 };
 
 
 // Add this utility function to get a random array element
@@ -38,17 +39,15 @@ const getRandomElement = <T, >(array: T[]): T | undefined =>
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PersonaSelector(props: { conversationId: string, runExample: (example: string) => void }) {
+export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: string) => void }) {
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { experimentalLabs, showFinder } = useUIPreferencesStore(state => ({
-    experimentalLabs: state.experimentalLabs,
-    showFinder: state.showPurposeFinder,
-  }), shallow);
+  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const labsPersonaYTCreator = useUXLabsStore(state => state.labsPersonaYTCreator);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -187,7 +186,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
             </Grid>
           ))}
           {/* Button to start the YouTube persona creator */}
-          {experimentalLabs && <Grid>
+          {labsPersonaYTCreator && <Grid>
             <Button
               variant='soft' color='neutral'
               component={Link} noLinkStyle href='/personas'
@@ -212,7 +211,6 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
             </Button>
           </Grid>}
         </Grid>
-
         <Typography
           level='body-sm'
           sx={{

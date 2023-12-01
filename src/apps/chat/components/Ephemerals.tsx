@@ -5,7 +5,7 @@ import { Box, Grid, IconButton, Sheet, Stack, styled, Typography, useTheme } fro
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { DEphemeral, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
 
 
 const StateLine = styled(Typography)(({ theme }) => ({
@@ -32,8 +32,6 @@ function PrimitiveRender({ name, value }: { name: string, value: string | number
     return <StateLine><b>{name}</b>: <b>{value}</b></StateLine>;
   else if (typeof value === 'boolean')
     return <StateLine><b>{name}</b>: <b>{value ? 'true' : 'false'}</b></StateLine>;
-  else if (typeof value === 'symbol')
-    return <StateLine><b>{name}</b>: <b>{value.toString()}</b></StateLine>;
   else
     return <StateLine><b>{name}</b>: unknown?</StateLine>;
 }
@@ -126,7 +124,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 }
 
 
-export function Ephemerals(props: { conversationId: string | null, sx?: SxProps }) {
+export function Ephemerals(props: { conversationId: DConversationId | null, sx?: SxProps }) {
   // global state
   const theme = useTheme();
   const ephemerals = useChatStore(state => {

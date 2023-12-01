@@ -1,18 +1,26 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Checkbox, Divider } from '@mui/joy';
+import { Box, Checkbox, Divider } from '@mui/joy';
+
+import { DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { useUIStateStore } from '~/common/state/store-ui';
-
-import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForDefaultVendor } from '~/modules/llms/vendors/vendor.registry';
+import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { settingsGap } from '~/common/app.theme';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsSourceSelector } from './ModelsSourceSelector';
-import { VendorSourceSetup } from './VendorSourceSetup';
+
+
+function VendorSourceSetup(props: { source: DModelSource }) {
+  const vendor = findVendorById(props.source.vId);
+  if (!vendor)
+    return 'Configuration issue: Vendor not found for Source ' + props.source.id;
+  return <vendor.SourceSetupComponent sourceId={props.source.id} />;
+}
 
 
 export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
@@ -22,7 +30,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
-  const { modelsSetupOpen, openModelsSetup, closeModelsSetup, llmOptionsId } = useUIStateStore();
+  const [modelsSetupOpen, llmOptionsId] = useLayoutModelsSetup();
   const { modelSources, llmCount } = useModelsStore(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
@@ -39,8 +47,8 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   // if no sources at startup, open the modal
   React.useEffect(() => {
     if (!selectedSourceId && !props.suspendAutoModelsSetup)
-      openModelsSetup();
-  }, [selectedSourceId, openModelsSetup, props.suspendAutoModelsSetup]);
+      openLayoutModelsSetup();
+  }, [selectedSourceId, props.suspendAutoModelsSetup]);
 
   // add the default source on cold - will require setup
   React.useEffect(() => {
@@ -61,14 +69,18 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
           checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
         /> : undefined
       }
-      open={modelsSetupOpen} onClose={closeModelsSetup}
+      open onClose={closeLayoutModelsSetup}
     >
 
       <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
 
       {!!activeSource && <Divider />}
 
-      {!!activeSource && <VendorSourceSetup source={activeSource} />}
+      {!!activeSource && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+          <VendorSourceSetup source={activeSource} />
+        </Box>
+      )}
 
       {!!llmCount && <Divider />}
 

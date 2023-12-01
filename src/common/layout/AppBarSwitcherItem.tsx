@@ -4,10 +4,10 @@ import { useRouter } from 'next/router';
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { BringTheLove, DiscordIcon } from '~/common/layout/AppBarSupportItem';
-import { Brand } from '~/common/brand';
+import { Brand } from '../app.config';
 
-import { setLayoutMenuAnchor } from './store-applayout';
+import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
+import { closeLayoutMenu } from './store-applayout';
 
 
 // routes for the quick switcher menu item
@@ -42,8 +42,8 @@ export function AppBarSwitcherItem() {
   // switcher
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
-      setLayoutMenuAnchor(null);
-      routerPush(AppRouteMap[app].route).then(() => null);
+      closeLayoutMenu();
+      void routerPush(AppRouteMap[app].route);
     }
   };
 

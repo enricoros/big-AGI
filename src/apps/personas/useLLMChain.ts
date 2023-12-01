@@ -89,7 +89,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
       .catch((err) => {
         stepDone = true;
         if (!stepAbortController.signal.aborted)
-          setError(`Transformation Error: ${err?.message || err?.toString() || err || 'unknown'}`);
+          setError(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
       });
 
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted
@@ -141,9 +141,8 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
   if (!llm)
     throw new Error(`LLM ${llmId} not found`);
 
-  const maxTokens = llm.contextTokens;
-  const overrideResponseTokens = Math.floor(maxTokens / 3);
-  const inputTokens = maxTokens - overrideResponseTokens;
+  const overrideResponseTokens = llm.maxOutputTokens;
+  const inputTokens = llm.contextTokens - overrideResponseTokens;
   const safeInputLength = Math.floor(inputTokens * 2); // it's deemed around 4
 
   return {

@@ -12,7 +12,7 @@ export function GoodModal(props: {
   strongerTitle?: boolean, noTitleBar?: boolean,
   dividers?: boolean,
   open: boolean,
-  onClose: () => void,
+  onClose?: () => void,
   startButton?: React.JSX.Element,
   sx?: SxProps,
   children: React.ReactNode,
@@ -32,7 +32,7 @@ export function GoodModal(props: {
             <Typography level={props.strongerTitle !== true ? 'title-md' : 'title-lg'}>
               {props.title || ''}
             </Typography>
-            <ModalClose sx={{ position: 'static', mr: -1 }} />
+            {!!props.onClose && <ModalClose sx={{ position: 'static', mr: -1 }} />}
           </Box>}
 
           {props.dividers === true && <Divider />}
@@ -41,12 +41,12 @@ export function GoodModal(props: {
 
           {props.dividers === true && <Divider />}
 
-          <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
+          {(!!props.startButton || !!props.onClose) && <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
             {props.startButton}
-            <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
+            {!!props.onClose && <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
               Close
-            </Button>
-          </Box>
+            </Button>}
+          </Box>}
 
         </ModalDialog>
       </ModalOverflow>

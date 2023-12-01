@@ -4,11 +4,12 @@
 
 import { DLLMId } from '~/modules/llms/store-llms';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
+import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
 
 
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629
-const reActPrompt: string =
+const reActPrompt = (enableBrowse: boolean): string =>
   `You are a Question Answering AI with reasoning ability.
 You will receive a Question from the User.
 In order to answer any Question, you run in a loop of Thought, Action, PAUSE, Observation.
@@ -28,7 +29,11 @@ e.g. google: Django
 Returns google custom search results
 ALWAYS look up on google when the question is related to live events or factual information, such as sports, news, or weather.
 
-calculate:
+` + (enableBrowse ? `loadUrl:
+e.g. loadUrl: https://arxiv.org/abs/1706.03762
+Opens the given URL and displays it
+
+` : '') + `calculate:
 e.g. calculate: 4 * 7 / 3
 Runs a calculation and returns the number - uses Python so be sure to use floating point syntax if necessary
 
@@ -76,16 +81,18 @@ interface State {
 export class Agent {
 
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
-  async reAct(question: string, llmId: DLLMId, maxTurns = 5, log: (...data: any[]) => void = console.log, show: (state: object) => void): Promise<string> {
+  async reAct(question: string, llmId: DLLMId, maxTurns = 5, enableBrowse = false,
+              appendLog: (...data: any[]) => void = console.log,
+              showState: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
-    const S: State = this.initialize(`Question: ${question}`);
-    show(S);
+    const S: State = this.initialize(`Question: ${question}`, enableBrowse);
+    showState(S);
     while (i < maxTurns && S.result === undefined) {
       i++;
-      log(`\n## Turn ${i}`);
-      await this.step(S, llmId, log);
-      show(S);
+      appendLog(`\n## Turn ${i}`);
+      await this.step(S, llmId, appendLog);
+      showState(S);
     }
     // return only the 'Answer: ' part of the result
     if (S.result) {
@@ -96,9 +103,9 @@ export class Agent {
     return S.result || 'No result';
   }
 
-  initialize(question: string): State {
+  initialize(question: string, enableBrowse: boolean): State {
     return {
-      messages: [{ role: 'system', content: reActPrompt.replaceAll('{{currentDate}}', new Date().toISOString().slice(0, 10)) }],
+      messages: [{ role: 'system', content: reActPrompt(enableBrowse).replaceAll('{{currentDate}}', new Date().toISOString().slice(0, 10)) }],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
@@ -178,10 +185,21 @@ async function search(query: string): Promise<string> {
   }
 }
 
+async function browse(url: string): Promise<string> {
+  try {
+    const data = await callBrowseFetchPage(url);
+    return JSON.stringify(data ? { text: data } : { error: 'Issue reading the page' });
+  } catch (error) {
+    console.error('Error browsing:', (error as Error).message);
+    return 'An error occurred while browsing to the URL. Missing WSS Key?';
+  }
+}
+
 const calculate = async (what: string): Promise<string> => String(eval(what));
 
 const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
   google: search,
+  loadUrl: browse,
   calculate: calculate,
 };

@@ -1,15 +1,20 @@
+import { backendCaps } from '~/modules/backend/state-backend';
+
+import { CapabilityProdiaImageGeneration } from '~/common/components/useCapabilities';
 import { apiAsync } from '~/common/util/trpc.client';
 
-import { useProdiaStore } from './store-prodia';
+import { useProdiaStore } from './store-module-prodia';
 
-
-export const requireUserKeyProdia = !process.env.HAS_SERVER_KEY_PRODIA;
-
-export const canUseProdia = (): boolean => !!useProdiaStore.getState().prodiaModelId || !requireUserKeyProdia;
 
 export const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 36;
 
 export const CmdRunProdia: string[] = ['/imagine', '/img'];
+
+export function useCapability(): CapabilityProdiaImageGeneration {
+  const loadedModels = useProdiaStore(state => !!state.prodiaModelId);
+  const isConfiguredServerSide = backendCaps().hasImagingProdia;
+  return { mayWork: isConfiguredServerSide || loadedModels };
+}
 
 
 export async function prodiaGenerateImage(count: number, imageText: string) {

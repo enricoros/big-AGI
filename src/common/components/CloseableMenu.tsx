@@ -3,7 +3,7 @@ import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
 import { MenuList, styled, VariantProp } from '@mui/joy';
-import { SxProps } from '@mui/system';
+import { SxProps } from '@mui/joy/styles/types';
 
 
 // adds the 'sx' prop to the Popper, and defaults zIndex to 1000
@@ -27,6 +27,7 @@ export function CloseableMenu(props: {
   // color?: ColorPaletteProp,
   // size?: 'sm' | 'md' | 'lg',
   placement?: PopperPlacementType,
+  placementOffset?: number[],
   maxHeightGapPx?: number,
   noTopPadding?: boolean,
   noBottomPadding?: boolean,
@@ -60,7 +61,7 @@ export function CloseableMenu(props: {
       modifiers={[{
         name: 'offset',
         options: {
-          offset: [0, 4],
+          offset: props.placementOffset || [0, 4],
         },
       }]}
       sx={props.zIndex

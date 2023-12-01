@@ -34,7 +34,7 @@ Fork the repository to your personal GitHub account.
 2. On this page, set your **Project name**, **Production branch** (e.g., main), and your Build settings
 3. Choose `Next.js` from the **Framework preset** dropdown menu
 4. Set a custom **Build Command**:
-    - `rm pages/api/trpc-node/[trpc].ts && npx @cloudflare/next-on-pages@1`
+    - `rm app/api/trpc-node/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`
     - see the tradeoffs for this deletion on the notice at the top
 5. Keep the **Build output directory** as default
 6. Click the **Save and Deploy** button
@@ -44,11 +44,18 @@ Fork the repository to your personal GitHub account.
 Observe the process as it initializes your build environment, clones the GitHub repository, builds the application, and deploys it
 to the Cloudflare Network. Once complete, proceed to the project you created.
 
-## Step 5: (Optional) Custom Domain Configuration
+## Step 5: Required: Set the `nodejs_compat` compatibility flag
+
+1. Navigate to the [Settings > Functions](https://dash.cloudflare.com/?to=/:account/pages/view/:pages-project/settings/functions) page of your newly created project
+2. Scroll to `Compatibility flags` and enter "`nodejs_compat`" for both **Production** and **Preview** environments.
+   It should look like this: ![](pixels/config-deploy-cloudflare-compat2.png)
+3. Re-deploy your project for the new flags to take effect
+
+## Step 6: (Optional) Custom Domain Configuration
 
 Use the `Custom domains` tab to set up your domain via CNAME.
 
-## Step 6: (Optional) Access Policy and Web Analytics Configuration
+## Step 7: (Optional) Access Policy and Web Analytics Configuration
 
 Navigate to the `Settings` page and enable the following settings:
 

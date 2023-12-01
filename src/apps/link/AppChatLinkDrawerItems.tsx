@@ -4,12 +4,12 @@ import TimeAgo from 'react-timeago';
 import { Box, ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { useChatLinkItems } from '../chat/trade/store-sharing';
+import { useChatLinkItems } from '~/modules/trade/store-module-trade';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
-import { closeLayoutDrawerMenu } from '~/common/layout/store-applayout';
-import { getChatLinkRelativePath, getHomeLink } from '~/common/routes';
+import { closeLayoutDrawer } from '~/common/layout/store-applayout';
+import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
 
 
 /**
@@ -27,8 +27,8 @@ export function AppChatLinkDrawerItems() {
   return <>
 
     <MenuItem
-      onClick={closeLayoutDrawerMenu}
-      component={Link} href={getHomeLink()} noLinkStyle
+      onClick={closeLayoutDrawer}
+      component={Link} href={ROUTE_INDEX} noLinkStyle
     >
       <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
       {Brand.Title.Base}

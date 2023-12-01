@@ -68,7 +68,10 @@ export function TokenBadge({ directTokens, indirectTokens, tokenLimit, showExces
           <span>{value.toLocaleString()}</span>
         </Tooltip>
       }
-      sx={outerSx}
+      sx={{
+        ...outerSx,
+        cursor: 'help',
+      }}
       slotProps={{
         badge: {
           sx: innerSx,
