@@ -9,6 +9,11 @@ import { attachmentConvert, attachmentCreate, attachmentDefineConversions, attac
 export type AttachmentId = string;
 export type AttachmentDTOrigin = 'drop' | 'paste';
 export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
+export type AttachmentConversionType =
+  | 'text' | 'rich-text' | 'rich-text-table'
+  | 'pdf-text'
+  | 'image' | 'image-ocr'
+  | 'unhandled';
 
 export type AttachmentSource = {
   media: 'url';
@@ -36,7 +41,7 @@ export type AttachmentInput = {
 };
 
 export type AttachmentConversion = {
-  id: 'text' | 'rich-text' | 'rich-text-table' | 'image' | 'image-ocr' | 'unhandled';
+  id: AttachmentConversionType;
   name: string;
   // outputType: ConversionOutputType; // The type of the output after conversion
   // isAutonomous: boolean; // Whether the conversion does not require user input

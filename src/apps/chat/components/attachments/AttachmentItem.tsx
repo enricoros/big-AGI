@@ -1,15 +1,16 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Sheet, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItemDecorator, MenuItem, Radio, Sheet, Typography } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import ClearIcon from '@mui/icons-material/Clear';
-import CloseIcon from '@mui/icons-material/Close';
 import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
+import TextureIcon from '@mui/icons-material/Texture';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -17,7 +18,7 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import { Attachment, useAttachmentsStore } from './store-attachments';
+import { Attachment, AttachmentConversionType, useAttachmentsStore } from './store-attachments';
 
 
 // default attachment width
@@ -65,28 +66,24 @@ const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
+const conversionTypeToIconMap: { [key in AttachmentConversionType]: React.ComponentType<any> } = {
+  'text': TextFieldsIcon,
+  'rich-text': CodeIcon,
+  'rich-text-table': PivotTableChartIcon,
+  'pdf-text': PictureAsPdfIcon,
+  'image': ImageOutlinedIcon,
+  'image-ocr': AbcIcon,
+  'unhandled': TextureIcon,
+};
+
 function attachmentIcon(attachment: Attachment) {
   const conversion = attachment.conversionIdx !== null ? attachment.conversions[attachment.conversionIdx] ?? null : null;
-  if (!conversion)
-    return null;
-  const iconSx = { width: 24, height: 24 };
-  switch (conversion.id) {
-    case 'text':
-      return <TextFieldsIcon sx={iconSx} />;
-    case 'rich-text':
-      return <CodeIcon sx={iconSx} />;
-    case 'rich-text-table':
-      return <PivotTableChartIcon sx={iconSx} />;
-    case 'image':
-      //   return <img src={conversion.url} alt={conversion.name} style={{ maxHeight: '100%', maxWidth: '100%' }} />;
-      return <ImageOutlinedIcon sx={iconSx} />;
-    case 'image-ocr':
-      return <AbcIcon sx={iconSx} />;
-    case 'unhandled':
-      return <CloseIcon sx={iconSx} color='warning' />;
-    default:
-      return null;
+  if (conversion && conversion.id) {
+    const Icon = conversionTypeToIconMap[conversion.id] ?? null;
+    if (Icon)
+      return <Icon sx={{ width: 24, height: 24 }} />;
   }
+  return null;
 }
 
 
@@ -236,7 +233,6 @@ export function AttachmentItem(props: {
           </Button>
         )}
     </GoodTooltip>
-
 
     {/* individual operations menu */}
     {!!menuAnchor && (

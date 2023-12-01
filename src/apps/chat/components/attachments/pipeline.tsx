@@ -123,11 +123,8 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
   switch (true) {
 
     // plain text types
-    case input.mimeType === 'application/json':
-    case input.mimeType === 'text/csv':
-    case input.mimeType === 'text/plain':
-
-      // handle a secondary layer of HTML 'text' origins (drop, paste, clipboard-read)
+    case ['text/plain', 'text/html', 'text/markdown', 'text/csv'].includes(input.mimeType):
+      // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
 
@@ -152,6 +149,11 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
           name: 'Html',
         });
       }
+      break;
+
+    // PDF
+    case ['application/pdf', 'application/x-pdf', 'application/acrobat'].includes(input.mimeType):
+      conversions.push({ id: 'pdf-text', name: `PDF To Text` });
       break;
 
     // images
