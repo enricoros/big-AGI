@@ -23,6 +23,7 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
@@ -48,7 +49,7 @@ import { useComposerStartupText } from './store-composer';
 
 
 const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip placement='top' title={
+  <GoodTooltip placement='top' title={
     <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
       Voice input<br />
       <KeyStroke combo='Ctrl + M' />
@@ -57,7 +58,7 @@ const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onCli
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <MicIcon />
     </IconButton>
-  </Tooltip>;
+  </GoodTooltip>;
 
 const MicContinuationButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
   <Tooltip placement='bottom' title={
