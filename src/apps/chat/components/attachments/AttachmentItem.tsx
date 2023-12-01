@@ -288,7 +288,12 @@ export function AttachmentItem(props: {
             <ListItemDecorator>
               <Radio checked={idx === aConversionIdx} />
             </ListItemDecorator>
-            {conversion.name}
+            {conversion.unsupported ? <Box>
+              Unsupported 🤔
+              <Typography level='body-xs'>
+                {conversion.name}
+              </Typography>
+            </Box> : conversion.name}
           </MenuItem>,
         )}
         {!isUnconverted && <ListDivider />}

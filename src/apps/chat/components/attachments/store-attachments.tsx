@@ -44,6 +44,7 @@ export type AttachmentConversion = {
   id: AttachmentConversionType;
   name: string;
   disabled?: boolean;
+  unsupported?: boolean;
   // outputType: ConversionOutputType; // The type of the output after conversion
   // isAutonomous: boolean; // Whether the conversion does not require user input
   // isAsync: boolean; // Whether the conversion is asynchronous
