@@ -1,4 +1,4 @@
-# `BIG-AGI` 🤖💬
+# `Lenns BIG-AGI`
 
 # Changes to this fork
 Fork with basic auth added.
@@ -12,30 +12,67 @@ BASIC_AUTH_PASSWORD=<your password>
 
 Update the middleware.ts to use the basic auth middleware on all routes in src/pages
 
-# Description
+# BIG-AGI 🧠✨
 
-Welcome to `big-AGI` 👋 your personal AGI application
-powered by OpenAI GPT-4 and beyond. Designed for smart humans and super-heroes,
-this responsive web app comes with Personas, Drawing, Code Execution, PDF imports, Voice support,
-data Rendering, AGI functions, chats and much more. Comes with plenty of `#big-AGI-energy` 🚀
+Welcome to big-AGI 👋, the GPT application for Pro users that combines utility,
+simplicity, and speed. Powered by the latest models from 7 vendors, including
+open-source, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
+visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
 
-[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=demo)](https://big-agi.com)
+Pros use big-AGI. 🚀 Developers love big-AGI. 🤖
+
+[![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
 Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
+## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2)
+
+big-AGI is an open book; our **[public roadmap](https://github.com/users/enricoros/projects/4/views/2)**
+shows the current developments and future ideas.
+
+- Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
+- Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
+
+### What's New in 1.6.0 - Nov 28, 2023 🌟
+
+- **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Branching Discussions**: Create new conversations from any message
+- **Keyboard Navigation**: Swift chat navigation with new shortcuts (e.g. ctrl+alt+left/right)
+- **Performance Boost**: Faster rendering for a smoother experience
+- **UI Enhancements**: Refined interface based on user feedback
+- **New Features**: Anthropic Claude 2.1, `/help` command, and Flattener tool
+- **For Developers**: Code quality upgrades and snackbar notifications
+
+### What's New in 1.5.0 - Nov 19, 2023
+
+- **Continued Voice**: Engage with hands-free interaction for a seamless experience
+- **Visualization Tool**: Create data representations with our new visualization capabilities
+- **Ollama Local Models**: Leverage local models support with our comprehensive guide
+- **Text Tools**: Enjoy tools including highlight differences to refine your content
+- **Mermaid Diagramming**: Render complex diagrams with our Mermaid language support
+- **OpenAI 1106 Chat Models**: Experience the cutting-edge capabilities of the latest OpenAI models
+- **SDXL Support**: Enhance your image generation with SDXL support for Prodia
+- **Cloudflare OpenAI API Gateway**: Integrate with Cloudflare for a robust API gateway
+- **Helicone for Anthropic**: Utilize Helicone's tools for Anthropic models
+
+Check out the [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), or
+the [past releases changelog](docs/changelog.md).
+
 ## ✨ Key Features 👊
 
 ![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
+[More](docs/pixels/big-AGI-compo2b.png), [screenshots](docs/pixels).
 
-- **AI Personas**
-- **Polished UI**: installable web app, mobile-friendly, token counters, etc.
-- **Fast UX**: Microphone, Camera OCR, Drag files, Voice Synthesis
-- **Models**: [OpenAI](https://platform.openai.com/overview), [Anthropic](https://www.anthropic.com/product), [Azure](https://oai.azure.com/), [OpenRouter](https://openrouter.ai/), [Local models](https://github.com/oobabooga/text-generation-webui), and more
-- **Private**: use your own API keys and self-host if you like
-- **Advanced**: PDF import & Summarization, code execution
-- **Integrations**: ElevenLabs, Helicone, Paste.gg, Prodia and more
+- **AI Personas**: Tailor your AI interactions with customizable personas
+- **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface
+- **Efficient Interaction**: Voice commands, OCR, and drag-and-drop file uploads
+- **Multiple AI Models**: Choose from a variety of leading AI providers
+- **Privacy First**: Self-host and use your own API keys for full control
+- **Advanced Tools**: Execute code, import PDFs, and summarize documents
+- **Seamless Integrations**: Enhance functionality with various third-party services
+- **Open Roadmap**: Contribute to the progress of big-AGI
 
 ## 💖 Support
 
@@ -53,95 +90,7 @@ Or fork & run on Vercel
 
 <br/>
 
-## 🧠 Latest Drops
-
-#### Next
-
-- **Cloudflare API Gateway** support
-- **Helicone for Anthropic** support
-- **Text Tools** - incl. highlight differences
-
-#### 1.4.0: Sept/Oct: scale OUT
-
-- **Expanded Model Support**: Azure and [OpenRouter](https://openrouter.ai/docs#models) models, including gpt-4-32k
-- **Share and clone** conversations with public links
-- Removed the 20 chats hard limit ([Ashesh3](https://github.com/enricoros/big-agi/pull/158))
-- Latex Rendering
-- Augmented Chat modes (Labs)
-
-#### July/Aug: More Better Faster
-
-- **Camera OCR** - real-world AI - take a picture of a text, and chat with it
-- **Anthropic models** support, e.g. Claude
-- **Backup/Restore** - save chats, and restore them later
-- **[Local model support with Oobabooga server](docs/config-local-oobabooga)** - run your own LLMs!
-- **Flatten conversations** - conversations summarizer with 4 modes
-- **Fork conversations** - create a new chat, to experiment with different endings
-- New commands: /s to add a System message, and /a for an Assistant message
-- New Chat modes: Write-only - just appends the message, without assistant response
-- Fix STOP generation - in sync with the Vercel team to fix a long-standing NextJS issue
-- Fixes on the HTML block - particularly useful to see error pages
-
-#### June: scale UP
-
-- **[New OpenAI Models](https://openai.com/blog/function-calling-and-other-api-updates) support** - 0613 models, including 16k and 32k
-- **Cleaner UI** - with rationalized Settings, Modals, and Configurators
-- **Dynamic Models Configurator** - easy connection with different model vendors
-- **Multiple Model Vendors Support** framework to support many LLM vendors
-- **Per-model Options** (temperature, tokens, etc.) for fine-tuning AI behavior to your needs
-- Support for GPT-4-32k
-- Improved Dialogs and Messages
-- Much Enhanced DX: TRPC integration, modularization, pluggable UI, etc
-
-#### April / May: more #big-agi-energy
-
-- **[Google Search](docs/pixels/feature_react_google.png)** active in ReAct - add your keys to Settings > Google
-  Search
-- **[Reason+Act](docs/pixels/feature_react_turn_on.png)** preview feature - activate with 2-taps on the 'Chat' button
-- **[Image Generation](docs/pixels/feature_imagine_command.png)** using Prodia (BYO Keys) - /imagine - or menu option
-- **[Voice Synthesis](docs/pixels/feature_voice_1.png)** 📣 with ElevenLabs, including selection of custom voices
-- **[Precise Token Counter](docs/pixels/feature_token_counter.png)** 📈 extra-useful to pack the context window
-- **[Install Mobile APP](docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
-- **[UI language](docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
-- **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
-- **Code Execution: [Codepen](https://codepen.io/)/[Replit](https://replit.com/)** 💻 (@harlanlewis)
-- **[SVG Drawing](docs/pixels/feature_svg_drawing.png)** - draw with AI 🎨
-- Chats: multiple chats, AI titles, Import/Export, Selection mode
-- Rendering: Markdown, SVG, improved Code blocks
-- Integrations: OpenAI organization ID
-- [Cloudflare deployment instructions](docs/deploy-cloudflare.md),
-  [awesome-agi](https://github.com/enricoros/awesome-agi)
-- [Typing Avatars](docs/pixels/gif_typing_040123.gif) ⌨️
-  <!-- p><a href="docs/pixels/gif_typing_040123.gif"><img src="docs/pixels/gif_typing_040123.gif" width='700' alt="New Typing Avatars"/></a></p -->
-
-#### March: first release
-
-- **[AI Personas](docs/pixels/feature_purpose_two.png)** - including Code, Science, Corporate, and Chat 🎭
-- **Privacy**: user-owned API keys 🔑 and localStorage 🛡️
-- **Context** - Attach or [Drag & Drop files](docs/pixels/feature_drop_target.png) to add them to the prompt 📁
-- **Syntax highlighting** - for multiple languages 🌈
-- **Code Execution: Sandpack** -
-  [now on branch]((https://github.com/enricoros/big-agi/commit/f678a0d463d5e9cf0733f577e11bd612b7902d89)) `variant-code-execution`
-- Chat with GPT-4 and 3.5 Turbo 🧠💨
-- Real-time streaming of AI responses ⚡
-- **Voice Input** 🎙️ - works great on Chrome / Windows
-- Integration: **[Paste.gg](docs/pixels/feature_paste_gg.png)** integration for chat sharing 📥
-- Integration: **[Helicone](https://www.helicone.ai/)** integration for API observability 📊
-- 🌙 Dark model - Wide mode ⛶
-
-<br/>
-
-## Why this? 💡
-
-Because the official Chat ___lacks important features___, is ___more limited than the api___, at times
-___slow or unavailable___, and you cannot deploy it yourself, remix it, add features, or share it with
-your friends.
-Our users report that ___big-AGI is faster___, ___more reliable___, and ___features rich___
-with features that matter to them.
-
-![Much features, so fun](docs/pixels/big-AGI-compo2b.png)
-
-## Develop 🧩
+## 🧩 Develop
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black)
@@ -156,44 +105,37 @@ npm install
 npm run dev
 ```
 
-Now the app should be running on `http://localhost:3000`
+The app will be running on `http://localhost:3000`
 
-### Integrations:
+Integrations:
 
+* Local models: Ollama, Oobabooga, LocalAi, etc.
 * [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
 * [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
-## Deploy with Docker 🐳
+## 🐳 Deploy with Docker
 
 For more detailed information on deploying with Docker, please refer to the [docker deployment documentation](docs/deploy-docker.md).
 
-### 🔧 Locally built image
-
-> Firstly, write all your API keys and env vars to an `.env` file, and make sure the env file is using *both build and run*.
-> See [docs/environment-variables.md](docs/environment-variables.md) for a list of all environment variables.
-
-```bash
+Build and run:
 
 ```bash
 docker build -t big-agi .
-docker run --detach 'big-agi'
+docker run -d -p 3000:3000 big-agi
 ``` 
 
-### Pre-built image
+Or run the official container:
 
-> Warning: the UI will still be asking for keys, as the image was built without the API keys
+- manually: `docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi`
+- or, with docker-compose: `docker-compose up`
 
-```bash
-docker-compose up
-```
-
-## Deploy with Cloudflare Pages ☁️
+## ☁️ Deploy on Cloudflare Pages
 
 Please refer to the [Cloudflare deployment documentation](docs/deploy-cloudflare.md).
 
-## Deploy with Vercel 🚀
+## 🚀 Deploy on Vercel
 
 Create your GitHub fork, create a Vercel project over that fork, and deploy it. Or press the button below for convenience.
 
