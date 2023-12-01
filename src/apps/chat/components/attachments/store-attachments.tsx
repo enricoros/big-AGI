@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { attachmentConvert, attachmentCreate, attachmentDefineConversions, attachmentLoadInputAsync } from './logic';
+import { attachmentConvert, attachmentCreate, attachmentDefineConversions, attachmentLoadInputAsync } from './pipeline';
 
 
 // Attachment Types
