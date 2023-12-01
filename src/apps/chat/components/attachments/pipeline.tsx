@@ -2,6 +2,7 @@ import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { createBase36Uid } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { pdfToText } from '~/common/util/pdfUtils';
 
 import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentOutput, AttachmentSource } from './store-attachments';
 
@@ -117,6 +118,9 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
 
 // Input data -> Conversions
 export function attachmentDefineConversions(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
+
+  const disableVision = true;
+
   // return all the possible conversions for the input
   const conversions: AttachmentConversion[] = [];
 
@@ -154,11 +158,12 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
     // PDF
     case ['application/pdf', 'application/x-pdf', 'application/acrobat'].includes(input.mimeType):
       conversions.push({ id: 'pdf-text', name: `PDF To Text` });
+      conversions.push({ id: 'pdf-images', name: `PDF To Images`, disabled: true });
       break;
 
     // images
     case input.mimeType.startsWith('image/'):
-      conversions.push({ id: 'image', name: `Image (GPT Vision)` });
+      conversions.push({ id: 'image', name: `Image (GPT Vision)`, disabled: disableVision });
       conversions.push({ id: 'image-ocr', name: 'As OCR' });
       break;
 
@@ -174,7 +179,7 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
 
 // Input & Conversion -> Outputs
-export function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
+export async function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
 
   // set conversion index
   conversionIdx = (conversionIdx !== null && conversionIdx >= 0 && conversionIdx < attachment.conversions.length) ? conversionIdx : null;
@@ -196,7 +201,7 @@ export function attachmentConvert(attachment: Readonly<Attachment>, conversionId
     // text as-is
     case 'text':
       outputs.push({
-        type: 'text',
+        type: 'text-block',
         text: dataToString(input.data),
         isEjectable: true,
       });
@@ -205,7 +210,7 @@ export function attachmentConvert(attachment: Readonly<Attachment>, conversionId
     // html as-is
     case 'rich-text':
       outputs.push({
-        type: 'text',
+        type: 'text-block',
         text: input.altData!,
         isEjectable: true,
       });
@@ -221,10 +226,29 @@ export function attachmentConvert(attachment: Readonly<Attachment>, conversionId
         mdTable = dataToString(input.data);
       }
       outputs.push({
-        type: 'text',
+        type: 'text-block',
         text: mdTable,
         isEjectable: true,
       });
+      break;
+
+    case 'pdf-text':
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for PDF conversion, got:', typeof input.data);
+        break;
+      }
+      // duplicate the ArrayBuffer to avoid mutation
+      const pdfData = new Uint8Array(input.data.slice(0));
+      const pdfText = await pdfToText(pdfData);
+      outputs.push({
+        type: 'text-block',
+        text: pdfText,
+        isEjectable: true,
+      });
+      break;
+
+    case 'pdf-images':
+      // TODO: extract all pages as individual images
       break;
 
     case 'image':
