@@ -1,8 +1,3 @@
-// Type guard to check if an item has a 'str' property
-function isTextItem(item: any): item is { str: string } {
-  return 'str' in item && typeof item.str === 'string';
-}
-
 /**
  * Extracts text from a PDF file
  *
@@ -12,17 +7,16 @@ function isTextItem(item: any): item is { str: string } {
  * is called. This is useful because the 'pdfjs-dist' library is quite large,
  * and we don't want to load it unless we need to. [Faster startup time!]
  *
- * @param file - The PDF file to extract text from
+ * @param pdfBuffer The content of a PDF file
  */
-export const pdfToText = async (file: File): Promise<string> => {
+export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
   // Dynamically import the 'pdfjs-dist' library [nextjs]
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
   // Set the worker script path
   GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument(arrayBuffer).promise;
+  const pdf = await getDocument(pdfBuffer).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
 
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -35,4 +29,9 @@ export const pdfToText = async (file: File): Promise<string> => {
   }
 
   return textPages.join(''); // Join all the page texts at the end
-};
+}
+
+// Type guard to check if an item has a 'str' property
+function isTextItem(item: any): item is { str: string } {
+  return 'str' in item && typeof item.str === 'string';
+}
