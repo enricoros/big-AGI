@@ -154,7 +154,14 @@ export function AttachmentItem(props: {
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
     if (aOutputs && aOutputs.length >= 1) {
-      const concat = aOutputs.map(output => output.text).join('\n');
+      const concat = aOutputs.map(output => {
+        if (output.type === 'text-block')
+          return output.text;
+        else if (output.type === 'image-part')
+          return output.base64Url;
+        else
+          return null;
+      }).join('\n\n');
       copyToClipboard(concat, 'Converted attachment');
     }
   }, [aOutputs]);
@@ -170,7 +177,6 @@ export function AttachmentItem(props: {
 
   const isOutputLoading = attachment.outputsLoading;
   const isNoOutput = aOutputs?.length === 0;
-  // const areOutputsEjectable = hasOutputs && aOutputs?.every(output => output.isEjectable);
 
 
   let variant: 'soft' | 'outlined' | 'contained';
@@ -241,7 +247,7 @@ export function AttachmentItem(props: {
                 {attachmentIcon(attachment)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
-                  : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>s
+                  : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
                     {attachmentText(attachment)}
                   </Typography>}
               </>}
@@ -311,7 +317,7 @@ export function AttachmentItem(props: {
               {/*  Conversions: {aConversions.map(((conversion, idx) => ` ${conversion.id}${(idx === aConversionIdx) ? '*' : ''}`)).join(', ')}*/}
               {/*</Typography>*/}
               <Typography level='body-xs'>
-                🡒 {isNoOutput ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.text.length.toLocaleString()} bytes`).join(' · ')}
+                🡒 {isNoOutput ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
               </Typography>
             </Box>
           </MenuItem>

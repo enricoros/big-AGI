@@ -83,7 +83,7 @@ export function Composer(props: {
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { inComposer: browsingInComposer } = useBrowseCapability();
-  const { assistantTyping, systemPurposeId, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
+  const { assistantTyping, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
@@ -99,18 +99,24 @@ export function Composer(props: {
     attachAppendFile,
     attachments,
     attachmentsReady,
+    attachmentsTokensCount: tokensComposerAttachments,
     clearAttachments,
-  } = useAttachments(browsingInComposer && !composeText.startsWith('/'));
+  } = useAttachments(chatLLMId, browsingInComposer && !composeText.startsWith('/'));
 
   // derived state
   const isDesktop = !isMobile;
-  const tokenLimit = chatLLM?.contextTokens || 0;
-  const directTokens = React.useMemo(() => {
-    return (!debouncedText || !chatLLMId) ? 4 : 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
+
+  // tokens derived state
+  const tokensComposerText = React.useMemo(() => {
+    if (!debouncedText || !chatLLMId)
+      return 0;
+    return 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
   }, [chatLLMId, debouncedText]);
-  const historyTokens = conversationTokenCount;
-  const responseTokens = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
-  // const remainingTokens = tokenLimit - directTokens - historyTokens - responseTokens;
+  const tokensComposer = tokensComposerText + tokensComposerAttachments;
+  const tokensHistory = _historyTokenCount;
+  const tokensReponseMax = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
+  const tokenLimit = chatLLM?.contextTokens || 0;
+  // const remainingTokens = tokenLimit - tokensComposer - tokensHistory - tokensReponseMax;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)
@@ -399,13 +405,13 @@ export function Composer(props: {
                     lineHeight: 1.75,
                   }} />
 
-                {tokenLimit > 0 && (directTokens > 0 || (historyTokens + responseTokens) > 0) && (
-                  <TokenProgressbar history={historyTokens} response={responseTokens} direct={directTokens} limit={tokenLimit} />
+                {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
+                  <TokenProgressbar direct={tokensComposer} history={tokensHistory} response={tokensReponseMax} limit={tokenLimit} />
                 )}
 
                 {!!tokenLimit && (
                   <TokenBadge
-                    directTokens={directTokens} indirectTokens={historyTokens + responseTokens} tokenLimit={tokenLimit}
+                    directTokens={tokensComposer} indirectTokens={tokensHistory + tokensReponseMax} limit={tokenLimit}
                     showExcess absoluteBottomRight
                   />
                 )}
