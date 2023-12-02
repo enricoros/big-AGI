@@ -406,14 +406,11 @@ export function Composer(props: {
                   }} />
 
                 {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
-                  <TokenProgressbar direct={tokensComposer} history={tokensHistory} response={tokensReponseMax} limit={tokenLimit} />
+                  <TokenProgressbar direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
                 )}
 
                 {!!tokenLimit && (
-                  <TokenBadge
-                    directTokens={tokensComposer} indirectTokens={tokensHistory + tokensReponseMax} limit={tokenLimit}
-                    showExcess absoluteBottomRight
-                  />
+                  <TokenBadge direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showExcess absoluteBottomRight />
                 )}
 
               </Box>

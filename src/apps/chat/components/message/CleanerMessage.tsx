@@ -94,7 +94,7 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
       </Typography>
 
       {props.remainingTokens !== undefined && <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
-        <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
+        <TokenBadge direct={messageTokenCount} limit={props.remainingTokens} inline />
       </Box>}
 
       <Typography level='body-md' sx={{
