@@ -46,7 +46,7 @@ export function TokenProgressbar(props: { direct: number, history: number, respo
 
   return (
 
-    <TokenTooltip color={color} message={message} placement='top-end'>
+    <TokenTooltip color={color} message={message}>
 
       <Box sx={{
         position: 'absolute', left: 1, right: 1, bottom: 1, height: containerHeight,

@@ -3,6 +3,12 @@ import * as React from 'react';
 import { Badge, Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
 
+function alignRight(value: number, columnSize: number = 7) {
+  const str = value.toLocaleString();
+  return str.padStart(columnSize);
+}
+
+
 export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number): {
   color: ColorPaletteProp, message: string, remainingTokens: number
 } {
@@ -20,18 +26,18 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, h
   // has full information (d + i < l)
   else if (historyTokens || responseMaxTokens) {
     message +=
-      `${Math.abs(remainingTokens).toLocaleString()} ${remainingTokens >= 0 ? 'available' : 'excess'} tokens\n\n` +
-      ` = Model max tokens: ${tokenLimit.toLocaleString()}\n` +
-      `     - This message: ${directTokens.toLocaleString()}\n` +
-      `          - History: ${(historyTokens || 0).toLocaleString()}\n` +
-      `     - Max response: ${(responseMaxTokens || 0).toLocaleString()}`;
+      `${Math.abs(remainingTokens).toLocaleString()} ${remainingTokens >= 0 ? 'available' : 'excess'} message tokens\n\n` +
+      ` = Model max tokens: ${alignRight(tokenLimit)}\n` +
+      `     - This message: ${alignRight(directTokens)}\n` +
+      `          - History: ${alignRight(historyTokens || 0)}\n` +
+      `     - Max response: ${alignRight(responseMaxTokens || 0)}`;
   }
   // Cleaner mode: d + ? < R (total is the remaining in this case)
   else {
     message +=
       `${(tokenLimit + usedTokens).toLocaleString()} available tokens after deleting this\n\n` +
-      ` = Currently free: ${tokenLimit.toLocaleString()}\n` +
-      `   + This message: ${usedTokens.toLocaleString()}`;
+      ` = Currently free: ${alignRight(tokenLimit)}\n` +
+      `   + This message: ${alignRight(usedTokens)}`;
   }
 
   const color: ColorPaletteProp =
@@ -50,11 +56,14 @@ export const TokenTooltip = (props: { message: string, color: ColorPaletteProp, 
     placement={props.placement}
     variant={props.color !== 'primary' ? 'solid' : 'soft'} color={props.color}
     title={
-      <Box sx={{ p: 1, whiteSpace: 'pre' }}>
+      <Box sx={{ p: 2, whiteSpace: 'pre' }}>
         {props.message}
       </Box>
     }
-    sx={{ fontFamily: 'code' }}
+    sx={{
+      fontFamily: 'code',
+      boxShadow: 'xl',
+    }}
   >
     {props.children}
   </Tooltip>;
