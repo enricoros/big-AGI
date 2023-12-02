@@ -2,13 +2,10 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
-import CallIcon from '@mui/icons-material/Call';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
-import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
@@ -23,8 +20,6 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { KeyStroke } from '~/common/components/KeyStroke';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
@@ -38,58 +33,18 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { Attachments } from './attachments/Attachments';
-import { ButtonCameraCapture } from './ButtonCameraCapture';
-import { ButtonClipboardPaste } from './ButtonClipboardPaste';
-import { ButtonFileAttach } from './ButtonFileAttach';
+import { ButtonAttachCamera } from './ButtonAttachCamera';
+import { ButtonAttachClipboard } from './ButtonAttachClipboard';
+import { ButtonAttachFile } from './ButtonAttachFile';
+import { ButtonCall } from './ButtonCall';
+import { ButtonMic } from './ButtonMic';
+import { ButtonMicContinuation } from './ButtonMicContinuation';
+import { ButtonOptionsDraw } from './ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
 import { useAttachments } from './attachments/useAttachments';
 import { useComposerStartupText } from './store-composer';
-
-
-const MicButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <GoodTooltip placement='top' title={
-    <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
-      Voice input<br />
-      <KeyStroke combo='Ctrl + M' />
-    </Box>
-  }>
-    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
-      <MicIcon />
-    </IconButton>
-  </GoodTooltip>;
-
-const MicContinuationButton = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip placement='bottom' title={
-    <Box sx={{ p: 1, lineHeight: 2, gap: 1 }}>
-      Voice Continuation
-    </Box>
-  }>
-    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
-      <AutoModeIcon />
-    </IconButton>
-  </Tooltip>;
-
-const CallButtonMobile = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
-  <IconButton variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} sx={props.sx}>
-    <CallIcon />
-  </IconButton>;
-
-const CallButtonDesktop = (props: { disabled?: boolean, onClick: () => void, sx?: SxProps }) =>
-  <Button variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} endDecorator={<CallIcon />} sx={props.sx}>
-    Call
-  </Button>;
-
-const DrawOptionsButtonMobile = (props: { onClick: () => void, sx?: SxProps }) =>
-  <IconButton variant='soft' color='warning' onClick={props.onClick} sx={props.sx}>
-    <FormatPaintIcon />
-  </IconButton>;
-
-const DrawOptionsButtonDesktop = (props: { onClick: () => void, sx?: SxProps }) =>
-  <Button variant='soft' color='warning' onClick={props.onClick} endDecorator={<FormatPaintIcon />} sx={props.sx}>
-    Options
-  </Button>;
 
 
 /**
@@ -370,16 +325,16 @@ export function Composer(props: {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
 
               {/* [mobile] Mic button */}
-              {isSpeechEnabled && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+              {isSpeechEnabled && <ButtonMic variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
               {/* Responsive Camera OCR button */}
-              <ButtonCameraCapture isMobile onAttachImage={handleAttachCameraImage} />
+              <ButtonAttachCamera isMobile onAttachImage={handleAttachCameraImage} />
 
               {/* Responsive Open Files button */}
-              <ButtonFileAttach isMobile onAttachFilePicker={handleAttachFilePicker} />
+              <ButtonAttachFile isMobile onAttachFilePicker={handleAttachFilePicker} />
 
               {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonClipboardPaste isMobile onPaste={attachAppendClipboardItems} />}
+              {supportsClipboardRead && <ButtonAttachClipboard isMobile onClick={attachAppendClipboardItems} />}
 
             </Box>
           ) : (
@@ -390,13 +345,13 @@ export function Composer(props: {
               {/*</FormHelperText>*/}
 
               {/* Responsive Open Files button */}
-              <ButtonFileAttach onAttachFilePicker={handleAttachFilePicker} />
+              <ButtonAttachFile onAttachFilePicker={handleAttachFilePicker} />
 
               {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonClipboardPaste onPaste={attachAppendClipboardItems} />}
+              {supportsClipboardRead && <ButtonAttachClipboard onClick={attachAppendClipboardItems} />}
 
               {/* Responsive Camera OCR button */}
-              {labsCameraDesktop && <ButtonCameraCapture onAttachImage={handleAttachCameraImage} />}
+              {labsCameraDesktop && <ButtonAttachCamera onAttachImage={handleAttachCameraImage} />}
 
             </Box>
           )}
@@ -466,10 +421,10 @@ export function Composer(props: {
                   mr: 0.25,
                   display: 'flex', flexDirection: 'column', gap: 0.25,
                 }}>
-                  {isDesktop && <MicButton variant={micVariant} color={micColor} onClick={handleToggleMic} sx={{ background: 'none' }} />}
+                  {isDesktop && <ButtonMic variant={micVariant} color={micColor} onClick={handleToggleMic} sx={{ background: 'none' }} />}
 
                   {micIsRunning && (
-                    <MicContinuationButton
+                    <ButtonMicContinuation
                       variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
                       onClick={handleToggleMicContinuation}
                     />
@@ -540,9 +495,9 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
-                  ? <CallButtonMobile disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : (isDraw || isDrawPlus)
-                    ? <DrawOptionsButtonMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                    ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
               )}
 
@@ -586,10 +541,10 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <CallButtonDesktop disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+              {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
-              {(isDraw || isDrawPlus) && <DrawOptionsButtonDesktop onClick={handleDrawOptionsClicked} />}
+              {(isDraw || isDrawPlus) && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
 
             </Box>}
 
