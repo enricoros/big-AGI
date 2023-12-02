@@ -292,11 +292,9 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
         const buffer = Buffer.from(input.data);
         const result = await recognize(buffer, undefined, {
           errorHandler: e => console.error(e),
-          logger: (m) => {
-            // noinspection SuspiciousTypeOfGuard
-            // if (typeof m.progress === 'number')
-            //   setOCRProgress(m.progress);
-            console.log('PDF to text progress:', m.progress);
+          logger: (message) => {
+            if (message.status === 'recognizing text')
+              console.log('OCR progress:', message.progress);
           },
         });
         outputs.push({
