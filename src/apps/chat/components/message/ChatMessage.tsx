@@ -525,7 +525,7 @@ export function ChatMessage(props: {
                         ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                         : block.type === 'diff'
                           ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
+                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
                             ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                             : <RenderText key={'text-' + index} textBlock={block} />)}
 
