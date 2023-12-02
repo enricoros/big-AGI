@@ -145,7 +145,7 @@ export function ContentReducer(props: {
               lineHeight: 1.75,
             }} />
 
-          <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
+          <TokenBadge direct={reducedTokens} limit={props.tokenLimit} absoluteBottomRight />
 
           {/* indicator we're processing */}
           {processing && (
