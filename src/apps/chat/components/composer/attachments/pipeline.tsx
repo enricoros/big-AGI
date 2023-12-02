@@ -4,13 +4,15 @@ import { createBase36Uid } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfUtils';
 
-import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentOutput, AttachmentSource } from './store-attachments';
+import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentOutput, AttachmentOutputType, AttachmentSource } from './store-attachments';
 
 
 // extensions to treat as plain text
 const PLAIN_TEXT_EXTENSIONS: string[] = ['.ts', '.tsx'];
 
-
+/**
+ * Creates a new Attachment object.
+ */
 export function attachmentCreate(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
   return {
     id: createBase36Uid(checkDuplicates),
@@ -27,8 +29,12 @@ export function attachmentCreate(source: AttachmentSource, checkDuplicates: Atta
   };
 }
 
-
-// Source -> Input
+/**
+ * Asynchronously loads the input for an Attachment object.
+ *
+ * @param {Readonly<AttachmentSource>} source - The source of the attachment.
+ * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ */
 export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource>, edit: (changes: Partial<Attachment>) => void) {
   edit({ inputLoading: true });
 
@@ -116,10 +122,16 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
   edit({ inputLoading: false });
 }
 
-
-// Input data -> Conversions
+/**
+ * Defines the possible conversions for an Attachment object based on its input type.
+ *
+ * @param {AttachmentSource['media']} sourceType - The media type of the attachment source.
+ * @param {Readonly<AttachmentInput>} input - The input of the attachment.
+ * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ */
 export function attachmentDefineConversions(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
 
+  // TEMP: this is to show feature dependency when defining conversions
   const disableVision = true;
 
   // return all the possible conversions for the input
@@ -164,7 +176,7 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
     // images
     case input.mimeType.startsWith('image/'):
-      conversions.push({ id: 'image', name: `Image (GPT Vision)`, disabled: disableVision });
+      conversions.push({ id: 'image', name: `Image (GPT Vision)` });
       conversions.push({ id: 'image-ocr', name: 'As OCR' });
       break;
 
@@ -178,16 +190,13 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
   edit({ conversions });
 }
 
-
-function dataToString(data: string | ArrayBuffer | null | undefined): string {
-  if (typeof data === 'string')
-    return data;
-  if (data instanceof ArrayBuffer)
-    return new TextDecoder().decode(data);
-  return '';
-}
-
-// Input & Conversion -> Outputs
+/**
+ * Converts the input of an Attachment object based on the selected conversion.
+ *
+ * @param {Readonly<Attachment>} attachment - The Attachment object to convert.
+ * @param {number | null} conversionIdx - The index of the selected conversion in the Attachment object's conversions array.
+ * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ */
 export async function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
 
   // set conversion index
@@ -207,6 +216,15 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
     outputsLoading: true,
   });
 
+  // input datacould be a string or an ArrayBuffer
+  function inputDataToString(data: string | ArrayBuffer | null | undefined): string {
+    if (typeof data === 'string')
+      return data;
+    if (data instanceof ArrayBuffer)
+      return new TextDecoder().decode(data);
+    return '';
+  }
+
   // apply conversion to the input
   const outputs: AttachmentOutput[] = [];
   switch (conversion.id) {
@@ -215,8 +233,7 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
     case 'text':
       outputs.push({
         type: 'text-block',
-        text: dataToString(input.data),
-        isEjectable: true,
+        text: inputDataToString(input.data),
       });
       break;
 
@@ -225,7 +242,6 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       outputs.push({
         type: 'text-block',
         text: input.altData!,
-        isEjectable: true,
       });
       break;
 
@@ -236,12 +252,11 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
         mdTable = htmlTableToMarkdown(input.altData!);
       } catch (error) {
         // fallback to text/plain
-        mdTable = dataToString(input.data);
+        mdTable = inputDataToString(input.data);
       }
       outputs.push({
         type: 'text-block',
         text: mdTable,
-        isEjectable: true,
       });
       break;
 
@@ -256,7 +271,6 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       outputs.push({
         type: 'text-block',
         text: pdfText,
-        isEjectable: true,
       });
       break;
 
@@ -288,7 +302,6 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
         outputs.push({
           type: 'text-block',
           text: result.data.text,
-          isEjectable: true,
         });
       } catch (error) {
         console.error(error);
@@ -305,4 +318,16 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
     outputsLoading: false,
     outputs,
   });
+}
+
+/**
+ * Checks if an Attachment object is ready to be ejected (must have outputs, and
+ * all AttachmentOutputType(s) are supported by the caller)
+ */
+export function attachmentIsEjectable(attachment: Readonly<Attachment>, supportedOutputs: AttachmentOutputType[]) {
+  if (!attachment.outputs)
+    return false;
+  if (attachment.outputs.length === 0)
+    return false;
+  return attachment.outputs.every(output => supportedOutputs.includes(output.type));
 }

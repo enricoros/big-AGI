@@ -2,15 +2,18 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
+import type { DLLMId } from '~/modules/llms/store-llms';
+
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { AttachmentDTOrigin, AttachmentFileOrigin, useAttachmentsStore } from './store-attachments';
+import { AttachmentDTOrigin, AttachmentFileOrigin, AttachmentOutputType, useAttachmentsStore } from './store-attachments';
+import { attachmentIsEjectable } from './pipeline';
 
 
-export const useAttachments = (enableUrlAttachments: boolean) => {
+export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) => {
 
   // state
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
@@ -21,7 +24,23 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
   }), shallow);
 
 
-  // Convenience functions
+  // derived state
+  const supportsImages = !!llmId?.endsWith('-vision-preview');
+  const attachmentsTokensCount = 0;
+
+  const attachmentsReady = React.useMemo(() => {
+    if (!attachments?.length)
+      return true;
+
+    const supportedOutputs: AttachmentOutputType[] = ['text-block'];
+    if (supportsImages)
+      supportedOutputs.push('image-part');
+
+    return attachments.every(attachment => attachmentIsEjectable(attachment, supportedOutputs));
+  }, [attachments, supportsImages]);
+
+
+  // Creation helpers
 
   const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideFileName?: string) =>
       createAttachment({
@@ -56,7 +75,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
     // attach as URL
     const textPlain = dt.getData('text/plain') || '';
-    if (textPlain && enableUrlAttachments) {
+    if (textPlain && enableLoadURLs) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl && textPlainUrl) {
         void createAttachment({
@@ -80,7 +99,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
     // did not attach anything from this data transfer
     return false;
-  }, [attachAppendFile, createAttachment, enableUrlAttachments]);
+  }, [attachAppendFile, createAttachment, enableLoadURLs]);
 
 
   const attachAppendClipboardItems = React.useCallback(async () => {
@@ -124,7 +143,7 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
       const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
 
       // attach as URL
-      if (textPlain && enableUrlAttachments) {
+      if (textPlain && enableLoadURLs) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
           void createAttachment({
@@ -145,13 +164,14 @@ export const useAttachments = (enableUrlAttachments: boolean) => {
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [attachAppendFile, createAttachment, enableUrlAttachments]);
+  }, [attachAppendFile, createAttachment, enableLoadURLs]);
 
 
   return {
     // state
     attachments,
-    attachmentsReady: !attachments.length || attachments.every(attachment => !!attachment.outputs && attachment.outputs.every(output => output.isEjectable)),
+    attachmentsReady,
+    attachmentsTokensCount,
 
     // create attachments
     attachAppendClipboardItems,

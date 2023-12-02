@@ -14,6 +14,7 @@ export type AttachmentConversionType =
   | 'pdf-text' | 'pdf-images'
   | 'image' | 'image-ocr'
   | 'unhandled';
+export type AttachmentOutputType = 'text-block' | 'image-part';
 
 export type AttachmentSource = {
   media: 'url';
@@ -55,8 +56,11 @@ export type AttachmentConversion = {
 export type AttachmentOutput = {
   type: 'text-block',
   text: string,
-  isEjectable: true,
-}
+} | {
+  type: 'image-part',
+  base64Url: string,
+  // TODO: not implemented yet
+};
 
 export type Attachment = {
   readonly id: AttachmentId;
@@ -77,7 +81,6 @@ export type Attachment = {
   // dataTitle: string; // outputType dependent
   // data: string; // outputType dependent
   // preview?: AttachmentPreview; // Preview of the output
-  // isEjectable: boolean; // Whether the attachment can be inlined as text
   // }[];
 
   // metadata: {

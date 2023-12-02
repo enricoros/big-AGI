@@ -46,16 +46,16 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, i
 /**
  * Simple little component to show the token count (and a tooltip on hover)
  */
-export function TokenBadge({ directTokens, indirectTokens, tokenLimit, showExcess, absoluteBottomRight, inline, sx }: { directTokens: number, indirectTokens?: number, tokenLimit: number, showExcess?: boolean, absoluteBottomRight?: boolean, inline?: boolean, sx?: SxProps }) {
+export function TokenBadge({ directTokens, indirectTokens, limit, showExcess, absoluteBottomRight, inline, sx }: { directTokens: number, indirectTokens?: number, limit: number, showExcess?: boolean, absoluteBottomRight?: boolean, inline?: boolean, sx?: SxProps }) {
 
   const fontSx: SxProps = { fontFamily: 'code', ...(sx || {}) };
   const outerSx: SxProps = absoluteBottomRight ? { position: 'absolute', bottom: 8, right: 8 } : {};
   const innerSx: SxProps = (absoluteBottomRight || inline) ? { position: 'static', transform: 'none', ...fontSx } : fontSx;
 
-  const { message, color, remainingTokens } = tokensPrettyMath(tokenLimit, directTokens, indirectTokens);
+  const { message, color, remainingTokens } = tokensPrettyMath(limit, directTokens, indirectTokens);
 
   // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
-  const value = (showExcess && (tokenLimit && remainingTokens <= 0))
+  const value = (showExcess && (limit && remainingTokens <= 0))
     ? Math.abs(remainingTokens)
     : directTokens;
 
