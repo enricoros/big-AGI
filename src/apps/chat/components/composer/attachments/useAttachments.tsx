@@ -6,11 +6,12 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
+import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
 import { AttachmentDTOrigin, AttachmentFileOrigin, AttachmentOutputType, useAttachmentsStore } from './store-attachments';
-import { attachmentIsEjectable } from './pipeline';
+import { attachmentIsEjectable, attachmentPreviewEjection } from './pipeline';
 
 
 export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) => {
@@ -24,10 +25,9 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
   }), shallow);
 
 
-  // derived state
-  const supportsImages = !!llmId?.endsWith('-vision-preview');
-  const attachmentsTokensCount = 0;
+  // memoed state (readiness and token count)
 
+  const supportsImages = !!llmId?.endsWith('-vision-preview');
   const attachmentsReady = React.useMemo(() => {
     if (!attachments?.length)
       return true;
@@ -38,6 +38,22 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
 
     return attachments.every(attachment => attachmentIsEjectable(attachment, supportedOutputs));
   }, [attachments, supportsImages]);
+
+
+  const attachmentsTokensCount = React.useMemo(() => {
+    if (!attachments?.length || !llmId)
+      return 0;
+
+    // sum up the tokens as if we performed a full eject of all outputs
+    const fusedText = attachments.reduce((fusedText, attachment) => {
+      const attachmentTextPreview = attachmentPreviewEjection(attachment);
+      if (!attachmentTextPreview)
+        return fusedText;
+      return `${fusedText}\n\n${attachmentTextPreview.trim()}`.trim();
+    }, '');
+
+    return countModelTokens(fusedText, llmId, 'attachments tokens count');
+  }, [attachments, llmId]);
 
 
   // Creation helpers
