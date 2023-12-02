@@ -116,7 +116,6 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = chatLLM?.contextTokens || 0;
-  // const remainingTokens = tokenLimit - tokensComposer - tokensHistory - tokensReponseMax;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)

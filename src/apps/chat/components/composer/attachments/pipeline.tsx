@@ -131,9 +131,6 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
  */
 export function attachmentDefineConversions(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
 
-  // TEMP: this is to show feature dependency when defining conversions
-  const disableVision = true;
-
   // return all the possible conversions for the input
   const conversions: AttachmentConversion[] = [];
 
@@ -328,4 +325,17 @@ export function attachmentIsEjectable(attachment: Readonly<Attachment>, supporte
   if (attachment.outputs.length === 0)
     return false;
   return attachment.outputs.every(output => supportedOutputs.includes(output.type));
+}
+
+export function attachmentPreviewEjection(attachment: Readonly<Attachment>): string | null {
+  if (!attachment.outputs)
+    return null;
+  if (attachment.outputs.length === 0)
+    return null;
+
+  return attachment.outputs.reduce((text, output) => {
+    if (output.type === 'text-block')
+      return `${text}\n\n\`\`\`\n${output.text}\n\`\`\`\n`;
+    return text;
+  }, '');
 }
