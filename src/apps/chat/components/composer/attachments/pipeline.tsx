@@ -173,8 +173,8 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
     // images
     case input.mimeType.startsWith('image/'):
-      conversions.push({ id: 'image', name: `Image (GPT Vision)` });
-      conversions.push({ id: 'image-ocr', name: 'As OCR' });
+      conversions.push({ id: 'image', name: `Image (needs gpt-vision)` });
+      conversions.push({ id: 'image-ocr', name: 'As Text (OCR)' });
       break;
 
     // catch-all
