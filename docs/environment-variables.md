@@ -9,10 +9,6 @@ which take place over _defaults_. This file is kept in sync with [`../src/server
 
 Environment variables can be set by creating a `.env` file in the root directory of the project.
 
-> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
-> If the Docker container is built without setting environment variables, the frontend UI will be unaware
-> of them, despite the backend being able to use them at runtime.
-
 The following is an example `.env` for copy-paste convenience:
 
 ```bash
@@ -45,6 +41,9 @@ GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
 # Browse
 PUPPETEER_WSS_ENDPOINT=
+
+# Backend Analytics
+BACKEND_ANALYTICS=
 ```
 
 ## Variables Documentation
@@ -108,6 +107,8 @@ Enable the app to Talk, Draw, and Google things up.
 | `PRODIA_API_KEY`         | Prodia API Key - used with '/imagine ...'                                                                               |
 | **Browse**               |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT` | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
+| **Backend**              |                                                                                                                         | 
+| `BACKEND_ANALYTICS`      | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
 
 ---
 

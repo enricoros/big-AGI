@@ -19,10 +19,13 @@ import { ZodError } from 'zod';
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
 
-export const createTRPCFetchContext = ({ /*req, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
+export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
-  return {};
+  return {
+    // only used by Backend Analytics
+    hostName: req.headers?.get('host') ?? 'localhost',
+  };
 };
 
 
