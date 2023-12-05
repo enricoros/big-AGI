@@ -13,6 +13,7 @@ export function FormSliderControl(props: {
   min?: number, max?: number, step?: number, defaultValue?: number,
   valueLabelDisplay?: 'on' | 'auto' | 'off',
   value: number, onChange: (value: number) => void,
+  endAdornment?: React.ReactNode,
 }) {
   return (
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -24,6 +25,7 @@ export function FormSliderControl(props: {
         valueLabelDisplay={props.valueLabelDisplay}
         // sx={{ py: 1, mt: 1.1 }}
       />
+      {props.endAdornment}
     </FormControl>
   );
 }
