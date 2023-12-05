@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
-import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -17,8 +16,8 @@ export function UxLabsSettings() {
 
   // external state
   const {
-    labsCalling, /*labsEnhancedUI,*/ labsLlmOvertemp, labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
-    setLabsCalling, /*setLabsEnhancedUI,*/ setLabsLlmOvertemp, setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
+    labsCalling, /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
+    setLabsCalling, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
@@ -43,11 +42,6 @@ export function UxLabsSettings() {
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
-    <FormSwitchControl
-      title={<><DeviceThermostatIcon sx={{ mr: 0.25 }} /> Overtemperature</>} description={labsLlmOvertemp ? 'LLMs ♨️' : 'Disabled'}
-      checked={labsLlmOvertemp} onChange={setLabsLlmOvertemp}
-    />
-
     {/*<FormSwitchControl*/}
     {/*  title='Enhanced UI' description={labsEnhancedUI ? 'Enabled' : 'Disabled'}*/}
     {/*  checked={labsEnhancedUI} onChange={setLabsEnhancedUI}*/}
@@ -56,7 +50,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools
+        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 
