@@ -14,8 +14,8 @@ import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/sto
 
 function AppBarLLMDropdown(props: {
   llms: DLLM[],
-  llmId: DLLMId | null,
-  setLlmId: (llmId: DLLMId | null) => void,
+  chatLlmId: DLLMId | null,
+  setChatLlmId: (llmId: DLLMId | null) => void,
   placeholder?: string,
 }) {
 
@@ -23,7 +23,7 @@ function AppBarLLMDropdown(props: {
   const llmItems: DropdownItems = {};
   let prevSourceId: DModelSourceId | null = null;
   for (const llm of props.llms) {
-    if (!llm.hidden || llm.id === props.llmId) {
+    if (!llm.hidden || llm.id === props.chatLlmId) {
       if (!prevSourceId || llm.sId !== prevSourceId) {
         if (prevSourceId)
           llmItems[`sep-${llm.id}`] = { type: 'separator', title: llm.sId };
@@ -33,22 +33,25 @@ function AppBarLLMDropdown(props: {
     }
   }
 
-  const handleChatLLMChange = (_event: any, value: DLLMId | null) => value && props.setLlmId(value);
+  const handleChatLLMChange = (_event: any, value: DLLMId | null) => value && props.setChatLlmId(value);
 
-  const handleOpenLLMOptions = () => props.llmId && openLayoutLLMOptions(props.llmId);
+  const handleOpenLLMOptions = () => props.chatLlmId && openLayoutLLMOptions(props.chatLlmId);
 
 
   return (
     <AppBarDropdown
       items={llmItems}
-      value={props.llmId} onChange={handleChatLLMChange}
+      value={props.chatLlmId} onChange={handleChatLLMChange}
       placeholder={props.placeholder || 'Models …'}
       appendOption={<>
 
-        {props.llmId && (
+        {props.chatLlmId && (
           <ListItemButton key='menu-opt' onClick={handleOpenLLMOptions}>
             <ListItemDecorator><SettingsIcon color='success' /></ListItemDecorator>
-            Options
+            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+              Options
+              <KeyStroke combo='Ctrl + Shift + O' />
+            </Box>
           </ListItemButton>
         )}
 
@@ -74,7 +77,7 @@ export function useChatLLMDropdown() {
   }), shallow);
 
   const chatLLMDropdown = React.useMemo(
-    () => <AppBarLLMDropdown llms={llms} llmId={chatLLMId} setLlmId={setChatLLMId} />,
+    () => <AppBarLLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />,
     [llms, chatLLMId, setChatLLMId],
   );
 

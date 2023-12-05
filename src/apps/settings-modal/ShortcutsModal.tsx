@@ -26,8 +26,9 @@ const shortcutsMd = `
 | Ctrl + Alt + D      | **Delete** chat                                 |
 | Ctrl + Alt + B      | **Branch** chat                                 |
 | **Settings**        |                                                 |
-| Ctrl + Shift + M    | 🧠 Models                                       |
 | Ctrl + Shift + P    | ⚙️ Preferences                                  |
+| Ctrl + Shift + M    | 🧠 Models                                       |
+| Ctrl + Shift + O    | Options (current Chat Model)                    |
 | Ctrl + Shift + ?    | Shortcuts                                       |
 
 `.trim();
