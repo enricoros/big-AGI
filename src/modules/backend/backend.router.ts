@@ -1,6 +1,8 @@
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 
+import { analyticsListCapabilities } from './backend.analytics';
+
 
 /**
  * This is the primary router for the backend. Mainly, this deals with letting
@@ -12,7 +14,8 @@ export const backendRouter = createTRPCRouter({
 
   /* List server-side capabilities (pre-configured by the deployer) */
   listCapabilities: publicProcedure
-    .query(async () => {
+    .query(async ({ ctx }) => {
+      analyticsListCapabilities(ctx.hostName);
       return {
         hasDB: !!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING,
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
