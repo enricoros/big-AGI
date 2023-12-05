@@ -27,6 +27,9 @@ interface UXLabsStore {
   labsSplitBranching: boolean;
   setLabsSplitBranching: (labsSplitBranching: boolean) => void;
 
+  labsLlmOvertemp: boolean;
+  setLabsLlmOvertemp: (labsLlmOvertemp: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -47,6 +50,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsSplitBranching: false,
       setLabsSplitBranching: (labsSplitBranching: boolean) => set({ labsSplitBranching }),
+
+      labsLlmOvertemp: false,
+      setLabsLlmOvertemp: (labsLlmOvertemp: boolean) => set({ labsLlmOvertemp }),
 
     }),
     {

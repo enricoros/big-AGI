@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { DLLM, useModelsStore } from '../../store-llms';
 import { LLMOptionsOpenAI } from './openai.vendor';
@@ -18,6 +19,10 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
 
 export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }) {
 
+  // external state
+  const labsLlmOvertemp = useUXLabsStore.getState().labsLlmOvertemp;
+
+  // derived state
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
 
@@ -25,8 +30,8 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
 
     <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
-      description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
-      min={0} max={1} step={0.1} defaultValue={0.5}
+      description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' :  llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
+      min={0} max={labsLlmOvertemp ? 2 : 1} step={0.1} defaultValue={0.5}
       valueLabelDisplay='on'
       value={llmTemperature}
       onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value })}

@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
+import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -16,8 +17,8 @@ export function UxLabsSettings() {
 
   // external state
   const {
-    labsCalling, /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
-    setLabsCalling, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
+    labsCalling, /*labsEnhancedUI,*/ labsLlmOvertemp, labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
+    setLabsCalling, /*setLabsEnhancedUI,*/ setLabsLlmOvertemp, setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
@@ -40,6 +41,11 @@ export function UxLabsSettings() {
     <FormSwitchControl
       title={<><VerticalSplitIcon /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'} disabled
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
+    />
+
+    <FormSwitchControl
+      title={<><DeviceThermostatIcon sx={{ mr: 0.25 }} /> Overtemperature</>} description={labsLlmOvertemp ? 'LLMs ♨️' : 'Disabled'}
+      checked={labsLlmOvertemp} onChange={setLabsLlmOvertemp}
     />
 
     {/*<FormSwitchControl*/}
