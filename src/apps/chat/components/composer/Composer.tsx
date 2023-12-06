@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
+import { keyframes } from '@emotion/react';
 
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
@@ -45,6 +46,18 @@ import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
 import { useAttachments } from './attachments/useAttachments';
 import { useComposerStartupText } from './store-composer';
+
+
+const animationStopEnter = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(8px)
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+`;
 
 
 /**
@@ -504,37 +517,39 @@ export function Composer(props: {
               )}
 
               {/* Responsive Send/Stop buttons */}
-              {assistantTyping
-                ? (
+              <ButtonGroup
+                variant={isWriteUser ? 'outlined' : 'solid'}
+                color={buttonColor}
+                sx={{
+                  flexGrow: 1,
+                  boxShadow: isMobile ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 20%)`,
+                }}
+              >
+                {!assistantTyping ? (
                   <Button
+                    key='composer-act'
+                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsReady}
+                    onClick={() => handleSendClicked(chatModeId)}
+                    endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+                  >
+                    {micContinuation && 'Voice '}
+                    {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
+                  </Button>
+                ) : (
+                  <Button
+                    key='composer-stop'
                     fullWidth variant='soft' color={isReAct ? 'success' : 'primary'} disabled={!props.conversationId}
                     onClick={handleStopClicked}
-                    endDecorator={<StopOutlinedIcon />}
+                    endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
+                    sx={{ animation: `${animationStopEnter} 0.1s ease-out` }}
                   >
                     Stop
                   </Button>
-                ) : (
-                  <ButtonGroup
-                    variant={isWriteUser ? 'outlined' : 'solid'}
-                    color={buttonColor}
-                    sx={{
-                      flexGrow: 1,
-                      boxShadow: isMobile ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 30%)`,
-                    }}
-                  >
-                    <Button
-                      fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsReady}
-                      onClick={() => handleSendClicked(chatModeId)}
-                      endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
-                    >
-                      {micContinuation && 'Voice '}
-                      {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
-                    </Button>
-                    <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
-                      <ExpandLessIcon />
-                    </IconButton>
-                  </ButtonGroup>
                 )}
+                <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
+                  <ExpandLessIcon />
+                </IconButton>
+              </ButtonGroup>
 
             </Box>
 
