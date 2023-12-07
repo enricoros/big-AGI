@@ -9,6 +9,7 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
 import type { Attachment, AttachmentId } from './store-attachments';
+import type { ComposerOutputPartType } from '../composer.types';
 import { AttachmentItem } from './AttachmentItem';
 import { AttachmentMenu } from './AttachmentMenu';
 
@@ -18,6 +19,7 @@ import { AttachmentMenu } from './AttachmentMenu';
  */
 export function Attachments(props: {
   attachments: Attachment[]
+  ejectableOutputPartTypes: ComposerOutputPartType[],
   onAttachmentsClear: () => void,
   onAttachmentsInline: () => void,
 }) {
@@ -124,6 +126,7 @@ export function Attachments(props: {
         attachment={itemMenuAttachment}
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === attachments.length - 1}
+        ejectableOutputPartTypes={props.ejectableOutputPartTypes}
         onAttachmentInline={handleAttachmentInline}
         onClose={handleItemMenuHide}
       />

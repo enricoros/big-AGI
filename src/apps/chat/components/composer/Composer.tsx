@@ -33,6 +33,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import type { ComposerOutputPartType } from './composer.types';
 import { Attachments } from './attachments/Attachments';
 import { ButtonAttachCamera } from './ButtonAttachCamera';
 import { ButtonAttachClipboard } from './ButtonAttachClipboard';
@@ -106,15 +107,20 @@ export function Composer(props: {
     };
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
+  const ejectableOutputPartTypes: ComposerOutputPartType[] = React.useMemo(() => {
+    const supportsImages = !!chatLLMId?.endsWith('-vision-preview');
+    return supportsImages ? ['text-block', 'image-part'] : ['text-block'];
+  }, [chatLLMId]);
+  const enableLoadUrls = browsingInComposer && !composeText.startsWith('/');
   const {
     attachAppendClipboardItems,
     attachAppendDataTransfer,
     attachAppendFile,
     attachments,
-    attachmentsReady,
+    attachmentsEjectable,
     attachmentsTokensCount: tokensComposerAttachments,
     clearAttachments,
-  } = useAttachments(chatLLMId, browsingInComposer && !composeText.startsWith('/'));
+  } = useAttachments(ejectableOutputPartTypes, chatLLMId, enableLoadUrls);
 
   // derived state
   const isDesktop = !isMobile;
@@ -374,7 +380,7 @@ export function Composer(props: {
             </Box>
           )}
 
-          {/* Vertical stacked Edit box and Attachments */}
+          {/* Vertically stacked [ Edit box + Overlays + Mic | Attachments ] */}
           <Box sx={{
             flexGrow: 1,
             display: 'flex', flexDirection: 'column', gap: 1,
@@ -493,6 +499,7 @@ export function Composer(props: {
             {/* Render any Attachments & menu items */}
             <Attachments
               attachments={attachments}
+              ejectableOutputPartTypes={ejectableOutputPartTypes}
               onAttachmentsClear={clearAttachments}
               onAttachmentsInline={() => console.warn('TODO: inline attachments')}
             />
@@ -528,7 +535,7 @@ export function Composer(props: {
                 {!assistantTyping ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsReady}
+                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsEjectable}
                     onClick={() => handleSendClicked(chatModeId)}
                     endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >

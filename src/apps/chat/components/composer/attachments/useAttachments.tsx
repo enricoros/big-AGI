@@ -15,7 +15,7 @@ import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsSt
 import { attachmentIsEjectable, attachmentPreviewEjection } from './pipeline';
 
 
-export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) => {
+export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[], llmId: DLLMId | null, enableLoadURLs: boolean) => {
 
   // state
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
@@ -28,17 +28,11 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
 
   // memoed state (readiness and token count)
 
-  const supportsImages = !!llmId?.endsWith('-vision-preview');
-  const attachmentsReady = React.useMemo(() => {
+  const attachmentsEjectable = React.useMemo(() => {
     if (!attachments?.length)
       return true;
-
-    const supportedOutputs: ComposerOutputPartType[] = ['text-block'];
-    if (supportsImages)
-      supportedOutputs.push('image-part');
-
-    return attachments.every(attachment => attachmentIsEjectable(attachment, supportedOutputs));
-  }, [attachments, supportsImages]);
+    return attachments.every(attachment => attachmentIsEjectable(attachment, ejectableOutputPartTypes));
+  }, [attachments, ejectableOutputPartTypes]);
 
 
   const attachmentsTokensCount = React.useMemo(() => {
@@ -187,7 +181,7 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
   return {
     // state
     attachments,
-    attachmentsReady,
+    attachmentsEjectable,
     attachmentsTokensCount,
 
     // create attachments
