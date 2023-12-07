@@ -9,7 +9,9 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
+import type { ComposerOutputPartType } from '../composer.types';
 import { Attachment, useAttachmentsStore } from './store-attachments';
+import { attachmentIsEjectable } from './pipeline';
 
 
 // enable for debugging
@@ -19,6 +21,7 @@ export const DEBUG_ATTACHMENTS = true;
 export function AttachmentMenu(props: {
   menuAnchor: HTMLAnchorElement,
   attachment: Attachment,
+  ejectableOutputPartTypes: ComposerOutputPartType[],
   isPositionFirst: boolean,
   isPositionLast: boolean,
   onAttachmentInline: (attachmentId: string) => void,
@@ -38,6 +41,7 @@ export function AttachmentMenu(props: {
 
   const isUnconvertible = aConverters.length === 0;
   const isOutputMissing = aOutputs.length === 0;
+  const isEjectable = attachmentIsEjectable(props.attachment, props.ejectableOutputPartTypes);
 
 
   // operations
@@ -147,7 +151,7 @@ export function AttachmentMenu(props: {
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      <MenuItem onClick={handleInline} disabled={isUnconvertible || isOutputMissing}>
+      <MenuItem onClick={handleInline} disabled={!isEjectable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline
       </MenuItem>
