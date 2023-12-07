@@ -623,7 +623,7 @@ export function ChatMessage(props: {
           </MenuItem>}
           {!!props.onConversationRestartFrom && <ListDivider />}
           {!!props.onConversationTruncate && (
-            <MenuItem onClick={handleOpsTruncate}>
+            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
               <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
               Truncate <span style={{ opacity: 0.5 }}>after</span>
             </MenuItem>

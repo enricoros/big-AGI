@@ -177,7 +177,7 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
 
     // images
     case input.mimeType.startsWith('image/'):
-      converters.push({ id: 'image', name: `Image (needs gpt-vision)` });
+      converters.push({ id: 'image', name: `Image (coming soon)` });
       converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
       break;
 
@@ -288,12 +288,12 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       break;
 
     case 'image':
-      outputs.push({
+      // TODO: continue here
+      /*outputs.push({
         type: 'image-part',
-        base64Url: `data:ciao`,
+        base64Url: `data:notImplemented.yet:)`,
         collapsible: false,
-      });
-      // TODO: extract base64
+      });*/
       break;
 
     case 'image-ocr':
