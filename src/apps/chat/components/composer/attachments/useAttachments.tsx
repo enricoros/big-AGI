@@ -2,51 +2,24 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
-
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
-import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import type { ComposerOutputPartType } from '../composer.types';
 import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
-import { attachmentPreviewTextEjection, attachmentsAreSupported } from './pipeline';
 
 
-export const useAttachments = (supportedOutputPartTypes: ComposerOutputPartType[], llmForTokenCount: DLLMId | null, enableLoadURLs: boolean) => {
+export const useAttachments = (enableLoadURLs: boolean) => {
 
   // state
+
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
     attachments: state.attachments,
     clearAttachments: state.clearAttachments,
     createAttachment: state.createAttachment,
     removeAttachment: state.removeAttachment,
   }), shallow);
-
-
-  // memoed state (readiness and token count)
-
-  const attachmentsSupported = React.useMemo(() => {
-    return attachmentsAreSupported(attachments, supportedOutputPartTypes);
-  }, [attachments, supportedOutputPartTypes]);
-
-  const attachmentsTokensCount = React.useMemo(() => {
-    if (!attachments?.length || !llmForTokenCount)
-      return 0;
-
-    // sum up the tokens as if we performed a full eject of all outputs
-    const fusedText = attachments.reduce((fusedText, attachment) => {
-      const attachmentTextPreview = attachmentPreviewTextEjection(attachment);
-      if (!attachmentTextPreview)
-        return fusedText;
-      // FIXME
-      return `${fusedText}\n\n${attachmentTextPreview.trim()}`.trim();
-    }, '');
-
-    return countModelTokens(fusedText, llmForTokenCount, 'attachments tokens count');
-  }, [attachments, llmForTokenCount]);
 
 
   // Creation helpers
@@ -179,8 +152,6 @@ export const useAttachments = (supportedOutputPartTypes: ComposerOutputPartType[
   return {
     // state
     attachments,
-    attachmentsSupported,
-    attachmentsTokensCount,
 
     // create attachments
     attachAppendClipboardItems,

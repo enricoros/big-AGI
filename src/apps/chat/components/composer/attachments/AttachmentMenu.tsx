@@ -9,9 +9,8 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import type { ComposerOutputPartType } from '../composer.types';
-import { Attachment, useAttachmentsStore } from './store-attachments';
-import { areAllOutputsSupported } from './pipeline';
+import type { LLMAttachment } from './useLLMAttachments';
+import { useAttachmentsStore } from './store-attachments';
 
 
 // enable for debugging
@@ -19,17 +18,25 @@ export const DEBUG_ATTACHMENTS = true;
 
 
 export function AttachmentMenu(props: {
+  llmAttachment: LLMAttachment,
   menuAnchor: HTMLAnchorElement,
-  attachment: Attachment,
   isPositionFirst: boolean,
   isPositionLast: boolean,
   onAttachmentInlineText: (attachmentId: string) => void,
   onClose: () => void,
-  supportedOutputPartTypes: ComposerOutputPartType[],
 }) {
 
   // derived state
+
   const isPositionFixed = props.isPositionFirst && props.isPositionLast;
+
+  const {
+    attachment,
+    isUnconvertible,
+    isOutputMissing,
+    isOutputTextInlineable,
+    tokenCountApprox,
+  } = props.llmAttachment;
 
   const {
     id: aId,
@@ -37,12 +44,7 @@ export function AttachmentMenu(props: {
     converters: aConverters,
     converterIdx: aConverterIdx,
     outputs: aOutputs,
-  } = props.attachment;
-
-  const isUnconvertible = aConverters.length === 0;
-  const isOutputMissing = aOutputs.length === 0;
-  const isOutputInlineable = React.useMemo(() => areAllOutputsSupported(aOutputs, props.supportedOutputPartTypes.filter(pt => pt === 'text-block')), [aOutputs, props.supportedOutputPartTypes]);
-  const isOutputUnsupported = React.useMemo(() => !areAllOutputsSupported(aOutputs, props.supportedOutputPartTypes), [aOutputs, props.supportedOutputPartTypes]);
+  } = attachment;
 
 
   // operations
@@ -146,13 +148,16 @@ export function AttachmentMenu(props: {
             <Typography level='body-xs'>
               🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
             </Typography>
+            {!!tokenCountApprox && <Typography level='body-xs'>
+              🡒 {tokenCountApprox} tokens
+            </Typography>}
           </Box>
         </MenuItem>
       )}
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      <MenuItem onClick={handleInlineText} disabled={!isOutputInlineable}>
+      <MenuItem onClick={handleInlineText} disabled={!isOutputTextInlineable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline <span style={{ opacity: 0.5 }}>text</span>
       </MenuItem>

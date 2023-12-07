@@ -4,7 +4,7 @@ export type ComposerOutputPart = {
   type: 'text-block',
   text: string,
   title: string | null,
-  collapsible: true,
+  collapsible: boolean,
 } | {
   // TODO: not implemented yet
   type: 'image-part',
