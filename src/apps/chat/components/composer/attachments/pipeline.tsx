@@ -150,7 +150,7 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
       if (textOriginHtml && isHtmlTable) {
         converters.push({
           id: 'rich-text-table',
-          name: 'Table',
+          name: 'Markdown Table',
         });
       }
 
@@ -161,10 +161,10 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
       });
 
       // p3: Html
-      if (textOriginHtml && !isHtmlTable) {
+      if (textOriginHtml) {
         converters.push({
           id: 'rich-text',
-          name: 'Html',
+          name: 'HTML',
         });
       }
       break;

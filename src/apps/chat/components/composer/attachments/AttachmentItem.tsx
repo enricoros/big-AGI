@@ -28,7 +28,10 @@ const ATTACHMENT_MIN_STYLE = {
 const ellipsizeLabel = (label?: string) => {
   if (!label)
     return '';
-  return ellipsizeMiddle((label || '').replace(/https?:\/\/(?:www\.)?/, ''), 30).replace('…', '…\n…');
+  return ellipsizeMiddle((label || '')
+    .replace(/https?:\/\/(?:www\.)?/, ''), 30)
+    .replace(/\/$/, '')
+    .replace('…', '…\n…');
 };
 
 

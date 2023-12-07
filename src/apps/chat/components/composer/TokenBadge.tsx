@@ -51,14 +51,15 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, h
 }
 
 
-export const TokenTooltip = (props: { message: string, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.JSX.Element }) =>
+export const TokenTooltip = (props: { message: string | null, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.JSX.Element }) =>
   <Tooltip
     placement={props.placement}
     variant={props.color !== 'primary' ? 'solid' : 'soft'} color={props.color}
-    title={
-      <Box sx={{ p: 2, whiteSpace: 'pre' }}>
+    title={props.message
+      ? <Box sx={{ p: 2, whiteSpace: 'pre' }}>
         {props.message}
       </Box>
+      : null
     }
     sx={{
       fontFamily: 'code',
