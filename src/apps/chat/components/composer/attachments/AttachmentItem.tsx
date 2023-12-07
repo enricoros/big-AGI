@@ -1,29 +1,20 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, ListDivider, ListItemDecorator, MenuItem, Radio, Sheet, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
-import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
-import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import { Attachment, AttachmentConversionType, useAttachmentsStore } from './store-attachments';
+import type { Attachment, AttachmentConversionType, AttachmentId } from './store-attachments';
 
-
-// enable for debugging
-const DEBUG_ATTACHMENTS = true;
 
 // default attachment width
 const ATTACHMENT_MIN_STYLE = {
@@ -81,7 +72,7 @@ const conversionTypeToIconMap: { [key in AttachmentConversionType]: React.Compon
   'unhandled': TextureIcon,
 };
 
-function attachmentIcon(attachment: Attachment) {
+function attachmentConversionIcon(attachment: Attachment) {
   const conversion = attachment.conversionIdx !== null ? attachment.conversions[attachment.conversionIdx] ?? null : null;
   if (conversion && conversion.id) {
     const Icon = conversionTypeToIconMap[conversion.id] ?? null;
@@ -92,106 +83,46 @@ function attachmentIcon(attachment: Attachment) {
 }
 
 
-function attachmentText(attachment: Attachment): string {
+function attachmentLabelText(attachment: Attachment): string {
   return ellipsizeFront(attachment.label, 24);
 }
 
 
 export function AttachmentItem(props: {
   attachment: Attachment,
-  isPositionFirst: boolean,
-  isPositionLast: boolean,
-  onAttachmentInline: (attachmentId: string) => void,
+  menuShown: boolean,
+  onClick: (attachmentId: AttachmentId, anchor: HTMLAnchorElement) => void,
 }) {
 
-  // state
-  const [menuAnchor, setMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
-
   // derived state
-  const { attachment } = props;
-  const {
-    id: aId,
-    label: aLabel,
-    input: aInput,
-    conversions: aConversions,
-    conversionIdx: aConversionIdx,
-    outputs: aOutputs,
-  } = attachment;
-
-  // menu
-
-  const handleMenuHide = () => setMenuAnchor(null);
-
-  const handleMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) =>
-    setMenuAnchor(anchor => anchor ? null : event.currentTarget);
-
-
-  // operations
-
-  const { onAttachmentInline } = props;
-
-  const handleInline = React.useCallback(() => {
-    handleMenuHide();
-    onAttachmentInline(aId);
-  }, [onAttachmentInline, aId]);
-
-  const handleMoveUp = React.useCallback(() => {
-    useAttachmentsStore.getState().moveAttachment(aId, -1);
-  }, [aId]);
-
-  const handleMoveDown = React.useCallback(() => {
-    useAttachmentsStore.getState().moveAttachment(aId, 1);
-  }, [aId]);
-
-  const handleRemove = React.useCallback(() => {
-    handleMenuHide();
-    useAttachmentsStore.getState().removeAttachment(aId);
-  }, [aId]);
-
-  const handleSetConversionIdx = React.useCallback(async (conversionIdx: number | null) =>
-      useAttachmentsStore.getState().setConversionIdx(aId, conversionIdx)
-    , [aId]);
-
-  const handleCopyOutputToClipboard = React.useCallback(() => {
-    if (aOutputs && aOutputs.length >= 1) {
-      const concat = aOutputs.map(output => {
-        if (output.type === 'text-block')
-          return output.text;
-        else if (output.type === 'image-part')
-          return output.base64Url;
-        else
-          return null;
-      }).join('\n\n');
-      copyToClipboard(concat, 'Converted attachment');
-    }
-  }, [aOutputs]);
-
-
-  const isUnmovable = props.isPositionFirst && props.isPositionLast;
+  const { attachment, onClick } = props;
 
   const isInputLoading = attachment.inputLoading;
   const isInputError = !!attachment.inputError;
-  // const hasInput = !!aInput;
-
-  const isUnconverted = aConversions.length === 0;
-
+  const isUnconverted = attachment.conversions.length === 0;
   const isOutputLoading = attachment.outputsLoading;
-  const isNoOutput = aOutputs?.length === 0;
+  const isOutputExpectedAndMissing = attachment.outputs?.length === 0;
 
 
-  let variant: 'soft' | 'outlined' | 'contained';
-  let color: ColorPaletteProp;
+  const handleShowMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    onClick(attachment.id, event.currentTarget);
+  }, [attachment, onClick]);
+
 
   // compose tooltip
   let tooltip: string | null = '';
-  if (props.attachment.source.media !== 'text')
-    tooltip += props.attachment.source.media + ': ';
-  tooltip += aLabel;
+  if (attachment.source.media !== 'text')
+    tooltip += attachment.source.media + ': ';
+  tooltip += attachment.label;
   // if (hasInput)
   //   tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
   // if (aOutputs && aOutputs.length >= 1)
   //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
+  // choose variants and color
+  let variant: 'soft' | 'outlined' | 'contained';
+  let color: ColorPaletteProp;
   if (isInputLoading || isOutputLoading) {
     variant = 'soft';
     color = 'success';
@@ -200,10 +131,10 @@ export function AttachmentItem(props: {
     variant = 'soft';
     color = 'danger';
   } else if (isUnconverted) {
-    tooltip = `Attachments of type '${aInput?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
+    tooltip = `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
     variant = 'soft';
     color = 'warning';
-  } else if (isNoOutput) {
+  } else if (isOutputExpectedAndMissing) {
     tooltip = 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
     variant = 'soft';
     color = 'warning';
@@ -220,18 +151,18 @@ export function AttachmentItem(props: {
     <GoodTooltip
       title={tooltip}
       isError={isInputError}
-      isWarning={isUnconverted || isNoOutput}
+      isWarning={isUnconverted || isOutputExpectedAndMissing}
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading
-        ? <LoadingIndicator label={aLabel} />
+        ? <LoadingIndicator label={attachment.label} />
         : (
           <Button
             size='sm'
             variant={variant} color={color}
-            onClick={handleMenuToggle}
+            onClick={handleShowMenu}
             sx={{
-              backgroundColor: menuAnchor ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
+              backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
               border: variant === 'soft' ? '1px solid' : undefined,
               borderColor: variant === 'soft' ? `${color}.solidBg` : undefined,
               borderRadius: 'sm',
@@ -244,98 +175,16 @@ export function AttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentIcon(attachment)}
+                {attachmentConversionIcon(attachment)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
                   : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                    {attachmentText(attachment)}
+                    {attachmentLabelText(attachment)}
                   </Typography>}
               </>}
           </Button>
         )}
     </GoodTooltip>
-
-    {/* individual operations menu */}
-    {!!menuAnchor && (
-      <CloseableMenu
-        placement='top' sx={{ minWidth: 200 }}
-        open anchorEl={menuAnchor} onClose={handleMenuHide}
-        noTopPadding noBottomPadding
-      >
-
-        {/* Move Arrows */}
-        {!isUnmovable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <MenuItem
-            disabled={props.isPositionFirst}
-            onClick={handleMoveUp}
-            sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}
-          >
-            <KeyboardArrowLeftIcon />
-          </MenuItem>
-          <MenuItem
-            disabled={props.isPositionLast}
-            onClick={handleMoveDown}
-            sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}
-          >
-            <KeyboardArrowRightIcon />
-          </MenuItem>
-        </Box>}
-        {!isUnmovable && <ListDivider sx={{ mt: 0 }} />}
-
-        {/* Render Conversions as menu items */}
-        {/*{!isUnconverted && <ListItem>*/}
-        {/*  <Typography level='body-md'>*/}
-        {/*    Attach as:*/}
-        {/*  </Typography>*/}
-        {/*</ListItem>}*/}
-        {!isUnconverted && aConversions.map((conversion, idx) =>
-          <MenuItem
-            disabled={conversion.disabled}
-            key={'c-' + conversion.id}
-            onClick={async () => idx !== aConversionIdx && await handleSetConversionIdx(idx)}
-          >
-            <ListItemDecorator>
-              <Radio checked={idx === aConversionIdx} />
-            </ListItemDecorator>
-            {conversion.unsupported ? <Box>
-              Unsupported 🤔
-              <Typography level='body-xs'>
-                {conversion.name}
-              </Typography>
-            </Box> : conversion.name}
-          </MenuItem>,
-        )}
-        {!isUnconverted && <ListDivider />}
-
-        {DEBUG_ATTACHMENTS && !!aInput && (
-          <MenuItem onClick={handleCopyOutputToClipboard}>
-            <Box>
-              {!!aInput && <Typography level='body-xs'>
-                🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
-              </Typography>}
-              {/*<Typography level='body-xs'>*/}
-              {/*  Conversions: {aConversions.map(((conversion, idx) => ` ${conversion.id}${(idx === aConversionIdx) ? '*' : ''}`)).join(', ')}*/}
-              {/*</Typography>*/}
-              <Typography level='body-xs'>
-                🡒 {isNoOutput ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
-              </Typography>
-            </Box>
-          </MenuItem>
-        )}
-        {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
-
-        {/* Destructive Operations */}
-        <MenuItem onClick={handleInline} disabled={isUnconverted || isNoOutput}>
-          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Inline
-        </MenuItem>
-        <MenuItem onClick={handleRemove}>
-          <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Remove
-        </MenuItem>
-
-      </CloseableMenu>
-    )}
 
   </Box>;
 }
