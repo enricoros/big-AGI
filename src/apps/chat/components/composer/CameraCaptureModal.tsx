@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, IconButton, LinearProgress, Modal, ModalClose, Option, Select, Sheet, Typography } from '@mui/joy';
+import { Box, Button, IconButton, Modal, ModalClose, Option, Select, Sheet, Typography } from '@mui/joy';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import DownloadIcon from '@mui/icons-material/Download';
 import InfoIcon from '@mui/icons-material/Info';
@@ -58,7 +58,7 @@ export function CameraCaptureModal(props: {
   // onOCR: (ocrText: string) => void }
 }) {
   // state
-  const [ocrProgress/*, setOCRProgress*/] = React.useState<number | null>(null);
+  // const [ocrProgress/*, setOCRProgress*/] = React.useState<number | null>(null);
   const [showInfo, setShowInfo] = React.useState(false);
 
   // camera operations
@@ -143,7 +143,7 @@ export function CameraCaptureModal(props: {
             ref={videoRef} autoPlay playsInline
             style={{
               display: 'block', width: '100%', maxHeight: 'calc(100vh - 200px)',
-              background: '#8888', opacity: ocrProgress !== null ? 0.5 : 1,
+              background: '#8888', //opacity: ocrProgress !== null ? 0.5 : 1,
             }}
           />
 
@@ -156,7 +156,7 @@ export function CameraCaptureModal(props: {
             {info}
           </Typography>}
 
-          {ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'calc(50% - 34px / 2)', left: 'calc(50% - 34px / 2)', zIndex: 2 }} />}
+          {/*{ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'calc(50% - 34px / 2)', left: 'calc(50% - 34px / 2)', zIndex: 2 }} />}*/}
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
@@ -166,7 +166,7 @@ export function CameraCaptureModal(props: {
 
           {zoomControl}
 
-          {ocrProgress !== null && <LinearProgress color='primary' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}
+          {/*{ocrProgress !== null && <LinearProgress color='primary' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}*/}
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
             {/* Info */}
