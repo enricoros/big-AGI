@@ -16,9 +16,9 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import type { ChatModeId } from '../../AppChat';
 import { useChatMicTimeoutMsValue } from '../../store-app-chat';
 
+import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
-import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -33,8 +33,11 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import type { ComposerOutputPartType } from './composer.types';
+import type { AttachmentId } from './attachments/store-attachments';
 import { Attachments } from './attachments/Attachments';
+import { useAttachments } from './attachments/useAttachments';
+import { useLLMAttachments } from './attachments/useLLMAttachments';
+
 import { ButtonAttachCamera } from './ButtonAttachCamera';
 import { ButtonAttachClipboard } from './ButtonAttachClipboard';
 import { ButtonAttachFile } from './ButtonAttachFile';
@@ -45,9 +48,7 @@ import { ButtonOptionsDraw } from './ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
-import { useAttachments } from './attachments/useAttachments';
 import { useComposerStartupText } from './store-composer';
-import { attachmentPreviewTextEjection } from './attachments/pipeline';
 
 
 const animationStopEnter = keyframes`
@@ -73,8 +74,9 @@ const animationStopEnter = keyframes`
  * @param {() => void} props.stopGeneration - Function to stop response generation
  */
 export function Composer(props: {
-  conversationId: DConversationId | null;
+  chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
+  conversationId: DConversationId | null;
   isDeveloperMode: boolean;
   onNewMessage: (chatModeId: ChatModeId, conversationId: DConversationId, text: string) => void;
   sx?: SxProps;
@@ -97,7 +99,6 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { inComposer: browsingInComposer } = useBrowseCapability();
   const { assistantTyping, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
@@ -107,36 +108,32 @@ export function Composer(props: {
       stopTyping: state.stopTyping,
     };
   }, shallow);
-  const { chatLLMId, chatLLM } = useChatLLM();
-  const supportedOutputPartTypes: ComposerOutputPartType[] = React.useMemo(() => {
-    const supportsImages = !!chatLLMId?.endsWith('-vision-preview');
-    return supportsImages ? ['text-block', 'image-part'] : ['text-block'];
-  }, [chatLLMId]);
-  const enableLoadUrls = browsingInComposer && !composeText.startsWith('/');
-  const {
-    attachAppendClipboardItems,
-    attachAppendDataTransfer,
-    attachAppendFile,
-    attachments,
-    attachmentsSupported,
-    attachmentsTokensCount,
-    clearAttachments,
-    removeAttachment,
-  } = useAttachments(supportedOutputPartTypes, chatLLMId, enableLoadUrls);
+  const { inComposer: browsingInComposer } = useBrowseCapability();
+  const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
+    useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
   // derived state
+
   const isDesktop = !isMobile;
+  const chatLLMId = props.chatLLM?.id || null;
+
+  // attachments derived state
+
+  const llmAttachments = useLLMAttachments(_attachments, chatLLMId);
 
   // tokens derived state
+
   const tokensComposerText = React.useMemo(() => {
     if (!debouncedText || !chatLLMId)
       return 0;
-    return 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
+    return countModelTokens(debouncedText, chatLLMId, 'composer text');
   }, [chatLLMId, debouncedText]);
-  const tokensComposer = tokensComposerText + attachmentsTokensCount;
+  let tokensComposer = tokensComposerText + llmAttachments.tokenCountApprox;
+  if (tokensComposer > 0)
+    tokensComposer += 4; // every user message has this many surrounding tokens (note: shall depend on llm..)
   const tokensHistory = _historyTokenCount;
-  const tokensReponseMax = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
-  const tokenLimit = chatLLM?.contextTokens || 0;
+  const tokensReponseMax = (props.chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
+  const tokenLimit = props.chatLLM?.contextTokens || 0;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)
@@ -274,21 +271,23 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
-  const handleAttachmentInlineText = React.useCallback((attachmentId: string) => {
-    const attachment = attachments.find(a => a.id === attachmentId);
-    if (attachment) {
-      const textOutput = attachmentPreviewTextEjection(attachment);
-      if (textOutput)
-        setComposeText(text => text + textOutput);
-      removeAttachment(attachmentId);
-    }
-  }, [attachments, removeAttachment, setComposeText]);
+  const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
+    setComposeText(text => {
+      const inlinedText = llmAttachments.inlineTextAttachment(attachmentId);
+      if (inlinedText !== null)
+        removeAttachment(attachmentId);
+      return inlinedText ? text + inlinedText : text;
+    });
+  }, [llmAttachments, removeAttachment, setComposeText]);
 
   const handleAttachmentsInline = React.useCallback(() => {
-
-    console.log('Not implemented: handleAttachmentsInline');
-    clearAttachments();
-  }, [attachments, clearAttachments]);
+    setComposeText(text => {
+      const inlinedText = llmAttachments.inlineTextAttachments();
+      if (inlinedText !== null)
+        clearAttachments();
+      return inlinedText ? text + inlinedText : text;
+    });
+  }, [clearAttachments, llmAttachments, setComposeText]);
 
 
   // Drag & Drop
@@ -516,8 +515,7 @@ export function Composer(props: {
 
             {/* Render any Attachments & menu items */}
             <Attachments
-              attachments={attachments}
-              ejectableOutputPartTypes={supportedOutputPartTypes}
+              llmAttachments={llmAttachments}
               onAttachmentInlineText={handleAttachmentInlineText}
               onAttachmentsClear={clearAttachments}
               onAttachmentsInlineText={handleAttachmentsInline}
@@ -536,7 +534,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
-                  ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : (isDraw || isDrawPlus)
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
@@ -554,7 +552,7 @@ export function Composer(props: {
                 {!assistantTyping ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsSupported}
+                    fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
                     onClick={() => handleSendClicked(chatModeId)}
                     endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
@@ -572,7 +570,7 @@ export function Composer(props: {
                     Stop
                   </Button>
                 )}
-                <IconButton disabled={!props.conversationId || !chatLLM || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
+                <IconButton disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
                   <ExpandLessIcon />
                 </IconButton>
               </ButtonGroup>
@@ -584,7 +582,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLM} onClick={handleCallClicked} />}
+              {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {(isDraw || isDrawPlus) && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}

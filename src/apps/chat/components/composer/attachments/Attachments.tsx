@@ -8,8 +8,8 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
-import type { Attachment, AttachmentId } from './store-attachments';
-import type { ComposerOutputPartType } from '../composer.types';
+import type { AttachmentId } from './store-attachments';
+import type { LLMAttachments } from './useLLMAttachments';
 import { AttachmentItem } from './AttachmentItem';
 import { AttachmentMenu } from './AttachmentMenu';
 
@@ -18,8 +18,7 @@ import { AttachmentMenu } from './AttachmentMenu';
  * Renderer of attachments, with menus, etc.
  */
 export function Attachments(props: {
-  attachments: Attachment[]
-  ejectableOutputPartTypes: ComposerOutputPartType[],
+  llmAttachments: LLMAttachments,
   onAttachmentInlineText: (attachmentId: AttachmentId) => void,
   onAttachmentsClear: () => void,
   onAttachmentsInlineText: () => void,
@@ -31,20 +30,25 @@ export function Attachments(props: {
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derived state
-  const { attachments, onAttachmentsClear, onAttachmentInlineText, onAttachmentsInlineText } = props;
+  const { llmAttachments, onAttachmentsClear, onAttachmentInlineText, onAttachmentsInlineText } = props;
+
+  const { attachments, isOutputTextInlineable } = llmAttachments;
+
   const hasAttachments = attachments.length >= 1;
+
+  // derived item menu state
 
   const itemMenuAnchor = itemMenu?.anchor;
   const itemMenuAttachmentId = itemMenu?.attachmentId;
-  const itemMenuAttachment = itemMenuAttachmentId ? attachments.find(a => a.id === itemMenu.attachmentId) : undefined;
+  const itemMenuAttachment = itemMenuAttachmentId ? attachments.find(la => la.attachment.id === itemMenu.attachmentId) : undefined;
   const itemMenuIndex = itemMenuAttachment ? attachments.indexOf(itemMenuAttachment) : -1;
 
 
   // item menu
 
-  const handleItemMenuShow = React.useCallback((attachmentId: AttachmentId, anchor: HTMLAnchorElement) => {
+  const handleItemMenuToggle = React.useCallback((attachmentId: AttachmentId, anchor: HTMLAnchorElement) => {
     handleOverallMenuHide();
-    setItemMenu({ anchor, attachmentId });
+    setItemMenu(prev => prev?.attachmentId === attachmentId ? null : { anchor, attachmentId });
   }, []);
 
   const handleItemMenuHide = React.useCallback(() => {
@@ -95,13 +99,12 @@ export function Attachments(props: {
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
-        {attachments.map((attachment) =>
+        {attachments.map((llmAttachment) =>
           <AttachmentItem
-            key={attachment.id}
-            attachment={attachment}
-            menuShown={attachment.id === itemMenuAttachmentId}
-            onClick={handleItemMenuShow}
-            supportedOutputPartTypes={props.ejectableOutputPartTypes}
+            key={llmAttachment.attachment.id}
+            llmAttachment={llmAttachment}
+            menuShown={llmAttachment.attachment.id === itemMenuAttachmentId}
+            onItemMenuToggle={handleItemMenuToggle}
           />,
         )}
       </Box>
@@ -125,13 +128,12 @@ export function Attachments(props: {
     {/* Attachment Menu */}
     {!!itemMenuAnchor && !!itemMenuAttachment && (
       <AttachmentMenu
+        llmAttachment={itemMenuAttachment}
         menuAnchor={itemMenuAnchor}
-        attachment={itemMenuAttachment}
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === attachments.length - 1}
         onAttachmentInlineText={handleAttachmentInlineText}
         onClose={handleItemMenuHide}
-        supportedOutputPartTypes={props.ejectableOutputPartTypes}
       />
     )}
 
@@ -143,7 +145,7 @@ export function Attachments(props: {
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
         noTopPadding noBottomPadding
       >
-        <MenuItem onClick={handleAttachmentsInlineText}>
+        <MenuItem onClick={handleAttachmentsInlineText} disabled={!isOutputTextInlineable}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline <span style={{ opacity: 0.5 }}>text attachments</span>
         </MenuItem>

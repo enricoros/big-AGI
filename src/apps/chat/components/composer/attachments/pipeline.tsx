@@ -5,7 +5,7 @@ import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfUtils';
 
 import type { Attachment, AttachmentConverter, AttachmentId, AttachmentInput, AttachmentSource } from './store-attachments';
-import type { ComposerOutputMultiPart, ComposerOutputPartType } from '../composer.types';
+import type { ComposerOutputMultiPart } from '../composer.types';
 
 
 // extensions to treat as plain text
@@ -332,28 +332,4 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
     outputsConverting: false,
     outputs,
   });
-}
-
-
-export const areAllOutputsSupported = (outputs: ComposerOutputMultiPart, supportedOutputPartTypes: ComposerOutputPartType[]) =>
-  outputs.length
-    ? outputs.every(output => supportedOutputPartTypes.includes(output.type))
-    : false;
-
-export const attachmentsAreSupported = (attachments: Readonly<Attachment[]>, supportedOutputPartTypes: ComposerOutputPartType[]) =>
-  attachments.length
-    ? attachments.every(attachment => areAllOutputsSupported(attachment.outputs, supportedOutputPartTypes))
-    : true;
-
-export function attachmentPreviewTextEjection(attachment: Readonly<Attachment>): string | null {
-  if (!attachment.outputs.length)
-    return null;
-
-  return attachment.outputs.reduce((text, output) => {
-    if (output.type === 'text-block')
-      return `${text}\n\n\`\`\`\n${output.text}\n\`\`\``;
-    else
-      console.warn('Unhandled ejection for output type:', output.type);
-    return text;
-  }, '');
 }

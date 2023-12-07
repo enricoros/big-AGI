@@ -14,8 +14,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
 import type { Attachment, AttachmentConverterType, AttachmentId } from './store-attachments';
-import type { ComposerOutputPartType } from '../composer.types';
-import { areAllOutputsSupported } from './pipeline';
+import type { LLMAttachment } from './useLLMAttachments';
 
 
 // default attachment width
@@ -90,27 +89,36 @@ function attachmentLabelText(attachment: Attachment): string {
 
 
 export function AttachmentItem(props: {
-  attachment: Attachment,
+  llmAttachment: LLMAttachment,
   menuShown: boolean,
-  onClick: (attachmentId: AttachmentId, anchor: HTMLAnchorElement) => void,
-  supportedOutputPartTypes: ComposerOutputPartType[],
+  onItemMenuToggle: (attachmentId: AttachmentId, anchor: HTMLAnchorElement) => void,
 }) {
 
   // derived state
-  const { attachment, onClick } = props;
 
-  const isInputLoading = attachment.inputLoading;
-  const isInputError = !!attachment.inputError;
-  const isUnconvertible = attachment.converters.length === 0;
-  const isOutputLoading = attachment.outputsConverting;
-  const isOutputMissing = attachment.outputs.length === 0;
-  const isOutputUnsupported = React.useMemo(() => !areAllOutputsSupported(attachment.outputs, props.supportedOutputPartTypes), [attachment.outputs, props.supportedOutputPartTypes]);
+  const { onItemMenuToggle } = props;
+
+  const {
+    attachment,
+    isUnconvertible,
+    isOutputMissing,
+    isOutputAttachable,
+  } = props.llmAttachment;
+
+  const {
+    inputError,
+    inputLoading: isInputLoading,
+    outputsConverting: isOutputLoading,
+  } = attachment;
+
+  const isInputError = !!inputError;
+  const showWarning = isUnconvertible || isOutputMissing || !isOutputAttachable;
 
 
-  const handleShowMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
-    onClick(attachment.id, event.currentTarget);
-  }, [attachment, onClick]);
+    onItemMenuToggle(attachment.id, event.currentTarget);
+  }, [attachment, onItemMenuToggle]);
 
 
   // compose tooltip
@@ -124,25 +132,23 @@ export function AttachmentItem(props: {
   //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
 
   // choose variants and color
-  let variant: 'soft' | 'outlined' | 'contained';
   let color: ColorPaletteProp;
+  let variant: 'soft' | 'outlined' | 'contained' = 'soft';
   if (isInputLoading || isOutputLoading) {
-    variant = 'soft';
     color = 'success';
   } else if (isInputError) {
     tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
-    variant = 'soft';
     color = 'danger';
-  } else if (isUnconvertible || isOutputMissing || isOutputUnsupported) {
-    tooltip = isUnconvertible ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
-      : 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
-    variant = 'soft';
+  } else if (showWarning) {
+    tooltip = isUnconvertible
+      ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
+      : `Not compatible with the selected LLM or not supported. Please select another format.\n\n${tooltip}`;
     color = 'warning';
   } else {
     // all good
     tooltip = null;
+    color = /*props.menuShown ? 'primary' :*/ 'neutral';
     variant = 'outlined';
-    color = /*menuAnchor ? 'primary' :*/ 'neutral';
   }
 
 
@@ -151,7 +157,7 @@ export function AttachmentItem(props: {
     <GoodTooltip
       title={tooltip}
       isError={isInputError}
-      isWarning={isUnconvertible || isOutputMissing || isOutputUnsupported}
+      isWarning={showWarning}
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading
@@ -160,7 +166,7 @@ export function AttachmentItem(props: {
           <Button
             size='sm'
             variant={variant} color={color}
-            onClick={handleShowMenu}
+            onClick={handleToggleMenu}
             sx={{
               backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
               border: variant === 'soft' ? '1px solid' : undefined,

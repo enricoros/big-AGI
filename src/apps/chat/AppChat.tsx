@@ -12,7 +12,7 @@ import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { useChatLLM, useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
@@ -57,6 +57,8 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
+  const { chatLLM } = useChatLLM();
+
   const {
     chatPanes,
     focusedConversationId,
@@ -402,9 +404,10 @@ export function AppChat() {
     </Box>
 
     <Composer
+      chatLLM={chatLLM}
+      composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
-      composerTextAreaRef={composerTextAreaRef}
       onNewMessage={handleComposerNewMessage}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
