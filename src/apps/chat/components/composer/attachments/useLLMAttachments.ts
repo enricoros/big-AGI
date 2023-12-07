@@ -96,7 +96,7 @@ function areAllOutputsSupported(outputs: ComposerOutputMultiPart, supportedOutpu
     : false;
 }
 
-function attachmentCollapseOutputs(outputs: ComposerOutputMultiPart): ComposerOutputMultiPart {
+export function attachmentCollapseOutputs(outputs: ComposerOutputMultiPart): ComposerOutputMultiPart {
   const accumulatedOutputs: ComposerOutputMultiPart = [];
 
   // Accumulate attachment outputs of the same type and 'collapsible' into a single object of that type.
