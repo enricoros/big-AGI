@@ -107,7 +107,7 @@ function attachmentCollapseOutputs(outputs: ComposerOutputMultiPart): ComposerOu
     if (last && last.type === output.type && output.collapsible) {
       switch (last.type) {
         case 'text-block':
-          last.text += `\n\n\`\`\`\n${output.text}\n\`\`\``;
+          last.text += `\n\n\`\`\`${output.title}\n${output.text}\n\`\`\``;
           break;
         default:
           console.warn('Unhandled collapsing for output type:', output.type);
@@ -118,7 +118,7 @@ function attachmentCollapseOutputs(outputs: ComposerOutputMultiPart): ComposerOu
       if (output.type === 'text-block') {
         accumulatedOutputs.push({
           type: 'text-block',
-          text: `\n\n\`\`\`\n${output.text}\n\`\`\``,
+          text: `\n\n\`\`\`${output.title}\n${output.text}\n\`\`\``,
           title: null,
           collapsible: false,
         });

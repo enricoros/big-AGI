@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, useTheme } from '@mui/joy';
 
-// import { tokensPrettyMath, TokenTooltip } from './TokenBadge';
+import { tokensPrettyMath, TokenTooltip } from './TokenBadge';
 
 
 /**
@@ -38,7 +38,7 @@ export function TokenProgressbar(props: { direct: number, history: number, respo
   const overflowColor = theme.palette.danger.softColor;
 
   // tooltip message/color
-  // const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax);
+  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax);
 
   // sizes
   const containerHeight = 8;
@@ -46,7 +46,7 @@ export function TokenProgressbar(props: { direct: number, history: number, respo
 
   return (
 
-    // <TokenTooltip color={color} message={message}>
+    <TokenTooltip color={color} message={props.direct ? null : message}>
 
       <Box sx={{
         position: 'absolute', left: 1, right: 1, bottom: 1, height: containerHeight,
@@ -79,6 +79,6 @@ export function TokenProgressbar(props: { direct: number, history: number, respo
 
       </Box>
 
-    // </TokenTooltip>
+    </TokenTooltip>
   );
 }
