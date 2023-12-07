@@ -409,7 +409,7 @@ export function Composer(props: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
                       sx: {
                         ...(isSpeechEnabled && { pr: { md: 5 } }),
-                        mb: 0.5,
+                        // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
                       },
                       ref: props.composerTextAreaRef,
                     },
