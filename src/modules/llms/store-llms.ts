@@ -252,7 +252,7 @@ export function useChatLLM() {
   return useModelsStore(state => {
     const { chatLLMId } = state;
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    return { chatLLMId, chatLLM };
+    return { chatLLM };
   }, shallow);
 }
 

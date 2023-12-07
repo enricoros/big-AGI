@@ -140,9 +140,11 @@ export function AttachmentItem(props: {
     tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
     color = 'danger';
   } else if (showWarning) {
-    tooltip = isUnconvertible
-      ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
-      : `Not compatible with the selected LLM or not supported. Please select another format.\n\n${tooltip}`;
+    tooltip = props.menuShown
+      ? null
+      : isUnconvertible
+        ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
+        : `Not compatible with the selected LLM or not supported. Please select another format.\n\n${tooltip}`;
     color = 'warning';
   } else {
     // all good

@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
@@ -137,7 +138,8 @@ export function AttachmentMenu(props: {
       {!isUnconvertible && <ListDivider />}
 
       {DEBUG_ATTACHMENTS && !!aInput && (
-        <MenuItem onClick={handleCopyOutputToClipboard}>
+        <MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>
+          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           <Box>
             {!!aInput && <Typography level='body-xs'>
               🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
@@ -149,7 +151,7 @@ export function AttachmentMenu(props: {
               🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
             </Typography>
             {!!tokenCountApprox && <Typography level='body-xs'>
-              🡒 {tokenCountApprox} tokens
+              🡒 {tokenCountApprox.toLocaleString()} tokens
             </Typography>}
           </Box>
         </MenuItem>
@@ -157,9 +159,13 @@ export function AttachmentMenu(props: {
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
+      {/*<MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>*/}
+      {/*  <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>*/}
+      {/*  Copy*/}
+      {/*</MenuItem>*/}
       <MenuItem onClick={handleInlineText} disabled={!isOutputTextInlineable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-        Inline <span style={{ opacity: 0.5 }}>text</span>
+        Inline text
       </MenuItem>
       <MenuItem onClick={handleRemove}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
