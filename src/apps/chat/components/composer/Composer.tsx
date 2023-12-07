@@ -47,6 +47,7 @@ import { TokenBadge } from './TokenBadge';
 import { TokenProgressbar } from './TokenProgressbar';
 import { useAttachments } from './attachments/useAttachments';
 import { useComposerStartupText } from './store-composer';
+import { attachmentPreviewTextEjection } from './attachments/pipeline';
 
 
 const animationStopEnter = keyframes`
@@ -120,6 +121,7 @@ export function Composer(props: {
     attachmentsEjectable,
     attachmentsTokensCount: tokensComposerAttachments,
     clearAttachments,
+    removeAttachment,
   } = useAttachments(ejectableOutputPartTypes, chatLLMId, enableLoadUrls);
 
   // derived state
@@ -271,6 +273,22 @@ export function Composer(props: {
   }, [attachAppendFile]);
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
+
+  const handleAttachmentInlineText = React.useCallback((attachmentId: string) => {
+    const attachment = attachments.find(a => a.id === attachmentId);
+    if (attachment) {
+      const textOutput = attachmentPreviewTextEjection(attachment);
+      if (textOutput)
+        setComposeText(text => text + textOutput);
+      removeAttachment(attachmentId);
+    }
+  }, [attachments, removeAttachment, setComposeText]);
+
+  const handleAttachmentsInline = React.useCallback(() => {
+
+    console.log('Not implemented: handleAttachmentsInline');
+    clearAttachments();
+  }, [attachments, clearAttachments]);
 
 
   // Drag & Drop
@@ -500,8 +518,9 @@ export function Composer(props: {
             <Attachments
               attachments={attachments}
               ejectableOutputPartTypes={ejectableOutputPartTypes}
+              onAttachmentInline={handleAttachmentInlineText}
               onAttachmentsClear={clearAttachments}
-              onAttachmentsInline={() => console.warn('TODO: inline attachments')}
+              onAttachmentsInline={handleAttachmentsInline}
             />
 
           </Box>

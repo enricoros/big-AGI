@@ -12,7 +12,7 @@ import { getClipboardItems } from '~/common/util/clipboardUtils';
 
 import type { ComposerOutputPartType } from '../composer.types';
 import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
-import { attachmentIsEjectable, attachmentPreviewEjection } from './pipeline';
+import { attachmentIsEjectable, attachmentPreviewTextEjection } from './pipeline';
 
 
 export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[], llmId: DLLMId | null, enableLoadURLs: boolean) => {
@@ -41,7 +41,7 @@ export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[
 
     // sum up the tokens as if we performed a full eject of all outputs
     const fusedText = attachments.reduce((fusedText, attachment) => {
-      const attachmentTextPreview = attachmentPreviewEjection(attachment);
+      const attachmentTextPreview = attachmentPreviewTextEjection(attachment);
       if (!attachmentTextPreview)
         return fusedText;
       return `${fusedText}\n\n${attachmentTextPreview.trim()}`.trim();
