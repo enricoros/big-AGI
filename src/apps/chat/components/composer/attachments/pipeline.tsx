@@ -339,13 +339,13 @@ export function attachmentIsEjectable(attachment: Readonly<Attachment>, supporte
   return attachment.outputs.every(output => supportedOutputPartTypes.includes(output.type));
 }
 
-export function attachmentPreviewEjection(attachment: Readonly<Attachment>): string | null {
+export function attachmentPreviewTextEjection(attachment: Readonly<Attachment>): string | null {
   if (!attachment.outputs.length)
     return null;
 
   return attachment.outputs.reduce((text, output) => {
     if (output.type === 'text-block')
-      return `${text}\n\n\`\`\`\n${output.text}\n\`\`\`\n`;
+      return `${text}\n\n\`\`\`\n${output.text}\n\`\`\``;
     else
       console.warn('Unhandled ejection for output type:', output.type);
     return text;

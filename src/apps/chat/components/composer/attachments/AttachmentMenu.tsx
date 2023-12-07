@@ -153,10 +153,10 @@ export function AttachmentMenu(props: {
       {/* Destructive Operations */}
       <MenuItem onClick={handleInline} disabled={!isEjectable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-        Inline
+        Inline <span style={{ opacity: 0.5 }}>text</span>
       </MenuItem>
       <MenuItem onClick={handleRemove}>
-        <ListItemDecorator><ClearIcon /></ListItemDecorator>
+      <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Remove
       </MenuItem>
 

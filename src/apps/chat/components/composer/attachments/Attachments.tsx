@@ -20,6 +20,7 @@ import { AttachmentMenu } from './AttachmentMenu';
 export function Attachments(props: {
   attachments: Attachment[]
   ejectableOutputPartTypes: ComposerOutputPartType[],
+  onAttachmentInline: (attachmentId: AttachmentId) => void,
   onAttachmentsClear: () => void,
   onAttachmentsInline: () => void,
 }) {
@@ -30,7 +31,7 @@ export function Attachments(props: {
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derived state
-  const { attachments, onAttachmentsClear, onAttachmentsInline } = props;
+  const { attachments, onAttachmentsClear, onAttachmentInline, onAttachmentsInline } = props;
   const hasAttachments = attachments.length >= 1;
 
   const itemMenuAnchor = itemMenu?.anchor;
@@ -66,6 +67,7 @@ export function Attachments(props: {
   // item menu
 
   const handleItemMenuShow = React.useCallback((attachmentId: AttachmentId, anchor: HTMLAnchorElement) => {
+    handleOverallMenuHide();
     setItemMenu({ anchor, attachmentId });
   }, []);
 
@@ -77,9 +79,9 @@ export function Attachments(props: {
   // item menu operations
 
   const handleAttachmentInline = React.useCallback((attachmentId: string) => {
-    // (attachmentId);
-    console.log('Not implemented: handleAttachmentInline', attachmentId);
-  }, []);
+    handleItemMenuHide();
+    onAttachmentInline(attachmentId);
+  }, [handleItemMenuHide, onAttachmentInline]);
 
 
   // no components without attachments
@@ -142,7 +144,7 @@ export function Attachments(props: {
       >
         <MenuItem onClick={handleInlineAttachments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Inline <span style={{ opacity: 0.5 }}>attachments</span>
+          Inline <span style={{ opacity: 0.5 }}>text attachments</span>
         </MenuItem>
         <MenuItem onClick={handleClearAttachments}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
