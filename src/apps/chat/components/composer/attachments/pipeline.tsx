@@ -4,7 +4,8 @@ import { createBase36Uid } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToText } from '~/common/util/pdfUtils';
 
-import { Attachment, AttachmentConversion, AttachmentId, AttachmentInput, AttachmentOutput, AttachmentOutputType, AttachmentSource } from './store-attachments';
+import type { Attachment, AttachmentConverter, AttachmentId, AttachmentInput, AttachmentSource } from './store-attachments';
+import type { ComposerOutputMultiPart, ComposerOutputPartType } from '../composer.types';
 
 
 // extensions to treat as plain text
@@ -18,12 +19,13 @@ export function attachmentCreate(source: AttachmentSource, checkDuplicates: Atta
     id: createBase36Uid(checkDuplicates),
     source: source,
     label: 'Loading...',
+    ref: '',
     inputLoading: false,
     inputError: null,
     input: undefined,
-    conversions: [],
-    conversionIdx: null,
-    outputsLoading: false,
+    converters: [],
+    converterIdx: null,
+    outputsConverting: false,
     outputs: undefined,
     // metadata: {},
   };
@@ -42,7 +44,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
 
     // Download URL (page, file, ..) and attach as input
     case 'url':
-      edit({ label: source.refUrl });
+      edit({ label: source.refUrl, ref: source.refUrl });
       try {
         const page = await callBrowseFetchPage(source.url);
         if (page.content) {
@@ -62,7 +64,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
 
     // Attach file as input
     case 'file':
-      edit({ label: source.refPath });
+      edit({ label: source.refPath, ref: source.refPath });
 
       // fix missing/wrong mimetypes
       let mimeType = source.fileWithHandle.type;
@@ -72,7 +74,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
         mimeType = 'text/plain';
       } else {
         // possibly fix wrongly assigned mimetypes (from the extension alone)
-        if (!mimeType.startsWith('text/') && PLAIN_TEXT_EXTENSIONS.some(e => source.refPath.endsWith(e)))
+        if (!mimeType.startsWith('text/') && PLAIN_TEXT_EXTENSIONS.some(ext => source.refPath.endsWith(ext)))
           mimeType = 'text/plain';
       }
 
@@ -97,6 +99,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
       if (source.textHtml && source.textPlain) {
         edit({
           label: 'Rich Text',
+          ref: '',
           input: {
             mimeType: 'text/plain',
             data: source.textPlain,
@@ -109,6 +112,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
         const text = source.textHtml || source.textPlain || '';
         edit({
           label: 'Text',
+          ref: '',
           input: {
             mimeType: 'text/plain',
             data: text,
@@ -123,16 +127,16 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
 }
 
 /**
- * Defines the possible conversions for an Attachment object based on its input type.
+ * Defines the possible converters for an Attachment object based on its input type.
  *
  * @param {AttachmentSource['media']} sourceType - The media type of the attachment source.
  * @param {Readonly<AttachmentInput>} input - The input of the attachment.
  * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
  */
-export function attachmentDefineConversions(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
+export function attachmentDefineConverters(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
 
-  // return all the possible conversions for the input
-  const conversions: AttachmentConversion[] = [];
+  // return all the possible converters for the input
+  const converters: AttachmentConverter[] = [];
 
   switch (true) {
 
@@ -144,21 +148,21 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
       // p1: Tables
       if (textOriginHtml && isHtmlTable) {
-        conversions.push({
+        converters.push({
           id: 'rich-text-table',
           name: 'Table',
         });
       }
 
       // p2: Text
-      conversions.push({
+      converters.push({
         id: 'text',
         name: 'Text',
       });
 
       // p3: Html
       if (textOriginHtml && !isHtmlTable) {
-        conversions.push({
+        converters.push({
           id: 'rich-text',
           name: 'Html',
         });
@@ -167,50 +171,50 @@ export function attachmentDefineConversions(sourceType: AttachmentSource['media'
 
     // PDF
     case ['application/pdf', 'application/x-pdf', 'application/acrobat'].includes(input.mimeType):
-      conversions.push({ id: 'pdf-text', name: `PDF To Text` });
-      conversions.push({ id: 'pdf-images', name: `PDF To Images`, disabled: true });
+      converters.push({ id: 'pdf-text', name: `PDF To Text` });
+      converters.push({ id: 'pdf-images', name: `PDF To Images`, disabled: true });
       break;
 
     // images
     case input.mimeType.startsWith('image/'):
-      conversions.push({ id: 'image', name: `Image (needs gpt-vision)` });
-      conversions.push({ id: 'image-ocr', name: 'As Text (OCR)' });
+      converters.push({ id: 'image', name: `Image (needs gpt-vision)` });
+      converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
       break;
 
     // catch-all
     default:
-      conversions.push({ id: 'unhandled', name: `${input.mimeType}`, unsupported: true });
-      conversions.push({ id: 'text', name: 'As Text' });
+      converters.push({ id: 'unhandled', name: `${input.mimeType}`, unsupported: true });
+      converters.push({ id: 'text', name: 'As Text' });
       break;
   }
 
-  edit({ conversions });
+  edit({ converters });
 }
 
 /**
- * Converts the input of an Attachment object based on the selected conversion.
+ * Converts the input of an Attachment object based on the selected converter.
  *
  * @param {Readonly<Attachment>} attachment - The Attachment object to convert.
- * @param {number | null} conversionIdx - The index of the selected conversion in the Attachment object's conversions array.
+ * @param {number | null} converterIdx - The index of the selected conversion in the Attachment object's converters array.
  * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
  */
-export async function attachmentConvert(attachment: Readonly<Attachment>, conversionIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
+export async function attachmentPerformConversion(attachment: Readonly<Attachment>, converterIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
 
-  // set conversion index
-  conversionIdx = (conversionIdx !== null && conversionIdx >= 0 && conversionIdx < attachment.conversions.length) ? conversionIdx : null;
+  // set converter index
+  converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
   edit({
-    conversionIdx,
+    converterIdx: converterIdx,
     outputs: undefined,
   });
 
-  // get conversion
-  const { input } = attachment;
-  const conversion = conversionIdx !== null ? attachment.conversions[conversionIdx] : null;
-  if (!conversion || !input)
+  // get converter
+  const { ref, input } = attachment;
+  const converter = converterIdx !== null ? attachment.converters[converterIdx] : null;
+  if (!converter || !input)
     return;
 
   edit({
-    outputsLoading: true,
+    outputsConverting: true,
   });
 
   // input datacould be a string or an ArrayBuffer
@@ -222,15 +226,17 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
     return '';
   }
 
-  // apply conversion to the input
-  const outputs: AttachmentOutput[] = [];
-  switch (conversion.id) {
+  // apply converter to the input
+  const outputs: ComposerOutputMultiPart = [];
+  switch (converter.id) {
 
     // text as-is
     case 'text':
       outputs.push({
         type: 'text-block',
         text: inputDataToString(input.data),
+        title: ref,
+        collapsible: true,
       });
       break;
 
@@ -239,6 +245,8 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       outputs.push({
         type: 'text-block',
         text: input.altData!,
+        title: ref,
+        collapsible: true,
       });
       break;
 
@@ -254,12 +262,14 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       outputs.push({
         type: 'text-block',
         text: mdTable,
+        title: ref,
+        collapsible: true,
       });
       break;
 
     case 'pdf-text':
       if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for PDF conversion, got:', typeof input.data);
+        console.log('Expected ArrayBuffer for PDF converter, got:', typeof input.data);
         break;
       }
       // duplicate the ArrayBuffer to avoid mutation
@@ -268,6 +278,8 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
       outputs.push({
         type: 'text-block',
         text: pdfText,
+        title: ref,
+        collapsible: true,
       });
       break;
 
@@ -281,7 +293,7 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
 
     case 'image-ocr':
       if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for Image OCR conversion, got:', typeof input.data);
+        console.log('Expected ArrayBuffer for Image OCR converter, got:', typeof input.data);
         break;
       }
       try {
@@ -297,6 +309,8 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
         outputs.push({
           type: 'text-block',
           text: result.data.text,
+          title: ref,
+          collapsible: true,
         });
       } catch (error) {
         console.error(error);
@@ -310,7 +324,7 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
 
   // update
   edit({
-    outputsLoading: false,
+    outputsConverting: false,
     outputs,
   });
 }
@@ -319,12 +333,12 @@ export async function attachmentConvert(attachment: Readonly<Attachment>, conver
  * Checks if an Attachment object is ready to be ejected (must have outputs, and
  * all AttachmentOutputType(s) are supported by the caller)
  */
-export function attachmentIsEjectable(attachment: Readonly<Attachment>, supportedOutputs: AttachmentOutputType[]) {
+export function attachmentIsEjectable(attachment: Readonly<Attachment>, supportedOutputPartTypes: ComposerOutputPartType[]) {
   if (!attachment.outputs)
     return false;
   if (attachment.outputs.length === 0)
     return false;
-  return attachment.outputs.every(output => supportedOutputs.includes(output.type));
+  return attachment.outputs.every(output => supportedOutputPartTypes.includes(output.type));
 }
 
 export function attachmentPreviewEjection(attachment: Readonly<Attachment>): string | null {
@@ -336,6 +350,8 @@ export function attachmentPreviewEjection(attachment: Readonly<Attachment>): str
   return attachment.outputs.reduce((text, output) => {
     if (output.type === 'text-block')
       return `${text}\n\n\`\`\`\n${output.text}\n\`\`\`\n`;
+    else
+      console.warn('Unhandled ejection for output type:', output.type);
     return text;
   }, '');
 }

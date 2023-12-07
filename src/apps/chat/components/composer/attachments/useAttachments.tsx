@@ -10,7 +10,8 @@ import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { AttachmentDTOrigin, AttachmentFileOrigin, AttachmentOutputType, useAttachmentsStore } from './store-attachments';
+import type { ComposerOutputPartType } from '../composer.types';
+import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
 import { attachmentIsEjectable, attachmentPreviewEjection } from './pipeline';
 
 
@@ -32,7 +33,7 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
     if (!attachments?.length)
       return true;
 
-    const supportedOutputs: AttachmentOutputType[] = ['text-block'];
+    const supportedOutputs: ComposerOutputPartType[] = ['text-block'];
     if (supportsImages)
       supportedOutputs.push('image-part');
 
@@ -58,14 +59,14 @@ export const useAttachments = (llmId: DLLMId | null, enableLoadURLs: boolean) =>
 
   // Creation helpers
 
-  const attachAppendFile = React.useCallback((origin: AttachmentFileOrigin, fileWithHandle: FileWithHandle, overrideFileName?: string) =>
+  const attachAppendFile = React.useCallback((origin: AttachmentSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) =>
       createAttachment({
         media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
       })
     , [createAttachment]);
 
 
-  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDTOrigin, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
     // attach File(s)
     if (dt.files.length >= 1) {

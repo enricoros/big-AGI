@@ -1,20 +1,14 @@
 import { create } from 'zustand';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { attachmentConvert, attachmentCreate, attachmentDefineConversions, attachmentLoadInputAsync } from './pipeline';
+import type { ComposerOutputMultiPart } from '../composer.types';
+import { attachmentPerformConversion, attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync } from './pipeline';
 
 
 // Attachment Types
 
-export type AttachmentId = string;
-export type AttachmentDTOrigin = 'drop' | 'paste';
-export type AttachmentFileOrigin = 'camera' | 'file-open' | 'clipboard-read' | AttachmentDTOrigin;
-export type AttachmentConversionType =
-  | 'text' | 'rich-text' | 'rich-text-table'
-  | 'pdf-text' | 'pdf-images'
-  | 'image' | 'image-ocr'
-  | 'unhandled';
-export type AttachmentOutputType = 'text-block' | 'image-part';
+export type AttachmentSourceOriginDTO = 'drop' | 'paste';
+export type AttachmentSourceOriginFile = 'camera' | 'file-open' | 'clipboard-read' | AttachmentSourceOriginDTO;
 
 export type AttachmentSource = {
   media: 'url';
@@ -22,15 +16,16 @@ export type AttachmentSource = {
   refUrl: string;
 } | {
   media: 'file';
-  origin: AttachmentFileOrigin,
+  origin: AttachmentSourceOriginFile,
   fileWithHandle: FileWithHandle;
   refPath: string;
 } | {
   media: 'text';
-  method: 'clipboard-read' | AttachmentDTOrigin;
+  method: 'clipboard-read' | AttachmentSourceOriginDTO;
   textPlain?: string;
   textHtml?: string;
 };
+
 
 export type AttachmentInput = {
   mimeType: string; // Original MIME type of the file
@@ -41,47 +36,44 @@ export type AttachmentInput = {
   // preview?: AttachmentPreview; // Preview of the input
 };
 
-export type AttachmentConversion = {
-  id: AttachmentConversionType;
+
+export type AttachmentConverterType =
+  | 'text' | 'rich-text' | 'rich-text-table'
+  | 'pdf-text' | 'pdf-images'
+  | 'image' | 'image-ocr'
+  | 'unhandled';
+
+export type AttachmentConverter = {
+  id: AttachmentConverterType;
   name: string;
   disabled?: boolean;
   unsupported?: boolean;
-  // outputType: ConversionOutputType; // The type of the output after conversion
+  // outputType: ComposerOutputPartType; // The type of the output after conversion
   // isAutonomous: boolean; // Whether the conversion does not require user input
   // isAsync: boolean; // Whether the conversion is asynchronous
   // progress: number; // Conversion progress percentage (0..1)
   // errorMessage?: string; // Error message if the conversion failed
 }
 
-export type AttachmentOutput = {
-  type: 'text-block',
-  text: string,
-} | {
-  type: 'image-part',
-  base64Url: string,
-  // TODO: not implemented yet
-};
+
+export type AttachmentId = string;
 
 export type Attachment = {
   readonly id: AttachmentId;
   readonly source: AttachmentSource,
   label: string;
+  ref: string;
 
   inputLoading: boolean;
   inputError: string | null;
   input?: AttachmentInput;
 
   // options to convert the input
-  conversions: AttachmentConversion[]; // List of available conversions for this attachment
-  conversionIdx: number | null; // Index of the selected conversion
+  converters: AttachmentConverter[]; // List of available converters for this attachment
+  converterIdx: number | null; // Index of the selected converter
 
-  outputsLoading: boolean;
-  outputs?: AttachmentOutput[];
-  // {
-  // dataTitle: string; // outputType dependent
-  // data: string; // outputType dependent
-  // preview?: AttachmentPreview; // Preview of the output
-  // }[];
+  outputsConverting: boolean;
+  outputs?: ComposerOutputMultiPart; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
 
   // metadata: {
   //   size?: number; // Size of the attachment in bytes
@@ -117,7 +109,7 @@ interface AttachmentsStore {
   clearAttachments: () => void;
   removeAttachment: (attachmentId: AttachmentId) => void;
   moveAttachment: (attachmentId: AttachmentId, delta: 1 | -1) => void;
-  setConversionIdx: (attachmentId: AttachmentId, conversionIdx: number | null) => Promise<void>;
+  setConverterIdx: (attachmentId: AttachmentId, converterIdx: number | null) => Promise<void>;
 
   _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) => void;
   _getAttachment: (attachmentId: AttachmentId) => Attachment | undefined;
@@ -130,7 +122,7 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
     attachments: [],
 
     createAttachment: async (source: AttachmentSource) => {
-      const { attachments, _getAttachment, _editAttachment, setConversionIdx } = _get();
+      const { attachments, _getAttachment, _editAttachment, setConverterIdx } = _get();
 
       const attachment = attachmentCreate(source, attachments.map(a => a.id));
 
@@ -146,15 +138,15 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
       if (!loaded || !loaded.input)
         return;
 
-      // 2. Define the I->O Conversions
-      attachmentDefineConversions(source.media, loaded.input, editFn);
+      // 2. Define the I->O Converters
+      attachmentDefineConverters(source.media, loaded.input, editFn);
       const defined = _getAttachment(attachment.id);
-      if (!defined || !defined.conversions.length || defined.conversionIdx !== null)
+      if (!defined || !defined.converters.length || defined.converterIdx !== null)
         return;
 
-      // 3. Select the first Conversion
-      const firstEnabledIndex = defined.conversions.findIndex(_c => !_c.disabled);
-      await setConversionIdx(attachment.id, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
+      // 3. Select the first Converter
+      const firstEnabledIndex = defined.converters.findIndex(_c => !_c.disabled);
+      await setConverterIdx(attachment.id, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
     },
 
     clearAttachments: () => _set({
@@ -182,15 +174,15 @@ export const useAttachmentsStore = create<AttachmentsStore>()(
         return { attachments };
       }),
 
-    setConversionIdx: async (attachmentId: AttachmentId, conversionIdx: number | null) => {
+    setConverterIdx: async (attachmentId: AttachmentId, converterIdx: number | null) => {
       const { _getAttachment, _editAttachment } = _get();
       const attachment = _getAttachment(attachmentId);
-      if (!attachment || attachment.conversionIdx === conversionIdx)
+      if (!attachment || attachment.converterIdx === converterIdx)
         return;
 
       const editFn = (changes: Partial<Attachment>) => _editAttachment(attachmentId, changes);
 
-      await attachmentConvert(attachment, conversionIdx, editFn);
+      await attachmentPerformConversion(attachment, converterIdx, editFn);
     },
 
     _editAttachment: (attachmentId: AttachmentId, update: Partial<Attachment> | ((attachment: Attachment) => Partial<Attachment>)) =>
