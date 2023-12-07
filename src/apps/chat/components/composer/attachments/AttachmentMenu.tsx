@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import type { LLMAttachment } from './useLLMAttachments';
+import { attachmentCollapseOutputs, LLMAttachment } from './useLLMAttachments';
 import { useAttachmentsStore } from './store-attachments';
 
 
@@ -55,7 +55,7 @@ export function AttachmentMenu(props: {
   const handleInlineText = React.useCallback(() => {
     onClose();
     onAttachmentInlineText(aId);
-  }, [onClose, onAttachmentInlineText, aId]);
+  }, [aId, onAttachmentInlineText, onClose]);
 
   const handleMoveUp = React.useCallback(() => {
     useAttachmentsStore.getState().moveAttachment(aId, -1);
@@ -74,17 +74,22 @@ export function AttachmentMenu(props: {
     return useAttachmentsStore.getState().setConverterIdx(aId, converterIdx);
   }, [aId]);
 
+  // const handleSummarizeText = React.useCallback(() => {
+  //   onAttachmentSummarizeText(aId);
+  // }, [aId, onAttachmentSummarizeText]);
+
   const handleCopyOutputToClipboard = React.useCallback(() => {
-    if (aOutputs.length >= 1) {
-      const concat = aOutputs.map(output => {
+    const outputs = attachmentCollapseOutputs(aOutputs);
+    if (outputs.length >= 1) {
+      const concat = outputs.map(output => {
         if (output.type === 'text-block')
           return output.text;
         else if (output.type === 'image-part')
           return output.base64Url;
         else
           return null;
-      }).join('\n\n');
-      copyToClipboard(concat, 'Converted attachment');
+      }).join('\n\n---\n\n');
+      copyToClipboard(concat.trim(), 'Converted attachment');
     }
   }, [aOutputs]);
 
@@ -162,6 +167,10 @@ export function AttachmentMenu(props: {
       {/*<MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>*/}
       {/*  <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>*/}
       {/*  Copy*/}
+      {/*</MenuItem>*/}
+      {/*<MenuItem onClick={handleSummarizeText} disabled={!isOutputTextInlineable}>*/}
+      {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
+      {/*  Shrink*/}
       {/*</MenuItem>*/}
       <MenuItem onClick={handleInlineText} disabled={!isOutputTextInlineable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>

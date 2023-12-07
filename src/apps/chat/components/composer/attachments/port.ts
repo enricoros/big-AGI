@@ -19,30 +19,8 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
     handleReducerClose();
     setComposeText(_t => _t + text);
   };
-*/
-
-
-/// Text template helpers
-
-/*const PromptTemplates = {
-  Concatenate: '{{input}}\n\n{{text}}',
-  PasteFile: '{{input}}\n\n```{{fileName}}\n{{fileText}}\n```\n',
-  PasteMarkdown: '{{input}}\n\n```\n{{clipboard}}\n```\n',
-};
-
-const expandPromptTemplate = (template: string, dict: object) => (inputValue: string): string => {
-  let expanded = template.replaceAll('{{input}}', (inputValue || '').trim()).trim();
-  for (const [key, value] of Object.entries(dict))
-    expanded = expanded.replaceAll(`{{${key}}}`, value.trim());
-  return expanded;
-};*/
-
-
-
-/*
 
   const handleAttachFiles = async (files: FileList, overrideFileNames?: string[]): Promise<void> => {
-
 
     // see how we fare on budget
     if (chatLLMId) {
