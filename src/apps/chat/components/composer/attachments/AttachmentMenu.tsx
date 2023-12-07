@@ -31,12 +31,12 @@ export function AttachmentMenu(props: {
   const {
     id: aId,
     input: aInput,
-    conversions: aConversions,
-    conversionIdx: aConversionIdx,
+    converters: aConverters,
+    converterIdx: aConverterIdx,
     outputs: aOutputs,
   } = props.attachment;
 
-  const isUnconverted = aConversions.length === 0;
+  const isUnconvertible = aConverters.length === 0;
   const isOutputExpectedAndMissing = aOutputs?.length === 0;
 
 
@@ -62,8 +62,8 @@ export function AttachmentMenu(props: {
     useAttachmentsStore.getState().removeAttachment(aId);
   }, [aId, onClose]);
 
-  const handleSetConversionIdx = React.useCallback(async (conversionIdx: number | null) =>
-      useAttachmentsStore.getState().setConversionIdx(aId, conversionIdx)
+  const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) =>
+      useAttachmentsStore.getState().setConverterIdx(aId, converterIdx)
     , [aId]);
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
@@ -107,30 +107,27 @@ export function AttachmentMenu(props: {
       </Box>}
       {!isPositionFixed && <ListDivider sx={{ mt: 0 }} />}
 
-      {/* Render Conversions as menu items */}
-      {/*{!isUnconverted && <ListItem>*/}
+      {/* Render Converters as menu items */}
+      {/*{!isUnconvertible && <ListItem>*/}
       {/*  <Typography level='body-md'>*/}
       {/*    Attach as:*/}
       {/*  </Typography>*/}
       {/*</ListItem>}*/}
-      {!isUnconverted && aConversions.map((conversion, idx) =>
+      {!isUnconvertible && aConverters.map((c, idx) =>
         <MenuItem
-          disabled={conversion.disabled}
-          key={'c-' + conversion.id}
-          onClick={async () => idx !== aConversionIdx && await handleSetConversionIdx(idx)}
+          disabled={c.disabled}
+          key={'c-' + c.id}
+          onClick={async () => idx !== aConverterIdx && await handleSetConverterIdx(idx)}
         >
           <ListItemDecorator>
-            <Radio checked={idx === aConversionIdx} />
+            <Radio checked={idx === aConverterIdx} />
           </ListItemDecorator>
-          {conversion.unsupported ? <Box>
-            Unsupported 🤔
-            <Typography level='body-xs'>
-              {conversion.name}
-            </Typography>
-          </Box> : conversion.name}
+          {c.unsupported
+            ? <Box>Unsupported 🤔 <Typography level='body-xs'>{c.name}</Typography></Box>
+            : c.name}
         </MenuItem>,
       )}
-      {!isUnconverted && <ListDivider />}
+      {!isUnconvertible && <ListDivider />}
 
       {DEBUG_ATTACHMENTS && !!aInput && (
         <MenuItem onClick={handleCopyOutputToClipboard}>
@@ -139,7 +136,7 @@ export function AttachmentMenu(props: {
               🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
             </Typography>}
             {/*<Typography level='body-xs'>*/}
-            {/*  Conversions: {aConversions.map(((conversion, idx) => ` ${conversion.id}${(idx === aConversionIdx) ? '*' : ''}`)).join(', ')}*/}
+            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
               🡒 {isOutputExpectedAndMissing ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
@@ -150,7 +147,7 @@ export function AttachmentMenu(props: {
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      <MenuItem onClick={handleInline} disabled={isUnconverted || isOutputExpectedAndMissing}>
+      <MenuItem onClick={handleInline} disabled={isUnconvertible || isOutputExpectedAndMissing}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline
       </MenuItem>

@@ -13,7 +13,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { Attachment, AttachmentConversionType, AttachmentId } from './store-attachments';
+import type { Attachment, AttachmentConverterType, AttachmentId } from './store-attachments';
 
 
 // default attachment width
@@ -61,7 +61,7 @@ const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
-const conversionTypeToIconMap: { [key in AttachmentConversionType]: React.ComponentType<any> } = {
+const converterTypeToIconMap: { [key in AttachmentConverterType]: React.ComponentType<any> } = {
   'text': TextFieldsIcon,
   'rich-text': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
@@ -72,10 +72,10 @@ const conversionTypeToIconMap: { [key in AttachmentConversionType]: React.Compon
   'unhandled': TextureIcon,
 };
 
-function attachmentConversionIcon(attachment: Attachment) {
-  const conversion = attachment.conversionIdx !== null ? attachment.conversions[attachment.conversionIdx] ?? null : null;
-  if (conversion && conversion.id) {
-    const Icon = conversionTypeToIconMap[conversion.id] ?? null;
+function attachmentConverterIcon(attachment: Attachment) {
+  const converter = attachment.converterIdx !== null ? attachment.converters[attachment.converterIdx] ?? null : null;
+  if (converter && converter.id) {
+    const Icon = converterTypeToIconMap[converter.id] ?? null;
     if (Icon)
       return <Icon sx={{ width: 24, height: 24 }} />;
   }
@@ -99,8 +99,8 @@ export function AttachmentItem(props: {
 
   const isInputLoading = attachment.inputLoading;
   const isInputError = !!attachment.inputError;
-  const isUnconverted = attachment.conversions.length === 0;
-  const isOutputLoading = attachment.outputsLoading;
+  const isUnconverted = attachment.converters.length === 0;
+  const isOutputLoading = attachment.outputsConverting;
   const isOutputExpectedAndMissing = attachment.outputs?.length === 0;
 
 
@@ -175,7 +175,7 @@ export function AttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentConversionIcon(attachment)}
+                {attachmentConverterIcon(attachment)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
                   : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
