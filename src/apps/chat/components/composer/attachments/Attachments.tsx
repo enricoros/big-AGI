@@ -8,8 +8,9 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
-import type { Attachment } from './store-attachments';
+import type { Attachment, AttachmentId } from './store-attachments';
 import { AttachmentItem } from './AttachmentItem';
+import { AttachmentMenu } from './AttachmentMenu';
 
 
 /**
@@ -23,11 +24,17 @@ export function Attachments(props: {
 
   // state
   const [confirmClearAttachments, setConfirmClearAttachments] = React.useState<boolean>(false);
+  const [itemMenu, setItemMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentId: AttachmentId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
-  // derive state
+  // derived state
   const { attachments, onAttachmentsClear, onAttachmentsInline } = props;
   const hasAttachments = attachments.length >= 1;
+
+  const itemMenuAnchor = itemMenu?.anchor;
+  const itemMenuAttachmentId = itemMenu?.attachmentId;
+  const itemMenuAttachment = itemMenuAttachmentId ? attachments.find(a => a.id === itemMenu.attachmentId) : undefined;
+  const itemMenuIndex = itemMenuAttachment ? attachments.indexOf(itemMenuAttachment) : -1;
 
 
   // menu
@@ -54,7 +61,18 @@ export function Attachments(props: {
   }, [onAttachmentsClear]);
 
 
-  // individual operations
+  // item menu
+
+  const handleItemMenuShow = React.useCallback((attachmentId: AttachmentId, anchor: HTMLAnchorElement) => {
+    setItemMenu({ anchor, attachmentId });
+  }, []);
+
+  const handleItemMenuHide = React.useCallback(() => {
+    setItemMenu(null);
+  }, []);
+
+
+  // item menu operations
 
   const handleAttachmentInline = React.useCallback((attachmentId: string) => {
     // (attachmentId);
@@ -73,13 +91,12 @@ export function Attachments(props: {
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
-        {attachments.map((attachment, idx) =>
+        {attachments.map((attachment) =>
           <AttachmentItem
             key={attachment.id}
             attachment={attachment}
-            isPositionFirst={idx === 0}
-            isPositionLast={idx === attachments.length - 1}
-            onAttachmentInline={handleAttachmentInline}
+            menuShown={attachment.id === itemMenuAttachmentId}
+            onClick={handleItemMenuShow}
           />,
         )}
       </Box>
@@ -99,7 +116,21 @@ export function Attachments(props: {
 
     </Box>
 
-    {/* Menu */}
+
+    {/* Attachment Menu */}
+    {!!itemMenuAnchor && !!itemMenuAttachment && (
+      <AttachmentMenu
+        menuAnchor={itemMenuAnchor}
+        attachment={itemMenuAttachment}
+        isPositionFirst={itemMenuIndex === 0}
+        isPositionLast={itemMenuIndex === attachments.length - 1}
+        onAttachmentInline={handleAttachmentInline}
+        onClose={handleItemMenuHide}
+      />
+    )}
+
+
+    {/* Overall Menu */}
     {!!overallMenuAnchor && (
       <CloseableMenu
         placement='top-start'
