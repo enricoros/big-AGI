@@ -20,9 +20,9 @@ import { AttachmentMenu } from './AttachmentMenu';
 export function Attachments(props: {
   attachments: Attachment[]
   ejectableOutputPartTypes: ComposerOutputPartType[],
-  onAttachmentInline: (attachmentId: AttachmentId) => void,
+  onAttachmentInlineText: (attachmentId: AttachmentId) => void,
   onAttachmentsClear: () => void,
-  onAttachmentsInline: () => void,
+  onAttachmentsInlineText: () => void,
 }) {
 
   // state
@@ -31,37 +31,13 @@ export function Attachments(props: {
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derived state
-  const { attachments, onAttachmentsClear, onAttachmentInline, onAttachmentsInline } = props;
+  const { attachments, onAttachmentsClear, onAttachmentInlineText, onAttachmentsInlineText } = props;
   const hasAttachments = attachments.length >= 1;
 
   const itemMenuAnchor = itemMenu?.anchor;
   const itemMenuAttachmentId = itemMenu?.attachmentId;
   const itemMenuAttachment = itemMenuAttachmentId ? attachments.find(a => a.id === itemMenu.attachmentId) : undefined;
   const itemMenuIndex = itemMenuAttachment ? attachments.indexOf(itemMenuAttachment) : -1;
-
-
-  // menu
-
-  const handleOverallMenuHide = () => setOverallMenuAnchor(null);
-
-  const handleOverallMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) =>
-    setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
-
-
-  // overall operations
-
-  const handleInlineAttachments = React.useCallback(() => {
-    handleOverallMenuHide();
-    onAttachmentsInline();
-  }, [onAttachmentsInline]);
-
-  const handleClearAttachments = () => setConfirmClearAttachments(true);
-
-  const handleClearAttachmentsConfirmed = React.useCallback(() => {
-    handleOverallMenuHide();
-    setConfirmClearAttachments(false);
-    onAttachmentsClear();
-  }, [onAttachmentsClear]);
 
 
   // item menu
@@ -78,10 +54,34 @@ export function Attachments(props: {
 
   // item menu operations
 
-  const handleAttachmentInline = React.useCallback((attachmentId: string) => {
+  const handleAttachmentInlineText = React.useCallback((attachmentId: string) => {
     handleItemMenuHide();
-    onAttachmentInline(attachmentId);
-  }, [handleItemMenuHide, onAttachmentInline]);
+    onAttachmentInlineText(attachmentId);
+  }, [handleItemMenuHide, onAttachmentInlineText]);
+
+
+  // menu
+
+  const handleOverallMenuHide = () => setOverallMenuAnchor(null);
+
+  const handleOverallMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) =>
+    setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
+
+
+  // overall operations
+
+  const handleAttachmentsInlineText = React.useCallback(() => {
+    handleOverallMenuHide();
+    onAttachmentsInlineText();
+  }, [onAttachmentsInlineText]);
+
+  const handleClearAttachments = () => setConfirmClearAttachments(true);
+
+  const handleClearAttachmentsConfirmed = React.useCallback(() => {
+    handleOverallMenuHide();
+    setConfirmClearAttachments(false);
+    onAttachmentsClear();
+  }, [onAttachmentsClear]);
 
 
   // no components without attachments
@@ -101,6 +101,7 @@ export function Attachments(props: {
             attachment={attachment}
             menuShown={attachment.id === itemMenuAttachmentId}
             onClick={handleItemMenuShow}
+            supportedOutputPartTypes={props.ejectableOutputPartTypes}
           />,
         )}
       </Box>
@@ -128,9 +129,9 @@ export function Attachments(props: {
         attachment={itemMenuAttachment}
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === attachments.length - 1}
-        ejectableOutputPartTypes={props.ejectableOutputPartTypes}
-        onAttachmentInline={handleAttachmentInline}
+        onAttachmentInlineText={handleAttachmentInlineText}
         onClose={handleItemMenuHide}
+        supportedOutputPartTypes={props.ejectableOutputPartTypes}
       />
     )}
 
@@ -142,7 +143,7 @@ export function Attachments(props: {
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
         noTopPadding noBottomPadding
       >
-        <MenuItem onClick={handleInlineAttachments}>
+        <MenuItem onClick={handleAttachmentsInlineText}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline <span style={{ opacity: 0.5 }}>text attachments</span>
         </MenuItem>
