@@ -148,7 +148,18 @@ export function Composer(props: {
   // Primary button
 
   const handleSendClicked = (_chatModeId: ChatModeId) => {
-    const text = (composeText || '').trim();
+    let text = (composeText || '').trim();
+    // inline the text attachments and clear if any string
+    if (!_chatModeId.startsWith('draw-')) {
+      const inlineTextAttachments = llmAttachments.inlineTextAttachments();
+      if (inlineTextAttachments !== null) {
+        if (text.length)
+          text += inlineTextAttachments;
+        else
+          text = inlineTextAttachments.trim();
+        clearAttachments();
+      }
+    }
     if (text.length && props.conversationId && chatLLMId) {
       setComposeText('');
       props.onNewMessage(_chatModeId, props.conversationId, text);
