@@ -11,7 +11,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { ComposerOutputPartType } from '../composer.types';
 import { Attachment, useAttachmentsStore } from './store-attachments';
-import { attachmentIsEjectable } from './pipeline';
+import { areAllOutputsSupported } from './pipeline';
 
 
 // enable for debugging
@@ -21,11 +21,11 @@ export const DEBUG_ATTACHMENTS = true;
 export function AttachmentMenu(props: {
   menuAnchor: HTMLAnchorElement,
   attachment: Attachment,
-  ejectableOutputPartTypes: ComposerOutputPartType[],
   isPositionFirst: boolean,
   isPositionLast: boolean,
-  onAttachmentInline: (attachmentId: string) => void,
+  onAttachmentInlineText: (attachmentId: string) => void,
   onClose: () => void,
+  supportedOutputPartTypes: ComposerOutputPartType[],
 }) {
 
   // derived state
@@ -41,17 +41,18 @@ export function AttachmentMenu(props: {
 
   const isUnconvertible = aConverters.length === 0;
   const isOutputMissing = aOutputs.length === 0;
-  const isEjectable = attachmentIsEjectable(props.attachment, props.ejectableOutputPartTypes);
+  const isOutputInlineable = React.useMemo(() => areAllOutputsSupported(aOutputs, props.supportedOutputPartTypes.filter(pt => pt === 'text-block')), [aOutputs, props.supportedOutputPartTypes]);
+  const isOutputUnsupported = React.useMemo(() => !areAllOutputsSupported(aOutputs, props.supportedOutputPartTypes), [aOutputs, props.supportedOutputPartTypes]);
 
 
   // operations
 
-  const { onAttachmentInline, onClose } = props;
+  const { onClose, onAttachmentInlineText } = props;
 
-  const handleInline = React.useCallback(() => {
+  const handleInlineText = React.useCallback(() => {
     onClose();
-    onAttachmentInline(aId);
-  }, [onClose, onAttachmentInline, aId]);
+    onAttachmentInlineText(aId);
+  }, [onClose, onAttachmentInlineText, aId]);
 
   const handleMoveUp = React.useCallback(() => {
     useAttachmentsStore.getState().moveAttachment(aId, -1);
@@ -66,9 +67,9 @@ export function AttachmentMenu(props: {
     useAttachmentsStore.getState().removeAttachment(aId);
   }, [aId, onClose]);
 
-  const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) =>
-      useAttachmentsStore.getState().setConverterIdx(aId, converterIdx)
-    , [aId]);
+  const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) => {
+    return useAttachmentsStore.getState().setConverterIdx(aId, converterIdx);
+  }, [aId]);
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
     if (aOutputs.length >= 1) {
@@ -87,7 +88,7 @@ export function AttachmentMenu(props: {
 
   return (
     <CloseableMenu
-      placement='top' sx={{ minWidth: 200 }}
+      dense placement='top' sx={{ minWidth: 200 }}
       open anchorEl={props.menuAnchor} onClose={props.onClose}
       noTopPadding noBottomPadding
     >
@@ -151,12 +152,12 @@ export function AttachmentMenu(props: {
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      <MenuItem onClick={handleInline} disabled={!isEjectable}>
+      <MenuItem onClick={handleInlineText} disabled={!isOutputInlineable}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline <span style={{ opacity: 0.5 }}>text</span>
       </MenuItem>
       <MenuItem onClick={handleRemove}>
-      <ListItemDecorator><ClearIcon /></ListItemDecorator>
+        <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Remove
       </MenuItem>
 

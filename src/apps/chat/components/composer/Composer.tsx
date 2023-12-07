@@ -108,7 +108,7 @@ export function Composer(props: {
     };
   }, shallow);
   const { chatLLMId, chatLLM } = useChatLLM();
-  const ejectableOutputPartTypes: ComposerOutputPartType[] = React.useMemo(() => {
+  const supportedOutputPartTypes: ComposerOutputPartType[] = React.useMemo(() => {
     const supportsImages = !!chatLLMId?.endsWith('-vision-preview');
     return supportsImages ? ['text-block', 'image-part'] : ['text-block'];
   }, [chatLLMId]);
@@ -118,11 +118,11 @@ export function Composer(props: {
     attachAppendDataTransfer,
     attachAppendFile,
     attachments,
-    attachmentsEjectable,
-    attachmentsTokensCount: tokensComposerAttachments,
+    attachmentsSupported,
+    attachmentsTokensCount,
     clearAttachments,
     removeAttachment,
-  } = useAttachments(ejectableOutputPartTypes, chatLLMId, enableLoadUrls);
+  } = useAttachments(supportedOutputPartTypes, chatLLMId, enableLoadUrls);
 
   // derived state
   const isDesktop = !isMobile;
@@ -133,7 +133,7 @@ export function Composer(props: {
       return 0;
     return 4 + countModelTokens(debouncedText, chatLLMId, 'composer text');
   }, [chatLLMId, debouncedText]);
-  const tokensComposer = tokensComposerText + tokensComposerAttachments;
+  const tokensComposer = tokensComposerText + attachmentsTokensCount;
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = chatLLM?.contextTokens || 0;
@@ -517,10 +517,10 @@ export function Composer(props: {
             {/* Render any Attachments & menu items */}
             <Attachments
               attachments={attachments}
-              ejectableOutputPartTypes={ejectableOutputPartTypes}
-              onAttachmentInline={handleAttachmentInlineText}
+              ejectableOutputPartTypes={supportedOutputPartTypes}
+              onAttachmentInlineText={handleAttachmentInlineText}
               onAttachmentsClear={clearAttachments}
-              onAttachmentsInline={handleAttachmentsInline}
+              onAttachmentsInlineText={handleAttachmentsInline}
             />
 
           </Box>
@@ -554,7 +554,7 @@ export function Composer(props: {
                 {!assistantTyping ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsEjectable}
+                    fullWidth disabled={!props.conversationId || !chatLLM || !attachmentsSupported}
                     onClick={() => handleSendClicked(chatModeId)}
                     endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >

@@ -12,10 +12,10 @@ import { getClipboardItems } from '~/common/util/clipboardUtils';
 
 import type { ComposerOutputPartType } from '../composer.types';
 import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
-import { attachmentIsEjectable, attachmentPreviewTextEjection } from './pipeline';
+import { attachmentPreviewTextEjection, attachmentsAreSupported } from './pipeline';
 
 
-export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[], llmId: DLLMId | null, enableLoadURLs: boolean) => {
+export const useAttachments = (supportedOutputPartTypes: ComposerOutputPartType[], llmForTokenCount: DLLMId | null, enableLoadURLs: boolean) => {
 
   // state
   const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
@@ -28,15 +28,12 @@ export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[
 
   // memoed state (readiness and token count)
 
-  const attachmentsEjectable = React.useMemo(() => {
-    if (!attachments?.length)
-      return true;
-    return attachments.every(attachment => attachmentIsEjectable(attachment, ejectableOutputPartTypes));
-  }, [attachments, ejectableOutputPartTypes]);
-
+  const attachmentsSupported = React.useMemo(() => {
+    return attachmentsAreSupported(attachments, supportedOutputPartTypes);
+  }, [attachments, supportedOutputPartTypes]);
 
   const attachmentsTokensCount = React.useMemo(() => {
-    if (!attachments?.length || !llmId)
+    if (!attachments?.length || !llmForTokenCount)
       return 0;
 
     // sum up the tokens as if we performed a full eject of all outputs
@@ -44,11 +41,12 @@ export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[
       const attachmentTextPreview = attachmentPreviewTextEjection(attachment);
       if (!attachmentTextPreview)
         return fusedText;
+      // FIXME
       return `${fusedText}\n\n${attachmentTextPreview.trim()}`.trim();
     }, '');
 
-    return countModelTokens(fusedText, llmId, 'attachments tokens count');
-  }, [attachments, llmId]);
+    return countModelTokens(fusedText, llmForTokenCount, 'attachments tokens count');
+  }, [attachments, llmForTokenCount]);
 
 
   // Creation helpers
@@ -181,7 +179,7 @@ export const useAttachments = (ejectableOutputPartTypes: ComposerOutputPartType[
   return {
     // state
     attachments,
-    attachmentsEjectable,
+    attachmentsSupported,
     attachmentsTokensCount,
 
     // create attachments

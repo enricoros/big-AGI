@@ -14,6 +14,8 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
 import type { Attachment, AttachmentConverterType, AttachmentId } from './store-attachments';
+import type { ComposerOutputPartType } from '../composer.types';
+import { areAllOutputsSupported } from './pipeline';
 
 
 // default attachment width
@@ -82,7 +84,6 @@ function attachmentConverterIcon(attachment: Attachment) {
   return null;
 }
 
-
 function attachmentLabelText(attachment: Attachment): string {
   return ellipsizeFront(attachment.label, 24);
 }
@@ -92,6 +93,7 @@ export function AttachmentItem(props: {
   attachment: Attachment,
   menuShown: boolean,
   onClick: (attachmentId: AttachmentId, anchor: HTMLAnchorElement) => void,
+  supportedOutputPartTypes: ComposerOutputPartType[],
 }) {
 
   // derived state
@@ -99,9 +101,10 @@ export function AttachmentItem(props: {
 
   const isInputLoading = attachment.inputLoading;
   const isInputError = !!attachment.inputError;
-  const isUnconverted = attachment.converters.length === 0;
+  const isUnconvertible = attachment.converters.length === 0;
   const isOutputLoading = attachment.outputsConverting;
   const isOutputMissing = attachment.outputs.length === 0;
+  const isOutputUnsupported = React.useMemo(() => !areAllOutputsSupported(attachment.outputs, props.supportedOutputPartTypes), [attachment.outputs, props.supportedOutputPartTypes]);
 
 
   const handleShowMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -130,12 +133,9 @@ export function AttachmentItem(props: {
     tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
     variant = 'soft';
     color = 'danger';
-  } else if (isUnconverted) {
-    tooltip = `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
-    variant = 'soft';
-    color = 'warning';
-  } else if (isOutputMissing) {
-    tooltip = 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
+  } else if (isUnconvertible || isOutputMissing || isOutputUnsupported) {
+    tooltip = isUnconvertible ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
+      : 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
     variant = 'soft';
     color = 'warning';
   } else {
@@ -151,7 +151,7 @@ export function AttachmentItem(props: {
     <GoodTooltip
       title={tooltip}
       isError={isInputError}
-      isWarning={isUnconverted || isOutputMissing}
+      isWarning={isUnconvertible || isOutputMissing || isOutputUnsupported}
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading

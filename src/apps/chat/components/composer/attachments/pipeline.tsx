@@ -288,6 +288,11 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       break;
 
     case 'image':
+      outputs.push({
+        type: 'image-part',
+        base64Url: `data:ciao`,
+        collapsible: false,
+      });
       // TODO: extract base64
       break;
 
@@ -329,15 +334,16 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   });
 }
 
-/**
- * Checks if an Attachment object is ready to be ejected (must have outputs, and
- * all AttachmentOutputType(s) are supported by the caller)
- */
-export function attachmentIsEjectable(attachment: Readonly<Attachment>, supportedOutputPartTypes: ComposerOutputPartType[]) {
-  if (!attachment.outputs.length)
-    return false;
-  return attachment.outputs.every(output => supportedOutputPartTypes.includes(output.type));
-}
+
+export const areAllOutputsSupported = (outputs: ComposerOutputMultiPart, supportedOutputPartTypes: ComposerOutputPartType[]) =>
+  outputs.length
+    ? outputs.every(output => supportedOutputPartTypes.includes(output.type))
+    : false;
+
+export const attachmentsAreSupported = (attachments: Readonly<Attachment[]>, supportedOutputPartTypes: ComposerOutputPartType[]) =>
+  attachments.length
+    ? attachments.every(attachment => areAllOutputsSupported(attachment.outputs, supportedOutputPartTypes))
+    : true;
 
 export function attachmentPreviewTextEjection(attachment: Readonly<Attachment>): string | null {
   if (!attachment.outputs.length)

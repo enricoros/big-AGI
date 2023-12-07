@@ -58,14 +58,7 @@ const expandPromptTemplate = (template: string, dict: object) => (inputValue: st
 
     // within the budget, so just append
     setComposeText(text => expandPromptTemplate(PromptTemplates.Concatenate, { text: newText })(text));
-  };
 
 
 
-
-  // Attachments: Text
-
-  const handleCameraOCRText = (text: string) => {
-    text && setComposeText(expandPromptTemplate(PromptTemplates.PasteMarkdown, { clipboard: text }));
-  };
 */
