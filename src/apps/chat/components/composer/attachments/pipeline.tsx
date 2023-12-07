@@ -26,7 +26,7 @@ export function attachmentCreate(source: AttachmentSource, checkDuplicates: Atta
     converters: [],
     converterIdx: null,
     outputsConverting: false,
-    outputs: undefined,
+    outputs: [],
     // metadata: {},
   };
 }
@@ -204,7 +204,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
   edit({
     converterIdx: converterIdx,
-    outputs: undefined,
+    outputs: [],
   });
 
   // get converter
@@ -334,17 +334,13 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
  * all AttachmentOutputType(s) are supported by the caller)
  */
 export function attachmentIsEjectable(attachment: Readonly<Attachment>, supportedOutputPartTypes: ComposerOutputPartType[]) {
-  if (!attachment.outputs)
-    return false;
-  if (attachment.outputs.length === 0)
+  if (!attachment.outputs.length)
     return false;
   return attachment.outputs.every(output => supportedOutputPartTypes.includes(output.type));
 }
 
 export function attachmentPreviewEjection(attachment: Readonly<Attachment>): string | null {
-  if (!attachment.outputs)
-    return null;
-  if (attachment.outputs.length === 0)
+  if (!attachment.outputs.length)
     return null;
 
   return attachment.outputs.reduce((text, output) => {

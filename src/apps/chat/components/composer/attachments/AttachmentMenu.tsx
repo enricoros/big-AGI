@@ -37,7 +37,7 @@ export function AttachmentMenu(props: {
   } = props.attachment;
 
   const isUnconvertible = aConverters.length === 0;
-  const isOutputExpectedAndMissing = aOutputs?.length === 0;
+  const isOutputMissing = aOutputs.length === 0;
 
 
   // operations
@@ -67,7 +67,7 @@ export function AttachmentMenu(props: {
     , [aId]);
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
-    if (aOutputs && aOutputs.length >= 1) {
+    if (aOutputs.length >= 1) {
       const concat = aOutputs.map(output => {
         if (output.type === 'text-block')
           return output.text;
@@ -139,7 +139,7 @@ export function AttachmentMenu(props: {
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
-              🡒 {isOutputExpectedAndMissing ? 'empty' : aOutputs?.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
+              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
             </Typography>
           </Box>
         </MenuItem>
@@ -147,7 +147,7 @@ export function AttachmentMenu(props: {
       {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      <MenuItem onClick={handleInline} disabled={isUnconvertible || isOutputExpectedAndMissing}>
+      <MenuItem onClick={handleInline} disabled={isUnconvertible || isOutputMissing}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline
       </MenuItem>

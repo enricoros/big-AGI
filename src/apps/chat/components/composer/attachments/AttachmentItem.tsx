@@ -101,7 +101,7 @@ export function AttachmentItem(props: {
   const isInputError = !!attachment.inputError;
   const isUnconverted = attachment.converters.length === 0;
   const isOutputLoading = attachment.outputsConverting;
-  const isOutputExpectedAndMissing = attachment.outputs?.length === 0;
+  const isOutputMissing = attachment.outputs.length === 0;
 
 
   const handleShowMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -134,7 +134,7 @@ export function AttachmentItem(props: {
     tooltip = `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`;
     variant = 'soft';
     color = 'warning';
-  } else if (isOutputExpectedAndMissing) {
+  } else if (isOutputMissing) {
     tooltip = 'Not compatible with the selected LLM or not supported. Please select another format.\n\n' + tooltip;
     variant = 'soft';
     color = 'warning';
@@ -151,7 +151,7 @@ export function AttachmentItem(props: {
     <GoodTooltip
       title={tooltip}
       isError={isInputError}
-      isWarning={isUnconverted || isOutputExpectedAndMissing}
+      isWarning={isUnconverted || isOutputMissing}
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading

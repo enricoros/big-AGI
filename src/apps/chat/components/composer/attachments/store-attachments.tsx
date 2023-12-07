@@ -73,7 +73,7 @@ export type Attachment = {
   converterIdx: number | null; // Index of the selected converter
 
   outputsConverting: boolean;
-  outputs?: ComposerOutputMultiPart; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
+  outputs: ComposerOutputMultiPart; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
 
   // metadata: {
   //   size?: number; // Size of the attachment in bytes
