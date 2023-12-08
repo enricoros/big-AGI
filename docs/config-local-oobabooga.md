@@ -33,12 +33,8 @@ This guide assumes that **big-AGI** is already installed on your system. Note th
       2023-12-07 21:51:21 INFO:Loading the extension "openai"...
       2023-12-07 21:51:21 INFO:OpenAI-compatible API URL:
       
-      http://0.0.0.0:5000
-      
-      2023-12-07 21:51:21 INFO:Loading the extension "gallery"...
-      INFO:     Started server process [24756]
-      INFO:     Waiting for application startup.
-      INFO:     Application startup complete.
+      http://0.0.0.0:5000 
+      ...
       INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
       Running on local URL:  http://0.0.0.0:7860
       ```
