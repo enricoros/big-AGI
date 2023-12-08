@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { BrowserContext, connect, TimeoutError } from '@cloudflare/puppeteer';
+import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -22,6 +22,11 @@ const fetchPageInputSchema = z.object({
   subjects: z.array(z.object({
     url: z.string().url(),
   })),
+  screenshot: z.object({
+    width: z.number(),
+    height: z.number(),
+    quality: z.number().optional(),
+  }).optional(),
 });
 
 
@@ -33,7 +38,8 @@ const fetchPageWorkerOutputSchema = z.object({
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
-    base64: z.string(),
+    imageDataUrl: z.string().startsWith('data:image/'),
+    mimeType: z.string().startsWith('image/'),
     width: z.number(),
     height: z.number(),
   }).optional(),
@@ -49,12 +55,12 @@ export const browseRouter = createTRPCRouter({
   fetchPages: publicProcedure
     .input(fetchPageInputSchema)
     .output(fetchPagesOutputSchema)
-    .mutation(async ({ input: { access, subjects } }) => {
+    .mutation(async ({ input: { access, subjects, screenshot } }) => {
       const pages: FetchPageWorkerOutputSchema[] = [];
 
       for (const subject of subjects) {
         try {
-          pages.push(await workerPuppeteer(access, subject.url));
+          pages.push(await workerPuppeteer(access, subject.url, screenshot?.width, screenshot?.height, screenshot?.quality));
         } catch (error: any) {
           pages.push({
             url: subject.url,
@@ -74,7 +80,7 @@ export const browseRouter = createTRPCRouter({
 type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
-async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): Promise<FetchPageWorkerOutputSchema> {
+async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
 
   // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
@@ -136,21 +142,25 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // get a screenshot of the page
   try {
-    const width = 100;
-    const height = 100;
-    const scale = 0.1; // 10%
+    if (ssWidth && ssHeight) {
+      const width = ssWidth;
+      const height = ssHeight;
+      const scale = Math.round(100 * ssWidth / 1024) / 100;
 
-    await page.setViewport({ width: width / scale, height: height / scale, deviceScaleFactor: scale });
+      await page.setViewport({ width: width / scale, height: height / scale, deviceScaleFactor: scale });
 
-    result.screenshot = {
-      base64: await page.screenshot({
-        type: 'webp',
-        clip: { x: 0, y: 0, width: width / scale, height: height / scale },
+      const imageType: ScreenshotOptions['type'] = 'webp';
+      const mimeType = `image/${imageType}`;
+
+      const dataString = await page.screenshot({
+        type: imageType,
         encoding: 'base64',
-      }) as string,
-      width,
-      height,
-    };
+        clip: { x: 0, y: 0, width: width / scale, height: height / scale },
+        ...(ssQuality && { quality: ssQuality }),
+      }) as string;
+
+      result.screenshot = { imageDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
+    }
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);
   }
