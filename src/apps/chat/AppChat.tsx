@@ -366,6 +366,7 @@ export function AppChat() {
 
           <ChatMessageList
             conversationId={_conversationId}
+            chatLLMContextTokens={chatLLM?.contextTokens}
             isMessageSelectionMode={isMessageSelectionMode}
             setIsMessageSelectionMode={setIsMessageSelectionMode}
             onConversationBranch={handleConversationBranch}
