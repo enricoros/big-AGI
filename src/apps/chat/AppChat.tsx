@@ -21,6 +21,7 @@ import { createDMessage, DConversationId, DMessage, getConversation, useConversa
 import { openLayoutLLMOptions, useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
@@ -182,13 +183,33 @@ export function AppChat() {
     setMessages(conversationId, history);
   }, [focusedSystemPurposeId, setMessages]);
 
-  const handleComposerNewMessage = async (chatModeId: ChatModeId, conversationId: DConversationId, userText: string) => {
+  const handleComposerAction = (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart): boolean => {
+
+    // validate inputs
+    if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
+      addSnackbar({
+        key: 'chat-composer-action-invalid',
+        message: 'Only a single text part is supported for now.',
+        type: 'issue',
+        overrides: {
+          autoHideDuration: 2000,
+        },
+      });
+      return false;
+    }
+    const userText = multiPartMessage[0].text;
+
+    // find conversation
     const conversation = getConversation(conversationId);
-    if (conversation)
-      return await _handleExecute(chatModeId, conversationId, [
-        ...conversation.messages,
-        createDMessage('user', userText),
-      ]);
+    if (!conversation)
+      return false;
+
+    // start execution (async)
+    void _handleExecute(chatModeId, conversationId, [
+      ...conversation.messages,
+      createDMessage('user', userText),
+    ]);
+    return true;
   };
 
   const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
@@ -409,7 +430,7 @@ export function AppChat() {
       composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
-      onNewMessage={handleComposerNewMessage}
+      onAction={handleComposerAction}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
         backgroundColor: 'background.surface',
