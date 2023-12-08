@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { connect, Page, TimeoutError } from '@cloudflare/puppeteer';
+import { BrowserContext, connect, TimeoutError } from '@cloudflare/puppeteer';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -40,7 +40,7 @@ const fetchPageWorkerOutputSchema = z.object({
 });
 
 const fetchPagesOutputSchema = z.object({
-  objects: z.array(fetchPageWorkerOutputSchema),
+  pages: z.array(fetchPageWorkerOutputSchema),
 });
 
 
@@ -50,13 +50,13 @@ export const browseRouter = createTRPCRouter({
     .input(fetchPageInputSchema)
     .output(fetchPagesOutputSchema)
     .mutation(async ({ input: { access, subjects } }) => {
-      const results: FetchPageWorkerOutputSchema[] = [];
+      const pages: FetchPageWorkerOutputSchema[] = [];
 
       for (const subject of subjects) {
         try {
-          results.push(await workerPuppeteer(access, subject.url));
+          pages.push(await workerPuppeteer(access, subject.url));
         } catch (error: any) {
-          results.push({
+          pages.push({
             url: subject.url,
             content: '',
             error: error?.message || JSON.stringify(error) || 'Unknown fetch error',
@@ -65,7 +65,7 @@ export const browseRouter = createTRPCRouter({
         }
       }
 
-      return { objects: results };
+      return { pages };
     }),
 
 });
@@ -78,7 +78,8 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
-  if (!browserWSEndpoint || !(browserWSEndpoint.startsWith('wss://') || browserWSEndpoint.startsWith('ws://')))
+  const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
+  if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
     throw new TRPCError({
       code: 'BAD_REQUEST',
       message: 'Invalid wss:// endpoint',
@@ -86,7 +87,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
-    content: '(no content)',
+    content: '',
     error: undefined,
     stopReason: 'error',
     screenshot: undefined,
@@ -96,26 +97,27 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
   const browser = await connect({ browserWSEndpoint });
 
   // for local testing, open an incognito context, to seaparate cookies
-  let page: Page;
-  if (browserWSEndpoint.startsWith('ws://')) {
-    const context = await browser.createIncognitoBrowserContext();
-    page = await context.newPage();
-  } else {
-    page = await browser.newPage();
-  }
+  let incognitoContext: BrowserContext | null = null;
+  if (isLocalBrowser)
+    incognitoContext = await browser.createIncognitoBrowserContext();
+  const page = incognitoContext ? await incognitoContext.newPage() : await browser.newPage();
+  page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
 
   // open url
   try {
-    page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
-    await page.goto(targetUrl);
-    result.stopReason = 'end';
+    const response = await page.goto(targetUrl);
+    const contentType = response?.headers()?.['content-type'];
+    const isWebPage = contentType?.startsWith('text/html') || contentType?.startsWith('text/plain') || false;
+    if (!isWebPage) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(`Invalid content-type: ${contentType}`);
+    } else
+      result.stopReason = 'end';
   } catch (error: any) {
-    const isExpected: boolean = error instanceof TimeoutError;
-    result.stopReason = isExpected ? 'timeout' : 'error';
-    if (!isExpected) {
-      result.error = '[Puppeteer] Loading issue: ' + error?.message || error?.toString() || 'Unknown error';
-      console.error('workerPuppeteer: page.goto', error);
-    }
+    const isTimeout: boolean = error instanceof TimeoutError;
+    result.stopReason = isTimeout ? 'timeout' : 'error';
+    if (!isTimeout)
+      result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
   }
 
   // transform the content of the page as text
@@ -129,7 +131,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
       });
     }
   } catch (error: any) {
-    console.error('workerPuppeteer: page.evaluate', error);
+    result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
   }
 
   // get a screenshot of the page
@@ -160,11 +162,22 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string): P
     console.error('workerPuppeteer: page.close', error);
   }
 
+  // close the incognito context
+  if (incognitoContext) {
+    try {
+      await incognitoContext.close();
+    } catch (error: any) {
+      console.error('workerPuppeteer: incognitoContext.close', error);
+    }
+  }
+
   // close the browse (important!)
-  try {
-    await browser.close();
-  } catch (error: any) {
-    console.error('workerPuppeteer: browser.close', error);
+  if (!isLocalBrowser) {
+    try {
+      await browser.close();
+    } catch (error: any) {
+      console.error('workerPuppeteer: browser.close', error);
+    }
   }
 
   return result;

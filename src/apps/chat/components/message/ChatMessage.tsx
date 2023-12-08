@@ -525,7 +525,7 @@ export function ChatMessage(props: {
                         ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                         : block.type === 'diff'
                           ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
+                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
                             ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                             : <RenderText key={'text-' + index} textBlock={block} />)}
 
@@ -623,7 +623,7 @@ export function ChatMessage(props: {
           </MenuItem>}
           {!!props.onConversationRestartFrom && <ListDivider />}
           {!!props.onConversationTruncate && (
-            <MenuItem onClick={handleOpsTruncate}>
+            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
               <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
               Truncate <span style={{ opacity: 0.5 }}>after</span>
             </MenuItem>

@@ -3,7 +3,6 @@ import * as React from 'react';
 import { isBrowser, isChromeDesktop, isIPhoneUser } from '~/common/util/pwaUtils';
 
 import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
-import { useGlobalShortcut } from './useGlobalShortcut';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
@@ -13,7 +12,8 @@ type DoneReason =
   | 'continuous-deadline' // we hit our `softStopTimeout` while listening continuously
   | 'api-unknown-timeout' // a timeout has occurred
   | 'api-error'           // underlying .onerror
-  | 'api-no-speech';      // underlying .onerror, user did not speak
+  | 'api-no-speech'       // underlying .onerror, user did not speak
+  | 'react-unmount';      // the component is unmounting - the App shall never see this (set on unmount and not transmitted)
 
 export interface SpeechResult {
   transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
@@ -43,36 +43,51 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
  * @param onResultCallback - the callback to invoke when a result is received
  * @param softStopTimeout - FOR INTERIM LISTENING, on desktop: delay since the last word before sending the final result
- * @param useShortcutCtrlKey - the key to use as a shortcut to start/stop the speech recognition (e.g. 'm' for "Ctrl + M")
  */
-export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey: string | false) => {
+export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number) => {
+
+  // external state (will update this function when changed)
+  const preferredLanguage = useUIPreferencesStore(state => state.preferredLanguage);
+
   // enablers
-  const refRecognition = React.useRef<SpeechRecoControls | null>(null);
   const onResultCallbackRef = React.useRef(onResultCallback);
+  const softStopTimeoutRef = React.useRef<number>(softStopTimeout);
+  const speechControlsRef = React.useRef<SpeechRecoControls | null>(null);
+  const preferredLanguageRef = React.useRef<string>(preferredLanguage);
 
   // session
-  const [isSpeechEnabled, setIsSpeechEnabled] = React.useState<boolean>(false);
   const refStarted = React.useRef<boolean>(false);
+  const [isSpeechEnabled, setIsSpeechEnabled] = React.useState<boolean>(false);
   const [isRecording, setIsRecording] = React.useState<boolean>(false);
   const [isRecordingAudio, setIsRecordingAudio] = React.useState<boolean>(false);
   const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
   const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
 
-  // external state (will update this function when changed)
-  const preferredLanguage = useUIPreferencesStore(state => state.preferredLanguage);
 
-  // Update the ref each time the component calling the hook re-renders with a new callback
+  // Sync refs with external state (callback, soft timeout, language)
   React.useEffect(() => {
+    // update callback
     onResultCallbackRef.current = onResultCallback;
-  }, [onResultCallback]);
+
+    // update soft stop timeout
+    softStopTimeoutRef.current = softStopTimeout;
+
+    // update language on the running instance (requires an instance method invocation)
+    if (preferredLanguageRef.current !== preferredLanguage) {
+      preferredLanguageRef.current = preferredLanguage;
+      if (speechControlsRef.current)
+        speechControlsRef.current.setLang(preferredLanguage);
+    }
+  }, [onResultCallback, softStopTimeout, preferredLanguage]);
+
 
   // create the Recognition engine
   React.useEffect(() => {
     if (!isBrowser) return;
 
     // do not re-initialize, just update the language (if we're here there's a high chance the language has changed)
-    if (refRecognition.current) {
-      refRecognition.current.setLang(preferredLanguage);
+    if (speechControlsRef.current) {
+      console.warn('useSpeechRecognition: [dev-warn]: Speech recognition is already initialized.');
       return;
     }
 
@@ -86,7 +101,15 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     if (!webSpeechAPI)
       return;
 
-    // local memory within a session
+
+    // create the SpeechRecognition instance
+    const instance = new webSpeechAPI();
+    instance.lang = preferredLanguageRef.current;
+    instance.interimResults = isChromeDesktop && softStopTimeoutRef.current > 0;
+    instance.maxAlternatives = 1;
+    instance.continuous = true;
+
+    // result within closure
     const speechResult: SpeechResult = {
       transcript: '',
       interimTranscript: '',
@@ -94,13 +117,6 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       doneReason: undefined,
     };
 
-    const instance = new webSpeechAPI();
-    instance.lang = preferredLanguage;
-    instance.interimResults = isChromeDesktop && softStopTimeout > 0;
-    instance.maxAlternatives = 1;
-    instance.continuous = true;
-
-    // soft inactivity timer
     let inactivityTimeoutId: any | null = null;
 
     const clearInactivityTimeout = () => {
@@ -118,6 +134,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
         instance.stop();
       }, timeoutMs);
     };
+
 
     instance.onaudiostart = () => setIsRecordingAudio(true);
 
@@ -137,7 +154,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       onResultCallbackRef.current(speechResult);
       // let the system handle the first stop (as long as possible)
       // if (instance.interimResults)
-      //   reloadInactivityTimeout(2 * softStopTimeout);
+      //   reloadInactivityTimeout(2 * softStopTimeoutRef.current);
     };
 
     instance.onend = () => {
@@ -197,35 +214,66 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
       // auto-stop
       if (instance.interimResults)
-        reloadInactivityTimeout(softStopTimeout, 'continuous-deadline');
+        reloadInactivityTimeout(softStopTimeoutRef.current, 'continuous-deadline');
     };
 
+
     // store the control interface
-    refRecognition.current = {
+    speechControlsRef.current = {
       setLang: (lang: string) => instance.lang = lang,
       start: () => instance.start(),
       stop: (reason: DoneReason) => {
         speechResult.doneReason = reason;
         instance.stop();
       },
+      unmount: () => {
+        // Clear any inactivity timeout to prevent it from running after unmount
+        clearInactivityTimeout();
+
+        // Explicitly remove event listeners
+        instance.onaudiostart = undefined;
+        instance.onaudioend = undefined;
+        instance.onspeechstart = undefined;
+        instance.onspeechend = undefined;
+        instance.onstart = undefined;
+        instance.onend = undefined;
+        instance.onerror = undefined;
+        instance.onresult = undefined;
+
+        // Stop the recognition if it's running
+        if (refStarted.current) {
+          speechResult.doneReason = 'react-unmount';
+          instance.stop();
+          refStarted.current = false;
+        }
+      },
     };
+
     refStarted.current = false;
     setIsSpeechEnabled(true);
 
-  }, [preferredLanguage, softStopTimeout]);
+    // Cleanup function to play well when the component unmounts
+    return () => {
+      if (speechControlsRef.current) {
+        speechControlsRef.current.unmount();
+        speechControlsRef.current = null;
+      }
+      setIsSpeechEnabled(false);
+    };
+  }, []);
 
 
   // ACTIONS: start/stop recording
 
   const startRecording = React.useCallback(() => {
-    if (!refRecognition.current)
+    if (!speechControlsRef.current)
       return console.error('startRecording: Speech recognition is not supported or not initialized.');
     if (refStarted.current)
       return console.error('startRecording: Start recording called while already recording.');
 
     setIsSpeechError(false);
     try {
-      refRecognition.current.start();
+      speechControlsRef.current.start();
     } catch (error: any) {
       setIsSpeechError(true);
       console.log('Speech recognition error - clicking too quickly?', error?.message);
@@ -233,12 +281,12 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   }, []);
 
   const stopRecording = React.useCallback(() => {
-    if (!refRecognition.current)
+    if (!speechControlsRef.current)
       return console.error('stopRecording: Speech recognition is not supported or not initialized.');
     if (!refStarted.current)
       return console.error('stopRecording: Stop recording called while not recording.');
 
-    refRecognition.current.stop('manual');
+    speechControlsRef.current.stop('manual');
   }, []);
 
   const toggleRecording = React.useCallback(() => {
@@ -248,7 +296,6 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       startRecording();
   }, [startRecording, stopRecording]);
 
-  useGlobalShortcut(useShortcutCtrlKey, true, false, false, toggleRecording);
 
   return {
     isRecording,
@@ -288,17 +335,17 @@ interface ISpeechRecognition extends EventTarget {
   stop: () => void;
   // abort: () => void;
 
-  onaudiostart: (event: any) => void;
-  // onsoundstart: (event: any) => void;
-  onspeechstart: (event: any) => void;
-  onspeechend: (event: any) => void;
-  // onsoundend: (event: any) => void;
-  onaudioend: (event: any) => void;
-  onresult: (event: ISpeechRecognitionEvent) => void;
-  // onnomatch: (event: any) => void;
-  onerror: (event: any) => void;
-  onstart: (event: any) => void;
-  onend: (event: any) => void;
+  onaudiostart?: (event: any) => void;
+  // onsoundstart?: (event: any) => void;
+  onspeechstart?: (event: any) => void;
+  onspeechend?: (event: any) => void;
+  // onsoundend?: (event: any) => void;
+  onaudioend?: (event: any) => void;
+  onresult?: (event: ISpeechRecognitionEvent) => void;
+  // onnomatch?: (event: any) => void;
+  onerror?: (event: any) => void;
+  onstart?: (event: any) => void;
+  onend?: (event: any) => void;
 }
 
 interface ISpeechRecognitionEvent extends Event {
@@ -310,4 +357,5 @@ interface SpeechRecoControls {
   setLang: (lang: string) => void;
   start: () => void;
   stop: (reason: DoneReason) => void;
+  unmount: () => void;
 }
