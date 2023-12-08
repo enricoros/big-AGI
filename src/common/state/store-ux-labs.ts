@@ -15,6 +15,9 @@ interface UXLabsStore {
   labsCalling: boolean;
   setLabsCalling: (labsCalling: boolean) => void;
 
+  labsCameraDesktop: boolean;
+  setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
+
   labsEnhancedUI: boolean;
   setLabsEnhancedUI: (labsEnhancedUI: boolean) => void;
 
@@ -35,6 +38,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsCalling: false,
       setLabsCalling: (labsCalling: boolean) => set({ labsCalling }),
+
+      labsCameraDesktop: false,
+      setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
 
       labsEnhancedUI: false,
       setLabsEnhancedUI: (labsEnhancedUI: boolean) => set({ labsEnhancedUI }),

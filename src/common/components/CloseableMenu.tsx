@@ -2,7 +2,7 @@ import * as React from 'react';
 import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
-import { MenuList, styled, VariantProp } from '@mui/joy';
+import { MenuList, styled } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 
