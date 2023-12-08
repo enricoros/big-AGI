@@ -207,13 +207,18 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 const _knownOobaboogaChatModels: ManualMappings = [];
 
 const _knownOobaboogaNonChatModels: string[] = [
-  'None', 'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'gpt-3.5-turbo', 'text-embedding-ada-002',
+  'None', 'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'text-embedding-ada-002',
+  /* 'gpt-3.5-turbo' // used to be here, but now it's the way to select the activly loaded ooababooga model */
 ];
 
 export function oobaboogaModelToModelDescription(modelId: string, created: number): ModelDescriptionSchema {
   let label = modelId.replaceAll(/[_-]/g, ' ').split(' ').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
   if (label.endsWith('.bin'))
     label = label.slice(0, -4);
+
+  // special case for the default (and only 'chat') model
+  if (modelId === 'gpt-3.5-turbo')
+    label = 'Oobabooga Model';
 
   return fromManualMapping(_knownOobaboogaChatModels, modelId, created, undefined, {
     idPrefix: modelId,
