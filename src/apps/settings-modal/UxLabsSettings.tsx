@@ -50,7 +50,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools
+        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 

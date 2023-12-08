@@ -561,7 +561,7 @@ export function ChatMessage(props: {
       {/* Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
-          placement='bottom-end' sx={{ minWidth: 280 }}
+          dense placement='bottom-end' sx={{ minWidth: 280 }}
           open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -640,12 +640,12 @@ export function ChatMessage(props: {
       {/* Selection (Contextual) Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
-          placement='bottom-start' sx={{ minWidth: 220 }}
+          dense placement='bottom-start' sx={{ minWidth: 220 }}
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy selection
+            Copy <span style={{ opacity: 0.5 }}>selection</span>
           </MenuItem>
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>

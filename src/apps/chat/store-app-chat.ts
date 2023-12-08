@@ -97,8 +97,8 @@ export const getChatAutoAI = (): {
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
 
-export const getChatTimeoutMs = (): number =>
-  useAppChatStore.getState().micTimeoutMs;
+export const useChatMicTimeoutMsValue = (): number =>
+  useAppChatStore(state => state.micTimeoutMs);
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
