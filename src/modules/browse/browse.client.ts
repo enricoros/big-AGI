@@ -28,25 +28,12 @@ export async function callBrowseFetchPage(url: string): Promise<string | null> {
         ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
       },
       subjects: [{ url }],
-      screenshotWidth: 512,
-      screenshotHeight: 512,
     });
 
     if (results.objects.length !== 1)
       return `Browsing error: expected 1 result, got ${results.objects.length}`;
 
     const firstResult = results.objects[0];
-
-    // DEBUG: if there's a screenshot, append it to the dom
-    /*if (firstResult.screenshot) {
-
-      const img = document.createElement('img');
-      img.src = firstResult.screenshot.imageDataUrl;
-      img.style.width = `${firstResult.screenshot.width}px`;
-      img.style.height = `${firstResult.screenshot.height}px`;
-      document.body.appendChild(img);
-    }*/
-
     return !firstResult.error ? firstResult.content : `Browsing service error: ${JSON.stringify(firstResult)}`;
 
   } catch (error: any) {
