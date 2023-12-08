@@ -48,6 +48,7 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
 export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number, useShortcutCtrlKey: string | false) => {
   // enablers
   const refRecognition = React.useRef<SpeechRecoControls | null>(null);
+  const refSoftStopTimeout = React.useRef<number>(softStopTimeout);
   const onResultCallbackRef = React.useRef(onResultCallback);
 
   // session
@@ -65,6 +66,12 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   React.useEffect(() => {
     onResultCallbackRef.current = onResultCallback;
   }, [onResultCallback]);
+
+  // Update the timeout when set externally
+  React.useEffect(() => {
+    refSoftStopTimeout.current = softStopTimeout;
+    // NOTE: if the timeout was 0, we need to set interimResults to false
+  }, [softStopTimeout]);
 
   // create the Recognition engine
   React.useEffect(() => {
@@ -96,7 +103,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
     const instance = new webSpeechAPI();
     instance.lang = preferredLanguage;
-    instance.interimResults = isChromeDesktop && softStopTimeout > 0;
+    instance.interimResults = isChromeDesktop && refSoftStopTimeout.current > 0;
     instance.maxAlternatives = 1;
     instance.continuous = true;
 
@@ -137,7 +144,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       onResultCallbackRef.current(speechResult);
       // let the system handle the first stop (as long as possible)
       // if (instance.interimResults)
-      //   reloadInactivityTimeout(2 * softStopTimeout);
+      //   reloadInactivityTimeout(2 * refSoftStopTimeout.current);
     };
 
     instance.onend = () => {
@@ -197,7 +204,7 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
 
       // auto-stop
       if (instance.interimResults)
-        reloadInactivityTimeout(softStopTimeout, 'continuous-deadline');
+        reloadInactivityTimeout(refSoftStopTimeout.current, 'continuous-deadline');
     };
 
     // store the control interface
@@ -212,7 +219,10 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     refStarted.current = false;
     setIsSpeechEnabled(true);
 
-  }, [preferredLanguage, softStopTimeout]);
+    // Note: shall we have a Cleanup function here? Right now the audio system is terminated when this is
+    // destroyed, but we shall have a formal unplugging maybe
+
+  }, [preferredLanguage]);
 
 
   // ACTIONS: start/stop recording
