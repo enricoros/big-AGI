@@ -15,8 +15,8 @@ First of all, you need to procure a Puppteer web browsing service endpoint. `big
 |--------------------------------------------------------------------------------------|---------|-------------|----------------|---------------------------------------------|
 | [BrightData Scraping Browser](https://brightdata.com/products/scraping-browser)      | Yes     | Proprietary | Cloud          | Advanced scraping tools, global IP pool     |
 | [Cloudflare Browser Rendering](https://developers.cloudflare.com/browser-rendering/) | ?       | Proprietary | Cloud          | Integrated CDN, optimized browser rendering |
-| ⬇️ [Browserless 2.0](#browserless-2-0)                                               | ?       | OpenSource  | Local (Docker) | Parallelism, debug viewer, advanced APIs    |
-| ⬇️ [Your Chrome Browser (ALPHA)](#your-own-chrome-browser)                           | Alpha   | Proprietary | Local (Chrome) | Personal, experimental use (ALPHA!)         |
+| ⬇️ [Browserless 2.0](#-browserless-20)                                               | Okay    | OpenSource  | Local (Docker) | Parallelism, debug viewer, advanced APIs    |
+| ⬇️ [Your Chrome Browser (ALPHA)](#-your-own-chrome-browser)                          | Alpha   | Proprietary | Local (Chrome) | Personal, experimental use (ALPHA!)         |
 | other Puppeteer-based WSS Services                                                   | ?       | Varied      | Cloud/Local    | Service-specific features                   |
 
 ## Configuration
@@ -35,14 +35,20 @@ First of all, you need to procure a Puppteer web browsing service endpoint. `big
    - **ReAct**: Enable the `loadURL()` function in ReAct for advanced interactions
 
 ### 🌐 Browserless 2.0
+
 [Browserless 2.0](https://github.com/browserless/browserless) is a Docker-based service that provides a headless
 browsing experience compatible with `big-AGI`. An open-source solution that simplifies web automation tasks,
 in a scalable manner.
 
+Launch Browserless with:
+
 ```bash
-docker run -p 3000:3000 browserless/chrome:latest
+docker run -p 9222:3000 browserless/chrome:latest
 ```
 
+Now you can use the following connection string in `big-AGI`: `ws://127.0.0.1:9222`.
+You can also browse to [http://127.0.0.1:9222](http://127.0.0.1:9222) to see the Browserless debug viewer
+and configure some options.
 
 ### 🌐 Your own Chrome browser
 
@@ -54,7 +60,7 @@ a WebSocket endpoint.
   - `--remote-debugging-port=9222`
 - go to http://localhost:9222/json/version and copy the `webSocketDebuggerUrl` value
   - it should be something like: `ws://localhost:9222/...`
-- paste the value into the Endpoint configuration (see point 2 above)
+- paste the value into the Endpoint configuration (see point 2 in the configuration)
 
 ### Server-Side Configuration
 
