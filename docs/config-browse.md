@@ -50,6 +50,10 @@ Now you can use the following connection string in `big-AGI`: `ws://127.0.0.1:92
 You can also browse to [http://127.0.0.1:9222](http://127.0.0.1:9222) to see the Browserless debug viewer
 and configure some options.
 
+Note: if you are using `docker-compose`, please see the
+[docker/docker-compose-browserless.yaml](docker/docker-compose-browserless.yaml) file for an example
+on how to run `big-AGI` and Browserless simultaneously in a single application.
+
 ### 🌐 Your own Chrome browser
 
 ***EXPERIMENTAL - UNTESTED*** - You can use your own Chrome browser as a browsing service, by configuring it to expose
