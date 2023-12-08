@@ -238,7 +238,9 @@ export function Composer(props: {
   }, [chatModeId, composeText, handleSendAction, micContinuation, props.composerTextAreaRef, props.conversationId, setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
-    useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000, 'm');
+    useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
+
+  useGlobalShortcut('m', true, false, false, toggleRecording);
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantTyping;
