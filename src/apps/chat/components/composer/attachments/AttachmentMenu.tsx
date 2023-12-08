@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import { attachmentCollapseOutputs, LLMAttachment } from './useLLMAttachments';
+import type { LLMAttachment } from './useLLMAttachments';
 import { useAttachmentsStore } from './store-attachments';
 
 
@@ -33,6 +33,7 @@ export function AttachmentMenu(props: {
 
   const {
     attachment,
+    attachmentOutputs,
     isUnconvertible,
     isOutputMissing,
     isOutputTextInlineable,
@@ -79,9 +80,8 @@ export function AttachmentMenu(props: {
   // }, [aId, onAttachmentSummarizeText]);
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
-    const outputs = attachmentCollapseOutputs(aOutputs);
-    if (outputs.length >= 1) {
-      const concat = outputs.map(output => {
+    if (attachmentOutputs.length >= 1) {
+      const concat = attachmentOutputs.map(output => {
         if (output.type === 'text-block')
           return output.text;
         else if (output.type === 'image-part')
@@ -91,7 +91,7 @@ export function AttachmentMenu(props: {
       }).join('\n\n---\n\n');
       copyToClipboard(concat.trim(), 'Converted attachment');
     }
-  }, [aOutputs]);
+  }, [attachmentOutputs]);
 
 
   return (

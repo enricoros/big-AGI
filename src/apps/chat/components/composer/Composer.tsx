@@ -35,9 +35,10 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { AttachmentId } from './attachments/store-attachments';
 import { Attachments } from './attachments/Attachments';
+import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
 import { useAttachments } from './attachments/useAttachments';
-import { useLLMAttachments } from './attachments/useLLMAttachments';
 
+import type { ComposerOutputMultiPart } from './composer.types';
 import { ButtonAttachCamera } from './ButtonAttachCamera';
 import { ButtonAttachClipboard } from './ButtonAttachClipboard';
 import { ButtonAttachFile } from './ButtonAttachFile';
@@ -64,21 +65,14 @@ const animationStopEnter = keyframes`
 
 
 /**
- * A React component for composing and sending messages in a chat-like interface.
- *
- * Note: Useful bash trick to generate code from a list of files:
- *       $ for F in *.ts; do echo; echo "\`\`\`$F"; cat $F; echo; echo "\`\`\`"; done | clip
- *
- * @param {boolean} props.disableSend - Flag to disable the send button.
- * @param {(text: string, conversationId: string | null) => void} props.sendMessage - Function to send the message. conversationId is null for the Active conversation
- * @param {() => void} props.stopGeneration - Function to stop response generation
+ * A React component for composing messages, with attachments and different modes.
  */
 export function Composer(props: {
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   conversationId: DConversationId | null;
   isDeveloperMode: boolean;
-  onNewMessage: (chatModeId: ChatModeId, conversationId: DConversationId, text: string) => void;
+  onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
   sx?: SxProps;
 }) {
 
@@ -147,42 +141,48 @@ export function Composer(props: {
 
   // Primary button
 
-  const handleSendClicked = (_chatModeId: ChatModeId) => {
-    let text = (composeText || '').trim();
-    // inline the text attachments and clear if any string
-    if (!_chatModeId.startsWith('draw-')) {
-      const inlineTextAttachments = llmAttachments.inlineTextAttachments();
-      if (inlineTextAttachments !== null) {
-        if (text.length)
-          text += inlineTextAttachments;
-        else
-          text = inlineTextAttachments.trim();
-        clearAttachments();
+  const { conversationId, onAction } = props;
+
+  const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
+    if (!conversationId)
+      return false;
+
+    // get attachments
+    const multiPartMessage = llmAttachments.getAttachmentsOutputs(composerText || null);
+    if (!multiPartMessage.length)
+      return false;
+
+    // send the message
+    const enqueued = onAction(_chatModeId, conversationId, multiPartMessage);
+    if (enqueued) {
+      clearAttachments();
+      setComposeText('');
+    }
+
+    return enqueued;
+  }, [clearAttachments, conversationId, llmAttachments, onAction, setComposeText]);
+
+  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+
+      // Alt: append the message instead
+      if (e.altKey) {
+        handleSendAction('write-user', composeText);
+        return e.preventDefault();
+      }
+
+      // Shift: toggles the 'enter is newline'
+      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+        if (!assistantTyping)
+          handleSendAction(chatModeId, composeText);
+        return e.preventDefault();
       }
     }
-    if (text.length && props.conversationId && chatLLMId) {
-      setComposeText('');
-      props.onNewMessage(_chatModeId, props.conversationId, text);
-    }
-  };
+  }, [assistantTyping, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
-  const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Enter')
-      return;
+  const handleSendClicked = () => handleSendAction(chatModeId, composeText);
 
-    // Alt: append the message
-    if (e.altKey) {
-      handleSendClicked('write-user');
-      return e.preventDefault();
-    }
-
-    // Shift: toggles the 'enter is newline'
-    if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-      if (!assistantTyping)
-        handleSendClicked(chatModeId);
-      return e.preventDefault();
-    }
-  };
+  const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
 
 
   // Secondary buttons
@@ -204,36 +204,38 @@ export function Composer(props: {
     setChatModeId(_chatModeId);
   };
 
-  const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
-
 
   // Mic typing & continuation mode
 
   const onSpeechResultCallback = React.useCallback((result: SpeechResult) => {
-    setSpeechInterimResult(result.done ? null : { ...result });
-    if (result.done) {
-      // append the transcript
-      const transcript = result.transcript.trim();
-      let newText = (composeText || '').trim();
-      newText = newText ? newText + ' ' + transcript : transcript;
-
-      // auto-send if requested
-      const autoSend = micContinuation && newText.length >= 1 && !!props.conversationId; //&& assistantTyping;
-      if (autoSend) {
-        props.onNewMessage(chatModeId, props.conversationId!, newText);
-        if (result.doneReason !== 'manual')
-          playSoundUrl('/sounds/mic-off-mid.mp3');
-      } else {
-        if (newText)
-          props.composerTextAreaRef.current?.focus();
-        if (!micContinuation && result.doneReason !== 'manual')
-          playSoundUrl('/sounds/mic-off-mid.mp3');
-      }
-
-      // set the text (or clear if auto-sent)
-      setComposeText(autoSend ? '' : newText);
+    // not done: show interim
+    if (!result.done) {
+      setSpeechInterimResult({ ...result });
+      return;
     }
-  }, [chatModeId, composeText, micContinuation, props, setComposeText]);
+
+    // done
+    setSpeechInterimResult(null);
+    const transcript = result.transcript.trim();
+    let nextText = (composeText || '').trim();
+    nextText = nextText ? nextText + ' ' + transcript : transcript;
+
+    // auto-send (mic continuation mode) if requested
+    const autoSend = micContinuation && nextText.length >= 1 && !!props.conversationId; //&& assistantTyping;
+    const notUserStop = result.doneReason !== 'manual';
+    if (autoSend) {
+      if (notUserStop)
+        playSoundUrl('/sounds/mic-off-mid.mp3');
+      handleSendAction(chatModeId, nextText);
+    } else {
+      if (!micContinuation && notUserStop)
+        playSoundUrl('/sounds/mic-off-mid.mp3');
+      if (nextText) {
+        props.composerTextAreaRef.current?.focus();
+        setComposeText(nextText);
+      }
+    }
+  }, [chatModeId, composeText, handleSendAction, micContinuation, props.composerTextAreaRef, props.conversationId, setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
     useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000, 'm');
@@ -283,20 +285,20 @@ export function Composer(props: {
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
   const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
-    setComposeText(text => {
-      const inlinedText = llmAttachments.inlineTextAttachment(attachmentId);
-      if (inlinedText !== null)
-        removeAttachment(attachmentId);
-      return inlinedText ? text + inlinedText : text;
+    setComposeText(currentText => {
+      const attachmentOutputs = llmAttachments.getAttachmentOutputs(currentText, attachmentId);
+      const inlinedText = getTextBlockText(attachmentOutputs) || '';
+      removeAttachment(attachmentId);
+      return inlinedText;
     });
   }, [llmAttachments, removeAttachment, setComposeText]);
 
-  const handleAttachmentsInline = React.useCallback(() => {
-    setComposeText(text => {
-      const inlinedText = llmAttachments.inlineTextAttachments();
-      if (inlinedText !== null)
-        clearAttachments();
-      return inlinedText ? text + inlinedText : text;
+  const handleAttachmentsInlineText = React.useCallback(() => {
+    setComposeText(currentText => {
+      const attachmentsOutputs = llmAttachments.getAttachmentsOutputs(currentText);
+      const inlinedText = getTextBlockText(attachmentsOutputs) || '';
+      clearAttachments();
+      return inlinedText;
     });
   }, [clearAttachments, llmAttachments, setComposeText]);
 
@@ -529,7 +531,7 @@ export function Composer(props: {
               llmAttachments={llmAttachments}
               onAttachmentInlineText={handleAttachmentInlineText}
               onAttachmentsClear={clearAttachments}
-              onAttachmentsInlineText={handleAttachmentsInline}
+              onAttachmentsInlineText={handleAttachmentsInlineText}
             />
 
           </Box>
@@ -564,7 +566,7 @@ export function Composer(props: {
                   <Button
                     key='composer-act'
                     fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
-                    onClick={() => handleSendClicked(chatModeId)}
+                    onClick={handleSendClicked}
                     endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
                     {micContinuation && 'Voice '}
