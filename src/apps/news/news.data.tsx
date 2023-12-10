@@ -6,6 +6,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { clientUtmSource } from '~/common/util/pwaUtils';
+import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
 // update this variable every time you want to broadcast a new version to clients
@@ -66,25 +67,27 @@ export const NewsItems: NewsItem[] = [
     ],
   },*/
   {
-    versionName: '1.7.0',
+    versionCode: '1.7.0',
+    versionName: 'Attachment Theory',
     versionDate: new Date('2023-12-10T18:00:00Z'), // new Date().toISOString()
-    text: 'Fresh on 1.7.0:',
     items: [
-      { text: <>Brand new <B href={RIssues + '/251'}>attachments</B> system: drag, paste, link, snap, images, text, pdfs</> },
-      { text: <><B href={RIssues + '/256'}>Overheat</B> LLMs, temperature &gt; 1</> },
-      { text: <>Attach <B href={RIssues + '/253'}>webcam</B> (Labs option)</> },
-      { text: <><B href={RCode + '/docs/config-browse.md'}>Browserless</B> browsing support</> },
-      { text: <>Support <B href={RCode + '/docs/deploy-authentication.md'}>password protection</B></> },
-      { text: <>More: Ctrl+Shift+O for model Options, improved Voice input, performance improvements</> },
+      { text: <>Redesigned <B href={RIssues + '/251'}>attachments system</B>: drag, paste, link, snap, images, text, pdfs</> },
+      { text: <>Desktop <B href={RIssues + '/253'}>webcam access</B> for direct image capture (Labs option)</> },
+      { text: <>Independent browsing with <B href={RCode + '/docs/config-browse.md'}>Browserless</B> support</> },
+      { text: <><B href={RIssues + '/256'}>Overheat</B> LLMs with higher temperature limits</> },
+      { text: <>Enhanced security via <B href={RCode + '/docs/deploy-authentication.md'}>password protection</B></> },
+      { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
+      { text: <>Optimized voice input and performance</> },
     ],
   },
   {
-    versionName: '1.6.0',
+    versionCode: '1.6.0',
+    versionName: 'Surf\'s Up',
     versionDate: new Date('2023-11-28T21:00:00Z'),
     items: [
       { text: <><B href={RIssues + '/237'}>Web Browsing</B> support, see the <B href={RCode + '/docs/config-browse.md'}>browsing user guide</B></> },
       { text: <><B href={RIssues + '/235'}>Branching Discussions</B> at any message</> },
-      { text: <><B href={RIssues + '/207'}>Keyboard Navigation</B>: use Ctrl+Shift+Left/Right to navigate chats</> },
+      { text: <><B href={RIssues + '/207'}>Keyboard Navigation</B>: use {platformAwareKeystrokes('Ctrl+Shift+Left/Right')} to navigate chats</> },
       { text: <><B href={RIssues + '/236'}>UI fixes</B> (thanks to the first sponsor)</> },
       { text: <>Added support for Anthropic Claude 2.1</> },
       { text: <>Large rendering performance optimization</> },
@@ -93,7 +96,8 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionName: '1.5.0',
+    versionCode: '1.5.0',
+    versionName: 'Loaded!',
     versionDate: new Date('2023-11-19T21:00:00Z'),
     items: [
       { text: <><B href={RIssues + '/190'}>Continued Voice</B> for hands-free interaction</> },
@@ -108,7 +112,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionName: '1.4.0',
+    versionCode: '1.4.0',
     items: [
       { text: <><B>Share and clone</B> conversations, with public links</> },
       { text: <><B href={RCode + '/docs/config-azure-openai.md'}>Azure</B> models, incl. gpt-4-32k</> },
@@ -118,7 +122,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionName: '1.3.5',
+    versionCode: '1.3.5',
     items: [
       { text: <>AI in the real world with <B>Camera OCR</B> - MOBILE-ONLY</> },
       { text: <><B>Anthropic</B> models full support</> },
@@ -129,7 +133,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionName: '1.3.1',
+    versionCode: '1.3.1',
     items: [
       { text: <><B>Flattener</B> - 4-mode conversations summarizer</> },
       { text: <><B>Forking</B> - branch your conversations</> },
@@ -139,7 +143,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionName: '1.2.1',
+    versionCode: '1.2.1',
     // text: '',
     items: [
       { text: <>New home page: <b><Link href={Brand.URIs.Home + clientUtmSource()} target='_blank'>{Brand.URIs.Home.replace('https://', '')}</Link></b></> },
@@ -151,7 +155,8 @@ export const NewsItems: NewsItem[] = [
 
 
 interface NewsItem {
-  versionName: string;
+  versionCode: string;
+  versionName?: string;
   versionDate?: Date;
   text?: string | React.JSX.Element;
   items?: {
