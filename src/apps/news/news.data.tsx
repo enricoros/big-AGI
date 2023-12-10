@@ -9,7 +9,7 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 7;
+export const incrementalVersion: number = 8;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
   const boldText = <Typography color={!!props.href ? 'primary' : 'warning'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
@@ -66,8 +66,21 @@ export const NewsItems: NewsItem[] = [
     ],
   },*/
   {
+    versionName: '1.7.0',
+    versionDate: new Date('2023-12-10T18:00:00Z'), // new Date().toISOString()
+    text: 'Fresh on 1.7.0:',
+    items: [
+      { text: <>Brand new <B href={RIssues + '/251'}>attachments</B> system: drag, paste, link, snap, images, text, pdfs</> },
+      { text: <><B href={RIssues + '/256'}>Overheat</B> LLMs, temperature &gt; 1</> },
+      { text: <>Attach <B href={RIssues + '/253'}>webcam</B> (Labs option)</> },
+      { text: <><B href={RCode + '/docs/config-browse.md'}>Browserless</B> browsing support</> },
+      { text: <>Support <B href={RCode + '/docs/deploy-authentication.md'}>password protection</B></> },
+      { text: <>More: Ctrl+Shift+O for model Options, improved Voice input, performance improvements</> },
+    ],
+  },
+  {
     versionName: '1.6.0',
-    text: 'Enjoy what\'s new:',
+    versionDate: new Date('2023-11-28T21:00:00Z'),
     items: [
       { text: <><B href={RIssues + '/237'}>Web Browsing</B> support, see the <B href={RCode + '/docs/config-browse.md'}>browsing user guide</B></> },
       { text: <><B href={RIssues + '/235'}>Branching Discussions</B> at any message</> },
@@ -81,6 +94,7 @@ export const NewsItems: NewsItem[] = [
   },
   {
     versionName: '1.5.0',
+    versionDate: new Date('2023-11-19T21:00:00Z'),
     items: [
       { text: <><B href={RIssues + '/190'}>Continued Voice</B> for hands-free interaction</> },
       { text: <><B href={RIssues + '/192'}>Visualization</B> Tool for data representations</> },
