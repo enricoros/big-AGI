@@ -106,7 +106,9 @@ npm run build
 npm run start --port 3000
 ```
 
-The app will be running on the specified port, e.g. `http://localhost:3000`
+The app will be running on the specified port, e.g. `http://localhost:3000`.
+
+Want to deploy with username/password? See the [Authentication](docs/deploy-authentication.md) guide.
 
 ## 🐳 Deploy with Docker
 
