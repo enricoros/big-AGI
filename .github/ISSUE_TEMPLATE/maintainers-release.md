@@ -34,13 +34,25 @@ assignees: enricoros
   - [ ] Discord announcement
   - [ ] Twitter announcement
 
-## Artifacts
 
-1) first copy and paste the former release `discord announcement`, `news.data.ts`, `changelog.md`, `README.md`
-2) then copy and paste the milestone and each indivdual issue (content will be downloaded)
-3) then paste the git changelog 1.2.2...1.2.3
+## Links
+Milestone: 
+Former release task: 
+GitHub release: 
 
-### news.data.tsx
+
+## Artifacts Generation
+
+1) The following is my opensource application
+   - paste README.md
+2) I am announcing a new version, 1.7.0. The following were the announcements for 1.6.0. Discord announcement, GitHub Release, in-app news.data.tsx, changelog.md.
+   - paste the former: `discord announcement`, `GitHub release`, `news.data.tsx`, `changelog.md`
+3) The following is the new data I have for 1.7.0
+   - paste the milestone and each individual issue (content will be downloaded)
+   - paste the git changelog  `git log v1.6.0..v1.7.0 | clip`
+   
+
+### news.data.TSX
 
 ```markdown
 I need the following from you:
