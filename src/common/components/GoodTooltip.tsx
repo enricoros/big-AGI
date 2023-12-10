@@ -9,7 +9,7 @@ import { SxProps } from '@mui/joy/styles/types';
  */
 export const GoodTooltip = (props: {
   title: string | React.JSX.Element | null,
-  placement?: 'top' | 'bottom',
+  placement?: 'top' | 'bottom' | 'top-start',
   isError?: boolean, isWarning?: boolean,
   children: React.JSX.Element,
   sx?: SxProps
