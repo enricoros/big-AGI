@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { keyframes } from '@emotion/react';
+import TimeAgo from 'react-timeago';
 
 import { Box, Button, Card, CardContent, Container, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -10,6 +11,9 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { newsCallout, NewsItems } from './news.data';
+
+// number of news items to show by default, before the expander
+const DEFAULT_NEWS_COUNT = 2;
 
 export const cssColorKeyframes = keyframes`
     0%, 100% {
@@ -28,7 +32,7 @@ export const cssColorKeyframes = keyframes`
 
 export function AppNews() {
   // state
-  const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(0);
+  const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(DEFAULT_NEWS_COUNT - 1);
 
   // news selection
   const news = NewsItems.filter((_, idx) => idx <= lastNewsIdx);
@@ -76,26 +80,27 @@ export function AppNews() {
             const firstCard = idx === 0;
             const hasCardAfter = news.length < NewsItems.length;
             const showExpander = hasCardAfter && (idx === news.length - 1);
-            const addPadding = !firstCard; // || showExpander;
+            const addPadding = false; //!firstCard; // || showExpander;
             return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
               <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                {!!ni.text && <Typography level='title-lg' component='div'>
-                  {ni.text}
-                </Typography>}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                  <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
+                    {ni.text || `Version ${ni.versionName}:`}
+                  </Typography>
+                  {/*!firstCard &&*/ (
+                    <Typography level='body-sm'>
+                      {!!ni.versionDate && <TimeAgo date={ni.versionDate} />}
+                    </Typography>
+                  )}
+                </Box>
 
                 {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
                   {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                    <Typography component='div'>
+                    <Typography component='div' level='body-sm'>
                       {item.text}
                     </Typography>
                   </li>)}
                 </ul>}
-
-                {/*!firstCard &&*/ (
-                  <Typography level='body-sm' sx={{ position: 'absolute', right: 0, top: 0 }}>
-                    {ni.versionName}
-                  </Typography>
-                )}
 
                 {showExpander && (
                   <IconButton
