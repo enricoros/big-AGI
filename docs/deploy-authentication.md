@@ -10,7 +10,9 @@ in one of the following ways:
 ## HTTP Authentication
 
 [HTTP Basic Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) is a simple method
-to secure your application. To enable it in `big-AGI`, you **must manually build the application**:
+to secure your application.
+
+To enable it in `big-AGI`, you **must manually build the application**:
 
 - Build `big-AGI` with HTTP authentication enabled:
   - Clone the repository
