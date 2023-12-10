@@ -14,7 +14,7 @@ to secure your application. To enable it in `big-AGI`, you **must manually build
 
 - Build `big-AGI` with HTTP authentication enabled:
   - Clone the repository
-  - Rename `middleware_BASIC_AUTH.ts` to `middleware_BASIC_AUTH.ts`
+  - Rename `middleware_BASIC_AUTH.ts` to `middleware.ts`
   - Build: follow the build instructions in [Deploy manually](../README.md#-deploy-manually) or [Deploying with Docker](deploy-docker.md)
 
 - Configure the following [environment variables](environment-variables.md) before launching `big-AGI`:

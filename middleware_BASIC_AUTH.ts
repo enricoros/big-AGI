@@ -1,14 +1,18 @@
+/**
+ * Middleware to protect `big-AGI` with HTTP Basic Authentication
+ *
+ * For more information on how to deploy with HTTP Basic Authentication, see:
+ *  - [deploy-authentication.md](docs/deploy-authentication.md)
+ */
+
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 
 // noinspection JSUnusedGlobalSymbols
-/**
- * Middleware to protect with HTTP Basic Authentication.
- */
 export function middleware(request: NextRequest) {
 
-  // Validate http basic auth configuration
+  // Validate deployment configuration
   if (!process.env.HTTP_BASIC_AUTH_USERNAME || !process.env.HTTP_BASIC_AUTH_PASSWORD) {
     console.warn('HTTP Basic Authentication is enabled but not configured');
     return new Response('Unauthorized/Unconfigured', unauthResponse);
@@ -48,7 +52,7 @@ export const config = {
     '/',
     // Include pages
     '/(call|index|news|personas|link)(.*)',
-    // Include API routes (the most important part to block)
+    // Include API routes
     '/api(.*)',
     // Note: this excludes _next, /images etc..
   ],
