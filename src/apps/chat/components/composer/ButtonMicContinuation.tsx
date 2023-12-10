@@ -11,9 +11,12 @@ const micContinuationLegend =
   </Box>;
 
 
-export const ButtonMicContinuation = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <Tooltip placement='bottom' title={micContinuationLegend}>
+export const ButtonMicContinuationMemo = React.memo(ButtonMicContinuation);
+
+function ButtonMicContinuation(props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) {
+  return <Tooltip placement='bottom' title={micContinuationLegend}>
     <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
       <AutoModeIcon />
     </IconButton>
   </Tooltip>;
+}

@@ -39,12 +39,12 @@ import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachm
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { ButtonAttachCamera } from './ButtonAttachCamera';
-import { ButtonAttachClipboard } from './ButtonAttachClipboard';
-import { ButtonAttachFile } from './ButtonAttachFile';
+import { ButtonAttachCameraMemo } from './ButtonAttachCamera';
+import { ButtonAttachClipboardMemo } from './ButtonAttachClipboard';
+import { ButtonAttachFileMemo } from './ButtonAttachFile';
 import { ButtonCall } from './ButtonCall';
-import { ButtonMic } from './ButtonMic';
-import { ButtonMicContinuation } from './ButtonMicContinuation';
+import { ButtonMicContinuationMemo } from './ButtonMicContinuation';
+import { ButtonMicMemo } from './ButtonMic';
 import { ButtonOptionsDraw } from './ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadge } from './TokenBadge';
@@ -247,11 +247,11 @@ export function Composer(props: {
   const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
   const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
 
-  const handleToggleMic = () => {
+  const handleToggleMic = React.useCallback(() => {
     if (micIsRunning && micContinuation)
       setMicContinuation(false);
     toggleRecording();
-  };
+  }, [micContinuation, micIsRunning, toggleRecording]);
 
   const handleToggleMicContinuation = () => setMicContinuation(continued => !continued);
 
@@ -381,16 +381,16 @@ export function Composer(props: {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
 
               {/* [mobile] Mic button */}
-              {isSpeechEnabled && <ButtonMic variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+              {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
               {/* Responsive Camera OCR button */}
-              <ButtonAttachCamera isMobile onAttachImage={handleAttachCameraImage} />
+              <ButtonAttachCameraMemo isMobile onAttachImage={handleAttachCameraImage} />
 
               {/* Responsive Open Files button */}
-              <ButtonAttachFile isMobile onAttachFilePicker={handleAttachFilePicker} />
+              <ButtonAttachFileMemo isMobile onAttachFilePicker={handleAttachFilePicker} />
 
               {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonAttachClipboard isMobile onClick={attachAppendClipboardItems} />}
+              {supportsClipboardRead && <ButtonAttachClipboardMemo isMobile onClick={attachAppendClipboardItems} />}
 
             </Box>
           ) : (
@@ -401,13 +401,13 @@ export function Composer(props: {
               {/*</FormHelperText>*/}
 
               {/* Responsive Open Files button */}
-              <ButtonAttachFile onAttachFilePicker={handleAttachFilePicker} />
+              <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
 
               {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonAttachClipboard onClick={attachAppendClipboardItems} />}
+              {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
 
               {/* Responsive Camera OCR button */}
-              {labsCameraDesktop && <ButtonAttachCamera onAttachImage={handleAttachCameraImage} />}
+              {labsCameraDesktop && <ButtonAttachCameraMemo onAttachImage={handleAttachCameraImage} />}
 
             </Box>
           )}
@@ -474,10 +474,10 @@ export function Composer(props: {
                   mr: isDesktop ? 1 : 0.25,
                   display: 'flex', flexDirection: 'column', gap: isDesktop ? 1 : 0.25,
                 }}>
-                  {isDesktop && <ButtonMic variant={micVariant} color={micColor} onClick={handleToggleMic} sx={{ background: isRecordingSpeech ? undefined : 'none' }} />}
+                  {isDesktop && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} noBackground={!isRecordingSpeech} />}
 
                   {micIsRunning && (
-                    <ButtonMicContinuation
+                    <ButtonMicContinuationMemo
                       variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
                       onClick={handleToggleMicContinuation}
                     />

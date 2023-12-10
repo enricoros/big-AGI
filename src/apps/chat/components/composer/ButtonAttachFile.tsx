@@ -11,7 +11,9 @@ const attachFileLegend =
   </Box>;
 
 
-export function ButtonAttachFile(props: { isMobile?: boolean, onAttachFilePicker: () => void }) {
+export const ButtonAttachFileMemo = React.memo(ButtonAttachFile);
+
+function ButtonAttachFile(props: { isMobile?: boolean, onAttachFilePicker: () => void }) {
   return props.isMobile ? (
     <IconButton onClick={props.onAttachFilePicker}>
       <AttachFileOutlinedIcon />

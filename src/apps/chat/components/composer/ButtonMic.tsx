@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, IconButton } from '@mui/joy';
-import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import { ColorPaletteProp, VariantProp } from '@mui/joy/styles/types';
 import MicIcon from '@mui/icons-material/Mic';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -15,9 +15,12 @@ const micLegend =
   </Box>;
 
 
-export const ButtonMic = (props: { variant: VariantProp, color: ColorPaletteProp, onClick: () => void, sx?: SxProps }) =>
-  <GoodTooltip placement='top' title={micLegend}>
-    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.sx}>
+export const ButtonMicMemo = React.memo(ButtonMic);
+
+function ButtonMic(props: { variant: VariantProp, color: ColorPaletteProp, noBackground?: boolean, onClick: () => void }) {
+  return <GoodTooltip placement='top' title={micLegend}>
+    <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.noBackground ? { background: 'none' } : {}}>
       <MicIcon />
     </IconButton>
   </GoodTooltip>;
+}
