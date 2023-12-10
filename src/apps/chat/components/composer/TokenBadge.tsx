@@ -73,7 +73,9 @@ export const TokenTooltip = (props: { message: string | null, color: ColorPalett
 /**
  * Simple little component to show the token count (and a tooltip on hover)
  */
-export function TokenBadge(props: {
+export const TokenBadgeMemo = React.memo(TokenBadge);
+
+function TokenBadge(props: {
   direct: number, history?: number, responseMax?: number, limit: number,
   showExcess?: boolean, absoluteBottomRight?: boolean, inline?: boolean,
 }) {
