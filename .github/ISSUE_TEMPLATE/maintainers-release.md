@@ -48,7 +48,7 @@ GitHub release:
 2) I am announcing a new version, 1.7.0. The following were the announcements for 1.6.0. Discord announcement, GitHub Release, in-app news.data.tsx, changelog.md.
    - paste the former: `discord announcement`, `GitHub release`, `news.data.tsx`, `changelog.md`
 3) The following is the new data I have for 1.7.0
-   - paste the milestone and each individual issue (content will be downloaded)
+   - paste the link to the milestone (closed) and each individual issue (content will be downloaded)
    - paste the git changelog  `git log v1.6.0..v1.7.0 | clip`
    
 
