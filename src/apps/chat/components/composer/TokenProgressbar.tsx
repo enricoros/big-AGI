@@ -10,7 +10,9 @@ import { tokensPrettyMath, TokenTooltip } from './TokenBadge';
  *
  * The Textarea contains it within the Composer (at least).
  */
-export function TokenProgressbar(props: { direct: number, history: number, responseMax: number, limit: number }) {
+export const TokenProgressbarMemo = React.memo(TokenProgressbar);
+
+function TokenProgressbar(props: { direct: number, history: number, responseMax: number, limit: number }) {
   // external state
   const theme = useTheme();
 

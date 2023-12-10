@@ -47,8 +47,8 @@ import { ButtonMicContinuationMemo } from './ButtonMicContinuation';
 import { ButtonMicMemo } from './ButtonMic';
 import { ButtonOptionsDraw } from './ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
-import { TokenBadge } from './TokenBadge';
-import { TokenProgressbar } from './TokenProgressbar';
+import { TokenBadgeMemo } from './TokenBadge';
+import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 
 
@@ -456,11 +456,11 @@ export function Composer(props: {
                   }} />
 
                 {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
-                  <TokenProgressbar direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
+                  <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
                 )}
 
                 {!!tokenLimit && (
-                  <TokenBadge direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showExcess absoluteBottomRight />
+                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showExcess absoluteBottomRight />
                 )}
 
               </Box>
