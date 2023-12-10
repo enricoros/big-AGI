@@ -57,9 +57,9 @@ GitHub release:
 ```markdown
 I need the following from you:
 
-1. a table summarizing all the new features in 1.2.3, which will be used for the artifacts later
+1. a table summarizing all the new features in 1.2.3 (description, significance, usefulness, do not link the commit, but have the issue number), which will be used for the artifacts later
 2. after the table score each feature from a user impact and magnitude point of view
-3. Improve the table, in decreasing order of importance for features, fixing any detail that's missing
+3. Improve the table, in decreasing order of importance for features, fixing any detail that's missing, in particular check if there are commits of significance from a user or developer point of view, which are not contained in the table
 4. I want you then to update the news.data.tsx for the new release
 ```
 
