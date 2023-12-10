@@ -14,7 +14,9 @@ const pasteClipboardLegend =
   </Box>;
 
 
-export function ButtonAttachClipboard(props: { isMobile?: boolean, onClick: () => void }) {
+export const ButtonAttachClipboardMemo = React.memo(ButtonAttachClipboard);
+
+function ButtonAttachClipboard(props: { isMobile?: boolean, onClick: () => void }) {
   return props.isMobile ? (
     <IconButton onClick={props.onClick}>
       <ContentPasteGoIcon />

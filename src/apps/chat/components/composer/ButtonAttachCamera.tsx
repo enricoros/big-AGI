@@ -13,7 +13,9 @@ const attachCameraLegend = (isMobile: boolean) =>
   </Box>;
 
 
-export function ButtonAttachCamera(props: { isMobile?: boolean, onAttachImage: (file: File) => void }) {
+export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
+
+function ButtonAttachCamera(props: { isMobile?: boolean, onAttachImage: (file: File) => void }) {
   // state
   const [open, setOpen] = React.useState(false);
 
