@@ -5,12 +5,22 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.7.0 - Dec 2023
+### 1.8.0 - Dec 2023
 
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
-- milestone: [1.7.0](https://github.com/enricoros/big-agi/milestone/7)
+- milestone: [1.8.0](https://github.com/enricoros/big-agi/milestone/8)
 
-### ✨ What's New in 1.6.0 👊 - Nov 28, 2023
+### What's New in 1.7.0 · Dec 10, 2023 · Attachment Theory 🌟
+
+- **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
+- **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
+- **Independent Browsing**: Full browsing support with Browserless. [Learn More](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Overheat LLMs**: Push the creativity with higher LLM temperatures. [#256](https://github.com/enricoros/big-agi/issues/256)
+- **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
+- Optimized Voice Input and Performance
+- For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
+
+### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
 
 - **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
 - **Branching Discussions**: Create new conversations from any message
@@ -20,7 +30,7 @@ by release.
 - **New Features**: Anthropic Claude 2.1, `/help` command, and Flattener tool
 - **For Developers**: Code quality upgrades and snackbar notifications
 
-### What's New in 1.5.0 - Nov 19, 2023
+### What's New in 1.5.0 - Nov 19, 2023 · Loaded
 
 - **Continued Voice**: Engage with hands-free interaction for a seamless experience
 - **Visualization Tool**: Create data representations with our new visualization capabilities
