@@ -1,3 +1,17 @@
+# `Lenns BIG-AGI`
+
+# Changes to this fork
+Fork with basic auth added.
+
+## Basic Auth
+Add the following environment variables
+
+BASIC_AUTH_USERNAME=<your username>
+
+BASIC_AUTH_PASSWORD=<your password>
+
+Update the middleware.ts to use the basic auth middleware on all routes in src/pages
+
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI 👋, the GPT application for professionals that need form, function,
