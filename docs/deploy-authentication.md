@@ -3,8 +3,8 @@
 `big-AGI` does not come with built-in authentication. To secure your deployment, you can implement authentication
 in one of the following ways:
 
-1. Build `big-AGI` with support for [HTTP Basic Authentication](#http-authentication)
-2. Utilize user authentication features provided by your [cloud deployment platform](#cloud-deployments-authentication)
+1. Build `big-AGI` with support for ⬇️ [HTTP Authentication](#http-authentication)
+2. Utilize user authentication features provided by your ⬇️ [cloud deployment platform](#cloud-deployments-authentication)
 3. Develop a custom authentication solution
 
 ## HTTP Authentication
