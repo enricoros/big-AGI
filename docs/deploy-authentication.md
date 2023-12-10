@@ -7,7 +7,9 @@ in one of the following ways:
 2. Utilize user authentication features provided by your ⬇️ [cloud deployment platform](#cloud-deployments-authentication)
 3. Develop a custom authentication solution
 
-## HTTP Authentication
+<br/>
+
+### HTTP Authentication
 
 [HTTP Basic Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) is a simple method
 to secure your application.
@@ -27,7 +29,9 @@ HTTP_BASIC_AUTH_PASSWORD=<your password>
 
 - Start the application
 
-## Cloud Deployments Authentication
+<br/>
+
+### Cloud Deployments Authentication
 
 > This approach allows you to enable authentication without rebuilding the application by using the features
 > provided by your cloud platform to manage user accounts and access.
