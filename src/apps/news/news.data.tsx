@@ -26,7 +26,7 @@ const RIssues = `${OpenRepo}/issues`;
 export const newsCallout =
   <Card>
     <CardContent sx={{ gap: 2 }}>
-      <Typography level='h3'>
+      <Typography level='h4'>
         Open Roadmap
       </Typography>
       <Typography>
@@ -138,6 +138,7 @@ export const NewsItems: NewsItem[] = [
 
 interface NewsItem {
   versionName: string;
+  versionDate?: Date;
   text?: string | React.JSX.Element;
   items?: {
     text: string | React.JSX.Element;
