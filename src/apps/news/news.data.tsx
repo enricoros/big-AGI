@@ -78,6 +78,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>Enhanced security via <B href={RCode + '/docs/deploy-authentication.md'}>password protection</B></> },
       { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
       { text: <>Optimized voice input and performance</> },
+      { text: <>Latest Ollama and Oobabooga models</> },
     ],
   },
   {

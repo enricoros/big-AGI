@@ -18,6 +18,7 @@ by release.
 - **Overheat LLMs**: Push the creativity with higher LLM temperatures. [#256](https://github.com/enricoros/big-agi/issues/256)
 - **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
 - Optimized Voice Input and Performance
+- Latest Ollama and Oobabooga models
 - For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
 
 ### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
