@@ -6,6 +6,7 @@ import { Box, Button, Card, CardContent, Container, IconButton, Typography } fro
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { Brand } from '~/common/app.config';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -55,11 +56,11 @@ export function AppNews() {
       }}>
 
         <Typography level='h1' sx={{ fontSize: '3rem' }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite` }}>{firstNews?.versionName}</Box>!
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite` }}>{firstNews?.versionCode}</Box>!
         </Typography>
 
         <Typography>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionName}
+          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
         </Typography>
 
         <Box>
@@ -84,9 +85,11 @@ export function AppNews() {
             return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
               <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
-                    {ni.text || `Version ${ni.versionName}:`}
-                  </Typography>
+                  <GoodTooltip title={ni.versionName || null} placement='top-start'>
+                    <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
+                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ${ni.versionName}` : `Version ${ni.versionCode}:`}
+                    </Typography>
+                  </GoodTooltip>
                   {/*!firstCard &&*/ (
                     <Typography level='body-sm'>
                       {!!ni.versionDate && <TimeAgo date={ni.versionDate} />}
