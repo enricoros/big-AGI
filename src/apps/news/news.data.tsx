@@ -69,7 +69,7 @@ export const NewsItems: NewsItem[] = [
   {
     versionCode: '1.7.0',
     versionName: 'Attachment Theory',
-    versionDate: new Date('2023-12-10T18:00:00Z'), // new Date().toISOString()
+    versionDate: new Date('2023-12-10T12:00:00Z'), // new Date().toISOString()
     items: [
       { text: <>Redesigned <B href={RIssues + '/251'}>attachments system</B>: drag, paste, link, snap, images, text, pdfs</> },
       { text: <>Desktop <B href={RIssues + '/253'}>webcam access</B> for direct image capture (Labs option)</> },
