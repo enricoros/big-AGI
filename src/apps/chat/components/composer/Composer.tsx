@@ -5,9 +5,9 @@ import { keyframes } from '@emotion/react';
 
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import PanToolIcon from '@mui/icons-material/PanTool';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -307,32 +307,32 @@ export function Composer(props: {
 
   // Drag & Drop
 
-  const eatDragEvent = (e: React.DragEvent) => {
+  const eatDragEvent = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  };
+  }, []);
 
-  const handleTextareaDragEnter = (e: React.DragEvent) => {
+  const handleTextareaDragEnter = React.useCallback((e: React.DragEvent) => {
     const isFromSelf = e.dataTransfer.types.includes('x-app/agi');
     if (!isFromSelf) {
       eatDragEvent(e);
       setIsDragging(true);
     }
-  };
+  }, [eatDragEvent]);
 
-  const handleTextareaDragStart = (e: React.DragEvent) => {
+  const handleTextareaDragStart = React.useCallback((e: React.DragEvent) => {
     e.dataTransfer.setData('x-app/agi', 'do-not-intercept');
-  };
+  }, []);
 
-  const handleOverlayDragLeave = (e: React.DragEvent) => {
+  const handleOverlayDragLeave = React.useCallback((e: React.DragEvent) => {
     eatDragEvent(e);
     setIsDragging(false);
-  };
+  }, [eatDragEvent]);
 
-  const handleOverlayDragOver = (e: React.DragEvent) => {
+  const handleOverlayDragOver = React.useCallback((e: React.DragEvent) => {
     eatDragEvent(e);
     // e.dataTransfer.dropEffect = 'copy';
-  };
+  }, [eatDragEvent]);
 
   const handleOverlayDrop = React.useCallback(async (event: React.DragEvent) => {
     eatDragEvent(event);
@@ -346,7 +346,7 @@ export function Composer(props: {
 
     // textarea drop
     attachAppendDataTransfer(dataTransfer, 'drop', true);
-  }, [attachAppendDataTransfer, setComposeText]);
+  }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
 
 
   const isImmediate = chatModeId === 'immediate';
@@ -488,12 +488,12 @@ export function Composer(props: {
               {/* overlay: Mic */}
               {micIsRunning && (
                 <Card
-                  color='primary' invertedColors variant='soft'
+                  color='primary' variant='soft' invertedColors
                   sx={{
                     display: 'flex',
                     position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
                     // alignItems: 'center', justifyContent: 'center',
-                    border: `1px solid`,
+                    border: '1px solid',
                     borderColor: 'primary.solidBg',
                     borderRadius: 'sm',
                     zIndex: 20,
@@ -507,24 +507,28 @@ export function Composer(props: {
               )}
 
               {/* overlay: Drag & Drop*/}
-              <Card
-                color='primary' invertedColors variant='soft'
-                sx={{
-                  display: isDragging ? 'flex' : 'none',
-                  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                  alignItems: 'center', justifyContent: 'space-evenly',
-                  border: '2px dashed',
-                  borderRadius: 'xs',
-                  zIndex: 10,
-                }}
-                onDragLeave={handleOverlayDragLeave}
-                onDragOver={handleOverlayDragOver}
-                onDrop={handleOverlayDrop}>
-                <PanToolIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />
-                <Typography level='body-sm' sx={{ pointerEvents: 'none' }}>
-                  I will hold on to this for you
-                </Typography>
-              </Card>
+              {!isMobile && (
+                <Card
+                  color='success' variant='soft' invertedColors
+                  sx={{
+                    display: isDragging ? 'flex' : 'none',
+                    position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+                    alignItems: 'center', justifyContent: 'center', gap: 2,
+                    border: '2px dashed',
+                    borderRadius: 'xs',
+                    boxShadow: 'none',
+                    zIndex: 10,
+                  }}
+                  onDragLeave={handleOverlayDragLeave}
+                  onDragOver={handleOverlayDragOver}
+                  onDrop={handleOverlayDrop}
+                >
+                  {isDragging && <AttachFileIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />}
+                  {isDragging && <Typography level='title-sm' sx={{ pointerEvents: 'none' }}>
+                    I will hold on to this for you
+                  </Typography>}
+                </Card>
+              )}
 
             </Box>
 
