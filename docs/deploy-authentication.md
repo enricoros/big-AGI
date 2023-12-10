@@ -27,7 +27,7 @@ HTTP_BASIC_AUTH_USERNAME=<your username>
 HTTP_BASIC_AUTH_PASSWORD=<your password>
 ```
 
-- Start the application
+- Start the application 🔒
 
 <br/>
 
