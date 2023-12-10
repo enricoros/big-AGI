@@ -17,7 +17,7 @@ To enable it in `big-AGI`, you **must manually build the application**:
 - Build `big-AGI` with HTTP authentication enabled:
   - Clone the repository
   - Rename `middleware_BASIC_AUTH.ts` to `middleware.ts`
-  - Build: follow the build instructions in [Deploy manually](../README.md#-deploy-manually) or [Deploying with Docker](deploy-docker.md)
+  - Build: usual simple build procedure (e.g. [Deploy manually](../README.md#-deploy-manually) or [Deploying with Docker](deploy-docker.md))
 
 - Configure the following [environment variables](environment-variables.md) before launching `big-AGI`:
 ```dotenv
