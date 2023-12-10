@@ -15,12 +15,14 @@ assignees: enricoros
   - [ ] Assign all the shipped roadmap Issues
   - [ ] Assign the relevant [recently closed Isssues](https://github.com/enricoros/big-agi/issues?q=is%3Aclosed+sort%3Aupdated-desc)
 - Code changes:
-  - [ ] Create a release branch 'release-x.y.z', and commit:
+  - [ ] Create a release branch 'release-x.y.z': `git checkout -b release-1.2.3`
+  - [ ] Create a temporary tag `git tag v1.2.3 && git push opensource --tags`
+  - [ ] Create a [New Draft GitHub Release](https://github.com/enricoros/big-agi/releases/new), and generate the automated changelog (for new contributors)
   - [ ] Update the release version in package.json, and `npm i`
-  - [ ] Update in-app News [src/apps/news/news.data.tsx](src/apps/news/news.data.tsx)
+  - [ ] Update in-app News [src/apps/news/news.data.tsx](/src/apps/news/news.data.tsx)
   - [ ] Update the in-app News version number
   - [ ] Update the readme with the new release
-  - [ ] Copy the highlights to the [changelog](docs/changelog.md)
+  - [ ] Copy the highlights to the [docs/changelog.md](/docs/changelog.md)
 - Release:
   - [ ] merge onto main
   - [ ] verify deployment on Vercel
