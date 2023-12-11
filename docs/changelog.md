@@ -10,7 +10,7 @@ by release.
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 - milestone: [1.8.0](https://github.com/enricoros/big-agi/milestone/8)
 
-### What's New in 1.7.0 · Dec 10, 2023 · Attachment Theory 🌟
+### What's New in 1.7.1 · Dec 11, 2023 · Attachment Theory 🌟
 
 - **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
 - **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
@@ -20,6 +20,7 @@ by release.
 - Optimized Voice Input and Performance
 - Latest Ollama and Oobabooga models
 - For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
+- [1.7.1]: Improved Ollama chats. [#270](https://github.com/enricoros/big-agi/issues/270)
 
 ### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
 

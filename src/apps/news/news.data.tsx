@@ -67,9 +67,10 @@ export const NewsItems: NewsItem[] = [
     ],
   },*/
   {
-    versionCode: '1.7.0',
+    versionCode: '1.7.1',
     versionName: 'Attachment Theory',
-    versionDate: new Date('2023-12-10T12:00:00Z'), // new Date().toISOString()
+    versionDate: new Date('2023-12-11T06:00:00Z'), // new Date().toISOString()
+    // versionDate: new Date('2023-12-10T12:00:00Z'), // 1.7.0
     items: [
       { text: <>Redesigned <B href={RIssues + '/251'}>attachments system</B>: drag, paste, link, snap, images, text, pdfs</> },
       { text: <>Desktop <B href={RIssues + '/253'}>webcam access</B> for direct image capture (Labs option)</> },
@@ -79,6 +80,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
       { text: <>Optimized voice input and performance</> },
       { text: <>Latest Ollama and Oobabooga models</> },
+      { text: <>1.7.1: Improved <B href={RIssues + '/270'}>Ollama chats</B></> },
     ],
   },
   {
