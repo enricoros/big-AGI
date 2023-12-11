@@ -2,9 +2,11 @@ import * as React from 'react';
 
 import { Box, Button, Chip, FormControl, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
+import FormatListNumberedRtlIcon from '@mui/icons-material/FormatListNumberedRtl';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
@@ -16,11 +18,12 @@ import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.r
 export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {
 
   // state
+  const [sortByPulls, setSortByPulls] = React.useState<boolean>(false);
   const [modelName, setModelName] = React.useState<string | null>('llama2');
   const [modelTag, setModelTag] = React.useState<string>('');
 
   // external state
-  const { data: pullable } = apiQuery.llmOllama.adminListPullable.useQuery({ access: props.access }, {
+  const { data: pullableData } = apiQuery.llmOllama.adminListPullable.useQuery({ access: props.access }, {
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
   });
@@ -28,7 +31,11 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
   const { isLoading: isDeleting, status: deleteStatus, error: deleteError, mutate: deleteMutate, reset: deleteReset } = apiQuery.llmOllama.adminDelete.useMutation();
 
   // derived state
-  const pullModelDescription = pullable?.pullable.find(p => p.id === modelName)?.description ?? null;
+  let pullable = pullableData?.pullable || [];
+  if (sortByPulls)
+    pullable = pullable.toSorted((a, b) => b.pulls - a.pulls);
+  const pullModelDescription = pullable.find(p => p.id === modelName)?.description ?? null;
+
 
   const handleModelPull = () => {
     deleteReset();
@@ -39,6 +46,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
     pullReset();
     modelName && deleteMutate({ access: props.access, name: modelName + (modelTag ? ':' + modelTag : '') });
   };
+
 
   return (
     <GoodModal title='Ollama Administration' dividers open onClose={props.onClose}>
@@ -52,13 +60,27 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
         <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
           <FormControl sx={{ flexGrow: 1, flexBasis: 0.55 }}>
             <FormLabelStart title='Name' />
-            <Select value={modelName || ''} onChange={(_event: any, value: string | null) => setModelName(value)}>
-              {pullable?.pullable.map(p =>
-                <Option key={p.id} value={p.id}>
-                  {p.isNew === true && <Chip size='sm' variant='outlined'>New</Chip>} {p.label}
-                </Option>,
-              )}
-            </Select>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Select
+                value={modelName || ''}
+                onChange={(_event: any, value: string | null) => setModelName(value)}
+                sx={{ flexGrow: 1 }}
+              >
+                {pullable.map(p =>
+                  <Option key={p.id} value={p.id}>
+                    {p.isNew === true && <Chip size='sm' variant='outlined'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
+                  </Option>,
+                )}
+              </Select>
+              <GoodTooltip title='Sort by Downloads'>
+                <IconButton
+                  variant={sortByPulls ? 'solid' : 'outlined'}
+                  onClick={() => setSortByPulls(!sortByPulls)}
+                >
+                  <FormatListNumberedRtlIcon />
+                </IconButton>
+              </GoodTooltip>
+            </Box>
           </FormControl>
           <FormControl sx={{ flexGrow: 1, flexBasis: 0.45 }}>
             <FormLabelStart title='Tag' />
@@ -70,7 +92,9 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
                 slotProps={{ input: { size: 10 } }} // halve the min width
               />
               {!!modelName && (
-                <IconButton component={Link} color='neutral' size='sm' href={`https://ollama.ai/library/${modelName}`} target='_blank'>
+                <IconButton
+                  component={Link} href={`https://ollama.ai/library/${modelName}`} target='_blank'
+                >
                   <LaunchIcon />
                 </IconButton>
               )}
