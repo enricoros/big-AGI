@@ -21,7 +21,19 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-### What's New in 1.6.0 - Nov 28, 2023 🌟
+### What's New in 1.7.1 · Dec 11, 2023 · Attachment Theory 🌟
+
+- **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
+- **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
+- **Independent Browsing**: Full browsing support with Browserless. [Learn More](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Overheat LLMs**: Push the creativity with higher LLM temperatures. [#256](https://github.com/enricoros/big-agi/issues/256)
+- **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
+- Optimized Voice Input and Performance
+- Latest Ollama and Oobabooga models
+- For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
+- [1.7.1]: Improved Ollama chats. [#270](https://github.com/enricoros/big-agi/issues/270)
+
+### What's New in 1.6.0 - Nov 28, 2023
 
 - **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
 - **Branching Discussions**: Create new conversations from any message
@@ -82,7 +94,8 @@ the [past releases changelog](docs/changelog.md).
 ![React](https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=&logo=vercel&logoColor=white)
 
-Clone this repo, install the dependencies, and run the development server:
+Clone this repo, install the dependencies (all locally), and run the development server (which auto-watches the
+files for changes):
 
 ```bash
 git clone https://github.com/enricoros/big-agi.git
@@ -91,15 +104,23 @@ npm install
 npm run dev
 ```
 
-The app will be running on `http://localhost:3000`
+The development app will be running on `http://localhost:3000`. Development builds have the advantage of not requiring
+a build step, but can be slower than production builds. Also, development builds won't have timeout on edge functions.
 
-Integrations:
+## 🌐 Deploy manually
 
-* Local models: Ollama, Oobabooga, LocalAi, etc.
-* [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
-* [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
-* [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
-* [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
+The _production_ build of the application is optimized for performance and is performed by the `npm run build` command,
+after installing the required dependencies.
+
+```bash
+# .. repeat the steps above up to `npm install`, then:
+npm run build
+npm run start --port 3000
+```
+
+The app will be running on the specified port, e.g. `http://localhost:3000`.
+
+Want to deploy with username/password? See the [Authentication](docs/deploy-authentication.md) guide.
 
 ## 🐳 Deploy with Docker
 
@@ -115,7 +136,7 @@ docker run -d -p 3000:3000 big-agi
 Or run the official container:
 
 - manually: `docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi`
-- or, with docker-compose: `docker-compose up`
+- or, with docker-compose: `docker-compose up` or see [the documentation](docs/deploy-docker.md) for a composer file with integrated browsing
 
 ## ☁️ Deploy on Cloudflare Pages
 
@@ -127,7 +148,13 @@ Create your GitHub fork, create a Vercel project over that fork, and deploy it. 
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-agi&env=OPENAI_API_KEY,OPENAI_API_HOST&envDescription=OpenAI%20KEY%20for%20your%20deployment.%20Set%20HOST%20only%20if%20non-default.)
 
+## Integrations:
 
+* Local models: Ollama, Oobabooga, LocalAi, etc.
+* [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
+* [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
+* [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
+* [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
 
 <br/>
 

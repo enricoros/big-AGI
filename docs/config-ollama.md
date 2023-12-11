@@ -5,15 +5,20 @@ This guide helps you connect [Ollama](https://ollama.ai) [models](https://ollama
 experience. The integration brings the popular big-AGI features to Ollama, including: voice chats,
 editing tools, models switching, personas, and more.
 
+_Last updated Dec 11, 2023_
+
 ![config-local-ollama-0-example.png](pixels/config-ollama-0-example.png)
 
 ## Quick Integration Guide
 
-1. **Ensure Ollama API Server is Running**: Before starting, make sure your Ollama API server is up and running.
-2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**.
-3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`).
-4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models.
-5. **Start Using AI Personas**: Select an Ollama model and begin interacting with AI personas tailored to your needs.
+1. **Ensure Ollama API Server is Running**: Follow the official instructions to get Ollama up and running on your machine
+2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
+3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`)
+4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models
+   > Optional: use the Ollama Admin interface to see which models are available and 'Pull' them in your local machine. Note
+   that this operation will likely timeout due to Edge Functions timeout on the big-AGI server while pulling, and
+   you'll have to press the 'Pull' button again, until a green message appears.
+5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
 
 ### Ollama: installation and Setup
 

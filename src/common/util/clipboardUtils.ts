@@ -24,13 +24,13 @@ export function copyToClipboard(text: string, typeLabel: string) {
 // NOTE: this could be implemented in a platform-agnostic manner with !!.read, but we call it out here for clarity
 export const supportsClipboardRead = !isFirefox;
 
-export async function getClipboardItems(): Promise<ClipboardItem[]> {
+export async function getClipboardItems(): Promise<ClipboardItem[] | null> {
   if (!isBrowser || !window.navigator.clipboard?.read)
     return [];
   try {
     return await window.navigator.clipboard.read();
   } catch (error: any) {
     console.warn('Failed to read clipboard: ', error);
-    return [];
+    return null;
   }
 }

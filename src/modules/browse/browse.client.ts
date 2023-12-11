@@ -3,40 +3,60 @@ import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
 
+// show the screenshot in the dom
+const DEBUG_SHOW_SCREENSHOT = false;
+
+
 export const CmdRunBrowse: string[] = ['/browse'];
 
 
-export async function callBrowseFetchPage(url: string): Promise<string | null> {
+export async function callBrowseFetchPage(url: string) {
 
   // thow if no URL is provided
   url = url?.trim() || '';
   if (!url)
-    throw new Error('Invalid URL');
+    throw new Error('Browsing error: Invalid URL');
 
   // assume https if no protocol is provided
   // noinspection HttpUrlsUsage
   if (!url.startsWith('http://') && !url.startsWith('https://'))
     url = 'https://' + url;
 
-  try {
+  const clientWssEndpoint = useBrowseStore.getState().wssEndpoint;
 
-    const clientWssEndpoint = useBrowseStore.getState().wssEndpoint;
+  const { pages } = await apiAsyncNode.browse.fetchPages.mutate({
+    access: {
+      dialect: 'browse-wss',
+      ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
+    },
+    subjects: [{ url }],
+    screenshot: DEBUG_SHOW_SCREENSHOT ? {
+      width: 512,
+      height: 512,
+      // quality: 100,
+    } : undefined,
+  });
 
-    const results = await apiAsyncNode.browse.fetchPages.mutate({
-      access: {
-        dialect: 'browse-wss',
-        ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
-      },
-      subjects: [{ url }],
-    });
+  if (pages.length !== 1)
+    throw new Error(`Browsing error: expected 1 result, got ${pages.length}`);
 
-    if (results.objects.length !== 1)
-      return `Browsing error: expected 1 result, got ${results.objects.length}`;
+  const page = pages[0];
 
-    const firstResult = results.objects[0];
-    return !firstResult.error ? firstResult.content : `Browsing service error: ${JSON.stringify(firstResult)}`;
-
-  } catch (error: any) {
-    return `Browsing error: ${error?.message || error?.toString() || 'Unknown fetch error'}`;
+  // DEBUG: if there's a screenshot, append it to the dom
+  if (DEBUG_SHOW_SCREENSHOT && page.screenshot) {
+    const img = document.createElement('img');
+    img.src = page.screenshot.imageDataUrl;
+    img.style.width = `${page.screenshot.width}px`;
+    img.style.height = `${page.screenshot.height}px`;
+    document.body.appendChild(img);
   }
+
+  // throw if there's an error
+  if (page.error) {
+    console.warn('Browsing service error:', page.error);
+    if (!page.content)
+      throw new Error(page.error);
+  }
+
+  return page;
 }

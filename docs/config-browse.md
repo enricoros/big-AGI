@@ -3,25 +3,68 @@
 Allows users to load web pages across various components of `big-AGI`. This feature is supported by Puppeteer-based
 browsing services, which are the most common way to render web pages in a headless environment.
 
+Once configured, the Browsing service provides this functionality:
+
+- **Paste a URL**: Simply paste/drag a URL into the chat, and `big-AGI` will load and attach the page (very effective)
+- **Use /browse**: Type `/browse [URL]` in the chat to command `big-AGI` to load the specified web page
+- **ReAct**: ReAct will automatically use the `loadURL()` function whenever a URL is encountered
+
 First of all, you need to procure a Puppteer web browsing service endpoint. `big-AGI` supports services like:
 
-- [BrightData](https://brightdata.com/products/scraping-browser) Scraping Browser
-- [Cloudflare](https://developers.cloudflare.com/browser-rendering/) Browser Rendering, or
-- any other Puppeteer-based service that provides a WebSocket endpoint (WSS)
-- **including [your own browser](#your-own-chrome-browser)**
+| Service                                                                              | Working | Type        | Location       | Special Features                            |
+|--------------------------------------------------------------------------------------|---------|-------------|----------------|---------------------------------------------|
+| [BrightData Scraping Browser](https://brightdata.com/products/scraping-browser)      | Yes     | Proprietary | Cloud          | Advanced scraping tools, global IP pool     |
+| [Cloudflare Browser Rendering](https://developers.cloudflare.com/browser-rendering/) | ?       | Proprietary | Cloud          | Integrated CDN, optimized browser rendering |
+| ⬇️ [Browserless 2.0](#-browserless-20)                                               | Okay    | OpenSource  | Local (Docker) | Parallelism, debug viewer, advanced APIs    |
+| ⬇️ [Your Chrome Browser (ALPHA)](#-your-own-chrome-browser)                          | Alpha   | Proprietary | Local (Chrome) | Personal, experimental use (ALPHA!)         |
+| other Puppeteer-based WSS Services                                                   | ?       | Varied      | Cloud/Local    | Service-specific features                   |
 
 ## Configuration
 
-1. **Procure an Endpoint**: Ensure that your browsing service is running and has a WebSocket endpoint available:
-    - this mustbe in the form: `wss://${auth}@{some host}:{port}`
+1. **Procure an Endpoint**
+   - Ensure that your browsing service is running (remote or local) and has a WebSocket endpoint available
+   - Write down the address: `wss://${auth}@{some host}:{port}`, or ws:// for local services on your machine
 
-2. **Configure `big-AGI`**:  navigate to **Preferences** > **Tools** > **Browse** and enter the 'wss://...' connection
-   string provided by your browsing service
+2. **Configure `big-AGI`**
+   - navigate to **Preferences** > **Tools** > **Browse**
+   - Enter the 'wss://...' connection string provided by your browsing service
 
 3. **Enable Features**: Choose which browse-related features you want to enable:
-    - **Attach URLs**: Automatically load and attach a page when pasting a URL into the composer
-    - **/browse Command**: Use the `/browse` command in the chat to load a web page
-    - **ReAct**: Enable the `loadURL()` function in ReAct for advanced interactions
+   - **Attach URLs**: Automatically load and attach a page when pasting a URL into the composer
+   - **/browse Command**: Use the `/browse` command in the chat to load a web page
+   - **ReAct**: Enable the `loadURL()` function in ReAct for advanced interactions
+
+### 🌐 Browserless 2.0
+
+[Browserless 2.0](https://github.com/browserless/browserless) is a Docker-based service that provides a headless
+browsing experience compatible with `big-AGI`. An open-source solution that simplifies web automation tasks,
+in a scalable manner.
+
+Launch Browserless with:
+
+```bash
+docker run -p 9222:3000 browserless/chrome:latest
+```
+
+Now you can use the following connection string in `big-AGI`: `ws://127.0.0.1:9222`.
+You can also browse to [http://127.0.0.1:9222](http://127.0.0.1:9222) to see the Browserless debug viewer
+and configure some options.
+
+Note: if you are using `docker-compose`, please see the
+[docker/docker-compose-browserless.yaml](docker/docker-compose-browserless.yaml) file for an example
+on how to run `big-AGI` and Browserless simultaneously in a single application.
+
+### 🌐 Your own Chrome browser
+
+***EXPERIMENTAL - UNTESTED*** - You can use your own Chrome browser as a browsing service, by configuring it to expose
+a WebSocket endpoint.
+
+- close all the Chrome instances (on Windows, check the Task Manager if still running)
+- start Chrome with the following command line options (on Windows, you can edit the shortcut properties):
+  - `--remote-debugging-port=9222`
+- go to http://localhost:9222/json/version and copy the `webSocketDebuggerUrl` value
+  - it should be something like: `ws://localhost:9222/...`
+- paste the value into the Endpoint configuration (see point 2 in the configuration)
 
 ### Server-Side Configuration
 
@@ -32,26 +75,6 @@ allow your to skip points 2 and 3 above.
 Always deploy your own user authentication, authorization and security solution. For this feature, the tRPC
 route that provides browsing service, shall be secured with a user authentication and authorization solution,
 to prevent unauthorized access to the browsing service.
-
-### Your own Chrome browser
-
-***EXPERIMENTAL - UNTESTED*** - You can use your own Chrome browser as a browsing service, by configuring it to expose
-a WebSocket endpoint.
-
-- close all the Chrome instances (on Windows, check the Task Manager if still running)
-- start Chrome with the following command line options (on Windows, you can edit the shortcut properties):
-    - `--remote-debugging-port=9222`
-- go to http://localhost:9222/json/version and copy the `webSocketDebuggerUrl` value
-    - it should be something like: `ws://localhost:9222/...`
-- paste the value into the Endpoint configuration (see point 2 above)
-
-## Usage
-
-Once configured, you can start using the browse functionality:
-
-- **Paste a URL**: Simply paste a URL into the chat, and `big-AGI` will load the page if the Attach URLs feature is enabled
-- **Use /browse**: Type `/browse [URL]` in the chat to command `big-AGI` to load the specified web page
-- **ReAct**: ReAct will automatically use the `loadURL()` function whenever a URL is encountered
 
 ## Support
 

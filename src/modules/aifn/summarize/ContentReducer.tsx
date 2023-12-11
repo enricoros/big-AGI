@@ -5,7 +5,7 @@ import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Sel
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
-import { TokenBadge } from '../../../apps/chat/components/composer/TokenBadge';
+import { TokenBadgeMemo } from '../../../apps/chat/components/composer/TokenBadge';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
@@ -145,7 +145,7 @@ export function ContentReducer(props: {
               lineHeight: 1.75,
             }} />
 
-          <TokenBadge directTokens={reducedTokens} tokenLimit={props.tokenLimit} absoluteBottomRight />
+          <TokenBadgeMemo direct={reducedTokens} limit={props.tokenLimit} absoluteBottomRight />
 
           {/* indicator we're processing */}
           {processing && (

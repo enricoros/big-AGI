@@ -18,13 +18,13 @@ export const runBrowseUpdatingState = async (conversationId: string, url: string
 
   try {
 
-    const text = await callBrowseFetchPage(url);
-    if (!text) {
+    const page = await callBrowseFetchPage(url);
+    if (!page.content) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error('No text found.');
     }
     updateAssistantMessage({
-      text: text,
+      text: page.content,
       typing: false,
     });
 

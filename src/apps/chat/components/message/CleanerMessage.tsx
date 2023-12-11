@@ -6,7 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DMessage } from '~/common/state/store-chats';
 
-import { TokenBadge } from '../composer/TokenBadge';
+import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { makeAvatar, messageBackground } from './ChatMessage';
 
 
@@ -94,7 +94,7 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
       </Typography>
 
       {props.remainingTokens !== undefined && <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
-        <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
+        <TokenBadgeMemo direct={messageTokenCount} limit={props.remainingTokens} inline />
       </Box>}
 
       <Typography level='body-md' sx={{

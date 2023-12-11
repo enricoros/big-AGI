@@ -4,8 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, List } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
-import { useChatLLM } from '~/modules/llms/store-llms';
+import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
@@ -24,6 +23,7 @@ import { useChatShowSystemMessages } from '../store-app-chat';
  */
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
+  chatLLMContextTokens?: number,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
   onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => void,
@@ -50,7 +50,6 @@ export function ChatMessageList(props: {
       setMessages: state.setMessages,
     };
   }, shallow);
-  const { chatLLM } = useChatLLM();
   const { mayWork: isImaginable } = useCapabilityProdia();
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
@@ -188,7 +187,7 @@ export function ChatMessageList(props: {
           <CleanerMessage
             key={'sel-' + message.id}
             message={message}
-            isBottom={idx === 0} remainingTokens={(chatLLM ? chatLLM.contextTokens : 0) - historyTokenCount}
+            isBottom={idx === 0} remainingTokens={(props.chatLLMContextTokens || 0) - historyTokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
           />
 
