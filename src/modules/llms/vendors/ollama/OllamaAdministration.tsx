@@ -1,17 +1,19 @@
 import * as React from 'react';
 
-import { Box, Button, Chip, FormControl, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { Box, Button, Chip, FormControl, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
+import { InlineError } from '~/common/components/InlineError';
+import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/app.theme';
 
 import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
-import { InlineError } from '~/common/components/InlineError';
 
 
-export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => void }) {
+export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {
 
   // state
   const [modelName, setModelName] = React.useState<string | null>('llama2');
@@ -47,8 +49,8 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
           However we provide a way to pull models from the Ollama host, for convenience.
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <FormControl sx={{ flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
+          <FormControl sx={{ flexGrow: 1, flexBasis: 0.55 }}>
             <FormLabelStart title='Name' />
             <Select value={modelName || ''} onChange={(_event: any, value: string | null) => setModelName(value)}>
               {pullable?.pullable.map(p =>
@@ -58,14 +60,21 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
               )}
             </Select>
           </FormControl>
-          <FormControl sx={{ flexGrow: 1 }}>
+          <FormControl sx={{ flexGrow: 1, flexBasis: 0.45 }}>
             <FormLabelStart title='Tag' />
-            <Input
-              variant='outlined' placeholder='latest'
-              value={modelTag || ''} onChange={event => setModelTag(event.target.value)}
-              sx={{ minWidth: 100 }}
-              slotProps={{ input: { size: 10 } }} // halve the min width
-            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Input
+                variant='outlined' placeholder='latest'
+                value={modelTag || ''} onChange={event => setModelTag(event.target.value)}
+                sx={{ minWidth: 80, flexGrow: 1 }}
+                slotProps={{ input: { size: 10 } }} // halve the min width
+              />
+              {!!modelName && (
+                <IconButton component={Link} color='neutral' size='sm' href={`https://ollama.ai/library/${modelName}`} target='_blank'>
+                  <LaunchIcon />
+                </IconButton>
+              )}
+            </Box>
           </FormControl>
         </Box>
 
@@ -85,7 +94,7 @@ export function OllamaAdmin(props: { access: OllamaAccessSchema, onClose: () => 
             {pullModelDescription}
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 1, gap: 1 }}>
             <Button
               variant='outlined'
               color={deleteStatus === 'error' ? 'danger' : deleteStatus === 'success' ? 'success' : 'primary'}
