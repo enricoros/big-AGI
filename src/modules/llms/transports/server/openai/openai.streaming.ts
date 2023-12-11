@@ -6,10 +6,10 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, safeErrorString, S
 
 import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
 import type { OpenAIWire } from './openai.wiretypes';
+import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from '../ollama/ollama.router';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from '../anthropic/anthropic.router';
-import { ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from '../ollama/ollama.router';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
-import { wireOllamaGenerationSchema } from '../ollama/ollama.wiretypes';
+import { wireOllamaChunkedOutputSchema } from '../ollama/ollama.wiretypes';
 
 
 /**
@@ -59,10 +59,10 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
         break;
 
       case 'ollama':
-        headersUrl = ollamaAccess(access, '/api/generate');
+        headersUrl = ollamaAccess(access, OLLAMA_PATH_CHAT);
         body = ollamaChatCompletionPayload(model, history, true);
         eventStreamFormat = 'json-nl';
-        vendorStreamParser = createOllamaStreamParser();
+        vendorStreamParser = createOllamaChatCompletionStreamParser();
         break;
 
       case 'azure':
@@ -135,30 +135,35 @@ function createAnthropicStreamParser(): AIStreamParser {
   };
 }
 
-function createOllamaStreamParser(): AIStreamParser {
+function createOllamaChatCompletionStreamParser(): AIStreamParser {
   let hasBegun = false;
 
   return (data: string) => {
 
-    let wireGeneration: any;
+    // parse the JSON chunk
+    let wireJsonChunk: any;
     try {
-      wireGeneration = JSON.parse(data);
+      wireJsonChunk = JSON.parse(data);
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
       console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
       throw error;
     }
-    const generation = wireOllamaGenerationSchema.parse(wireGeneration);
-    let text = generation.response;
+
+    // validate chunk
+    const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
+
+    // process output
+    let text = chunk.message?.content || /*chunk.response ||*/ '';
 
     // hack: prepend the model name to the first packet
-    if (!hasBegun) {
+    if (!hasBegun && chunk.model) {
       hasBegun = true;
-      const firstPacket: ChatStreamFirstPacketSchema = { model: generation.model };
+      const firstPacket: ChatStreamFirstPacketSchema = { model: chunk.model };
       text = JSON.stringify(firstPacket) + text;
     }
 
-    return { text, close: generation.done };
+    return { text, close: chunk.done };
   };
 }
 
@@ -248,7 +253,8 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
           if (close)
             controller.terminate();
         } catch (error: any) {
-          // console.log(`/api/llms/stream: parse issue: ${error?.message || error}`);
+          if (SERVER_DEBUG_WIRE)
+            console.log(' - E: parse issue:', event.data, error?.message || error);
           controller.enqueue(textEncoder.encode(`[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
           controller.terminate();
         }
