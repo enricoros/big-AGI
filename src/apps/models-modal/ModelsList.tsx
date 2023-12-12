@@ -109,6 +109,7 @@ export function ModelsList(props: {
     <List variant='soft' size='sm' sx={{
       borderRadius: 'sm',
       pl: { xs: 0, md: 1 },
+      overflowY: 'auto',
     }}>
       {items}
     </List>
