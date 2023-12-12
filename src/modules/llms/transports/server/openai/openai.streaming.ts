@@ -259,7 +259,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
         } catch (error: any) {
           if (SERVER_DEBUG_WIRE)
             console.log(' - E: parse issue:', event.data, error?.message || error);
-          controller.enqueue(textEncoder.encode(`[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
+          controller.enqueue(textEncoder.encode(` **[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}**`));
           controller.terminate();
         }
       };
