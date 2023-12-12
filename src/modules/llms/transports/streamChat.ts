@@ -27,7 +27,7 @@ export async function streamChat(
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ): Promise<void> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  const access = vendor.getAccess(llm._source.setup) as ChatStreamInputSchema['access'];
+  const access = vendor.getTransportAccess(llm._source.setup) as ChatStreamInputSchema['access'];
   return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate);
 }
 

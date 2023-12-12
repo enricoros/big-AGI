@@ -22,7 +22,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOllama.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorOllama.getTransportAccess);
 
   // derived state
   const { ollamaHost } = access;

@@ -19,7 +19,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOpenRouter.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorOpenRouter.getTransportAccess);
 
   // derived state
   const { oaiKey } = access;
