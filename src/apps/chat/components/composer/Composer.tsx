@@ -331,7 +331,8 @@ export function Composer(props: {
 
   const handleOverlayDragOver = React.useCallback((e: React.DragEvent) => {
     eatDragEvent(e);
-    // e.dataTransfer.dropEffect = 'copy';
+    // this makes sure we don't "transfer" (or move) the attachment, but we tell the sender we'll copy it
+    e.dataTransfer.dropEffect = 'copy';
   }, [eatDragEvent]);
 
   const handleOverlayDrop = React.useCallback(async (event: React.DragEvent) => {
