@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { DLLM, DLLMId } from '../store-llms';
-import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
+import { findVendorForLlmOrThrow } from '../vendors/vendors.registry';
 
 import type { ChatStreamFirstPacketSchema, ChatStreamInputSchema } from './server/openai/openai.streaming';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';

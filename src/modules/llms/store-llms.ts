@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import type { ModelVendorId } from './vendors/IModelVendor';
+import type { IModelVendor, ModelVendorId } from './vendors/IModelVendor';
 import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vendor';
 
 
@@ -272,16 +272,24 @@ export function useChatLLM() {
 /**
  * Source-specific read/write - great time saver
  */
-export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, getTransportAccess: (partialSetup?: Partial<TSourceSetup>) => TAccess) {
-  // invalidate when the setup changes
+export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, vendor: IModelVendor<TSourceSetup, TAccess>) {
+
+  // invalidates only when the setup changes
   const { updateSourceSetup, ...rest } = useModelsStore(state => {
-    const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) ?? null;
+
+    // find the source (or null)
+    const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) as DModelSource<TSourceSetup> ?? null;
+
+    // (safe) source-derived properties
+    const sourceSetupValid = (source?.setup && vendor?.validateSetup) ? vendor.validateSetup(source.setup as TSourceSetup) : false;
     const sourceLLMs = source ? state.llms.filter(llm => llm._source === source) : [];
+    const access = vendor.getTransportAccess(source?.setup);
+
     return {
       source,
-      sourceLLMs,
+      access,
       sourceHasLLMs: !!sourceLLMs.length,
-      access: getTransportAccess(source?.setup),
+      sourceSetupValid,
       updateSourceSetup: state.updateSourceSetup,
     };
   }, shallow);

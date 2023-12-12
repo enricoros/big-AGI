@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { BackendCapabilities } from '~/modules/backend/state-backend';
+
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
@@ -30,7 +32,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
-      };
+      } satisfies BackendCapabilities;
     }),
 
 

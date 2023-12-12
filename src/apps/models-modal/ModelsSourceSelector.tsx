@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { type DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { type IModelVendor, type ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
-import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';

@@ -7,7 +7,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 
 import { DLLM, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { openLayoutLLMOptions } from '~/common/layout/store-applayout';
