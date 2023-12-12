@@ -23,7 +23,7 @@ export function GoodModal(props: {
   const showBottomClose = !!props.onClose && props.hideBottomClose !== true;
   return (
     <Modal open={props.open} onClose={props.onClose}>
-      <ModalOverflow>
+      <ModalOverflow sx={{p:1}}>
         <ModalDialog
           sx={{
             minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
