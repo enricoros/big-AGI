@@ -51,15 +51,13 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
-    {/*<Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>*/}
-    {/*<OpenRouterIcon />*/}
     <Typography level='body-sm'>
-      <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent, premium service
+      <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent service
       granting access to <Link href='https://openrouter.ai/docs#models' target='_blank'>exclusive models</Link> such
-      as GPT-4 32k, Claude, and more, typically unavailable to the public. <Link
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md'>Configuration &amp; documentation</Link>.
+      as GPT-4 32k, Claude, and more. <Link
+      href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md' target='_blank'>
+      Configuration &amp; documentation</Link>.
     </Typography>
-    {/*</Box>*/}
 
     <FormInputKey
       id='openrouter-key' label='OpenRouter API Key'
@@ -73,10 +71,19 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='sk-or-...'
     />
 
+    <Typography level='body-sm'>
+      🎁 A selection of <Link href='https://openrouter.ai/docs#models' target='_blank'>OpenRouter models</Link> are
+      made available without charge. You can get an API key by using the Login button below.
+    </Typography>
+
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError}
       leftButton={
-        <Button color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'} onClick={handleOpenRouterLogin}>
+        <Button
+          color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'}
+          onClick={handleOpenRouterLogin}
+          endDecorator={(needsUserKey && !keyValid) ? '🎁' : undefined}
+        >
           OpenRouter Login
         </Button>
       }

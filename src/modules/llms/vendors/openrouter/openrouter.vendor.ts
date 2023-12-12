@@ -38,6 +38,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptio
   rank: 12,
   location: 'cloud',
   instanceLimit: 1,
+  hasFreeModels: true,
   hasBackendCap: () => backendCaps().hasLlmOpenRouter,
 
   // components

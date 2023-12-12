@@ -29,7 +29,7 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
       icon = <vendor.Icon />;
   }
   return (greenMark && icon)
-    ? <Badge color='primary' size='sm' badgeContent=''>{icon}</Badge>
+    ? <Badge color='success' size='sm' badgeContent=''>{icon}</Badge>
     : icon;
 }
 
@@ -92,7 +92,11 @@ export function ModelsSourceSelector(props: {
               <ListItemDecorator>
                 {vendorIcon(vendor, !!vendor.hasBackendCap && vendor.hasBackendCap())}
               </ListItemDecorator>
-              {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
+              {vendor.name}
+              {/*{sourceCount > 0 && ` (added)`}*/}
+              {!!vendor.hasFreeModels && ` 🎁`}
+              {/*{!!vendor.instanceLimit && ` (${sourceCount}/${vendor.instanceLimit})`}*/}
+              {vendor.location === 'local' && <span style={{ opacity: 0.5 }}>local</span>}
             </MenuItem>
           ),
         };
