@@ -14,7 +14,7 @@ export interface SourceSetupOobabooga {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga',
   rank: 25,
