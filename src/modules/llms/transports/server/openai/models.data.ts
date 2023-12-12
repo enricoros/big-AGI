@@ -346,7 +346,7 @@ export function openRouterModelToModelDescription(modelId: string, created: numb
   const orModel = orModelMap[modelId] ?? null;
   let label = orModel?.name || modelId.replace('/', ' · ');
   if (orModel?.cp === 0 && orModel?.cc === 0)
-    label += ' · 🎁 Free';
+    label += ' · 🎁' // Free? Discounted?
 
   if (SERVER_DEBUG_WIRE && !orModel)
     console.log(' - openRouterModelToModelDescription: non-mapped model id:', modelId);
