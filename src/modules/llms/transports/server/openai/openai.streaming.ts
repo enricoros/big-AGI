@@ -153,6 +153,10 @@ function createOllamaChatCompletionStreamParser(): AIStreamParser {
     // validate chunk
     const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
 
+    // pass through errors from Ollama
+    if ('error' in chunk)
+      throw new Error(chunk.error);
+
     // process output
     let text = chunk.message?.content || /*chunk.response ||*/ '';
 
