@@ -51,19 +51,19 @@
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "^0.0.5",
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.10.4",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.3",
-    "@types/react": "^18.2.38",
+    "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@types/react-katex": "^3.0.3",
+    "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.6",
     "@types/uuid": "^9.0.7",
-    "eslint": "^8.54.0",
+    "eslint": "^8.55.0",
     "eslint-config-next": "^14.0.4",
-    "prettier": "^3.1.0",
+    "prettier": "^3.1.1",
     "prisma": "^5.7.0",
-    "typescript": "^5.3.2"
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": "^20.0.0 || ^18.0.0"
