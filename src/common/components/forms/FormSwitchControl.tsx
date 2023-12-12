@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, Switch } from '@mui/joy';
+import { FormControl, Switch } from '@mui/joy';
 
-import { settingsCol1Width } from '~/common/theme';
+import { FormLabelStart } from './FormLabelStart';
 
 
 /**
@@ -10,23 +10,19 @@ import { settingsCol1Width } from '~/common/theme';
  */
 export function FormSwitchControl(props: {
   title: string | React.JSX.Element, description?: string | React.JSX.Element,
-  value: boolean, onChange: (on: boolean) => void,
+  on?: string, off?: string, fullWidth?: boolean,
+  checked: boolean, onChange: (on: boolean) => void,
+  disabled?: boolean,
 }) {
   return (
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>
-          {props.title}
-        </FormLabel>
-        <FormHelperText sx={{ display: 'block' }}>
-          {props.description}
-        </FormHelperText>
-      </Box>
+    <FormControl orientation='horizontal' disabled={props.disabled} sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title={props.title} description={props.description} />
       <Switch
-        checked={props.value}
+        checked={props.checked}
         onChange={event => props.onChange(event.target.checked)}
-        endDecorator={props.value ? 'Enabled' : 'Off'}
-        sx={{ flexGrow: 1 }}
+        endDecorator={props.checked ? props.on || 'On' : props.off || 'Off'}
+        sx={props.fullWidth ? { flexGrow: 1 } : undefined}
+        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
       />
     </FormControl>
   );

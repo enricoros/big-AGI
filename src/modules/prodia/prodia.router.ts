@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
-import { HARDCODED_MODELS } from '~/modules/prodia/prodia.models';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
+
+import { HARDCODED_MODELS } from './prodia.models';
 
 
 const imagineInputSchema = z.object({
@@ -185,7 +187,7 @@ async function getJobStatus(apiKey: string | undefined, jobId: string): Promise<
 
 function prodiaAccess(_prodiaKey: string | undefined, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
-  const prodiaKey = (_prodiaKey || process.env.PRODIA_API_KEY || '').trim();
+  const prodiaKey = (_prodiaKey || env.PRODIA_API_KEY || '').trim();
   if (!prodiaKey)
     throw new Error('Missing Prodia API Key. Add it on the UI (Setup) or server side (your deployment).');
 

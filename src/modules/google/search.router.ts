@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { Search } from './search.types';
@@ -25,8 +26,8 @@ export const googleSearchRouter = createTRPCRouter({
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
-        cx: (input.cx || process.env.GOOGLE_CSE_ID || '').trim(),
-        key: (input.key || process.env.GOOGLE_CLOUD_API_KEY || '').trim(),
+        cx: (input.cx || env.GOOGLE_CSE_ID || '').trim(),
+        key: (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim(),
         num: 5,
       };
 

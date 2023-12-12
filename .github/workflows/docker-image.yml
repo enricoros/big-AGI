@@ -7,11 +7,15 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Create and publish a Docker image
+name: Create and publish Docker images
 
 on:
   push:
-    branches: ['main']
+    branches:
+      - main
+      #- main-stable  # Disabled as the v* tag is used for stable releases
+    tags:
+      - 'v*'  # Trigger on version tags (e.g., v1.7.0)
 
 env:
   REGISTRY: ghcr.io
@@ -26,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -40,11 +44,17 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/main-stable' }}
+            type=ref,event=tag  # Use the tag name as a tag for tag builds
+            type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
 
       - name: Build and push Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
+          file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

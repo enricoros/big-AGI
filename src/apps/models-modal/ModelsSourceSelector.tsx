@@ -11,11 +11,11 @@ import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/mo
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { hideOnDesktop, hideOnMobile } from '~/common/theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
-  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasServerKey)
+  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasBackendCap?.())
     return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }*/
@@ -29,7 +29,7 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
       icon = <vendor.Icon />;
   }
   return (greenMark && icon)
-    ? <Badge color='primary' size='sm' badgeContent=''>{icon}</Badge>
+    ? <Badge color='success' size='sm' badgeContent=''>{icon}</Badge>
     : icon;
 }
 
@@ -43,6 +43,7 @@ export function ModelsSourceSelector(props: {
   const [confirmDeletionSourceId, setConfirmDeletionSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
+  const isMobile = useIsMobile();
   const { modelSources, addModelSource, removeModelSource } = useModelsStore(state => ({
     modelSources: state.sources,
     addModelSource: state.addSource, removeModelSource: state.removeSource,
@@ -63,7 +64,7 @@ export function ModelsSourceSelector(props: {
   }, [addModelSource, props]);
 
 
-  const enableDeleteButton = !!props.selectedSourceId && (modelSources.length > 1 /*|| (process.env.NODE_ENV === 'development')*/);
+  const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
 
   const handleDeleteSource = (id: DModelSourceId) => setConfirmDeletionSourceId(id);
 
@@ -89,9 +90,13 @@ export function ModelsSourceSelector(props: {
           component: (
             <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
               <ListItemDecorator>
-                {vendorIcon(vendor, !!vendor.hasServerKey)}
+                {vendorIcon(vendor, !!vendor.hasBackendCap && vendor.hasBackendCap())}
               </ListItemDecorator>
-              {vendor.name}{/*{sourceCount > 0 && ` (added)`}*/}
+              {vendor.name}
+              {/*{sourceCount > 0 && ` (added)`}*/}
+              {!!vendor.hasFreeModels && ` 🎁`}
+              {/*{!!vendor.instanceLimit && ` (${sourceCount}/${vendor.instanceLimit})`}*/}
+              {vendor.location === 'local' && <span style={{ opacity: 0.5 }}>local</span>}
             </MenuItem>
           ),
         };
@@ -115,9 +120,9 @@ export function ModelsSourceSelector(props: {
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
 
       {/* Models: [Select] Add Delete */}
-      <Typography sx={{ mr: 1, ...hideOnMobile }}>
+      {!isMobile && <Typography sx={{ mr: 1 }}>
         Service:
-      </Typography>
+      </Typography>}
 
       <Select
         variant='outlined'
@@ -133,12 +138,15 @@ export function ModelsSourceSelector(props: {
         {sourceItems.map(item => item.component)}
       </Select>
 
-      <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ ...hideOnDesktop }}>
-        <AddIcon />
-      </IconButton>
-      <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ ...hideOnMobile }}>
-        Add
-      </Button>
+      {isMobile ? (
+        <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+          <AddIcon />
+        </IconButton>
+      ) : (
+        <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
+          Add
+        </Button>
+      )}
 
       <IconButton
         variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}

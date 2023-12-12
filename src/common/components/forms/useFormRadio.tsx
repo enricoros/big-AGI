@@ -2,8 +2,7 @@ import * as React from 'react';
 
 import { FormControl, FormLabel, Radio, RadioGroup } from '@mui/joy';
 
-
-export type FormRadioOption<T extends string> = { label: string, value: T };
+import { FormRadioOption } from './FormRadioControl';
 
 
 /**
@@ -28,7 +27,7 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
             value={value} onChange={handleChange}
           >
             {options.map((option) =>
-              <Radio key={option.value} value={option.value} label={option.label} />)}
+              <Radio key={option.value} disabled={option.disabled} value={option.value} label={option.label} />)}
           </RadioGroup>
         </FormControl>,
     [handleChange, hidden, label, options, value],

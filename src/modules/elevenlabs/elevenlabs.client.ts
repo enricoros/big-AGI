@@ -1,26 +1,26 @@
-import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';
+import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { SpeechInputSchema } from './elevenlabs.router';
-import { useElevenlabsStore } from './store-elevenlabs';
+import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs';
 
-
-export const requireUserKeyElevenLabs = !process.env.HAS_SERVER_KEY_ELEVENLABS;
-
-export const canUseElevenLabs = (): boolean => !!useElevenlabsStore.getState().elevenLabsVoiceId || !requireUserKeyElevenLabs;
 
 export const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
 
-export const isElevenLabsEnabled = (apiKey?: string) => apiKey ? isValidElevenLabsApiKey(apiKey) : !requireUserKeyElevenLabs;
+export const isElevenLabsEnabled = (apiKey?: string) => apiKey
+  ? isValidElevenLabsApiKey(apiKey)
+  : backendCaps().hasVoiceElevenLabs;
 
 
 export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
-  const clientApiKey = useElevenlabsStore(state => state.elevenLabsApiKey);
-  const isConfiguredServerSide = !requireUserKeyElevenLabs;
+  const [clientApiKey, voiceId] = useElevenLabsData();
+  const isConfiguredServerSide = backendCaps().hasVoiceElevenLabs;
   const isConfiguredClientSide = clientApiKey ? isValidElevenLabsApiKey(clientApiKey) : false;
-  const mayWork = isConfiguredServerSide || isConfiguredClientSide;
+  const mayWork = isConfiguredServerSide || isConfiguredClientSide || !!voiceId;
   return { mayWork, isConfiguredServerSide, isConfiguredClientSide };
 }
 
@@ -28,7 +28,7 @@ export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
 export async function speakText(text: string, voiceId?: string) {
   if (!(text?.trim())) return;
 
-  const { elevenLabsApiKey, elevenLabsVoiceId } = useElevenlabsStore.getState();
+  const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
 
   const { preferredLanguage } = useUIPreferencesStore.getState();
@@ -48,7 +48,7 @@ export async function speakText(text: string, voiceId?: string) {
 export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string) {
   if (!(text?.trim())) return;
 
-  const { elevenLabsApiKey, elevenLabsVoiceId } = useElevenlabsStore.getState();
+  const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
   if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
 
   const { preferredLanguage } = useUIPreferencesStore.getState();

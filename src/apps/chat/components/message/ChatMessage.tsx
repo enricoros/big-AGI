@@ -3,14 +3,15 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DifferenceIcon from '@mui/icons-material/Difference';
 import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
-import FastForwardIcon from '@mui/icons-material/FastForward';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
@@ -18,6 +19,8 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
@@ -26,10 +29,12 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
-import { copyToClipboard } from '~/common/util/copyToClipboard';
-import { cssRainbowColorKeyframes, hideOnMobile } from '~/common/theme';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import { useChatShowTextDiff } from '../../store-app-chat';
 
 import { RenderCode } from './RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -166,10 +171,10 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   return { errorMessage, isAssistantError };
 }
 
-function useSanityTextDiffs(text: string, diffText: string | undefined) {
+function useSanityTextDiffs(text: string, diffText: string | undefined, enabled: boolean) {
   const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
   React.useEffect(() => {
-    if (!diffText)
+    if (!diffText || !enabled)
       return setDiffs(null);
     setDiffs(
       cleanupEfficiency(makeDiff(diffText, text, {
@@ -177,10 +182,12 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
         checkLines: true,
       }), 4),
     );
-  }, [text, diffText]);
+  }, [text, diffText, enabled]);
   return diffs;
 }
 
+
+export const ChatMessageMemo = React.memo(ChatMessage);
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -192,14 +199,17 @@ function useSanityTextDiffs(text: string, diffText: string | undefined) {
  */
 export function ChatMessage(props: {
   message: DMessage,
-  showDate?: boolean, diffText?: string,
-  hideAvatars?: boolean, codeBackground?: string, noMarkdown?: boolean,
+  showDate?: boolean, diffPreviousText?: string,
+  hideAvatars?: boolean, codeBackground?: string,
+  noMarkdown?: boolean, diagramMode?: boolean,
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
-  onMessageDelete?: () => void,
-  onMessageEdit?: (text: string) => void,
-  onMessageRunFrom?: (offset: number) => void,
-  onTextDiagram?: (text: string) => Promise<void>
+  onConversationBranch?: (messageId: string) => void,
+  onConversationRestartFrom?: (messageId: string, offset: number) => void,
+  onConversationTruncate?: (messageId: string) => void,
+  onMessageDelete?: (messageId: string) => void,
+  onMessageEdit?: (messageId: string, text: string) => void,
+  onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
   sx?: SxProps,
@@ -212,7 +222,6 @@ export function ChatMessage(props: {
   const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
-  // const contentRef = React.useRef<HTMLUListElement>(null);
 
   // external state
   const { cleanerLooks, renderMarkdown, doubleClickToEdit } = useUIPreferencesStore(state => ({
@@ -220,10 +229,12 @@ export function ChatMessage(props: {
     renderMarkdown: state.renderMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
   }), shallow);
-  const diffs = useSanityTextDiffs(props.message.text, props.diffText);
+  const [showDiff, setShowDiff] = useChatShowTextDiff();
+  const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
 
   // derived state
   const {
+    id: messageId,
     text: messageText,
     sender: messageSender,
     avatar: messageAvatar,
@@ -252,7 +263,7 @@ export function ChatMessage(props: {
   const handleTextEdited = (editedText: string) => {
     setIsEditing(false);
     if (props.onMessageEdit && editedText?.trim() && editedText !== messageText)
-      props.onMessageEdit(editedText);
+      props.onMessageEdit(messageId, editedText);
   };
 
   const handleUncollapse = () => setForceUserExpanded(true);
@@ -263,7 +274,7 @@ export function ChatMessage(props: {
   const closeOperationsMenu = () => setOpsMenuAnchor(null);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
-    copyToClipboard(textSel);
+    copyToClipboard(textSel, 'Text');
     e.preventDefault();
     closeOperationsMenu();
     closeSelectionMenu();
@@ -276,10 +287,24 @@ export function ChatMessage(props: {
     closeOperationsMenu();
   };
 
+  const handleOpsConversationBranch = (e: React.MouseEvent) => {
+    e.preventDefault();
+    props.onConversationBranch && props.onConversationBranch(messageId);
+    closeOperationsMenu();
+  };
+
+  const handleOpsConversationRestartFrom = (e: React.MouseEvent) => {
+    e.preventDefault();
+    props.onConversationRestartFrom && props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
+    closeOperationsMenu();
+  };
+
+  const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
+
   const handleOpsDiagram = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextDiagram) {
-      await props.onTextDiagram(textSel);
+      await props.onTextDiagram(messageId, textSel);
       closeOperationsMenu();
       closeSelectionMenu();
     }
@@ -303,12 +328,13 @@ export function ChatMessage(props: {
     }
   };
 
-  const handleOpsRunAgain = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (props.onMessageRunFrom) {
-      props.onMessageRunFrom(fromAssistant ? -1 : 0);
-      closeOperationsMenu();
-    }
+  const handleOpsTruncate = (_e: React.MouseEvent) => {
+    props.onConversationTruncate && props.onConversationTruncate(messageId);
+    closeOperationsMenu();
+  };
+
+  const handleOpsDelete = (_e: React.MouseEvent) => {
+    props.onMessageDelete && props.onMessageDelete(messageId);
   };
 
 
@@ -354,24 +380,10 @@ export function ChatMessage(props: {
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString().trim();
-      if (selectedText.length > 0) {
-        // range check: only to exclude the 'auto selection' from other components
-        // if (contentRef.current?.contains(range.commonAncestorContainer))
+      if (selectedText.length > 0)
         openSelectionMenu(event, selectedText);
-        // else
-        //   closeSelectionMenu();
-      }
     }
   }, [openSelectionMenu]);
-
-  // React.useEffect(() => {
-  //   if (!ENABLE_SELECTION_AUTO_MENU)
-  //     return;
-  //
-  //   // Attach event listener for automatic text selection
-  //   window.addEventListener('mouseup', handleMouseUp);
-  //   return () => window.removeEventListener('mouseup', handleMouseUp);
-  // }, [handleMouseUp]);
 
 
   // prettier upstream errors
@@ -464,14 +476,21 @@ export function ChatMessage(props: {
 
 
       {/* Edit / Blocks */}
-      {!isEditing ? (
+      {isEditing
 
-        <Box
+        ? <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
+
+        : <Box
+          onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
           onDoubleClick={event => (doubleClickToEdit && props.onMessageEdit) ? handleOpsEdit(event) : null}
           sx={{
             ...blockSx,
             flexGrow: 0,
             overflowX: 'auto',
+            ...(!!props.diagramMode && {
+              // width: '100%',
+              boxShadow: 'md',
+            }),
           }}>
 
           {props.showDate === true && (
@@ -485,34 +504,30 @@ export function ChatMessage(props: {
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
           )}
 
-          {errorMessage
-            ? (
-              <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
-                <InlineError error={errorMessage} />
-              </Tooltip>
-            ) : (
-              <Box
-                // ref={contentRef}
-                onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && !!props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
-              >
-                {parseBlocks(collapsedText, fromSystem, diffs).map((block, index) =>
-                  block.type === 'html'
-                    ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
-                    : block.type === 'code'
-                      ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} />
-                      : block.type === 'image'
-                        ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsRunAgain} />
-                        : block.type === 'latex'
-                          ? <RenderLatex key={'latex-' + index} latexBlock={block} />
-                          : block.type === 'diff'
-                            ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
-                            : (renderMarkdown && props.noMarkdown !== true && !fromSystem)
-                              ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                              : <RenderText key={'text-' + index} textBlock={block} />,
-                )}
-              </Box>
-            )
-          }
+          {errorMessage && (
+            <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{collapsedText}</Typography>} variant='soft'>
+              <InlineError error={errorMessage} />
+            </Tooltip>
+          )}
+
+          {/* sequence of render components, for each Block */}
+          {!errorMessage && parseBlocks(collapsedText, fromSystem, textDiffs)
+            .filter((block, _, blocks) => !props.diagramMode || block.type === 'code' || blocks.length === 1)
+            .map(
+              (block, index) =>
+                block.type === 'html'
+                  ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
+                  : block.type === 'code'
+                    ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.diagramMode} />
+                    : block.type === 'image'
+                      ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsConversationRestartFrom} />
+                      : block.type === 'latex'
+                        ? <RenderLatex key={'latex-' + index} latexBlock={block} />
+                        : block.type === 'diff'
+                          ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
+                          : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
+                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                            : <RenderText key={'text-' + index} textBlock={block} />)}
 
           {isCollapsed && (
             <Button variant='plain' color='neutral' onClick={handleUncollapse}>... expand ...</Button>
@@ -525,12 +540,7 @@ export function ChatMessage(props: {
           {/*</Chip>*/}
 
         </Box>
-
-      ) : (
-
-        <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
-
-      )}
+      }
 
 
       {/* Overlay copy icon */}
@@ -551,7 +561,7 @@ export function ChatMessage(props: {
       {/* Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
-          placement='bottom-end' sx={{ minWidth: 280 }}
+          dense placement='bottom-end' sx={{ minWidth: 280 }}
           open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -567,22 +577,39 @@ export function ChatMessage(props: {
               Copy
             </MenuItem>
           </Box>
+          {!!props.diffPreviousText && <ListDivider />}
+          {!!props.diffPreviousText && (
+            <MenuItem onClick={handleOpsToggleShowDiff}>
+              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
+              Show difference
+              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
+            </MenuItem>
+          )}
           <ListDivider />
-          {!!props.onMessageRunFrom && (
-            <MenuItem onClick={handleOpsRunAgain}>
-              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <FastForwardIcon />}</ListItemDecorator>
+          {!!props.onConversationRestartFrom && (
+            <MenuItem onClick={handleOpsConversationRestartFrom}>
+              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <TelegramIcon />}</ListItemDecorator>
               {!fromAssistant
-                ? 'Run from here'
+                ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
-                  ? 'Retry from here'
+                  ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                     Retry
-                    <KeyStroke light combo='Ctrl + Shift + R' sx={hideOnMobile} />
+                    <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>
               }
             </MenuItem>
           )}
-          {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
+          {!!props.onConversationBranch && (
+            <MenuItem onClick={handleOpsConversationBranch} disabled={fromSystem}>
+              <ListItemDecorator>
+                <ForkRightIcon />
+              </ListItemDecorator>
+              Branch {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
+            </MenuItem>
+          )}
+          {!!props.onConversationBranch && <ListDivider />}
+          {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
             Visualize ...
           </MenuItem>}
@@ -594,25 +621,31 @@ export function ChatMessage(props: {
             <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
             Speak
           </MenuItem>}
-          {!!props.onMessageRunFrom && <ListDivider />}
+          {!!props.onConversationRestartFrom && <ListDivider />}
+          {!!props.onConversationTruncate && (
+            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
+              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+              Truncate <span style={{ opacity: 0.5 }}>after</span>
+            </MenuItem>
+          )}
           {!!props.onMessageDelete && (
-            <MenuItem onClick={props.onMessageDelete} disabled={false /*fromSystem*/}>
+            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
               <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
+              Delete <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
         </CloseableMenu>
       )}
 
-      {/* Selection Menu */}
+      {/* Selection (Contextual) Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
-          placement='bottom-start' sx={{ minWidth: 220 }}
+          dense placement='bottom-start' sx={{ minWidth: 220 }}
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy selection
+            Copy <span style={{ opacity: 0.5 }}>selection</span>
           </MenuItem>
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>

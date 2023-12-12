@@ -3,14 +3,11 @@ import { useRouter } from 'next/router';
 
 import { Container, Sheet } from '@mui/joy';
 
-import { AppCallQueryParams } from '~/common/routes';
+import { AppCallQueryParams } from '~/common/app.routes';
 import { InlineError } from '~/common/components/InlineError';
 
 import { CallUI } from './CallUI';
 import { CallWizard } from './CallWizard';
-
-
-export const APP_CALL_ENABLED = false;
 
 
 export function AppCall() {

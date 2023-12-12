@@ -6,7 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DMessage } from '~/common/state/store-chats';
 
-import { TokenBadge } from '../composer/TokenBadge';
+import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { makeAvatar, messageBackground } from './ChatMessage';
 
 
@@ -85,7 +85,7 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
         <Checkbox size='md' checked={props.selected} onChange={handleCheckedChange} />
       </Box>}
 
-      <Box sx={{ display: 'flex', minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
+      <Box sx={{ display: { xs: 'none', sm: 'flex' }, minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
         {avatarEl}
       </Box>
 
@@ -94,10 +94,18 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
       </Typography>
 
       {props.remainingTokens !== undefined && <Box sx={{ display: 'flex', minWidth: { xs: 32, sm: 45 }, justifyContent: 'flex-end' }}>
-        <TokenBadge directTokens={messageTokenCount} tokenLimit={props.remainingTokens} inline />
+        <TokenBadgeMemo direct={messageTokenCount} limit={props.remainingTokens} inline />
       </Box>}
 
-      <Typography sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+      <Typography level='body-md' sx={{
+        flexGrow: 1,
+        textOverflow: 'ellipsis', overflow: 'hidden',
+        // whiteSpace: 'nowrap',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        maxHeight: '2.9em',
+      }}>
         {messageText}
       </Typography>
 

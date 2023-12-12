@@ -1,10 +1,13 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, Slider } from '@mui/joy';
-import { settingsCol1Width, settingsGap } from '~/common/theme';
+import { IconButton, Tooltip } from '@mui/joy';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+
+import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 
 import { DLLM, useModelsStore } from '../../store-llms';
 import { LLMOptionsOpenAI } from './openai.vendor';
+
 
 function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
   return {
@@ -18,38 +21,50 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
 
 export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }) {
 
+  // derived state
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  // state (here because the initial state depends on props)
+  const [overheat, setOverheat] = React.useState(llmTemperature > 1);
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>Temperature</FormLabel>
-        <FormHelperText>{llmTemperature < 0.33 ? 'More strict' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}</FormHelperText>
-      </Box>
-      <Slider
-        aria-label='Model Temperature' color='neutral'
-        min={0} max={1} step={0.1} defaultValue={0.5}
-        value={llmTemperature} onChange={(_event, value) => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value as number })}
-        valueLabelDisplay='auto'
-        sx={{ py: 1, mt: 1.1 }}
-      />
-    </FormControl>
+  const showOverheatButton = overheat || llmTemperature >= 1;
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <Box sx={{ minWidth: settingsCol1Width }}>
-        <FormLabel>Output Tokens</FormLabel>
-        <FormHelperText>Reduces input</FormHelperText>
-      </Box>
-      <Slider
-        aria-label='Model Max Tokens' color='neutral'
-        min={256} max={maxOutputTokens} step={256} defaultValue={1024}
-        value={llmResponseTokens} onChange={(_event, value) => useModelsStore.getState().updateLLMOptions(llmId, { llmResponseTokens: value as number })}
-        valueLabelDisplay='on'
-        sx={{ py: 1, mt: 1.1 }}
-      />
-    </FormControl>
+  const handleOverheatToggle = React.useCallback(() => {
+    if (overheat && llmTemperature > 1)
+      useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: 1 });
+    setOverheat(!overheat);
+  }, [llmId, llmTemperature, overheat]);
 
-  </Box>;
+
+  return <>
+
+    <FormSliderControl
+      title='Temperature' ariaLabel='Model Temperature'
+      description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
+      min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
+      valueLabelDisplay='on'
+      value={llmTemperature}
+      onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value })}
+      endAdornment={showOverheatButton &&
+        <Tooltip title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
+          <IconButton
+            variant={overheat ? 'soft' : 'plain'} color={overheat ? 'danger' : 'neutral'}
+            onClick={handleOverheatToggle} sx={{ ml: 2 }}
+          >
+            <LocalFireDepartmentIcon />
+          </IconButton>
+        </Tooltip>
+      }
+    />
+
+    <FormSliderControl
+      title='Output Tokens' ariaLabel='Model Max Tokens'
+      min={256} max={maxOutputTokens} step={256} defaultValue={1024}
+      valueLabelDisplay='on'
+      value={llmResponseTokens}
+      onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmResponseTokens: value })}
+    />
+
+  </>;
 }

@@ -2,8 +2,8 @@ import * as React from 'react';
 import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
-import { MenuList, styled, VariantProp } from '@mui/joy';
-import { SxProps } from '@mui/system';
+import { MenuList, styled } from '@mui/joy';
+import { SxProps } from '@mui/joy/styles/types';
 
 
 // adds the 'sx' prop to the Popper, and defaults zIndex to 1000
@@ -23,7 +23,8 @@ const Popup = styled(Popper)({
  */
 export function CloseableMenu(props: {
   open: boolean, anchorEl: HTMLElement | null, onClose: () => void,
-  variant?: VariantProp,
+  dense?: boolean,
+  // variant?: VariantProp,
   // color?: ColorPaletteProp,
   // size?: 'sm' | 'md' | 'lg',
   placement?: PopperPlacementType,
@@ -71,13 +72,12 @@ export function CloseableMenu(props: {
     >
       <ClickAwayListener onClickAway={handleClose}>
         <MenuList
-          variant={props.variant}
-          // color={props.color}
+          // variant={props.variant} color={props.color}
           onKeyDown={handleListKeyDown}
           sx={{
             '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-            '--ListItem-minHeight': '3rem',
-            '--ListItemDecorator-size': '2.75rem',
+            '--ListItem-minHeight': props.dense ? '2.5rem' : '3rem',
+            '--ListItemDecorator-size': '2.75rem', // icon width
             backgroundColor: 'background.popup',
             boxShadow: 'md',
             ...(props.maxHeightGapPx !== undefined ? { maxHeight: `calc(100dvh - ${props.maxHeightGapPx}px)`, overflowY: 'auto' } : {}),

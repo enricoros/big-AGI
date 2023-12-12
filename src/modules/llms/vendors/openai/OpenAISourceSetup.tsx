@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { Alert, Box } from '@mui/joy';
+import { Alert } from '@mui/joy';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -10,7 +10,6 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
@@ -35,7 +34,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const needsUserKey = !ModelVendorOpenAI.hasServerKey;
+  const needsUserKey = !ModelVendorOpenAI.hasBackendCap?.();
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
@@ -43,12 +42,15 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <FormInputKey
       id='openai-key' label='API Key'
@@ -93,12 +95,12 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Alert>}
 
     {advanced.on && <FormSwitchControl
-      title='Moderation'
+      title='Moderation' on='Enabled' fullWidth
       description={<>
         <Link level='body-sm' href='https://platform.openai.com/docs/guides/moderation/moderation' target='_blank'>Overview</Link>,
         {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
       </>}
-      value={moderationCheck}
+      checked={moderationCheck}
       onChange={on => updateSetup({ moderationCheck: on })}
     />}
 
@@ -106,7 +108,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
     {isError && <InlineError error={error} />}
 
-  </Box>;
+  </>;
 }
 
 

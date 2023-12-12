@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { Box, Tooltip, useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 
-import { tokensPrettyMath } from './TokenBadge';
+import { tokensPrettyMath, TokenTooltip } from './TokenBadge';
 
 
 /**
@@ -10,15 +10,17 @@ import { tokensPrettyMath } from './TokenBadge';
  *
  * The Textarea contains it within the Composer (at least).
  */
-export function TokenProgressbar(props: { history: number, response: number, direct: number, limit: number }) {
+export const TokenProgressbarMemo = React.memo(TokenProgressbar);
+
+function TokenProgressbar(props: { direct: number, history: number, responseMax: number, limit: number }) {
   // external state
   const theme = useTheme();
 
-  if (!(props.limit > 0) || (!props.direct && !props.history && !props.response)) return null;
+  if (!(props.limit > 0) || (!props.direct && !props.history && !props.responseMax)) return null;
 
   // compute percentages
   let historyPct = 100 * props.history / props.limit;
-  let responsePct = 100 * props.response / props.limit;
+  let responsePct = 100 * props.responseMax / props.limit;
   let directPct = 100 * props.direct / props.limit;
   const totalPct = historyPct + responsePct + directPct;
   const isOverflow = totalPct >= 100;
@@ -38,7 +40,7 @@ export function TokenProgressbar(props: { history: number, response: number, dir
   const overflowColor = theme.palette.danger.softColor;
 
   // tooltip message/color
-  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history + props.response);
+  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax);
 
   // sizes
   const containerHeight = 8;
@@ -46,11 +48,11 @@ export function TokenProgressbar(props: { history: number, response: number, dir
 
   return (
 
-    <Tooltip title={<span style={{ whiteSpace: 'pre' }}>{message}</span>} color={color} sx={{ fontFamily: 'code' }}>
+    <TokenTooltip color={color} message={props.direct ? null : message}>
 
       <Box sx={{
         position: 'absolute', left: 1, right: 1, bottom: 1, height: containerHeight,
-        overflow: 'hidden', borderBottomLeftRadius: 7, borderBottomRightRadius: 7,
+        overflow: 'hidden', borderBottomLeftRadius: 5, borderBottomRightRadius: 5,
       }}>
 
         {/* History */}
@@ -79,6 +81,6 @@ export function TokenProgressbar(props: { history: number, response: number, dir
 
       </Box>
 
-    </Tooltip>
+    </TokenTooltip>
   );
 }

@@ -8,11 +8,12 @@ import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
-import { copyToClipboard } from '~/common/util/copyToClipboard';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import { CodeBlock } from './blocks';
 import { OpenInCodepen } from './OpenInCodepen';
 import { OpenInReplit } from './OpenInReplit';
+import { RenderCodeMermaid } from './RenderCodeMermaid';
 import { heuristicIsHtml, IFrameComponent } from './RenderHtml';
 
 
@@ -24,7 +25,7 @@ export const overlayButtonsSx: SxProps = {
 };
 
 function RenderCodeImpl(props: {
-  codeBlock: CodeBlock, sx?: SxProps,
+  codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps,
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
 }) {
@@ -114,7 +115,7 @@ function RenderCodeImpl(props: {
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(blockCode);
+    copyToClipboard(blockCode, 'Code');
   };
 
   return (
@@ -145,20 +146,20 @@ function RenderCodeImpl(props: {
         {renderHTML
           ? <IFrameComponent htmlString={blockCode} />
           : renderMermaid
-            ? <div className='mermaid'>{blockCode}</div>
-            : <Box
-              dangerouslySetInnerHTML={{
-                __html:
-                  renderSVG
-                    ? blockCode
-                    : renderPlantUML
-                      ? (plantUmlHtmlData || plantUmlError || 'No PlantUML rendering.')
-                      : highlightedCode,
-              }}
-              sx={{
-                ...(renderSVG ? { lineHeight: 0 } : {}),
-                ...(renderPlantUML ? { textAlign: 'center' } : {}),
-              }}
+            ? <RenderCodeMermaid mermaidCode={blockCode} />
+            : <Box component='div'
+                   dangerouslySetInnerHTML={{
+                     __html:
+                       renderSVG
+                         ? blockCode
+                         : renderPlantUML
+                           ? (plantUmlHtmlData || (plantUmlError as string) || 'No PlantUML rendering.')
+                           : highlightedCode,
+                   }}
+                   sx={{
+                     ...(renderSVG ? { lineHeight: 0 } : {}),
+                     ...(renderPlantUML ? { textAlign: 'center' } : {}),
+                   }}
             />}
 
         {/* Code Buttons */}
@@ -171,7 +172,7 @@ function RenderCodeImpl(props: {
             </Tooltip>
           )}
           {isMermaid && (
-            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render Mermaid'} variant='solid'>
+            <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'} variant='solid'>
               <IconButton variant={renderMermaid ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowMermaid(!showMermaid)}>
                 <SchemaIcon />
               </IconButton>
@@ -193,11 +194,11 @@ function RenderCodeImpl(props: {
           )}
           {canCodepen && <OpenInCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {canReplit && <OpenInReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-          <Tooltip title='Copy Code' variant='solid'>
+          {props.noCopyButton !== true && <Tooltip title='Copy Code' variant='solid'>
             <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
             </IconButton>
-          </Tooltip>
+          </Tooltip>}
         </Box>
 
       </Box>
@@ -212,12 +213,12 @@ const RenderCodeDynamic = React.lazy(async () => {
   const { highlightCode, inferCodeLanguage } = await import('./codePrism');
 
   return {
-    default: (props: { codeBlock: CodeBlock, sx?: SxProps }) =>
+    default: (props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) =>
       <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
   };
 });
 
-export const RenderCode = (props: { codeBlock: CodeBlock, sx?: SxProps }) =>
+export const RenderCode = (props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) =>
   <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...(props.sx || {}) }} />}>
     <RenderCodeDynamic {...props} />
   </React.Suspense>;

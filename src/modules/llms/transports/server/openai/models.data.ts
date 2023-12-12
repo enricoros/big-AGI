@@ -1,5 +1,6 @@
 import type { ModelDescriptionSchema } from '../server.schemas';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../../store-llms';
+import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
 
 // [Azure] / [OpenAI]
@@ -207,13 +208,18 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 const _knownOobaboogaChatModels: ManualMappings = [];
 
 const _knownOobaboogaNonChatModels: string[] = [
-  'None', 'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'gpt-3.5-turbo', 'text-embedding-ada-002',
+  'None', 'text-curie-001', 'text-davinci-002', 'all-mpnet-base-v2', 'text-embedding-ada-002',
+  /* 'gpt-3.5-turbo' // used to be here, but now it's the way to select the activly loaded ooababooga model */
 ];
 
 export function oobaboogaModelToModelDescription(modelId: string, created: number): ModelDescriptionSchema {
   let label = modelId.replaceAll(/[_-]/g, ' ').split(' ').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
   if (label.endsWith('.bin'))
     label = label.slice(0, -4);
+
+  // special case for the default (and only 'chat') model
+  if (modelId === 'gpt-3.5-turbo')
+    label = 'Oobabooga Model';
 
   return fromManualMapping(_knownOobaboogaChatModels, modelId, created, undefined, {
     idPrefix: modelId,
@@ -231,8 +237,8 @@ export function oobaboogaModelToModelDescription(modelId: string, created: numbe
 /**
  * Created to reflect the doc page: https://openrouter.ai/docs
  *
- * Update prompt:
- *   "Please update the typescript object below (do not change the definition, just the object), based on the updated upstream documentation:"
+ * Update prompt (last updated 2023-12-12)
+ *   "Please update the following typescript object (do not change the definition, just values, and do not miss any rows), based on the information provided thereafter:"
  *
  * fields:
  *  - cw: context window size (max tokens, total)
@@ -240,50 +246,87 @@ export function oobaboogaModelToModelDescription(modelId: string, created: numbe
  *  - cc: cost per 1k completion tokens
  *  - old: if true, this is an older model that has been superseded by a newer one
  */
-const orModelMap: { [id: string]: { name: string; cw: number; cp: number; cc: number; old?: boolean; unfilt?: boolean; } } = {
-  'huggingfaceh4/zephyr-7b-beta': { name: 'Hugging Face: Zephyr 7B (beta)', cw: 4096, cp: 0, cc: 0, unfilt: true },
-  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct v0.1 (beta)', cw: 8192, cp: 0, cc: 0, unfilt: true },
-  'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', cw: 4095, cp: 0.0015, cc: 0.002 },
-  'openai/gpt-3.5-turbo-1106': { name: 'OpenAI: GPT-3.5 Turbo 16k (preview)', cw: 16385, cp: 0.001, cc: 0.002 },
-  'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', cw: 16383, cp: 0.003, cc: 0.004 },
-  'openai/gpt-4-1106-preview': { name: 'OpenAI: GPT-4 Turbo (preview)', cw: 128000, cp: 0.01, cc: 0.03 },
-  'openai/gpt-4': { name: 'OpenAI: GPT-4', cw: 8191, cp: 0.03, cc: 0.06 },
-  'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', cw: 32767, cp: 0.06, cc: 0.12 },
-  'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', cw: 4095, cp: 0.0015, cc: 0.002 },
+const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: number; old?: boolean; unfilt?: boolean; } } = {
+  // 'openrouter/auto': { name: 'Auto (best for prompt)', cw: 128000, cp: undefined, cc: undefined, unfilt: undefined },
+  'nousresearch/nous-capybara-7b': { name: 'Nous: Capybara 7B', cw: 4096, cp: 0, cc: 0, unfilt: true },
+  'mistralai/mistral-7b-instruct': { name: 'Mistral 7B Instruct', cw: 8192, cp: 0, cc: 0, unfilt: true },
+  'huggingfaceh4/zephyr-7b-beta': { name: 'Hugging Face: Zephyr 7B', cw: 4096, cp: 0, cc: 0, unfilt: true },
+  'openchat/openchat-7b': { name: 'OpenChat 3.5', cw: 8192, cp: 0, cc: 0, unfilt: true },
+  'gryphe/mythomist-7b': { name: 'MythoMist 7B', cw: 32768, cp: 0, cc: 0, unfilt: true },
+  'openrouter/cinematika-7b': { name: 'Cinematika 7B (alpha)', cw: 32000, cp: 0, cc: 0, unfilt: true },
+  'mistralai/mixtral-8x7b-instruct': { name: 'Mistral: Mixtral 8x7B Instruct (beta)', cw: 32000, cp: 0, cc: 0, unfilt: true },
+  'rwkv/rwkv-5-world-3b': { name: 'RWKV v5 World 3B (beta)', cw: 10000, cp: 0, cc: 0, unfilt: true },
+  'recursal/rwkv-5-3b-ai-town': { name: 'RWKV v5 3B AI Town (beta)', cw: 10000, cp: 0, cc: 0, unfilt: true },
+  'jebcarter/psyfighter-13b': { name: 'Psyfighter 13B', cw: 4096, cp: 0.001, cc: 0.001, unfilt: true },
+  'koboldai/psyfighter-13b-2': { name: 'Psyfighter v2 13B', cw: 4096, cp: 0.001, cc: 0.001, unfilt: true },
+  'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes 13B', cw: 4096, cp: 0.000075, cc: 0.000075, unfilt: true },
+  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct', cw: 8192, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'phind/phind-codellama-34b': { name: 'Phind: CodeLlama 34B v2', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'intel/neural-chat-7b': { name: 'Neural Chat 7B v3.1', cw: 4096, cp: 0.0025, cc: 0.0025, unfilt: true },
+  'haotian-liu/llava-13b': { name: 'Llava 13B', cw: 2048, cp: 0.0025, cc: 0.0025, unfilt: true },
+  'nousresearch/nous-hermes-2-vision-7b': { name: 'Nous: Hermes 2 Vision 7B (alpha)', cw: 4096, cp: 0.0025, cc: 0.0025, unfilt: true },
+  'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat', cw: 4096, cp: 0.000156755, cc: 0.000156755, unfilt: true },
+  'openai/gpt-3.5-turbo': { name: 'OpenAI: GPT-3.5 Turbo', cw: 4095, cp: 0.001, cc: 0.002, unfilt: false },
+  'openai/gpt-3.5-turbo-1106': { name: 'OpenAI: GPT-3.5 Turbo 16k (preview)', cw: 16385, cp: 0.001, cc: 0.002, unfilt: false },
+  'openai/gpt-3.5-turbo-16k': { name: 'OpenAI: GPT-3.5 Turbo 16k', cw: 16385, cp: 0.003, cc: 0.004, unfilt: false },
+  'openai/gpt-4-1106-preview': { name: 'OpenAI: GPT-4 Turbo (preview)', cw: 128000, cp: 0.01, cc: 0.03, unfilt: false },
+  'openai/gpt-4': { name: 'OpenAI: GPT-4', cw: 8191, cp: 0.03, cc: 0.06, unfilt: false },
+  'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', cw: 32767, cp: 0.06, cc: 0.12, unfilt: false },
+  'openai/gpt-4-vision-preview': { name: 'OpenAI: GPT-4 Vision (preview)', cw: 128000, cp: 0.01, cc: 0.03, unfilt: false },
+  'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', cw: 4095, cp: 0.0015, cc: 0.002, unfilt: false },
   'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Chat', cw: 9216, cp: 0.0005, cc: 0.0005, unfilt: true },
   'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Code Chat', cw: 7168, cp: 0.0005, cc: 0.0005, unfilt: true },
   'google/palm-2-chat-bison-32k': { name: 'Google: PaLM 2 Chat 32k', cw: 32000, cp: 0.0005, cc: 0.0005, unfilt: true },
   'google/palm-2-codechat-bison-32k': { name: 'Google: PaLM 2 Code Chat 32k', cw: 32000, cp: 0.0005, cc: 0.0005, unfilt: true },
-  'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat (beta)', cw: 4096, cp: 0.0002345, cc: 0.0002345, unfilt: true },
-  'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat (beta)', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
-  'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes Llama2 13B (beta)', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
-  'nousresearch/nous-hermes-llama2-70b': { name: 'Nous: Hermes Llama2 70B (beta)', cw: 4096, cp: 0.001, cc: 0.001, unfilt: true },
-  'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct (beta)', cw: 8192, cp: 0.0004, cc: 0.0004, unfilt: true },
-  'phind/phind-codellama-34b': { name: 'Phind: CodeLlama 34B v2 (beta)', cw: 4096, cp: 0.0004, cc: 0.0004, unfilt: true },
-  'jondurbin/airoboros-l2-70b': { name: 'Airoboros L2 70B (beta)', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
-  'migtissera/synthia-70b': { name: 'Synthia 70B (beta)', cw: 8192, cp: 0.009375, cc: 0.009375, unfilt: true },
-  'open-orca/mistral-7b-openorca': { name: 'Mistral OpenOrca 7B (beta)', cw: 8192, cp: 0.0002, cc: 0.0002, unfilt: true },
-  'teknium/openhermes-2-mistral-7b': { name: 'Mistral OpenHermes 7B (beta)', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
-  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B (beta)', cw: 8192, cp: 0.001125, cc: 0.001125, unfilt: true },
-  'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP L2 13B (beta)', cw: 6144, cp: 0.001125, cc: 0.001125, unfilt: true },
-  'gryphe/mythomax-l2-13b': { name: 'MythoMax L2 13B', cw: 4096, cp: 0.0008, cc: 0.0008, unfilt: true },
-  'xwin-lm/xwin-lm-70b': { name: 'Xwin 70B (beta)', cw: 8192, cp: 0.009375, cc: 0.009375, unfilt: true },
-  'gryphe/mythomax-l2-13b-8k': { name: 'MythoMax L2 13B 8k (beta)', cw: 8192, cp: 0.001125, cc: 0.001125, unfilt: true },
-  'anthropic/claude-2': { name: 'Anthropic: Claude v2', cw: 100000, cp: 0.01102, cc: 0.03268 },
-  'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', cw: 100000, cp: 0.00163, cc: 0.00551 },
-  'mancer/weaver': { name: 'Mancer: Weaver 12k (alpha)', cw: 8000, cp: 0.0045, cc: 0.0045, unfilt: true },
-  'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', cw: 4095, cp: 0.0015, cc: 0.002, old: true },
+  'perplexity/pplx-70b-online': { name: 'Perplexity: PPLX 70B Online', cw: 4096, cp: 0, cc: 0.0028, unfilt: true },
+  'perplexity/pplx-7b-online': { name: 'Perplexity: PPLX 7B Online', cw: 4096, cp: 0, cc: 0.00028, unfilt: true },
+  'perplexity/pplx-7b-chat': { name: 'Perplexity: PPLX 7B Chat', cw: 8192, cp: 0.00007, cc: 0.00028, unfilt: true },
+  'perplexity/pplx-70b-chat': { name: 'Perplexity: PPLX 70B Chat', cw: 4096, cp: 0.0007, cc: 0.0028, unfilt: true },
+  'meta-llama/llama-2-70b-chat': { name: 'Meta: Llama v2 70B Chat', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
+  'nousresearch/nous-hermes-llama2-70b': { name: 'Nous: Hermes 70B', cw: 4096, cp: 0.0009, cc: 0.0009, unfilt: true },
+  'nousresearch/nous-capybara-34b': { name: 'Nous: Capybara 34B', cw: 32000, cp: 0.0007, cc: 0.0028, unfilt: true },
+  'jondurbin/airoboros-l2-70b': { name: 'Airoboros 70B', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
+  'migtissera/synthia-70b': { name: 'Synthia 70B', cw: 8192, cp: 0.00375, cc: 0.00375, unfilt: true },
+  'open-orca/mistral-7b-openorca': { name: 'Mistral OpenOrca 7B', cw: 8192, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'teknium/openhermes-2-mistral-7b': { name: 'OpenHermes 2 Mistral 7B', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'teknium/openhermes-2.5-mistral-7b': { name: 'OpenHermes 2.5 Mistral 7B', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B', cw: 8192, cp: 0.001125, cc: 0.001125, unfilt: true },
+  'undi95/remm-slerp-l2-13b': { name: 'ReMM SLERP 13B', cw: 6144, cp: 0.001125, cc: 0.001125, unfilt: true },
+  'xwin-lm/xwin-lm-70b': { name: 'Xwin 70B', cw: 8192, cp: 0.00375, cc: 0.00375, unfilt: true },
+  'gryphe/mythomax-l2-13b-8k': { name: 'MythoMax 13B 8k', cw: 8192, cp: 0.001125, cc: 0.001125, unfilt: true },
+  'undi95/toppy-m-7b': { name: 'Toppy M 7B', cw: 32768, cp: 0.000375, cc: 0.000375, unfilt: true },
+  'alpindale/goliath-120b': { name: 'Goliath 120B', cw: 6144, cp: 0.009375, cc: 0.009375, unfilt: true },
+  'lizpreciatior/lzlv-70b-fp16-hf': { name: 'lzlv 70B', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
+  'neversleep/noromaid-20b': { name: 'Noromaid 20B', cw: 8192, cp: 0.00225, cc: 0.00225, unfilt: true },
+  '01-ai/yi-34b-chat': { name: 'Yi 34B Chat', cw: 4096, cp: 0.0008, cc: 0.0008, unfilt: true },
+  '01-ai/yi-34b': { name: 'Yi 34B (base)', cw: 4096, cp: 0.0008, cc: 0.0008, unfilt: true },
+  '01-ai/yi-6b': { name: 'Yi 6B (base)', cw: 4096, cp: 0.00014, cc: 0.00014, unfilt: true },
+  'togethercomputer/stripedhyena-nous-7b': { name: 'StripedHyena Nous 7B', cw: 32000, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'togethercomputer/stripedhyena-hessian-7b': { name: 'StripedHyena Hessian 7B (base)', cw: 32000, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'mistralai/mixtral-8x7b': { name: 'Mistral: Mixtral 8x7B (base) (beta)', cw: 32000, cp: 0.0006, cc: 0.0006, unfilt: true },
+  'anthropic/claude-2': { name: 'Anthropic: Claude v2.1', cw: 200000, cp: 0.008, cc: 0.024, unfilt: false },
+  'anthropic/claude-2.0': { name: 'Anthropic: Claude v2.0', cw: 100000, cp: 0.008, cc: 0.024, unfilt: false },
+  'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', cw: 100000, cp: 0.00163, cc: 0.00551, unfilt: false },
+  'mancer/weaver': { name: 'Mancer: Weaver (alpha)', cw: 8000, cp: 0.003375, cc: 0.003375, unfilt: true },
+  'gryphe/mythomax-l2-13b': { name: 'MythoMax 13B', cw: 4096, cp: 0.0006, cc: 0.0006, unfilt: true },
+  // Old models (maintained for reference)
+  'openai/gpt-3.5-turbo-0301': { name: 'OpenAI: GPT-3.5 Turbo (older v0301)', cw: 4095, cp: 0.001, cc: 0.002, old: true },
   'openai/gpt-4-0314': { name: 'OpenAI: GPT-4 (older v0314)', cw: 8191, cp: 0.03, cc: 0.06, old: true },
   'openai/gpt-4-32k-0314': { name: 'OpenAI: GPT-4 32k (older v0314)', cw: 32767, cp: 0.06, cc: 0.12, old: true },
   'openai/text-davinci-002': { name: 'OpenAI: Davinci 2', cw: 4095, cp: 0.02, cc: 0.02, old: true },
-  'anthropic/claude-v1': { name: 'Anthropic: Claude v1', cw: 9000, cp: 0.01102, cc: 0.03268, old: true },
-  'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', cw: 9000, cp: 0.01102, cc: 0.03268, old: true },
+  'anthropic/claude-v1': { name: 'Anthropic: Claude v1', cw: 9000, cp: 0.008, cc: 0.024, old: true },
+  'anthropic/claude-1.2': { name: 'Anthropic: Claude (older v1)', cw: 9000, cp: 0.008, cc: 0.024, old: true },
   'anthropic/claude-instant-v1-100k': { name: 'Anthropic: Claude Instant 100k v1', cw: 100000, cp: 0.00163, cc: 0.00551, old: true },
-  'anthropic/claude-v1-100k': { name: 'Anthropic: Claude 100k v1', cw: 100000, cp: 0.01102, cc: 0.03268, old: true },
+  'anthropic/claude-v1-100k': { name: 'Anthropic: Claude 100k v1', cw: 100000, cp: 0.008, cc: 0.024, old: true },
   'anthropic/claude-instant-1.0': { name: 'Anthropic: Claude Instant (older v1)', cw: 9000, cp: 0.00163, cc: 0.00551, old: true },
 };
 
-const orModelFamilyOrder = ['mistralai/', 'huggingfaceh4/', 'openai/', 'anthropic/', 'google/', 'meta-llama/', 'phind/'];
+const orModelFamilyOrder = [
+  // great models
+  'mistralai/mixtral-8x7b-instruct', 'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
+  // great orgs
+  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'openai/', 'meta-llama/', 'phind/',
+];
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
   const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
@@ -303,10 +346,10 @@ export function openRouterModelToModelDescription(modelId: string, created: numb
   const orModel = orModelMap[modelId] ?? null;
   let label = orModel?.name || modelId.replace('/', ' · ');
   if (orModel?.cp === 0 && orModel?.cc === 0)
-    label += ' - 🎁 Free';
+    label += ' · 🎁' // Free? Discounted?
 
-  // if (!orModel)
-  //   console.log('openRouterModelToModelDescription: unknown model id:', modelId);
+  if (SERVER_DEBUG_WIRE && !orModel)
+    console.log(' - openRouterModelToModelDescription: non-mapped model id:', modelId);
 
   // context: use the known size if available, otherwise fallback to the (undocumneted) provided length or fallback again to 4096
   const contextWindow = orModel?.cw || context_length || 4096;
@@ -348,6 +391,6 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
     contextWindow: known.contextWindow,
     ...(!!known.maxCompletionTokens && { maxCompletionTokens: known.maxCompletionTokens }),
     interfaces: known.interfaces,
-    ...(!!known.hidden && { hidden: known.hidden })
+    ...(!!known.hidden && { hidden: known.hidden }),
   };
 }

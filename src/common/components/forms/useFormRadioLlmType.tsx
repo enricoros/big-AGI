@@ -3,7 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { DLLM, useModelsStore } from '~/modules/llms/store-llms';
 
-import { FormRadioOption, useFormRadio } from '~/common/components/forms/useFormRadio';
+import { FormRadioOption } from './FormRadioControl';
+import { useFormRadio } from './useFormRadio';
 
 
 type LlmType = 'chat' | 'fast';

@@ -1,19 +1,26 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Checkbox, Divider } from '@mui/joy';
+import { Box, Checkbox, Divider } from '@mui/joy';
+
+import { DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendor.registry';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-
-import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForDefaultVendor } from '~/modules/llms/vendors/vendor.registry';
+import { settingsGap } from '~/common/app.theme';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsSourceSelector } from './ModelsSourceSelector';
-import { VendorSourceSetup } from './VendorSourceSetup';
+
+
+function VendorSourceSetup(props: { source: DModelSource }) {
+  const vendor = findVendorById(props.source.vId);
+  if (!vendor)
+    return 'Configuration issue: Vendor not found for Source ' + props.source.id;
+  return <vendor.SourceSetupComponent sourceId={props.source.id} />;
+}
 
 
 export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
@@ -28,7 +35,6 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     modelSources: state.sources,
     llmCount: state.llms.length,
   }), shallow);
-  useGlobalShortcut('m', true, true, openLayoutModelsSetup);
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
@@ -70,7 +76,11 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
       {!!activeSource && <Divider />}
 
-      {!!activeSource && <VendorSourceSetup source={activeSource} />}
+      {!!activeSource && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+          <VendorSourceSetup source={activeSource} />
+        </Box>
+      )}
 
       {!!llmCount && <Divider />}
 

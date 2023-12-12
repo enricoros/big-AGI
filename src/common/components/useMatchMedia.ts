@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { themeBreakpoints } from '~/common/theme';
+import { themeBreakpoints } from '../app.theme';
 
+import { isBrowser } from '~/common/util/pwaUtils';
 
-const isBrowser = typeof window !== 'undefined';
 
 export const useIsMobile = (): boolean => useMatchMedia(`(max-width: ${themeBreakpoints.md - 1}px)`, false);
 

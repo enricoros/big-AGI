@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
-
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
@@ -9,7 +7,6 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
 import { asValidURL } from '~/common/util/urlUtils';
-import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
@@ -26,7 +23,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
 
-  const needsUserKey = !ModelVendorAzure.hasServerKey;
+  const needsUserKey = !ModelVendorAzure.hasBackendCap?.();
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
   const hostValid = !!asValidURL(azureEndpoint);
@@ -36,11 +33,14 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
     enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <FormTextField
       title='Azure Endpoint'
@@ -66,5 +66,5 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
     {isError && <InlineError error={error} />}
 
-  </Box>;
+  </>;
 }

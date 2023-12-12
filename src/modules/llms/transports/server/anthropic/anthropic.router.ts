@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
@@ -23,19 +24,19 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
   const apiVersion = '2023-06-01';
 
   // API key
-  const anthropicKey = access.anthropicKey || process.env.ANTHROPIC_API_KEY || '';
+  const anthropicKey = access.anthropicKey || env.ANTHROPIC_API_KEY || '';
 
   // break for the missing key only on the default host
   if (!anthropicKey)
-    if (!access.anthropicHost && !process.env.ANTHROPIC_API_HOST)
+    if (!access.anthropicHost && !env.ANTHROPIC_API_HOST)
       throw new Error('Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
   // API host
-  let anthropicHost = fixupHost(access.anthropicHost || process.env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
+  let anthropicHost = fixupHost(access.anthropicHost || env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
 
   // Helicone for Anthropic
   // https://docs.helicone.ai/getting-started/integration-method/anthropic
-  const heliKey = access.heliconeKey || process.env.HELICONE_API_KEY || false;
+  const heliKey = access.heliconeKey || env.HELICONE_API_KEY || false;
   if (heliKey) {
     if (!anthropicHost.includes(DEFAULT_ANTHROPIC_HOST) && !anthropicHost.includes(DEFAULT_HELICONE_ANTHROPIC_HOST))
       throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);

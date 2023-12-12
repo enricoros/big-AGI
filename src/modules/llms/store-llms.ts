@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import { ModelVendorId } from './vendors/IModelVendor';
+import type { ModelVendorId } from './vendors/IModelVendor';
+import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vendor';
 
 
 /**
@@ -64,7 +65,7 @@ interface ModelsData {
 }
 
 interface ModelsActions {
-  addLLMs: (llms: DLLM[]) => void;
+  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
@@ -76,9 +77,14 @@ interface ModelsActions {
   setChatLLMId: (id: DLLMId | null) => void;
   setFastLLMId: (id: DLLMId | null) => void;
   setFuncLLMId: (id: DLLMId | null) => void;
+
+  // special
+  setOpenRoutersKey: (key: string) => void;
 }
 
-export const useModelsStore = create<ModelsData & ModelsActions>()(
+type LlmsStore = ModelsData & ModelsActions;
+
+export const useModelsStore = create<LlmsStore>()(
   persist(
     (set) => ({
 
@@ -98,10 +104,15 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
         set(state => updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, id)),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
-      // this will replace existing llms with the same id
-      addLLMs: (llms: DLLM[]) =>
+      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) =>
         set(state => {
-          const newLlms = [...llms, ...state.llms.filter(llm => !llms.find(m => m.id === llm.id))];
+
+          const otherLlms = preserveExpired === true
+            ? state.llms
+            : state.llms.filter(llm => llm.sId !== sourceId);
+
+          // replace existing llms with the same id
+          const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
           return {
             llms: newLlms,
             ...updateSelectedIds(newLlms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
@@ -155,12 +166,21 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
         set(state => ({
           sources: state.sources.map((source: DModelSource): DModelSource =>
             source.id === id
-              ? {
-                ...source,
-                setup: { ...source.setup, ...partialSetup },
-              } : source,
+              ? { ...source, setup: { ...source.setup, ...partialSetup } }
+              : source,
           ),
         })),
+
+      setOpenRoutersKey: (key: string) =>
+        set(state => {
+          const openRouterSource = state.sources.find(source => source.vId === 'openrouter');
+          if (!openRouterSource) return state;
+          return {
+            sources: state.sources.map(source => source.id === openRouterSource.id
+              ? { ...source, setup: { ...source.setup, oaiKey: key satisfies SourceSetupOpenRouter['oaiKey'] } }
+              : source),
+          };
+        }),
 
     }),
     {
@@ -170,7 +190,7 @@ export const useModelsStore = create<ModelsData & ModelsActions>()(
        *  1: adds maxOutputTokens (default to half of contextTokens)
        */
       version: 1,
-      migrate: (state: any, fromVersion: number): ModelsData & ModelsActions => {
+      migrate: (state: any, fromVersion: number): LlmsStore => {
 
         // 0 -> 1: add 'maxOutputTokens' where missing,
         if (state && fromVersion === 0)
@@ -245,7 +265,7 @@ export function useChatLLM() {
   return useModelsStore(state => {
     const { chatLLMId } = state;
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    return { chatLLMId, chatLLM };
+    return { chatLLM };
   }, shallow);
 }
 

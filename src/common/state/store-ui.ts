@@ -2,47 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
-// UI Counters
-
-interface UICountersStore {
-
-  actionCounters: Record<string, number>;
-  incrementActionCounter: (key: string) => void;
-  clearActionCounter: (key: string) => void;
-  clearAllActionCounters: () => void;
-
-}
-
-const useUICountersStore = create<UICountersStore>()(
-  persist(
-    (set) => ({
-
-      actionCounters: {},
-      incrementActionCounter: (key: string) => set(state => ({
-        actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
-      })),
-      clearActionCounter: (key: string) => set(state => ({
-        actionCounters: { ...state.actionCounters, [key]: 0 },
-      })),
-      clearAllActionCounters: () => set({ actionCounters: {} }),
-
-    }),
-    {
-      name: 'app-ui-counters',
-    }),
-);
-
-type UiCounterKey = 'export-share' | 'share-chat-link' | 'call-wizard';
-
-export function useUICounter(key: UiCounterKey) {
-  const value = useUICountersStore(state => state.actionCounters[key] || 0);
-  return { value, novel: !value, touch: () => useUICountersStore.getState().incrementActionCounter(key) };
-}
-
-
 // UI Preferences
 
 interface UIPreferencesStore {
+
+  // UI Features
 
   preferredLanguage: string;
   setPreferredLanguage: (preferredLanguage: string) => void;
@@ -56,26 +20,27 @@ interface UIPreferencesStore {
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
 
-  experimentalLabs: boolean;
-  setExperimentalLabs: (experimentalLabs: boolean) => void;
-
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
   showPurposeFinder: boolean;
   setShowPurposeFinder: (showPurposeFinder: boolean) => void;
 
-  showSystemMessages: boolean;
-  setShowSystemMessages: (showSystemMessages: boolean) => void;
-
   zenMode: 'clean' | 'cleaner';
   setZenMode: (zenMode: 'clean' | 'cleaner') => void;
+
+  // UI Counters
+
+  actionCounters: Record<string, number>;
+  incrementActionCounter: (key: string) => void;
 
 }
 
 export const useUIPreferencesStore = create<UIPreferencesStore>()(
   persist(
     (set) => ({
+
+      // UI Features
 
       preferredLanguage: (typeof navigator !== 'undefined') && navigator.language || 'en-US',
       setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
@@ -89,20 +54,23 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
 
-      experimentalLabs: false,
-      setExperimentalLabs: (experimentalLabs: boolean) => set({ experimentalLabs }),
-
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
+      // Deprecated
       showPurposeFinder: false,
       setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
 
-      showSystemMessages: false,
-      setShowSystemMessages: (showSystemMessages: boolean) => set({ showSystemMessages }),
-
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
+
+      // UI Counters
+
+      actionCounters: {},
+      incrementActionCounter: (key: string) =>
+        set((state) => ({
+          actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
+        })),
 
     }),
     {
@@ -122,3 +90,12 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
     },
   ),
 );
+
+export function useUICounter(key: 'export-share' | 'share-chat-link' | 'call-wizard') {
+  const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
+  return {
+    value,
+    novel: !value,
+    touch: () => useUIPreferencesStore.getState().incrementActionCounter(key),
+  };
+}

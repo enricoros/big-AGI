@@ -5,10 +5,11 @@ import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
+import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
-import { Brand } from '~/common/brand';
+import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/routes';
+import { navigateToChat } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -22,7 +23,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const listBottomRef = React.useRef<HTMLDivElement>(null);
 
   // external state
-  const showSystemMessages = useUIPreferencesStore(state => state.showSystemMessages);
+  const [showSystemMessages] = useChatShowSystemMessages();
   const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
 
   // derived state
@@ -56,8 +57,8 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
 
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
-    useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat();
+    const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
+    await navigateToChat(importedId);
     setCloning(false);
   };
 

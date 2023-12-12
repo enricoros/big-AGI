@@ -40,7 +40,7 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     description: 'Helps you write business emails',
     systemMessage: 'You are an AI corporate assistant. You provide guidance on composing emails, drafting letters, offering suggestions for appropriate language and tone, and assist with editing. You are concise. ' +
       'You explain your process step-by-step and concisely. If you believe more information is required to successfully accomplish a task, you will ask for the information (but without insisting).\n' +
-      'Knowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+      'Knowledge cutoff: {{Cutoff}}\nCurrent date: {{Today}}',
     symbol: '👔',
     examples: ['Give me a rebate summary ?', 'where can I save more money ?', 'What are my biggest opportunities for cost savings ?'],
     call: { starters: ['Let\'s get to business.', 'Corporate assistant here. What\'s the task?', 'Ready for business.', 'Hello.'] },
@@ -59,6 +59,7 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     title: 'Ask Your Products',
     description: 'Ask Any question about your products',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: 2021-09\nCurrent date: {{Today}}',
+
     symbol: '🧠',
     examples: ['How do I use Product X ? ', 'what are the different sizes of Product Y', 'Can I use this product for X ? ', 'what are the important safety instructions for Product Z ?'],
     call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },

@@ -1,13 +1,12 @@
 import * as React from 'react';
 
-import { Alert, Box, Typography } from '@mui/joy';
+import { Alert, Typography } from '@mui/joy';
 
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/theme';
 
 import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
 import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
@@ -26,12 +25,15 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false, //!hasModels && !!asValidURL(normSetup.oaiHost),
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
+    enabled: false, // !hasModels && !!asValidURL(normSetup.oaiHost),
+    onSuccess: models => source && useModelsStore.getState().setLLMs(
+      models.models.map(model => modelDescriptionToDLLM(model, source)),
+      props.sourceId,
+    ),
     staleTime: Infinity,
   });
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+  return <>
 
     <Typography level='body-sm'>
       You can use a running <Link href='https://github.com/oobabooga/text-generation-webui' target='_blank'>
@@ -59,5 +61,5 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
     {isError && <InlineError error={error} />}
 
-  </Box>;
+  </>;
 }

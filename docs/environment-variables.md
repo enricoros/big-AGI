@@ -3,15 +3,11 @@
 This document provides an explanation of the environment variables used in the big-AGI application.
 
 **All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
-which take place over _defaults_. This file is kept in sync with [`../src/common/types/env.d.ts`](../src/common/types/env.d.ts).
+which take place over _defaults_. This file is kept in sync with [`../src/server/env.mjs`](../src/server/env.mjs).
 
 ### Setting Environment Variables
 
 Environment variables can be set by creating a `.env` file in the root directory of the project.
-
-> For Docker deployment, ensure all necessary environment variables are set **both during build and run**.
-> If the Docker container is built without setting environment variables, the frontend UI will be unaware
-> of them, despite the backend being able to use them at runtime.
 
 The following is an example `.env` for copy-paste convenience:
 
@@ -38,11 +34,20 @@ HELICONE_API_KEY=
 ELEVENLABS_API_KEY=
 ELEVENLABS_API_HOST=
 ELEVENLABS_VOICE_ID=
+# Text-To-Image
+PRODIA_API_KEY=
 # Google Custom Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
-# Text-To-Image
-PRODIA_API_KEY=
+# Browse
+PUPPETEER_WSS_ENDPOINT=
+
+# Backend Analytics
+BACKEND_ANALYTICS=
+
+# Backend HTTP Basic Authentication
+HTTP_BASIC_AUTH_USERNAME=
+HTTP_BASIC_AUTH_PASSWORD=
 ```
 
 ## Variables Documentation
@@ -93,17 +98,23 @@ It is currently supported for:
 
 Enable the app to Talk, Draw, and Google things up.
 
-| Variable                 | Description                                                                                                             |
-|:-------------------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**       | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
-| `ELEVENLABS_API_KEY`     | ElevenLabs API Key - used for calls, etc.                                                                               |
-| `ELEVENLABS_API_HOST`    | Custom host for ElevenLabs                                                                                              |
-| `ELEVENLABS_VOICE_ID`    | Default voice ID for ElevenLabs                                                                                         |
-| **Google Custom Search** | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
-| `GOOGLE_CLOUD_API_KEY`   | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
-| `GOOGLE_CSE_ID`          | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
-| **Text-To-Image**        | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
-| `PRODIA_API_KEY`         | Prodia API Key - used with '/imagine ...'                                                                               |
+| Variable                   | Description                                                                                                             |
+|:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
+| **Text-To-Speech**         | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
+| `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
+| `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
+| `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
+| **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
+| `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
+| `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
+| **Text-To-Image**          | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
+| `PRODIA_API_KEY`           | Prodia API Key - used with '/imagine ...'                                                                               |
+| **Browse**                 |                                                                                                                         |
+| `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
+| **Backend**                |                                                                                                                         | 
+| `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
+| `HTTP_BASIC_AUTH_USERNAME` | Username for HTTP Basic Authentication. See the [Authentication](deploy-authentication.md) guide.                       |
+| `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
 
 ---
 

@@ -22,7 +22,7 @@ export interface CapabilityBrowserSpeechRecognition {
 export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './useSpeechRecognition';
 
 
-/// Speech Synthesis (ElevenLabs)
+/// Speech Synthesis: ElevenLabs
 
 export interface CapabilityElevenLabsSpeechSynthesis {
   mayWork: boolean;
@@ -31,3 +31,28 @@ export interface CapabilityElevenLabsSpeechSynthesis {
 }
 
 export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
+
+
+/// Image Generation: Prodia
+
+export interface CapabilityProdiaImageGeneration {
+  mayWork: boolean;
+}
+
+export { useCapability as useCapabilityProdia } from '~/modules/prodia/prodia.client';
+
+
+/// Browsing
+
+export interface CapabilityBrowsing {
+  mayWork: boolean;
+  isServerConfig: boolean;
+  isClientConfig: boolean;
+  isClientValid: boolean;
+  inCommand: boolean;
+  inComposer: boolean;
+  inReact: boolean;
+  inPersonas: boolean;
+}
+
+// export { useBrowseCapability as useCapabilityBrowse } from '~/modules/browse/store-module-browsing';

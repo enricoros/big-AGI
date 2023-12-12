@@ -4,9 +4,9 @@ import { useRouter } from 'next/router';
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { BringTheLove, DiscordIcon } from '~/common/layout/AppBarSupportItem';
-import { Brand } from '~/common/brand';
+import { Brand } from '../app.config';
 
+import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
 import { closeLayoutMenu } from './store-applayout';
 
 
