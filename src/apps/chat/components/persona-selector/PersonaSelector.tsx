@@ -141,7 +141,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
 
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Typography level='title-sm'>
-            AI Persona
+            AI Tasks
           </Typography>
           <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
@@ -183,7 +183,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
               </Button>
             </Grid>
           ))}
-          {/* Button to start the YouTube persona creator */}
+{/*           Button to start the YouTube persona creator 
           <Grid>
             <Button
               variant='soft' color='neutral'
@@ -207,7 +207,7 @@ export function PersonaSelector(props: { conversationId: string, runExample: (ex
                 YouTube persona creator
               </div>
             </Button>
-          </Grid>
+          </Grid>  */}
         </Grid>
 
         <Typography
