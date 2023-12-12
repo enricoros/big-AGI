@@ -34,7 +34,7 @@
     "eventsource-parser": "^1.1.1",
     "idb-keyval": "^6.2.1",
     "next": "^14.0.3",
-    "pdfjs-dist": "4.0.189",
+    "pdfjs-dist": "4.0.269",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
