@@ -18,7 +18,7 @@ export interface SourceSetupOllama {
 }
 
 
-export const ModelVendorOllama: IModelVendor<SourceSetupOllama, LLMOptionsOpenAI, OllamaAccessSchema> = {
+export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
   id: 'ollama',
   name: 'Ollama',
   rank: 22,

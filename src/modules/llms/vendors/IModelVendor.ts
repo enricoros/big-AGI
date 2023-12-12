@@ -7,7 +7,7 @@ import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMe
 export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
 
 
-export interface IModelVendor<TSourceSetup = unknown, TLLMOptions = unknown, TAccess = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
+export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
   readonly id: ModelVendorId;
   readonly name: string;
   readonly rank: number;

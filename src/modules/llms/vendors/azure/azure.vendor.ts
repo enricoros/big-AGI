@@ -36,7 +36,7 @@ export interface SourceSetupAzure {
  *
  * Work in progress...
  */
-export const ModelVendorAzure: IModelVendor<SourceSetupAzure, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorAzure: IModelVendor<SourceSetupAzure, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'azure',
   name: 'Azure',
   rank: 14,

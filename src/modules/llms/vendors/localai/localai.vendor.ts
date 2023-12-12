@@ -14,7 +14,7 @@ export interface SourceSetupLocalAI {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,

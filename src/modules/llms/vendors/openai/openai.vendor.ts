@@ -28,7 +28,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,

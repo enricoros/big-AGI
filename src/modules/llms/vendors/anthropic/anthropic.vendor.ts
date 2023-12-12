@@ -22,7 +22,7 @@ export interface SourceSetupAnthropic {
   heliconeKey: string;
 }
 
-export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI, AnthropicAccessSchema> = {
+export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicAccessSchema, LLMOptionsOpenAI> = {
   id: 'anthropic',
   name: 'Anthropic',
   rank: 13,

@@ -32,7 +32,7 @@ export interface SourceSetupOpenRouter {
  *  [x] decide whether to do UI work to improve the appearance - prioritized models
  *  [x] works!
  */
-export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'openrouter',
   name: 'OpenRouter',
   rank: 12,
