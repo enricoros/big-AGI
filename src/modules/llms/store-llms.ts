@@ -272,7 +272,7 @@ export function useChatLLM() {
 /**
  * Source-specific read/write - great time saver
  */
-export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, getAccess: (partialSetup?: Partial<TSourceSetup>) => TAccess) {
+export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, getTransportAccess: (partialSetup?: Partial<TSourceSetup>) => TAccess) {
   // invalidate when the setup changes
   const { updateSourceSetup, ...rest } = useModelsStore(state => {
     const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) ?? null;
@@ -281,7 +281,7 @@ export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, 
       source,
       sourceLLMs,
       sourceHasLLMs: !!sourceLLMs.length,
-      access: getAccess(source?.setup),
+      access: getTransportAccess(source?.setup),
       updateSourceSetup: state.updateSourceSetup,
     };
   }, shallow);

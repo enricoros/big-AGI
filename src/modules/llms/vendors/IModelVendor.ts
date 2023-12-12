@@ -24,7 +24,8 @@ export interface IModelVendor<TSourceSetup = unknown, TLLMOptions = unknown, TAc
   // functions
   readonly initializeSetup?: () => TSourceSetup;
 
-  getAccess(setup?: Partial<TSourceSetup>): TAccess;
+  // get a TAccess object, translating from TSourceSetup
+  getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
 
   callChatGenerate(llm: TDLLM, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut>;
 
