@@ -1,5 +1,8 @@
+import { z } from 'zod';
+
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { analyticsListCapabilities } from './backend.analytics';
 
@@ -28,6 +31,19 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
       };
+    }),
+
+
+  // The following are used for various OAuth integrations
+
+  /* Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key */
+  exchangeOpenRouterKey: publicProcedure
+    .input(z.object({ code: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Documented here: https://openrouter.ai/docs#oauth
+      return await fetchJsonOrTRPCError<{ key: string }, { code: string }>('https://openrouter.ai/api/v1/auth/keys', 'POST', {}, {
+        code: input.code,
+      }, 'Backend.exchangeOpenRouterKey');
     }),
 
 });

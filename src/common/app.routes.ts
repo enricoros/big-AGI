@@ -13,8 +13,21 @@ export const ROUTE_INDEX = '/';
 export const ROUTE_APP_CHAT = '/';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
+const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
 
 export const getIndexLink = () => ROUTE_INDEX;
+
+export const getCallbackUrl = (source: 'openrouter') => {
+  const callbackUrl = new URL(window.location.href);
+  switch (source) {
+    case 'openrouter':
+      callbackUrl.pathname = ROUTE_CALLBACK_OPENROUTER;
+      break;
+    default:
+      throw new Error(`Unknown source: ${source}`);
+  }
+  return callbackUrl.toString();
+};
 
 export const getChatLinkRelativePath = (chatLinkId: string) => ROUTE_APP_LINK_CHAT.replace(':linkId', chatLinkId);
 
