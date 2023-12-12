@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import { ModelVendorId } from './vendors/IModelVendor';
+import type { ModelVendorId } from './vendors/IModelVendor';
+import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vendor';
 
 
 /**
@@ -76,6 +77,9 @@ interface ModelsActions {
   setChatLLMId: (id: DLLMId | null) => void;
   setFastLLMId: (id: DLLMId | null) => void;
   setFuncLLMId: (id: DLLMId | null) => void;
+
+  // special
+  setOpenRoutersKey: (key: string) => void;
 }
 
 type LlmsStore = ModelsData & ModelsActions;
@@ -162,12 +166,21 @@ export const useModelsStore = create<LlmsStore>()(
         set(state => ({
           sources: state.sources.map((source: DModelSource): DModelSource =>
             source.id === id
-              ? {
-                ...source,
-                setup: { ...source.setup, ...partialSetup },
-              } : source,
+              ? { ...source, setup: { ...source.setup, ...partialSetup } }
+              : source,
           ),
         })),
+
+      setOpenRoutersKey: (key: string) =>
+        set(state => {
+          const openRouterSource = state.sources.find(source => source.vId === 'openrouter');
+          if (!openRouterSource) return state;
+          return {
+            sources: state.sources.map(source => source.id === openRouterSource.id
+              ? { ...source, setup: { ...source.setup, oaiKey: key satisfies SourceSetupOpenRouter['oaiKey'] } }
+              : source),
+          };
+        }),
 
     }),
     {
