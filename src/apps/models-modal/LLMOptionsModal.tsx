@@ -7,7 +7,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';

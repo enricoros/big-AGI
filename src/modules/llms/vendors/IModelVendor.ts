@@ -1,11 +1,12 @@
 import type React from 'react';
 
 import type { DLLM, DModelSourceId } from '../store-llms';
-import { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
+import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
 
 
 export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
 
+export type ModelVendorRegistryType = Record<ModelVendorId, IModelVendor>;
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
   readonly id: ModelVendorId;
@@ -21,10 +22,12 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
   readonly SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
   readonly LLMOptionsComponent: React.ComponentType<{ llm: TDLLM }>;
 
-  // functions
-  readonly initializeSetup?: () => TSourceSetup;
+  /// abstraction interface ///
 
-  // get a TAccess object, translating from TSourceSetup
+  initializeSetup?(): TSourceSetup;
+
+  validateSetup?(setup: TSourceSetup): boolean;
+
   getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
 
   callChatGenerate(llm: TDLLM, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut>;

@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutModelsSetup, openLayoutModelsSetup, useLayoutModelsSetup } from '~/common/layout/store-applayout';
