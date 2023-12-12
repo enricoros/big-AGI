@@ -254,7 +254,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
     case 'rich-text-table':
       let mdTable: string;
       try {
-        mdTable = htmlTableToMarkdown(input.altData!);
+        mdTable = htmlTableToMarkdown(input.altData!, false);
       } catch (error) {
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
