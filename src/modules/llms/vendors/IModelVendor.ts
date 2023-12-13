@@ -4,7 +4,7 @@ import type { DLLM, DModelSourceId } from '../store-llms';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
 
 
-export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
+export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'mistral' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
 
 export type ModelVendorRegistryType = Record<ModelVendorId, IModelVendor>;
 

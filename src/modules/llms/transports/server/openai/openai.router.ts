@@ -9,12 +9,12 @@ import { Brand } from '~/common/app.config';
 
 import type { OpenAIWire } from './openai.wiretypes';
 import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
-import { localAIModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
+import { localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
 
 // Input Schemas
 
-const openAIDialects = z.enum(['azure', 'localai', 'oobabooga', 'openai', 'openrouter']);
+const openAIDialects = z.enum(['azure', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter']);
 
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,
@@ -186,12 +186,18 @@ export const llmOpenAIRouter = createTRPCRouter({
             .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created));
           break;
 
+        case 'mistral':
+          models = openAIModels
+            .map(mistralModelToModelDescription)
+            .sort(mistralModelsSort);
+          break;
 
         case 'openrouter':
           models = openAIModels
             .sort(openRouterModelFamilySortFn)
             .map(model => openRouterModelToModelDescription(model.id, model.created, (model as any)?.['context_length']));
           break;
+
       }
 
       return { models };
@@ -267,9 +273,10 @@ async function openaiPOST<TOut extends object, TPostBody extends object>(access:
 }
 
 
+const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
-const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
 export function fixupHost(host: string, apiPath: string): string {
   if (!host.startsWith('http'))
@@ -358,6 +365,20 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
         },
         url: oaiHost + apiPath,
+      };
+
+
+    case 'mistral':
+      // https://docs.mistral.ai/platform/client
+      const mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
+      const mistralHost = fixupHost(access.oaiHost || DEFAULT_MISTRAL_HOST, apiPath);
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${mistralKey}`,
+        },
+        url: mistralHost + apiPath,
       };
 
 

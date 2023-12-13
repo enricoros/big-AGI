@@ -1,6 +1,9 @@
-import type { ModelDescriptionSchema } from '../server.schemas';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../../store-llms';
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
+
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../../store-llms';
+
+import type { ModelDescriptionSchema } from '../server.schemas';
+import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
 
 
 // [Azure] / [OpenAI]
@@ -204,6 +207,63 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 }
 
 
+// [Mistral]
+
+const _knownMistralChatModels: ManualMappings = [
+  {
+    idPrefix: 'mistral-medium',
+    label: 'Mistral Medium',
+    description: 'Mistral internal prototype model.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistral-small',
+    label: 'Mistral Small',
+    description: 'Higher reasoning capabilities and more capabilities (English, French, German, Italian, Spanish, and Code)',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistral-tiny',
+    label: 'Mistral Tiny',
+    description: 'Used for large batch processing tasks where cost is a significant factor but reasoning capabilities are not crucial',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistral-embed',
+    label: 'Mistral Embed',
+    description: 'Mistral Medium on Mistral',
+    // output: 1024 dimensions
+    maxCompletionTokens: 1024, // HACK - it's 1024 dimensions, but those are not 'completion tokens'
+    contextWindow: 32768, // actually unknown, assumed from the other models
+    interfaces: [],
+    hidden: true,
+  },
+];
+
+export function mistralModelToModelDescription(_model: unknown): ModelDescriptionSchema {
+  const model = wireMistralModelsListOutputSchema.parse(_model);
+  return fromManualMapping(_knownMistralChatModels, model.id, model.created, undefined, {
+    idPrefix: model.id,
+    label: model.id.replaceAll(/[_-]/g, ' '),
+    description: 'New Mistral Model',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat], // assume..
+    hidden: true,
+  });
+}
+
+export function mistralModelsSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  if (a.hidden && !b.hidden)
+    return 1;
+  if (!a.hidden && b.hidden)
+    return -1;
+  return a.id.localeCompare(b.id);
+}
+
+
 // [Oobabooga]
 const _knownOobaboogaChatModels: ManualMappings = [];
 
@@ -346,7 +406,7 @@ export function openRouterModelToModelDescription(modelId: string, created: numb
   const orModel = orModelMap[modelId] ?? null;
   let label = orModel?.name || modelId.replace('/', ' · ');
   if (orModel?.cp === 0 && orModel?.cc === 0)
-    label += ' · 🎁' // Free? Discounted?
+    label += ' · 🎁'; // Free? Discounted?
 
   if (SERVER_DEBUG_WIRE && !orModel)
     console.log(' - openRouterModelToModelDescription: non-mapped model id:', modelId);
