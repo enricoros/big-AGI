@@ -67,7 +67,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },*/
   {
-    versionCode: '1.7.2',
+    versionCode: '1.7.3',
     versionName: 'Attachment Theory',
     versionDate: new Date('2023-12-11T06:00:00Z'), // new Date().toISOString()
     // versionDate: new Date('2023-12-10T12:00:00Z'), // 1.7.0
@@ -81,7 +81,8 @@ export const NewsItems: NewsItem[] = [
       { text: <>Optimized voice input and performance</> },
       { text: <>Latest Ollama and Oobabooga models</> },
       { text: <>1.7.1: Improved <B href={RIssues + '/270'}>Ollama chats</B></> },
-      { text: <>1.7.2: Updated OpenRouter models</> },
+      { text: <>1.7.2: Updated OpenRouter models 🎁</> },
+      { text: <>1.7.3: <B href={RIssues + '/273'}>Mistral Platform</B> support</> },
     ],
   },
   {
