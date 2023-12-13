@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { useRouter } from 'next/router';
 
+import { navigateToNews } from '~/common/app.routes';
 import { useAppStateStore } from '~/common/state/store-appstate';
 
 import { incrementalVersion } from './news.data';
 
 
 export function useShowNewsOnUpdate() {
-  const { push: routerPush } = useRouter();
   const { usageCount, lastSeenNewsVersion } = useAppStateStore(state => ({
     usageCount: state.usageCount,
     lastSeenNewsVersion: state.lastSeenNewsVersion,
@@ -17,9 +16,9 @@ export function useShowNewsOnUpdate() {
     const isNewsOutdated = (lastSeenNewsVersion || 0) < incrementalVersion;
     if (isNewsOutdated && usageCount > 2) {
       // Disable for now
-      void routerPush('/news');
+      void navigateToNews();
     }
-  }, [lastSeenNewsVersion, routerPush, usageCount]);
+  }, [lastSeenNewsVersion, usageCount]);
 }
 
 export function useMarkNewsAsSeen() {

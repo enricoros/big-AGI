@@ -42,7 +42,7 @@ export const backendRouter = createTRPCRouter({
   /* Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key */
   exchangeOpenRouterKey: publicProcedure
     .input(z.object({ code: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       // Documented here: https://openrouter.ai/docs#oauth
       return await fetchJsonOrTRPCError<{ key: string }, { code: string }>('https://openrouter.ai/api/v1/auth/keys', 'POST', {}, {
         code: input.code,
