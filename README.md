@@ -21,7 +21,7 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-### What's New in 1.7.2 · Dec 12, 2023 · Attachment Theory 🌟
+### What's New in 1.7.3 · Dec 13, 2023 · Attachment Theory 🌟
 
 - **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
 - **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
@@ -32,7 +32,8 @@ shows the current developments and future ideas.
 - Latest Ollama and Oobabooga models
 - For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
 - [1.7.1]: Improved Ollama chats. [#270](https://github.com/enricoros/big-agi/issues/270)
-- [1.7.2]: Updated OpenRouter models (incl. Mixtral 8x7B)
+- [1.7.2]: OpenRouter login & free models 🎁
+- [1.7.3]: Mistral Platform support. [#273](https://github.com/enricoros/big-agi/issues/273)
 
 ### What's New in 1.6.0 - Nov 28, 2023
 
