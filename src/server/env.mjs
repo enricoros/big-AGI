@@ -21,6 +21,9 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().optional(),
     ANTHROPIC_API_HOST: z.string().url().optional(),
 
+    // LLM: Mistral
+    MISTRAL_API_KEY: z.string().optional(),
+
     // LLM: Ollama
     OLLAMA_API_HOST: z.string().url().optional(),
 

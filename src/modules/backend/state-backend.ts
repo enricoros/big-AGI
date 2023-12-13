@@ -9,6 +9,7 @@ export interface BackendCapabilities {
   hasImagingProdia: boolean;
   hasLlmAnthropic: boolean;
   hasLlmAzureOpenAI: boolean;
+  hasLlmMistral: boolean;
   hasLlmOllama: boolean;
   hasLlmOpenAI: boolean;
   hasLlmOpenRouter: boolean;
@@ -30,6 +31,7 @@ const useBackendStore = create<BackendStore>()(
     hasImagingProdia: false,
     hasLlmAnthropic: false,
     hasLlmAzureOpenAI: false,
+    hasLlmMistral: false,
     hasLlmOllama: false,
     hasLlmOpenAI: false,
     hasLlmOpenRouter: false,
