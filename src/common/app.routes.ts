@@ -7,6 +7,7 @@
 import Router from 'next/router';
 
 import type { DConversationId } from '~/common/state/store-chats';
+import { isBrowser } from './util/pwaUtils';
 
 
 export const ROUTE_INDEX = '/';
@@ -14,6 +15,7 @@ export const ROUTE_APP_CHAT = '/';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
 const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
+
 
 // Get Paths
 
@@ -54,6 +56,8 @@ export const navigateToChat = async (conversationId?: DConversationId) => {
 export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
 
 export const navigateBack = Router.back;
+
+export const reloadPage = () => isBrowser && window.location.reload();
 
 function navigateFn(path: string) {
   return (replace?: boolean): Promise<boolean> => Router[replace ? 'replace' : 'push'](path);
