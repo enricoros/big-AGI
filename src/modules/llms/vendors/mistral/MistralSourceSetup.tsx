@@ -18,7 +18,7 @@ const MISTRAL_REG_LINK = 'https://console.mistral.ai/';
 export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { source, sourceSetupValid, sourceHasLLMs, access, updateSetup } =
+  const { source, sourceSetupValid, access, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorMistral);
 
   // derived state
@@ -30,7 +30,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false,
+    enabled: shallFetchSucceed,
     onSuccess: models => source && useModelsStore.getState().setLLMs(
       models.models.map(model => modelDescriptionToDLLM(model, source)),
       props.sourceId,

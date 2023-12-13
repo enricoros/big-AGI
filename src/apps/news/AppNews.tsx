@@ -78,7 +78,7 @@ export function AppNews() {
 
         {!!news && <Container disableGutters maxWidth='sm'>
           {news?.map((ni, idx) => {
-            const firstCard = idx === 0;
+            // const firstCard = idx === 0;
             const hasCardAfter = news.length < NewsItems.length;
             const showExpander = hasCardAfter && (idx === news.length - 1);
             const addPadding = false; //!firstCard; // || showExpander;
