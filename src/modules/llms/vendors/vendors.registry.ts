@@ -1,6 +1,7 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
@@ -14,6 +15,7 @@ const MODEL_VENDOR_REGISTRY: ModelVendorRegistryType = {
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
   localai: ModelVendorLocalAI,
+  mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,

@@ -67,6 +67,7 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
 
       case 'azure':
       case 'localai':
+      case 'mistral':
       case 'oobabooga':
       case 'openai':
       case 'openrouter':
