@@ -28,6 +28,7 @@ export const backendRouter = createTRPCRouter({
         hasImagingProdia: !!env.PRODIA_API_KEY,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
+        hasLlmMistral: !!env.MISTRAL_API_KEY,
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
