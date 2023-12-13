@@ -9,6 +9,7 @@ export type DropdownItems = Record<string, {
   title: string,
   symbol?: string,
   type?: 'separator'
+  icon?: React.ReactNode,
 }>;
 
 
@@ -71,20 +72,25 @@ export function AppBarDropdown<TValue extends string>(props: {
     {!!props.prependOption && Object.keys(props.items).length >= 1 && <Divider />}
 
     <Box sx={{ overflowY: 'auto' }}>
-      {Object.keys(props.items).map((key: string, idx: number) => <React.Fragment key={'key-' + idx}>
-        {props.items[key].type === 'separator'
-          ? <ListDivider />
-          : <Option value={key} sx={{ whiteSpace: 'nowrap' }}>
-            {props.showSymbols && <ListItemDecorator sx={{ fontSize: 'xl' }}>{props.items[key]?.symbol + ' '}</ListItemDecorator>}
-            {props.items[key].title}
+      {Object.keys(props.items).map((key: string, idx: number) => {
+        const item = props.items[key];
+
+        if (item.type === 'separator')
+          return <ListDivider key={'key-' + idx} />;
+
+        return (
+          <Option key={'key-' + idx} value={key} sx={{ whiteSpace: 'nowrap' }}>
+            {props.showSymbols && <ListItemDecorator sx={{ fontSize: 'xl' }}>{item?.symbol + ' '}</ListItemDecorator>}
+            {props.showSymbols && !!item.icon && <ListItemDecorator>{item?.icon}</ListItemDecorator>}
+            {item.title}
             {/*{key === props.value && (*/}
             {/*  <IconButton variant='soft' onClick={() => alert('aa')} sx={{ ml: 'auto' }}>*/}
             {/*    <SettingsIcon color='success' />*/}
             {/*  </IconButton>*/}
             {/*)}*/}
           </Option>
-        }
-      </React.Fragment>)}
+        );
+      })}
     </Box>
 
     {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider />}

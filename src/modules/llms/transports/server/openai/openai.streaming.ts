@@ -67,6 +67,7 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
 
       case 'azure':
       case 'localai':
+      case 'mistral':
       case 'oobabooga':
       case 'openai':
       case 'openrouter':
@@ -152,6 +153,10 @@ function createOllamaChatCompletionStreamParser(): AIStreamParser {
 
     // validate chunk
     const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
+
+    // pass through errors from Ollama
+    if ('error' in chunk)
+      throw new Error(chunk.error);
 
     // process output
     let text = chunk.message?.content || /*chunk.response ||*/ '';
@@ -255,7 +260,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
         } catch (error: any) {
           if (SERVER_DEBUG_WIRE)
             console.log(' - E: parse issue:', event.data, error?.message || error);
-          controller.enqueue(textEncoder.encode(`[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
+          controller.enqueue(textEncoder.encode(` **[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}**`));
           controller.terminate();
         }
       };

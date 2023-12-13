@@ -22,7 +22,7 @@ export interface SourceSetupAnthropic {
   heliconeKey: string;
 }
 
-export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptionsOpenAI, AnthropicAccessSchema> = {
+export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicAccessSchema, LLMOptionsOpenAI> = {
   id: 'anthropic',
   name: 'Anthropic',
   rank: 13,
@@ -36,14 +36,14 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, LLMOptions
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  getAccess: (partialSetup): AnthropicAccessSchema => ({
+  getTransportAccess: (partialSetup): AnthropicAccessSchema => ({
     dialect: 'anthropic',
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return anthropicCallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, /*null, null,*/ maxTokens);
+    return anthropicCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, /*null, null,*/ maxTokens);
   },
   callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
     throw new Error('Anthropic does not support "Functions" yet');

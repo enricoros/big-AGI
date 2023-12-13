@@ -23,7 +23,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorAnthropic.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorAnthropic);
 
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = access;

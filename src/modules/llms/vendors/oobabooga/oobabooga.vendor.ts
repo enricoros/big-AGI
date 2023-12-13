@@ -14,7 +14,7 @@ export interface SourceSetupOobabooga {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga',
   rank: 25,
@@ -30,7 +30,7 @@ export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOption
   initializeSetup: (): SourceSetupOobabooga => ({
     oaiHost: 'http://127.0.0.1:5000',
   }),
-  getAccess: (partialSetup): OpenAIAccessSchema => ({
+  getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'oobabooga',
     oaiKey: '',
     oaiOrg: '',
@@ -39,9 +39,9 @@ export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, LLMOption
     moderationCheck: false,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
+    return openAICallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
   },
   callChatGenerateWF(llm, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
-    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, functions, forceFunctionName, maxTokens);
+    return openAICallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, functions, forceFunctionName, maxTokens);
   },
 };

@@ -18,7 +18,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorAzure.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorAzure);
 
   // derived state
   const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;

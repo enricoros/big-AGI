@@ -14,7 +14,7 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
   // Set the worker script path
-  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
+  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
 
   const pdf = await getDocument(pdfBuffer).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages

@@ -18,7 +18,7 @@ export interface SourceSetupOllama {
 }
 
 
-export const ModelVendorOllama: IModelVendor<SourceSetupOllama, LLMOptionsOpenAI, OllamaAccessSchema> = {
+export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
   id: 'ollama',
   name: 'Ollama',
   rank: 22,
@@ -32,12 +32,12 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, LLMOptionsOpenAI
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  getAccess: (partialSetup): OllamaAccessSchema => ({
+  getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
     ollamaHost: partialSetup?.ollamaHost || '',
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return ollamaCallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, maxTokens);
+    return ollamaCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, maxTokens);
   },
   callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
     throw new Error('Ollama does not support "Functions" yet');

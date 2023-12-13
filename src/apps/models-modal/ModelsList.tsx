@@ -7,7 +7,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 
 import { DLLM, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import { findVendorById } from '~/modules/llms/vendors/vendor.registry';
+import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { openLayoutLLMOptions } from '~/common/layout/store-applayout';
@@ -109,6 +109,7 @@ export function ModelsList(props: {
     <List variant='soft' size='sm' sx={{
       borderRadius: 'sm',
       pl: { xs: 0, md: 1 },
+      overflowY: 'auto',
     }}>
       {items}
     </List>

@@ -14,7 +14,7 @@ export interface SourceSetupLocalAI {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
   rank: 20,
@@ -30,7 +30,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpen
   initializeSetup: () => ({
     oaiHost: 'http://localhost:8080',
   }),
-  getAccess: (partialSetup) => ({
+  getTransportAccess: (partialSetup) => ({
     dialect: 'localai',
     oaiKey: '',
     oaiOrg: '',
@@ -39,9 +39,9 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, LLMOptionsOpen
     moderationCheck: false,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
+    return openAICallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
   },
   callChatGenerateWF(llm, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
-    return openAICallChatGenerate(this.getAccess(llm._source.setup), llm.options, messages, functions, forceFunctionName, maxTokens);
+    return openAICallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, functions, forceFunctionName, maxTokens);
   },
 };

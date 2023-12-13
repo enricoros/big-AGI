@@ -43,27 +43,34 @@ export type WireOllamaChatCompletionInput = z.infer<typeof wireOllamaChatComplet
 /**
  * Chat Completion or Generation APIs - Streaming Response
  */
-export const wireOllamaChunkedOutputSchema = z.object({
-  model: z.string(),
-  // created_at: z.string(), // commented because unused
+export const wireOllamaChunkedOutputSchema = z.union([
+  // Chat Completion Chunk
+  z.object({
+    model: z.string(),
+    // created_at: z.string(), // commented because unused
 
-  // [Chat Completion] (exclusive with 'response')
-  message: z.object({
-    role: z.enum(['assistant' /*, 'system', 'user' Disabled on purpose, to validate the response */]),
-    content: z.string(),
-  }).optional(), // optional on the last message
+    // [Chat Completion] (exclusive with 'response')
+    message: z.object({
+      role: z.enum(['assistant' /*, 'system', 'user' Disabled on purpose, to validate the response */]),
+      content: z.string(),
+    }).optional(), // optional on the last message
 
-  // [Generation] (non-chat, exclusive with 'message')
-  //response: z.string().optional(),
+    // [Generation] (non-chat, exclusive with 'message')
+    //response: z.string().optional(),
 
-  done: z.boolean(),
+    done: z.boolean(),
 
-  // only on the last message
-  // context: z.array(z.number()), // non-chat endpoint
-  // total_duration: z.number(),
-  // prompt_eval_count: z.number(),
-  // prompt_eval_duration: z.number(),
-  // eval_count: z.number(),
-  // eval_duration: z.number(),
+    // only on the last message
+    // context: z.array(z.number()), // non-chat endpoint
+    // total_duration: z.number(),
+    // prompt_eval_count: z.number(),
+    // prompt_eval_duration: z.number(),
+    // eval_count: z.number(),
+    // eval_duration: z.number(),
 
-});
+  }),
+  // Possible Error
+  z.object({
+    error: z.string(),
+  }),
+]);

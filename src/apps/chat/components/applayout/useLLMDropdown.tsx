@@ -23,14 +23,26 @@ function AppBarLLMDropdown(props: {
   const llmItems: DropdownItems = {};
   let prevSourceId: DModelSourceId | null = null;
   for (const llm of props.llms) {
-    if (!llm.hidden || llm.id === props.chatLlmId) {
-      if (!prevSourceId || llm.sId !== prevSourceId) {
-        if (prevSourceId)
-          llmItems[`sep-${llm.id}`] = { type: 'separator', title: llm.sId };
-        prevSourceId = llm.sId;
-      }
-      llmItems[llm.id] = { title: llm.label };
+
+    // filter-out hidden models
+    if (!(!llm.hidden || llm.id === props.chatLlmId))
+      continue;
+
+    // add separators when changing sources
+    if (!prevSourceId || llm.sId !== prevSourceId) {
+      if (prevSourceId)
+        llmItems[`sep-${llm.id}`] = {
+          type: 'separator',
+          title: llm.sId,
+        };
+      prevSourceId = llm.sId;
     }
+
+    // add the model item
+    llmItems[llm.id] = {
+      title: llm.label,
+      // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
+    };
   }
 
   const handleChatLLMChange = (_event: any, value: DLLMId | null) => value && props.setChatLlmId(value);

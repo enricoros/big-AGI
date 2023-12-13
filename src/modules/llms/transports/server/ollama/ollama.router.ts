@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -246,8 +247,17 @@ export const llmOllamaRouter = createTRPCRouter({
       const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, false), OLLAMA_PATH_CHAT);
       const generation = wireOllamaChunkedOutputSchema.parse(wireGeneration);
 
+      if ('error' in generation)
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Ollama chat-generation issue: ${generation.error}`,
+        });
+
       if (!generation.message?.content)
-        throw new Error('Ollama chat generation (non-stream) issue: ' + JSON.stringify(wireGeneration));
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Ollama chat-generation API issue: ${JSON.stringify(wireGeneration)}`,
+        });
 
       return {
         role: 'assistant',

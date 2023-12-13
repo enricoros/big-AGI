@@ -19,7 +19,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorLocalAI.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorLocalAI);
 
   // derived state
   const { oaiHost } = access;

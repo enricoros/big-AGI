@@ -29,7 +29,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOpenAI.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorOpenAI);
 
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;

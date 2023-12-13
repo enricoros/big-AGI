@@ -18,7 +18,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOoobabooga.getAccess);
+    useSourceSetup(props.sourceId, ModelVendorOoobabooga);
 
   // derived state
   const { oaiHost } = access;

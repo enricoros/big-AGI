@@ -28,7 +28,7 @@ export interface LLMOptionsOpenAI {
   llmResponseTokens: number;
 }
 
-export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI, OpenAIAccessSchema> = {
+export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,
@@ -42,7 +42,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
-  getAccess: (partialSetup): OpenAIAccessSchema => ({
+  getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'openai',
     oaiKey: '',
     oaiOrg: '',
@@ -52,11 +52,11 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, LLMOptionsOpenAI
     ...partialSetup,
   }),
   callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    const access = this.getAccess(llm._source.setup);
+    const access = this.getTransportAccess(llm._source.setup);
     return openAICallChatGenerate(access, llm.options, messages, null, null, maxTokens);
   },
   callChatGenerateWF(llm, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
-    const access = this.getAccess(llm._source.setup);
+    const access = this.getTransportAccess(llm._source.setup);
     return openAICallChatGenerate(access, llm.options, messages, functions, forceFunctionName, maxTokens);
   },
 };

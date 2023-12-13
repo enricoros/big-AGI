@@ -11,6 +11,7 @@ import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
 
 import { ProviderBackend } from '~/common/state/ProviderBackend';
+import { ProviderSingleTab } from '~/common/state/ProviderSingleTab';
 import { ProviderSnacks } from '~/common/state/ProviderSnacks';
 import { ProviderTRPCQueryClient } from '~/common/state/ProviderTRPCQueryClient';
 import { ProviderTheming } from '~/common/state/ProviderTheming';
@@ -25,13 +26,15 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     </Head>
 
     <ProviderTheming emotionCache={emotionCache}>
-      <ProviderTRPCQueryClient>
-        <ProviderSnacks>
-          <ProviderBackend>
-            <Component {...pageProps} />
-          </ProviderBackend>
-        </ProviderSnacks>
-      </ProviderTRPCQueryClient>
+      <ProviderSingleTab>
+        <ProviderTRPCQueryClient>
+          <ProviderSnacks>
+            <ProviderBackend>
+              <Component {...pageProps} />
+            </ProviderBackend>
+          </ProviderSnacks>
+        </ProviderTRPCQueryClient>
+      </ProviderSingleTab>
     </ProviderTheming>
 
     <VercelAnalytics debug={false} />

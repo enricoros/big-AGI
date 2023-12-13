@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { DLLM, DLLMId } from '../store-llms';
-import { findVendorForLlmOrThrow } from '../vendors/vendor.registry';
+import { findVendorForLlmOrThrow } from '../vendors/vendors.registry';
 
 import type { ChatStreamFirstPacketSchema, ChatStreamInputSchema } from './server/openai/openai.streaming';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
@@ -27,7 +27,7 @@ export async function streamChat(
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ): Promise<void> {
   const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  const access = vendor.getAccess(llm._source.setup) as ChatStreamInputSchema['access'];
+  const access = vendor.getTransportAccess(llm._source.setup) as ChatStreamInputSchema['access'];
   return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate);
 }
 
