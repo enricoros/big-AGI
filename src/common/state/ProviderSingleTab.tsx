@@ -24,7 +24,7 @@ export const ProviderSingleTab = (props: { children: React.ReactNode }) => {
       sx={{
         flexGrow: 1,
         display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'center', alignItems: 'center', gap: 2,
-        p: { xs: 3, md: 1 },
+        p: 3,
       }}
     >
 
