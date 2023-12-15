@@ -5,7 +5,7 @@ This guide helps you connect [Ollama](https://ollama.ai) [models](https://ollama
 experience. The integration brings the popular big-AGI features to Ollama, including: voice chats,
 editing tools, models switching, personas, and more.
 
-_Last updated Dec 11, 2023_
+_Last updated Dec 16, 2023_
 
 ![config-local-ollama-0-example.png](pixels/config-ollama-0-example.png)
 
