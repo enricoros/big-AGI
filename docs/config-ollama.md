@@ -36,7 +36,7 @@ For detailed instructions on setting up the Ollama API server, please refer to t
 * You can now switch model/persona dynamically and text/voice chat with the models:<br/>
   <img src="pixels/config-ollama-3-chat.png" alt="config-local-ollama-3-chat.png" width="320">
 
-### Network Troubleshooting
+### ⚠️ Network Troubleshooting
 
 If you get errors about the server having trouble connecting with Ollama, please see 
 [this message](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483) on Issue #276.
