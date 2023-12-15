@@ -27,13 +27,13 @@ For detailed instructions on setting up the Ollama API server, please refer to t
 
 ### Visual Guide
 
-* After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:
+* After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:<br/>
   <img src="pixels/config-ollama-1-models.png" alt="config-local-ollama-1-models.png" width="320">
 
-* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:
+* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:<br/>
   <img src="pixels/config-ollama-2-admin-pull.png" alt="config-local-ollama-2-admin-pull.png" width="320">
 
-* You can now switch model/persona dynamically and text/voice chat with the models:
+* You can now switch model/persona dynamically and text/voice chat with the models:<br/>
   <img src="pixels/config-ollama-3-chat.png" alt="config-local-ollama-3-chat.png" width="320">
 
 ### Network Troubleshooting
