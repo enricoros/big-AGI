@@ -5,8 +5,8 @@ export const env = createEnv({
   server: {
 
     // Backend Postgres, for optional storage via Prisma
-    POSTGRES_PRISMA_URL: z.string().url().optional(),
-    POSTGRES_URL_NON_POOLING: z.string().url().optional(),
+    POSTGRES_PRISMA_URL: z.string().optional(),
+    POSTGRES_URL_NON_POOLING: z.string().optional(),
 
     // LLM: OpenAI
     OPENAI_API_KEY: z.string().optional(),
