@@ -46,7 +46,7 @@ PUPPETEER_WSS_ENDPOINT=
 # Backend Analytics
 BACKEND_ANALYTICS=
 
-# Backend HTTP Basic Authentication
+# Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 ```
@@ -115,10 +115,7 @@ Enable the app to Talk, Draw, and Google things up.
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
 | **Backend**                |                                                                                                                         | 
 | `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
-| `HTTP_BASIC_AUTH_USERNAME` | Username for HTTP Basic Authentication. See the [Authentication](deploy-authentication.md) guide.                       |
+| `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
 
 ---
-
-
-
