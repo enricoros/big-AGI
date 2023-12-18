@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, ButtonGroup, CircularProgress, Divider, Grid, IconButton } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, Divider, Grid, IconButton, Input, FormControl, FormLabel } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -48,6 +48,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [message, setMessage] = React.useState<DMessage | null>(null);
   const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Visualize');
   const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Style');
+  const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
@@ -81,7 +82,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
 
-    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject);
+    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
       await streamChat(diagramLlm.id, diagramPrompt, stepAbortController.signal,
@@ -103,7 +104,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject]);
+  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject, customInstruction]);
 
 
   // [Effect] Auto-abort on unmount
@@ -149,6 +150,12 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <Grid xs={12} xl={6}>
           {llmComponent}
         </Grid>
+        <Grid xs={12} md={6}>
+            <FormControl>
+              <FormLabel>Custom Instruction</FormLabel>
+              <Input title="Custom Instruction" placeholder='e.g. visualize as state' value={customInstruction}  onChange={(e) => setCustomInstruction(e.target.value)} />
+            </FormControl>
+          </Grid>
       </Grid>
     )}
 
