@@ -1,5 +1,6 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
+import { ModelVendorGemini } from '~/modules/llms/vendors/googleai/gemini.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
@@ -14,6 +15,7 @@ import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-l
 const MODEL_VENDOR_REGISTRY = {
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
+  googleai: ModelVendorGemini,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
