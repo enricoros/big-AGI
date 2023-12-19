@@ -17,6 +17,7 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   updated?: number | 0;
   description: string;
   tags: string[]; // UNUSED for now
+  // modelcaps: DModelCapability[];
   contextTokens: number;
   maxOutputTokens: number;
   hidden: boolean;
@@ -30,6 +31,17 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
 }
 
 export type DLLMId = string;
+
+// export type DModelCapability =
+//   | 'input-text'
+//   | 'input-image-data'
+//   | 'input-multipart'
+//   | 'output-text'
+//   | 'output-function'
+//   | 'output-image-data'
+//   | 'if-chat'
+//   | 'if-fast-chat'
+//   ;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';

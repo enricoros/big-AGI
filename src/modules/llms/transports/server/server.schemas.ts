@@ -6,6 +6,10 @@ const pricingSchema = z.object({
   cpmCompletion: z.number().optional(), // Cost per thousand completion tokens
 });
 
+// const rateLimitsSchema = z.object({
+//   reqPerMinute: z.number().optional(),
+// });
+
 const modelDescriptionSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -15,6 +19,7 @@ const modelDescriptionSchema = z.object({
   contextWindow: z.number(),
   maxCompletionTokens: z.number().optional(),
   pricing: pricingSchema.optional(),
+  // rateLimits: rateLimitsSchema.optional(),
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
   hidden: z.boolean().optional(),
 });
