@@ -7,8 +7,18 @@ import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
-import type { IModelVendor, ModelVendorId, ModelVendorRegistryType } from './IModelVendor';
+import type { IModelVendor } from './IModelVendor';
 import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
+
+export type ModelVendorId =
+  | 'anthropic'
+  | 'azure'
+  | 'localai'
+  | 'mistral'
+  | 'ollama'
+  | 'oobabooga'
+  | 'openai'
+  | 'openrouter';
 
 /** Global: Vendor Instances Registry **/
 const MODEL_VENDOR_REGISTRY: ModelVendorRegistryType = {
@@ -21,6 +31,8 @@ const MODEL_VENDOR_REGISTRY: ModelVendorRegistryType = {
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
 };
+
+type ModelVendorRegistryType = Record<ModelVendorId, IModelVendor>;
 
 const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';
 

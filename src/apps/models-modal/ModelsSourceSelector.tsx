@@ -5,9 +5,9 @@ import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Op
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { type DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { type IModelVendor, type ModelVendorId } from '~/modules/llms/vendors/IModelVendor';
-import { createModelSourceForVendor, findAllVendors, findVendorById } from '~/modules/llms/vendors/vendors.registry';
+import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
+import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
+import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';

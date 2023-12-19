@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import type { IModelVendor, ModelVendorId } from './vendors/IModelVendor';
+import type { IModelVendor } from './vendors/IModelVendor';
+import type { ModelVendorId } from './vendors/vendors.registry';
 import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vendor';
 
 

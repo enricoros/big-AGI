@@ -1,12 +1,9 @@
 import type React from 'react';
 
 import type { DLLM, DModelSourceId } from '../store-llms';
+import type { ModelVendorId } from './vendors.registry';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
 
-
-export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'mistral' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
-
-export type ModelVendorRegistryType = Record<ModelVendorId, IModelVendor>;
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
   readonly id: ModelVendorId;
