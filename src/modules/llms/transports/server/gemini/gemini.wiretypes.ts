@@ -38,6 +38,8 @@ export const geminiModelsListOutputSchema = z.object({
 
 // /v1/{model=models/*}:generateContent, /v1beta/{model=models/*}:streamGenerateContent
 
+// Request
+
 const geminiContentPartSchema = z.union([
 
   // TextPart
@@ -114,8 +116,10 @@ const geminiGenerationConfigSchema = z.object({
 });
 
 const geminiContentSchema = z.object({
-  parts: z.array(geminiContentPartSchema),            // Ordered Parts that constitute a single message. Parts may have different MIME types.
-  role: z.enum(['user', 'model']).optional(),   // Optional. The producer of the content. Must be either 'user' or 'model'.
+  // Must be either 'user' or 'model'. Optional but must be set if there are multiple "Content" objects in the parent array.
+  role: z.enum(['user', 'model']).optional(),
+  // Ordered Parts that constitute a single message. Parts may have different MIME types.
+  parts: z.array(geminiContentPartSchema),
 });
 
 export const geminiGenerateContentRequest = z.object({
@@ -127,6 +131,8 @@ export const geminiGenerateContentRequest = z.object({
 
 export type GeminiGenerateContentRequest = z.infer<typeof geminiGenerateContentRequest>;
 
+
+// Response
 
 const geminiHarmProbabilitySchema = z.enum([
   'HARM_PROBABILITY_UNSPECIFIED',
