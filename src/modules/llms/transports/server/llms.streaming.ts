@@ -4,12 +4,26 @@ import { createParser as createEventsourceParser, EventSourceParseCallback, Even
 
 import { createEmptyReadableStream, debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE, serverFetchOrThrow } from '~/server/wire';
 
-import type { AnthropicWire } from '../anthropic/anthropic.wiretypes';
-import type { OpenAIWire } from './openai.wiretypes';
-import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from '../ollama/ollama.router';
-import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from '../anthropic/anthropic.router';
-import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai.router';
-import { wireOllamaChunkedOutputSchema } from '../ollama/ollama.wiretypes';
+
+// Anthropic server imports
+import type { AnthropicWire } from './anthropic/anthropic.wiretypes';
+import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic/anthropic.router';
+
+// Ollama server imports
+import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
+import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
+
+// OpenAI server imports
+import type { OpenAIWire } from './openai/openai.wiretypes';
+import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
+
+
+/**
+ * Event stream formats
+ *  - 'sse' is the default format, and is used by all vendors except Ollama
+ *  - 'json-nl' is used by Ollama
+ */
+type EventStreamFormat = 'sse' | 'json-nl';
 
 
 /**
@@ -20,46 +34,49 @@ import { wireOllamaChunkedOutputSchema } from '../ollama/ollama.wiretypes';
  * The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
  * communicate parameters before the text starts flowing to the client.
  */
-export type AIStreamParser = (data: string) => { text: string, close: boolean };
-
-type EventStreamFormat = 'sse' | 'json-nl';
+type AIStreamParser = (data: string) => { text: string, close: boolean };
 
 
 const chatStreamInputSchema = z.object({
   access: z.union([anthropicAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
-  model: openAIModelSchema, history: openAIHistorySchema,
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
 });
 export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
 
-const chatStreamFirstPacketSchema = z.object({
+const chatStreamFirstOutputPacketSchema = z.object({
   model: z.string(),
 });
-export type ChatStreamFirstPacketSchema = z.infer<typeof chatStreamFirstPacketSchema>;
+export type ChatStreamFirstOutputPacketSchema = z.infer<typeof chatStreamFirstOutputPacketSchema>;
 
 
-export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Response> {
+export async function llmStreamingRelayHandler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
-  const { access, model, history } = chatStreamInputSchema.parse(await req.json());
+  const body = await req.json();
+  const { access, model, history } = chatStreamInputSchema.parse(body);
 
-  // begin event streaming from the OpenAI API
-  let headersUrl: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
+  // access/dialect dependent setup:
+  //  - requestAccess: the headers and URL to use for the upstream API call
+  //  - eventStreamFormat: the format of the event stream (sse or json-nl)
+  //  - vendorStreamParser: the parser to use for the event stream
   let upstreamResponse: Response;
-  let vendorStreamParser: AIStreamParser;
+  let requestAccess: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
   let eventStreamFormat: EventStreamFormat = 'sse';
+  let vendorStreamParser: AIStreamParser;
   try {
 
     // prepare the API request data
     let body: object;
     switch (access.dialect) {
       case 'anthropic':
-        headersUrl = anthropicAccess(access, '/v1/complete');
+        requestAccess = anthropicAccess(access, '/v1/complete');
         body = anthropicChatCompletionPayload(model, history, true);
         vendorStreamParser = createAnthropicStreamParser();
         break;
 
       case 'ollama':
-        headersUrl = ollamaAccess(access, OLLAMA_PATH_CHAT);
+        requestAccess = ollamaAccess(access, OLLAMA_PATH_CHAT);
         body = ollamaChatCompletionPayload(model, history, true);
         eventStreamFormat = 'json-nl';
         vendorStreamParser = createOllamaChatCompletionStreamParser();
@@ -71,27 +88,27 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
       case 'oobabooga':
       case 'openai':
       case 'openrouter':
-        headersUrl = openAIAccess(access, model.id, '/v1/chat/completions');
+        requestAccess = openAIAccess(access, model.id, '/v1/chat/completions');
         body = openAIChatCompletionPayload(model, history, null, null, 1, true);
         vendorStreamParser = createOpenAIStreamParser();
         break;
     }
 
     if (SERVER_DEBUG_WIRE)
-      console.log('-> streaming:', debugGenerateCurlCommand('POST', headersUrl.url, headersUrl.headers, body));
+      console.log('-> streaming:', debugGenerateCurlCommand('POST', requestAccess.url, requestAccess.headers, body));
 
     // POST to our API route
-    upstreamResponse = await serverFetchOrThrow(headersUrl.url, 'POST', headersUrl.headers, body);
+    upstreamResponse = await serverFetchOrThrow(requestAccess.url, 'POST', requestAccess.headers, body);
 
   } catch (error: any) {
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
 
     // server-side admins message
-    console.error(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, headersUrl?.url);
+    console.error(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, requestAccess?.url);
 
     // client-side users visible message
     return new NextResponse(`[Issue] ${access.dialect}: ${fetchOrVendorError}`
-      + (process.env.NODE_ENV === 'development' ? ` · [URL: ${headersUrl?.url}]` : ''), { status: 500 });
+      + (process.env.NODE_ENV === 'development' ? ` · [URL: ${requestAccess?.url}]` : ''), { status: 500 });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
@@ -103,8 +120,9 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
    * NOTE: we have not benchmarked to see if there is performance impact by using this approach - we do want to have
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
+  const transformUpstreamToBigAgiClient = createEventStreamTransformer(vendorStreamParser, eventStreamFormat, access.dialect);
   const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(createEventStreamTransformer(vendorStreamParser, eventStreamFormat, access.dialect));
+    .pipeThrough(transformUpstreamToBigAgiClient);
 
   return new NextResponse(chatResponseStream, {
     status: 200,
@@ -115,108 +133,38 @@ export async function openaiStreamingRelayHandler(req: NextRequest): Promise<Res
 }
 
 
-/// Event Parsers
-
-function createAnthropicStreamParser(): AIStreamParser {
-  let hasBegun = false;
-
-  return (data: string) => {
-
-    const json: AnthropicWire.Complete.Response = JSON.parse(data);
-    let text = json.completion;
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun) {
-      hasBegun = true;
-      const firstPacket: ChatStreamFirstPacketSchema = { model: json.model };
-      text = JSON.stringify(firstPacket) + text;
-    }
-
-    return { text, close: false };
-  };
-}
-
-function createOllamaChatCompletionStreamParser(): AIStreamParser {
-  let hasBegun = false;
-
-  return (data: string) => {
-
-    // parse the JSON chunk
-    let wireJsonChunk: any;
-    try {
-      wireJsonChunk = JSON.parse(data);
-    } catch (error: any) {
-      // log the malformed data to the console, and rethrow to transmit as 'error'
-      console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
-      throw error;
-    }
-
-    // validate chunk
-    const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
-
-    // pass through errors from Ollama
-    if ('error' in chunk)
-      throw new Error(chunk.error);
-
-    // process output
-    let text = chunk.message?.content || /*chunk.response ||*/ '';
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun && chunk.model) {
-      hasBegun = true;
-      const firstPacket: ChatStreamFirstPacketSchema = { model: chunk.model };
-      text = JSON.stringify(firstPacket) + text;
-    }
-
-    return { text, close: chunk.done };
-  };
-}
-
-function createOpenAIStreamParser(): AIStreamParser {
-  let hasBegun = false;
-  let hasWarned = false;
-
-  return (data: string) => {
-
-    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
-
-    // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
-    if (json.error)
-      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
-
-    // [OpenAI] if there's a warning, log it once
-    if (json.warning && !hasWarned) {
-      hasWarned = true;
-      console.log('/api/llms/stream: OpenAI upstream warning:', json.warning);
-    }
-
-    if (json.choices.length !== 1) {
-      // [Azure] we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
-      if (json.id === '' && json.object === '' && json.model === '')
-        return { text: '', close: false };
-      throw new Error(`Expected 1 completion, got ${json.choices.length}`);
-    }
-
-    const index = json.choices[0].index;
-    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
-      throw new Error(`Expected completion index 0, got ${index}`);
-    let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun) {
-      hasBegun = true;
-      const firstPacket: ChatStreamFirstPacketSchema = { model: json.model };
-      text = JSON.stringify(firstPacket) + text;
-    }
-
-    // [LocalAI] workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
-    const close = !!json.choices[0].finish_reason;
-    return { text, close };
-  };
-}
-
-
 // Event Stream Transformers
+
+/**
+ * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
+ * Ollama is the only vendor that uses this format.
+ */
+function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSourceParser {
+  let accumulator: string = '';
+  return {
+    // feeds a new chunk to the parser - we accumulate in case of partial data, and only execute on full lines
+    feed: (chunk: string): void => {
+      accumulator += chunk;
+      if (accumulator.endsWith('\n')) {
+        for (const jsonString of accumulator.split('\n').filter(line => !!line)) {
+          const mimicEvent: ParsedEvent = {
+            type: 'event',
+            id: undefined,
+            event: undefined,
+            data: jsonString,
+          };
+          onParse(mimicEvent);
+        }
+        accumulator = '';
+      }
+    },
+
+    // resets the parser state - not useful with our driving of the parser
+    reset: (): void => {
+      console.error('createJsonNewlineParser.reset() not implemented');
+    },
+  };
+}
 
 /**
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
@@ -278,33 +226,103 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
   });
 }
 
-/**
- * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
- * Ollama is the only vendor that uses this format.
- */
-function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSourceParser {
-  let accumulator: string = '';
-  return {
-    // feeds a new chunk to the parser - we accumulate in case of partial data, and only execute on full lines
-    feed: (chunk: string): void => {
-      accumulator += chunk;
-      if (accumulator.endsWith('\n')) {
-        for (const jsonString of accumulator.split('\n').filter(line => !!line)) {
-          const mimicEvent: ParsedEvent = {
-            type: 'event',
-            id: undefined,
-            event: undefined,
-            data: jsonString,
-          };
-          onParse(mimicEvent);
-        }
-        accumulator = '';
-      }
-    },
 
-    // resets the parser state - not useful with our driving of the parser
-    reset: (): void => {
-      console.error('createJsonNewlineParser.reset() not implemented');
-    },
+/// Stream Parsers
+
+function createAnthropicStreamParser(): AIStreamParser {
+  let hasBegun = false;
+
+  return (data: string) => {
+
+    const json: AnthropicWire.Complete.Response = JSON.parse(data);
+    let text = json.completion;
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: json.model };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    return { text, close: false };
+  };
+}
+
+function createOllamaChatCompletionStreamParser(): AIStreamParser {
+  let hasBegun = false;
+
+  return (data: string) => {
+
+    // parse the JSON chunk
+    let wireJsonChunk: any;
+    try {
+      wireJsonChunk = JSON.parse(data);
+    } catch (error: any) {
+      // log the malformed data to the console, and rethrow to transmit as 'error'
+      console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
+      throw error;
+    }
+
+    // validate chunk
+    const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
+
+    // pass through errors from Ollama
+    if ('error' in chunk)
+      throw new Error(chunk.error);
+
+    // process output
+    let text = chunk.message?.content || /*chunk.response ||*/ '';
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun && chunk.model) {
+      hasBegun = true;
+      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: chunk.model };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    return { text, close: chunk.done };
+  };
+}
+
+function createOpenAIStreamParser(): AIStreamParser {
+  let hasBegun = false;
+  let hasWarned = false;
+
+  return (data: string) => {
+
+    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+
+    // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
+    if (json.error)
+      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
+
+    // [OpenAI] if there's a warning, log it once
+    if (json.warning && !hasWarned) {
+      hasWarned = true;
+      console.log('/api/llms/stream: OpenAI upstream warning:', json.warning);
+    }
+
+    if (json.choices.length !== 1) {
+      // [Azure] we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
+      if (json.id === '' && json.object === '' && json.model === '')
+        return { text: '', close: false };
+      throw new Error(`Expected 1 completion, got ${json.choices.length}`);
+    }
+
+    const index = json.choices[0].index;
+    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
+      throw new Error(`Expected completion index 0, got ${index}`);
+    let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: json.model };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    // [LocalAI] workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
+    const close = !!json.choices[0].finish_reason;
+    return { text, close };
   };
 }

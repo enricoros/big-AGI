@@ -3,7 +3,7 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { DLLM, DLLMId } from '../store-llms';
 import { findVendorForLlmOrThrow } from '../vendors/vendors.registry';
 
-import type { ChatStreamFirstPacketSchema, ChatStreamInputSchema } from './server/openai/openai.streaming';
+import type { ChatStreamFirstOutputPacketSchema, ChatStreamInputSchema } from './server/llms.streaming';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { VChatMessageIn } from './chatGenerate';
 
@@ -131,7 +131,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       incrementalText = incrementalText.substring(endOfJson + 1);
       parsedFirstPacket = true;
       try {
-        const parsed: ChatStreamFirstPacketSchema = JSON.parse(json);
+        const parsed: ChatStreamFirstOutputPacketSchema = JSON.parse(json);
         onUpdate({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore
