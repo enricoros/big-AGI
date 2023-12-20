@@ -27,7 +27,7 @@ import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHi
  *  - 'sse' is the default format, and is used by all vendors except Ollama
  *  - 'json-nl' is used by Ollama
  */
-type EventStreamFormat = 'sse' | 'json-nl';
+type MuxingFormat = 'sse' | 'json-nl';
 
 
 /**
@@ -62,11 +62,11 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
 
   // access/dialect dependent setup:
   //  - requestAccess: the headers and URL to use for the upstream API call
-  //  - eventStreamFormat: the format of the event stream (sse or json-nl)
+  //  - muxingFormat: the format of the event stream (sse or json-nl)
   //  - vendorStreamParser: the parser to use for the event stream
   let upstreamResponse: Response;
   let requestAccess: { headers: HeadersInit, url: string } = { headers: {}, url: '' };
-  let eventStreamFormat: EventStreamFormat = 'sse';
+  let muxingFormat: MuxingFormat = 'sse';
   let vendorStreamParser: AIStreamParser;
   try {
 
@@ -88,7 +88,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
       case 'ollama':
         requestAccess = ollamaAccess(access, OLLAMA_PATH_CHAT);
         body = ollamaChatCompletionPayload(model, history, true);
-        eventStreamFormat = 'json-nl';
+        muxingFormat = 'json-nl';
         vendorStreamParser = createStreamParserOllama();
         break;
 
@@ -131,7 +131,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const transformUpstreamToBigAgiClient = createEventStreamTransformer(
-    eventStreamFormat, vendorStreamParser, access.dialect,
+    muxingFormat, vendorStreamParser, access.dialect,
   );
   const chatResponseStream =
     (upstreamResponse.body || createEmptyReadableStream())
@@ -152,7 +152,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
  * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
  * Ollama is the only vendor that uses this format.
  */
-function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSourceParser {
+function createDemuxerJsonNewline(onParse: EventSourceParseCallback): EventSourceParser {
   let accumulator: string = '';
   return {
     // feeds a new chunk to the parser - we accumulate in case of partial data, and only execute on full lines
@@ -174,7 +174,7 @@ function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSource
 
     // resets the parser state - not useful with our driving of the parser
     reset: (): void => {
-      console.error('createJsonNewlineParser.reset() not implemented');
+      console.error('createDemuxerJsonNewline.reset() not implemented');
     },
   };
 }
@@ -183,7 +183,7 @@ function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSource
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
  */
-function createEventStreamTransformer(inputFormat: EventStreamFormat, vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
+function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
@@ -226,10 +226,10 @@ function createEventStreamTransformer(inputFormat: EventStreamFormat, vendorText
         }
       };
 
-      if (inputFormat === 'sse')
+      if (muxingFormat === 'sse')
         eventSourceParser = createEventsourceParser(onNewEvent);
-      else if (inputFormat === 'json-nl')
-        eventSourceParser = createJsonNewlineParser(onNewEvent);
+      else if (muxingFormat === 'json-nl')
+        eventSourceParser = createDemuxerJsonNewline(onNewEvent);
     },
 
     // stream=true is set because the data is not guaranteed to be final and un-chunked
