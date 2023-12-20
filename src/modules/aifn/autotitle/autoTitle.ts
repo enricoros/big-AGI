@@ -1,4 +1,4 @@
-import { llmChatGenerateOrThrow } from '~/modules/llms/client/llmChatGenerate';
+import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';

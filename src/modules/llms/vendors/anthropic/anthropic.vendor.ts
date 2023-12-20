@@ -5,7 +5,8 @@ import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageOut } from '../../client/llm.client.types';
+import type { VChatMessageOut } from '../../llm.client';
+import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -76,5 +77,8 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
       throw new Error(errorMessage);
     }
   },
+
+  // Chat Generate (streaming) with Functions
+  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow } from '~/modules/llms/client/llmChatGenerate';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export interface LLMChainStep {

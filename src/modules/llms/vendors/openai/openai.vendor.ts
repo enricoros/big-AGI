@@ -5,7 +5,8 @@ import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
-import type { VChatMessageOrFunctionCallOut } from '../../client/llm.client.types';
+import type { VChatMessageOrFunctionCallOut } from '../../llm.client';
+import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
@@ -83,5 +84,8 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
       throw new Error(errorMessage);
     }
   },
+
+  // Chat Generate (streaming) with Functions
+  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

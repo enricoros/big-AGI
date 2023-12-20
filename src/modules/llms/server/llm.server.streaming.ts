@@ -9,6 +9,9 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, safeErrorString, S
 import type { AnthropicWire } from './anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic/anthropic.router';
 
+// Gemini server imports
+import { geminiAccessSchema } from './gemini/gemini.router';
+
 // Ollama server imports
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
@@ -37,24 +40,24 @@ type EventStreamFormat = 'sse' | 'json-nl';
 type AIStreamParser = (data: string) => { text: string, close: boolean };
 
 
-const chatStreamInputSchema = z.object({
-  access: z.union([anthropicAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
+const chatStreamingInputSchema = z.object({
+  access: z.union([anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
   model: openAIModelSchema,
   history: openAIHistorySchema,
 });
-export type ChatStreamInputSchema = z.infer<typeof chatStreamInputSchema>;
+export type ChatStreamingInputSchema = z.infer<typeof chatStreamingInputSchema>;
 
-const chatStreamFirstOutputPacketSchema = z.object({
+const chatStreamingFirstOutputPacketSchema = z.object({
   model: z.string(),
 });
-export type ChatStreamFirstOutputPacketSchema = z.infer<typeof chatStreamFirstOutputPacketSchema>;
+export type ChatStreamingFirstOutputPacketSchema = z.infer<typeof chatStreamingFirstOutputPacketSchema>;
 
 
 export async function llmStreamingRelayHandler(req: NextRequest): Promise<Response> {
 
   // inputs - reuse the tRPC schema
   const body = await req.json();
-  const { access, model, history } = chatStreamInputSchema.parse(body);
+  const { access, model, history } = chatStreamingInputSchema.parse(body);
 
   // access/dialect dependent setup:
   //  - requestAccess: the headers and URL to use for the upstream API call
@@ -240,7 +243,7 @@ function createAnthropicStreamParser(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: json.model };
+      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: json.model };
       text = JSON.stringify(firstPacket) + text;
     }
 
@@ -276,7 +279,7 @@ function createOllamaChatCompletionStreamParser(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun && chunk.model) {
       hasBegun = true;
-      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: chunk.model };
+      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: chunk.model };
       text = JSON.stringify(firstPacket) + text;
     }
 
@@ -317,7 +320,7 @@ function createOpenAIStreamParser(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamFirstOutputPacketSchema = { model: json.model };
+      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: json.model };
       text = JSON.stringify(firstPacket) + text;
     }
 

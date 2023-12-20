@@ -6,7 +6,8 @@ import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageOut } from '../../client/llm.client.types';
+import type { VChatMessageOut } from '../../llm.client';
+import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
@@ -85,5 +86,8 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
       throw new Error(errorMessage);
     }
   },
+
+  // Chat Generate (streaming) with Functions
+  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

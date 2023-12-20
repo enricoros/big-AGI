@@ -1,5 +1,4 @@
-import type { VChatFunctionIn } from '~/modules/llms/client/llm.client.types';
-import { llmChatGenerateOrThrow } from '~/modules/llms/client/llmChatGenerate';
+import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
