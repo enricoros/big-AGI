@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/app.theme';
 
-import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
 
 export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {

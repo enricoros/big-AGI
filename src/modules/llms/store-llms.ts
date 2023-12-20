@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
-import type { IModelVendor, ModelVendorId } from './vendors/IModelVendor';
+import type { ModelVendorId } from './vendors/vendors.registry';
 import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vendor';
 
 
@@ -16,6 +16,7 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   updated?: number | 0;
   description: string;
   tags: string[]; // UNUSED for now
+  // modelcaps: DModelCapability[];
   contextTokens: number;
   maxOutputTokens: number;
   hidden: boolean;
@@ -29,6 +30,17 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
 }
 
 export type DLLMId = string;
+
+// export type DModelCapability =
+//   | 'input-text'
+//   | 'input-image-data'
+//   | 'input-multipart'
+//   | 'output-text'
+//   | 'output-function'
+//   | 'output-image-data'
+//   | 'if-chat'
+//   | 'if-fast-chat'
+//   ;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
@@ -269,32 +281,3 @@ export function useChatLLM() {
   }, shallow);
 }
 
-/**
- * Source-specific read/write - great time saver
- */
-export function useSourceSetup<TSourceSetup, TAccess>(sourceId: DModelSourceId, vendor: IModelVendor<TSourceSetup, TAccess>) {
-
-  // invalidates only when the setup changes
-  const { updateSourceSetup, ...rest } = useModelsStore(state => {
-
-    // find the source (or null)
-    const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) as DModelSource<TSourceSetup> ?? null;
-
-    // (safe) source-derived properties
-    const sourceSetupValid = (source?.setup && vendor?.validateSetup) ? vendor.validateSetup(source.setup as TSourceSetup) : false;
-    const sourceLLMs = source ? state.llms.filter(llm => llm._source === source) : [];
-    const access = vendor.getTransportAccess(source?.setup);
-
-    return {
-      source,
-      access,
-      sourceHasLLMs: !!sourceLLMs.length,
-      sourceSetupValid,
-      updateSourceSetup: state.updateSourceSetup,
-    };
-  }, shallow);
-
-  // convenience function for this source
-  const updateSetup = (partialSetup: Partial<TSourceSetup>) => updateSourceSetup<TSourceSetup>(sourceId, partialSetup);
-  return { ...rest, updateSetup };
-}

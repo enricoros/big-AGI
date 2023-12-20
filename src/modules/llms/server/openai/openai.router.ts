@@ -8,7 +8,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 import { Brand } from '~/common/app.config';
 
 import type { OpenAIWire } from './openai.wiretypes';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
 
