@@ -95,16 +95,19 @@ const geminiHarmCategorySchema = z.enum([
   'HARM_CATEGORY_DANGEROUS_CONTENT',
 ]);
 
+export const geminiBlockSafetyLevelSchema = z.enum([
+  'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
+  'BLOCK_LOW_AND_ABOVE',
+  'BLOCK_MEDIUM_AND_ABOVE',
+  'BLOCK_ONLY_HIGH',
+  'BLOCK_NONE',
+]);
+
+export type GeminiBlockSafetyLevel = z.infer<typeof geminiBlockSafetyLevelSchema>;
 
 const geminiSafetySettingSchema = z.object({
   category: geminiHarmCategorySchema,
-  threshold: z.enum([
-    'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
-    'BLOCK_LOW_AND_ABOVE',
-    'BLOCK_MEDIUM_AND_ABOVE',
-    'BLOCK_ONLY_HIGH',
-    'BLOCK_NONE',
-  ]),
+  threshold: geminiBlockSafetyLevelSchema,
 });
 
 const geminiGenerationConfigSchema = z.object({
@@ -176,10 +179,10 @@ export const geminiGeneratedContentResponseSchema = z.object({
     }).optional(),
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(GroundingAttribution).optional(), // This field is populated for GenerateAnswer calls.
-  })),
+  })).optional(),
   // NOTE: promptFeedback is only send in the first chunk in a streaming response
   promptFeedback: z.object({
     blockReason: z.enum(['BLOCK_REASON_UNSPECIFIED', 'SAFETY', 'OTHER']).optional(),
-    safetyRatings: z.array(geminiSafetyRatingSchema),
+    safetyRatings: z.array(geminiSafetyRatingSchema).optional(),
   }).optional(),
 });

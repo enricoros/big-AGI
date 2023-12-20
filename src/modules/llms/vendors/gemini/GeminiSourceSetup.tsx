@@ -1,11 +1,16 @@
 import * as React from 'react';
 
+import { FormControl, FormHelperText, Option, Select } from '@mui/joy';
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId } from '../../store-llms';
+import type { DModelSourceId } from '../../store-llms';
+import type { GeminiBlockSafetyLevel } from '../../server/gemini/gemini.wiretypes';
 import { useLlmUpdateModels } from '../useLlmUpdateModels';
 import { useSourceSetup } from '../useSourceSetup';
 
@@ -13,6 +18,14 @@ import { ModelVendorGemini } from './gemini.vendor';
 
 
 const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
+
+const SAFETY_OPTIONS: { value: GeminiBlockSafetyLevel, label: string }[] = [
+  { value: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED', label: 'Default' },
+  { value: 'BLOCK_LOW_AND_ABOVE', label: 'Low and above' },
+  { value: 'BLOCK_MEDIUM_AND_ABOVE', label: 'Medium and above' },
+  { value: 'BLOCK_ONLY_HIGH', label: 'Only high' },
+  { value: 'BLOCK_NONE', label: 'None' },
+];
 
 
 export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -22,7 +35,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
     useSourceSetup(props.sourceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey } = access;
+  const { geminiKey, minSafetyLevel } = access;
 
   const needsUserKey = !ModelVendorGemini.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && sourceSetupValid);
@@ -44,6 +57,34 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Safety Settings'
+                      description='Threshold' />
+      <Select
+        variant='outlined'
+        value={minSafetyLevel} onChange={(_event, value) => value && updateSetup({ minSafetyLevel: value })}
+        startDecorator={<HealthAndSafetyIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
+        // indicator={<KeyboardArrowDownIcon />}
+        slotProps={{
+          root: { sx: { width: '100%' } },
+          indicator: { sx: { opacity: 0.5 } },
+          button: { sx: { whiteSpace: 'inherit' } },
+        }}
+      >
+        {SAFETY_OPTIONS.map(option => (
+          <Option key={'gemini-safety-' + option.value} value={option.value}>{option.label}</Option>
+        ))}
+      </Select>
+    </FormControl>
+
+    <FormHelperText sx={{ display: 'block' }}>
+      Gemini has <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
+      adjustable safety settings</Link> on four categories: Harassment, Hate speech,
+      Sexually explicit, and Dangerous content, in addition to non-adjustable built-in filters.
+      By default, the model will block content with <em>medium and above</em> probability
+      of being unsafe.
+    </FormHelperText>
 
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError}

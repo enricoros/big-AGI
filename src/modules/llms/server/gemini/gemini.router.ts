@@ -12,7 +12,7 @@ import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.ty
 
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
-import { GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
+import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelSchema, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
 
 
 // Default hosts
@@ -49,7 +49,7 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
  *  - System messages = [User, Model'Ok']
  *  - User and Assistant messages are coalesced into a single message (e.g. [User, User, Assistant, Assistant, User] -> [User[2], Assistant[2], User[1]])
  */
-export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, n: number): GeminiGenerateContentRequest => {
+export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, safety: GeminiBlockSafetyLevel, n: number): GeminiGenerateContentRequest => {
 
   // convert the history to a Gemini format
   const contents: GeminiContentSchema[] = [];
@@ -82,12 +82,12 @@ export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, histo
       ...(model.maxTokens && { maxOutputTokens: model.maxTokens }),
       temperature: model.temperature,
     },
-    // safetySettings: [
-    //   { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-    //   { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-    //   { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-    //   { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-    // ],
+    safetySettings: safety !== 'HARM_BLOCK_THRESHOLD_UNSPECIFIED' ? [
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: safety },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: safety },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: safety },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: safety },
+    ] : undefined,
   };
 };
 
@@ -108,6 +108,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 export const geminiAccessSchema = z.object({
   dialect: z.enum(['gemini']),
   geminiKey: z.string(),
+  minSafetyLevel: geminiBlockSafetyLevelSchema,
 });
 export type GeminiAccessSchema = z.infer<typeof geminiAccessSchema>;
 
@@ -123,6 +124,10 @@ const chatGenerateInputSchema = z.object({
 });
 
 
+/**
+ * See https://github.com/google/generative-ai-js/tree/main/packages/main/src for
+ * the official Google implementation.
+ */
 export const llmGeminiRouter = createTRPCRouter({
 
   /* [Gemini] models.list = /v1beta/models */
@@ -184,7 +189,7 @@ export const llmGeminiRouter = createTRPCRouter({
     .mutation(async ({ input: { access, history, model } }) => {
 
       // generate the content
-      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentTextPayload(model, history, 1), geminiModelsGenerateContentPath);
+      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1), geminiModelsGenerateContentPath);
       const generation = geminiGeneratedContentResponseSchema.parse(wireGeneration);
 
       // only use the first result (and there should be only one)
