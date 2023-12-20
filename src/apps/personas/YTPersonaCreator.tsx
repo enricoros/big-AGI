@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tooltip, Typography, Tabs, TabList, Tab, TabPanel } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -67,6 +67,7 @@ export function YTPersonaCreator() {
   const [videoURL, setVideoURL] = React.useState('');
   const [videoID, setVideoID] = React.useState('');
   const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
+  const [personaText, setPersonaText] = React.useState('');
 
   // external state
   const [diagramLlm, llmComponent] = useFormRadioLlmType();
@@ -93,41 +94,60 @@ export function YTPersonaCreator() {
     }
   };
 
+  // New handler for persona text change
+  const handlePersonaTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPersonaText(e.target.value);
+  };
+
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-      <YouTubeIcon sx={{ color: '#f00' }} />
-      <Typography level='title-lg'>
-        YouTube -&gt; AI persona
-      </Typography>
-    </Box>
+    <Typography level='title-sm' mb={4}>
+          AI Persona from YouTube or text
+    </Typography>
+    <Tabs defaultValue={0}>
+      <TabList>
+        <Tab>From YouTube Video</Tab>
+        <Tab>From Text</Tab>
+      </TabList>
+      <TabPanel value={0}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+          <YouTubeIcon sx={{ color: '#f00' }} />
+          <Typography level="title-lg">YouTube -&gt; AI persona</Typography>
+        </Box>
 
-    <form onSubmit={handleFetchTranscript}>
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
-        <Input
-          required
-          type='url'
-          fullWidth
-          variant='outlined'
-          placeholder='YouTube Video URL'
-          value={videoURL} onChange={handleVideoIdChange}
-          endDecorator={
-            <IconButton
-              variant='outlined' color='neutral'
-              onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}
-            >
-              <WhatshotIcon />
-            </IconButton>
-          }
-        />
-        <Button
-          type='submit'
-          variant='solid' disabled={isFetching || isTransforming} loading={isFetching}
-          sx={{ minWidth: 120 }}>
+        <form onSubmit={handleFetchTranscript}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <Input
+              required
+              type="url"
+              fullWidth
+              variant="outlined"
+              placeholder="YouTube Video URL"
+              value={videoURL}
+              onChange={handleVideoIdChange}
+              endDecorator={
+                <IconButton variant="outlined" color="neutral" onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
+                  <WhatshotIcon />
+                </IconButton>
+              }
+            />
+            <Button type="submit" variant="solid" disabled={isFetching || isTransforming || !videoURL  } loading={isFetching} sx={{ minWidth: 120 }}>
+              Create
+            </Button>
+          </Box>
+        </form>
+      </TabPanel>
+      <TabPanel value={1}>
+        {/* New text area for users to paste copied text */}
+        <Typography level="title-md" sx={{ mb: 1 }}>
+          Paste your text here
+        </Typography>
+        <textarea placeholder="Paste your text here..." value={personaText} onChange={handlePersonaTextChange} style={{ width: '100%', minHeight: '100px' }} />
+        <Button variant="solid" disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ mt: 1, mb: 2 }}>
           Create
         </Button>
-      </Box>
-    </form>
+      </TabPanel>
+    </Tabs>
 
     {/* LLM selector (chat vs fast) */}
     {!isTransforming && !isFinished && llmComponent}
