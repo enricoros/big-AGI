@@ -84,8 +84,8 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
               <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <GoodTooltip title={ni.versionName || null} placement='top-start'>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0 }}>
+                  <GoodTooltip title={ni.versionName ? `${ni.versionName} ${ni.versionMoji || ''}` : null} placement='top-start'>
                     <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
                       {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ${ni.versionName}` : `Version ${ni.versionCode}:`}
                     </Typography>
