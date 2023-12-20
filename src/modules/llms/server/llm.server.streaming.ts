@@ -81,7 +81,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
 
       case 'gemini':
         requestAccess = geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath);
-        body = geminiGenerateContentTextPayload(model, history, 1);
+        body = geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1);
         vendorStreamParser = createStreamParserGemini(model.id.replace('models/', ''));
         break;
 

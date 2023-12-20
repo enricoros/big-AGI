@@ -5,6 +5,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
+import type { GeminiBlockSafetyLevel } from '../../server/gemini/gemini.wiretypes';
 import type { IModelVendor } from '../IModelVendor';
 import type { VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
@@ -16,6 +17,7 @@ import { GeminiSourceSetup } from './GeminiSourceSetup';
 
 export interface SourceSetupGemini {
   geminiKey: string;
+  minSafetyLevel: GeminiBlockSafetyLevel;
 }
 
 export interface LLMOptionsGemini {
@@ -45,6 +47,7 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
   // functions
   initializeSetup: () => ({
     geminiKey: '',
+    minSafetyLevel: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
   }),
   validateSetup: (setup) => {
     return setup.geminiKey?.length > 0;
@@ -52,6 +55,7 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
   getTransportAccess: (partialSetup): GeminiAccessSchema => ({
     dialect: 'gemini',
     geminiKey: partialSetup?.geminiKey || '',
+    minSafetyLevel: partialSetup?.minSafetyLevel || 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
   }),
 
   // List Models
@@ -89,4 +93,5 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
 
   // Chat Generate (streaming) with Functions
   streamingChatGenerateOrThrow: unifiedStreamingClient,
+
 };
