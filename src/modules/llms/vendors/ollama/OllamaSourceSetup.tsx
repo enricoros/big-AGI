@@ -8,10 +8,11 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL } from '~/common/util/urlUtils';
 
-import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
-import { ModelVendorOllama, ollamaListModelsQuery } from './ollama.vendor';
+import { ModelVendorOllama } from './ollama.vendor';
 import { OllamaAdministration } from './OllamaAdministration';
 
 
@@ -33,7 +34,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ollamaListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ModelVendorOllama, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
 

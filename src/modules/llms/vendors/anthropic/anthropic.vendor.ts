@@ -4,8 +4,8 @@ import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
-import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
+import type { IModelVendor } from '../IModelVendor';
+import type { VChatMessageOut } from '../../client/llm.client.types';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -42,46 +42,39 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
     anthropicHost: partialSetup?.anthropicHost || null,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return anthropicCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, /*null, null,*/ maxTokens);
+
+
+  // List Models
+  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
+    return apiQuery.llmAnthropic.listModels.useQuery({ access }, {
+      enabled: enabled,
+      onSuccess: onSuccess,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
   },
-  callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
-    throw new Error('Anthropic does not support "Functions" yet');
+
+  // Chat Generate (non-streaming) with Functions
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+    if (functions?.length || forceFunctionName)
+      throw new Error('Anthropic does not support functions');
+
+    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    try {
+      return await apiAsync.llmAnthropic.chatGenerate.mutate({
+        access,
+        model: {
+          id: llmRef!,
+          temperature: llmTemperature,
+          maxTokens: maxTokens || llmResponseTokens || 1024,
+        },
+        history: messages,
+      }) as VChatMessageOut;
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'Anthropic Chat Generate Error';
+      console.error(`anthropic.rpcChatGenerateOrThrow: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
   },
+
 };
-
-
-export const anthropicListModelsQuery: IModelVendorUpdateModelsQuery<AnthropicAccessSchema> = (access, enabled, onSuccess) =>
-  apiQuery.llmAnthropic.listModels.useQuery({ access }, {
-    enabled: enabled,
-    onSuccess: onSuccess,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
-
-
-/**
- * This function either returns the LLM message, or function calls, or throws a descriptive error string
- */
-async function anthropicCallChatGenerate<TOut = VChatMessageOut>(
-  access: AnthropicAccessSchema, llmOptions: Partial<LLMOptionsOpenAI>, messages: VChatMessageIn[],
-  // functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
-  maxTokens?: number,
-): Promise<TOut> {
-  const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
-  try {
-    return await apiAsync.llmAnthropic.chatGenerate.mutate({
-      access,
-      model: {
-        id: llmRef!,
-        temperature: llmTemperature,
-        maxTokens: maxTokens || llmResponseTokens || 1024,
-      },
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'Anthropic Chat Generate Error';
-    console.error(`anthropicCallChatGenerate: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}

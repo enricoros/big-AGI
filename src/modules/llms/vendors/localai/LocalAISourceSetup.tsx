@@ -8,10 +8,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
-
-import { openAIListModelsQuery } from '../openai/openai.vendor';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorLocalAI } from './localai.vendor';
 
@@ -32,7 +31,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(openAIListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ModelVendorLocalAI, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
 

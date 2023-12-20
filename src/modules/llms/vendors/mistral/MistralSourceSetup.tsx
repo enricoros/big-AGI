@@ -5,10 +5,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
-
-import { openAIListModelsQuery } from '../openai/openai.vendor';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorMistral } from './mistral.vendor';
 
@@ -31,7 +30,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(openAIListModelsQuery, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorMistral, access, shallFetchSucceed, source);
 
   return <>
 

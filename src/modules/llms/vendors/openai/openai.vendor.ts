@@ -3,9 +3,9 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
+import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
+import type { VChatMessageOrFunctionCallOut } from '../../client/llm.client.types';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
@@ -51,50 +51,37 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
     moderationCheck: false,
     ...partialSetup,
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    const access = this.getTransportAccess(llm._source.setup);
-    return openAICallChatGenerate(access, llm.options, messages, null, null, maxTokens);
+
+  // List Models
+  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
+    return apiQuery.llmOpenAI.listModels.useQuery({ access }, {
+      enabled: enabled,
+      onSuccess: onSuccess,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
   },
-  callChatGenerateWF(llm, messages: VChatMessageIn[], functions: VChatFunctionIn[] | null, forceFunctionName: string | null, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut> {
-    const access = this.getTransportAccess(llm._source.setup);
-    return openAICallChatGenerate(access, llm.options, messages, functions, forceFunctionName, maxTokens);
+
+  // Chat Generate (non-streaming) with Functions
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    try {
+      return await apiAsync.llmOpenAI.chatGenerateWithFunctions.mutate({
+        access,
+        model: {
+          id: llmRef!,
+          temperature: llmTemperature,
+          maxTokens: maxTokens || llmResponseTokens || 1024,
+        },
+        functions: functions ?? undefined,
+        forceFunctionName: forceFunctionName ?? undefined,
+        history: messages,
+      }) as VChatMessageOrFunctionCallOut;
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'OpenAI Chat Generate Error';
+      console.error(`openai.rpcChatGenerateOrThrow: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
   },
+
 };
-
-
-export const openAIListModelsQuery: IModelVendorUpdateModelsQuery<OpenAIAccessSchema> = (access, enabled, onSuccess) =>
-  apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: enabled,
-    onSuccess: onSuccess,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
-
-
-/**
- * This function either returns the LLM message, or function calls, or throws a descriptive error string
- */
-export async function openAICallChatGenerate<TOut = VChatMessageOut | VChatMessageOrFunctionCallOut>(
-  access: OpenAIAccessSchema, llmOptions: Partial<LLMOptionsOpenAI>, messages: VChatMessageIn[],
-  functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
-  maxTokens?: number,
-): Promise<TOut> {
-  const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
-  try {
-    return await apiAsync.llmOpenAI.chatGenerateWithFunctions.mutate({
-      access,
-      model: {
-        id: llmRef!,
-        temperature: llmTemperature,
-        maxTokens: maxTokens || llmResponseTokens || 1024,
-      },
-      functions: functions ?? undefined,
-      forceFunctionName: forceFunctionName ?? undefined,
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'OpenAI Chat Generate Error';
-    console.error(`openAICallChatGenerate: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}

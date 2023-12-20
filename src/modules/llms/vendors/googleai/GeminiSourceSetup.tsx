@@ -5,10 +5,11 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
-import { geminiListModelsQuery, ModelVendorGemini } from './gemini.vendor';
+import { ModelVendorGemini } from './gemini.vendor';
 
 
 const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
@@ -29,7 +30,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(geminiListModelsQuery, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorGemini, access, shallFetchSucceed, source);
 
   return <>
 
