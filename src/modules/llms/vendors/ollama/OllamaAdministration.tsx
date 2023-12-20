@@ -68,7 +68,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
               >
                 {pullable.map(p =>
                   <Option key={p.id} value={p.id}>
-                    {p.isNew === true && <Chip size='sm' variant='outlined'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
+                    {p.isNew === true && <Chip size='sm' variant='solid'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
                   </Option>,
                 )}
               </Select>
@@ -118,7 +118,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
             {pullModelDescription}
           </Typography>
 
-          <Box sx={{ display: 'flex', flexWrap: 1, gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 1, gap: 1, alignItems: 'start' }}>
             <Button
               variant='outlined'
               color={deleteStatus === 'error' ? 'danger' : deleteStatus === 'success' ? 'success' : 'primary'}
