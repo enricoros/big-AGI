@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import { llmChatGenerate } from '~/modules/llms/client/llmChatGenerate';
 
 
 export interface LLMChainStep {
@@ -80,7 +81,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
     // LLM call
-    callChatGenerate(llmId, llmChatInput, chain.overrideResponseTokens)
+    llmChatGenerate(llmId, llmChatInput, chain.overrideResponseTokens)
       .then(({ content }) => {
         stepDone = true;
         if (!stepAbortController.signal.aborted)

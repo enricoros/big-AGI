@@ -1,6 +1,6 @@
 import type { TRPCClientErrorBase } from '@trpc/client';
 
-import type { ModelDescriptionSchema } from '../transports/server/server.schemas';
+import type { ModelDescriptionSchema } from '../server/server.schemas';
 
 import { DLLM, DModelSource, useModelsStore } from '../store-llms';
 
@@ -14,7 +14,7 @@ export type IModelVendorUpdateModelsQuery<TAccess = unknown> =
  * Hook that fetches the list of models from the vendor and updates the store,
  * while returning the fetch state.
  */
-export function useUpdateVendorModels<TSourceSetup, TAccess>(listFn: IModelVendorUpdateModelsQuery<TAccess>, access: TAccess, enabled: boolean, source: DModelSource<TSourceSetup>) {
+export function useLlmUpdateModels<TSourceSetup, TAccess>(listFn: IModelVendorUpdateModelsQuery<TAccess>, access: TAccess, enabled: boolean, source: DModelSource<TSourceSetup>) {
   return listFn(access, enabled, data => source && updateModelsFn(data, source));
 }
 

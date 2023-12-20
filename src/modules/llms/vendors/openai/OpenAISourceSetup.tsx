@@ -12,7 +12,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { isValidOpenAIApiKey, ModelVendorOpenAI, openAIListModelsQuery } from './openai.vendor';
 
@@ -40,7 +40,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

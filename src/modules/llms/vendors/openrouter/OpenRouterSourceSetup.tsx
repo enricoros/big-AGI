@@ -9,7 +9,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { getCallbackUrl } from '~/common/app.routes';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { openAIListModelsQuery } from '../openai/openai.vendor';
 
@@ -32,7 +32,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
 
 
   const handleOpenRouterLogin = () => {

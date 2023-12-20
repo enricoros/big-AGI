@@ -4,9 +4,9 @@ import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';

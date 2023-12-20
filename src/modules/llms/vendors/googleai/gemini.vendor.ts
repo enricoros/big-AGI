@@ -4,10 +4,10 @@ import { backendCaps } from '~/modules/backend/state-backend';
 
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { GeminiAccessSchema } from '../../transports/server/gemini/gemini.router';
+import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 

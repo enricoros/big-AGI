@@ -1,4 +1,4 @@
-import type { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 
 import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 
