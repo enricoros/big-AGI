@@ -1,6 +1,8 @@
 import type React from 'react';
+import type { TRPCClientErrorBase } from '@trpc/client';
 
 import type { DLLM, DModelSourceId } from '../store-llms';
+import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../client/llm.client.types';
 
@@ -31,3 +33,8 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   callChatGenerateWF(llm: TDLLM, messages: VChatMessageIn[], functions: null | VChatFunctionIn[], forceFunctionName: null | string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut>;
 }
+
+
+export type IModelVendorUpdateModelsQuery<TAccess = unknown> =
+  (access: TAccess, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) =>
+    { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };

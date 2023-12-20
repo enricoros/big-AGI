@@ -1,13 +1,6 @@
-import type { TRPCClientErrorBase } from '@trpc/client';
-
-import type { ModelDescriptionSchema } from '../server/server.schemas';
-
+import type { IModelVendorUpdateModelsQuery } from '../vendors/IModelVendor';
+import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import { DLLM, DModelSource, useModelsStore } from '../store-llms';
-
-
-export type IModelVendorUpdateModelsQuery<TAccess = unknown> =
-  (access: TAccess, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) =>
-    { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };
 
 
 /**

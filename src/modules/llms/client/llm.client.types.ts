@@ -1,5 +1,12 @@
 import type { OpenAIWire } from '../server/openai/openai.wiretypes';
 
+
+// Model List types
+// export { type ModelDescriptionSchema } from '../server/llm.server.types';
+
+
+// Chat Generate types
+
 export interface VChatMessageIn {
   role: 'assistant' | 'system' | 'user'; // | 'function';
   content: string;

@@ -1,4 +1,4 @@
-import type { ModelDescriptionSchema } from '../server.schemas';
+import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
