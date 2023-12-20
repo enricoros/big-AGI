@@ -4,11 +4,11 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { ModelVendorGemini } from './gemini.vendor';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
+import { DModelSourceId, useSourceSetup } from '../../store-llms';
+import { useUpdateVendorModels } from '../useUpdateVendorModels';
+
+import { geminiListModelsQuery, ModelVendorGemini } from './gemini.vendor';
 
 
 const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
@@ -28,14 +28,8 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
   const showKeyError = !!geminiKey && !sourceSetupValid;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmGemini.listModels.useQuery({ access }, {
-    enabled: shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
+  const { isFetching, refetch, isError, error } =
+    useUpdateVendorModels(geminiListModelsQuery, access, shallFetchSucceed, source);
 
   return <>
 

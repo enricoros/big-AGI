@@ -1,13 +1,14 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
 import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
 import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
+import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
-import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { OllamaSourceSetup } from './OllamaSourceSetup';
@@ -43,6 +44,16 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
     throw new Error('Ollama does not support "Functions" yet');
   },
 };
+
+
+export function ollamaListModelsQuery(access: OllamaAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
+  return apiQuery.llmOllama.listModels.useQuery({ access }, {
+    enabled: enabled,
+    onSuccess: onSuccess,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  });
+}
 
 
 /**
