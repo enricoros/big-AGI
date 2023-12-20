@@ -6,7 +6,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { geminiListModelsQuery, ModelVendorGemini } from './gemini.vendor';
 
@@ -29,7 +29,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(geminiListModelsQuery, access, shallFetchSucceed, source);
+    useLlmUpdateModels(geminiListModelsQuery, access, shallFetchSucceed, source);
 
   return <>
 

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Chip, ColorPaletteProp, VariantProp } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 
 
 export function CallMessage(props: {

@@ -1,11 +1,12 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
+import type { ChatStreamFirstOutputPacketSchema, ChatStreamInputSchema } from '../server/llms.streaming';
 import type { DLLM, DLLMId } from '../store-llms';
 import { findVendorForLlmOrThrow } from '../vendors/vendors.registry';
 
-import type { ChatStreamFirstOutputPacketSchema, ChatStreamInputSchema } from './server/llms.streaming';
-import type { OpenAIWire } from './server/openai/openai.wiretypes';
-import type { VChatMessageIn } from './chatGenerate';
+import type { OpenAIWire } from '../server/openai/openai.wiretypes';
+
+import type { VChatMessageIn } from './llm.client.types';
 
 
 /**
@@ -20,7 +21,7 @@ import type { VChatMessageIn } from './chatGenerate';
  * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
  * @param onUpdate callback when a piece of a message (text, model name, typing..) is received
  */
-export async function streamChat(
+export async function llmStreamChatGenerate(
   llmId: DLLMId,
   messages: VChatMessageIn[],
   abortSignal: AbortSignal,

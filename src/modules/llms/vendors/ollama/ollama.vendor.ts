@@ -4,9 +4,9 @@ import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
+import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

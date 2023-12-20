@@ -6,7 +6,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { openAIListModelsQuery } from '../openai/openai.vendor';
 
@@ -31,7 +31,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(openAIListModelsQuery, access, shallFetchSucceed, source);
+    useLlmUpdateModels(openAIListModelsQuery, access, shallFetchSucceed, source);
 
   return <>
 

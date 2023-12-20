@@ -9,7 +9,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { openAIListModelsQuery } from '../openai/openai.vendor';
 
@@ -32,7 +32,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(openAIListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(openAIListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
 

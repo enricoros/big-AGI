@@ -1,6 +1,6 @@
 import type { ModelDescriptionSchema } from '../server.schemas';
 
-import { LLM_IF_OAI_Chat } from '../../../store-llms';
+import { LLM_IF_OAI_Chat } from '../../store-llms';
 
 const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 

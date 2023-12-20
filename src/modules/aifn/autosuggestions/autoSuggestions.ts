@@ -1,4 +1,5 @@
-import { callChatGenerateWithFunctions, VChatFunctionIn } from '~/modules/llms/transports/chatGenerate';
+import type { VChatFunctionIn } from '~/modules/llms/client/llm.client.types';
+import { llmChatGenerateWithFunctions } from '~/modules/llms/client/llmChatGenerate';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
@@ -71,7 +72,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Question
   if (suggestQuestions) {
-    // callChatGenerateWithFunctions(funcLLMId, [
+    // llmChatGenerateWithFunctions(funcLLMId, [
     //     { role: 'system', content: systemMessage.text },
     //     { role: 'user', content: userMessage.text },
     //     { role: 'assistant', content: assistantMessageText },
@@ -83,7 +84,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
-    void callChatGenerateWithFunctions(funcLLMId, [
+    void llmChatGenerateWithFunctions(funcLLMId, [
         { role: 'system', content: systemMessage.text },
         { role: 'user', content: userMessage.text },
         { role: 'assistant', content: assistantMessageText },

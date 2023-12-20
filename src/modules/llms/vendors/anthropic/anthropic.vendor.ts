@@ -3,10 +3,10 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { AnthropicAccessSchema } from '../../transports/server/anthropic/anthropic.router';
+import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
 import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

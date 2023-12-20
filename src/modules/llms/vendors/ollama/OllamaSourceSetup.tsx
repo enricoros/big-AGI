@@ -9,7 +9,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { asValidURL } from '~/common/util/urlUtils';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { ModelVendorOllama, ollamaListModelsQuery } from './ollama.vendor';
 import { OllamaAdministration } from './OllamaAdministration';
@@ -33,7 +33,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(ollamaListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ollamaListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
 

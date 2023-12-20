@@ -1,4 +1,4 @@
-import { callChatGenerate } from '~/modules/llms/transports/chatGenerate';
+import { llmChatGenerate } from '~/modules/llms/client/llmChatGenerate';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
@@ -27,7 +27,7 @@ export function autoTitle(conversationId: string) {
   });
 
   // LLM
-  void callChatGenerate(fastLLMId, [
+  void llmChatGenerate(fastLLMId, [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:

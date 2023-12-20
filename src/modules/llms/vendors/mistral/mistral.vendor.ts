@@ -3,8 +3,8 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { MistralIcon } from '~/common/components/icons/MistralIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
-import type { VChatMessageIn, VChatMessageOut } from '../../transports/chatGenerate';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { VChatMessageIn, VChatMessageOut } from '../../client/llm.client.types';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate, SourceSetupOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';

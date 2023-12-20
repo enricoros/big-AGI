@@ -8,7 +8,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { asValidURL } from '~/common/util/urlUtils';
 
 import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useUpdateVendorModels } from '../useUpdateVendorModels';
+import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
 
 import { openAIListModelsQuery } from '../openai/openai.vendor';
 
@@ -33,7 +33,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useUpdateVendorModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

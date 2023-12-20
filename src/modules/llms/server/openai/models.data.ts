@@ -1,6 +1,6 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../store-llms';
 
 import type { ModelDescriptionSchema } from '../server.schemas';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
