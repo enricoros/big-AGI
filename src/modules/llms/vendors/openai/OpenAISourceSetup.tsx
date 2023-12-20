@@ -11,10 +11,11 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import { DModelSourceId, useSourceSetup } from '../../store-llms';
-import { useLlmUpdateModels } from '../../client/useLlmUpdateModels';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
-import { isValidOpenAIApiKey, ModelVendorOpenAI, openAIListModelsQuery } from './openai.vendor';
+import { isValidOpenAIApiKey, ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -40,7 +41,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(openAIListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorOpenAI, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

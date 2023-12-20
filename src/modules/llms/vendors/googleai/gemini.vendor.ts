@@ -5,8 +5,8 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
-import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
+import type { IModelVendor } from '../IModelVendor';
+import type { VChatMessageOut } from '../../client/llm.client.types';
 
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
@@ -52,46 +52,38 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
     dialect: 'gemini',
     geminiKey: partialSetup?.geminiKey || '',
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return geminiCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, maxTokens);
+
+  // List Models
+  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
+    return apiQuery.llmGemini.listModels.useQuery({ access }, {
+      enabled: enabled,
+      onSuccess: onSuccess,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
   },
-  callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
-    throw new Error('Gemini does not support "Functions" yet');
+
+  // Chat Generate (non-streaming) with Functions
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+    if (functions?.length || forceFunctionName)
+      throw new Error('Gemini does not support functions');
+
+    const { llmRef, temperature = 0.5, maxOutputTokens } = llmOptions;
+    try {
+      return await apiAsync.llmGemini.chatGenerate.mutate({
+        access,
+        model: {
+          id: llmRef!,
+          temperature: temperature,
+          maxTokens: maxTokens || maxOutputTokens || 1024,
+        },
+        history: messages,
+      }) as VChatMessageOut;
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'Gemini Chat Generate Error';
+      console.error(`gemini.rpcChatGenerateOrThrow: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
   },
+
 };
-
-
-export const geminiListModelsQuery: IModelVendorUpdateModelsQuery<GeminiAccessSchema> = (access, enabled, onSuccess) =>
-  apiQuery.llmGemini.listModels.useQuery({ access }, {
-    enabled: enabled,
-    onSuccess: onSuccess,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
-
-
-/**
- * This function either returns the LLM message, or throws a descriptive error string
- */
-async function geminiCallChatGenerate<TOut = VChatMessageOut>(
-  access: GeminiAccessSchema, llmOptions: Partial<LLMOptionsGemini>, messages: VChatMessageIn[],
-  maxTokens?: number,
-): Promise<TOut> {
-  const { llmRef, temperature = 0.5, maxOutputTokens } = llmOptions;
-  try {
-    return await apiAsync.llmGemini.chatGenerate.mutate({
-      access,
-      model: {
-        id: llmRef!,
-        temperature: temperature,
-        maxTokens: maxTokens || maxOutputTokens || 1024,
-      },
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'Gemini Chat Generate Error';
-    console.error(`geminiCallChatGenerate: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}
-

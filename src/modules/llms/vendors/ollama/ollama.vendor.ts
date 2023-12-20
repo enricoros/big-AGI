@@ -3,9 +3,9 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
+import type { IModelVendor } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
+import type { VChatMessageOut } from '../../client/llm.client.types';
 
 import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -36,45 +36,38 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
     dialect: 'ollama',
     ollamaHost: partialSetup?.ollamaHost || '',
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return ollamaCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, maxTokens);
+
+  // List Models
+  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
+    return apiQuery.llmOllama.listModels.useQuery({ access }, {
+      enabled: enabled,
+      onSuccess: onSuccess,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
   },
-  callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
-    throw new Error('Ollama does not support "Functions" yet');
+
+  // Chat Generate (non-streaming) with Functions
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+    if (functions?.length || forceFunctionName)
+      throw new Error('Ollama does not support functions');
+
+    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    try {
+      return await apiAsync.llmOllama.chatGenerate.mutate({
+        access,
+        model: {
+          id: llmRef!,
+          temperature: llmTemperature,
+          maxTokens: maxTokens || llmResponseTokens || 1024,
+        },
+        history: messages,
+      }) as VChatMessageOut;
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'Ollama Chat Generate Error';
+      console.error(`ollama.rpcChatGenerateOrThrow: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
   },
+
 };
-
-
-export const ollamaListModelsQuery: IModelVendorUpdateModelsQuery<OllamaAccessSchema> = (access, enabled, onSuccess) =>
-  apiQuery.llmOllama.listModels.useQuery({ access }, {
-    enabled: enabled,
-    onSuccess: onSuccess,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
-
-
-/**
- * This function either returns the LLM message, or throws a descriptive error string
- */
-async function ollamaCallChatGenerate<TOut = VChatMessageOut>(
-  access: OllamaAccessSchema, llmOptions: Partial<LLMOptionsOpenAI>, messages: VChatMessageIn[],
-  maxTokens?: number,
-): Promise<TOut> {
-  const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
-  try {
-    return await apiAsync.llmOllama.chatGenerate.mutate({
-      access,
-      model: {
-        id: llmRef!,
-        temperature: llmTemperature,
-        maxTokens: maxTokens || llmResponseTokens || 1024,
-      },
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'Ollama Chat Generate Error';
-    console.error(`ollamaCallChatGenerate: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}

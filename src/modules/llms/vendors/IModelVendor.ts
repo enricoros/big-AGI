@@ -29,12 +29,18 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
 
-  callChatGenerate(llm: TDLLM, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut>;
+  rpcUpdateModelsQuery: (
+    access: TAccess,
+    enabled: boolean,
+    onSuccess: (data: { models: ModelDescriptionSchema[] }) => void,
+  ) => { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };
 
-  callChatGenerateWF(llm: TDLLM, messages: VChatMessageIn[], functions: null | VChatFunctionIn[], forceFunctionName: null | string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut>;
+  rpcChatGenerateOrThrow: (
+    access: TAccess,
+    llmOptions: TLLMOptions,
+    messages: VChatMessageIn[],
+    functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+    maxTokens?: number,
+  ) => Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
+
 }
-
-
-export type IModelVendorUpdateModelsQuery<TAccess = unknown> =
-  (access: TAccess, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) =>
-    { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };

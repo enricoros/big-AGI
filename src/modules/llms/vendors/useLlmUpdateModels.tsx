@@ -1,4 +1,4 @@
-import type { IModelVendorUpdateModelsQuery } from '../vendors/IModelVendor';
+import type { IModelVendor } from './IModelVendor';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import { DLLM, DModelSource, useModelsStore } from '../store-llms';
 
@@ -7,8 +7,8 @@ import { DLLM, DModelSource, useModelsStore } from '../store-llms';
  * Hook that fetches the list of models from the vendor and updates the store,
  * while returning the fetch state.
  */
-export function useLlmUpdateModels<TSourceSetup, TAccess>(listFn: IModelVendorUpdateModelsQuery<TAccess>, access: TAccess, enabled: boolean, source: DModelSource<TSourceSetup>) {
-  return listFn(access, enabled, data => source && updateModelsFn(data, source));
+export function useLlmUpdateModels<TSourceSetup, TAccess, TLLMOptions>(vendor: IModelVendor<TSourceSetup, TAccess, TLLMOptions>, access: TAccess, enabled: boolean, source: DModelSource<TSourceSetup>) {
+  return vendor.rpcUpdateModelsQuery(access, enabled, data => source && updateModelsFn(data, source));
 }
 
 

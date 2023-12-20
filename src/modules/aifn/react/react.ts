@@ -6,7 +6,7 @@ import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 import { DLLMId } from '~/modules/llms/store-llms';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
-import { llmChatGenerate } from '~/modules/llms/client/llmChatGenerate';
+import { llmChatGenerateOrThrow } from '~/modules/llms/client/llmChatGenerate';
 
 
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629
@@ -129,7 +129,7 @@ export class Agent {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await llmChatGenerate(llmId, S.messages, 500)).content;
+      content = (await llmChatGenerateOrThrow(llmId, S.messages, null, null, 500)).content;
     } catch (error: any) {
       content = `Error in callChat: ${error}`;
     }
