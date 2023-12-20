@@ -3,7 +3,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { AzureIcon } from '~/common/components/icons/AzureIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import { LLMOptionsOpenAI, openAICallChatGenerate } from '../openai/openai.vendor';

@@ -1,6 +1,6 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
-import { ModelVendorGemini } from '~/modules/llms/vendors/googleai/gemini.vendor';
+import { ModelVendorGemini } from './googleai/gemini.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
