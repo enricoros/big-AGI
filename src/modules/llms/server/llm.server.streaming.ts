@@ -271,6 +271,12 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
     const wireGenerationChunk = JSON.parse(data);
     const generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
 
+    // Prompt Safety Errors: pass through errors from Gemini
+    if (generationChunk.promptFeedback?.blockReason) {
+      const { blockReason, safetyRatings } = generationChunk.promptFeedback;
+      return { text: `[Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`, close: true };
+    }
+
     // expect a single completion
     const singleCandidate = generationChunk.candidates?.[0] ?? null;
     if (!singleCandidate || !singleCandidate.content?.parts.length)
