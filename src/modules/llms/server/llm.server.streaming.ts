@@ -10,7 +10,8 @@ import type { AnthropicWire } from './anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic/anthropic.router';
 
 // Gemini server imports
-import { geminiAccessSchema } from './gemini/gemini.router';
+import { geminiAccess, geminiAccessSchema, geminiGenerateContentPayload } from './gemini/gemini.router';
+import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
 
 // Ollama server imports
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
@@ -75,14 +76,20 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
       case 'anthropic':
         requestAccess = anthropicAccess(access, '/v1/complete');
         body = anthropicChatCompletionPayload(model, history, true);
-        vendorStreamParser = createAnthropicStreamParser();
+        vendorStreamParser = createStreamParserAnthropic();
+        break;
+
+      case 'gemini':
+        requestAccess = geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath);
+        body = geminiGenerateContentPayload(model, history, 1);
+        vendorStreamParser = createStreamParserGemini(model.id.replace('models/', ''));
         break;
 
       case 'ollama':
         requestAccess = ollamaAccess(access, OLLAMA_PATH_CHAT);
         body = ollamaChatCompletionPayload(model, history, true);
         eventStreamFormat = 'json-nl';
-        vendorStreamParser = createOllamaChatCompletionStreamParser();
+        vendorStreamParser = createStreamParserOllama();
         break;
 
       case 'azure':
@@ -93,7 +100,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
       case 'openrouter':
         requestAccess = openAIAccess(access, model.id, '/v1/chat/completions');
         body = openAIChatCompletionPayload(model, history, null, null, 1, true);
-        vendorStreamParser = createOpenAIStreamParser();
+        vendorStreamParser = createStreamParserOpenAI();
         break;
     }
 
@@ -123,9 +130,12 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
    * NOTE: we have not benchmarked to see if there is performance impact by using this approach - we do want to have
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
-  const transformUpstreamToBigAgiClient = createEventStreamTransformer(vendorStreamParser, eventStreamFormat, access.dialect);
-  const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream())
-    .pipeThrough(transformUpstreamToBigAgiClient);
+  const transformUpstreamToBigAgiClient = createEventStreamTransformer(
+    eventStreamFormat, vendorStreamParser, access.dialect,
+  );
+  const chatResponseStream =
+    (upstreamResponse.body || createEmptyReadableStream())
+      .pipeThrough(transformUpstreamToBigAgiClient);
 
   return new NextResponse(chatResponseStream, {
     status: 200,
@@ -173,7 +183,7 @@ function createJsonNewlineParser(onParse: EventSourceParseCallback): EventSource
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
  */
-function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFormat: EventStreamFormat, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
+function createEventStreamTransformer(inputFormat: EventStreamFormat, vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
@@ -232,7 +242,7 @@ function createEventStreamTransformer(vendorTextParser: AIStreamParser, inputFor
 
 /// Stream Parsers
 
-function createAnthropicStreamParser(): AIStreamParser {
+function createStreamParserAnthropic(): AIStreamParser {
   let hasBegun = false;
 
   return (data: string) => {
@@ -251,7 +261,40 @@ function createAnthropicStreamParser(): AIStreamParser {
   };
 }
 
-function createOllamaChatCompletionStreamParser(): AIStreamParser {
+function createStreamParserGemini(modelName: string): AIStreamParser {
+  let hasBegun = false;
+
+  // this can throw, it's catched upstream
+  return (data: string) => {
+
+    // parse the JSON chunk
+    const wireGenerationChunk = JSON.parse(data);
+    const generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
+
+    // expect a single completion
+    const singleCandidate = generationChunk.candidates?.[0] ?? null;
+    if (!singleCandidate || !singleCandidate.content?.parts.length)
+      throw new Error(`Gemini: expected 1 completion, got ${generationChunk.candidates?.length}`);
+
+    // expect a single part
+    if (singleCandidate.content.parts.length !== 1 || !('text' in singleCandidate.content.parts[0]))
+      throw new Error(`Gemini: expected 1 text part, got ${singleCandidate.content.parts.length}`);
+
+    // expect a single text in the part
+    let text = singleCandidate.content.parts[0].text || '';
+
+    // hack: prepend the model name to the first packet
+    if (!hasBegun) {
+      hasBegun = true;
+      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: modelName };
+      text = JSON.stringify(firstPacket) + text;
+    }
+
+    return { text, close: false };
+  };
+}
+
+function createStreamParserOllama(): AIStreamParser {
   let hasBegun = false;
 
   return (data: string) => {
@@ -287,7 +330,7 @@ function createOllamaChatCompletionStreamParser(): AIStreamParser {
   };
 }
 
-function createOpenAIStreamParser(): AIStreamParser {
+function createStreamParserOpenAI(): AIStreamParser {
   let hasBegun = false;
   let hasWarned = false;
 

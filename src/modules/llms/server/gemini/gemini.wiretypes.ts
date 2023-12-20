@@ -4,7 +4,8 @@ import { z } from 'zod';
 
 export const geminiModelsListPath = '/v1beta/models?pageSize=1000';
 export const geminiModelsGenerateContentPath = '/v1beta/{model=models/*}:generateContent';
-export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:streamGenerateContent';
+// see alt=sse on https://cloud.google.com/apis/docs/system-parameters#definitions
+export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:streamGenerateContent?alt=sse';
 
 
 // models.list = /v1beta/models
@@ -174,8 +175,9 @@ export const geminiGeneratedContentResponseSchema = z.object({
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(GroundingAttribution).optional(), // This field is populated for GenerateAnswer calls.
   })),
+  // NOTE: promptFeedback is only send in the first chunk in a streaming response
   promptFeedback: z.object({
     blockReason: z.enum(['BLOCK_REASON_UNSPECIFIED', 'SAFETY', 'OTHER']).optional(),
     safetyRatings: z.array(geminiSafetyRatingSchema),
-  }),
+  }).optional(),
 });
