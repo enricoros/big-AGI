@@ -89,5 +89,4 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
 
   // Chat Generate (streaming) with Functions
   streamingChatGenerateOrThrow: unifiedStreamingClient,
-
 };
