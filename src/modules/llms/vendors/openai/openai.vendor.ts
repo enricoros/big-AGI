@@ -1,9 +1,10 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
+import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
 import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
@@ -60,6 +61,16 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
     return openAICallChatGenerate(access, llm.options, messages, functions, forceFunctionName, maxTokens);
   },
 };
+
+
+export function openAIListModelsQuery(access: OpenAIAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
+  return apiQuery.llmOpenAI.listModels.useQuery({ access }, {
+    enabled: enabled,
+    onSuccess: onSuccess,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  });
+}
 
 
 /**

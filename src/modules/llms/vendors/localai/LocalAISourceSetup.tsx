@@ -7,10 +7,11 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
+import { DModelSourceId, useSourceSetup } from '../../store-llms';
+import { useUpdateVendorModels } from '../useUpdateVendorModels';
+
+import { openAIListModelsQuery } from '../openai/openai.vendor';
 
 import { ModelVendorLocalAI } from './localai.vendor';
 
@@ -30,14 +31,8 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = isValidHost;
 
   // fetch models - the OpenAI way
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false, // !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
+  const { isFetching, refetch, isError, error } =
+    useUpdateVendorModels(openAIListModelsQuery, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
 

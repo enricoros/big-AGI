@@ -2,13 +2,16 @@ import GoogleIcon from '@mui/icons-material/Google';
 
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../transports/server/gemini/gemini.router';
-import { GeminiSourceSetup } from './GeminiSourceSetup';
+import type { IModelVendor } from '../IModelVendor';
+import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
+import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
+
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
-import { apiAsync } from '~/common/util/trpc.client';
+
+import { GeminiSourceSetup } from './GeminiSourceSetup';
 
 
 export interface SourceSetupGemini {
@@ -57,6 +60,17 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
     throw new Error('Gemini does not support "Functions" yet');
   },
 };
+
+
+export function geminiListModelsQuery(access: GeminiAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
+  return apiQuery.llmGemini.listModels.useQuery({ access }, {
+    enabled: enabled,
+    onSuccess: onSuccess,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  });
+}
+
 
 /**
  * This function either returns the LLM message, or throws a descriptive error string

@@ -7,13 +7,12 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
+import { DModelSourceId, useSourceSetup } from '../../store-llms';
+import { useUpdateVendorModels } from '../useUpdateVendorModels';
 
-import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
+import { anthropicListModelsQuery, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
 
 
 export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
@@ -34,14 +33,8 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmAnthropic.listModels.useQuery({ access }, {
-    enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
+  const { isFetching, refetch, isError, error } =
+    useUpdateVendorModels(anthropicListModelsQuery, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

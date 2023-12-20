@@ -1,10 +1,11 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
 import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
-import { apiAsync } from '~/common/util/trpc.client';
+import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { IModelVendor } from '../IModelVendor';
 import type { AnthropicAccessSchema } from '../../transports/server/anthropic/anthropic.router';
+import type { IModelVendor } from '../IModelVendor';
+import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
 import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
@@ -49,6 +50,16 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
     throw new Error('Anthropic does not support "Functions" yet');
   },
 };
+
+
+export function anthropicListModelsQuery(access: AnthropicAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
+  return apiQuery.llmAnthropic.listModels.useQuery({ access }, {
+    enabled: enabled,
+    onSuccess: onSuccess,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  });
+}
 
 
 /**
