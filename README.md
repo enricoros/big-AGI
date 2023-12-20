@@ -21,7 +21,19 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-### What's New in 1.7.3 · Dec 13, 2023 · Attachment Theory 🌟
+### What's New in 1.8.0 · Dec 20, 2023 · To The Moon And Back · 🚀🌕🔙
+
+- **Google Gemini Support**: Use the newest Google models. [#275](https://github.com/enricoros/big-agi/issues/275)
+- **Mistral Platform**: Mixtral and future models support. [#273](https://github.com/enricoros/big-agi/issues/273)
+- **Diagram Instructions**. Thanks to @joriskalz! [#280](https://github.com/enricoros/big-agi/pull/280)
+- Ollama Chats: Enhanced chatting experience. [#270](https://github.com/enricoros/big-agi/issues/270)
+- Mac Shortcuts Fix: Improved UX on Mac
+- **Single-Tab Mode**: Data integrity with single window. [#268](https://github.com/enricoros/big-agi/issues/268)
+- **Updated Models**: Latest Ollama (v0.1.17) and OpenRouter models
+- Official Downloads: Easy access to the latest big-AGI on [big-AGI.com](https://big-agi.com)
+- For developers: [troubleshot networking](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483), fixed Vercel deployment, cleaned up the LLMs/Streaming framework
+
+### What's New in 1.7.0 · Dec 11, 2023
 
 - **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
 - **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
@@ -31,9 +43,6 @@ shows the current developments and future ideas.
 - Optimized Voice Input and Performance
 - Latest Ollama and Oobabooga models
 - For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
-- [1.7.1]: Improved Ollama chats. [#270](https://github.com/enricoros/big-agi/issues/270)
-- [1.7.2]: OpenRouter login & free models 🎁
-- [1.7.3]: Mistral Platform support. [#273](https://github.com/enricoros/big-agi/issues/273)
 
 ### What's New in 1.6.0 - Nov 28, 2023
 

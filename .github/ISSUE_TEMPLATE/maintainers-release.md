@@ -65,7 +65,11 @@ I need the following from you:
 
 ### GitHub release
 
-Now paste the former release (or 1.5.0 which was accurate and great), including the new contributors and
+```markdown
+Please create the 1.2.3 Release Notes for GitHub. The following were the Release Notes for 1.1.0. Use a truthful and honest tone, undestanding that people's time and attention span is short. Today is 2023-12-20.
+```
+
+Now paste-attachment the former release notes (or 1.5.0 which was accurate and great), including the new contributors and
 some stats (# of commits, etc.), and roll it for the new release.
 
 ### Discord announcement
