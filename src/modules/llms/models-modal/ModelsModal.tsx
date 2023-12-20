@@ -65,7 +65,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       title={<>Configure <b>AI Models</b></>}
       startButton={
         multiSource ? <Checkbox
-          label='all vendors' sx={{ my: 'auto' }}
+          label='All Services' sx={{ my: 'auto' }}
           checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
         /> : undefined
       }
