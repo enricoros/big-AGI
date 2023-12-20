@@ -384,10 +384,10 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
 };
 
 const orModelFamilyOrder = [
-  // great models
-  'mistralai/mixtral-8x7b-instruct', 'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
+  // great models (pickes by hand, they're free)
+  'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
   // great orgs
-  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'openai/', 'meta-llama/', 'phind/',
+  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'mistralai/', 'openai/', 'meta-llama/', 'phind/',
 ];
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
