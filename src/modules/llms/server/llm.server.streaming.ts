@@ -10,7 +10,7 @@ import type { AnthropicWire } from './anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicChatCompletionPayload } from './anthropic/anthropic.router';
 
 // Gemini server imports
-import { geminiAccess, geminiAccessSchema, geminiGenerateContentPayload } from './gemini/gemini.router';
+import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } from './gemini/gemini.router';
 import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
 
 // Ollama server imports
@@ -81,7 +81,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
 
       case 'gemini':
         requestAccess = geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath);
-        body = geminiGenerateContentPayload(model, history, 1);
+        body = geminiGenerateContentTextPayload(model, history, 1);
         vendorStreamParser = createStreamParserGemini(model.id.replace('models/', ''));
         break;
 

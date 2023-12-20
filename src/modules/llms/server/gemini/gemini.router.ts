@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { env } from '~/server/env.mjs';
 
 import packageJson from '../../../../../package.json';
 
@@ -11,7 +12,7 @@ import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.ty
 
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
-import { GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
+import { GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
 
 
 // Default hosts
@@ -22,35 +23,58 @@ const DEFAULT_GEMINI_HOST = 'https://generativelanguage.googleapis.com';
 
 export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
 
-  // handle paths that require a model name
+  const geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
+  const geminiHost = fixupHost(DEFAULT_GEMINI_HOST, apiPath);
+
+  // update model-dependent paths
   if (apiPath.includes('{model=models/*}')) {
     if (!modelRefId)
       throw new Error(`geminiAccess: modelRefId is required for ${apiPath}`);
     apiPath = apiPath.replace('{model=models/*}', modelRefId);
   }
 
-  const geminiHost = fixupHost(DEFAULT_GEMINI_HOST, apiPath);
-
   return {
     headers: {
       'Content-Type': 'application/json',
       'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
-      'x-goog-api-key': access.geminiKey,
+      'x-goog-api-key': geminiKey,
     },
     url: geminiHost + apiPath,
   };
 }
 
-export const geminiGenerateContentPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, n: number): GeminiGenerateContentRequest => {
-  const contents: GeminiGenerateContentRequest['contents'] = [];
-  history.forEach((message) => {
-    // hack for now - the model seems to want prompts to alternate
-    if (message.role === 'system') {
-      contents.push({ role: 'user', parts: [{ text: message.content }] });
-      contents.push({ role: 'model', parts: [{ text: 'Ok.' }] });
-    } else
-      contents.push({ role: message.role === 'assistant' ? 'model' : 'user', parts: [{ text: message.content }] });
-  });
+/**
+ * We specially encode the history to match the Gemini API requirements.
+ * Gemini does not want 2 consecutive messages from the same role, so we alternate.
+ *  - System messages = [User, Model'Ok']
+ *  - User and Assistant messages are coalesced into a single message (e.g. [User, User, Assistant, Assistant, User] -> [User[2], Assistant[2], User[1]])
+ */
+export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, n: number): GeminiGenerateContentRequest => {
+
+  // convert the history to a Gemini format
+  const contents: GeminiContentSchema[] = [];
+  for (const _historyElement of history) {
+
+    const { role: msgRole, content: msgContent } = _historyElement;
+
+    // System message - we treat it as per the example in https://ai.google.dev/tutorials/ai-studio_quickstart#chat_example
+    if (msgRole === 'system') {
+      contents.push({ role: 'user', parts: [{ text: msgContent }] });
+      contents.push({ role: 'model', parts: [{ text: 'Ok' }] });
+      continue;
+    }
+
+    // User or Assistant message
+    const nextRole: GeminiContentSchema['role'] = msgRole === 'assistant' ? 'model' : 'user';
+    if (contents.length && contents[contents.length - 1].role === nextRole) {
+      // coalesce with the previous message
+      contents[contents.length - 1].parts.push({ text: msgContent });
+    } else {
+      // create a new message
+      contents.push({ role: nextRole, parts: [{ text: msgContent }] });
+    }
+  }
+
   return {
     contents,
     generationConfig: {
@@ -160,7 +184,7 @@ export const llmGeminiRouter = createTRPCRouter({
     .mutation(async ({ input: { access, history, model } }) => {
 
       // generate the content
-      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentPayload(model, history, 1), geminiModelsGenerateContentPath);
+      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentTextPayload(model, history, 1), geminiModelsGenerateContentPath);
       const generation = geminiGeneratedContentResponseSchema.parse(wireGeneration);
 
       // only use the first result (and there should be only one)

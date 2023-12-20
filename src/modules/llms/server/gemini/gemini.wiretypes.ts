@@ -123,6 +123,8 @@ const geminiContentSchema = z.object({
   parts: z.array(geminiContentPartSchema),
 });
 
+export type GeminiContentSchema = z.infer<typeof geminiContentSchema>;
+
 export const geminiGenerateContentRequest = z.object({
   contents: z.array(geminiContentSchema),
   tools: z.array(geminiToolSchema).optional(),
