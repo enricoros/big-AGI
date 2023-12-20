@@ -205,8 +205,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               <div>
                 <ScienceIcon />
               </div>
-              <div>
-                YouTube persona creator
+              <div style={{ textAlign: 'center' }}>
+                Persona creator
               </div>
             </Button>
           </Grid>}

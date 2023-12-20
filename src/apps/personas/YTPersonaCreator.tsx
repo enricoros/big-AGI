@@ -39,7 +39,7 @@ function useTranscriptFromVideo(videoID: string | null) {
 
 const YouTubePersonaSteps: LLMChainStep[] = [
   {
-    name: 'Analyzing the transcript',
+    name: 'Analyzing the transcript / text',
     setSystem: 'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
     addUserInput: true,
     addUser: 'Conduct comprehensive research on the provided transcript. Identify key characteristics of the speaker, including age, professional field, distinct personality traits, style of communication, narrative context, and self-awareness. Additionally, consider any unique aspects such as their use of humor, their cultural background, core values, passions, fears, personal history, and social interactions. Your output for this stage is an in-depth written analysis that exhibits an understanding of both the superficial and more profound aspects of the speaker\'s persona.',
@@ -102,7 +102,7 @@ export function YTPersonaCreator() {
   return <>
 
     <Typography level='title-sm' mb={4}>
-          AI Persona from YouTube or text
+          AI Persona from YouTube or Text
     </Typography>
     <Tabs defaultValue={0}>
       <TabList>
@@ -157,7 +157,7 @@ export function YTPersonaCreator() {
       <Card sx={{ mt: 2, boxShadow: 'md' }}>
         <CardContent>
           <Typography level='title-md' sx={{ mb: 1 }}>
-            {title || 'Transcript'}
+            {title || 'Transcript / Text'}
           </Typography>
           <Box>
             {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Image' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
@@ -185,7 +185,7 @@ export function YTPersonaCreator() {
     {/* Persona! */}
     {chainOutput && <Box sx={{ mt: 2 }}>
       <Typography level='title-lg'>
-        YouTuber Persona System Prompt
+        Persona System Prompt
       </Typography>
       <Card sx={{ boxShadow: 'md' }}>
         <CardContent sx={{
