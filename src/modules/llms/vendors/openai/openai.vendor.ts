@@ -3,8 +3,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
@@ -63,14 +62,13 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
 };
 
 
-export function openAIListModelsQuery(access: OpenAIAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
-  return apiQuery.llmOpenAI.listModels.useQuery({ access }, {
+export const openAIListModelsQuery: IModelVendorUpdateModelsQuery<OpenAIAccessSchema> = (access, enabled, onSuccess) =>
+  apiQuery.llmOpenAI.listModels.useQuery({ access }, {
     enabled: enabled,
     onSuccess: onSuccess,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
-}
 
 
 /**

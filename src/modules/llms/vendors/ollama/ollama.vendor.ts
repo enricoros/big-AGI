@@ -3,8 +3,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
-import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
@@ -46,14 +45,13 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
 };
 
 
-export function ollamaListModelsQuery(access: OllamaAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
-  return apiQuery.llmOllama.listModels.useQuery({ access }, {
+export const ollamaListModelsQuery: IModelVendorUpdateModelsQuery<OllamaAccessSchema> = (access, enabled, onSuccess) =>
+  apiQuery.llmOllama.listModels.useQuery({ access }, {
     enabled: enabled,
     onSuccess: onSuccess,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
-}
 
 
 /**

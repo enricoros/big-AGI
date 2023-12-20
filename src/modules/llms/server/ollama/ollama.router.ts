@@ -10,7 +10,7 @@ import { LLM_IF_OAI_Chat } from '../../store-llms';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../server.schemas';
+import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema } from './ollama.wiretypes';

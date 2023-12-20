@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../store-llms';
 
+
+// Model Description: a superset of LLM model descriptors
+
 const pricingSchema = z.object({
   cpmPrompt: z.number().optional(), // Cost per thousand prompt tokens
   cpmCompletion: z.number().optional(), // Cost per thousand completion tokens
@@ -23,6 +26,8 @@ const modelDescriptionSchema = z.object({
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
   hidden: z.boolean().optional(),
 });
+
+// this is also used by the Client
 export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;
 
 export const listModelsOutputSchema = z.object({

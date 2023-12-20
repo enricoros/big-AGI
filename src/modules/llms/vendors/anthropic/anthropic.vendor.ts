@@ -4,8 +4,7 @@ import { AnthropicIcon } from '~/common/components/icons/AnthropicIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
-import type { IModelVendor } from '../IModelVendor';
-import type { ModelDescriptionSchema } from '../../server/server.schemas';
+import type { IModelVendor, IModelVendorUpdateModelsQuery } from '../IModelVendor';
 import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../client/llm.client.types';
 
 import { LLMOptionsOpenAI } from '../openai/openai.vendor';
@@ -52,14 +51,13 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
 };
 
 
-export function anthropicListModelsQuery(access: AnthropicAccessSchema, enabled: boolean, onSuccess: (data: { models: ModelDescriptionSchema[] }) => void) {
-  return apiQuery.llmAnthropic.listModels.useQuery({ access }, {
+export const anthropicListModelsQuery: IModelVendorUpdateModelsQuery<AnthropicAccessSchema> = (access, enabled, onSuccess) =>
+  apiQuery.llmAnthropic.listModels.useQuery({ access }, {
     enabled: enabled,
     onSuccess: onSuccess,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
-}
 
 
 /**
