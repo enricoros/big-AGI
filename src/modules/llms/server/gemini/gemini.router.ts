@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
+import packageJson from '../../../../../package.json';
+
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
@@ -32,6 +34,7 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   return {
     headers: {
       'Content-Type': 'application/json',
+      'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
       'x-goog-api-key': access.geminiKey,
     },
     url: geminiHost + apiPath,
