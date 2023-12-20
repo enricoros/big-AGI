@@ -313,16 +313,16 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
   'huggingfaceh4/zephyr-7b-beta': { name: 'Hugging Face: Zephyr 7B', cw: 4096, cp: 0, cc: 0, unfilt: true },
   'openchat/openchat-7b': { name: 'OpenChat 3.5', cw: 8192, cp: 0, cc: 0, unfilt: true },
   'gryphe/mythomist-7b': { name: 'MythoMist 7B', cw: 32768, cp: 0, cc: 0, unfilt: true },
-  'openrouter/cinematika-7b': { name: 'Cinematika 7B (alpha)', cw: 32000, cp: 0, cc: 0, unfilt: true },
-  'mistralai/mixtral-8x7b-instruct': { name: 'Mistral: Mixtral 8x7B Instruct (beta)', cw: 32000, cp: 0, cc: 0, unfilt: true },
+  'openrouter/cinematika-7b': { name: 'Cinematika 7B (alpha)', cw: 32768, cp: 0, cc: 0, unfilt: true },
   'rwkv/rwkv-5-world-3b': { name: 'RWKV v5 World 3B (beta)', cw: 10000, cp: 0, cc: 0, unfilt: true },
   'recursal/rwkv-5-3b-ai-town': { name: 'RWKV v5 3B AI Town (beta)', cw: 10000, cp: 0, cc: 0, unfilt: true },
-  'jebcarter/psyfighter-13b': { name: 'Psyfighter 13B', cw: 4096, cp: 0.001, cc: 0.001, unfilt: true },
-  'koboldai/psyfighter-13b-2': { name: 'Psyfighter v2 13B', cw: 4096, cp: 0.001, cc: 0.001, unfilt: true },
+  'jebcarter/psyfighter-13b': { name: 'Psyfighter 13B', cw: 4096, cp: 0.0001, cc: 0.0001, unfilt: true },
+  'koboldai/psyfighter-13b-2': { name: 'Psyfighter v2 13B', cw: 4096, cp: 0.0001, cc: 0.0001, unfilt: true },
   'nousresearch/nous-hermes-llama2-13b': { name: 'Nous: Hermes 13B', cw: 4096, cp: 0.000075, cc: 0.000075, unfilt: true },
   'meta-llama/codellama-34b-instruct': { name: 'Meta: CodeLlama 34B Instruct', cw: 8192, cp: 0.0002, cc: 0.0002, unfilt: true },
   'phind/phind-codellama-34b': { name: 'Phind: CodeLlama 34B v2', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
   'intel/neural-chat-7b': { name: 'Neural Chat 7B v3.1', cw: 4096, cp: 0.0025, cc: 0.0025, unfilt: true },
+  'mistralai/mixtral-8x7b-instruct': { name: 'Mistral: Mixtral 8x7B Instruct (beta)', cw: 32768, cp: 0.0003, cc: 0.0003, unfilt: true },
   'haotian-liu/llava-13b': { name: 'Llava 13B', cw: 2048, cp: 0.0025, cc: 0.0025, unfilt: true },
   'nousresearch/nous-hermes-2-vision-7b': { name: 'Nous: Hermes 2 Vision 7B (alpha)', cw: 4096, cp: 0.0025, cc: 0.0025, unfilt: true },
   'meta-llama/llama-2-13b-chat': { name: 'Meta: Llama v2 13B Chat', cw: 4096, cp: 0.000156755, cc: 0.000156755, unfilt: true },
@@ -334,10 +334,12 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
   'openai/gpt-4-32k': { name: 'OpenAI: GPT-4 32k', cw: 32767, cp: 0.06, cc: 0.12, unfilt: false },
   'openai/gpt-4-vision-preview': { name: 'OpenAI: GPT-4 Vision (preview)', cw: 128000, cp: 0.01, cc: 0.03, unfilt: false },
   'openai/gpt-3.5-turbo-instruct': { name: 'OpenAI: GPT-3.5 Turbo Instruct', cw: 4095, cp: 0.0015, cc: 0.002, unfilt: false },
-  'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Chat', cw: 9216, cp: 0.0005, cc: 0.0005, unfilt: true },
-  'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Code Chat', cw: 7168, cp: 0.0005, cc: 0.0005, unfilt: true },
-  'google/palm-2-chat-bison-32k': { name: 'Google: PaLM 2 Chat 32k', cw: 32000, cp: 0.0005, cc: 0.0005, unfilt: true },
-  'google/palm-2-codechat-bison-32k': { name: 'Google: PaLM 2 Code Chat 32k', cw: 32000, cp: 0.0005, cc: 0.0005, unfilt: true },
+  'google/palm-2-chat-bison': { name: 'Google: PaLM 2 Chat', cw: 36864, cp: 0.00025, cc: 0.0005, unfilt: true },
+  'google/palm-2-codechat-bison': { name: 'Google: PaLM 2 Code Chat', cw: 28672, cp: 0.00025, cc: 0.0005, unfilt: true },
+  'google/palm-2-chat-bison-32k': { name: 'Google: PaLM 2 Chat 32k', cw: 131072, cp: 0.00025, cc: 0.0005, unfilt: true },
+  'google/palm-2-codechat-bison-32k': { name: 'Google: PaLM 2 Code Chat 32k', cw: 131072, cp: 0.00025, cc: 0.0005, unfilt: true },
+  'google/gemini-pro': { name: 'Google: Gemini Pro (preview)', cw: 131040, cp: 0.00025, cc: 0.0005, unfilt: true },
+  'google/gemini-pro-vision': { name: 'Google: Gemini Pro Vision (preview)', cw: 65536, cp: 0.00025, cc: 0.0005, unfilt: true },
   'perplexity/pplx-70b-online': { name: 'Perplexity: PPLX 70B Online', cw: 4096, cp: 0, cc: 0.0028, unfilt: true },
   'perplexity/pplx-7b-online': { name: 'Perplexity: PPLX 7B Online', cw: 4096, cp: 0, cc: 0.00028, unfilt: true },
   'perplexity/pplx-7b-chat': { name: 'Perplexity: PPLX 7B Chat', cw: 8192, cp: 0.00007, cc: 0.00028, unfilt: true },
@@ -347,7 +349,7 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
   'nousresearch/nous-capybara-34b': { name: 'Nous: Capybara 34B', cw: 32000, cp: 0.0007, cc: 0.0028, unfilt: true },
   'jondurbin/airoboros-l2-70b': { name: 'Airoboros 70B', cw: 4096, cp: 0.0007, cc: 0.00095, unfilt: true },
   'migtissera/synthia-70b': { name: 'Synthia 70B', cw: 8192, cp: 0.00375, cc: 0.00375, unfilt: true },
-  'open-orca/mistral-7b-openorca': { name: 'Mistral OpenOrca 7B', cw: 8192, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'open-orca/mistral-7b-openorca': { name: 'Mistral OpenOrca 7B', cw: 8192, cp: 0.0001425006, cc: 0.0001425006, unfilt: true },
   'teknium/openhermes-2-mistral-7b': { name: 'OpenHermes 2 Mistral 7B', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
   'teknium/openhermes-2.5-mistral-7b': { name: 'OpenHermes 2.5 Mistral 7B', cw: 4096, cp: 0.0002, cc: 0.0002, unfilt: true },
   'pygmalionai/mythalion-13b': { name: 'Pygmalion: Mythalion 13B', cw: 8192, cp: 0.001125, cc: 0.001125, unfilt: true },
@@ -361,9 +363,9 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
   '01-ai/yi-34b-chat': { name: 'Yi 34B Chat', cw: 4096, cp: 0.0008, cc: 0.0008, unfilt: true },
   '01-ai/yi-34b': { name: 'Yi 34B (base)', cw: 4096, cp: 0.0008, cc: 0.0008, unfilt: true },
   '01-ai/yi-6b': { name: 'Yi 6B (base)', cw: 4096, cp: 0.00014, cc: 0.00014, unfilt: true },
-  'togethercomputer/stripedhyena-nous-7b': { name: 'StripedHyena Nous 7B', cw: 32000, cp: 0.0002, cc: 0.0002, unfilt: true },
-  'togethercomputer/stripedhyena-hessian-7b': { name: 'StripedHyena Hessian 7B (base)', cw: 32000, cp: 0.0002, cc: 0.0002, unfilt: true },
-  'mistralai/mixtral-8x7b': { name: 'Mistral: Mixtral 8x7B (base) (beta)', cw: 32000, cp: 0.0006, cc: 0.0006, unfilt: true },
+  'togethercomputer/stripedhyena-nous-7b': { name: 'StripedHyena Nous 7B', cw: 32768, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'togethercomputer/stripedhyena-hessian-7b': { name: 'StripedHyena Hessian 7B (base)', cw: 32768, cp: 0.0002, cc: 0.0002, unfilt: true },
+  'mistralai/mixtral-8x7b': { name: 'Mistral: Mixtral 8x7B (base) (beta)', cw: 32768, cp: 0.0006, cc: 0.0006, unfilt: true },
   'anthropic/claude-2': { name: 'Anthropic: Claude v2.1', cw: 200000, cp: 0.008, cc: 0.024, unfilt: false },
   'anthropic/claude-2.0': { name: 'Anthropic: Claude v2.0', cw: 100000, cp: 0.008, cc: 0.024, unfilt: false },
   'anthropic/claude-instant-v1': { name: 'Anthropic: Claude Instant v1', cw: 100000, cp: 0.00163, cc: 0.00551, unfilt: false },
@@ -382,10 +384,10 @@ const orModelMap: { [id: string]: { name: string; cw: number; cp?: number; cc?: 
 };
 
 const orModelFamilyOrder = [
-  // great models
-  'mistralai/mixtral-8x7b-instruct', 'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
+  // great models (pickes by hand, they're free)
+  'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
   // great orgs
-  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'openai/', 'meta-llama/', 'phind/',
+  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'mistralai/', 'openai/', 'meta-llama/', 'phind/',
 ];
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {

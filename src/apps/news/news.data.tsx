@@ -10,10 +10,10 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 8;
+export const incrementalVersion: number = 9;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
-  const boldText = <Typography color={!!props.href ? 'primary' : 'warning'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
+  const boldText = <Typography color={!!props.href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
   return props.href ?
     <Link href={props.href + clientUtmSource()} target='_blank' sx={{ /*textDecoration: 'underline'*/ }}>{boldText} <LaunchIcon sx={{ ml: 1 }} /></Link> :
     boldText;
@@ -27,11 +27,12 @@ const RIssues = `${OpenRepo}/issues`;
 export const newsCallout =
   <Card>
     <CardContent sx={{ gap: 2 }}>
-      <Typography level='h4'>
+      <Typography level='title-lg'>
         Open Roadmap
       </Typography>
-      <Typography>
-        The roadmap is officially out. For the first time you get a look at what&apos;s brewing, up and coming, and get a chance to pick up cool features!
+      <Typography level='body-md'>
+        Take a peek at our roadmap to see what&apos;s in the pipeline.
+        Discover upcoming features and let us know what excites you the most!
       </Typography>
       <Grid container spacing={1}>
         <Grid xs={12} sm={7}>
@@ -39,7 +40,7 @@ export const newsCallout =
             fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
             component={Link} href={OpenProject} noLinkStyle target='_blank'
           >
-            Explore the Roadmap
+            Explore
           </Button>
         </Grid>
         <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
@@ -67,10 +68,27 @@ export const NewsItems: NewsItem[] = [
     ],
   },*/
   {
-    versionCode: '1.7.3',
+    versionCode: '1.8.0',
+    versionName: 'To The Moon And Back',
+    versionMoji: '🚀🌕🔙❤️',
+    versionDate: new Date('2023-12-20T09:30:00Z'),
+    items: [
+      { text: <><B href={RIssues + '/275'}>Google Gemini</B> models support</> },
+      { text: <><B href={RIssues + '/273'}>Mistral Platform</B> support</> },
+      { text: <><B href={RIssues + '/270'}>Ollama chats</B> perfection</> },
+      { text: <>Custom <B href={RIssues + '/280'}>diagrams instructions</B> (@joriskalz)</> },
+      { text: <><B>Single-Tab</B> mode, enhances data integrity and prevents DB corruption</> },
+      { text: <>Updated Ollama (v0.1.17) and OpenRouter models</> },
+      { text: <>More: fixed ⌘ shortcuts on Mac</> },
+      { text: <><Link href='https://big-agi.com'>Website</Link>: official downloads</> },
+      { text: <>Easier Vercel deployment, documented <Link href='https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483'>network troubleshooting</Link></>, dev: true },
+    ],
+  },
+  {
+    versionCode: '1.7.0',
     versionName: 'Attachment Theory',
-    versionDate: new Date('2023-12-11T06:00:00Z'), // new Date().toISOString()
-    // versionDate: new Date('2023-12-10T12:00:00Z'), // 1.7.0
+    // versionDate: new Date('2023-12-11T06:00:00Z'), // 1.7.3
+    versionDate: new Date('2023-12-10T12:00:00Z'), // 1.7.0
     items: [
       { text: <>Redesigned <B href={RIssues + '/251'}>attachments system</B>: drag, paste, link, snap, images, text, pdfs</> },
       { text: <>Desktop <B href={RIssues + '/253'}>webcam access</B> for direct image capture (Labs option)</> },
@@ -80,9 +98,6 @@ export const NewsItems: NewsItem[] = [
       { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
       { text: <>Optimized voice input and performance</> },
       { text: <>Latest Ollama and Oobabooga models</> },
-      { text: <>1.7.1: Improved <B href={RIssues + '/270'}>Ollama chats</B></> },
-      { text: <>1.7.2: Updated OpenRouter models 🎁</> },
-      { text: <>1.7.3: <B href={RIssues + '/273'}>Mistral Platform</B> support</> },
     ],
   },
   {
@@ -162,6 +177,7 @@ export const NewsItems: NewsItem[] = [
 interface NewsItem {
   versionCode: string;
   versionName?: string;
+  versionMoji?: string;
   versionDate?: Date;
   text?: string | React.JSX.Element;
   items?: {
