@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Container } from '@mui/joy';
 
-import { ModelsModal } from '../../apps/models-modal/ModelsModal';
+import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
 import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
 import { ShortcutsModal } from '../../apps/settings-modal/ShortcutsModal';
 

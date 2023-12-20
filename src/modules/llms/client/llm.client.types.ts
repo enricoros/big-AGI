@@ -1,4 +1,4 @@
-import type { OpenAIWire } from '~/modules/llms/server/openai/openai.wiretypes';
+import type { OpenAIWire } from '../server/openai/openai.wiretypes';
 
 export interface VChatMessageIn {
   role: 'assistant' | 'system' | 'user'; // | 'function';
