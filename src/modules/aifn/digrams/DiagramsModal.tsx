@@ -8,8 +8,9 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
+
 import { ChatMessage } from '../../../apps/chat/components/message/ChatMessage';
-import { streamChat } from '~/modules/llms/transports/streamChat';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
@@ -85,7 +86,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
-      await streamChat(diagramLlm.id, diagramPrompt, stepAbortController.signal,
+      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, null, null, stepAbortController.signal,
         (update: Partial<{ text: string, typing: boolean, originLLM: string }>) => {
           assistantMessage = { ...assistantMessage, ...update };
           setMessage(assistantMessage);

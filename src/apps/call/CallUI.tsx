@@ -15,8 +15,7 @@ import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown'
 
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
-import { streamChat } from '~/modules/llms/transports/streamChat';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { Link } from '~/common/components/Link';
@@ -216,7 +215,7 @@ export function CallUI(props: {
     responseAbortController.current = new AbortController();
     let finalText = '';
     let error: any | null = null;
-    streamChat(chatLLMId, callPrompt, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
+    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
       const text = updatedMessage.text?.trim();
       if (text) {
         finalText = text;

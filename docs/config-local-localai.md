@@ -30,5 +30,5 @@ For instance with [Use luna-ai-llama2 with docker compose](https://localai.io/ba
 
 > NOTE: LocalAI does not list details about the mdoels. Every model is assumed to be
 > capable of chatting, and with a context window of 4096 tokens.
-> Please update the [src/modules/llms/transports/server/openai/models.data.ts](../src/modules/llms/transports/server/openai/models.data.ts)
+> Please update the [src/modules/llms/transports/server/openai/models.data.ts](../src/modules/llms/server/openai/models.data.ts)
 > file with the mapping information between LocalAI model IDs and names/descriptions/tokens, etc.

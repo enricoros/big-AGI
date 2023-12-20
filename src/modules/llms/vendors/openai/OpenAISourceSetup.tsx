@@ -9,13 +9,13 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
-import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
+import { isValidOpenAIApiKey, ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -40,15 +40,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
-
+  const { isFetching, refetch, isError, error } =
+    useLlmUpdateModels(ModelVendorOpenAI, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
@@ -109,31 +102,4 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     {isError && <InlineError error={error} />}
 
   </>;
-}
-
-
-export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
-  const maxOutputTokens = model.maxCompletionTokens || Math.round((model.contextWindow || 4096) / 2);
-  const llmResponseTokens = Math.round(maxOutputTokens / (model.maxCompletionTokens ? 2 : 4));
-  return {
-    id: `${source.id}-${model.id}`,
-
-    label: model.label,
-    created: model.created || 0,
-    updated: model.updated || 0,
-    description: model.description,
-    tags: [], // ['stream', 'chat'],
-    contextTokens: model.contextWindow,
-    maxOutputTokens: maxOutputTokens,
-    hidden: !!model.hidden,
-
-    sId: source.id,
-    _source: source,
-
-    options: {
-      llmRef: model.id,
-      llmTemperature: 0.5,
-      llmResponseTokens: llmResponseTokens,
-    },
-  };
 }

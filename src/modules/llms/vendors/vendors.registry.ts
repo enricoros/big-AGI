@@ -1,5 +1,6 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
+import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
@@ -7,20 +8,32 @@ import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
-import type { IModelVendor, ModelVendorId, ModelVendorRegistryType } from './IModelVendor';
+import type { IModelVendor } from './IModelVendor';
 import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
 
+export type ModelVendorId =
+  | 'anthropic'
+  | 'azure'
+  | 'googleai'
+  | 'localai'
+  | 'mistral'
+  | 'ollama'
+  | 'oobabooga'
+  | 'openai'
+  | 'openrouter';
+
 /** Global: Vendor Instances Registry **/
-const MODEL_VENDOR_REGISTRY: ModelVendorRegistryType = {
+const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
+  googleai: ModelVendorGemini,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
-};
+} as Record<string, IModelVendor>;
 
 const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';
 
@@ -31,13 +44,15 @@ export function findAllVendors(): IModelVendor[] {
   return modelVendors;
 }
 
-export function findVendorById(vendorId?: ModelVendorId): IModelVendor | null {
-  return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] ?? null) : null;
+export function findVendorById<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
+  vendorId?: ModelVendorId,
+): IModelVendor<TSourceSetup, TAccess, TLLMOptions> | null {
+  return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TSourceSetup, TAccess, TLLMOptions>) ?? null : null;
 }
 
-export function findVendorForLlmOrThrow(llmId: DLLMId) {
-  const llm = findLLMOrThrow(llmId);
-  const vendor = findVendorById(llm?._source.vId);
+export function findVendorForLlmOrThrow<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(llmId: DLLMId) {
+  const llm = findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId);
+  const vendor = findVendorById<TSourceSetup, TAccess, TLLMOptions>(llm?._source.vId);
   if (!vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
   return { llm, vendor };
 }

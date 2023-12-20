@@ -167,6 +167,8 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
       make sure the usage is under <Link noLinkStyle href='https://platform.openai.com/account/billing/limits' target='_blank'>the limits</Link>.
     </>;
   }
+  // else
+  //  errorMessage = <>{text || 'Unknown error'}</>;
 
   return { errorMessage, isAssistantError };
 }

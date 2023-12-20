@@ -6,7 +6,7 @@ import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema } from '../server.schemas';
+import { listModelsOutputSchema } from '../llm.server.types';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';

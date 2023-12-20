@@ -1,12 +1,11 @@
 import type React from 'react';
+import type { TRPCClientErrorBase } from '@trpc/client';
 
-import type { DLLM, DModelSourceId } from '../store-llms';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../transports/chatGenerate';
+import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
+import type { ModelDescriptionSchema } from '../server/llm.server.types';
+import type { ModelVendorId } from './vendors.registry';
+import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '~/modules/llms/llm.client';
 
-
-export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'mistral' | 'ollama' | 'oobabooga' | 'openai' | 'openrouter';
-
-export type ModelVendorRegistryType = Record<ModelVendorId, IModelVendor>;
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
   readonly id: ModelVendorId;
@@ -30,7 +29,28 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
 
-  callChatGenerate(llm: TDLLM, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut>;
+  rpcUpdateModelsQuery: (
+    access: TAccess,
+    enabled: boolean,
+    onSuccess: (data: { models: ModelDescriptionSchema[] }) => void,
+  ) => { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };
 
-  callChatGenerateWF(llm: TDLLM, messages: VChatMessageIn[], functions: null | VChatFunctionIn[], forceFunctionName: null | string, maxTokens?: number): Promise<VChatMessageOrFunctionCallOut>;
+  rpcChatGenerateOrThrow: (
+    access: TAccess,
+    llmOptions: TLLMOptions,
+    messages: VChatMessageIn[],
+    functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+    maxTokens?: number,
+  ) => Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
+
+  streamingChatGenerateOrThrow: (
+    access: TAccess,
+    llmId: DLLMId,
+    llmOptions: TLLMOptions,
+    messages: VChatMessageIn[],
+    functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+    abortSignal: AbortSignal,
+    onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
+  ) => Promise<void>;
+
 }

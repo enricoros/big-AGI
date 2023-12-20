@@ -1,8 +1,7 @@
 import * as React from 'react';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
-import type { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
-import { streamChat } from '~/modules/llms/transports/streamChat';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export function useStreamChatText() {
@@ -25,7 +24,7 @@ export function useStreamChatText() {
 
     try {
       let lastText = '';
-      await streamChat(llmId, prompt, abortControllerRef.current.signal, (update) => {
+      await llmStreamingChatGenerate(llmId, prompt, null, null, abortControllerRef.current.signal, (update) => {
         if (update.text) {
           lastText = update.text;
           setPartialText(lastText);
