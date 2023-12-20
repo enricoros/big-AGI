@@ -1,12 +1,10 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { ChatStreamFirstOutputPacketSchema, ChatStreamInputSchema } from '../server/llms.streaming';
-import type { DLLM, DLLMId } from '../store-llms';
-import { findVendorForLlmOrThrow } from '../vendors/vendors.registry';
+import type { ChatStreamingFirstOutputPacketSchema, ChatStreamingInputSchema } from '../server/llm.server.streaming';
+import type { DLLMId } from '../store-llms';
+import type { VChatFunctionIn, VChatMessageIn } from '../llm.client';
 
 import type { OpenAIWire } from '../server/openai/openai.wiretypes';
-
-import type { VChatMessageIn } from './llm.client.types';
 
 
 /**
@@ -16,27 +14,14 @@ import type { VChatMessageIn } from './llm.client.types';
  * Vendor-specific implementation is on our server backend (API) code. This function tries to be
  * as generic as possible.
  *
- * @param llmId LLM to use
- * @param messages the history of messages to send to the API endpoint
- * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
- * @param onUpdate callback when a piece of a message (text, model name, typing..) is received
+ * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
  */
-export async function llmStreamChatGenerate(
+export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions = unknown>(
+  access: ChatStreamingInputSchema['access'],
   llmId: DLLMId,
+  llmOptions: TLLMOptions,
   messages: VChatMessageIn[],
-  abortSignal: AbortSignal,
-  onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
-): Promise<void> {
-  const { llm, vendor } = findVendorForLlmOrThrow(llmId);
-  const access = vendor.getTransportAccess(llm._source.setup) as ChatStreamInputSchema['access'];
-  return await vendorStreamChat(access, llm, messages, abortSignal, onUpdate);
-}
-
-
-async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
-  access: ChatStreamInputSchema['access'],
-  llm: DLLM<TSourceSetup, TLLMOptions>,
-  messages: VChatMessageIn[],
+  functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
   abortSignal: AbortSignal,
   onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
 ) {
@@ -80,12 +65,12 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
   }
 
   // model params (llm)
-  const { llmRef, llmTemperature, llmResponseTokens } = (llm.options as any) || {};
+  const { llmRef, llmTemperature, llmResponseTokens } = (llmOptions as any) || {};
   if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
-    throw new Error(`Error in configuration for model ${llm.id}: ${JSON.stringify(llm.options)}`);
+    throw new Error(`Error in configuration for model ${llmId}: ${JSON.stringify(llmOptions)}`);
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate
-  const input: ChatStreamInputSchema = {
+  const input: ChatStreamingInputSchema = {
     access,
     model: {
       id: llmRef,
@@ -132,7 +117,7 @@ async function vendorStreamChat<TSourceSetup = unknown, TLLMOptions = unknown>(
       incrementalText = incrementalText.substring(endOfJson + 1);
       parsedFirstPacket = true;
       try {
-        const parsed: ChatStreamFirstOutputPacketSchema = JSON.parse(json);
+        const parsed: ChatStreamingFirstOutputPacketSchema = JSON.parse(json);
         onUpdate({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore

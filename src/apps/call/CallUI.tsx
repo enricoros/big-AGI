@@ -13,10 +13,9 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
 import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
 
-import type { VChatMessageIn } from '~/modules/llms/client/llm.client.types';
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { llmStreamChatGenerate } from '~/modules/llms/client/llmStreamChatGenerate';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { Link } from '~/common/components/Link';
@@ -216,7 +215,7 @@ export function CallUI(props: {
     responseAbortController.current = new AbortController();
     let finalText = '';
     let error: any | null = null;
-    llmStreamChatGenerate(chatLLMId, callPrompt, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
+    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
       const text = updatedMessage.text?.trim();
       if (text) {
         finalText = text;

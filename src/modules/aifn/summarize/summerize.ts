@@ -1,5 +1,5 @@
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow } from '~/modules/llms/client/llmChatGenerate';
+import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
 
 
 // prompt to be tried when doing recursive summerization.

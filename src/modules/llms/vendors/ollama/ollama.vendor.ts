@@ -5,7 +5,8 @@ import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
-import type { VChatMessageOut } from '../../client/llm.client.types';
+import type { VChatMessageOut } from '../../llm.client';
+import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
@@ -69,5 +70,8 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
       throw new Error(errorMessage);
     }
   },
+
+  // Chat Generate (streaming) with Functions
+  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

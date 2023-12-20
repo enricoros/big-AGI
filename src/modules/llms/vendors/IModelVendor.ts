@@ -1,10 +1,10 @@
 import type React from 'react';
 import type { TRPCClientErrorBase } from '@trpc/client';
 
-import type { DLLM, DModelSourceId } from '../store-llms';
+import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../client/llm.client.types';
+import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '~/modules/llms/llm.client';
 
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
@@ -42,5 +42,15 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     maxTokens?: number,
   ) => Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
+
+  streamingChatGenerateOrThrow: (
+    access: TAccess,
+    llmId: DLLMId,
+    llmOptions: TLLMOptions,
+    messages: VChatMessageIn[],
+    functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+    abortSignal: AbortSignal,
+    onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
+  ) => Promise<void>;
 
 }
