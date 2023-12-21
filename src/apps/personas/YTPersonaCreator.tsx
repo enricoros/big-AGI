@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tooltip, Typography, Tabs, TabList, Tab, TabPanel } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tab, TabList, TabPanel, Tabs, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
@@ -102,48 +103,68 @@ export function YTPersonaCreator() {
   return <>
 
     <Typography level='title-sm' mb={4}>
-          AI Persona from YouTube or Text
+      Create the System Prompt of an AI Persona from YouTube or Text.
     </Typography>
-    <Tabs defaultValue={0}>
+
+    <Tabs defaultValue={0} variant='outlined'>
       <TabList>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>
       </TabList>
-      <TabPanel value={0}>
-      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-          <YouTubeIcon sx={{ color: '#f00' }} />
-          <Typography level="title-lg">YouTube -&gt; AI persona</Typography>
-        </Box>
+
+      {/* YouTube URL inputs */}
+      <TabPanel value={0} sx={{ p: 2 }}>
+
+        <Typography level='title-md' startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />} sx={{ mb: 2 }}>
+          YouTube -&gt; Persona
+        </Typography>
 
         <form onSubmit={handleFetchTranscript}>
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
-            <Input
-              required
-              type="url"
-              fullWidth
-              variant="outlined"
-              placeholder="YouTube Video URL"
-              value={videoURL}
-              onChange={handleVideoIdChange}
-              endDecorator={
-                <IconButton variant="outlined" color="neutral" onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
-                  <WhatshotIcon />
-                </IconButton>
-              }
-            />
-            <Button type="submit" variant="solid" disabled={isFetching || isTransforming || !videoURL  } loading={isFetching} sx={{ minWidth: 120 }}>
-              Create
-            </Button>
-          </Box>
+          <Input
+            required
+            type='url'
+            fullWidth
+            variant='outlined'
+            placeholder='YouTube Video URL'
+            value={videoURL}
+            onChange={handleVideoIdChange}
+            endDecorator={
+              <IconButton variant='outlined' color='neutral' onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
+                <WhatshotIcon />
+              </IconButton>
+            }
+            sx={{ mb: 1 }}
+          />
+          <Button type='submit' variant='solid' disabled={isFetching || isTransforming || !videoURL} loading={isFetching} sx={{ minWidth: 140 }}>
+            Create
+          </Button>
         </form>
       </TabPanel>
-      <TabPanel value={1}>
-        {/* New text area for users to paste copied text */}
-        <Typography level="title-md" sx={{ mb: 1 }}>
-          Paste your text here
+
+      {/* Text area for users to paste copied text */}
+      <TabPanel value={1} sx={{ p: 2 }}>
+
+        <Typography level='title-md' startDecorator={<TextFieldsIcon />} sx={{ mb: 2 }}>
+          <b>Text</b> -&gt; Persona
         </Typography>
-        <textarea placeholder="Paste your text here..." value={personaText} onChange={handlePersonaTextChange} style={{ width: '100%', minHeight: '100px' }} />
-        <Button variant="solid" disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ mt: 1, mb: 2 }}>
+
+        <Textarea
+          variant='outlined'
+          autoFocus
+          minRows={5} maxRows={10}
+          placeholder='Paste your text here...'
+          value={personaText}
+          onChange={handlePersonaTextChange}
+          sx={{
+            backgroundColor: 'background.level1',
+            '&:focus-within': {
+              backgroundColor: 'background.popup',
+            },
+            lineHeight: 1.75,
+            mb: 1,
+          }}
+        />
+        <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ minWidth: 140 }}>
           Create
         </Button>
       </TabPanel>
