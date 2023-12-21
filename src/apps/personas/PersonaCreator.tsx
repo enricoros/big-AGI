@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tab, TabList, TabPanel, Tabs, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, Input, LinearProgress, Tab, TabList, TabPanel, Tabs, Textarea, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
-import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { GoodModal } from '~/common/components/GoodModal';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
@@ -129,16 +129,18 @@ export function PersonaCreator() {
             placeholder='YouTube Video URL'
             value={videoURL}
             onChange={handleVideoIdChange}
-            endDecorator={
-              <IconButton variant='outlined' color='neutral' onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
-                <WhatshotIcon />
-              </IconButton>
-            }
             sx={{ mb: 1.5 }}
           />
-          <Button type='submit' variant='solid' disabled={isFetching || isTransforming || !videoURL} loading={isFetching} sx={{ minWidth: 140 }}>
-            Create
-          </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button type='submit' variant='solid' disabled={isFetching || isTransforming || !videoURL} loading={isFetching} sx={{ minWidth: 140 }}>
+              Create
+            </Button>
+            <GoodTooltip title='This example comes from the popular Fireship YouTube channel, which presents technical topics with irreverent humor.'>
+              <Button variant='outlined' color='neutral' onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
+                Example
+              </Button>
+            </GoodTooltip>
+          </Box>
         </form>
       </TabPanel>
 
@@ -190,25 +192,24 @@ export function PersonaCreator() {
 
     {/* Persona! */}
     {chainOutput && <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 0.5 }}>
-        <Typography level='title-lg' color='success' startDecorator={<SettingsAccessibilityIcon color='success' />}>
-          Persona Prompt
-        </Typography>
-        <Tooltip title='Copy system prompt' variant='solid'>
-          <Button color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')} endDecorator={<ContentCopyIcon />} sx={{ minWidth: 120 }}>
-            Copy
-          </Button>
-        </Tooltip>
-      </Box>
-
-      <Card sx={{ boxShadow: 'md' }}>
+      <Card sx={{ boxShadow: 'md', mt: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography level='title-lg' color='success' startDecorator={<SettingsAccessibilityIcon color='success' />}>
+            Persona Prompt
+          </Typography>
+          <GoodTooltip title='Copy system prompt'>
+            <Button color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')} endDecorator={<ContentCopyIcon />} sx={{ minWidth: 120 }}>
+              Copy
+            </Button>
+          </GoodTooltip>
+        </Box>
         <CardContent>
-          <Typography level='title-sm' sx={{ lineHeight: 1.75, mb: 1 }}>
+          <Alert variant='soft' color='success' sx={{ mb: 1 }}>
+            You may now copy the text below and use it as Custom prompt!
+          </Alert>
+          <Typography level='title-sm' sx={{ lineHeight: 1.75 }}>
             {chainOutput}
           </Typography>
-          <Alert variant='soft' color='success'>
-            You may copy the text above and use it as Custom prompt!
-          </Alert>
         </CardContent>
       </Card>
     </>}
@@ -219,7 +220,7 @@ export function PersonaCreator() {
         Input Data
       </Typography>
 
-      <Card sx={{ boxShadow: 'md' }}>
+      <Card>
         <CardContent>
           <Typography level='title-md' sx={{ mb: 1 }}>
             {title || 'Transcript / Text'}
@@ -280,7 +281,8 @@ export function PersonaCreator() {
       </Box>
       <Typography level='title-sm'>
         This may take 1-2 minutes. Do not close this window or the progress will be lost.
-        If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
+        While larger models will produce higher quality prompts,
+        if you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
         please try again with faster/smaller models.
       </Typography>
       <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 3 }}>
