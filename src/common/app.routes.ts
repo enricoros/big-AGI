@@ -14,6 +14,7 @@ export const ROUTE_INDEX = '/';
 export const ROUTE_APP_CHAT = '/';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
+export const ROUTE_APP_PERSONAS = '/personas';
 const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
 
 
@@ -54,6 +55,8 @@ export const navigateToChat = async (conversationId?: DConversationId) => {
   }
 };
 export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
+
+export const navigateToPersonas = navigateFn(ROUTE_APP_PERSONAS);
 
 export const navigateBack = Router.back;
 
