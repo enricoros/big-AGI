@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Container, ListDivider, Sheet, Typography } from '@mui/joy';
 
-import { YTPersonaCreator } from './YTPersonaCreator';
+import { PersonaCreator } from './PersonaCreator';
 import ScienceIcon from '@mui/icons-material/Science';
 
 
@@ -30,7 +30,7 @@ export function AppPersonas() {
 
         <ListDivider sx={{ my: 2 }} />
 
-        <YTPersonaCreator />
+        <PersonaCreator />
 
       </Container>
 
