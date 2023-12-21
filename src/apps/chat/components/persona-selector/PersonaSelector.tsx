@@ -3,18 +3,19 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
-import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
-import { Link } from '~/common/components/Link';
+import { navigateToPersonas } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
 
+
+// 'special' purpose IDs, for tile hiding purposes
+const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
 
 // Constants for tile sizes / grid width - breakpoints need to be computed here to work around
 // the "flex box cannot shrink over wrapped content" issue
@@ -47,7 +48,6 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // external state
   const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
-  const labsPersonaYTCreator = useUXLabsStore(state => state.labsPersonaYTCreator);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -113,6 +113,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
   const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
 
+  const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
+
   const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
   const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
 
@@ -156,10 +158,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               <Button
                 variant={(!editMode && systemPurposeId === spId) ? 'solid' : 'soft'}
                 color={(!editMode && systemPurposeId === spId) ? 'primary' : SystemPurposes[spId as SystemPurposeId]?.highlighted ? 'warning' : 'neutral'}
-                onClick={() => !editMode && handlePurposeChanged(spId as SystemPurposeId)}
+                onClick={() => editMode
+                  ? toggleHiddenPurposeId(spId)
+                  : handlePurposeChanged(spId as SystemPurposeId)
+                }
                 sx={{
                   flexDirection: 'column',
                   fontWeight: 500,
+                  // paddingInline: 1,
                   gap: bpTileGap,
                   height: bpTileSize,
                   width: bpTileSize,
@@ -171,9 +177,10 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               >
                 {editMode && (
                   <Checkbox
-                    label={<Typography level='body-sm'>show</Typography>}
-                    checked={!hiddenPurposeIDs.includes(spId)} onChange={() => toggleHiddenPurposeId(spId)}
-                    sx={{ alignSelf: 'flex-start' }}
+                    color='neutral'
+                    checked={!hiddenPurposeIDs.includes(spId)}
+                    // label={<Typography level='body-xs'>show</Typography>}
+                    sx={{ position: 'absolute', left: 8, top: 8 }}
                   />
                 )}
                 <div style={{ fontSize: '2rem' }}>
@@ -185,28 +192,43 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               </Button>
             </Grid>
           ))}
-          {/* Button to start the YouTube persona creator */}
-          {labsPersonaYTCreator && <Grid>
+          {/* Button to start the Persona Creator */}
+          {(editMode || !hidePersonaCreator) && <Grid>
             <Button
               variant='soft' color='neutral'
-              component={Link} noLinkStyle href='/personas'
+              onClick={() => editMode
+                ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR)
+                : void navigateToPersonas()
+              }
               sx={{
-                '--Icon-fontSize': '2rem',
                 flexDirection: 'column',
                 fontWeight: 500,
-                // gap: bpTileGap,
+                // paddingInline: 1,
+                gap: bpTileGap,
                 height: bpTileSize,
                 width: bpTileSize,
-                border: `1px dashed`,
-                boxShadow: 'md',
-                backgroundColor: 'background.surface',
+                // border: `1px dashed`,
+                // borderColor: 'neutral.softActiveBg',
+                boxShadow: 'xs',
+                backgroundColor: 'neutral.softDisabledBg',
               }}
             >
+              {editMode && (
+                <Checkbox
+                  color='neutral'
+                  checked={!hidePersonaCreator}
+                  // label={<Typography level='body-xs'>show</Typography>}
+                  sx={{ position: 'absolute', left: 8, top: 8 }}
+                />
+              )}
               <div>
-                <ScienceIcon />
+                <div style={{ fontSize: '2rem' }}>
+                  🎭
+                </div>
+                {/*<SettingsAccessibilityIcon style={{ opacity: 0.5 }} />*/}
               </div>
-              <div>
-                YouTube persona creator
+              <div style={{ textAlign: 'center' }}>
+                Persona Creator
               </div>
             </Button>
           </Grid>}
