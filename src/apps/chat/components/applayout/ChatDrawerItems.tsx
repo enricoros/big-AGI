@@ -13,6 +13,8 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
+import { Folders }  from './Folders';
+import { useFolderStore } from '~/common/state/store-folders'; 
 
 
 // type ListGrouping = 'off' | 'persona';
@@ -37,6 +39,9 @@ function ChatDrawerItems(props: {
   const conversations = useChatStore(state => state.conversations, shallow);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
+  const createFolder = useFolderStore((state) => state.createFolder);
+  const addConversationToFolder = useFolderStore((state) => state.addConversationToFolder);
+
 
   // derived state
   const maxChatMessages = conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 1);
@@ -44,6 +49,22 @@ function ChatDrawerItems(props: {
   const hasChats = totalConversations > 0;
   const singleChat = totalConversations === 1;
   const softMaxReached = totalConversations >= 50;
+
+
+  const handleFolderSelect = (folderId: string | null) => {
+    // Logic to handle folder selection
+
+    // Optionally, you could automatically activate the first conversation in the folder
+    console.log('Folder selected: ', folderId);
+
+  };
+
+  const handleFolderCreate = (folderTitle: string) => {
+    const newFolderId = createFolder(folderTitle);
+    // Optionally, you could automatically add the current conversation to the new folder
+    // addConversationToFolder(newFolderId, props.activeConversationId);
+  };
+
 
 
   const handleButtonNew = React.useCallback(() => {
@@ -90,6 +111,9 @@ function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
+    {/* Include the Folders component */}
+    <Folders onFolderSelect={handleFolderSelect} onFolderCreate={handleFolderCreate} />
+
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
@@ -99,6 +123,7 @@ function ChatDrawerItems(props: {
     </MenuItem>
 
     <ListDivider sx={{ mb: 0 }} />
+
 
     <Box sx={{ flex: 1, overflowY: 'auto' }}>
       {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
