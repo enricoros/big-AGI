@@ -63,7 +63,7 @@ const YouTubePersonaSteps: LLMChainStep[] = [
 ];
 
 
-export function YTPersonaCreator() {
+export function PersonaCreator() {
   // state
   const [videoURL, setVideoURL] = React.useState('');
   const [videoID, setVideoID] = React.useState('');
