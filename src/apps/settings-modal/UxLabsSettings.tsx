@@ -18,16 +18,11 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCalling, labsCameraDesktop, /*labsEnhancedUI,*/ labsMagicDraw, labsSplitBranching,
-    setLabsCalling, setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsSplitBranching,
+    labsCalling, labsCameraDesktop, /*labsEnhancedUI,*/ labsSplitBranching,
+    setLabsCalling, setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
-
-    <FormSwitchControl
-      title={<><FormatPaintIcon color={labsMagicDraw ? 'primary' : undefined} sx={{ mr: 0.25 }} />Assisted Draw</>} description={labsMagicDraw ? 'Enabled' : 'Disabled'}
-      checked={labsMagicDraw} onChange={setLabsMagicDraw}
-    />
 
     <FormSwitchControl
       title={<><CallIcon color={labsCalling ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Voice Calls</>} description={labsCalling ? 'Call AGI' : 'Disabled'}
@@ -52,7 +47,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools · LLM Overheat
+        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Magic Draw · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 

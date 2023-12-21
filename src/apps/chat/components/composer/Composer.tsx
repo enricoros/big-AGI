@@ -355,19 +355,16 @@ export function Composer(props: {
   const isChat = isImmediate || isWriteUser;
   const isReAct = chatModeId === 'react';
   const isDraw = chatModeId === 'draw-imagine';
-  const isDrawPlus = chatModeId === 'draw-imagine-plus';
-  const buttonColor: ColorPaletteProp = isReAct ? 'success' : (isDraw || isDrawPlus) ? 'warning' : 'primary';
+  const buttonColor: ColorPaletteProp = isReAct ? 'success' : isDraw ? 'warning' : 'primary';
 
   const textPlaceholder: string =
-    isDrawPlus
-      ? 'Write a subject, and we\'ll add detail...'
-      : isDraw
-        ? 'Describe an idea or a drawing...'
-        : isReAct
-          ? 'Multi-step reasoning question...'
-          : props.isDeveloperMode
-            ? 'Chat with me · drop source files · attach code...'
-            : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
+    isDraw
+      ? 'Describe an idea or a drawing...'
+      : isReAct
+        ? 'Multi-step reasoning question...'
+        : props.isDeveloperMode
+          ? 'Chat with me · drop source files · attach code...'
+          : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
 
 
   return (
@@ -427,7 +424,7 @@ export function Composer(props: {
               <Box sx={{ position: 'relative' }}>
 
                 <Textarea
-                  variant='outlined' color={(isDraw || isDrawPlus) ? 'warning' : isReAct ? 'success' : 'neutral'}
+                  variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
                   autoFocus
                   minRows={5} maxRows={10}
                   placeholder={textPlaceholder}
@@ -555,7 +552,7 @@ export function Composer(props: {
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
                   ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
-                  : (isDraw || isDrawPlus)
+                  : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
               )}
@@ -577,7 +574,7 @@ export function Composer(props: {
                     endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
                   >
                     {micContinuation && 'Voice '}
-                    {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : isDrawPlus ? 'Draw+' : 'Chat'}
+                    {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : 'Chat'}
                   </Button>
                 ) : (
                   <Button
@@ -605,7 +602,7 @@ export function Composer(props: {
               {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
-              {(isDraw || isDrawPlus) && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
+              {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
 
             </Box>}
 

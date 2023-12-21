@@ -31,11 +31,6 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     label: 'Draw',
     description: 'AI Image Generation',
   },
-  'draw-imagine-plus': {
-    label: 'Assisted Draw',
-    description: 'Assisted Image Generation',
-    experimental: true,
-  },
   'react': {
     label: 'Reason + Act · α',
     description: 'Answers questions in multiple steps',
@@ -53,7 +48,6 @@ export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClos
 
   // external state
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
-  const labsMagicDraw = useUXLabsStore(state => state.labsMagicDraw);
 
   return <CloseableMenu
     placement='top-end' sx={{ minWidth: 320 }}
@@ -68,7 +62,7 @@ export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClos
 
     {/* ChatMode items */}
     {Object.entries(ChatModeItems)
-      .filter(([, { experimental }]) => labsMagicDraw || !experimental)
+      .filter(([, { experimental }]) => !experimental)
       .map(([key, data]) =>
         <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
