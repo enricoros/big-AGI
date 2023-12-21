@@ -71,7 +71,7 @@ export function PersonaCreator() {
   const [personaText, setPersonaText] = React.useState('');
 
   // external state
-  const [personaLlm, llmComponent] = useFormRadioLlmType();
+  const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
 
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
