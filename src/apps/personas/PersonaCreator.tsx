@@ -71,7 +71,7 @@ export function PersonaCreator() {
   const [personaText, setPersonaText] = React.useState('');
 
   // external state
-  const [diagramLlm, llmComponent] = useFormRadioLlmType();
+  const [personaLlm, llmComponent] = useFormRadioLlmType();
 
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
@@ -80,7 +80,7 @@ export function PersonaCreator() {
 
   // use the transformation sequence to create a persona
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(YouTubePersonaSteps, diagramLlm?.id, personaTranscript ?? undefined);
+    useLLMChain(YouTubePersonaSteps, personaLlm?.id, personaTranscript ?? undefined);
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -102,20 +102,20 @@ export function PersonaCreator() {
 
   return <>
 
-    <Typography level='title-sm' mb={4}>
-      Create the System Prompt of an AI Persona from YouTube or Text.
+    <Typography level='title-sm' mb={3}>
+      Create the <em>System Prompt</em> of an AI Persona from YouTube or Text.
     </Typography>
 
-    <Tabs defaultValue={0} variant='outlined'>
-      <TabList>
+    <Tabs defaultValue={0} variant='outlined' sx={{ mb: 3 }}>
+      <TabList sx={{ minHeight: 48 }}>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>
       </TabList>
 
       {/* YouTube URL inputs */}
-      <TabPanel value={0} sx={{ p: 2 }}>
+      <TabPanel value={0} sx={{ p: 3 }}>
 
-        <Typography level='title-md' startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />} sx={{ mb: 2 }}>
+        <Typography level='title-md' startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />} sx={{ mb: 3 }}>
           YouTube -&gt; Persona
         </Typography>
 
@@ -133,7 +133,7 @@ export function PersonaCreator() {
                 <WhatshotIcon />
               </IconButton>
             }
-            sx={{ mb: 1 }}
+            sx={{ mb: 1.5 }}
           />
           <Button type='submit' variant='solid' disabled={isFetching || isTransforming || !videoURL} loading={isFetching} sx={{ minWidth: 140 }}>
             Create
@@ -142,16 +142,15 @@ export function PersonaCreator() {
       </TabPanel>
 
       {/* Text area for users to paste copied text */}
-      <TabPanel value={1} sx={{ p: 2 }}>
+      <TabPanel value={1} sx={{ p: 3 }}>
 
-        <Typography level='title-md' startDecorator={<TextFieldsIcon />} sx={{ mb: 2 }}>
+        <Typography level='title-md' startDecorator={<TextFieldsIcon />} sx={{ mb: 3 }}>
           <b>Text</b> -&gt; Persona
         </Typography>
 
         <Textarea
           variant='outlined'
-          autoFocus
-          minRows={5} maxRows={10}
+          minRows={4} maxRows={8}
           placeholder='Paste your text here...'
           value={personaText}
           onChange={handlePersonaTextChange}
@@ -161,34 +160,20 @@ export function PersonaCreator() {
               backgroundColor: 'background.popup',
             },
             lineHeight: 1.75,
-            mb: 1,
+            mb: 1.5,
           }}
         />
-        <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ minWidth: 140 }}>
-          Create
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ minWidth: 140 }}>
+            Create
+          </Button>
+          {!!personaText?.length && <Typography level='body-sm'>{personaText.length.toLocaleString()}</Typography>}
+        </Box>
       </TabPanel>
     </Tabs>
 
     {/* LLM selector (chat vs fast) */}
     {!isTransforming && !isFinished && llmComponent}
-
-    {/* 1. Transcript*/}
-    {personaTranscript && (
-      <Card sx={{ mt: 2, boxShadow: 'md' }}>
-        <CardContent>
-          <Typography level='title-md' sx={{ mb: 1 }}>
-            {title || 'Transcript / Text'}
-          </Typography>
-          <Box>
-            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Image' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
-            <Typography level='body-sm'>
-              {personaTranscript.slice(0, 280)}...
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-    )}
 
     {/* Errors */}
     {isError && (
@@ -202,12 +187,12 @@ export function PersonaCreator() {
       </Alert>
     )}
 
-
     {/* Persona! */}
-    {chainOutput && <Box sx={{ mt: 2 }}>
-      <Typography level='title-lg'>
+    {chainOutput && <>
+      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
         Persona System Prompt
       </Typography>
+
       <Card sx={{ boxShadow: 'md' }}>
         <CardContent sx={{
           position: 'relative',
@@ -218,7 +203,7 @@ export function PersonaCreator() {
           </Alert>
           <Tooltip title='Copy system prompt' variant='solid'>
             <IconButton
-              variant='outlined' color='neutral' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')}
+              variant='soft' color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')}
               sx={{
                 position: 'absolute', right: 0, zIndex: 10,
                 // opacity: 0, transition: 'opacity 0.3s',
@@ -231,17 +216,39 @@ export function PersonaCreator() {
           </Typography>
         </CardContent>
       </Card>
-    </Box>}
+    </>}
+
+    {/* Input: Transcript*/}
+    {personaTranscript && <>
+      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
+        Input Data
+      </Typography>
+
+      <Card sx={{ boxShadow: 'md' }}>
+        <CardContent>
+          <Typography level='title-md' sx={{ mb: 1 }}>
+            {title || 'Transcript / Text'}
+          </Typography>
+          <Box>
+            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Image' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
+            <Typography level='body-sm'>
+              {personaTranscript.slice(0, 280)}...
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    </>}
 
     {/* Intermediate outputs rendered as cards in a grid */}
-    {chainIntermediates && chainIntermediates.length > 0 && <Box sx={{ mt: 2 }}>
-      <Typography level='title-lg'>
+    {chainIntermediates && chainIntermediates.length > 0 && <>
+      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
         {isTransforming ? 'Working...' : 'Intermediate Work'}
       </Typography>
+
       <Grid container spacing={2}>
         {chainIntermediates.map((intermediate, i) =>
           <Grid xs={12} sm={6} md={4} key={i}>
-            <Card>
+            <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Typography level='title-sm' sx={{ mb: 1 }}>
                   {i + 1}. {YouTubePersonaSteps[i].name}
@@ -254,7 +261,7 @@ export function PersonaCreator() {
           </Grid>,
         )}
       </Grid>
-    </Box>}
+    </>}
 
 
     {/* Embodiment Progress */}
@@ -262,19 +269,26 @@ export function PersonaCreator() {
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
         <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
       </Box>
-      <Typography color='success' level='title-lg' sx={{ mt: 1 }}>
-        Embodying Persona ...
-      </Typography>
-      <Typography color='success' level='title-sm' sx={{ mt: 1, fontWeight: 600 }}>
-        {chainStepName}
-      </Typography>
-      <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1, mb: 2 }} />
+      <Box>
+        <Typography color='success' level='title-lg'>
+          Embodying Persona ...
+        </Typography>
+        <Typography level='title-sm' sx={{ mt: 1 }}>
+          Using: {personaLlm?.label}
+        </Typography>
+      </Box>
+      <Box>
+        <Typography color='success' level='title-sm' sx={{ fontWeight: 600 }}>
+          {chainStepName}
+        </Typography>
+        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
+      </Box>
       <Typography level='title-sm'>
         This may take 1-2 minutes. Do not close this window or the progress will be lost.
         If you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
         please try again with faster/smaller models.
       </Typography>
-      <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 5 }}>
+      <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 3 }}>
         Cancel
       </Button>
     </GoodModal>}
