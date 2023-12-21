@@ -47,7 +47,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Magic Draw · Relative chat size · Text Tools · LLM Overheat
+        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Imagine · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 

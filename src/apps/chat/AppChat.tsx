@@ -40,7 +40,11 @@ import { runReActUpdatingState } from './editors/react-tangent';
 /**
  * Mode: how to treat the input from the Composer
  */
-export type ChatModeId = 'immediate' | 'write-user' | 'react' | 'draw-imagine' | 'draw-imagine-plus';
+export type ChatModeId =
+  | 'generate-text'
+  | 'append-user'
+  | 'generate-image'
+  | 'generate-react';
 
 
 const SPECIAL_ID_WIPE_ALL: DConversationId = 'wipe-chats';
@@ -154,27 +158,26 @@ export function AppChat() {
     // synchronous long-duration tasks, which update the state as they go
     if (chatLLMId && focusedSystemPurposeId) {
       switch (chatModeId) {
-        case 'immediate':
+        case 'generate-text':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId);
-        case 'write-user':
+
+        case 'append-user':
           return setMessages(conversationId, history);
-        case 'react':
+
+        case 'generate-image':
+          if (!lastMessage?.text)
+            break;
+          setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
+            ...message,
+            text: `${CmdRunProdia[0]} ${lastMessage.text}`,
+          }));
+          return await runImageGenerationUpdatingState(conversationId, lastMessage.text);
+
+        case 'generate-react':
           if (!lastMessage?.text)
             break;
           setMessages(conversationId, history);
           return await runReActUpdatingState(conversationId, lastMessage.text, chatLLMId);
-        case 'draw-imagine':
-        case 'draw-imagine-plus':
-          if (!lastMessage?.text)
-            break;
-          const imagePrompt = chatModeId == 'draw-imagine-plus'
-            ? await imaginePromptFromText(lastMessage.text) || 'An error sign.'
-            : lastMessage.text;
-          setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
-            ...message,
-            text: `${CmdRunProdia[0]} ${imagePrompt}`,
-          }));
-          return await runImageGenerationUpdatingState(conversationId, imagePrompt);
       }
     }
 
@@ -213,13 +216,13 @@ export function AppChat() {
   };
 
   const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
-    await _handleExecute('immediate', conversationId, history);
+    await _handleExecute('generate-text', conversationId, history);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedConversationId);
     if (focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      return await _handleExecute('immediate', focusedConversation.id, lastMessage.role === 'assistant'
+      return await _handleExecute('generate-text', focusedConversation.id, lastMessage.role === 'assistant'
         ? focusedConversation.messages.slice(0, -1)
         : [...focusedConversation.messages],
       );
@@ -228,13 +231,15 @@ export function AppChat() {
 
   const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
 
-  const handleTextImaginePlus = async (conversationId: DConversationId, messageText: string) => {
+  const handleTextImagine = async (conversationId: DConversationId, messageText: string) => {
     const conversation = getConversation(conversationId);
-    if (conversation)
-      return await _handleExecute('draw-imagine-plus', conversationId, [
-        ...conversation.messages,
-        createDMessage('user', messageText),
-      ]);
+    if (!conversation)
+      return;
+    const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
+    return await _handleExecute('generate-image', conversationId, [
+      ...conversation.messages,
+      createDMessage('user', imaginedPrompt),
+    ]);
   };
 
   const handleTextSpeak = async (text: string) => {
@@ -393,7 +398,7 @@ export function AppChat() {
             onConversationBranch={handleConversationBranch}
             onConversationExecuteHistory={handleConversationExecuteHistory}
             onTextDiagram={handleTextDiagram}
-            onTextImagine={handleTextImaginePlus}
+            onTextImagine={handleTextImagine}
             onTextSpeak={handleTextSpeak}
             sx={{
               flexGrow: 1,
@@ -431,6 +436,7 @@ export function AppChat() {
       conversationId={focusedConversationId}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       onAction={handleComposerAction}
+      onTextImagine={handleTextImagine}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
         backgroundColor: 'background.surface',
