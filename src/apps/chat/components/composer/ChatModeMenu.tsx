@@ -5,7 +5,6 @@ import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatModeId } from '../../AppChat';
 
@@ -18,20 +17,20 @@ interface ChatModeDescription {
 }
 
 const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
-  'immediate': {
+  'generate-text': {
     label: 'Chat',
     description: 'Persona replies',
   },
-  'write-user': {
+  'append-user': {
     label: 'Write',
     description: 'Appends a message',
     shortcut: 'Alt + Enter',
   },
-  'draw-imagine': {
+  'generate-image': {
     label: 'Draw',
     description: 'AI Image Generation',
   },
-  'react': {
+  'generate-react': {
     label: 'Reason + Act · α',
     description: 'Answers questions in multiple steps',
   },

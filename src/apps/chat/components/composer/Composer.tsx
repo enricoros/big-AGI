@@ -3,11 +3,13 @@ import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { keyframes } from '@emotion/react';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -73,6 +75,7 @@ export function Composer(props: {
   conversationId: DConversationId | null;
   isDeveloperMode: boolean;
   onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
+  onTextImagine: (conversationId: DConversationId, text: string) => void;
   sx?: SxProps;
 }) {
 
@@ -89,7 +92,7 @@ export function Composer(props: {
     labsCalling: state.labsCalling,
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('immediate');
+  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
@@ -167,7 +170,7 @@ export function Composer(props: {
 
       // Alt: append the message instead
       if (e.altKey) {
-        handleSendAction('write-user', composeText);
+        handleSendAction('append-user', composeText);
         return e.preventDefault();
       }
 
@@ -190,6 +193,13 @@ export function Composer(props: {
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
   const handleDrawOptionsClicked = () => openLayoutPreferences(2);
+
+  const handleTextImagineClicked = () => {
+    if (!composeText || !props.conversationId)
+      return;
+    props.onTextImagine(props.conversationId, composeText);
+    setComposeText('');
+  };
 
 
   // Mode menu
@@ -350,11 +360,11 @@ export function Composer(props: {
   }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
 
 
-  const isImmediate = chatModeId === 'immediate';
-  const isWriteUser = chatModeId === 'write-user';
-  const isChat = isImmediate || isWriteUser;
-  const isReAct = chatModeId === 'react';
-  const isDraw = chatModeId === 'draw-imagine';
+  const isText = chatModeId === 'generate-text';
+  const isAppend = chatModeId === 'append-user';
+  const isChat = isText || isAppend;
+  const isReAct = chatModeId === 'generate-react';
+  const isDraw = chatModeId === 'generate-image';
   const buttonColor: ColorPaletteProp = isReAct ? 'success' : isDraw ? 'warning' : 'primary';
 
   const textPlaceholder: string =
@@ -559,7 +569,7 @@ export function Composer(props: {
 
               {/* Responsive Send/Stop buttons */}
               <ButtonGroup
-                variant={isWriteUser ? 'outlined' : 'solid'}
+                variant={isAppend ? 'outlined' : 'solid'}
                 color={buttonColor}
                 sx={{
                   flexGrow: 1,
@@ -571,10 +581,16 @@ export function Composer(props: {
                     key='composer-act'
                     fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
                     onClick={handleSendClicked}
-                    endDecorator={micContinuation ? <AutoModeIcon /> : isWriteUser ? <SendIcon sx={{ fontSize: 18 }} /> : isReAct ? <PsychologyIcon /> : <TelegramIcon />}
+                    endDecorator={
+                      micContinuation ? <AutoModeIcon /> :
+                        isAppend ? <SendIcon sx={{ fontSize: 18 }} /> :
+                          isReAct ? <PsychologyIcon /> :
+                            isDraw ? <FormatPaintIcon />
+                              : <TelegramIcon />
+                    }
                   >
                     {micContinuation && 'Voice '}
-                    {isWriteUser ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : 'Chat'}
+                    {isAppend ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : 'Chat'}
                   </Button>
                 ) : (
                   <Button
@@ -587,7 +603,16 @@ export function Composer(props: {
                     Stop
                   </Button>
                 )}
-                <IconButton disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
+
+                {/* [Draw] Imagine */}
+                {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
+                  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleTextImagineClicked}>
+                    <AutoAwesomeIcon />
+                  </IconButton>
+                </Tooltip>}
+
+                {/* Mode expander */}
+                <IconButton variant={isDraw ? undefined : undefined} disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
                   <ExpandLessIcon />
                 </IconButton>
               </ButtonGroup>
