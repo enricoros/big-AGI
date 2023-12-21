@@ -39,7 +39,7 @@ function useTranscriptFromVideo(videoID: string | null) {
 }
 
 
-const YouTubePersonaSteps: LLMChainStep[] = [
+const PersonaCreationSteps: LLMChainStep[] = [
   {
     name: 'Analyzing the transcript / text',
     setSystem: 'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
@@ -81,7 +81,7 @@ export function PersonaCreator() {
 
   // use the transformation sequence to create a persona
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(YouTubePersonaSteps, personaLlm?.id, personaTranscript ?? undefined);
+    useLLMChain(PersonaCreationSteps, personaLlm?.id, personaTranscript ?? undefined);
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -226,7 +226,7 @@ export function PersonaCreator() {
             {title || 'Transcript / Text'}
           </Typography>
           <Box>
-            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Image' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
+            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Thumbnail' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
             <Typography level='body-sm'>
               {personaTranscript.slice(0, 280)}...
             </Typography>
@@ -247,7 +247,7 @@ export function PersonaCreator() {
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Typography level='title-sm' sx={{ mb: 1 }}>
-                  {i + 1}. {YouTubePersonaSteps[i].name}
+                  {i + 1}. {PersonaCreationSteps[i].name}
                 </Typography>
                 <Typography level='body-sm'>
                   {intermediate?.slice(0, 140)}...
