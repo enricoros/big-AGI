@@ -18,15 +18,8 @@ export function AppPersonas() {
       <Container disableGutters maxWidth='md' sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
         <Typography level='title-lg' sx={{ textAlign: 'center' }}>
-          Advanced AI Personas
+          AI Personas Creator
         </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-          <Typography>
-            Experimental
-          </Typography>
-          <ScienceIcon color='primary' />
-        </Box>
 
         <ListDivider sx={{ my: 2 }} />
 
