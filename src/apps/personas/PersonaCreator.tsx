@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, IconButton, Input, LinearProgress, Tab, TabList, TabPanel, Tabs, Textarea, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -106,7 +107,7 @@ export function PersonaCreator() {
       Create the <em>System Prompt</em> of an AI Persona from YouTube or Text.
     </Typography>
 
-    <Tabs defaultValue={0} variant='outlined' sx={{ mb: 3 }}>
+    <Tabs defaultValue={0} variant='outlined'>
       <TabList sx={{ minHeight: 48 }}>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>
@@ -173,7 +174,7 @@ export function PersonaCreator() {
     </Tabs>
 
     {/* LLM selector (chat vs fast) */}
-    {!isTransforming && !isFinished && llmComponent}
+    {!isTransforming && !isFinished && <Box sx={{ mt: 3 }}>{llmComponent}</Box>}
 
     {/* Errors */}
     {isError && (
@@ -189,38 +190,32 @@ export function PersonaCreator() {
 
     {/* Persona! */}
     {chainOutput && <>
-      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
-        Persona System Prompt
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 0.5 }}>
+        <Typography level='title-lg' color='success' startDecorator={<SettingsAccessibilityIcon color='success' />}>
+          Persona Prompt
+        </Typography>
+        <Tooltip title='Copy system prompt' variant='solid'>
+          <Button color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')} endDecorator={<ContentCopyIcon />} sx={{ minWidth: 120 }}>
+            Copy
+          </Button>
+        </Tooltip>
+      </Box>
 
       <Card sx={{ boxShadow: 'md' }}>
-        <CardContent sx={{
-          position: 'relative',
-          '&:hover > button': { opacity: 1 },
-        }}>
-          <Alert variant='soft' color='success' sx={{ mb: 1 }}>
-            You can now copy the following text and use it as Custom prompt!
-          </Alert>
-          <Tooltip title='Copy system prompt' variant='solid'>
-            <IconButton
-              variant='soft' color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')}
-              sx={{
-                position: 'absolute', right: 0, zIndex: 10,
-                // opacity: 0, transition: 'opacity 0.3s',
-              }}>
-              <ContentCopyIcon />
-            </IconButton>
-          </Tooltip>
-          <Typography level='body-sm'>
+        <CardContent>
+          <Typography level='title-sm' sx={{ lineHeight: 1.75, mb: 1 }}>
             {chainOutput}
           </Typography>
+          <Alert variant='soft' color='success'>
+            You may copy the text above and use it as Custom prompt!
+          </Alert>
         </CardContent>
       </Card>
     </>}
 
     {/* Input: Transcript*/}
     {personaTranscript && <>
-      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
+      <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
         Input Data
       </Typography>
 
@@ -241,7 +236,7 @@ export function PersonaCreator() {
 
     {/* Intermediate outputs rendered as cards in a grid */}
     {chainIntermediates && chainIntermediates.length > 0 && <>
-      <Typography level='title-lg' sx={{ mt: 3, mb: 1.5 }}>
+      <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
         {isTransforming ? 'Working...' : 'Intermediate Work'}
       </Typography>
 
@@ -264,7 +259,7 @@ export function PersonaCreator() {
     </>}
 
 
-    {/* Embodiment Progress */}
+    {/* Dialog: Embodiment Progress */}
     {isTransforming && <GoodModal open>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
         <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
