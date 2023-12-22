@@ -69,8 +69,9 @@ function ChatDrawerItems(props: {
 
   const handleFolderCreate = (folderTitle: string) => {
     const newFolderId = createFolder(folderTitle);
-    // Optionally, you could automatically add the current conversation to the new folder
-    // addConversationToFolder(newFolderId, props.activeConversationId);
+    
+    // select the new folder
+    setSelectedFolderId(newFolderId);
   };
 
   const handleButtonNew = React.useCallback(() => {
