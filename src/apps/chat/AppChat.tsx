@@ -17,7 +17,7 @@ import { useChatLLM, useModelsStore } from '~/modules/llms/store-llms';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, getConversation, useChatStore, useConversation } from '~/common/state/store-chats';
 import { openLayoutLLMOptions, useLayoutPluggable } from '~/common/layout/store-applayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -63,6 +63,9 @@ export function AppChat() {
   // external state
   const { chatLLM } = useChatLLM();
   const addConversationToFolder = useFolderStore((state) => state.addConversationToFolder);
+
+  // Get the list of conversations from the store
+  const conversations = useChatStore(state => state.conversations);
 
 
   const {
@@ -246,6 +249,27 @@ export function AppChat() {
     await speakText(text);
   };
 
+  // Function to check if the selected folder has an empty chat
+  const doesSelectedFolderHaveEmptyChat = (selectedFolderId: string | null, conversations: any[]) => {
+    // If no folder is selected (default folder), check if there is an empty chat globally
+    if (selectedFolderId === null) {
+      return conversations.some(convo => convo.messages.length === 0);
+    }
+  
+    // Retrieve the folder's conversations
+    const folderConversations = useFolderStore.getState().folders.find(folder => folder.id === selectedFolderId)?.conversationIds || [];
+  
+    // Check if any of the folder's conversations are empty
+    return folderConversations.some(convoId => {
+      const convo = conversations.find(conversation => conversation.id === convoId);
+      return convo && convo.messages.length === 0;
+    });
+  };
+
+
+  // Determine if the "New" button should be disabled
+  const disableNewButton = doesSelectedFolderHaveEmptyChat(selectedFolderId, conversations);
+
 
 const handleConversationNew = React.useCallback(() => {
   // Create a new conversation
@@ -262,7 +286,7 @@ const handleConversationNew = React.useCallback(() => {
 
   // Return the new conversation ID
   return newConversationId;
-}, [focusedSystemPurposeId, prependNewConversation, setFocusedConversationId, selectedFolderId]);
+}, [focusedSystemPurposeId, prependNewConversation, setFocusedConversationId, selectedFolderId, addConversationToFolder]);
   
   
   const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
@@ -355,7 +379,7 @@ const handleConversationNew = React.useCallback(() => {
   const drawerItems = React.useMemo(() =>
       <ChatDrawerItemsMemo
         activeConversationId={focusedConversationId}
-        disableNewButton={isFocusedChatEmpty}
+        disableNewButton={disableNewButton}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
         onConversationImportDialog={handleConversationImportDialog}
@@ -364,7 +388,7 @@ const handleConversationNew = React.useCallback(() => {
         selectedFolderId={selectedFolderId}
         setSelectedFolderId={setSelectedFolderId}      
       />,
-    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId, selectedFolderId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, setFocusedConversationId, selectedFolderId, disableNewButton],
   );
 
   const menuItems = React.useMemo(() =>
