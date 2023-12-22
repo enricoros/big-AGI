@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -11,6 +11,7 @@ import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { closeLayoutLLMOptions } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
 
@@ -93,18 +94,25 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Defaults' sx={{ minWidth: 80 }} />
         <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
-          <Button variant={isChatLLM ? 'solid' : undefined} onClick={() => setChatLLMId(isChatLLM ? null : props.id)}>Chat</Button>
-          <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
-          <Button variant={isFuncLLM ? 'solid' : undefined} onClick={() => setFuncLLMId(isFuncLLM ? null : props.id)}>Func</Button>
+          <GoodTooltip title='Is this model the currently selected Chat model'>
+            <Button variant={isChatLLM ? 'solid' : undefined} onClick={() => setChatLLMId(isChatLLM ? null : props.id)}>Chat</Button>
+          </GoodTooltip>
+          <GoodTooltip title='Make this the model appointed for fast (e.g. auto-title, summarize) operations.'>
+            <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
+          </GoodTooltip>
+          <GoodTooltip title='Make this the model appointed for "function calling" and other structured features, such as Auto-Chart, Auto-Follow-ups, etc.'>
+            <Button variant={isFuncLLM ? 'solid' : undefined} onClick={() => setFuncLLMId(isFuncLLM ? null : props.id)}>Func</Button>
+          </GoodTooltip>
         </ButtonGroup>
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
         <FormLabelStart title='Visible' sx={{ minWidth: 80 }} />
-        <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
-                endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-                sx={{ ml: 0, mr: 'auto' }} />
+        <Tooltip title={!llm.hidden ? 'Show this model in the list of Chat models' : 'Hide this model from the list of Chat models'}>
+          <Switch checked={!llm.hidden} onChange={handleLlmVisibilityToggle}
+                  endDecorator={!llm.hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+        </Tooltip>
       </FormControl>
 
       {/*<FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>*/}
@@ -115,14 +123,21 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
-        {showDetails && <Typography level='body-sm' sx={{ display: 'block' }}>
-          [{llm.id}]: {llm.options.llmRef && `${llm.options.llmRef} · `}
-          {!!llm.contextTokens && `context tokens: ${llm.contextTokens.toLocaleString()} · `}
-          {!!llm.maxOutputTokens && `max output tokens: ${llm.maxOutputTokens.toLocaleString()} · `}
-          {!!llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()} · `}
-          description: {llm.description}
-          {/*· tags: {llm.tags.join(', ')}*/}
-        </Typography>}
+        {showDetails && <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography level='body-md'>
+            {llm.id}
+          </Typography>
+          {!!llm.description && <Typography level='body-xs'>
+            {llm.description}
+          </Typography>}
+          <Typography level='body-xs'>
+            {!!llm.contextTokens && `context tokens: ${llm.contextTokens.toLocaleString()} · `}
+            {!!llm.maxOutputTokens && `max output tokens: ${llm.maxOutputTokens.toLocaleString()}`}<br />
+            {!!llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()} · `}
+            {/*· tags: {llm.tags.join(', ')}*/}
+            {JSON.stringify(llm.options)}
+          </Typography>
+        </Box>}
       </FormControl>
 
     </GoodModal>
