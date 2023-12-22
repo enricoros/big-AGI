@@ -45,9 +45,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton
-      refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} error={isError}
-    />
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

@@ -71,7 +71,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <SetupFormRefetchButton
-      refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError}
+      refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
         <Button
           color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'}

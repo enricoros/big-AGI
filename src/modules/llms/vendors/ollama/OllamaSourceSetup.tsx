@@ -48,7 +48,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     <SetupFormRefetchButton
-      refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError}
+      refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
         <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)}>
           Ollama Admin
