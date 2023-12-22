@@ -61,10 +61,6 @@ function ChatDrawerItems(props: {
   const handleFolderSelect = (folderId: string | null) => {
     // Logic to handle folder selection
     setSelectedFolderId(folderId);
-
-    // Optionally, you could automatically activate the first conversation in the folder
-    console.log('Folder selected: ', folderId);
-
   };
 
   const handleFolderCreate = (folderTitle: string) => {
@@ -76,9 +72,7 @@ function ChatDrawerItems(props: {
 
   const handleButtonNew = React.useCallback(() => {
     const newConversationId = onConversationNew();
-    console.log('New conversation created: ', newConversationId); 
     if (selectedFolderId) {
-      console.log('Adding conversation to folder: ', selectedFolderId);
       addConversationToFolder(selectedFolderId, newConversationId);
     }
     closeLayoutDrawer();
@@ -143,7 +137,7 @@ function ChatDrawerItems(props: {
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        New
+        New chat
         {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
       </Box>
     </MenuItem>

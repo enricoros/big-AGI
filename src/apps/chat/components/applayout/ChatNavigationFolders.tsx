@@ -176,7 +176,7 @@ export const ChatNavigationFolders = ({
         <ListItem>
           <ListItemButton onClick={handleFolderCreate}>
             <ListItemDecorator><AddBoxIcon /></ListItemDecorator>
-            <ListItemContent>Create New Folder</ListItemContent>              
+            <ListItemContent>New Folder</ListItemContent>              
           </ListItemButton>
         </ListItem>
       </List>
