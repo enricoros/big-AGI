@@ -1,9 +1,10 @@
 import React from 'react';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { Box, List, ListItem, ListItemButton, ListItemDecorator, ListItemContent } from '@mui/joy';
+import { Box, List, IconButton, ListItem, ListItemButton, ListItemDecorator, ListItemContent } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { DConversation, DConversationId } from '~/common/state/store-chats';
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
 
@@ -38,6 +39,7 @@ export const ChatNavigationFolders = ({
   const DEFAULT_FOLDER_TITLE = 'General';
 
   const deleteFolder = useFolderStore((state) => state.deleteFolder);
+  const [deleteArmedFolderId, setDeleteArmedFolderId] = React.useState<string | null>(null);
 
   const handleFolderSelect = (folderId: string | null) => {
     onFolderSelect(folderId);
@@ -50,15 +52,24 @@ export const ChatNavigationFolders = ({
     }
   };
 
+
   const handleFolderDelete = (folderId: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent ListItemButton onClick from being triggered
-    if (window.confirm('Are you sure you want to delete this folder?')) {
-      deleteFolder(folderId);
-      if (selectedFolderId === folderId) {
-        onFolderSelect(null); // Notify parent component about the deletion
-      }
-    }
+    event.stopPropagation();
+    setDeleteArmedFolderId(folderId); // Arm the deletion instead of confirming immediately
   };
+
+  const handleConfirmDelete = (folderId: string) => {
+    deleteFolder(folderId);
+    if (selectedFolderId === folderId) {
+      onFolderSelect(null);
+    }
+    setDeleteArmedFolderId(null); // Disarm the deletion
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteArmedFolderId(null); // Disarm the deletion
+  };
+
 
   return (
     <Box>
@@ -105,46 +116,61 @@ export const ChatNavigationFolders = ({
         )}
 
         {folders.map((folder) => (
-          <>
-          <ListItem key={folder.id}>
-            <ListItemButton 
-              onClick={() => handleFolderSelect(folder.id)} 
-              selected={folder.id === selectedFolderId}
-              sx={{ justifyContent: 'space-between',
-              '&:hover .delete-icon': {
-                visibility: 'visible', // Show delete icon on hover
-              } }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <ListItemDecorator><FolderIcon /></ListItemDecorator>
-                <ListItemContent>{folder.title}</ListItemContent>
-              </Box>
-              <ListItemDecorator className="delete-icon" sx={{ visibility: 'hidden' }}>
-                <DeleteIcon onClick={(event) => handleFolderDelete(folder.id, event)} />
-              </ListItemDecorator>
-            </ListItemButton>
-          </ListItem>
-          {/* now if selected show conversations */}
-          {selectedFolderId === folder.id && (
-            <List 
-              sx={{
-                paddingLeft: 2,
-              }}>
-              {conversationsByFolder.map((conversation) => (
-                <ChatNavigationItemMemo
-                  key={'nav-' + conversation.id}
-                  conversation={conversation}
-                  isActive={conversation.id === activeConversationId}
-                  isLonely={isLonely}
-                  maxChatMessages={maxChatMessages}
-                  showSymbols={showSymbols}
-                  onConversationActivate={onConversationActivate}
-                  onConversationDelete={onConversationDelete}
-                />
-              ))}
-            </List>
-          )}
-          </>
+          <React.Fragment key={folder.id}>
+            <ListItem key={folder.id}>
+              <ListItemButton 
+                onClick={() => handleFolderSelect(folder.id)} 
+                selected={folder.id === selectedFolderId}
+                sx={{ justifyContent: 'space-between',
+                '&:hover .delete-icon': {
+                  visibility: 'visible', // Show delete icon on hover
+                } }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemDecorator><FolderIcon /></ListItemDecorator>
+                  <ListItemContent>{folder.title}</ListItemContent>
+                </Box>
+                {deleteArmedFolderId !== folder.id && (
+                  <ListItemDecorator className="delete-icon" sx={{ visibility: 'hidden' }}>
+                    <IconButton color="neutral" onClick={(event) => handleFolderDelete(folder.id, event)}>
+                      <DeleteOutlineIcon />
+                  </IconButton>
+                  </ListItemDecorator>
+                )}
+                  {/* Confirm/Cancel delete buttons */}
+              {deleteArmedFolderId === folder.id && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                  <IconButton color="danger" onClick={() => handleConfirmDelete(folder.id)}>
+                    <DeleteOutlineIcon />
+                  </IconButton>
+                  <IconButton color="neutral" onClick={handleCancelDelete}>
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              )}
+              </ListItemButton>
+            </ListItem>
+            {/* now if selected show conversations */}
+            {selectedFolderId === folder.id && (
+              <List 
+                sx={{
+                  paddingLeft: 2,
+                }}>
+                {conversationsByFolder.map((conversation) => (
+                  <ChatNavigationItemMemo
+                    key={'nav-' + conversation.id}
+                    conversation={conversation}
+                    isActive={conversation.id === activeConversationId}
+                    isLonely={isLonely}
+                    maxChatMessages={maxChatMessages}
+                    showSymbols={showSymbols}
+                    onConversationActivate={onConversationActivate}
+                    onConversationDelete={onConversationDelete}
+                  />
+                ))}
+              </List>
+            )}
+          </React.Fragment>
 
         ))}
         <ListItem>
