@@ -1,22 +1,46 @@
 import React from 'react';
-import { useFolderStore } from '~/common/state/store-folders';
+import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { Box, List, ListItem, ListItemButton, ListItemDecorator, ListItemContent } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { DConversation, DConversationId } from '~/common/state/store-chats';
+import { ChatNavigationItemMemo } from './ChatNavigationItem';
 
-export const Folders = ({ onFolderSelect, onFolderCreate }: { onFolderSelect: (folderId: string | null) => void, onFolderCreate: (folderTitle: string) => void }) => {
+export const Folders = ({
+  onFolderSelect,
+  onFolderCreate,
+  folders,
+  selectedFolderId,
+  activeConversationId,
+  isLonely,
+  maxChatMessages,
+  showSymbols,
+  onConversationActivate,
+  onConversationDelete,
+  conversationsByFolder,
+
+}: {
+  onFolderSelect: (folderId: string | null) => void,
+  onFolderCreate: (folderTitle: string) => void,
+  folders: DFolder[], // Add this prop
+  selectedFolderId: string | null, // Add this prop
+  activeConversationId: string | null,
+  isLonely: boolean,
+  maxChatMessages: number,
+  showSymbols: boolean,
+  onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
+  onConversationDelete: (conversationId: DConversationId) => void,
+  conversationsByFolder: DConversation[], // Add this prop
+}) => {
   
-  // Internal state
-  const [selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
+  // Add a constant for the default folder title
+  const DEFAULT_FOLDER_TITLE = 'General';
 
-  // External state
-  const folders = useFolderStore((state) => state.folders);
   const deleteFolder = useFolderStore((state) => state.deleteFolder);
 
-  const handleFolderSelect = (folderId: string) => {
+  const handleFolderSelect = (folderId: string | null) => {
     onFolderSelect(folderId);
-    setSelectedFolderId(folderId);
   };
 
   const handleFolderCreate = () => {
@@ -31,8 +55,7 @@ export const Folders = ({ onFolderSelect, onFolderCreate }: { onFolderSelect: (f
     if (window.confirm('Are you sure you want to delete this folder?')) {
       deleteFolder(folderId);
       if (selectedFolderId === folderId) {
-        setSelectedFolderId(null); // Reset selection if the deleted folder was selected
-        onFolderSelect(''); // Notify parent component about the deletion
+        onFolderSelect(null); // Notify parent component about the deletion
       }
     }
   };
@@ -40,7 +63,49 @@ export const Folders = ({ onFolderSelect, onFolderCreate }: { onFolderSelect: (f
   return (
     <Box>
       <List>
+          {/* Add a ListItem for the default folder */}
+          <ListItem key="default-folder">
+          <ListItemButton
+            onClick={() => handleFolderSelect(null)}
+            selected={selectedFolderId === null}
+            sx={{
+              justifyContent: 'space-between',
+              '&:hover .delete-icon': {
+                visibility: 'hidden', // Hide delete icon for default folder
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <ListItemDecorator><FolderIcon /></ListItemDecorator>
+              <ListItemContent>{DEFAULT_FOLDER_TITLE}</ListItemContent>
+            </Box>
+          </ListItemButton>
+        </ListItem>
+
+        {/* Render the default folder's conversations when selected */}
+        {selectedFolderId === null && (
+          <List 
+            sx={{
+                paddingLeft: 2,
+            }}
+          >
+            {conversationsByFolder.map((conversation) => (
+              <ChatNavigationItemMemo
+                key={'nav-' + conversation.id}
+                conversation={conversation}
+                isActive={conversation.id === activeConversationId}
+                isLonely={isLonely}
+                maxChatMessages={maxChatMessages}
+                showSymbols={showSymbols}
+                onConversationActivate={onConversationActivate}
+                onConversationDelete={onConversationDelete}
+              />
+            ))}
+          </List>
+        )}
+
         {folders.map((folder) => (
+          <>
           <ListItem key={folder.id}>
             <ListItemButton 
               onClick={() => handleFolderSelect(folder.id)} 
@@ -59,6 +124,28 @@ export const Folders = ({ onFolderSelect, onFolderCreate }: { onFolderSelect: (f
               </ListItemDecorator>
             </ListItemButton>
           </ListItem>
+          {/* now if selected show conversations */}
+          {selectedFolderId === folder.id && (
+            <List 
+              sx={{
+                paddingLeft: 2,
+              }}>
+              {conversationsByFolder.map((conversation) => (
+                <ChatNavigationItemMemo
+                  key={'nav-' + conversation.id}
+                  conversation={conversation}
+                  isActive={conversation.id === activeConversationId}
+                  isLonely={isLonely}
+                  maxChatMessages={maxChatMessages}
+                  showSymbols={showSymbols}
+                  onConversationActivate={onConversationActivate}
+                  onConversationDelete={onConversationDelete}
+                />
+              ))}
+            </List>
+          )}
+          </>
+
         ))}
         <ListItem>
           <ListItemButton onClick={handleFolderCreate}>

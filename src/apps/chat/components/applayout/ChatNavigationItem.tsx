@@ -89,7 +89,7 @@ function ChatNavigationItem(props: {
 
   return (
     <MenuItem
-      variant={isActive ? 'solid' : 'plain'} color='neutral'
+      variant={isActive ? 'soft' : 'plain'} color='primary'
       selected={isActive}
       onClick={handleConversationActivate}
       sx={{
@@ -97,7 +97,7 @@ function ChatNavigationItem(props: {
         position: 'relative',
         border: 'none', // note, there's a default border of 1px and invisible.. hmm
         '&:hover > button': { opacity: 1 },
-        ...(isActive ? { bgcolor: 'red' } : {}),
+        ...(isActive ? { bgcolor: 'red' } : { }),
       }}
     >
 

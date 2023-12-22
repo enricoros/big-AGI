@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import { useFolderStore } from '~/common/state/store-folders';
 
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
@@ -561,4 +562,15 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     wipeAllConversations: state.wipeAllConversations,
     setMessages: state.setMessages,
   };
+}, shallow);
+
+export const useConversationsByFolder = (folderId: string | null) => useChatStore(state => {
+  if (folderId) {
+    const { conversations } = state;
+    const folder = useFolderStore.getState().folders.find(_f => _f.id === folderId);
+    if (folder)
+      return conversations.filter(_c => folder.conversationIds.includes(_c.id));
+  }
+  // return only the conversations that are not in any folder
+  return state.conversations.filter(_c => !useFolderStore.getState().folders.find(_f => _f.conversationIds.includes(_c.id)));
 }, shallow);

@@ -35,6 +35,7 @@ import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
+import { useFolderStore } from '~/common/state/store-folders';
 
 
 /**
@@ -56,9 +57,13 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
+
 
   // external state
   const { chatLLM } = useChatLLM();
+  const addConversationToFolder = useFolderStore((state) => state.addConversationToFolder);
+
 
   const {
     chatPanes,
@@ -242,17 +247,24 @@ export function AppChat() {
   };
 
 
-  // Chat actions
+const handleConversationNew = React.useCallback(() => {
+  // Create a new conversation
+  const newConversationId = prependNewConversation(focusedSystemPurposeId ?? undefined);
 
-  const handleConversationNew = React.useCallback(() => {
-    // activate an existing new conversation if present, or create another
-    setFocusedConversationId(newConversationId
-      ? newConversationId
-      : prependNewConversation(focusedSystemPurposeId ?? undefined),
-    );
-    composerTextAreaRef.current?.focus();
-  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
+  // If a folder is selected, add the new conversation to the folder
+  if (selectedFolderId) {
+    addConversationToFolder(selectedFolderId, newConversationId);
+  }
 
+  // Focus on the new conversation
+  setFocusedConversationId(newConversationId);
+  composerTextAreaRef.current?.focus();
+
+  // Return the new conversation ID
+  return newConversationId;
+}, [focusedSystemPurposeId, prependNewConversation, setFocusedConversationId, selectedFolderId]);
+  
+  
   const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
   const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
@@ -349,8 +361,10 @@ export function AppChat() {
         onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}
+        selectedFolderId={selectedFolderId}
+        setSelectedFolderId={setSelectedFolderId}      
       />,
-    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId, selectedFolderId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -475,3 +489,4 @@ export function AppChat() {
 
   </>;
 }
+

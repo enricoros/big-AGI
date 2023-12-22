@@ -1,5 +1,3 @@
-// store-folders.ts
-
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,7 +55,7 @@ export const useFolderStore = create<FolderStore>()(devtools(
               : folder
           ),
         }));
-      },
+      },      
 
       removeConversationFromFolder: (folderId: string, conversationId: DConversationId): void => {
         set(state => ({
