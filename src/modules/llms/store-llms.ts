@@ -19,7 +19,10 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   // modelcaps: DModelCapability[];
   contextTokens: number;
   maxOutputTokens: number;
-  hidden: boolean;
+  hidden: boolean; // hidden from Chat model UI selectors
+
+  // temporary special flags - not graduated yet
+  isFree: boolean; // model is free to use
 
   // llm -> source
   sId: DModelSourceId;
