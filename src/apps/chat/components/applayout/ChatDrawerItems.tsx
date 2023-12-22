@@ -13,7 +13,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
-import { Folders }  from './Folders';
+import { ChatNavigationFolders }  from './ChatNavigationFolders';
 import { useFolderStore } from '~/common/state/store-folders'; 
 
 
@@ -125,7 +125,7 @@ function ChatDrawerItems(props: {
     {/*</ListItem>*/}
 
     {/* Include the Folders component */}
-    <Folders 
+    <ChatNavigationFolders 
       onFolderSelect={handleFolderSelect} 
       onFolderCreate={handleFolderCreate}
       folders={useFolderStore((state) => state.folders)}

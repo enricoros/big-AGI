@@ -7,7 +7,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { DConversation, DConversationId } from '~/common/state/store-chats';
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
 
-export const Folders = ({
+export const ChatNavigationFolders = ({
   onFolderSelect,
   onFolderCreate,
   folders,
