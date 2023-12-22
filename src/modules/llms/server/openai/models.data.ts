@@ -375,6 +375,7 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
     description: known.description,
     contextWindow: known.contextWindow,
     ...(!!known.maxCompletionTokens && { maxCompletionTokens: known.maxCompletionTokens }),
+    ...(!!known.pricing && { pricing: known.pricing }),
     interfaces: known.interfaces,
     ...(!!known.hidden && { hidden: known.hidden }),
   };
