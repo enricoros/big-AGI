@@ -70,6 +70,7 @@ export function PersonaCreator() {
   const [videoID, setVideoID] = React.useState('');
   const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
   const [personaText, setPersonaText] = React.useState('');
+  const [selectedTab, setSelectedTab] = React.useState(0);
 
   // external state
   const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
@@ -78,6 +79,15 @@ export function PersonaCreator() {
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
     useTranscriptFromVideo(videoID);
   React.useEffect(() => setPersonaTranscript(transcript), [transcript]);
+
+  // Reset the relevant state when the selected tab changes
+  React.useEffect(() => {
+      // reset state
+      setVideoURL('');
+      setVideoID('');
+      setPersonaTranscript(null);
+      setPersonaText('');
+  }, [selectedTab]);
 
   // use the transformation sequence to create a persona
   const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
@@ -107,7 +117,9 @@ export function PersonaCreator() {
       Create the <em>System Prompt</em> of an AI Persona from YouTube or Text.
     </Typography>
 
-    <Tabs defaultValue={0} variant='outlined'>
+    <Tabs defaultValue={0} variant='outlined'
+      value={selectedTab}
+      onChange={(event, newValue) => setSelectedTab(newValue as number)}>
       <TabList sx={{ minHeight: 48 }}>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>

@@ -6,7 +6,7 @@ import { createAssistantTypingMessage } from './editors';
 
 
 /**
- * The main 'image generation' function - for now specialized to the 'imagine' command.
+ * Text to image, appended as an 'assistant' message
  */
 export async function runImageGenerationUpdatingState(conversationId: string, imageText: string) {
 

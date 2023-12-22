@@ -11,7 +11,7 @@ export function ButtonOptionsDraw(props: { isMobile?: boolean, onClick: () => vo
       <FormatPaintIcon />
     </IconButton>
   ) : (
-    <Button variant='soft' color='warning' onClick={props.onClick} endDecorator={<FormatPaintIcon />} sx={props.sx}>
+    <Button variant='soft' color='warning' onClick={props.onClick} sx={props.sx}>
       Options
     </Button>
   );
