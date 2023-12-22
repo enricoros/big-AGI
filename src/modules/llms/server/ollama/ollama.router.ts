@@ -8,9 +8,10 @@ import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.se
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { fixupHost } from '~/common/util/urlUtils';
 
-import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
+import { llmsListModelsOutputSchema, ModelDescriptionSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema } from './ollama.wiretypes';
@@ -186,7 +187,7 @@ export const llmOllamaRouter = createTRPCRouter({
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(listModelsOutputSchema)
+    .output(llmsListModelsOutputSchema)
     .query(async ({ input }) => {
 
       // get the models
@@ -241,7 +242,7 @@ export const llmOllamaRouter = createTRPCRouter({
   /* Ollama: Chat generation */
   chatGenerate: publicProcedure
     .input(chatGenerateInputSchema)
-    .output(openAIChatGenerateOutputSchema)
+    .output(llmsChatGenerateOutputSchema)
     .mutation(async ({ input: { access, history, model } }) => {
 
       const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, false), OLLAMA_PATH_CHAT);

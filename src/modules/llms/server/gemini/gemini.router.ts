@@ -7,10 +7,12 @@ import packageJson from '../../../../../package.json';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '../../store-llms';
-import { listModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { fixupHost } from '~/common/util/urlUtils';
 
-import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '../../store-llms';
+import { llmsListModelsOutputSchema, ModelDescriptionSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
+
+import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
 import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelSchema, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
 
@@ -133,7 +135,7 @@ export const llmGeminiRouter = createTRPCRouter({
   /* [Gemini] models.list = /v1beta/models */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(listModelsOutputSchema)
+    .output(llmsListModelsOutputSchema)
     .query(async ({ input }) => {
 
       // get the models
@@ -185,7 +187,7 @@ export const llmGeminiRouter = createTRPCRouter({
   /* [Gemini] models.generateContent = /v1/{model=models/*}:generateContent */
   chatGenerate: publicProcedure
     .input(chatGenerateInputSchema)
-    .output(openAIChatGenerateOutputSchema)
+    .output(llmsChatGenerateOutputSchema)
     .mutation(async ({ input: { access, history, model } }) => {
 
       // generate the content

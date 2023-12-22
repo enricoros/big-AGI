@@ -5,8 +5,10 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { fixupHost, openAIChatGenerateOutputSchema, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { listModelsOutputSchema } from '../llm.server.types';
+import { fixupHost } from '~/common/util/urlUtils';
+
+import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
+import { llmsListModelsOutputSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
 
 import { AnthropicWire } from './anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';
@@ -106,13 +108,13 @@ export const llmAnthropicRouter = createTRPCRouter({
    */
   listModels: publicProcedure
     .input(listModelsInputSchema)
-    .output(listModelsOutputSchema)
+    .output(llmsListModelsOutputSchema)
     .query(() => ({ models: hardcodedAnthropicModels })),
 
   /* Anthropic: Chat generation */
   chatGenerate: publicProcedure
     .input(chatGenerateInputSchema)
-    .output(openAIChatGenerateOutputSchema)
+    .output(llmsChatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;

@@ -30,6 +30,23 @@ const modelDescriptionSchema = z.object({
 // this is also used by the Client
 export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;
 
-export const listModelsOutputSchema = z.object({
+export const llmsListModelsOutputSchema = z.object({
   models: z.array(modelDescriptionSchema),
 });
+
+
+// (non-streaming) Chat Generation Output
+
+export const llmsChatGenerateOutputSchema = z.object({
+  role: z.enum(['assistant', 'system', 'user']),
+  content: z.string(),
+  finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
+});
+
+export const llmsChatGenerateWithFunctionsOutputSchema = z.union([
+  llmsChatGenerateOutputSchema,
+  z.object({
+    function_name: z.string(),
+    function_arguments: z.record(z.any()),
+  }),
+]);
