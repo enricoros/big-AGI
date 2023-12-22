@@ -12,8 +12,8 @@ export const Brand = {
     Common: (process.env.NODE_ENV === 'development' ? '[DEV] ' : '') + 'big-AGI',
   },
   Meta: {
-    Description: 'Leading open-source AI web interface to help you learn, think, and do. AI personas, superior privacy, advanced features, and fun UX.',
-    SiteName: 'big-AGI | Harnessing AI for You',
+    Description: 'Launch big-AGI to unlock the full potential of AI, with precise control over your data and models. Voice interface, AI personas, advanced features, and fun UX.',
+    SiteName: 'big-AGI | Precision AI for You',
     ThemeColor: '#32383E',
     TwitterSite: '@enricoros',
   },
