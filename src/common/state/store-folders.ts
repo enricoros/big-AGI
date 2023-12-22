@@ -15,6 +15,7 @@ interface FolderState {
 
 interface FolderActions {
   createFolder: (title: string) => string;
+  updateFolderName: (folderId: string, title: string) => void;
   deleteFolder: (folderId: string) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
@@ -40,6 +41,17 @@ export const useFolderStore = create<FolderStore>()(devtools(
 
         return newFolder.id;
       },
+
+      updateFolderName: (folderId: string, title: string): void => {
+        set(state => ({
+          folders: state.folders.map(folder => 
+            folder.id === folderId
+              ? { ...folder, title }
+              : folder
+          ),
+        }));
+      },
+      
 
       deleteFolder: (folderId: string): void => {
         set(state => ({
