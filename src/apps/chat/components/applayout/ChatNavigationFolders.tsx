@@ -137,17 +137,17 @@ export const ChatNavigationFolders = ({
                   </IconButton>
                   </ListItemDecorator>
                 )}
-                  {/* Confirm/Cancel delete buttons */}
-              {deleteArmedFolderId === folder.id && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                  <IconButton color="danger" onClick={() => handleConfirmDelete(folder.id)}>
-                    <DeleteOutlineIcon />
-                  </IconButton>
-                  <IconButton color="neutral" onClick={handleCancelDelete}>
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-              )}
+                {/* Confirm/Cancel delete buttons */}
+                {deleteArmedFolderId === folder.id && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <IconButton color="danger" onClick={() => handleConfirmDelete(folder.id)}>
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                    <IconButton color="neutral" onClick={handleCancelDelete}>
+                      <CloseIcon />
+                    </IconButton>
+                  </Box>
+                )}
               </ListItemButton>
             </ListItem>
             {/* now if selected show conversations */}
