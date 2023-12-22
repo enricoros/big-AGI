@@ -51,7 +51,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       Concurrent model execution is also not supported.
     </Alert>}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!(oaiHost.length >= 7) || isFetching} error={isError} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!(oaiHost.length >= 7) || isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

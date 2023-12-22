@@ -72,7 +72,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       Advanced: You set the Helicone key, and Anthropic text will be routed through Helicone.
     </Alert>}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

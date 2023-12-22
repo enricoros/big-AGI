@@ -97,7 +97,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={on => updateSetup({ moderationCheck: on })}
     />}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

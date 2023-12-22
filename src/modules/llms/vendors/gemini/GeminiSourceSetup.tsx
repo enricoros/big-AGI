@@ -86,9 +86,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
       of being unsafe.
     </FormHelperText>
 
-    <SetupFormRefetchButton
-      refetch={refetch} disabled={!shallFetchSucceed || isFetching} error={isError}
-    />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

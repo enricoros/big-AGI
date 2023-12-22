@@ -29,6 +29,8 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
 
+  getRateLimitDelay?(llm: TDLLM): number;
+
   rpcUpdateModelsQuery: (
     access: TAccess,
     enabled: boolean,

@@ -59,8 +59,29 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
     moderationCheck: false,
   }),
 
+  // there is delay for OpenRouter Free API calls
+  getRateLimitDelay: (llm) => {
+    const now = Date.now();
+    const elapsed = now - nextGenerationTs;
+    const wait = llm.isFree
+      ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
+      : 100;
+
+    if (elapsed < wait) {
+      const delay = wait - elapsed;
+      nextGenerationTs = now + delay;
+      return delay;
+    } else {
+      nextGenerationTs = now;
+      return 0;
+    }
+  },
+
   // OpenAI transport ('openrouter' dialect in 'access')
   rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };
+
+// rate limit timestamp
+let nextGenerationTs = 0;
