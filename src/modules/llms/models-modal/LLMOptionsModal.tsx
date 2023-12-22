@@ -127,6 +127,9 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
           <Typography level='body-md'>
             {llm.id}
           </Typography>
+          {llm.isFree && <Typography level='body-xs'>
+            🎁 Free model - note: refresh models to check for updates in pricing
+          </Typography>}
           {!!llm.description && <Typography level='body-xs'>
             {llm.description}
           </Typography>}
