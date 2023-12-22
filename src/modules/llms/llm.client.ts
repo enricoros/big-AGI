@@ -45,6 +45,11 @@ export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = u
   const partialSourceSetup = llm._source.setup;
   const access = vendor.getTransportAccess(partialSourceSetup);
 
+  // get any vendor-specific rate limit delay
+  const delay = vendor.getRateLimitDelay?.(llm) ?? 0;
+  if (delay > 0)
+    await new Promise(resolve => setTimeout(resolve, delay));
+
   // execute via the vendor
   return await vendor.rpcChatGenerateOrThrow(access, options, messages, functions, forceFunctionName, maxTokens);
 }
@@ -68,6 +73,11 @@ export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess =
   // get the access
   const partialSourceSetup = llm._source.setup;
   const access = vendor.getTransportAccess(partialSourceSetup); // as ChatStreamInputSchema['access'];
+
+  // get any vendor-specific rate limit delay
+  const delay = vendor.getRateLimitDelay?.(llm) ?? 0;
+  if (delay > 0)
+    await new Promise(resolve => setTimeout(resolve, delay));
 
   // execute via the vendor
   return await vendor.streamingChatGenerateOrThrow(access, llmId, llmOptions, messages, functions, forceFunctionName, abortSignal, onUpdate);
