@@ -522,7 +522,7 @@ export function ChatMessage(props: {
                   : block.type === 'code'
                     ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.diagramMode} />
                     : block.type === 'image'
-                      ? <RenderImage key={'image-' + index} imageBlock={block} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsConversationRestartFrom} />
+                      ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsConversationRestartFrom} />
                       : block.type === 'latex'
                         ? <RenderLatex key={'latex-' + index} latexBlock={block} />
                         : block.type === 'diff'
