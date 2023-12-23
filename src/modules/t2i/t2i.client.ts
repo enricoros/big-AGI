@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
@@ -8,35 +6,13 @@ import { backendCaps } from '~/modules/backend/state-backend';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
-import { openAIGenerateImagesOrThrow } from '~/modules/t2i/dalle/openaiGenerateImages';
+import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
 import { useProdiaStore } from './prodia/store-module-prodia';
+import { useTextToImageStore } from './store-module-t2i';
 
 
 export const CmdRunT2I: string[] = ['/draw', '/imagine', '/img'];
-
-
-// T2I persisted store
-
-interface TextToImageStore {
-
-  activeProviderId: string | null;
-  setActiveProviderId: (providerId: string | null) => void;
-
-}
-
-const useTextToImageStore = create<TextToImageStore>()(
-  persist(
-    (_set) => ({
-
-      activeProviderId: null, // null: will auto-select the first availabe provider
-      setActiveProviderId: (activeProviderId: string | null) => _set({ activeProviderId }),
-
-    }),
-    {
-      name: 'module-t2i',
-    }),
-);
 
 
 // Capabilities API - used by Settings, and whomever wants to check if this is available
@@ -44,7 +20,10 @@ const useTextToImageStore = create<TextToImageStore>()(
 export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
-  const { activeProviderId, setActiveProviderId } = useTextToImageStore();
+  const { activeProviderId, setActiveProviderId } = useTextToImageStore(state => ({
+    activeProviderId: state.activeProviderId,
+    setActiveProviderId: state.setActiveProviderId,
+  }), shallow);
   const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
   const openAIModelSourceIds: OpenAIModelSource[] = useModelsStore(state => getOpenAIModelSources(state.llms, state.sources), shallow);
 
