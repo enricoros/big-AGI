@@ -1,7 +1,7 @@
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import { heuristicIsHtml } from './RenderHtml';
-import { heuristicMarkdownImageReferenceBlocks, heuristicLegacyProdiaImageBlocks } from './RenderImage';
+import { heuristicMarkdownImageReferenceBlocks, heuristicLegacyImageBlocks } from './RenderImage';
 
 type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
@@ -28,9 +28,9 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
     return mdImageBlocks;
 
   // special case: legacy prodia images
-  const prodiaImageBlocks = heuristicLegacyProdiaImageBlocks(text);
-  if (prodiaImageBlocks)
-    return prodiaImageBlocks;
+  const legacyImageBlocks = heuristicLegacyImageBlocks(text);
+  if (legacyImageBlocks)
+    return legacyImageBlocks;
 
   const regexPatterns = {
     codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,

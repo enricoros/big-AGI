@@ -38,6 +38,7 @@ export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/e
 export interface TextToImageProvider {
   id: string;
   label: string;
+  painter: string;
   description: string;
   configured: boolean;
   vendor: 'openai' | 'prodia';

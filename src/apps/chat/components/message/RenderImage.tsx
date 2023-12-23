@@ -31,7 +31,7 @@ export function heuristicMarkdownImageReferenceBlocks(fullText: string) {
       const url = match[2];
       imageBlocks.push({ type: 'image', url, alt });
     } else {
-      // If any line is not a Markdown image reference with a valid image URL, return null
+      // if there is any outlier line, return null
       return null;
     }
   }
@@ -42,11 +42,10 @@ export function heuristicMarkdownImageReferenceBlocks(fullText: string) {
 
 const prodiaUrlRegex = /^(https?:\/\/images\.prodia\.\S+)$/i;
 
-
 /**
  * Legacy heuristic for detecting images from "images.prodia." URLs.
  */
-export function heuristicLegacyProdiaImageBlocks(fullText: string): ImageBlock[] | null {
+export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | null {
 
   // Check if all lines are URLs starting with "http://images.prodia." or "https://images.prodia."
   const imageBlocks: ImageBlock[] = [];
@@ -56,7 +55,7 @@ export function heuristicLegacyProdiaImageBlocks(fullText: string): ImageBlock[]
       const url = match[1];
       imageBlocks.push({ type: 'image', url });
     } else {
-      // If any line is not a URL from "images.prodia.", return null
+      // if there is any outlier line, return null
       return null;
     }
   }

@@ -183,7 +183,7 @@ export function SettingsModal() {
             <Topic>
               <T2ISettings />
             </Topic>
-            <Topic icon='🖍️️' title='OpenAI Dall-E' startCollapsed>
+            <Topic icon='🖍️️' title='OpenAI DALL·E' startCollapsed>
               <DallESettings />
             </Topic>
             <Topic icon='🖍️️' title='Prodia' startCollapsed>
