@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
-import { t2iSetOpenAIModelSourceId } from '~/modules/t2i/t2i.client';
-
 import { Brand } from '~/common/app.config';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -44,12 +42,6 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // fetch models
   const { isFetching, refetch, isError, error } =
     useLlmUpdateModels(ModelVendorOpenAI, access, !sourceHasLLMs && shallFetchSucceed, source);
-
-  // sync the Source ID withthe T2I (image generation) module, to enable Dall-E image generation
-  React.useEffect(() => {
-    t2iSetOpenAIModelSourceId(sourceHasLLMs ? props.sourceId : null);
-  }, [props.sourceId, sourceHasLLMs]);
-
 
   return <>
 
