@@ -6,7 +6,7 @@ type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextB
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
 export type DiffBlock = { type: 'diff'; textDiffs: TextDiff[] };
 export type HtmlBlock = { type: 'html'; html: string; };
-export type ImageBlock = { type: 'image'; url: string; };
+export type ImageBlock = { type: 'image'; url: string; alt?: string }; // Added optional alt property
 export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
