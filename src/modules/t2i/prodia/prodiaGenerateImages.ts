@@ -34,8 +34,10 @@ export async function prodiaGenerateImages(imageText: string, count: number) {
 
       if (images.length !== 1)
         throw new Error('Prodia image generation failed - expected 1 image, got ' + images.length);
+      const { imageUrl, altText } = images[0];
 
-      return images[0].imageUrl || 'Prodia image generation failed';
+      // return a list of strings as markdown images
+      return `![${altText}](${imageUrl})`;
     }),
   );
 
