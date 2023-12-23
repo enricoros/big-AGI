@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { t2iCreateImageOutputSchema } from '~/modules/t2i/t2i.server.types';
+import { t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server.types';
 
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
@@ -68,10 +68,11 @@ const chatGenerateWithFunctionsInputSchema = z.object({
   functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
 });
 
-const createImageInputSchema = z.object({
+const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   tti: z.object({
     prompt: z.string(),
+    count: z.number().min(1),
     model: z.enum(['dall-e-2', 'dall-e-3']),
     highQuality: z.boolean(),
     asUrl: z.boolean(), // if false, returns a base64 encoded data Url
@@ -234,10 +235,14 @@ export const llmOpenAIRouter = createTRPCRouter({
     }),
 
   /* [OpenAI] images/generations */
-  createImage: publicProcedure
-    .input(createImageInputSchema)
-    .output(t2iCreateImageOutputSchema)
+  createImages: publicProcedure
+    .input(createImagesInputSchema)
+    .output(t2iCreateImagesOutputSchema)
     .mutation(async ({ input: { access, tti } }) => {
+
+      // Validate input
+      if (tti.model === 'dall-e-3' && tti.count > 1)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
       const wireOpenAICreateImageOutput = await openaiPOST<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
@@ -245,7 +250,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         {
           prompt: tti.prompt,
           model: tti.model,
-          n: 1,
+          n: tti.count,
           quality: tti.highQuality ? 'hd' : 'standard',
           response_format: tti.asUrl ? 'url' : 'b64_json',
           size: tti.size,
@@ -257,16 +262,14 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // expect a single image and as URL
       const imagesOutput = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput);
-      if (imagesOutput.data?.length !== 1)
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 image, got ${imagesOutput.data?.length}` });
-      const firstImage = imagesOutput.data[0];
-      if ('b64_json' in firstImage)
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
-
-      return {
-        imageUrl: firstImage.url,
-        altText: firstImage.revised_prompt || tti.prompt,
-      };
+      return imagesOutput.data.map(image => {
+        if ('b64_json' in image)
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
+        return {
+          imageUrl: image.url,
+          altText: image.revised_prompt || tti.prompt,
+        };
+      });
     }),
 
   /* [OpenAI] check for content policy violations */
