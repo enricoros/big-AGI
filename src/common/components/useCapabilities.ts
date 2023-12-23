@@ -33,13 +33,22 @@ export interface CapabilityElevenLabsSpeechSynthesis {
 export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
 
 
-/// Image Generation: Prodia
+/// Image Generation
 
-export interface CapabilityProdiaImageGeneration {
-  mayWork: boolean;
+export interface CapabilityTextToImageProvider {
+  id: 'openai' | 'prodia';
+  label: string;
+  description: string;
+  active: boolean;
 }
 
-export { useCapability as useCapabilityProdia } from '~/modules/prodia/prodia.client';
+export interface CapabilityTextToImage {
+  mayWork: boolean;
+  providers: CapabilityTextToImageProvider[],
+  setActiveProvider: (providerId: string | null) => void;
+}
+
+export { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 
 /// Browsing
