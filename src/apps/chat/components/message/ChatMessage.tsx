@@ -96,7 +96,10 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
       // text-to-image: icon
       if (isTextToImage)
-        return <FormatPaintIcon sx={iconSx} />;
+        return <FormatPaintIcon sx={{
+          ...iconSx,
+          animation: `${cssRainbowColorKeyframes} 1s linear 2.66`,
+        }} />;
 
       // purpose symbol (if present)
       const symbol = SystemPurposes[messagePurposeId!]?.symbol;

@@ -186,7 +186,7 @@ export function SettingsModal() {
             <Topic icon='🖍️️' title='OpenAI DALL·E' startCollapsed>
               <DallESettings />
             </Topic>
-            <Topic icon='🖍️️' title='Prodia' startCollapsed>
+            <Topic icon='🖍️️' title='Prodia API' startCollapsed>
               <ProdiaSettings />
             </Topic>
           </Topics>
