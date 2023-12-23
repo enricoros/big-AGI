@@ -23,7 +23,7 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
 
   const regexPatterns = {
     codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
-    imageBlock: /(https:\/\/images\.prodia\.xyz\/.*?\.png)/g, // NOTE: only Prodia for now - but this shall be expanded to markdown images ![alt](url) or any png/jpeg
+    imageBlock: /(https:\/\/images\.prodia\.xyz\/.*?\.(?:png|jpe?g))|(https:\/\/oaidalleapiprodscus\..*)/g,
     latexBlock: /\$\$([\s\S]*?)\$\$/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
@@ -62,7 +62,7 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
         break;
 
       case 'imageBlock':
-        const url: string = match[1];
+        const url: string = match[1] || match[2];
         blocks.push({ type: 'image', url });
         break;
 
