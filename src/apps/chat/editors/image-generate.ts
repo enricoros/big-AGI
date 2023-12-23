@@ -1,4 +1,4 @@
-import { prodiaGenerateImage } from '~/modules/prodia/prodia.client';
+import { t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -24,7 +24,7 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
   const { editMessage } = useChatStore.getState();
 
   try {
-    const imageUrls = await prodiaGenerateImage(count, imageText);
+    const imageUrls = await t2iGenerateImageOrThrow(imageText, count);
 
     // Concatenate all the resulting URLs and update the assistant message with these URLs
     const allImageUrls = imageUrls.join('\n');
