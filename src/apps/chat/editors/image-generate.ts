@@ -32,6 +32,6 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
 
   } catch (error: any) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
-    editMessage(conversationId, assistantMessageId, { text: `Sorry, I couldn't create an image for you. ${errorMessage}`, typing: false }, false);
+    editMessage(conversationId, assistantMessageId, { text: `[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`, typing: false }, false);
   }
 }
