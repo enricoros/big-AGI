@@ -56,14 +56,33 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
 // T2I API
 
-export async function t2iGenerateImageOrThrow(prompt: string, count: number): Promise<string[]> {
-  const activeProvider = getActiveTextToImageProviderOrThrow();
-  switch (activeProvider.vendor) {
+export function getActiveTextToImageProviderOrThrow() {
+
+  // validate active Id
+  const { activeProviderId } = useTextToImageStore.getState();
+  if (!activeProviderId)
+    throw new Error('No TextToImage Provider selected');
+
+  // get all providers
+  const { llms, sources } = useModelsStore.getState();
+  const openAIModelSourceIds = getOpenAIModelSources(llms, sources);
+  const providers = getTextToImageProviders(openAIModelSourceIds, !!useProdiaStore.getState().prodiaModelId);
+
+  // find the active provider
+  const activeProvider = providers.find(p => p.id === activeProviderId);
+  if (!activeProvider)
+    throw new Error('No TextToImage Provider found');
+
+  return activeProvider;
+}
+
+export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, prompt: string, count: number): Promise<string[]> {
+  switch (provider.vendor) {
 
     case 'openai':
-      if (!activeProvider.id)
+      if (!provider.id)
         throw new Error('No OpenAI model source configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(activeProvider.id, prompt, count);
+      return await openAIGenerateImagesOrThrow(provider.id, prompt, count);
 
     case 'prodia':
       const hasProdiaServer = backendCaps().hasImagingProdia;
@@ -99,8 +118,9 @@ function getTextToImageProviders(openAIModelSources: OpenAIModelSource[], hasPro
   for (const { modelSourceId, label, hasModels } of openAIModelSources) {
     providers.push({
       id: modelSourceId,
-      label,
-      description: 'OpenAI\'s Dall-E models',
+      label: label,
+      painter: 'DALL·E',
+      description: 'OpenAI\'s DALL·E models',
       configured: hasModels,
       vendor: 'openai',
     });
@@ -111,30 +131,11 @@ function getTextToImageProviders(openAIModelSources: OpenAIModelSource[], hasPro
   providers.push({
     id: 'prodia',
     label: 'Prodia',
+    painter: 'Prodia',
     description: 'Prodia\'s models',
     configured: hasProdiaServer || hasProdiaClientModels,
     vendor: 'prodia',
   });
 
   return providers;
-}
-
-function getActiveTextToImageProviderOrThrow() {
-
-  // validate active Id
-  const { activeProviderId } = useTextToImageStore.getState();
-  if (!activeProviderId)
-    throw new Error('No TextToImage Provider selected');
-
-  // get all providers
-  const { llms, sources } = useModelsStore.getState();
-  const openAIModelSourceIds = getOpenAIModelSources(llms, sources);
-  const providers = getTextToImageProviders(openAIModelSourceIds, !!useProdiaStore.getState().prodiaModelId);
-
-  // find the active provider
-  const activeProvider = providers.find(p => p.id === activeProviderId);
-  if (!activeProvider)
-    throw new Error('No TextToImage Provider found');
-
-  return activeProvider;
 }

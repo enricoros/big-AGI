@@ -14,7 +14,6 @@ import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
@@ -78,38 +77,39 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
     case 'system':
       return <SettingsSuggestIcon sx={iconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
 
+    case 'user':
+      return <Face6Icon sx={iconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
+
     case 'assistant':
-      // display a gif avatar when the assistant is typing (people seem to love this, so keeping it after april fools')
+      // typing gif (people seem to love this, so keeping it after april fools')
+      const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
+      const isReact = messageOriginLLM?.startsWith('react-');
       if (messageTyping) {
         return <Avatar
           alt={messageSender} variant='plain'
-          src={messageOriginLLM === 'prodia'
-            ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
-            : messageOriginLLM?.startsWith('react-')
-              ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
+          src={isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
+            : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
               : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
-          sx={{ ...mascotSx, borderRadius: 'var(--joy-radius-sm)' }}
+          sx={{ ...mascotSx, borderRadius: 'sm' }}
         />;
       }
-      // display the purpose symbol
-      if (messageOriginLLM === 'prodia')
-        return <PaletteOutlinedIcon sx={iconSx} />;
+
+      // text-to-image: icon
+      if (isTextToImage)
+        return <FormatPaintIcon sx={iconSx} />;
+
+      // purpose symbol (if present)
       const symbol = SystemPurposes[messagePurposeId!]?.symbol;
-      if (symbol)
-        return <Box
-          sx={{
-            fontSize: '24px',
-            textAlign: 'center',
-            width: '100%', minWidth: `${iconSx.width}px`, lineHeight: `${iconSx.height}px`,
-          }}
-        >
-          {symbol}
-        </Box>;
+      if (symbol) return <Box sx={{
+        fontSize: '24px',
+        textAlign: 'center',
+        width: '100%', minWidth: `${iconSx.width}px`, lineHeight: `${iconSx.height}px`,
+      }}>
+        {symbol}
+      </Box>;
+
       // default assistant avatar
       return <SmartToyOutlinedIcon sx={iconSx} />; // https://mui.com/static/images/avatar/2.jpg
-
-    case 'user':
-      return <Face6Icon sx={iconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
   }
   return <Avatar alt={messageSender} />;
 }
@@ -256,9 +256,9 @@ export function ChatMessage(props: {
   const showAvatars = props.hideAvatars !== true && !cleanerLooks;
 
   const textSel = selMenuText ? selMenuText : messageText;
-  const isSpecialProdia = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/imagine') || textSel.startsWith('/img');
-  const couldDiagram = textSel?.length >= 100 && !isSpecialProdia;
-  const couldImagine = textSel?.length >= 2 && !isSpecialProdia;
+  const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
+  const couldDiagram = textSel?.length >= 100 && !isSpecialT2I;
+  const couldImagine = textSel?.length >= 2 && !isSpecialT2I;
   const couldSpeak = couldImagine;
 
 

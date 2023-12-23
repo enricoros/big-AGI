@@ -42,8 +42,8 @@ export function DallESettings() {
       title='Model'
       description={dalleModelId === 'dall-e-2' ? 'Older' : 'Newer'}
       options={[
-        { value: 'dall-e-2', label: 'Dall-E 2' },
-        { value: 'dall-e-3', label: 'Dall-E 3' },
+        { value: 'dall-e-2', label: 'DALL·E 2' },
+        { value: 'dall-e-3', label: 'DALL·E 3' },
       ]}
       value={dalleModelId} onChange={setDalleModelId}
     />
