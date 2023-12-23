@@ -70,7 +70,7 @@ const chatGenerateWithFunctionsInputSchema = z.object({
 
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
-  tti: z.object({
+  request: z.object({
     prompt: z.string(),
     count: z.number().min(1),
     model: z.enum(['dall-e-2', 'dall-e-3']),
@@ -238,23 +238,23 @@ export const llmOpenAIRouter = createTRPCRouter({
   createImages: publicProcedure
     .input(createImagesInputSchema)
     .output(t2iCreateImagesOutputSchema)
-    .mutation(async ({ input: { access, tti } }) => {
+    .mutation(async ({ input: { access, request } }) => {
 
       // Validate input
-      if (tti.model === 'dall-e-3' && tti.count > 1)
+      if (request.model === 'dall-e-3' && request.count > 1)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
       const wireOpenAICreateImageOutput = await openaiPOST<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
         access, null,
         {
-          prompt: tti.prompt,
-          model: tti.model,
-          n: tti.count,
-          quality: tti.quality,
-          response_format: tti.asUrl ? 'url' : 'b64_json',
-          size: tti.size,
-          style: tti.style,
+          prompt: request.prompt,
+          model: request.model,
+          n: request.count,
+          quality: request.quality,
+          response_format: request.asUrl ? 'url' : 'b64_json',
+          size: request.size,
+          style: request.style,
           user: 'big-agi',
         },
         '/v1/images/generations',
@@ -267,7 +267,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
         return {
           imageUrl: image.url,
-          altText: image.revised_prompt || tti.prompt,
+          altText: image.revised_prompt || request.prompt,
         };
       });
     }),
