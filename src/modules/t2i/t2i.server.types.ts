@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // Image generation output
 
-export const t2iCreateImageOutputSchema = z.object({
+const t2iCreateImageOutputSchema = z.object({
 
   // one of these two will be present
   imageUrl: z.string().optional(),
@@ -16,3 +16,5 @@ export const t2iCreateImageOutputSchema = z.object({
   elapsed: z.number().optional(),
 
 });
+
+export const t2iCreateImagesOutputSchema = z.array(t2iCreateImageOutputSchema);

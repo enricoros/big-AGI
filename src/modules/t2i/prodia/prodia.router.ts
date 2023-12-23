@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { t2iCreateImageOutputSchema } from '~/modules/t2i/t2i.server.types';
+import { t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server.types';
 
 import { HARDCODED_MODELS } from './prodia.models';
 
@@ -33,7 +33,7 @@ export const prodiaRouter = createTRPCRouter({
   /** [Prodia] Generate an image, returning the cloud URL */
   createImage: publicProcedure
     .input(createImageInputSchema)
-    .output(t2iCreateImageOutputSchema)
+    .output(t2iCreateImagesOutputSchema)
     .query(async ({ input }) => {
 
       // timeout, in seconds
@@ -85,12 +85,14 @@ export const prodiaRouter = createTRPCRouter({
       if (j.status !== 'succeeded' || !j.imageUrl)
         throw new Error(`Prodia image generation failed within ${elapsed}s`);
 
-      // respond with the image URL
-      return {
-        imageUrl: j.imageUrl,
-        altText: `Prodia generated "${jobRequest.prompt}". Options: ${JSON.stringify({ seed: j.params })}.`,
-        elapsed,
-      };
+      // respond with 1 result
+      return [
+        {
+          imageUrl: j.imageUrl,
+          altText: `Prodia generated "${jobRequest.prompt}". Options: ${JSON.stringify({ seed: j.params })}.`,
+          elapsed,
+        },
+      ];
     }),
 
   /** List models - for now just hardcode the list, as there's no endpoint */

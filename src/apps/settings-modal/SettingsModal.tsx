@@ -8,7 +8,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
-import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
+import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutPreferences, openLayoutShortcuts, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
