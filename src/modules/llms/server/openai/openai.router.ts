@@ -257,7 +257,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           style: tti.style,
           user: 'big-agi',
         },
-        '/v1/image/generations',
+        '/v1/images/generations',
       );
 
       // expect a single image and as URL
