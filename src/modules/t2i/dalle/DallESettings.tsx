@@ -55,7 +55,7 @@ export function DallESettings() {
       value={dalleModelId} onChange={setDalleModelId}
     />
 
-    <FormRadioControl
+    {isDallE3 && <FormRadioControl
       title='Style'
       description={(isDallE3 && dalleStyle === 'vivid') ? 'Hyper-Real' : 'Relistic'}
       disabled={!isDallE3}
@@ -64,7 +64,7 @@ export function DallESettings() {
         { value: 'vivid', label: 'Vivid' },
       ]}
       value={isDallE3 ? dalleStyle : 'natural'} onChange={setDalleStyle}
-    />
+    />}
 
     {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Resolution'
@@ -90,7 +90,7 @@ export function DallESettings() {
       </Select>
     </FormControl>}
 
-    {advanced.on && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
+    {advanced.on && isDallE3 && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Quality'
                       description={isHD ? 'Detailed' : 'Default'} />
       <Switch checked={isHD} onChange={handleDalleQualityChange}
