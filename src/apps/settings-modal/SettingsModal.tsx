@@ -153,7 +153,7 @@ export function SettingsModal() {
           <Tab disableIndicator value={4} sx={tabFixSx}>Tools</Tab>
         </TabList>
 
-        <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={1} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -167,7 +167,7 @@ export function SettingsModal() {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={3} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={3} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
@@ -178,7 +178,7 @@ export function SettingsModal() {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={2} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <T2ISettings />
@@ -192,7 +192,7 @@ export function SettingsModal() {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={4} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon={<SearchIcon />} title='Browsing' startCollapsed>
               <BrowseSettings />
