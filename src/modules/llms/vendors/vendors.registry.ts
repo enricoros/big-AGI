@@ -9,7 +9,7 @@ import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 
 import type { IModelVendor } from './IModelVendor';
-import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow } from '../store-llms';
+import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow, findSourceOrThrow } from '../store-llms';
 
 export type ModelVendorId =
   | 'anthropic'
@@ -53,8 +53,15 @@ export function findVendorById<TSourceSetup = unknown, TAccess = unknown, TLLMOp
 export function findVendorForLlmOrThrow<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(llmId: DLLMId) {
   const llm = findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId);
   const vendor = findVendorById<TSourceSetup, TAccess, TLLMOptions>(llm?._source.vId);
-  if (!vendor) throw new Error(`callChat: Vendor not found for LLM ${llmId}`);
+  if (!vendor) throw new Error(`Vendor not found for LLM ${llmId}`);
   return { llm, vendor };
+}
+
+export function findAccessForSourceOrThrow<TSourceSetup = unknown, TAccess = unknown>(sourceId: DModelSourceId) {
+  const source = findSourceOrThrow<TSourceSetup>(sourceId);
+  const vendor = findVendorById<TSourceSetup, TAccess>(source.vId);
+  if (!vendor) throw new Error(`ModelSource ${sourceId} has no vendor`);
+  return vendor.getTransportAccess(source.setup);
 }
 
 export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {

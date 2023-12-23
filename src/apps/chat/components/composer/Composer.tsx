@@ -73,6 +73,7 @@ export function Composer(props: {
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   conversationId: DConversationId | null;
+  capabilityHasT2I: boolean;
   isDeveloperMode: boolean;
   onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
@@ -374,7 +375,9 @@ export function Composer(props: {
         ? 'Multi-step reasoning question...'
         : props.isDeveloperMode
           ? 'Chat with me · drop source files · attach code...'
-          : /*isProdiaConfigured ?*/ 'Chat · /react · /imagine · drop text files...' /*: 'Chat · /react · drop text files...'*/;
+          : props.capabilityHasT2I
+            ? 'Chat · /react · /draw · drop text files...'
+            : 'Chat · /react · drop text files...';
 
 
   return (
@@ -640,6 +643,7 @@ export function Composer(props: {
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
             chatModeId={chatModeId} onSetChatModeId={handleModeChange}
+            capabilityHasTTI={props.capabilityHasT2I}
           />
         )}
 

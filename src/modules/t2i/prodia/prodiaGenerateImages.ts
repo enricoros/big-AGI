@@ -1,23 +1,9 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
-import { CapabilityProdiaImageGeneration } from '~/common/components/useCapabilities';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import { useProdiaStore } from './store-module-prodia';
 
 
-export const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 36;
-
-export const CmdRunProdia: string[] = ['/imagine', '/img'];
-
-export function useCapability(): CapabilityProdiaImageGeneration {
-  const loadedModels = useProdiaStore(state => !!state.prodiaModelId);
-  const isConfiguredServerSide = backendCaps().hasImagingProdia;
-  return { mayWork: isConfiguredServerSide || loadedModels };
-}
-
-
-export async function prodiaGenerateImage(count: number, imageText: string) {
+export async function prodiaGenerateImages(imageText: string, count: number) {
   // use the most current model and settings
   const {
     prodiaApiKey: prodiaKey, prodiaModelId, prodiaModelGen,
@@ -32,7 +18,7 @@ export async function prodiaGenerateImage(count: number, imageText: string) {
     // using an array of 'count' number of promises
     Array(count).fill(undefined).map(async () => {
 
-      const { imageUrl } = await apiAsync.prodia.imagine.query({
+      const images = await apiAsync.prodia.createImage.query({
         ...(!!prodiaKey && { prodiaKey }),
         prodiaModel: prodiaModelId || 'Realistic_Vision_V5.0.safetensors [614d1063]', // data versioning fix
         prodiaGen: prodiaModelGen || 'sd', // data versioning fix
@@ -46,7 +32,12 @@ export async function prodiaGenerateImage(count: number, imageText: string) {
         ...(!!seed && { seed }),
       });
 
-      return imageUrl;
+      if (images.length !== 1)
+        throw new Error('Prodia image generation failed - expected 1 image, got ' + images.length);
+      const { imageUrl, altText } = images[0];
+
+      // return a list of strings as markdown images
+      return `![${altText}](${imageUrl})`;
     }),
   );
 

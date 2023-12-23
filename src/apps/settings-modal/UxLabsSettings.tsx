@@ -3,7 +3,6 @@ import * as React from 'react';
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CallIcon from '@mui/icons-material/Call';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';

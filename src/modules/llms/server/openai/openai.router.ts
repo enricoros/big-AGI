@@ -5,10 +5,12 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
+import { t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server.types';
+
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import type { OpenAIWire } from './openai.wiretypes';
+import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
@@ -66,6 +68,19 @@ const chatGenerateWithFunctionsInputSchema = z.object({
   functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
 });
 
+const createImagesInputSchema = z.object({
+  access: openAIAccessSchema,
+  request: z.object({
+    prompt: z.string(),
+    count: z.number().min(1),
+    model: z.enum(['dall-e-2', 'dall-e-3']),
+    quality: z.enum(['standard', 'hd']),
+    asUrl: z.boolean(), // if false, returns a base64 encoded data Url
+    size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']),
+    style: z.enum(['natural', 'vivid']),
+  }),
+});
+
 const moderationInputSchema = z.object({
   access: openAIAccessSchema,
   text: z.string(),
@@ -74,7 +89,7 @@ const moderationInputSchema = z.object({
 
 export const llmOpenAIRouter = createTRPCRouter({
 
-  /* OpenAI: List the Models available */
+  /* [OpenAI] List the Models available */
   listModels: publicProcedure
     .input(listModelsInputSchema)
     .output(llmsListModelsOutputSchema)
@@ -188,7 +203,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       return { models };
     }),
 
-  /* OpenAI: chat generation */
+  /* [OpenAI] (non streaming) chat generation */
   chatGenerateWithFunctions: publicProcedure
     .input(chatGenerateWithFunctionsInputSchema)
     .output(llmsChatGenerateWithFunctionsOutputSchema)
@@ -219,11 +234,48 @@ export const llmOpenAIRouter = createTRPCRouter({
         : parseChatGenerateOutput(message as OpenAIWire.ChatCompletion.ResponseMessage, finish_reason);
     }),
 
-  /* OpenAI: check for content policy violations */
+  /* [OpenAI] images/generations */
+  createImages: publicProcedure
+    .input(createImagesInputSchema)
+    .output(t2iCreateImagesOutputSchema)
+    .mutation(async ({ input: { access, request } }) => {
+
+      // Validate input
+      if (request.model === 'dall-e-3' && request.count > 1)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
+
+      // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
+      const wireOpenAICreateImageOutput = await openaiPOST<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
+        access, null,
+        {
+          prompt: request.prompt,
+          model: request.model,
+          n: request.count,
+          quality: request.quality,
+          response_format: request.asUrl ? 'url' : 'b64_json',
+          size: request.size,
+          style: request.style,
+          user: 'big-agi',
+        },
+        '/v1/images/generations',
+      );
+
+      // expect a single image and as URL
+      const imagesOutput = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput);
+      return imagesOutput.data.map(image => {
+        if ('b64_json' in image)
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
+        return {
+          imageUrl: image.url,
+          altText: image.revised_prompt || request.prompt,
+        };
+      });
+    }),
+
+  /* [OpenAI] check for content policy violations */
   moderation: publicProcedure
     .input(moderationInputSchema)
-    .mutation(async ({ input }): Promise<OpenAIWire.Moderation.Response> => {
-      const { access, text } = input;
+    .mutation(async ({ input: { access, text } }): Promise<OpenAIWire.Moderation.Response> => {
       try {
 
         return await openaiPOST<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
