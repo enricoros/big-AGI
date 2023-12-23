@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
-import { t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server.types';
+import { t2iCreateImagesOutputSchema } from '../t2i.server.types';
 
 import { HARDCODED_MODELS } from './prodia.models';
 
