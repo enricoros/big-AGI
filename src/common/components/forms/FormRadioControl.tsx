@@ -19,7 +19,7 @@ export const FormRadioControl = <TValue extends string>(props: {
   tooltip?: string | React.JSX.Element,
   disabled?: boolean;
   options: FormRadioOption<TValue>[];
-  value: TValue;
+  value?: TValue;
   onChange: (value: TValue) => void;
 }) =>
   <FormControl orientation='horizontal' disabled={props.disabled} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -28,6 +28,7 @@ export const FormRadioControl = <TValue extends string>(props: {
       orientation='horizontal'
       value={props.value}
       onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.value && props.onChange(event.target.value as TValue)}
+      sx={{ flexWrap: 'wrap' }}
     >
       {props.options.map((option) =>
         <Radio key={'opt-' + option.value} value={option.value} label={option.label} disabled={option.disabled || props.disabled} />,
