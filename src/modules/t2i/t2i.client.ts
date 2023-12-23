@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 
 import type { DModelSourceId } from '~/modules/llms/store-llms';
 import { backendCaps } from '~/modules/backend/state-backend';
-import { openAIGenerateImagesOrThrow } from '~/modules/llms/vendors/openai/openaiGenerateImages';
+import { openAIGenerateImagesOrThrow } from '~/modules/t2i/openai/openaiGenerateImages';
 
 import type { CapabilityTextToImage, CapabilityTextToImageProvider } from '~/common/components/useCapabilities';
 
