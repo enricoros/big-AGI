@@ -1,3 +1,6 @@
+import { z } from 'zod';
+
+
 /**
  * OpenAI API types - https://platform.openai.com/docs/api-reference/
  *
@@ -159,3 +162,46 @@ export namespace OpenAIWire {
   }
 
 }
+
+
+// OpenAI text to image generation - https://platform.openai.com/docs/api-reference/images/create
+
+const wireOpenAICreateImageRequestSchema = z.object({
+  // The maximum length is 1000 characters for dall-e-2 and 4000 characters for dall-e-3
+  prompt: z.string().max(4000),
+
+  // The model to use for image generation
+  model: z.enum(['dall-e-2', 'dall-e-3']).optional().default('dall-e-2'),
+
+  // The number of images to generate. Must be between 1 and 10. For dall-e-3, only n=1 is supported.
+  n: z.number().min(1).max(10).nullable().optional(),
+
+  // 'hd' creates images with finer details and greater consistency across the image. This param is only supported for dall-e-3
+  quality: z.enum(['standard', 'hd']).optional(),
+
+  // The format in which the generated images are returned
+  response_format: z.enum(['url', 'b64_json']).optional().default('url'),
+
+  // 'dall-e-2': must be one of 256x256, 512x512, or 1024x1024
+  // 'dall-e-3': must be one of 1024x1024, 1792x1024, or 1024x1792
+  size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']).optional().default('1024x1024'),
+
+  // only used by 'dall-e-3': 'vivid' (hyper-real and dramatic images) or 'natural'
+  style: z.enum(['vivid', 'natural']).optional().default('vivid'),
+
+  // A unique identifier representing your end-user
+  user: z.string().optional(),
+});
+
+export type WireOpenAICreateImageRequest = z.infer<typeof wireOpenAICreateImageRequestSchema>;
+
+export const wireOpenAICreateImageOutputSchema = z.object({
+  created: z.number(),
+  data: z.array(z.object({
+    b64_json: z.string().optional(),
+    url: z.string().optional(),
+    revised_prompt: z.string().optional(),
+  })),
+});
+
+export type WireOpenAICreateImageOutput = z.infer<typeof wireOpenAICreateImageOutputSchema>;
