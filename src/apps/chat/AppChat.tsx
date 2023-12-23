@@ -4,8 +4,8 @@ import { Box } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
-import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
+import { CmdRunT2I } from '~/modules/t2i/t2i.client';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
@@ -131,7 +131,7 @@ export function AppChat() {
       const pieces = extractCommands(lastMessage.text);
       if (pieces.length == 2 && pieces[0].type === 'cmd' && pieces[1].type === 'text') {
         const [command, prompt] = [pieces[0].value, pieces[1].value];
-        if (CmdRunProdia.includes(command)) {
+        if (CmdRunT2I.includes(command)) {
           setMessages(conversationId, history);
           return await runImageGenerationUpdatingState(conversationId, prompt);
         }
@@ -169,7 +169,7 @@ export function AppChat() {
             break;
           setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
             ...message,
-            text: `${CmdRunProdia[0]} ${lastMessage.text}`,
+            text: `${CmdRunT2I[0]} ${lastMessage.text}`,
           }));
           return await runImageGenerationUpdatingState(conversationId, lastMessage.text);
 
