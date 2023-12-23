@@ -13,7 +13,7 @@ interface ChatModeDescription {
   label: string;
   description: string | React.JSX.Element;
   shortcut?: string;
-  experimental?: boolean;
+  requiresTTI?: boolean;
 }
 
 const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
@@ -29,6 +29,7 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
   'generate-image': {
     label: 'Draw',
     description: 'AI Image Generation',
+    requiresTTI: true,
   },
   'generate-react': {
     label: 'Reason + Act · α',
@@ -43,7 +44,11 @@ function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
   return shortcut;
 }
 
-export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClose: () => void, chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void }) {
+export function ChatModeMenu(props: {
+  anchorEl: HTMLAnchorElement | null, onClose: () => void,
+  chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void
+  capabilityHasTTI: boolean,
+}) {
 
   // external state
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -61,14 +66,13 @@ export function ChatModeMenu(props: { anchorEl: HTMLAnchorElement | null, onClos
 
     {/* ChatMode items */}
     {Object.entries(ChatModeItems)
-      .filter(([, { experimental }]) => !experimental)
       .map(([key, data]) =>
         <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
             <Radio checked={key === props.chatModeId} />
             <Box sx={{ flexGrow: 1 }}>
               <Typography>{data.label}</Typography>
-              <Typography level='body-xs'>{data.description}</Typography>
+              <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.capabilityHasTTI) ? 'Unconfigured' : ''}</Typography>
             </Box>
             {(key === props.chatModeId || !!data.shortcut) && (
               <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline)} />

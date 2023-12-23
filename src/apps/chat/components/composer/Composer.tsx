@@ -643,6 +643,7 @@ export function Composer(props: {
           <ChatModeMenu
             anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
             chatModeId={chatModeId} onSetChatModeId={handleModeChange}
+            capabilityHasTTI={props.capabilityHasTTI}
           />
         )}
 
