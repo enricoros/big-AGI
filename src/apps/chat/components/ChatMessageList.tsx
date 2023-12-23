@@ -10,7 +10,7 @@ import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGloba
 import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { openLayoutPreferences } from '~/common/layout/store-applayout';
-import { useCapabilityElevenLabs, useCapabilityProdia } from '~/common/components/useCapabilities';
+import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 
 import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
@@ -23,6 +23,7 @@ import { useChatShowSystemMessages } from '../store-app-chat';
  */
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
+  capabilityHasT2I: boolean,
   chatLLMContextTokens?: number,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
@@ -50,11 +51,10 @@ export function ChatMessageList(props: {
       setMessages: state.setMessages,
     };
   }, shallow);
-  const { mayWork: isImaginable } = useCapabilityProdia();
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
-  const { conversationId, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
+  const { conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
 
 
   // text actions
@@ -98,14 +98,14 @@ export function ChatMessageList(props: {
   }, [conversationId, onTextDiagram]);
 
   const handleTextImagine = React.useCallback(async (text: string) => {
-    if (!isImaginable)
+    if (!capabilityHasT2I)
       return openLayoutPreferences(2);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
       setIsImagining(false);
     }
-  }, [conversationId, isImaginable, onTextImagine]);
+  }, [capabilityHasT2I, conversationId, onTextImagine]);
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)

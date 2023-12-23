@@ -4,10 +4,12 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
+import { t2iCreateImagesOutputSchema } from '../t2i.server.types';
+
 import { HARDCODED_MODELS } from './prodia.models';
 
 
-const imagineInputSchema = z.object({
+const createImageInputSchema = z.object({
   prodiaKey: z.string().optional(),
   prodiaModel: z.string(),
   prodiaGen: z.enum(['sd', 'sdxl']).optional(),
@@ -28,9 +30,10 @@ const modelsInputSchema = z.object({
 
 export const prodiaRouter = createTRPCRouter({
 
-  /** Generate an image, returning the URL where it's stored */
-  imagine: publicProcedure
-    .input(imagineInputSchema)
+  /** [Prodia] Generate an image, returning the cloud URL */
+  createImage: publicProcedure
+    .input(createImageInputSchema)
+    .output(t2iCreateImagesOutputSchema)
     .query(async ({ input }) => {
 
       // timeout, in seconds
@@ -82,12 +85,14 @@ export const prodiaRouter = createTRPCRouter({
       if (j.status !== 'succeeded' || !j.imageUrl)
         throw new Error(`Prodia image generation failed within ${elapsed}s`);
 
-      // respond with the image URL
-      return {
-        imageUrl: j.imageUrl,
-        altText: `Prodia generated "${jobRequest.prompt}". Options: ${JSON.stringify({ seed: j.params })}.`,
-        elapsed,
-      };
+      // respond with 1 result
+      return [
+        {
+          imageUrl: j.imageUrl,
+          altText: jobRequest.prompt,
+          elapsed,
+        },
+      ];
     }),
 
   /** List models - for now just hardcode the list, as there's no endpoint */
@@ -157,18 +162,18 @@ export interface JobRequestSDXL extends JobRequestBase {
 
 export interface JobResponse {
   job: string;
-  params: {
-    prompt: string;
-    cfg_scale: number;
-    steps: number;
-    negative_prompt: string;
-    seed: number;
-    upscale: boolean;
-    sampler_name: 'Euler' | string;
-    width: 512 | number;
-    height: 512 | number;
-    options: { sd_model_checkpoint: 'sdv1_4.ckpt [7460a6fa]' | string; };
-  };
+  // params: {
+  //   prompt: string;
+  //   cfg_scale: number;
+  //   steps: number;
+  //   negative_prompt: string;
+  //   seed: number;
+  //   upscale: boolean;
+  //   sampler_name: 'Euler' | string;
+  //   width: 512 | number;
+  //   height: 512 | number;
+  //   options: { sd_model_checkpoint: 'sdv1_4.ckpt [7460a6fa]' | string; };
+  // };
   status: 'queued' | 'generating' | 'succeeded' | 'failed';
   imageUrl?: string;
 }

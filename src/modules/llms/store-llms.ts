@@ -239,10 +239,6 @@ export const useModelsStore = create<LlmsStore>()(
 );
 
 
-const defaultChatSuffixPreference = ['gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
-const defaultFastSuffixPreference = ['gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
-const defaultFuncSuffixPreference = ['gpt-4-1106-preview', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-4-0613'];
-
 export function findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId: DLLMId): DLLM<TSourceSetup, TLLMOptions> {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
   if (!llm) throw new Error(`LLM ${llmId} not found`);
@@ -250,15 +246,16 @@ export function findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId: DLLMId): DLLM<T
   return llm as DLLM<TSourceSetup, TLLMOptions>;
 }
 
-function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: boolean): DLLMId | null {
-  if (!llms?.length) return null;
-  for (const suffix of suffixes)
-    for (const llm of llms)
-      if (llm.id.endsWith(suffix))
-        return llm.id;
-  // otherwise return first id
-  return fallbackToFirst ? llms[0].id : null;
+export function findSourceOrThrow<TSourceSetup>(sourceId: DModelSourceId) {
+  const source: DModelSource<TSourceSetup> | undefined = useModelsStore.getState().sources.find(source => source.id === sourceId);
+  if (!source) throw new Error(`ModelSource ${sourceId} not found`);
+  return source;
 }
+
+
+const defaultChatSuffixPreference = ['gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
+const defaultFastSuffixPreference = ['gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
+const defaultFuncSuffixPreference = ['gpt-4-1106-preview', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-4-0613'];
 
 function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null): Partial<ModelsData> {
   if (chatLlmId && !allLlms.find(llm => llm.id === chatLlmId)) chatLlmId = null;
@@ -273,6 +270,17 @@ function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId:
   return { chatLLMId: chatLlmId, fastLLMId: fastLlmId, funcLLMId: funcLlmId };
 }
 
+function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: boolean): DLLMId | null {
+  if (!llms?.length) return null;
+  for (const suffix of suffixes)
+    for (const llm of llms)
+      if (llm.id.endsWith(suffix))
+        return llm.id;
+  // otherwise return first id
+  return fallbackToFirst ? llms[0].id : null;
+}
+
+
 /**
  * Current 'Chat' LLM, or null
  */
@@ -283,4 +291,3 @@ export function useChatLLM() {
     return { chatLLM };
   }, shallow);
 }
-

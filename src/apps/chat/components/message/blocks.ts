@@ -1,12 +1,13 @@
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import { heuristicIsHtml } from './RenderHtml';
+import { heuristicMarkdownImageReferenceBlocks, heuristicLegacyImageBlocks } from './RenderImage';
 
 type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
 export type DiffBlock = { type: 'diff'; textDiffs: TextDiff[] };
 export type HtmlBlock = { type: 'html'; html: string; };
-export type ImageBlock = { type: 'image'; url: string; };
+export type ImageBlock = { type: 'image'; url: string; alt?: string }; // Added optional alt property
 export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
@@ -21,9 +22,18 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
   if (heuristicIsHtml(text))
     return [{ type: 'html', html: text }];
 
+  // special case: markdown image references (e.g. ![alt text](https://example.com/image.png))
+  const mdImageBlocks = heuristicMarkdownImageReferenceBlocks(text);
+  if (mdImageBlocks)
+    return mdImageBlocks;
+
+  // special case: legacy prodia images
+  const legacyImageBlocks = heuristicLegacyImageBlocks(text);
+  if (legacyImageBlocks)
+    return legacyImageBlocks;
+
   const regexPatterns = {
     codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
-    imageBlock: /(https:\/\/images\.prodia\.xyz\/.*?\.png)/g, // NOTE: only Prodia for now - but this shall be expanded to markdown images ![alt](url) or any png/jpeg
     latexBlock: /\$\$([\s\S]*?)\$\$/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
@@ -59,11 +69,6 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
         const blockCode: string = match[2].trim();
         const blockEnd: string = match[3];
         blocks.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
-        break;
-
-      case 'imageBlock':
-        const url: string = match[1];
-        blocks.push({ type: 'image', url });
         break;
 
       case 'latexBlock':

@@ -1,7 +1,7 @@
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
-import { CmdRunProdia } from '~/modules/prodia/prodia.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
 import { CmdRunSearch } from '~/modules/google/search.client';
+import { CmdRunT2I } from '~/modules/t2i/t2i.client';
 import { Brand } from '~/common/app.config';
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 
@@ -10,7 +10,7 @@ export const CmdAddRoleMessage: string[] = ['/assistant', '/a', '/system', '/s']
 
 export const CmdHelp: string[] = ['/help', '/h', '/?'];
 
-export const commands = [...CmdRunBrowse, ...CmdRunProdia, ...CmdRunReact, ...CmdRunSearch, ...CmdAddRoleMessage, ...CmdHelp];
+export const commands = [...CmdRunBrowse, ...CmdRunT2I, ...CmdRunReact, ...CmdRunSearch, ...CmdAddRoleMessage, ...CmdHelp];
 
 export interface SentencePiece {
   type: 'text' | 'cmd';
