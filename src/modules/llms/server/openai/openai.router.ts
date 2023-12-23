@@ -74,9 +74,9 @@ const createImagesInputSchema = z.object({
     prompt: z.string(),
     count: z.number().min(1),
     model: z.enum(['dall-e-2', 'dall-e-3']),
-    highQuality: z.boolean(),
+    quality: z.enum(['standard', 'hd']),
     asUrl: z.boolean(), // if false, returns a base64 encoded data Url
-    size: z.enum(['1024x1024']),
+    size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']),
     style: z.enum(['natural', 'vivid']),
   }),
 });
@@ -251,7 +251,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           prompt: tti.prompt,
           model: tti.model,
           n: tti.count,
-          quality: tti.highQuality ? 'hd' : 'standard',
+          quality: tti.quality,
           response_format: tti.asUrl ? 'url' : 'b64_json',
           size: tti.size,
           style: tti.style,
