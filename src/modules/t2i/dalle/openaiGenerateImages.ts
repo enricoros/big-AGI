@@ -43,3 +43,25 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
     return `![${altText}](${imageUrl})`;
   });
 }
+
+
+/**
+ * Return the pricing for the OpenAI image generation API.
+ * TODO: update this when the OpenAI pricing changes.
+ */
+export function openAIImageModelsPricing(dalleModelId: 'dall-e-3' | 'dall-e-2', dalleQuality: 'standard' | 'hd', dalleSize: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792'): string {
+  if (dalleModelId === 'dall-e-3') {
+    if (dalleQuality === 'hd') {
+      if (dalleSize === '1024x1024') return '0.08';
+      if (dalleSize === '1792x1024' || dalleSize === '1024x1792') return '0.12';
+    } else if (dalleQuality === 'standard') {
+      if (dalleSize === '1024x1024') return '0.04';
+      if (dalleSize === '1792x1024' || dalleSize === '1024x1792') return '0.08';
+    }
+  } else if (dalleModelId === 'dall-e-2') {
+    if (dalleSize === '256x256') return '0.016';
+    if (dalleSize === '512x512') return '0.018';
+    if (dalleSize === '1024x1024') return '0.02';
+  }
+  return '?';
+}
