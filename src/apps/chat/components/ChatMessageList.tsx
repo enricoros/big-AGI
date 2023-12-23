@@ -23,7 +23,7 @@ import { useChatShowSystemMessages } from '../store-app-chat';
  */
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
-  capabilityHasTTI: boolean,
+  capabilityHasT2I: boolean,
   chatLLMContextTokens?: number,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
@@ -54,7 +54,7 @@ export function ChatMessageList(props: {
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
-  const { conversationId, capabilityHasTTI, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
+  const { conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
 
 
   // text actions
@@ -98,14 +98,14 @@ export function ChatMessageList(props: {
   }, [conversationId, onTextDiagram]);
 
   const handleTextImagine = React.useCallback(async (text: string) => {
-    if (!capabilityHasTTI)
+    if (!capabilityHasT2I)
       return openLayoutPreferences(2);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
       setIsImagining(false);
     }
-  }, [capabilityHasTTI, conversationId, onTextImagine]);
+  }, [capabilityHasT2I, conversationId, onTextImagine]);
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)

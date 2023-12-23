@@ -87,7 +87,7 @@ export function AppChat() {
     setMessages,
   } = useConversation(focusedConversationId);
 
-  const { mayWork: capabilityHasTTI } = useCapabilityTextToImage();
+  const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
 
   // Window actions
@@ -394,7 +394,7 @@ export function AppChat() {
 
           <ChatMessageList
             conversationId={_conversationId}
-            capabilityHasTTI={capabilityHasTTI}
+            capabilityHasT2I={capabilityHasT2I}
             chatLLMContextTokens={chatLLM?.contextTokens}
             isMessageSelectionMode={isMessageSelectionMode}
             setIsMessageSelectionMode={setIsMessageSelectionMode}
@@ -437,7 +437,7 @@ export function AppChat() {
       chatLLM={chatLLM}
       composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
-      capabilityHasTTI={capabilityHasTTI}
+      capabilityHasT2I={capabilityHasT2I}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}

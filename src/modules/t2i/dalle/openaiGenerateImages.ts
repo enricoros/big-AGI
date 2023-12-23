@@ -27,7 +27,7 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
   // call the OpenAI image generation API
   const images = await apiAsync.llmOpenAI.createImages.mutate({
     access: findAccessForSourceOrThrow(modelSourceId),
-    tti: {
+    request: {
       prompt: prompt,
       count: count,
       model: dalleModelId,
