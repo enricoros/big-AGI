@@ -89,7 +89,7 @@ export const prodiaRouter = createTRPCRouter({
       return [
         {
           imageUrl: j.imageUrl,
-          altText: `Prodia generated "${jobRequest.prompt}". Options: ${JSON.stringify({ seed: j.params })}.`,
+          altText: jobRequest.prompt,
           elapsed,
         },
       ];
@@ -162,18 +162,18 @@ export interface JobRequestSDXL extends JobRequestBase {
 
 export interface JobResponse {
   job: string;
-  params: {
-    prompt: string;
-    cfg_scale: number;
-    steps: number;
-    negative_prompt: string;
-    seed: number;
-    upscale: boolean;
-    sampler_name: 'Euler' | string;
-    width: 512 | number;
-    height: 512 | number;
-    options: { sd_model_checkpoint: 'sdv1_4.ckpt [7460a6fa]' | string; };
-  };
+  // params: {
+  //   prompt: string;
+  //   cfg_scale: number;
+  //   steps: number;
+  //   negative_prompt: string;
+  //   seed: number;
+  //   upscale: boolean;
+  //   sampler_name: 'Euler' | string;
+  //   width: 512 | number;
+  //   height: 512 | number;
+  //   options: { sd_model_checkpoint: 'sdv1_4.ckpt [7460a6fa]' | string; };
+  // };
   status: 'queued' | 'generating' | 'succeeded' | 'failed';
   imageUrl?: string;
 }

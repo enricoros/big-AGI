@@ -38,6 +38,8 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
     },
   });
 
-  // return a list of strings
-  return images.map(i => i.imageUrl!);
+  // return a list of strings as markdown images
+  return images.map(({ imageUrl, altText }) => {
+    return `![${altText}](${imageUrl})`;
+  });
 }
