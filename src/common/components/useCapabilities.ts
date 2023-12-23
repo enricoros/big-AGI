@@ -35,17 +35,19 @@ export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/e
 
 /// Image Generation
 
-export interface CapabilityTextToImageProvider {
-  id: 'openai' | 'prodia';
+export interface TextToImageProvider {
+  id: string;
   label: string;
   description: string;
-  active: boolean;
+  configured: boolean;
+  vendor: 'openai' | 'prodia';
 }
 
 export interface CapabilityTextToImage {
   mayWork: boolean;
-  providers: CapabilityTextToImageProvider[],
-  setActiveProvider: (providerId: string | null) => void;
+  providers: TextToImageProvider[],
+  activeProviderId: string | null;
+  setActiveProviderId: (providerId: string | null) => void;
 }
 
 export { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';

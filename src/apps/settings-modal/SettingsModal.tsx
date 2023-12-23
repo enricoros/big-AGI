@@ -6,9 +6,11 @@ import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
+import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
+import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { closeLayoutPreferences, openLayoutShortcuts, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
@@ -178,7 +180,13 @@ export function SettingsModal() {
 
         <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
           <Topics>
-            <Topic icon='🖍️️' title='Prodia API'>
+            <Topic>
+              <T2ISettings />
+            </Topic>
+            <Topic icon='🖍️️' title='OpenAI Dall-E' startCollapsed>
+              <DallESettings />
+            </Topic>
+            <Topic icon='🖍️️' title='Prodia' startCollapsed>
               <ProdiaSettings />
             </Topic>
           </Topics>

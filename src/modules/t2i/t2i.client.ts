@@ -1,14 +1,14 @@
 import * as React from 'react';
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 
-import type { DModelSourceId } from '~/modules/llms/store-llms';
+import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { backendCaps } from '~/modules/backend/state-backend';
-import { openAIGenerateImagesOrThrow } from '~/modules/t2i/openai/openaiGenerateImages';
 
-import type { CapabilityTextToImage, CapabilityTextToImageProvider } from '~/common/components/useCapabilities';
+import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
+import { openAIGenerateImagesOrThrow } from '~/modules/t2i/dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
 import { useProdiaStore } from './prodia/store-module-prodia';
 
@@ -18,25 +18,19 @@ export const CmdRunT2I: string[] = ['/draw', '/imagine', '/img'];
 
 // T2I persisted store
 
-interface T2IStore {
+interface TextToImageStore {
 
   activeProviderId: string | null;
-  setActiveProvider: (providerId: string | null) => void;
-
-  openAIModelSourceId: DModelSourceId | null;
-  setOpenAIModelSourceId: (id: DModelSourceId | null) => void;
+  setActiveProviderId: (providerId: string | null) => void;
 
 }
 
-const useT2IStore = create<T2IStore>()(
+const useTextToImageStore = create<TextToImageStore>()(
   persist(
-    (_set, _get) => ({
+    (_set) => ({
 
-      activeProviderId: null,
-      setActiveProvider: (providerId: string | null) => _set({ activeProviderId: providerId }),
-
-      openAIModelSourceId: null,
-      setOpenAIModelSourceId: (id: DModelSourceId | null) => _set({ openAIModelSourceId: id }),
+      activeProviderId: null, // null: will auto-select the first availabe provider
+      setActiveProviderId: (activeProviderId: string | null) => _set({ activeProviderId }),
 
     }),
     {
@@ -50,18 +44,33 @@ const useT2IStore = create<T2IStore>()(
 export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
-  const { activeProviderId, openAIModelSourceId, setActiveProvider } = useT2IStore();
-  const hasProdiaClient = useProdiaStore(state => !!state.prodiaModelId);
+  const { activeProviderId, setActiveProviderId } = useTextToImageStore();
+  const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
+  const openAIModelSourceIds: OpenAIModelSource[] = useModelsStore(state => getOpenAIModelSources(state.llms, state.sources), shallow);
 
-  // cache the list of t2i providers
-  const providers = React.useMemo(() =>
-      getProviders(activeProviderId, openAIModelSourceId, hasProdiaClient)
-    , [activeProviderId, hasProdiaClient, openAIModelSourceId]);
+
+  // derived state
+  const providers = React.useMemo(() => {
+    return getTextToImageProviders(openAIModelSourceIds, hasProdiaModels);
+  }, [hasProdiaModels, openAIModelSourceIds]);
+
+
+  // [Effect] Auto-select the first correctly configured provider
+  React.useEffect(() => {
+    const providedIDs = providers.map(p => p.id);
+    if (activeProviderId && providedIDs.includes(activeProviderId))
+      return;
+    const autoSelectProvider = providers.find(p => p.configured);
+    if (autoSelectProvider)
+      setActiveProviderId(autoSelectProvider.id);
+  }, [activeProviderId, providers, setActiveProviderId]);
+
 
   return {
-    mayWork: providers.length > 0,
+    mayWork: providers.find(p => p.configured) !== undefined,
     providers,
-    setActiveProvider,
+    activeProviderId,
+    setActiveProviderId,
   };
 }
 
@@ -69,68 +78,84 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 // T2I API
 
 export async function t2iGenerateImageOrThrow(prompt: string, count: number): Promise<string[]> {
-  switch (useT2IStore.getState().activeProviderId) {
+  const activeProvider = getActiveTextToImageProviderOrThrow();
+  switch (activeProvider.vendor) {
 
     case 'openai':
-      // validate correct OpenAI configuration
-      const { openAIModelSourceId } = useT2IStore.getState();
-      if (!openAIModelSourceId)
-        throw new Error('No OpenAI model source configured');
-      return await openAIGenerateImagesOrThrow(openAIModelSourceId, prompt, count);
+      if (!activeProvider.id)
+        throw new Error('No OpenAI model source configured for TextToImage');
+      return await openAIGenerateImagesOrThrow(activeProvider.id, prompt, count);
 
     case 'prodia':
-      // validate correct Prodia configuration
       const hasProdiaServer = backendCaps().hasImagingProdia;
       const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
-        throw new Error('No Prodia configuration found');
+        throw new Error('No Prodia configuration found for TextToImage');
       return await prodiaGenerateImages(prompt, count);
-
-    default:
-      throw new Error('Select a TextToImage Provider');
 
   }
 }
 
-export const t2iSetOpenAIModelSourceId = (id: DModelSourceId | null) =>
-  useT2IStore.getState().setOpenAIModelSourceId(id);
-
 
 /// Private
 
-// function getActiveProvider() {
-//   // get a state snapshot
-//   const { activeProviderId, openAIModelSourceId } = useT2IStore.getState();
-//   const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
-//
-//   // find the active provider
-//   return getProviders(activeProviderId, openAIModelSourceId, hasProdiaClientModels).find(p => p.active);
-// }
+interface OpenAIModelSource {
+  label: string;
+  modelSourceId: DModelSourceId;
+  hasModels: boolean;
+}
 
-function getProviders(activeProviderId: string | null, openAIModelSourceId: string | null, hasProdiaClientModels: boolean): CapabilityTextToImageProvider[] {
-  const providers: CapabilityTextToImageProvider[] = [];
+function getOpenAIModelSources(llms: DLLM[], sources: DModelSource[]) {
+  return sources.filter(s => s.vId === 'openai').map((s): OpenAIModelSource => ({
+    label: s.label,
+    modelSourceId: s.id,
+    hasModels: !!llms.find(m => m.sId === s.id),
+  }));
+}
 
-  // add OpenAI if configured
-  if (openAIModelSourceId) {
+function getTextToImageProviders(openAIModelSources: OpenAIModelSource[], hasProdiaClientModels: boolean) {
+  const providers: TextToImageProvider[] = [];
+
+  // add all OpenAI providers
+  for (const { modelSourceId, label, hasModels } of openAIModelSources) {
     providers.push({
-      id: 'openai',
-      label: 'OpenAI',
+      id: modelSourceId,
+      label,
       description: 'OpenAI\'s Dall-E models',
-      active: activeProviderId === 'openai',
-      // llmSourceID: openAIModelSourceId,
-    } satisfies CapabilityTextToImageProvider);
+      configured: hasModels,
+      vendor: 'openai',
+    });
   }
 
-  // add Prodia if configured
+  // add Prodia
   const hasProdiaServer = backendCaps().hasImagingProdia;
-  if (hasProdiaServer || hasProdiaClientModels) {
-    providers.push({
-      id: 'prodia',
-      label: 'Prodia',
-      description: 'Prodia\'s models',
-      active: activeProviderId === 'prodia',
-    } satisfies CapabilityTextToImageProvider);
-  }
+  providers.push({
+    id: 'prodia',
+    label: 'Prodia',
+    description: 'Prodia\'s models',
+    configured: hasProdiaServer || hasProdiaClientModels,
+    vendor: 'prodia',
+  });
 
   return providers;
+}
+
+function getActiveTextToImageProviderOrThrow() {
+
+  // validate active Id
+  const { activeProviderId } = useTextToImageStore.getState();
+  if (!activeProviderId)
+    throw new Error('No TextToImage Provider selected');
+
+  // get all providers
+  const { llms, sources } = useModelsStore.getState();
+  const openAIModelSourceIds = getOpenAIModelSources(llms, sources);
+  const providers = getTextToImageProviders(openAIModelSourceIds, !!useProdiaStore.getState().prodiaModelId);
+
+  // find the active provider
+  const activeProvider = providers.find(p => p.id === activeProviderId);
+  if (!activeProvider)
+    throw new Error('No TextToImage Provider found');
+
+  return activeProvider;
 }
