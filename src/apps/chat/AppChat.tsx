@@ -5,7 +5,7 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
-import { CmdRunT2I } from '~/modules/t2i/t2i.client';
+import { CmdRunT2I, useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
@@ -86,6 +86,8 @@ export function AppChat() {
     wipeAllConversations,
     setMessages,
   } = useConversation(focusedConversationId);
+
+  const { mayWork: capabilityHasTTI } = useCapabilityTextToImage();
 
 
   // Window actions
@@ -392,6 +394,7 @@ export function AppChat() {
 
           <ChatMessageList
             conversationId={_conversationId}
+            capabilityHasTTI={capabilityHasTTI}
             chatLLMContextTokens={chatLLM?.contextTokens}
             isMessageSelectionMode={isMessageSelectionMode}
             setIsMessageSelectionMode={setIsMessageSelectionMode}
@@ -434,6 +437,7 @@ export function AppChat() {
       chatLLM={chatLLM}
       composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
+      capabilityHasTTI={capabilityHasTTI}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
