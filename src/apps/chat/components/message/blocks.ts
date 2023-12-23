@@ -1,6 +1,7 @@
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import { heuristicIsHtml } from './RenderHtml';
+import { heuristicMarkdownImageReferenceBlocks, heuristicLegacyProdiaImageBlocks } from './RenderImage';
 
 type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
@@ -21,9 +22,18 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
   if (heuristicIsHtml(text))
     return [{ type: 'html', html: text }];
 
+  // special case: markdown image references (e.g. ![alt text](https://example.com/image.png))
+  const mdImageBlocks = heuristicMarkdownImageReferenceBlocks(text);
+  if (mdImageBlocks)
+    return mdImageBlocks;
+
+  // special case: legacy prodia images
+  const prodiaImageBlocks = heuristicLegacyProdiaImageBlocks(text);
+  if (prodiaImageBlocks)
+    return prodiaImageBlocks;
+
   const regexPatterns = {
     codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
-    imageBlock: /(https:\/\/images\.prodia\.xyz\/.*?\.(?:png|jpe?g))|(https:\/\/oaidalleapiprodscus\..*)/g,
     latexBlock: /\$\$([\s\S]*?)\$\$/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
@@ -59,11 +69,6 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
         const blockCode: string = match[2].trim();
         const blockEnd: string = match[3];
         blocks.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
-        break;
-
-      case 'imageBlock':
-        const url: string = match[1] || match[2];
-        blocks.push({ type: 'image', url });
         break;
 
       case 'latexBlock':
