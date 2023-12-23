@@ -91,7 +91,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
           title={<Typography level='title-sm' sx={{ p: 2 }}>{alt}</Typography>}
           placement='top-start'
           sx={{
-            maxWidth: { sm: '80vw', md: '50vw' },
+            maxWidth: { sm: '90vw', md: '70vw' },
             boxShadow: 'md',
           }}
         >
