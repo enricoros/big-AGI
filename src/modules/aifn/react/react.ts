@@ -130,7 +130,7 @@ export class Agent {
     try {
       content = (await llmChatGenerateOrThrow(llmId, S.messages, null, null, 500)).content;
     } catch (error: any) {
-      content = `Error in callChat: ${error}`;
+      content = `Error in llmChatGenerateOrThrow: ${error}`;
     }
     // process response, strip out potential hallucinated response after PAUSE is detected
     content = this.truncateStringAfterPause(content);
