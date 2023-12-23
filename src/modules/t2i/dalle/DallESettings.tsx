@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { FormControl, Option, Select, Switch } from '@mui/joy';
+import { FormControl, Option, Select, Switch, Typography } from '@mui/joy';
 import WarningIcon from '@mui/icons-material/Warning';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { Link } from '~/common/components/Link';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, useDalleStore } from './store-module-dalle';
+import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
 export function DallESettings() {
 
   // state
-  // const advanced = useToggleableBoolean();
+  const advanced = useToggleableBoolean(true);
 
   // external state
   const { dalleModelId, setDalleModelId, dalleQuality, setDalleQuality, dalleSize, setDalleSize, dalleStyle, setDalleStyle, dalleNoRewrite, setDalleNoRewrite } = useDalleStore(state => ({
@@ -31,10 +33,15 @@ export function DallESettings() {
 
   const handleResolutionChange = (_event: any, value: DalleImageSize | null) => value && setDalleSize(value);
 
+  const isDallE3 = dalleModelId === 'dall-e-3';
+  const isHD = dalleQuality === 'hd' && isDallE3;
+
   const resolutions: DalleImageSize[] = dalleModelId === 'dall-e-2'
     ? ['256x256', '512x512', '1024x1024']
     : ['1024x1024', '1792x1024', '1024x1792'];
   const hasResolution = resolutions.includes(dalleSize);
+
+  const costPerImage = openAIImageModelsPricing(dalleModelId, dalleQuality, dalleSize);
 
   return <>
 
@@ -50,22 +57,16 @@ export function DallESettings() {
 
     <FormRadioControl
       title='Style'
-      description={dalleStyle === 'vivid' ? 'Hyper-Real' : 'Relistic'}
+      description={(isDallE3 && dalleStyle === 'vivid') ? 'Hyper-Real' : 'Relistic'}
+      disabled={!isDallE3}
       options={[
         { value: 'natural', label: 'Natural' },
         { value: 'vivid', label: 'Vivid' },
       ]}
-      value={dalleStyle} onChange={setDalleStyle}
+      value={isDallE3 ? dalleStyle : 'natural'} onChange={setDalleStyle}
     />
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Quality'
-                      description={dalleQuality === 'hd' ? 'Finer Details' : 'Default'} />
-      <Switch checked={dalleQuality === 'hd'} onChange={handleDalleQualityChange}
-              startDecorator={dalleQuality === 'hd' ? 'HD' : 'Standard'} />
-    </FormControl>
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Resolution'
                       description={!hasResolution
                         ? 'Unsupported'
@@ -76,7 +77,7 @@ export function DallESettings() {
         value={dalleSize} onChange={handleResolutionChange}
         startDecorator={hasResolution ? undefined : <WarningIcon color='warning' />}
         slotProps={{
-          root: { sx: { minWidth: '160px' } },
+          root: { sx: { minWidth: '140px' } },
           indicator: { sx: { opacity: 0.5 } },
           button: { sx: { whiteSpace: 'inherit' } },
         }}
@@ -87,20 +88,35 @@ export function DallESettings() {
           </Option>,
         )}
       </Select>
-    </FormControl>
+    </FormControl>}
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+    {advanced.on && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Quality'
+                      description={isHD ? 'Detailed' : 'Default'} />
+      <Switch checked={isHD} onChange={handleDalleQualityChange}
+              startDecorator={isHD ? 'HD' : 'Standard'} />
+    </FormControl>}
+
+    {advanced.on && !isDallE3 && <FormControl orientation='horizontal' disabled={isDallE3} sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Improve Prompt'
                       description={dalleNoRewrite ? 'Do Not Rewrite' : 'Default'}
                       tooltip={<>
-                        OpenAI improves the prompt by rewriting it. Default: On.
+                        OpenAI improves the prompt by rewriting it by default.
+                        This can be disabled to get more control over the prompt.
                         See <Link href='https://platform.openai.com/docs/guides/images/prompting' target='_blank'>
                         This OpenAI document </Link>
                       </>}
       />
       <Switch checked={!dalleNoRewrite} onChange={handleDalleNoRewriteChange}
               startDecorator={dalleNoRewrite ? 'RAW' : 'Improve'} />
+    </FormControl>}
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Cost per Image'
+                      description={<Link href='https://openai.com/pricing' target='_blank' noLinkStyle sx={{ textDecoration: 'none' }}>OpenAI Pricing </Link>} />
+      <Typography>$ {costPerImage}</Typography>
     </FormControl>
+
 
     {/*<FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />*/}
 
