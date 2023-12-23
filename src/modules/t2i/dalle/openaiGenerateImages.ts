@@ -9,7 +9,7 @@ import { useDalleStore } from './store-module-dalle';
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId, prompt: string, count: number): Promise<string[]> {
+export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId, prompt: string, _count: number): Promise<string[]> {
 
   // use the current settings
   const {
@@ -24,24 +24,40 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
   if (dalleNoRewrite)
     prompt = 'I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ' + prompt;
 
-  // call the OpenAI image generation API
-  const images = await apiAsync.llmOpenAI.createImages.mutate({
-    access: findAccessForSourceOrThrow(modelSourceId),
-    request: {
-      prompt: prompt,
-      count: count,
-      model: dalleModelId,
-      quality: dalleQuality,
-      asUrl: true,
-      size: dalleSize,
-      style: dalleStyle,
-    },
-  });
+  const isD3 = dalleModelId === 'dall-e-3';
 
-  // return a list of strings as markdown images
-  return images.map(({ imageUrl, altText }) => {
-    return `![${altText}](${imageUrl})`;
-  });
+  // parallelize the image generation depending on how many images can a model generate
+  const imagePromises: Promise<string[]>[] = [];
+  while (_count > 0) {
+
+    // per-request count
+    const count = Math.min(_count, isD3 ? 1 : 10);
+
+    const imageRefPromise = apiAsync.llmOpenAI.createImages.mutate({
+      access: findAccessForSourceOrThrow(modelSourceId),
+      request: {
+        prompt: prompt,
+        count: count,
+        model: dalleModelId,
+        quality: dalleQuality,
+        asUrl: true,
+        size: dalleSize,
+        style: dalleStyle,
+      },
+    }).then(images =>
+      // convert to markdown image references
+      images.map(({ imageUrl, altText }) => `![${altText}](${imageUrl})`),
+    );
+
+    imagePromises.push(imageRefPromise);
+    _count -= count;
+  }
+
+  // run all image generation requests in parallel
+  const imageRefsBatches: string[][] = await Promise.all(imagePromises);
+
+  // flatten the resulting array
+  return imageRefsBatches.flat();
 }
 
 
