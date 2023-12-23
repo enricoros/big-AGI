@@ -4,10 +4,12 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
 
+import { t2iCreateImageOutputSchema } from '~/modules/t2i/t2i.server.types';
+
 import { HARDCODED_MODELS } from './prodia.models';
 
 
-const imagineInputSchema = z.object({
+const createImageInputSchema = z.object({
   prodiaKey: z.string().optional(),
   prodiaModel: z.string(),
   prodiaGen: z.enum(['sd', 'sdxl']).optional(),
@@ -28,9 +30,10 @@ const modelsInputSchema = z.object({
 
 export const prodiaRouter = createTRPCRouter({
 
-  /** Generate an image, returning the URL where it's stored */
-  imagine: publicProcedure
-    .input(imagineInputSchema)
+  /** [Prodia] Generate an image, returning the cloud URL */
+  createImage: publicProcedure
+    .input(createImageInputSchema)
+    .output(t2iCreateImageOutputSchema)
     .query(async ({ input }) => {
 
       // timeout, in seconds

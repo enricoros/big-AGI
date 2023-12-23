@@ -32,7 +32,7 @@ export async function prodiaGenerateImage(count: number, imageText: string) {
     // using an array of 'count' number of promises
     Array(count).fill(undefined).map(async () => {
 
-      const { imageUrl } = await apiAsync.prodia.imagine.query({
+      const { imageUrl } = await apiAsync.prodia.createImage.query({
         ...(!!prodiaKey && { prodiaKey }),
         prodiaModel: prodiaModelId || 'Realistic_Vision_V5.0.safetensors [614d1063]', // data versioning fix
         prodiaGen: prodiaModelGen || 'sd', // data versioning fix
@@ -46,7 +46,7 @@ export async function prodiaGenerateImage(count: number, imageText: string) {
         ...(!!seed && { seed }),
       });
 
-      return imageUrl;
+      return imageUrl || 'Prodia image generation failed';
     }),
   );
 
