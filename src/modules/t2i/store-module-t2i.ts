@@ -4,14 +4,8 @@ import { persist } from 'zustand/middleware';
 
 interface TextToImageStore {
 
-  // Provider selection
-
   activeProviderId: string | null;
   setActiveProviderId: (providerId: string | null) => void;
-
-  // Dall-E settings
-
-
 
 }
 

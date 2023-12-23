@@ -3,13 +3,26 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { DModelSourceId } from '../../llms/store-llms';
 import { findAccessForSourceOrThrow } from '../../llms/vendors/vendors.registry';
 
+import { useDalleStore } from './store-module-dalle';
+
 
 /**
  * Client function to call the OpenAI image generation API.
- *
- * Doesn't belong to the 'llms' module, although it refers a lot to it.
  */
 export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId, prompt: string, count: number): Promise<string[]> {
+
+  // use the current settings
+  const {
+    dalleModelId,
+    dalleQuality,
+    dalleSize,
+    dalleStyle,
+    dalleNoRewrite,
+  } = useDalleStore.getState();
+
+  // This trick is explained on: https://platform.openai.com/docs/guides/images/usage?context=node
+  if (dalleNoRewrite)
+    prompt = 'I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ' + prompt;
 
   // call the OpenAI image generation API
   const images = await apiAsync.llmOpenAI.createImages.mutate({
@@ -17,11 +30,11 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
     tti: {
       prompt: prompt,
       count: count,
-      model: 'dall-e-3',
-      highQuality: true,
+      model: dalleModelId,
+      quality: dalleQuality,
       asUrl: true,
-      size: '1024x1024',
-      style: 'vivid',
+      size: dalleSize,
+      style: dalleStyle,
     },
   });
 
