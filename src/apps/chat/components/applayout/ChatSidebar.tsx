@@ -33,20 +33,17 @@ import Done from '@mui/icons-material/Done';
 import FolderListItem from './FolderListItem';
 import { DConversation } from '~/common/state/store-chats';
 
-export default function ChatSidebar(
-    {
-        onFolderSelect,
-        folders,
-        selectedFolderId,
-        conversationsByFolder,
-      
-      }: {
-        onFolderSelect: (folderId: string | null) => void,
-        folders: DFolder[], 
-        selectedFolderId: string | null,
-        conversationsByFolder: DConversation[], 
-      }
-) {
+export default function ChatSidebar({
+  onFolderSelect,
+  folders,
+  selectedFolderId,
+  conversationsByFolder,
+}: {
+  onFolderSelect: (folderId: string | null) => void;
+  folders: DFolder[];
+  selectedFolderId: string | null;
+  conversationsByFolder: DConversation[];
+}) {
   const { moveFolder, updateFolderName } = useFolderStore((state) => ({
     folders: state.folders,
     moveFolder: state.moveFolder,
@@ -99,20 +96,59 @@ export default function ChatSidebar(
           <DragDropContext onDragEnd={onDragEnd}>
             <StrictModeDroppable
               droppableId="folder"
-              renderClone={(provided, snapshot, rubric) => <FolderListItem folder={folders[rubric.source.index]} provided={provided} snapshot={snapshot} onFolderSelect={onFolderSelect} selectedFolderId={selectedFolderId} />}
+              renderClone={(provided, snapshot, rubric) => (
+                <FolderListItem
+                  folder={folders[rubric.source.index]}
+                  provided={provided}
+                  snapshot={snapshot}
+                  onFolderSelect={onFolderSelect}
+                  selectedFolderId={selectedFolderId}
+                />
+              )}
             >
               {(provided) => (
                 <List ref={provided.innerRef} {...provided.droppableProps}>
+                  <ListItem>
+                    <ListItemButton
+                      // handle folder select
+                      onClick={(event) => {
+                        event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
+                        onFolderSelect(null);
+                      }}
+                      selected={selectedFolderId === null}
+                      sx={{
+                        justifyContent: 'space-between',
+                        '&:hover .menu-icon': {
+                          visibility: 'visible', // Hide delete icon for default folder
+                        },
+                      }}
+                    >
+                      <ListItemDecorator>
+                        <OutlineFolderIcon style={{ color: 'inherit' }} />
+                      </ListItemDecorator>
+
+                      <ListItemContent>
+                        <Typography>All</Typography>
+                      </ListItemContent>
+                    </ListItemButton>
+                  </ListItem>
+
                   {folders.map((folder, index) => (
                     <Draggable key={folder.id} draggableId={folder.id} index={index}>
                       {(provided, snapshot) => (
                         <React.Fragment>
-                          <FolderListItem folder={folder} provided={provided} snapshot={snapshot} onFolderSelect={onFolderSelect} selectedFolderId={selectedFolderId} />
+                          <FolderListItem
+                            folder={folder}
+                            provided={provided}
+                            snapshot={snapshot}
+                            onFolderSelect={onFolderSelect}
+                            selectedFolderId={selectedFolderId}
+                          />
                         </React.Fragment>
                       )}
                     </Draggable>
                   ))}
-                    {provided.placeholder}
+                  {provided.placeholder}
                 </List>
               )}
             </StrictModeDroppable>

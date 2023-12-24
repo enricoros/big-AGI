@@ -572,6 +572,6 @@ export const useConversationsByFolder = (folderId: string | null) => useChatStor
     if (folder)
       return conversations.filter(_c => folder.conversationIds.includes(_c.id));
   }
-  // return only the conversations that are not in any folder
-  return state.conversations.filter(_c => !useFolderStore.getState().folders.find(_f => _f.conversationIds.includes(_c.id)));
+  // return all conversations if all folder is selected
+  return state.conversations;
 }, shallow);

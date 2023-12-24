@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, Input, List, ListDivider, ListItem, ListItemButton, ListItemDecorator, MenuItem, Sheet, Typography, useTheme } from '@mui/joy';
+import { Avatar, Box, IconButton, Input, InputProps, List, ListDivider, ListItem, ListItemButton, ListItemDecorator, MenuItem, Sheet, Typography, useTheme } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -16,12 +16,10 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
-import { ChatNavigationFolders }  from './ChatNavigationFolders';
 
 import ChatSidebar from './ChatSidebar';
 
 import { useFolderStore } from '~/common/state/store-folders'; 
-import { NoSSR } from '~/common/components/NoSSR';
 import { CSSProperties, useEffect, useRef, useState } from 'react';
 
 
@@ -102,6 +100,8 @@ function ChatDrawerItems(props: {
     const listRef = useRef<HTMLDivElement>(null);
     const [showDownArrow, setShowDownArrow] = useState(false);
     const [showUpArrow, setShowUpArrow] = useState(false);
+
+
   
     const theme = useTheme();
   
@@ -175,28 +175,16 @@ function ChatDrawerItems(props: {
         <div style={styles.listContainer} ref={listRef}>
           <List>
             {conversations.map((conversation, index) => (
-               <ListItem key={'nav-' + conversation.id}>
-               <ListItemButton
-                 variant='plain' color='primary'
-                 selected={conversation.id === props.activeConversationId}
-                 onClick={() => handleConversationActivate(conversation.id, false)}
-                 sx={{
-                   // py: 0,
-                   position: 'relative',
-                   border: 'none', // note, there's a default border of 1px and invisible.. hmm
-                   '&:hover > button': { opacity: 1 },
-                   ...(conversation.id === props.activeConversationId ? { bgcolor: 'red' } : { }),
-                 }}
-               >
-                 { conversation.autoTitle && (
-                   <Typography  sx={{ fontWeight: 'bold' }}>
-                     {conversation.autoTitle}
-                   </Typography>
-                 )}
-               </ListItemButton>
-       
-       
-             </ListItem>
+               <ChatNavigationItemMemo
+               key={'nav-' + conversation.id}
+               conversation={conversation}
+               isActive={conversation.id === props.activeConversationId}
+               isLonely={singleChat}
+               maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
+               showSymbols={showSymbols}
+               onConversationActivate={handleConversationActivate}
+               onConversationDelete={handleConversationDelete}
+             />
             ))}
           </List>
         </div>
@@ -262,7 +250,13 @@ function ChatDrawerItems(props: {
     <Sheet variant="soft" sx={{ width: 343, p: 2, borderRadius: 'sm' }}>
       {/* Search input for conversations */}
 
-      <Input startDecorator={<SearchIcon />}></Input>
+
+
+      <Input
+        startDecorator={<SearchIcon />}
+        sx={{ mb: 2 }}
+        placeholder='Filter by title'
+      />
 
       <ConversationList conversations={conversations} />
 
