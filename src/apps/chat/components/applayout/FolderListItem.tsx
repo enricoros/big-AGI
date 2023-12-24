@@ -237,9 +237,9 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                 aria-labelledby="product-color-attribute"
                 defaultValue={folder.color || 'warning'}
                 onChange={handleColorChange}
-                sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row' }}
+                sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row', maxWidth: 180 }}
               >
-                {(['#01B80A', '#F0CB00', '#C001D7', '#0093E8', '#E03C00'] as const).map((color, index) => (
+                {(["#ff0000","#ff8700","#ffd300","#deff0a","#a1ff0a", "#8A0000", "#8A3700", "#8A5700", "#7C6A05", "#626906","#0aff99","#0aefff","#147df5","#580aff","#be0aff", "#226D40","#22656D","#25346A","#440669","#6E0569"] as const).map((color, index) => (
                   <Sheet
                     key={index}
                     sx={{
