@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, ListDivider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Box, IconButton, Input, List, ListDivider, ListItem, ListItemButton, ListItemDecorator, MenuItem, Sheet, Typography, useTheme } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 
-import { DConversationId, useChatStore, useConversationsByFolder } from '~/common/state/store-chats';
+import { DConversation, DConversationId, useChatStore, useConversationsByFolder } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -14,7 +17,12 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
 import { ChatNavigationFolders }  from './ChatNavigationFolders';
+
+import ChatSidebar from './ChatSidebar';
+
 import { useFolderStore } from '~/common/state/store-folders'; 
+import { NoSSR } from '~/common/components/NoSSR';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 
 
 // type ListGrouping = 'off' | 'persona';
@@ -90,7 +98,137 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
+  const ConversationList = ({ conversations }: { conversations: DConversation[] }) => {
+    const listRef = useRef<HTMLDivElement>(null);
+    const [showDownArrow, setShowDownArrow] = useState(false);
+    const [showUpArrow, setShowUpArrow] = useState(false);
+  
+    const theme = useTheme();
+  
+    const checkForOverflow = () => {
+      const currentList = listRef.current;
+      if (currentList) {
+        const isOverflowing = currentList.scrollHeight > currentList.clientHeight;
+        setShowDownArrow(isOverflowing);
+        setShowUpArrow(false); // Initially, we don't want to show the up arrow
+      }
+    };
+  
+    const checkScrollPosition = () => {
+      const currentList = listRef.current;
+      if (currentList) {
+        const isAtBottom = currentList.scrollHeight - currentList.scrollTop === currentList.clientHeight;
+        const isAtTop = currentList.scrollTop === 0;
+        setShowDownArrow(!isAtBottom);
+        setShowUpArrow(!isAtTop);
+      }
+    };
+  
+    useEffect(() => {
+      checkForOverflow();
+      window.addEventListener('resize', checkForOverflow);
+  
+      // Add scroll event listener
+      const currentList = listRef.current;
+      if (currentList) {
+        currentList.addEventListener('scroll', checkScrollPosition);
+      }
+  
+      return () => {
+        window.removeEventListener('resize', checkForOverflow);
+        // Remove scroll event listener
+        if (currentList) {
+          currentList.removeEventListener('scroll', checkScrollPosition);
+        }
+      };
+    }, [conversations]);
+  
+    const styles: { container: CSSProperties; listContainer: CSSProperties; arrow: CSSProperties, arrowDown: CSSProperties, arrowUp: CSSProperties } = {
+      container: {
+        position: 'relative', // Container for both list and arrows
+        maxHeight: '200px',
+      },
+      listContainer: {
+        maxHeight: '200px',
+        overflow: 'auto',
+      },
+      arrow: {
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        color: theme.palette.text.secondary,
+        opacity: 0.7,
+        fontSize: '30px',
+      },
+      arrowDown: {
+        bottom: 0,
+      },
+      arrowUp: {
+        top: 10,
+        // rotate arrow 180 degrees
+        transform: 'translateX(-50%) rotate(180deg)',
+      },
+    };
+  
+    return (
+      <div style={styles.container}>
+        <div style={styles.listContainer} ref={listRef}>
+          <List>
+            {conversations.map((conversation, index) => (
+               <ListItem key={'nav-' + conversation.id}>
+               <ListItemButton
+                 variant='plain' color='primary'
+                 selected={conversation.id === props.activeConversationId}
+                 onClick={() => handleConversationActivate(conversation.id, false)}
+                 sx={{
+                   // py: 0,
+                   position: 'relative',
+                   border: 'none', // note, there's a default border of 1px and invisible.. hmm
+                   '&:hover > button': { opacity: 1 },
+                   ...(conversation.id === props.activeConversationId ? { bgcolor: 'red' } : { }),
+                 }}
+               >
+                 { conversation.autoTitle && (
+                   <Typography  sx={{ fontWeight: 'bold' }}>
+                     {conversation.autoTitle}
+                   </Typography>
+                 )}
+               </ListItemButton>
+       
+       
+             </ListItem>
+            ))}
+          </List>
+        </div>
+        {showUpArrow && (
+          <ExpandCircleDownIcon
+            style={{ ...styles.arrow, ...styles.arrowUp }}
+            onClick={() => {
+              listRef.current?.scrollTo({
+                top: 0,
+                behavior: 'smooth',
+              });
+            }}
+          />
+        )}
+        {showDownArrow && (
+          <ExpandCircleDownIcon
+            style={{ ...styles.arrow, ...styles.arrowDown }}
+            onClick={() => {
+              listRef.current?.scrollTo({
+                top: listRef.current?.scrollHeight,
+                behavior: 'smooth',
+              });
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+  
+  
 
+  
   // grouping
   /*let sortedIds = conversationIDs;
   if (grouping === 'persona') {
@@ -113,26 +251,22 @@ function ChatDrawerItems(props: {
 
   return <>
 
-    {/*<ListItem>*/}
-    {/*  <Typography level='body-sm'>*/}
-    {/*    Active chats*/}
-    {/*  </Typography>*/}
-    {/*</ListItem>*/}
+    <ChatSidebar 
+        onFolderSelect={handleFolderSelect} 
+        folders={useFolderStore((state) => state.folders)}
+        selectedFolderId={selectedFolderId}
+        conversationsByFolder={conversations}
+        />
 
-    {/* Include the Folders component */}
-    <ChatNavigationFolders 
-      onFolderSelect={handleFolderSelect} 
-      onFolderCreate={handleFolderCreate}
-      folders={useFolderStore((state) => state.folders)}
-      selectedFolderId={selectedFolderId}
-      activeConversationId={props.activeConversationId}
-      isLonely={singleChat}
-      maxChatMessages={maxChatMessages}
-      showSymbols={showSymbols}
-      onConversationActivate={handleConversationActivate}
-      onConversationDelete={handleConversationDelete}
-      conversationsByFolder={conversations}
-      />
+    {/* show all ChatNavigation items */}
+    <Sheet variant="soft" sx={{ width: 343, p: 2, borderRadius: 'sm' }}>
+      {/* Search input for conversations */}
+
+      <Input startDecorator={<SearchIcon />}></Input>
+
+      <ConversationList conversations={conversations} />
+
+    </Sheet>
 
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>

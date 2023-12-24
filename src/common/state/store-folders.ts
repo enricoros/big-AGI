@@ -7,6 +7,7 @@ export interface DFolder {
   id: string;
   title: string;
   conversationIds: DConversationId[];
+  color?: string; // Optional color property
 }
 
 interface FolderState {
@@ -19,6 +20,10 @@ interface FolderActions {
   deleteFolder: (folderId: string) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
+  moveFolder: (fromIndex: number, toIndex: number) => void; // New action to reorder folders
+  setFolders: (folders: DFolder[]) => void; // New action to set folders state directly
+  setFolderColor: (folderId: string, color: string) => void; // New action to set folder color
+
 }
 
 type FolderStore = FolderState & FolderActions;
@@ -34,6 +39,7 @@ export const useFolderStore = create<FolderStore>()(devtools(
           title,
           conversationIds: [],
         };
+
 
         set(state => ({
           folders: [...state.folders, newFolder],
@@ -51,7 +57,6 @@ export const useFolderStore = create<FolderStore>()(devtools(
           ),
         }));
       },
-      
 
       deleteFolder: (folderId: string): void => {
         set(state => ({
@@ -78,6 +83,31 @@ export const useFolderStore = create<FolderStore>()(devtools(
           ),
         }));
       },
+
+      moveFolder: (fromIndex: number, toIndex: number): void => {
+        set(state => {
+          const newFolders = Array.from(state.folders);
+          const [movedFolder] = newFolders.splice(fromIndex, 1);
+          newFolders.splice(toIndex, 0, movedFolder);
+          return { folders: newFolders };
+        });
+      },
+
+      setFolders: (folders: DFolder[]): void => {
+        set({ folders });
+      },
+
+      setFolderColor: (folderId: string, color: string): void => {
+        set(state => ({
+          folders: state.folders.map(folder => 
+            folder.id === folderId
+              ? { ...folder, color }
+              : folder
+          ),
+        }));
+      },
+
+
     }),
     {
       name: 'app-folders',
