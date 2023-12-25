@@ -36,7 +36,7 @@ function ChatDrawerItems(props: {
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => DConversationId,
-  onConversationsDeleteAll: () => void,
+  onConversationsDeleteAll: (folderId: string | null) => void,
   selectedFolderId: string | null,
   setSelectedFolderId: (folderId: string | null) => void,
 }) {

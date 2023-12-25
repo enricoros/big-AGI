@@ -14,7 +14,7 @@ export const ConversationList = (props: {
     onConversationDelete: (conversationId: DConversationId) => void,
     onConversationImportDialog: () => void,
     onConversationNew: () => DConversationId,
-    onConversationsDeleteAll: () => void,
+    onConversationsDeleteAll: (folderId: string | null) => void,
     selectedFolderId: string | null,
     setSelectedFolderId: (folderId: string | null) => void,
     labsEnhancedUI: boolean,
