@@ -5,6 +5,7 @@ import ListItem from '@mui/joy/ListItem';
 import ListItemButton from '@mui/joy/ListItemButton';
 import ListItemContent from '@mui/joy/ListItemContent';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
+import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/joy/IconButton';
 import Box from '@mui/joy/Box';
 import Sheet, { sheetClasses } from '@mui/joy/Sheet';
@@ -24,7 +25,7 @@ import {
   DraggableStateSnapshot,
 } from 'react-beautiful-dnd';
 import OutlineFolderIcon from '@mui/icons-material/Folder';
-import { Dropdown, FormLabel, Menu, MenuButton, MenuItem, RadioGroup } from '@mui/joy';
+import { Button, Dropdown, FormLabel, Menu, MenuButton, MenuItem, RadioGroup } from '@mui/joy';
 import MoreVert from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -37,13 +38,30 @@ export default function ChatSidebar({
   onFolderSelect,
   folders,
   selectedFolderId,
-  conversationsByFolder,
 }: {
   onFolderSelect: (folderId: string | null) => void;
   folders: DFolder[];
   selectedFolderId: string | null;
   conversationsByFolder: DConversation[];
 }) {
+
+
+  // external state
+  // Get the createFolder action from the store
+  const { createFolder } = useFolderStore((state) => ({
+    createFolder: state.createFolder,
+  }));
+
+  // The function to call when the "Add Folder" button is clicked
+  const handleAddFolderClick = () => {
+    // Prompt the user for a folder name
+    const title = prompt('Enter folder name:');
+    if (title) {
+      createFolder(title);
+    }
+  };
+
+
   const { moveFolder, updateFolderName } = useFolderStore((state) => ({
     folders: state.folders,
     moveFolder: state.moveFolder,
@@ -60,7 +78,6 @@ export default function ChatSidebar({
       <Typography level="h3" fontSize="xl" fontWeight="xl" mb={1}>
         Folders
       </Typography>
-
       <List
         aria-labelledby="ios-example-demo"
         sx={(theme) => ({
@@ -155,6 +172,12 @@ export default function ChatSidebar({
           </DragDropContext>
         </ListItem>
       </List>
+      {/* right aligned button */}
+      <Button color="primary" variant="plain" startDecorator={<AddIcon />}
+        sx={{ ml: 'auto', display: 'flex', justifyContent: 'flex-end' }}
+        onClick={handleAddFolderClick}>
+        New folder
+      </Button>
     </Sheet>
   );
 }
