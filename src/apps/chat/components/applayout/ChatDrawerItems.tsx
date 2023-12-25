@@ -19,8 +19,10 @@ import { ChatNavigationItemMemo } from './ChatNavigationItem';
 
 import ChatSidebar from './ChatSidebar';
 
+import { ConversationList } from './ConversationList';
+
 import { useFolderStore } from '~/common/state/store-folders'; 
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 
 // type ListGrouping = 'off' | 'persona';
@@ -43,6 +45,8 @@ function ChatDrawerItems(props: {
 
   // local state
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
+  const [searchTerm, setSearchTerm] = useState('');
+
   // const [grouping] = React.useState<ListGrouping>('off');
   // Add state to track the selected folder
 
@@ -96,124 +100,18 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
-  const ConversationList = ({ conversations }: { conversations: DConversation[] }) => {
-    const listRef = useRef<HTMLDivElement>(null);
-    const [showDownArrow, setShowDownArrow] = useState(false);
-    const [showUpArrow, setShowUpArrow] = useState(false);
+  // Memoized event handler for the search input change
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value.toLowerCase());
+  }, []);
 
+  // Filter conversations based on the search term
+  const filteredConversations = useMemo(() => conversations.filter((conversation) =>
+    conversation.userTitle?.toLowerCase().includes(searchTerm) ||
+    conversation.autoTitle?.toLowerCase().includes(searchTerm)
+  ), [conversations, searchTerm]);
+  
 
-  
-    const theme = useTheme();
-  
-    const checkForOverflow = () => {
-      const currentList = listRef.current;
-      if (currentList) {
-        const isOverflowing = currentList.scrollHeight > currentList.clientHeight;
-        setShowDownArrow(isOverflowing);
-        setShowUpArrow(false); // Initially, we don't want to show the up arrow
-      }
-    };
-  
-    const checkScrollPosition = () => {
-      const currentList = listRef.current;
-      if (currentList) {
-        const isAtBottom = currentList.scrollHeight - currentList.scrollTop === currentList.clientHeight;
-        const isAtTop = currentList.scrollTop === 0;
-        setShowDownArrow(!isAtBottom);
-        setShowUpArrow(!isAtTop);
-      }
-    };
-  
-    useEffect(() => {
-      checkForOverflow();
-      window.addEventListener('resize', checkForOverflow);
-  
-      // Add scroll event listener
-      const currentList = listRef.current;
-      if (currentList) {
-        currentList.addEventListener('scroll', checkScrollPosition);
-      }
-  
-      return () => {
-        window.removeEventListener('resize', checkForOverflow);
-        // Remove scroll event listener
-        if (currentList) {
-          currentList.removeEventListener('scroll', checkScrollPosition);
-        }
-      };
-    }, [conversations]);
-  
-    const styles: { container: CSSProperties; listContainer: CSSProperties; arrow: CSSProperties, arrowDown: CSSProperties, arrowUp: CSSProperties } = {
-      container: {
-        position: 'relative', // Container for both list and arrows
-        maxHeight: '200px',
-      },
-      listContainer: {
-        maxHeight: '200px',
-        overflow: 'auto',
-      },
-      arrow: {
-        position: 'absolute',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        color: theme.palette.text.secondary,
-        opacity: 0.7,
-        fontSize: '30px',
-      },
-      arrowDown: {
-        bottom: 0,
-      },
-      arrowUp: {
-        top: 10,
-        // rotate arrow 180 degrees
-        transform: 'translateX(-50%) rotate(180deg)',
-      },
-    };
-  
-    return (
-      <div style={styles.container}>
-        <div style={styles.listContainer} ref={listRef}>
-          <List>
-            {conversations.map((conversation, index) => (
-               <ChatNavigationItemMemo
-               key={'nav-' + conversation.id}
-               conversation={conversation}
-               isActive={conversation.id === props.activeConversationId}
-               isLonely={singleChat}
-               maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
-               showSymbols={showSymbols}
-               onConversationActivate={handleConversationActivate}
-               onConversationDelete={handleConversationDelete}
-             />
-            ))}
-          </List>
-        </div>
-        {showUpArrow && (
-          <ExpandCircleDownIcon
-            style={{ ...styles.arrow, ...styles.arrowUp }}
-            onClick={() => {
-              listRef.current?.scrollTo({
-                top: 0,
-                behavior: 'smooth',
-              });
-            }}
-          />
-        )}
-        {showDownArrow && (
-          <ExpandCircleDownIcon
-            style={{ ...styles.arrow, ...styles.arrowDown }}
-            onClick={() => {
-              listRef.current?.scrollTo({
-                top: listRef.current?.scrollHeight,
-                behavior: 'smooth',
-              });
-            }}
-          />
-        )}
-      </div>
-    );
-  };
-  
   
 
   
@@ -253,13 +151,28 @@ function ChatDrawerItems(props: {
 
 
       <Input
+        key="search-input"
         startDecorator={<SearchIcon />}
         sx={{ mb: 2 }}
         placeholder='Filter by title'
+        value={searchTerm}
+        onChange={handleSearchChange}
       />
 
-      <ConversationList conversations={conversations} />
-
+      <ConversationList
+      conversations={filteredConversations}
+      activeConversationId={props.activeConversationId}
+      disableNewButton={props.disableNewButton}
+      onConversationActivate={handleConversationActivate}
+      onConversationDelete={handleConversationDelete}
+      onConversationImportDialog={props.onConversationImportDialog}
+      onConversationNew={props.onConversationNew}
+      onConversationsDeleteAll={props.onConversationsDeleteAll}
+      selectedFolderId={selectedFolderId}
+      setSelectedFolderId={setSelectedFolderId}
+      labsEnhancedUI={labsEnhancedUI}
+      showSymbols={showSymbols}
+    />
     </Sheet>
 
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
