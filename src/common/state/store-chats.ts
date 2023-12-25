@@ -255,8 +255,14 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           : null;
       },
 
-      wipeAllConversations: (personaId: SystemPurposeId | undefined): DConversationId => {
-        const { conversations } = _get();
+      wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null): DConversationId => {
+        let { conversations } = _get();
+
+        // If a folder is selected, only delete conversations in that folder
+        if (folderId) {
+          const folderConversations = useFolderStore.getState().folders.find(folder => folder.id === folderId)?.conversationIds || [];
+          conversations = conversations.filter(conversation => folderConversations.includes(conversation.id));
+        }
 
         // abort any pending requests on all conversations
         conversations.forEach(conversation => conversation.abortController?.abort());
@@ -264,7 +270,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         const conversation = createDConversation(personaId);
 
         _set({
-          conversations: [conversation],
+          conversations: folderId ? conversations : [conversation],
         });
 
         return conversation.id;
