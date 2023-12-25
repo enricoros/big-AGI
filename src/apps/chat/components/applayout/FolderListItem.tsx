@@ -21,6 +21,7 @@ import OutlineFolderIcon from '@mui/icons-material/Folder';
 import MoreVert from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import Done from '@mui/icons-material/Done';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
@@ -37,15 +38,20 @@ type RenderItemProps = {
 
 const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
   // internal state
+  const [deleteArmed, setDeleteArmed] = useState(false);
   const [deleteArmedFolderId, setDeleteArmedFolderId] = useState<string | null>(null);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState<string>('');
 
+  // State to control the open state of the Menu
+  const [menuOpen, setMenuOpen] = useState(false);
+
   // external state
-  const { folders, moveFolder, updateFolderName } = useFolderStore((state) => ({
+  const { folders, moveFolder, updateFolderName, deleteFolder } = useFolderStore((state) => ({
     folders: state.folders,
     moveFolder: state.moveFolder,
     updateFolderName: state.updateFolderName,
+    deleteFolder: state.deleteFolder,
   }));
 
   const { setFolderColor } = useFolderStore((state) => ({
@@ -88,6 +94,36 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
     setEditingFolderName(''); // Reset editing name
   };
 
+  // Modified handler to arm the delete action and keep the menu open
+  const handleDeleteButtonShow = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteArmed(true);
+    setMenuOpen(true); // Keep the menu open
+  };
+
+  // Handler to close the menu
+  const handleCloseMenu = () => {
+    setMenuOpen(false);
+    setDeleteArmed(false); // Reset delete armed state
+  };
+
+  // Handler to disarm the delete action
+  const handleDeleteButtonHide = () => setDeleteArmed(false);
+
+  // Handler to delete the folder
+  const handleDeleteConfirmed = (event: React.MouseEvent) => {
+    if (deleteArmed) {
+      setDeleteArmed(false);
+      event.stopPropagation();
+      deleteFolder(folder.id);
+    }
+  };
+
+  // Toggle the menu's open state
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
+
   const getItemStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
     userSelect: 'none',
     borderRadius: '8px',
@@ -117,11 +153,9 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
     }),
   });
 
-
   const handleFolderSelect = (folderId: string | null) => {
     onFolderSelect(folderId);
   };
-
 
   return (
     <ListItem
@@ -136,12 +170,11 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
       <ListItemButton
         // handle folder select
         onClick={(event) => {
-            event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-            console.log('folder.id', folder.id);
-            handleFolderSelect(folder.id);
+          event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
+          console.log('folder.id', folder.id);
+          handleFolderSelect(folder.id);
         }}
         selected={folder.id === selectedFolderId}
-
         sx={{
           justifyContent: 'space-between',
           '&:hover .menu-icon': {
@@ -194,24 +227,39 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
             sx={{ visibility: 'hidden' }}
             slots={{ root: IconButton }}
             slotProps={{ root: { variant: 'outlined', color: 'neutral' } }}
-            
+            onClick={toggleMenu}
           >
             <MoreVert />
           </MenuButton>
-          <Menu>
+          <Menu open={menuOpen} onClose={handleCloseMenu}>
             <MenuItem
               onClick={(event) => {
                 event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
+                handleCloseMenu();
                 setEditingFolderId(folder.id);
               }}
             >
               <EditIcon />
               Edit
             </MenuItem>
-            <MenuItem>
-              <DeleteOutlineIcon />
-              Delete
-            </MenuItem>
+            {!deleteArmed ? (
+              <MenuItem onClick={handleDeleteButtonShow}>
+                <DeleteOutlineIcon />
+                Delete
+              </MenuItem>
+            ) : (
+              <>
+                <MenuItem onClick={handleDeleteConfirmed} color='danger' sx={{ color: 'danger' }}>
+                  <DeleteOutlineIcon />
+                  Confirm Delete
+                </MenuItem>
+                <MenuItem onClick={handleCloseMenu}>
+                  <CloseIcon />
+                  Cancel
+                </MenuItem>
+              </>
+            )}
+
             <MenuItem
               sx={{
                 display: 'flex',
@@ -239,7 +287,30 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                 onChange={handleColorChange}
                 sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row', maxWidth: 180 }}
               >
-                {(["#ff0000","#ff8700","#ffd300","#deff0a","#a1ff0a", "#8A0000", "#8A3700", "#8A5700", "#7C6A05", "#626906","#0aff99","#0aefff","#147df5","#580aff","#be0aff", "#226D40","#22656D","#25346A","#440669","#6E0569"] as const).map((color, index) => (
+                {(
+                  [
+                    '#ff0000',
+                    '#ff8700',
+                    '#ffd300',
+                    '#deff0a',
+                    '#a1ff0a',
+                    '#8A0000',
+                    '#8A3700',
+                    '#8A5700',
+                    '#7C6A05',
+                    '#626906',
+                    '#0aff99',
+                    '#0aefff',
+                    '#147df5',
+                    '#580aff',
+                    '#be0aff',
+                    '#226D40',
+                    '#22656D',
+                    '#25346A',
+                    '#440669',
+                    '#6E0569',
+                  ] as const
+                ).map((color, index) => (
                   <Sheet
                     key={index}
                     sx={{
