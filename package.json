@@ -34,6 +34,7 @@
     "eventsource-parser": "^1.1.1",
     "idb-keyval": "^6.2.1",
     "next": "^14.0.4",
+    "nprogress": "^0.2.0",
     "pdfjs-dist": "4.0.269",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
@@ -52,6 +53,7 @@
   "devDependencies": {
     "@cloudflare/puppeteer": "^0.0.5",
     "@types/node": "^20.10.5",
+    "@types/nprogress": "^0.2.3",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.3",
     "@types/react": "^18.2.45",

@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Container } from '@mui/joy';
+import { Box, Container, useTheme } from '@mui/joy';
 
 import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
 import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
+import { NextRouterProgress } from '~/common/layout/optima/NextLoadProgress';
 import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -21,6 +22,7 @@ export function OptimaLayout(props: {
   children: React.ReactNode,
 }) {
   // external state
+  const theme = useTheme();
   const { centerMode } = useUIPreferencesStore(state => ({ centerMode: isPwa() ? 'full' : state.centerMode }), shallow);
 
   // usage counter, for progressive disclosure of features
@@ -35,6 +37,8 @@ export function OptimaLayout(props: {
   useGlobalShortcuts(shortcuts);
 
   return <>
+
+    <NextRouterProgress color={theme.palette.neutral.solidActiveBg} />
 
     <Container
       disableGutters
