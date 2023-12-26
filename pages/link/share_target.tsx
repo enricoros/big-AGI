@@ -8,7 +8,7 @@ import { setComposerStartupText } from '../../src/apps/chat/components/composer/
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { AppLayout } from '~/common/layout/AppLayout';
+import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex } from '~/common/app.routes';
@@ -133,10 +133,7 @@ function AppShareTarget() {
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
  * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
-export default function LaunchPage() {
-  return (
-    <AppLayout>
-      <AppShareTarget />
-    </AppLayout>
-  );
+export default function ShareTargetPage() {
+  return <AppShareTarget />;
 }
+ShareTargetPage.layoutOptions = { type: 'plain' } satisfies LayoutOptions;

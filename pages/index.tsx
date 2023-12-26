@@ -1,18 +1,15 @@
 import * as React from 'react';
 
 import { AppChat } from '../src/apps/chat/AppChat';
-import { useShowNewsOnUpdate } from '../src/apps/news/news.hooks';
+import { useRedirectToNewsOnUpdates } from '../src/apps/news/news.hooks';
 
-import { AppLayout } from '~/common/layout/AppLayout';
+import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 
 
 export default function ChatPage() {
-  // show the News page on updates
-  useShowNewsOnUpdate();
+  // show the News page if there are unseen updates
+  useRedirectToNewsOnUpdates();
 
-  return (
-    <AppLayout>
-      <AppChat />
-    </AppLayout>
-  );
+  return <AppChat />;
 }
+ChatPage.layoutOptions = { type: 'optima' } satisfies LayoutOptions;

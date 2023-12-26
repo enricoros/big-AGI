@@ -4,19 +4,19 @@ import { shallow } from 'zustand/shallow';
 import { Box, Container } from '@mui/joy';
 
 import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
-import { SettingsModal } from '../../apps/settings-modal/SettingsModal';
-import { ShortcutsModal } from '../../apps/settings-modal/ShortcutsModal';
+import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
+import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
 import { isPwa } from '~/common/util/pwaUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AppBar } from './AppBar';
-import { GlobalShortcutItem, useGlobalShortcuts } from '../components/useGlobalShortcut';
-import { openLayoutModelsSetup, openLayoutPreferences, openLayoutShortcuts } from './store-applayout';
+import { GlobalShortcutItem, useGlobalShortcuts } from '../../components/useGlobalShortcut';
+import { openLayoutModelsSetup, openLayoutPreferences, openLayoutShortcuts } from '../store-applayout';
 
 
-export function AppLayout(props: {
+export function OptimaLayout(props: {
   noAppBar?: boolean, suspendAutoModelsSetup?: boolean,
   children: React.ReactNode,
 }) {

@@ -6,7 +6,7 @@ import { useAppStateStore } from '~/common/state/store-appstate';
 import { incrementalVersion } from './news.data';
 
 
-export function useRedirectToNewsOnUpdate() {
+export function useRedirectToNewsOnUpdates() {
   React.useEffect(() => {
     const { usageCount, lastSeenNewsVersion } = useAppStateStore.getState();
     const isNewsOutdated = (lastSeenNewsVersion || 0) < incrementalVersion;

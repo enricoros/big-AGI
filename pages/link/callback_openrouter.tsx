@@ -3,14 +3,13 @@ import { useRouter } from 'next/router';
 
 import { Box, Typography } from '@mui/joy';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
-
-import { AppLayout } from '~/common/layout/AppLayout';
+import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex } from '~/common/app.routes';
 import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { themeBgApp } from '~/common/app.theme';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
@@ -85,15 +84,12 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
  * Docs: https://openrouter.ai/docs#oauth
  * Example URL: https://localhost:3000/link/callback_openrouter?code=SomeCode
  */
-export default function Page() {
+export default function CallbackPage() {
 
   // get the 'code=...' from the URL
   const { query } = useRouter();
   const { code: openRouterCode } = query;
 
-  return (
-    <AppLayout suspendAutoModelsSetup>
-      <CallbackOpenRouterPage openRouterCode={openRouterCode as (string | undefined)} />
-    </AppLayout>
-  );
+  return <CallbackOpenRouterPage openRouterCode={openRouterCode as (string | undefined)} />;
 }
+CallbackPage.layoutOptions = { type: 'plain' } satisfies LayoutOptions;
