@@ -75,6 +75,10 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
       updateFolderName(folderId, editingFolderName.trim());
     }
     setEditingFolderId(null); // Exit edit mode
+    // Blur the input element if it's currently focused
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,7 +239,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
             <MenuItem
               onClick={(event) => {
                 handleEdit(event, folder.id, folder.title); // Pass the folder's title here
-                handleCloseMenu();            
+                handleCloseMenu();
               }}
             >
               <EditIcon />
@@ -248,7 +252,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
               </MenuItem>
             ) : (
               <>
-                <MenuItem onClick={handleDeleteConfirmed} color='danger' sx={{ color: 'danger' }}>
+                <MenuItem onClick={handleDeleteConfirmed} color="danger" sx={{ color: 'danger' }}>
                   <DeleteOutlineIcon />
                   Confirm Delete
                 </MenuItem>
