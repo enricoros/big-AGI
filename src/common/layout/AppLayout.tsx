@@ -13,7 +13,6 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AppBar } from './AppBar';
 import { GlobalShortcutItem, useGlobalShortcuts } from '../components/useGlobalShortcut';
-import { NoSSR } from '../components/NoSSR';
 import { openLayoutModelsSetup, openLayoutPreferences, openLayoutShortcuts } from './store-applayout';
 
 
@@ -35,45 +34,42 @@ export function AppLayout(props: {
   ], []);
   useGlobalShortcuts(shortcuts);
 
-  return (
-    // Global NoSSR wrapper: the overall Container could have hydration issues when using localStorage and non-default maxWidth
-    <NoSSR>
+  return <>
 
-      <Container
-        disableGutters
-        maxWidth={centerMode === 'full' ? false : centerMode === 'narrow' ? 'md' : 'xl'}
-        sx={{
-          boxShadow: {
-            xs: 'none',
-            md: centerMode === 'narrow' ? 'md' : 'none',
-            xl: centerMode !== 'full' ? 'lg' : 'none',
-          },
-        }}>
+    <Container
+      disableGutters
+      maxWidth={centerMode === 'full' ? false : centerMode === 'narrow' ? 'md' : 'xl'}
+      sx={{
+        boxShadow: {
+          xs: 'none',
+          md: centerMode === 'narrow' ? 'md' : 'none',
+          xl: centerMode !== 'full' ? 'lg' : 'none',
+        },
+      }}>
 
-        <Box sx={{
-          display: 'flex', flexDirection: 'column',
-          height: '100dvh',
-        }}>
+      <Box sx={{
+        display: 'flex', flexDirection: 'column',
+        height: '100dvh',
+      }}>
 
-          {!props.noAppBar && <AppBar sx={{
-            zIndex: 20, // position: 'sticky', top: 0,
-          }} />}
+        {!props.noAppBar && <AppBar sx={{
+          zIndex: 20, // position: 'sticky', top: 0,
+        }} />}
 
-          {props.children}
+        {props.children}
 
-        </Box>
+      </Box>
 
-      </Container>
+    </Container>
 
-      {/* Overlay Settings */}
-      <SettingsModal />
+    {/* Overlay Settings */}
+    <SettingsModal />
 
-      {/* Overlay Models (& Model Options )*/}
-      <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+    {/* Overlay Models (& Model Options )*/}
+    <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
-      {/* Overlay Shortcuts */}
-      <ShortcutsModal />
+    {/* Overlay Shortcuts */}
+    <ShortcutsModal />
 
-    </NoSSR>
-  );
+  </>;
 }

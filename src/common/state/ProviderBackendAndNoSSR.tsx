@@ -4,8 +4,11 @@ import { useBackendCapsLoader } from '~/modules/backend/state-backend';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
-
-export function ProviderBackend(props: { children: React.ReactNode }) {
+/**
+ * Note: we used to have a NoSSR wrapper inside the AppLayout component (which was delaying rendering 1 cycle),
+ * however this wrapper is now providing the same function, given the network roundtrip.
+ */
+export function ProviderBackendAndNoSSR(props: { children: React.ReactNode }) {
 
   // external state
   const [loaded, setCapabilties] = useBackendCapsLoader();
@@ -21,7 +24,6 @@ export function ProviderBackend(props: { children: React.ReactNode }) {
     if (capabilities)
       setCapabilties(capabilities);
   }, [capabilities, setCapabilties]);
-
 
   // block rendering until the capabilities are loaded
   return !loaded ? null : props.children;

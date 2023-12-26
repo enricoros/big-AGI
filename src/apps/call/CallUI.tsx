@@ -272,7 +272,7 @@ export function CallUI(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  useLayoutPluggable(chatLLMDropdown, null, menuItems);
+  useLayoutPluggable(chatLLMDropdown, null, menuItems, 'CallUI');
 
 
   return <>

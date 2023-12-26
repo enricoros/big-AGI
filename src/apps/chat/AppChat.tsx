@@ -376,7 +376,7 @@ export function AppChat() {
     [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
-  useLayoutPluggable(centerItems, drawerItems, menuItems);
+  useLayoutPluggable(centerItems, drawerItems, menuItems, 'AppChat');
 
   return <>
 
