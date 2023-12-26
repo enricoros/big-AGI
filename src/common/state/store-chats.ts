@@ -578,7 +578,6 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
 }, shallow);
 
 export const useConversationsByFolder = (folderId: string | null) => useChatStore(state => {
-  console.log('useConversationsByFolder', folderId);
   if (folderId) {
     const { conversations } = state;
     const folder = useFolderStore.getState().folders.find(_f => _f.id === folderId);
