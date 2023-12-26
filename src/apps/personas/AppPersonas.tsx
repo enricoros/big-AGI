@@ -1,9 +1,10 @@
 import * as React from 'react';
 
-import { Box, Container, ListDivider, Sheet, Typography } from '@mui/joy';
+import { Container, ListDivider, Sheet, Typography } from '@mui/joy';
+
+import { themeBgApp } from '~/common/app.theme';
 
 import { PersonaCreator } from './PersonaCreator';
-import ScienceIcon from '@mui/icons-material/Science';
 
 
 export function AppPersonas() {
@@ -11,7 +12,7 @@ export function AppPersonas() {
     <Sheet sx={{
       flexGrow: 1,
       overflowY: 'auto',
-      backgroundColor: 'background.level1',
+      backgroundColor: themeBgApp,
       p: { xs: 3, md: 6 },
     }}>
 

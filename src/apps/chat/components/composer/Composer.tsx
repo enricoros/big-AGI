@@ -462,7 +462,6 @@ export function Composer(props: {
                     '&:focus-within': {
                       backgroundColor: 'background.popup',
                     },
-                    // fontSize: '16px',
                     lineHeight: 1.75,
                   }} />
 

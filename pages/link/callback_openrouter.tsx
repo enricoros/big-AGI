@@ -10,6 +10,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex } from '~/common/app.routes';
 import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { themeBgApp } from '~/common/app.theme';
 
 
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
@@ -43,7 +44,7 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
   return (
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level1',
+      backgroundColor: themeBgApp,
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },

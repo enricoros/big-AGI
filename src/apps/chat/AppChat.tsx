@@ -19,6 +19,7 @@ import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/commo
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { openLayoutLLMOptions, useLayoutPluggable } from '~/common/layout/store-applayout';
+import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
@@ -405,7 +406,7 @@ export function AppChat() {
             onTextSpeak={handleTextSpeak}
             sx={{
               flexGrow: 1,
-              backgroundColor: 'background.level1',
+              backgroundColor: themeBgApp,
               overflowY: 'auto',
               minHeight: 96,
               // outline the current focused pane
@@ -443,7 +444,7 @@ export function AppChat() {
       onTextImagine={handleTextImagine}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
-        backgroundColor: 'background.surface',
+        backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
         borderTopColor: 'divider',
         p: { xs: 1, md: 2 },

@@ -10,6 +10,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { themeBgApp } from '~/common/app.theme';
 
 import { newsCallout, NewsItems } from './news.data';
 
@@ -43,7 +44,7 @@ export function AppNews() {
 
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level1',
+      backgroundColor: themeBgApp,
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },

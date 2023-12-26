@@ -13,6 +13,7 @@ import { LogoProgress } from '~/common/components/LogoProgress';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/state/store-chats';
+import { themeBgAppDarker } from '~/common/app.theme';
 import { useLayoutPluggable } from '~/common/layout/store-applayout';
 
 import { AppChatLinkDrawerItems } from './AppChatLinkDrawerItems';
@@ -30,7 +31,7 @@ const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }
   </Box>;
 
 const ShowLoading = () =>
-  <Centerer backgroundColor='background.level3'>
+  <Centerer backgroundColor={themeBgAppDarker}>
     <LogoProgress showProgress={true} />
     <Typography level='title-sm' sx={{ mt: 2 }}>
       Loading Chat...
@@ -38,7 +39,7 @@ const ShowLoading = () =>
   </Centerer>;
 
 const ShowError = (props: { error: any }) =>
-  <Centerer backgroundColor='background.level2'>
+  <Centerer backgroundColor={themeBgAppDarker}>
     <InlineError error={props.error} severity='warning' />
   </Centerer>;
 
@@ -102,7 +103,7 @@ export function AppChatLink(props: { linkId: string }) {
         ? <ShowError error={error} />
         : !!data?.conversation
           ? <ViewChatLink conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
-          : <Centerer backgroundColor='background.level3' />}
+          : <Centerer backgroundColor={themeBgAppDarker} />}
 
   </>;
 }
