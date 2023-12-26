@@ -335,15 +335,16 @@ const handleConversationNew = React.useCallback(() => {
     if (deleteConversationId) {
       let nextConversationId: DConversationId | null;
       if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
-        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined);
+        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, selectedFolderId);
       else
         nextConversationId = deleteConversation(deleteConversationId);
       setFocusedConversationId(nextConversationId);
       setDeleteConversationId(null);
     }
   };
+  
 
-  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+  const handleConversationsDeleteAll = (folderId: string | null) => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
 
   const handleConversationDelete = React.useCallback((conversationId: DConversationId, bypassConfirmation: boolean) => {
     if (bypassConfirmation)
@@ -410,6 +411,11 @@ const handleConversationNew = React.useCallback(() => {
       />,
     [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
+
+  const conversationsToDeleteCount = selectedFolderId
+  ? useFolderStore.getState().folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
+  : conversations.length;
+
 
   useLayoutPluggable(centerItems, drawerItems, menuItems);
 
@@ -510,10 +516,10 @@ const handleConversationNew = React.useCallback(() => {
     {!!deleteConversationId && <ConfirmationModal
       open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
       confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? 'Are you absolutely sure you want to delete ALL conversations? This action cannot be undone.'
+        ? `Are you absolutely sure you want to delete ${selectedFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
         : 'Are you sure you want to delete this conversation?'}
       positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? 'Yes, delete all'
+        ? `Yes, delete all ${conversationsToDeleteCount} conversations` 
         : 'Delete conversation'}
     />}
 

@@ -120,7 +120,7 @@ interface ChatActions {
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (conversationId: DConversationId, messageId: string | null) => DConversationId | null;
   deleteConversation: (conversationId: DConversationId) => DConversationId | null;
-  wipeAllConversations: (personaId: SystemPurposeId | undefined) => DConversationId;
+  wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null) => DConversationId;
 
   // within a conversation
   startTyping: (conversationId: string, abortController: AbortController | null) => void;
@@ -257,24 +257,31 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 
       wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null): DConversationId => {
         let { conversations } = _get();
-
+      
         // If a folder is selected, only delete conversations in that folder
         if (folderId) {
-          const folderConversations = useFolderStore.getState().folders.find(folder => folder.id === folderId)?.conversationIds || [];
-          conversations = conversations.filter(conversation => folderConversations.includes(conversation.id));
+          const folderStore = useFolderStore.getState();
+          const folderConversations = folderStore.folders.find(folder => folder.id === folderId)?.conversationIds || [];
+          conversations = conversations.filter(conversation => !folderConversations.includes(conversation.id));
+      
+          // Update the folder to remove the deleted conversation IDs
+          // for each conversation in the folder call folderStore.removeConversationFromFolder
+          folderConversations.forEach(conversationId => folderStore.removeConversationFromFolder(folderId, conversationId));
+
+        } else {
+          // abort any pending requests on all conversations
+          conversations.forEach(conversation => conversation.abortController?.abort());
         }
-
-        // abort any pending requests on all conversations
-        conversations.forEach(conversation => conversation.abortController?.abort());
-
+      
         const conversation = createDConversation(personaId);
-
+      
         _set({
           conversations: folderId ? conversations : [conversation],
         });
-
+      
         return conversation.id;
       },
+            
 
 
       // within a conversation

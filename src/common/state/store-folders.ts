@@ -64,15 +64,20 @@ export const useFolderStore = create<FolderStore>()(devtools(
         }));
       },
 
-      addConversationToFolder: (folderId: string, conversationId: DConversationId): void => {
-        set(state => ({
-          folders: state.folders.map(folder => 
-            folder.id === folderId
-              ? { ...folder, conversationIds: [...folder.conversationIds, conversationId] }
-              : folder
-          ),
-        }));
-      },      
+      addConversationToFolder: (folderId: string, conversationId: string) => {
+        set(state => {
+          const folders = state.folders.map(folder => {
+            // Check if this is the correct folder and if the conversationId is not already present
+            if (folder.id === folderId && !folder.conversationIds.includes(conversationId)) {
+              // Use the spread operator to create a new array with the conversationId added
+              return { ...folder, conversationIds: [...folder.conversationIds, conversationId] };
+            }
+            return folder;
+          });
+          return { folders };
+        });
+      },
+      
 
       removeConversationFromFolder: (folderId: string, conversationId: DConversationId): void => {
         set(state => ({
