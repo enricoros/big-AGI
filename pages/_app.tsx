@@ -10,7 +10,7 @@ import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
 
-import { ProviderBackend } from '~/common/state/ProviderBackend';
+import { ProviderBackendAndNoSSR } from '~/common/state/ProviderBackendAndNoSSR';
 import { ProviderSingleTab } from '~/common/state/ProviderSingleTab';
 import { ProviderSnacks } from '~/common/state/ProviderSnacks';
 import { ProviderTRPCQueryClient } from '~/common/state/ProviderTRPCQueryClient';
@@ -29,9 +29,9 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
       <ProviderSingleTab>
         <ProviderTRPCQueryClient>
           <ProviderSnacks>
-            <ProviderBackend>
+            <ProviderBackendAndNoSSR>
               <Component {...pageProps} />
-            </ProviderBackend>
+            </ProviderBackendAndNoSSR>
           </ProviderSnacks>
         </ProviderTRPCQueryClient>
       </ProviderSingleTab>

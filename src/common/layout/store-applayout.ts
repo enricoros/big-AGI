@@ -4,6 +4,8 @@ import { shallow } from 'zustand/shallow';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
+const DEBUG_PLUG = false;
+
 interface AppLayoutStore {
 
   // pluggable UI
@@ -45,11 +47,17 @@ const useAppLayoutStore = create<AppLayoutStore>()(
 /**
  * used by the active UI client to register its components (and unregister on cleanup)
  */
-export function useLayoutPluggable(centerItems: React.JSX.Element | null, drawerItems: React.JSX.Element | null, menuItems: React.JSX.Element | null) {
+export function useLayoutPluggable(centerItems: React.JSX.Element | null, drawerItems: React.JSX.Element | null, menuItems: React.JSX.Element | null, debugCallerName: string) {
   React.useEffect(() => {
+    if (DEBUG_PLUG)
+      console.log(' +PLUG layout', debugCallerName);
     useAppLayoutStore.setState({ centerItems, drawerItems, menuItems });
-    return () => useAppLayoutStore.setState({ centerItems: null, drawerItems: null, menuItems: null });
-  }, [centerItems, drawerItems, menuItems]);
+    return () => {
+      if (DEBUG_PLUG)
+        console.log(' -UNplug layout', debugCallerName);
+      useAppLayoutStore.setState({ centerItems: null, drawerItems: null, menuItems: null });
+    };
+  }, [debugCallerName, centerItems, drawerItems, menuItems]);
 }
 
 export function useLayoutComponents() {
