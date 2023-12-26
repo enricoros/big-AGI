@@ -2,10 +2,9 @@ import * as React from 'react';
 
 import { AppCall } from '../src/apps/call/AppCall';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 export default function CallPage() {
-  return <AppCall />;
+  return withLayout({ type: 'optima' }, <AppCall />);
 }
-CallPage.layoutOptions = { type: 'optima' } satisfies LayoutOptions;

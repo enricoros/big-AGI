@@ -3,13 +3,12 @@ import * as React from 'react';
 import { AppNews } from '../src/apps/news/AppNews';
 import { useMarkNewsAsSeen } from '../src/apps/news/news.hooks';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 export default function NewsPage() {
   // 'touch' the last seen news version
   useMarkNewsAsSeen();
 
-  return <AppNews />;
+  return withLayout({ type: 'optima', suspendAutoModelsSetup: true }, <AppNews />);
 }
-NewsPage.layoutOptions = { type: 'optima', suspendAutoModelsSetup: true } satisfies LayoutOptions;
