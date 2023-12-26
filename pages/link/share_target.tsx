@@ -12,6 +12,7 @@ import { AppLayout } from '~/common/layout/AppLayout';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex } from '~/common/app.routes';
+import { themeBgApp } from '~/common/app.theme';
 
 
 /**
@@ -90,7 +91,7 @@ function AppShareTarget() {
   return (
 
     <Box sx={{
-      backgroundColor: 'background.level2',
+      backgroundColor: themeBgApp,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       flexGrow: 1,
     }}>

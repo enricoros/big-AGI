@@ -142,6 +142,10 @@ export const appTheme = extendTheme({
   },
 });
 
+export const themeBgApp = 'background.level1';
+export const themeBgAppDarker = 'background.level2';
+export const themeBgAppChatComposer = 'background.surface';
+
 export const bodyFontClassName = inter.className;
 export const themeBreakpoints = appTheme.breakpoints.values;
 
