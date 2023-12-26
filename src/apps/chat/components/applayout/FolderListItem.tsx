@@ -64,7 +64,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
   };
 
   // Handlers for editing and deleting
-  const handleEdit = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>, folderId: string, folderTitle: string) => {
+  const handleEdit = (event: React.MouseEvent<HTMLElement, MouseEvent>, folderId: string, folderTitle: string) => {
     event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
     setEditingFolderId(folderId);
     setEditingFolderName(folderTitle);
@@ -234,9 +234,8 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
           <Menu open={menuOpen} onClose={handleCloseMenu}>
             <MenuItem
               onClick={(event) => {
-                event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-                handleCloseMenu();
-                setEditingFolderId(folder.id);
+                handleEdit(event, folder.id, folder.title); // Pass the folder's title here
+                handleCloseMenu();            
               }}
             >
               <EditIcon />
