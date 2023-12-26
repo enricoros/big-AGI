@@ -8,11 +8,11 @@ import { setComposerStartupText } from '../../src/apps/chat/components/composer/
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex } from '~/common/app.routes';
 import { themeBgApp } from '~/common/app.theme';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 /**
@@ -134,6 +134,5 @@ function AppShareTarget() {
  * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
 export default function ShareTargetPage() {
-  return <AppShareTarget />;
+  return withLayout({ type: 'plain' }, <AppShareTarget />);
 }
-ShareTargetPage.layoutOptions = { type: 'plain' } satisfies LayoutOptions;

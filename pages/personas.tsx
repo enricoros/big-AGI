@@ -2,11 +2,9 @@ import * as React from 'react';
 
 import { AppPersonas } from '../src/apps/personas/AppPersonas';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
-
+import { withLayout } from '~/common/layout/withLayout';
 
 
 export default function PersonasPage() {
-  return <AppPersonas />;
+  return withLayout({ type: 'optima' }, <AppPersonas />);
 }
-PersonasPage.layoutOptions = { type: 'optima' } satisfies LayoutOptions;

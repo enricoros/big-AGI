@@ -3,13 +3,14 @@ import { useRouter } from 'next/router';
 
 import { Box, Typography } from '@mui/joy';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex } from '~/common/app.routes';
 import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { themeBgApp } from '~/common/app.theme';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
@@ -90,6 +91,5 @@ export default function CallbackPage() {
   const { query } = useRouter();
   const { code: openRouterCode } = query;
 
-  return <CallbackOpenRouterPage openRouterCode={openRouterCode as (string | undefined)} />;
+  return withLayout({ type: 'plain' }, <CallbackOpenRouterPage openRouterCode={openRouterCode as (string | undefined)} />);
 }
-CallbackPage.layoutOptions = { type: 'plain' } satisfies LayoutOptions;

@@ -93,10 +93,8 @@ MyDocument.getInitialProps = async (ctx: DocumentContext) => {
 
   ctx.renderPage = () =>
     originalRenderPage({
-      // @ts-ignore Inored since we added the 'layoutOptions' property to the Component
       enhanceApp: (App: React.ComponentType<React.ComponentProps<AppType> & MyAppProps>) =>
         function EnhanceApp(props) {
-          // @ts-ignore Inored since we added the 'layoutOptions' property to the Component
           return <App emotionCache={cache} {...props} />;
         },
     });

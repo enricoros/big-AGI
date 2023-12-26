@@ -1,20 +1,17 @@
-import type { NextPage } from 'next';
 import type { EmotionCache } from '@emotion/react';
 
-import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 
-
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
-  // require .layoutOptions on the page component
-  layoutOptions: LayoutOptions;
-};
+// export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+//   // require .layoutOptions on the page component
+//   layoutOptions: LayoutOptions;
+// };
 
 // Extend the AppProps type with the custom page component type
 declare module 'next/app' {
   import { AppProps } from 'next/app';
 
   type MyAppProps = AppProps & {
-    Component: NextPageWithLayout;
+    // Component: NextPageWithLayout;
     emotionCache?: EmotionCache;
   };
 }
