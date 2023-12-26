@@ -60,6 +60,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
 
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFolderColor(folder.id, event.target.value);
+    setMenuOpen(false);
   };
 
   // Handlers for editing and deleting
@@ -115,6 +116,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
       setDeleteArmed(false);
       event.stopPropagation();
       deleteFolder(folder.id);
+      setMenuOpen(false);
     }
   };
 
