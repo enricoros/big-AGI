@@ -7,7 +7,7 @@ import CallIcon from '@mui/icons-material/Call';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
-import { OptimaDropdown } from '~/common/layout/optima/OptimaDropdown';
+import { GoodDropdown } from '~/common/components/GoodDropdown';
 import { launchAppCall } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -42,7 +42,7 @@ function AppBarPersonaDropdown(props: {
   }
 
   return (
-    <OptimaDropdown
+    <GoodDropdown
       items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
       value={props.systemPurposeId} onChange={handleSystemPurposeChange}
       appendOption={appendOption}
