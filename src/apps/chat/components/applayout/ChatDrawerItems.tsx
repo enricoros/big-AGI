@@ -162,12 +162,8 @@ function ChatDrawerItems(props: {
       <ConversationList
       conversations={filteredConversations}
       activeConversationId={props.activeConversationId}
-      disableNewButton={props.disableNewButton}
       onConversationActivate={handleConversationActivate}
       onConversationDelete={handleConversationDelete}
-      onConversationImportDialog={props.onConversationImportDialog}
-      onConversationNew={props.onConversationNew}
-      onConversationsDeleteAll={props.onConversationsDeleteAll}
       selectedFolderId={selectedFolderId}
       setSelectedFolderId={setSelectedFolderId}
       labsEnhancedUI={labsEnhancedUI}

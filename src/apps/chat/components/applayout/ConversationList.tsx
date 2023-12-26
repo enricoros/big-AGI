@@ -9,12 +9,8 @@ import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 export const ConversationList = (props: {
     conversations: DConversation[],
     activeConversationId: DConversationId | null,
-    disableNewButton: boolean,
     onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
     onConversationDelete: (conversationId: DConversationId) => void,
-    onConversationImportDialog: () => void,
-    onConversationNew: () => DConversationId,
-    onConversationsDeleteAll: (folderId: string | null) => void,
     selectedFolderId: string | null,
     setSelectedFolderId: (folderId: string | null) => void,
     labsEnhancedUI: boolean,
