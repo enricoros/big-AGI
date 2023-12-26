@@ -6,6 +6,8 @@ import ListItemButton from '@mui/joy/ListItemButton';
 import ListItemContent from '@mui/joy/ListItemContent';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import DoneIcon from '@mui/icons-material/Done';
 import IconButton from '@mui/joy/IconButton';
 import Box from '@mui/joy/Box';
 import Sheet, { sheetClasses } from '@mui/joy/Sheet';
@@ -25,7 +27,7 @@ import {
   DraggableStateSnapshot,
 } from 'react-beautiful-dnd';
 import OutlineFolderIcon from '@mui/icons-material/Folder';
-import { Button, Dropdown, FormLabel, Menu, MenuButton, MenuItem, RadioGroup } from '@mui/joy';
+import { Button, Dropdown, FormLabel, Input, Menu, MenuButton, MenuItem, RadioGroup, TextField } from '@mui/joy';
 import MoreVert from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -46,6 +48,10 @@ export default function ChatSidebar({
 }) {
 
 
+  // local state
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+
   // external state
   // Get the createFolder action from the store
   const { createFolder } = useFolderStore((state) => ({
@@ -61,6 +67,22 @@ export default function ChatSidebar({
     }
   };
 
+    // Handler to create a new folder
+    const handleCreateFolder = () => {
+      // check min length
+      if (newFolderName.trim() !== '') {
+        createFolder(newFolderName.trim());
+        setNewFolderName('');
+        setIsAddingFolder(false);
+      }
+    };
+  
+    // Handler to cancel adding a new folder
+    const handleCancelAddFolder = () => {
+      setNewFolderName('');
+      setIsAddingFolder(false);
+    };
+  
 
   const { moveFolder, updateFolderName } = useFolderStore((state) => ({
     folders: state.folders,
@@ -172,12 +194,37 @@ export default function ChatSidebar({
           </DragDropContext>
         </ListItem>
       </List>
-      {/* right aligned button */}
-      <Button color="primary" variant="plain" startDecorator={<AddIcon />}
-        sx={{ ml: 'auto', display: 'flex', justifyContent: 'flex-end' }}
-        onClick={handleAddFolderClick}>
-        New folder
-      </Button>
+      {isAddingFolder ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <OutlineFolderIcon sx={{ ml: '13px' }} />
+          <Input
+            placeholder="Folder name"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') handleCreateFolder();
+            }}
+            autoFocus
+            sx={{ ml: '0px' }}
+          />
+          <IconButton color="success" onClick={handleCreateFolder}>
+            <DoneIcon />
+          </IconButton>
+          <IconButton color="danger" onClick={handleCancelAddFolder}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      ) : (
+        <Button
+          color="primary"
+          variant="plain"
+          startDecorator={<AddIcon />}
+          sx={{ display: 'flex', justifyContent: 'flex-start' }}
+          onClick={() => setIsAddingFolder(true)}
+        >
+          New folder
+        </Button>
+      )}
     </Sheet>
   );
 }
