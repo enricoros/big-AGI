@@ -22,12 +22,11 @@ import { ProviderTheming } from '~/common/state/ProviderTheming';
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
 
   // [dynamic page-level layouting] based on the the layoutOptions.type property of the Component
-  if (!Component.layoutOptions)
-    throw new Error('Component.layoutOptions is not defined');
   const { layoutOptions } = Component;
-  const LayoutComponent = layoutOptions.type === 'optima'
-    ? OptimaLayout
-    : PlainLayout /* default / fallback */;
+  const LayoutComponent =
+    layoutOptions?.type === 'optima' ? OptimaLayout
+      : layoutOptions?.type === 'plain' ? PlainLayout
+        : (props: { children?: React.ReactNode }) => props.children; // this is here for the /404, /500, etc. pages
 
   return <>
 
