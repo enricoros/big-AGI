@@ -258,8 +258,11 @@ export function AppChat() {
   const doesSelectedFolderHaveEmptyChat = (selectedFolderId: string | null, conversations: any[]) => {
     // If no folder is selected (default folder), check if there is an empty chat globally
     if (selectedFolderId === null) {
-      return conversations.some(convo => convo.messages.length === 0);
+      // get all conversations that are not in a folder
+      const conversationsNotInFolder = conversations.filter(convo => convo.folderId === null);
+      return conversationsNotInFolder.some(convo => convo.messages.length === 0);
     }
+  
   
     // Retrieve the folder's conversations
     const folderConversations = useFolderStore.getState().folders.find(folder => folder.id === selectedFolderId)?.conversationIds || [];
