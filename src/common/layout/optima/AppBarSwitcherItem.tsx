@@ -4,10 +4,10 @@ import { useRouter } from 'next/router';
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { Brand } from '../app.config';
+import { Brand } from '~/common/app.config';
 
 import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
-import { closeLayoutMenu } from './store-applayout';
+import { closeLayoutMenu } from '../store-applayout';
 
 
 // routes for the quick switcher menu item

@@ -7,8 +7,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 
-import { AppBarDropdown, DropdownItems } from '~/common/layout/AppBarDropdown';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { OptimaDropdown, DropdownItems } from '~/common/layout/optima/OptimaDropdown';
 import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
 
 
@@ -51,7 +51,7 @@ function AppBarLLMDropdown(props: {
 
 
   return (
-    <AppBarDropdown
+    <OptimaDropdown
       items={llmItems}
       value={props.chatLlmId} onChange={handleChatLLMChange}
       placeholder={props.placeholder || 'Models …'}

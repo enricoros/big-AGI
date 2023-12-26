@@ -9,19 +9,18 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { Brand } from '../app.config';
-import { CloseableMenu } from '../components/CloseableMenu';
-import { Link } from '../components/Link';
-import { LogoSquircle } from '../components/LogoSquircle';
+import { Brand } from '~/common/app.config';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { Link } from '~/common/components/Link';
+import { LogoSquircle } from '~/common/components/LogoSquircle';
 
-// import { AppBarSupportItem } from './AppBarSupportItem';
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';
-import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
+import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from '../store-applayout';
 
 
 function AppBarTitle() {
   return (
-    <Link href='/'>
+    <Link href='/public'>
       <LogoSquircle sx={{
         width: 32,
         height: 32,

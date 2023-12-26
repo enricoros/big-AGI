@@ -3,16 +3,13 @@ import { useRouter } from 'next/router';
 
 import { AppChatLink } from '../../../src/apps/link/AppChatLink';
 
-import { AppLayout } from '~/common/layout/AppLayout';
+import type { LayoutOptions } from '~/common/layout/LayoutOptions';
 
 
 export default function ChatLinkPage() {
   const { query } = useRouter();
   const chatLinkId = query?.chatLinkId as string ?? '';
 
-  return (
-    <AppLayout suspendAutoModelsSetup>
-      <AppChatLink linkId={chatLinkId} />
-    </AppLayout>
-  );
+  return <AppChatLink linkId={chatLinkId} />;
 }
+ChatLinkPage.layoutOptions = { type: 'optima', suspendAutoModelsSetup: true } satisfies LayoutOptions;
