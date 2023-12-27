@@ -95,9 +95,11 @@ export function AppBar(props: { sx?: SxProps }) {
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  // const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useOptimaLayout();
-  const { appBarItems: centerItems, appDrawerAnchor: drawerAnchor, appPaneContent: drawerItems, appMenuAnchor: menuAnchor, appMenuItems: menuItems } = useOptimaLayout();
-  const { closeAppMenu, closeAppDrawer, setAppDrawerAnchor, setAppMenuAnchor } = useOptimaLayout();
+  const {
+    appBarItems, appDrawerAnchor, appPaneContent, appMenuAnchor, appMenuItems,
+    closeAppMenu, closeAppDrawer,
+    setAppDrawerAnchor, setAppMenuAnchor,
+  } = useOptimaLayout();
 
   const commonMenuItems = React.useMemo(() =>
     <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
@@ -114,47 +116,47 @@ export function AppBar(props: { sx?: SxProps }) {
       }}>
 
       {/* Drawer Anchor */}
-      {!drawerItems ? (
+      {!appPaneContent ? (
         <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
       ) : (
-        <IconButton disabled={!!drawerAnchor || !drawerItems} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
+        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
           <MenuIcon />
         </IconButton>
       )}
 
       {/* Center Items */}
       <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
-        {!!centerItems ? centerItems : <AppBarTitle />}
+        {!!appBarItems ? appBarItems : <AppBarTitle />}
       </Box>
 
       {/* Menu Anchor */}
-      <IconButton disabled={!!menuAnchor /*|| !menuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
 
 
     {/* Drawer Menu */}
-    {!!drawerItems && <CloseableMenu
+    {!!appPaneContent && <CloseableMenu
       maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeAppDrawer}
+      open={!!appDrawerAnchor} anchorEl={appDrawerAnchor} onClose={closeAppDrawer}
       placement='bottom-start'
     >
-      {drawerItems}
+      {appPaneContent}
     </CloseableMenu>}
 
     {/* Menu Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeAppMenu}
+      open={!!appMenuAnchor} anchorEl={appMenuAnchor} onClose={closeAppMenu}
       placement='bottom-end'
     >
       {commonMenuItems}
-      {!!menuItems && <ListDivider sx={{ mt: 0 }} />}
-      {!!menuItems && <Box sx={{ overflowY: 'auto' }}>{menuItems}</Box>}
-      {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
+      {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
+      {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
+      {!!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
       <AppBarSwitcherItem />
       {/*<AppBarSupportItem />*/}
     </CloseableMenu>
