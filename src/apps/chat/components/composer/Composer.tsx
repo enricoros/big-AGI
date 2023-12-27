@@ -428,7 +428,7 @@ export function Composer(props: {
           <Box sx={{
             flexGrow: 1,
             display: 'flex', flexDirection: 'column', gap: 1,
-            overflowX: 'clip',
+            minWidth: 250, // enable X-scrolling (resetting any possible minWidth due to the attachments)
           }}>
 
             {/* Edit box + Overlays + Mic buttons */}
