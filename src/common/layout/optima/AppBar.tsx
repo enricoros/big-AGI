@@ -13,6 +13,7 @@ import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
+import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';
 import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from '../store-applayout';
@@ -20,7 +21,7 @@ import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDra
 
 function AppBarTitle() {
   return (
-    <Link href='/public'>
+    <Link href={ROUTE_INDEX}>
       <LogoSquircle sx={{
         width: 32,
         height: 32,
@@ -110,7 +111,7 @@ export function AppBar(props: { sx?: SxProps }) {
 
       {/* Drawer Anchor */}
       {!drawerItems ? (
-        <IconButton component={Link} href='/' noLinkStyle variant='plain'>
+        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
       ) : (
