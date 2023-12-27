@@ -15,7 +15,6 @@ import { T2ISettings } from '~/modules/t2i/T2ISettings';
 import { GoodModal } from '~/common/components/GoodModal';
 import { settingsGap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './AppChatSettingsUI';
@@ -102,23 +101,24 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
  */
-export function SettingsModal() {
+export function SettingsModal(props: {
+  open: boolean,
+  tabIndex: number,
+  onClose: () => void,
+  onOpenShortcuts: () => void,
+}) {
 
   // external state
-  const { closePreferences, openShortcuts, showPreferencesTab } = useOptimaLayout();
   const isMobile = useIsMobile();
-
-  // derived state
-  const isOpen = !!showPreferencesTab;
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal
       title='Preferences' strongerTitle
-      open={isOpen} onClose={closePreferences}
+      open={props.open} onClose={props.onClose}
       startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={openShortcuts}>
+        <Button variant='soft' onClick={props.onOpenShortcuts}>
           👉 See Shortcuts
         </Button>
       )}
@@ -129,7 +129,7 @@ export function SettingsModal() {
 
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={showPreferencesTab}>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
         <TabList
           variant='soft'
           disableUnderline
