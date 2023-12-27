@@ -9,7 +9,7 @@ import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/app.routes';
+import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -59,7 +59,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat(importedId);
+    await launchAppChat(importedId);
     setCloning(false);
   };
 
