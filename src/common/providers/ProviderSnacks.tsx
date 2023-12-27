@@ -3,7 +3,7 @@ import * as React from 'react';
 import { IconButton, Snackbar, SnackbarTypeMap } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { SNACKBAR_ANIMATION_DURATION, SnackbarMessage, useSnackbarsStore } from '../useSnackbarsStore';
+import { SNACKBAR_ANIMATION_DURATION, SnackbarMessage, useSnackbarsStore } from '../components/useSnackbarsStore';
 
 
 const defaultTypeConfig: {
