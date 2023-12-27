@@ -34,8 +34,7 @@ interface AppChatPanesStore {
   openConversationInSplitPane: (conversationId: DConversationId) => void;
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   setFocusedPaneIndex: (paneIndex: number) => void;
-  splitChatPane: (numberOfPanes: number) => void;
-  unsplitChatPane: (paneIndexToKeep: number) => void;
+  removePaneIndex: (paneIndex: number) => void;
   onConversationsChanged: (conversationIds: DConversationId[]) => void;
 
 }
@@ -169,22 +168,20 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         };
       }),
 
-    splitChatPane: (numberOfPanes: number) => {
-      const { chatPanes, chatPaneFocusIndex } = _get();
-      const focusedPane = (chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex] : null) ?? createPane();
+    removePaneIndex: (paneIndex: number) =>
+      _set(state => {
+        const { chatPanes, chatPaneFocusIndex } = state;
+        if (paneIndex < 0 || paneIndex >= chatPanes.length)
+          return state;
 
-      _set({
-        chatPanes: Array.from({ length: numberOfPanes }, () => ({ ...focusedPane })),
-        chatPaneFocusIndex: 0,
-      });
-    },
+        const newPanes = chatPanes.toSpliced(paneIndex, 1);
 
-    unsplitChatPane: (paneIndexToKeep: number) =>
-      _set(state => ({
-        chatPanes: [state.chatPanes[paneIndexToKeep] || createPane()],
-        chatPaneFocusIndex: 0,
-      })),
-
+        // when a pane is removed, focus the pane 0, or null if no panes remain
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: newPanes.length ? 0 : null,
+        };
+      }),
 
     /**
      * This function is vital, as is invoked when the conversationId[] changes in the global chats store.
@@ -258,6 +255,7 @@ export function usePanesManager() {
       onConversationsChanged,
       openConversationInFocusedPane,
       openConversationInSplitPane,
+      removePaneIndex,
       setFocusedPaneIndex,
     } = state;
     const focusedConversationId = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex]?.conversationId ?? null : null;
@@ -268,6 +266,7 @@ export function usePanesManager() {
       onConversationsChanged,
       openConversationInFocusedPane,
       openConversationInSplitPane,
+      removePaneIndex,
       setFocusedPaneIndex,
     };
   }, shallow);

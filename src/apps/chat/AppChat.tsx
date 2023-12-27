@@ -1,7 +1,8 @@
 import * as React from 'react';
-
-import { Box } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+
+import { Box, useTheme } from '@mui/joy';
 
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
@@ -63,6 +64,8 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
+  const theme = useTheme();
+
   const { openLlmOptions } = useOptimaLayout();
 
   const { chatLLM } = useChatLLM();
@@ -74,6 +77,7 @@ export function AppChat() {
     openConversationInFocusedPane,
     openConversationInSplitPane,
     setFocusedPaneIndex,
+    removePaneIndex,
   } = usePanesManager();
 
   const {
@@ -96,10 +100,6 @@ export function AppChat() {
   // Window actions
 
   const chatPaneIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
-
-  const setActivePaneIndex = React.useCallback((idx: number) => {
-    setFocusedPaneIndex(idx);
-  }, [setFocusedPaneIndex]);
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -382,18 +382,28 @@ export function AppChat() {
 
   return <>
 
-    <Box sx={{
-      flexGrow: 1,
-      display: 'flex', flexDirection: { xs: 'column', md: 'row' },
-      overflow: 'clip',
-    }}>
+    <PanelGroup direction='horizontal'>
 
-      {chatPaneIDs.map((_conversationId, idx) => (
-        <Box key={'chat-pane-' + idx} onClick={() => setActivePaneIndex(idx)} sx={{
-          flexGrow: 1, flexBasis: 1,
-          display: 'flex', flexDirection: 'column',
-          overflow: 'clip',
-        }}>
+      {chatPaneIDs.map((_conversationId, idx, panels) => <React.Fragment key={'chat-pane-' + _conversationId + '-' + panels.length}>
+
+        <Panel
+          id={'chat-pane-' + _conversationId}
+          order={idx}
+          collapsible
+          defaultSize={panels.length > 0 ? Math.round(100 / panels.length) : undefined}
+          minSize={20}
+          onClick={() => setFocusedPaneIndex(idx)}
+          onCollapse={() => setTimeout(() => removePaneIndex(idx), 50)}
+          style={{
+            // allows the content to be scrolled (all browsers)
+            overflowY: 'auto',
+            // border only for active pane (if two or more panes)
+            ...(chatPaneIDs.length < 2 ? {}
+              : (_conversationId === focusedConversationId)
+                ? { border: `2px solid ${theme.palette.primary.solidBg}` }
+                : { border: `2px solid ${theme.palette.background.level1}` }),
+          }}
+        >
 
           <ChatMessageList
             conversationId={_conversationId}
@@ -407,34 +417,40 @@ export function AppChat() {
             onTextImagine={handleTextImagine}
             onTextSpeak={handleTextSpeak}
             sx={{
-              flexGrow: 1,
               backgroundColor: themeBgApp,
-              overflowY: 'auto',
-              minHeight: 96,
-              // outline the current focused pane
-              ...(chatPaneIDs.length < 2 ? {}
-                : (_conversationId === focusedConversationId)
-                  ? {
-                    border: '2px solid',
-                    borderColor: 'primary.solidBg',
-                  } : {
-                    padding: '2px',
-                  }),
+              minHeight: '100%', // ensures filling of the blank space on newer chats
             }}
           />
 
           <Ephemerals
             conversationId={_conversationId}
             sx={{
+              // TODO: Fixme post panels?
               // flexGrow: 0.1,
               flexShrink: 0.5,
               overflowY: 'auto',
               minHeight: 64,
             }} />
 
-        </Box>
-      ))}
-    </Box>
+        </Panel>
+
+        {/* Panel Separators & Resizers */}
+        {idx < panels.length - 1 && (
+          <PanelResizeHandle>
+            <Box sx={{
+              backgroundColor: themeBgApp,
+              height: '100%',
+              width: '4px',
+              '&:hover': {
+                backgroundColor: 'primary.softActiveBg',
+              },
+            }} />
+          </PanelResizeHandle>
+        )}
+
+      </React.Fragment>)}
+
+    </PanelGroup>
 
     <Composer
       chatLLM={chatLLM}

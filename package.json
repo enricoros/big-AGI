@@ -42,6 +42,7 @@
     "react-dom": "^18.2.0",
     "react-katex": "^3.0.1",
     "react-markdown": "^9.0.1",
+    "react-resizable-panels": "^1.0.5",
     "react-timeago": "^7.2.0",
     "remark-gfm": "^4.0.0",
     "superjson": "^2.2.1",
