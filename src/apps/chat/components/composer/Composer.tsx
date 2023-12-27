@@ -26,12 +26,12 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
-import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -89,6 +89,7 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const { openPreferences } = useOptimaLayout();
   const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
     labsCalling: state.labsCalling,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -193,7 +194,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => openLayoutPreferences(2);
+  const handleDrawOptionsClicked = () => openPreferences(2);
 
   const handleTextImagineClicked = () => {
     if (!composeText || !props.conversationId)

@@ -18,8 +18,8 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { openLayoutLLMOptions, useLayoutPluggable } from '~/common/layout/store-applayout';
 import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
+import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
@@ -63,6 +63,8 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
+  const { openLlmOptions } = useOptimaLayout();
+
   const { chatLLM } = useChatLLM();
 
   const {
@@ -325,8 +327,8 @@ export function AppChat() {
   const handleOpenChatLlmOptions = React.useCallback(() => {
     const { chatLLMId } = useModelsStore.getState();
     if (!chatLLMId) return;
-    openLayoutLLMOptions(chatLLMId);
-  }, []);
+    openLlmOptions(chatLLMId);
+  }, [openLlmOptions]);
 
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     ['o', true, true, false, handleOpenChatLlmOptions],
@@ -376,7 +378,7 @@ export function AppChat() {
     [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
-  useLayoutPluggable(centerItems, drawerItems, menuItems, 'AppChat');
+  usePluggableOptimaLayout(drawerItems, centerItems, menuItems, 'AppChat');
 
   return <>
 

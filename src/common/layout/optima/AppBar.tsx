@@ -16,7 +16,7 @@ import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';
-import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from '../store-applayout';
+import { useOptimaLayout } from './useOptimaLayout';
 
 
 function AppBarTitle() {
@@ -40,12 +40,14 @@ function AppBarTitle() {
 
 
 function CommonMenuItems(props: { onClose: () => void }) {
+
   // external state
+  const { openPreferences } = useOptimaLayout();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
-    openLayoutPreferences();
+    openPreferences();
     props.onClose();
   };
 
@@ -93,10 +95,12 @@ export function AppBar(props: { sx?: SxProps }) {
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
+  // const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useOptimaLayout();
+  const { appBarItems: centerItems, appDrawerAnchor: drawerAnchor, appPaneContent: drawerItems, appMenuAnchor: menuAnchor, appMenuItems: menuItems } = useOptimaLayout();
+  const { closeAppMenu, closeAppDrawer, setAppDrawerAnchor, setAppMenuAnchor } = useOptimaLayout();
 
   const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeLayoutMenu} />, []);
+    <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
 
   return <>
 
@@ -115,7 +119,7 @@ export function AppBar(props: { sx?: SxProps }) {
           <ArrowBackIcon />
         </IconButton>
       ) : (
-        <IconButton disabled={!!drawerAnchor || !drawerItems} variant='plain' onClick={event => setLayoutDrawerAnchor(event.currentTarget)}>
+        <IconButton disabled={!!drawerAnchor || !drawerItems} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
           <MenuIcon />
         </IconButton>
       )}
@@ -126,7 +130,7 @@ export function AppBar(props: { sx?: SxProps }) {
       </Box>
 
       {/* Menu Anchor */}
-      <IconButton disabled={!!menuAnchor /*|| !menuItems*/} variant='plain' onClick={event => setLayoutMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!menuAnchor /*|| !menuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
@@ -135,7 +139,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Drawer Menu */}
     {!!drawerItems && <CloseableMenu
       maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeLayoutDrawer}
+      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeAppDrawer}
       placement='bottom-start'
     >
       {drawerItems}
@@ -144,7 +148,7 @@ export function AppBar(props: { sx?: SxProps }) {
     {/* Menu Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeLayoutMenu}
+      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeAppMenu}
       placement='bottom-end'
     >
       {commonMenuItems}

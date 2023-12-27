@@ -9,8 +9,8 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
-import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
@@ -40,6 +40,7 @@ export function ChatMessageList(props: {
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
+  const { openPreferences } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -99,21 +100,21 @@ export function ChatMessageList(props: {
 
   const handleTextImagine = React.useCallback(async (text: string) => {
     if (!capabilityHasT2I)
-      return openLayoutPreferences(2);
+      return openPreferences(2);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
       setIsImagining(false);
     }
-  }, [capabilityHasT2I, conversationId, onTextImagine]);
+  }, [capabilityHasT2I, conversationId, onTextImagine, openPreferences]);
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)
-      return openLayoutPreferences(3);
+      return openPreferences(3);
     setIsSpeaking(true);
     await onTextSpeak(text);
     setIsSpeaking(false);
-  }, [isSpeakable, onTextSpeak]);
+  }, [isSpeakable, onTextSpeak, openPreferences]);
 
 
   // operate on the local selection set

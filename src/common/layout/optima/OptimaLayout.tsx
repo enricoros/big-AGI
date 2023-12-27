@@ -1,44 +1,32 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
-import { Box, Container, useTheme } from '@mui/joy';
+import { Box, Container } from '@mui/joy';
 
 import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
 import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
-import { NextRouterProgress } from '~/common/layout/optima/NextLoadProgress';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useAppStateStore } from '~/common/state/store-appstate';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AppBar } from './AppBar';
-import { GlobalShortcutItem, useGlobalShortcuts } from '../../components/useGlobalShortcut';
-import { openLayoutModelsSetup, openLayoutPreferences, openLayoutShortcuts } from '../store-applayout';
+import { NextRouterProgress } from './NextLoadProgress';
+import { useOptimaLayout } from './useOptimaLayout';
 
 
 export function OptimaLayout(props: {
   noAppBar?: boolean, suspendAutoModelsSetup?: boolean,
   children: React.ReactNode,
 }) {
+
   // external state
-  const theme = useTheme();
-  const { centerMode } = useUIPreferencesStore(state => ({ centerMode: isPwa() ? 'full' : state.centerMode }), shallow);
+  const { closeShortcuts, showShortcuts } = useOptimaLayout();
 
-  // usage counter, for progressive disclosure of features
-  useAppStateStore(state => state.usageCount);
-
-  // global shortcuts for modals
-  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
-    ['m', true, true, false, openLayoutModelsSetup],
-    ['p', true, true, false, openLayoutPreferences],
-    ['?', true, true, false, openLayoutShortcuts],
-  ], []);
-  useGlobalShortcuts(shortcuts);
+  const centerMode = useUIPreferencesStore(state => isPwa() ? 'full' : state.centerMode);
 
   return <>
 
-    <NextRouterProgress color={theme.palette.neutral.solidActiveBg} />
+    <NextRouterProgress color='var(--joy-palette-neutral-700, #32383E)' />
 
     <Container
       disableGutters
@@ -73,7 +61,7 @@ export function OptimaLayout(props: {
     <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     {/* Overlay Shortcuts */}
-    <ShortcutsModal />
+    {showShortcuts && <ShortcutsModal onClose={closeShortcuts} />}
 
   </>;
 }

@@ -8,8 +8,8 @@ import { useChatLinkItems } from '~/modules/trade/store-module-trade';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
-import { closeLayoutDrawer } from '~/common/layout/store-applayout';
 import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
 /**
@@ -19,6 +19,7 @@ import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
 export function AppChatLinkDrawerItems() {
 
   // external state
+  const { closeAppDrawer } = useOptimaLayout();
   const chatLinkItems = useChatLinkItems()
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -27,7 +28,7 @@ export function AppChatLinkDrawerItems() {
   return <>
 
     <MenuItem
-      onClick={closeLayoutDrawer}
+      onClick={closeAppDrawer}
       component={Link} href={ROUTE_INDEX} noLinkStyle
     >
       <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
