@@ -5,7 +5,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 
 
-const DEBUG_OPTIMA_LAYOUT_PLUGGING = true;
+const DEBUG_OPTIMA_LAYOUT_PLUGGING = false;
 
 
 type PC = React.JSX.Element | null;
