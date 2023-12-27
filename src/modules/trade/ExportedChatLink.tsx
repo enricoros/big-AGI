@@ -90,7 +90,7 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
             <Button
               variant={opened ? 'soft' : 'solid'} onClick={onOpen}
               color={opened ? 'success' : undefined} endDecorator={opened ? <DoneIcon /> : <LaunchIcon />}
-              component={Link} href={relativeUrl} target='_blank' noLinkStyle
+              component={Link} href={relativeUrl} noLinkStyle
               sx={{ flexGrow: 1 }}
             >
               Open

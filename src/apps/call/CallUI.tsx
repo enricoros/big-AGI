@@ -22,7 +22,7 @@ import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
-import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
@@ -273,7 +273,7 @@ export function CallUI(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  useLayoutPluggable(chatLLMDropdown, null, menuItems, 'CallUI');
+  usePluggableOptimaLayout(null, chatLLMDropdown, menuItems, 'CallUI');
 
 
   return <>

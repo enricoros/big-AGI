@@ -9,7 +9,7 @@ import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/sto
 
 import { GoodDropdown, DropdownItems } from '~/common/components/GoodDropdown';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { openLayoutLLMOptions, openLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
 function AppBarLLMDropdown(props: {
@@ -18,6 +18,9 @@ function AppBarLLMDropdown(props: {
   setChatLlmId: (llmId: DLLMId | null) => void,
   placeholder?: string,
 }) {
+
+  // external state
+  const { openLlmOptions, openModelsSetup } = useOptimaLayout();
 
   // build model menu items, filtering-out hidden models, and add Source separators
   const llmItems: DropdownItems = {};
@@ -47,7 +50,7 @@ function AppBarLLMDropdown(props: {
 
   const handleChatLLMChange = (_event: any, value: DLLMId | null) => value && props.setChatLlmId(value);
 
-  const handleOpenLLMOptions = () => props.chatLlmId && openLayoutLLMOptions(props.chatLlmId);
+  const handleOpenLLMOptions = () => props.chatLlmId && openLlmOptions(props.chatLlmId);
 
 
   return (
@@ -67,7 +70,7 @@ function AppBarLLMDropdown(props: {
           </ListItemButton>
         )}
 
-        <ListItemButton key='menu-llms' onClick={openLayoutModelsSetup}>
+        <ListItemButton key='menu-llms' onClick={openModelsSetup}>
           <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
             Models

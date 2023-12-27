@@ -8,7 +8,6 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex } from '~/common/app.routes';
-import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { themeBgApp } from '~/common/app.theme';
 import { withLayout } from '~/common/layout/withLayout';
 
@@ -37,7 +36,7 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
     useModelsStore.getState().setOpenRoutersKey(openRouterKey);
 
     // 2. Navigate to the chat app
-    navigateToIndex(true).then(() => openLayoutModelsSetup());
+    void navigateToIndex(true); //.then(openModelsSetup);
 
   }, [isSuccess, openRouterKey]);
 

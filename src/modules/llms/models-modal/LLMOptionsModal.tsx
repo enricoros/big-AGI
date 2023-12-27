@@ -12,7 +12,6 @@ import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { closeLayoutLLMOptions } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
 
 
@@ -31,7 +30,7 @@ function VendorLLMOptions(props: { llmId: DLLMId }) {
 }
 
 
-export function LLMOptionsModal(props: { id: DLLMId }) {
+export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   // state
   const [showDetails, setShowDetails] = React.useState(false);
@@ -65,14 +64,14 @@ export function LLMOptionsModal(props: { id: DLLMId }) {
 
   const handleLlmDelete = () => {
     removeLLM(llm.id);
-    closeLayoutLLMOptions();
+    props.onClose();
   };
 
   return (
 
     <GoodModal
       title={<><b>{llm.label}</b> options</>}
-      open={!!props.id} onClose={closeLayoutLLMOptions}
+      open={!!props.id} onClose={props.onClose}
       startButton={
         <Button variant='plain' color='neutral' onClick={handleLlmDelete} startDecorator={<DeleteOutlineIcon />}>
           Delete

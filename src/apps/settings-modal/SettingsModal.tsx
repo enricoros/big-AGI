@@ -13,9 +13,9 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { closeLayoutPreferences, openLayoutShortcuts, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './AppChatSettingsUI';
@@ -105,17 +105,20 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
 export function SettingsModal() {
 
   // external state
+  const { closePreferences, openShortcuts, showPreferencesTab } = useOptimaLayout();
   const isMobile = useIsMobile();
-  const settingsTabIndex = useLayoutPreferencesTab();
+
+  // derived state
+  const isOpen = !!showPreferencesTab;
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal
       title='Preferences' strongerTitle
-      open={!!settingsTabIndex} onClose={closeLayoutPreferences}
+      open={isOpen} onClose={closePreferences}
       startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={openLayoutShortcuts}>
+        <Button variant='soft' onClick={openShortcuts}>
           👉 See Shortcuts
         </Button>
       )}
@@ -126,7 +129,7 @@ export function SettingsModal() {
 
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsTabIndex}>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={showPreferencesTab}>
         <TabList
           variant='soft'
           disableUnderline

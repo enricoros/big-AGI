@@ -14,7 +14,7 @@ import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/state/store-chats';
 import { themeBgAppDarker } from '~/common/app.theme';
-import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { AppChatLinkDrawerItems } from './AppChatLinkDrawerItems';
 import { AppChatLinkMenuItems } from './AppChatLinkMenuItems';
@@ -86,7 +86,7 @@ export function AppChatLink(props: { linkId: string }) {
 
   const drawerItems = React.useMemo(() => <AppChatLinkDrawerItems />, []);
   const menuItems = React.useMemo(() => <AppChatLinkMenuItems />, []);
-  useLayoutPluggable(null, hasLinkItems ? drawerItems : null, menuItems, 'AppChatLink');
+  usePluggableOptimaLayout(hasLinkItems ? drawerItems : null, null, menuItems, 'AppChatLink');
 
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
