@@ -7,7 +7,6 @@ import { PlainLayout } from './plain/PlainLayout';
 
 type WithLayout = {
   type: 'optima';
-  noAppBar?: boolean;
   suspendAutoModelsSetup?: boolean;
 } | {
   type: 'plain';

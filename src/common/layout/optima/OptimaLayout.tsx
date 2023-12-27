@@ -14,19 +14,31 @@ import { NextRouterProgress } from './NextLoadProgress';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-export function OptimaLayout(props: {
-  noAppBar?: boolean, suspendAutoModelsSetup?: boolean,
-  children: React.ReactNode,
-}) {
+/**
+ * Core layout of big-AGI, used by all the Primary applications therein.
+ *
+ * Main functions:
+ *  - modern responsive layout
+ *  - core layout of the application, with the Nav, Panes, Appbar, etc.
+ *    - the child(ren) of this layout are placed in the main content area
+ *  - allows for pluggable components of children applications, via usePluggableOptimaLayout
+ *  - overlays and displays various modals
+ *  - flicker free
+ */
+export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children: React.ReactNode, }) {
 
   // external state
-  const { closeShortcuts, showShortcuts } = useOptimaLayout();
+  const {
+    closePreferences, closeShortcuts,
+    openShortcuts,
+    showPreferencesTab, showShortcuts,
+  } = useOptimaLayout();
 
   const centerMode = useUIPreferencesStore(state => isPwa() ? 'full' : state.centerMode);
 
+
   return <>
 
-    <NextRouterProgress color='var(--joy-palette-neutral-700, #32383E)' />
 
     <Container
       disableGutters
@@ -44,9 +56,9 @@ export function OptimaLayout(props: {
         height: '100dvh',
       }}>
 
-        {!props.noAppBar && <AppBar sx={{
-          zIndex: 20, // position: 'sticky', top: 0,
-        }} />}
+        <AppBar sx={{
+          zIndex: 20,
+        }} />
 
         {props.children}
 
@@ -54,14 +66,19 @@ export function OptimaLayout(props: {
 
     </Container>
 
-    {/* Overlay Settings */}
-    <SettingsModal />
 
-    {/* Overlay Models (& Model Options )*/}
+    {/* Overlay Settings */}
+    <SettingsModal open={!!showPreferencesTab} tabIndex={showPreferencesTab} onClose={closePreferences} onOpenShortcuts={openShortcuts} />
+
+    {/* Overlay Models + LLM Options */}
     <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     {/* Overlay Shortcuts */}
     {showShortcuts && <ShortcutsModal onClose={closeShortcuts} />}
+
+
+    {/* Route loading progress overlay */}
+    <NextRouterProgress color='var(--joy-palette-neutral-700, #32383E)' />
 
   </>;
 }
