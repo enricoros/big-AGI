@@ -28,6 +28,7 @@ import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
+import { ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 function CallMenuItems(props: {
@@ -178,7 +179,7 @@ export function CallUI(props: {
       case 'Goodbye.':
         setStage('ended');
         setTimeout(() => {
-          void routerPush('/');
+          void routerPush(ROUTE_APP_CHAT);
         }, 2000);
         return;
       // command: regenerate answer
@@ -366,7 +367,7 @@ export function CallUI(props: {
       )}
 
       {/* [ended] Back / Call Again */}
-      {(isEnded || isDeclined) && <Link noLinkStyle href='/'><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
+      {(isEnded || isDeclined) && <Link noLinkStyle href={ROUTE_APP_CHAT}><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
       {(isEnded || isDeclined) && <CallButton Icon={CallIcon} text='Call Again' color='success' variant='soft' onClick={() => setStage('connected')} />}
 
     </Box>
