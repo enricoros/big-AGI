@@ -182,13 +182,23 @@ export function ChatMessageList(props: {
       // marginBottom: '-1px',
     }}>
 
-      {filteredMessages.map((message, idx) =>
+      {props.isMessageSelectionMode && (
+        <MessagesSelectionHeader
+          hasSelected={selectedMessages.size > 0}
+          sumTokens={historyTokenCount}
+          onClose={() => props.setIsMessageSelectionMode(false)}
+          onSelectAll={handleSelectAll}
+          onDeleteMessages={handleSelectionDelete}
+        />
+      )}
+
+      {filteredMessages.map((message, idx, {length: count}) =>
         props.isMessageSelectionMode ? (
 
           <CleanerMessage
             key={'sel-' + message.id}
             message={message}
-            isBottom={idx === 0} remainingTokens={(props.chatLLMContextTokens || 0) - historyTokenCount}
+            remainingTokens={(props.chatLLMContextTokens || 0) - historyTokenCount}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
           />
 
@@ -198,7 +208,7 @@ export function ChatMessageList(props: {
             key={'msg-' + message.id}
             message={message}
             diffPreviousText={message === diffMessage ? diffText : undefined}
-            isBottom={idx === 0}
+            isBottom={idx === count - 1}
             isImagining={isImagining} isSpeaking={isSpeaking}
             onConversationBranch={handleConversationBranch}
             onConversationRestartFrom={handleConversationRestartFrom}
@@ -211,18 +221,6 @@ export function ChatMessageList(props: {
           />
 
         ),
-      )}
-
-      {/* Header at the bottom because of 'row-reverse' */}
-      {props.isMessageSelectionMode && (
-        <MessagesSelectionHeader
-          hasSelected={selectedMessages.size > 0}
-          isBottom={filteredMessages.length === 0}
-          sumTokens={historyTokenCount}
-          onClose={() => props.setIsMessageSelectionMode(false)}
-          onSelectAll={handleSelectAll}
-          onDeleteMessages={handleSelectionDelete}
-        />
       )}
 
     </List>
