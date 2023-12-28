@@ -90,16 +90,9 @@ export function DallESettings() {
       </Select>
     </FormControl>}
 
-    {advanced.on && isDallE3 && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Quality'
-                      description={isHD ? 'Detailed' : 'Default'} />
-      <Switch checked={isHD} onChange={handleDalleQualityChange}
-              startDecorator={isHD ? 'HD' : 'Standard'} />
-    </FormControl>}
-
-    {advanced.on && <FormControl orientation='horizontal' disabled={isDallE3} sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Improve Prompt'
-                      description={dalleNoRewrite ? 'Do Not Rewrite' : 'Default'}
+    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Better Prompt'
+                      description={dalleNoRewrite ? 'No Rewrite' : 'Default'}
                       tooltip={<>
                         OpenAI improves the prompt by rewriting it by default.
                         This can be disabled to get more control over the prompt.
@@ -108,7 +101,14 @@ export function DallESettings() {
                       </>}
       />
       <Switch checked={!dalleNoRewrite} onChange={handleDalleNoRewriteChange}
-              startDecorator={dalleNoRewrite ? 'RAW' : 'Improve'} />
+              startDecorator={dalleNoRewrite ? 'No' : 'Improve'} />
+    </FormControl>}
+
+    {advanced.on && isDallE3 && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Quality'
+                      description={isHD ? 'Detailed' : 'Default'} />
+      <Switch checked={isHD} onChange={handleDalleQualityChange}
+              startDecorator={isHD ? 'HD' : 'Standard'} />
     </FormControl>}
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
