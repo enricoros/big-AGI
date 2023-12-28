@@ -97,7 +97,7 @@ export function DallESettings() {
               startDecorator={isHD ? 'HD' : 'Standard'} />
     </FormControl>}
 
-    {advanced.on && !isDallE3 && <FormControl orientation='horizontal' disabled={isDallE3} sx={{ justifyContent: 'space-between' }}>
+    {advanced.on && <FormControl orientation='horizontal' disabled={isDallE3} sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Improve Prompt'
                       description={dalleNoRewrite ? 'Do Not Rewrite' : 'Default'}
                       tooltip={<>
