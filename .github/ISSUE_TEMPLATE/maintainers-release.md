@@ -34,23 +34,40 @@ assignees: enricoros
   - [ ] Discord announcement
   - [ ] Twitter announcement
 
-
 ## Links
-Milestone: 
-Former release task: 
-GitHub release: 
 
+Milestone:
+Former release task:
+GitHub release:
 
 ## Artifacts Generation
 
-1) The following is my opensource application
-   - paste README.md
-2) I am announcing a new version, 1.7.0. The following were the announcements for 1.6.0. Discord announcement, GitHub Release, in-app news.data.tsx, changelog.md.
-   - paste the former: `discord announcement`, `GitHub release`, `news.data.tsx`, `changelog.md`
-3) The following is the new data I have for 1.7.0
-   - paste the link to the milestone (closed) and each individual issue (content will be downloaded)
-   - paste the git changelog  `git log v1.6.0..v1.7.0 | clip`
-   
+```markdown
+You help me generate the following collateral for the new release of my opensource application
+called big-AGI. The new release is 1.2.3.
+To familiarize yourself with the application, the following are the Website and the GitHub README.md.
+```
+
+- paste the URL: https://big-agi.com
+- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/main/README.md)
+
+```markdown
+I am announcing a new version, 1.2.3.
+For reference, the following was the collateral for 1.1.0 (Discord announcement,
+GitHub Release, in-app-news file news.data.tsx, changelog.md).
+```
+
+- paste the former: `discord announcement`,
+- `GitHub release`,
+- `news.data.tsx`,
+- `changelog.md`
+
+```markdown
+The following are the new developments for 1.2.3:
+```
+
+- paste the link to the milestone (closed) and each individual issue (content will be downloaded)
+- paste the git changelog  `git log v1.1.0..v1.2.3 | clip`
 
 ### news.data.TSX
 
