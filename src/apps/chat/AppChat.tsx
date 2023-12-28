@@ -76,8 +76,10 @@ export function AppChat() {
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
     openConversationInSplitPane,
-    setFocusedPaneIndex,
-    removePaneIndex,
+    paneIndex,
+    duplicatePane,
+    removePane,
+    setFocusedPane,
   } = usePanesManager();
 
   const {
@@ -99,7 +101,8 @@ export function AppChat() {
 
   // Window actions
 
-  const chatPaneIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
+  const panesConversationIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
+  const isSplitPane = chatPanes.length > 1;
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -108,6 +111,13 @@ export function AppChat() {
   const openSplitConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInSplitPane(conversationId);
   }, [openConversationInSplitPane]);
+
+  const toggleSplitPane = React.useCallback(() => {
+    if (isSplitPane)
+      removePane(paneIndex ?? chatPanes.length - 1);
+    else
+      duplicatePane(paneIndex ?? chatPanes.length - 1);
+  }, [chatPanes.length, duplicatePane, isSplitPane, paneIndex, removePane]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -346,8 +356,12 @@ export function AppChat() {
   // Pluggable ApplicationBar components
 
   const centerItems = React.useMemo(() =>
-      <ChatDropdowns conversationId={focusedConversationId} />,
-    [focusedConversationId],
+      <ChatDropdowns
+        conversationId={focusedConversationId}
+        isSplitPanes={isSplitPane}
+        onToggleSplitPanes={toggleSplitPane}
+      />,
+    [focusedConversationId, isSplitPane, toggleSplitPane],
   );
 
   const drawerItems = React.useMemo(() =>
@@ -384,7 +398,7 @@ export function AppChat() {
 
     <PanelGroup direction='horizontal'>
 
-      {chatPaneIDs.map((_conversationId, idx, panels) => <React.Fragment key={'chat-pane-' + _conversationId + '-' + panels.length}>
+      {panesConversationIDs.map((_conversationId, idx, panels) => <React.Fragment key={`chat-pane-${idx}-${panels.length}-${_conversationId}`}>
 
         <Panel
           id={'chat-pane-' + _conversationId}
@@ -392,13 +406,13 @@ export function AppChat() {
           collapsible
           defaultSize={panels.length > 0 ? Math.round(100 / panels.length) : undefined}
           minSize={20}
-          onClick={() => setFocusedPaneIndex(idx)}
-          onCollapse={() => setTimeout(() => removePaneIndex(idx), 50)}
+          onClick={() => setFocusedPane(idx)}
+          onCollapse={() => setTimeout(() => removePane(idx), 50)}
           style={{
             // allows the content to be scrolled (all browsers)
             overflowY: 'auto',
             // border only for active pane (if two or more panes)
-            ...(chatPaneIDs.length < 2 ? {}
+            ...(panesConversationIDs.length < 2 ? {}
               : (_conversationId === focusedConversationId)
                 ? { border: `2px solid ${theme.palette.primary.solidBg}` }
                 : { border: `2px solid ${theme.palette.background.level1}` }),
