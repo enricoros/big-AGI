@@ -1,3 +1,21 @@
+/**
+ * Copyright (c) 2023-2024 Enrico Ros
+ *
+ * This subsystem is responsible for 'snap-to-bottom' and 'scroll-to-bottom' features,
+ * with an animated, gradual scroll.
+ *
+ * See the `ScrollToBottomButton` component for the button that triggers the scroll.
+ *
+ * Example usage:
+ *   <ScrollToBottom bootToBottom stickToBottom sx={{ overflowY: 'auto', height: '100%' }}>
+ *     <LongMessagesList />
+ *     <ScrollToBottomButton />
+ *   </ScrollToBottom>
+ *
+ * Within the Context (children components), functions are made available by using:
+ *  const { notifyBooting, setStickToBottom } = useScrollToBottom();
+ *
+ */
 import * as React from 'react';
 
 import { Box } from '@mui/joy';
@@ -9,10 +27,25 @@ import { ScrollToBottomState, UseScrollToBottomProvider } from './useScrollToBot
 
 
 // set this to true to debug this component
-const DEBUG_SCROLL_TO_BOTTOM = true;
+const DEBUG_SCROLL_TO_BOTTOM = false;
 
+// NOTE: in Chrome a wheel scroll event is 100px
+const USER_STICKY_MARGIN = 60;
+
+// during the 'booting' timeout, scrolls happen instantly instead of smoothly
 const BOOTING_TIMEOUT = 400;
-const USER_STICKY_MARGIN = 10;
+
+
+function DebugBorderBox(props: { heightPx: number, color: string }) {
+  return (
+    <Box sx={{
+      position: 'absolute', bottom: 0, right: 0, left: 0,
+      height: `${props.heightPx}px`,
+      border: `1px solid ${props.color}`,
+      pointerEvents: 'none',
+    }} />
+  );
+}
 
 
 export function ScrollToBottom(props: {
@@ -54,7 +87,7 @@ export function ScrollToBottom(props: {
     const scrollable = scrollableElementRef.current;
     if (scrollable) {
       if (DEBUG_SCROLL_TO_BOTTOM)
-        console.log(' - doScrollToBottom()', { scrollHeight: scrollable.scrollHeight, offsetHeight: scrollable.offsetHeight });
+        console.log('  -> doScrollToBottom()', { scrollHeight: scrollable.scrollHeight, offsetHeight: scrollable.offsetHeight });
 
       // eat the next scroll event
       isProgrammaticScroll.current = true;
@@ -72,18 +105,43 @@ export function ScrollToBottom(props: {
   React.useEffect(() => {
     if (!state.booting || !isBrowser) return;
 
-    const clearBootingHandler = () => {
+    const _clearBootingHandler = () => {
       if (DEBUG_SCROLL_TO_BOTTOM)
-        console.log(' - booting complete, clearing state');
+        console.log(' -> booting done');
 
-      setState((state): ScrollToBottomState => ({ ...state, booting: false }));
+      setState(state => ({ ...state, booting: false }));
+
+      if (bootToBottom)
+        doScrollToBottom();
     };
 
     // cancelable listener
-    const timeout = window.setTimeout(clearBootingHandler, BOOTING_TIMEOUT);
+    const timeout = window.setTimeout(_clearBootingHandler, BOOTING_TIMEOUT);
     return () => clearTimeout(timeout);
-  }, [state.booting]);
+  }, [bootToBottom, doScrollToBottom, state.booting]);
 
+  /**
+   * Children elements resize event listener
+   *  - note that the 'scrollable' will likely have a fixed size, while its children are the ones who become scrollable
+   */
+  React.useEffect(() => {
+    const scrollable = scrollableElementRef.current;
+    if (!scrollable) return;
+
+    const _containerResizeObserver = new ResizeObserver(entries => {
+      if (DEBUG_SCROLL_TO_BOTTOM)
+        console.log(' -> scrollable children resized', entries.length);
+
+      if (entries.length > 0 && state.stickToBottom)
+        doScrollToBottom();
+    });
+
+
+    // cancelable observer of resize of scrollable's children elements
+    Array.from(scrollable.children).forEach(child => _containerResizeObserver.observe(child));
+    return () => _containerResizeObserver.disconnect();
+
+  }, [state.stickToBottom, doScrollToBottom]);
 
   /**
    * (User) Scroll events listener
@@ -95,7 +153,7 @@ export function ScrollToBottom(props: {
     const scrollable = scrollableElementRef.current;
     if (!scrollable) return;
 
-    const scrollEventsListener = () => {
+    const _scrollEventsListener = () => {
       // ignore scroll events during programmatic scrolls
       // NOTE: some will go through, but somewhat the framework is stable
       if (isProgrammaticScroll.current) {
@@ -110,59 +168,48 @@ export function ScrollToBottom(props: {
       const stickToBottom = atBottom;
 
       // update state only if anything changed
-      if (state.atBottom !== atBottom || state.stickToBottom !== stickToBottom)
-        setState(state => ({ ...state, stickToBottom, atBottom }));
+      setState(state => (state.stickToBottom !== stickToBottom || state.atBottom !== atBottom)
+        ? ({ ...state, stickToBottom, atBottom })
+        : state,
+      );
     };
 
+    // _scrollEventsListener(true);
+
     // cancelable listener (user and programatic scroll events)
-    scrollable.addEventListener('scroll', scrollEventsListener);
-    return () => scrollable.removeEventListener('scroll', scrollEventsListener);
+    scrollable.addEventListener('scroll', _scrollEventsListener);
+    return () => scrollable.removeEventListener('scroll', _scrollEventsListener);
 
-  }, [state.atBottom, state.booting, state.stickToBottom]);
-
-
-  /**
-   * Underlying element resize events listener
-   */
-  React.useEffect(() => {
-    const scrollable = scrollableElementRef.current;
-    if (!scrollable) return;
-
-    const resizeObserver = new ResizeObserver(entries => {
-      const resizedEntry = entries.find(entry => entry.target === scrollable);
-      if (!resizedEntry) return;
-
-      if (DEBUG_SCROLL_TO_BOTTOM)
-        console.log('-> scrollable resized', { ...resizedEntry.borderBoxSize });
-
-      if (state.stickToBottom)
-        doScrollToBottom();
-    });
-
-    // cancelable listener (resize of scrollable element)
-    resizeObserver.observe(scrollable);
-    return () => resizeObserver.disconnect();
-
-  }, [state.stickToBottom, doScrollToBottom]);
+  }, [state.booting]);
 
 
   // actions for this context
 
   const notifyBooting = React.useCallback(() => {
-    // update state only if we are using the booting framework
-    if (bootToBottom) {
-      setState(state => ({ ...state, booting: true }));
-    }
+    if (bootToBottom)
+      setState(state => state.booting ? state : ({ ...state, booting: true }));
   }, [bootToBottom]);
 
-  const setStickToBottom = React.useCallback((stick: boolean) => {
-    // update state only if anything changed, and scroll to bottom if requested
-    if (state.stickToBottom != stick) {
-      setState(state => ({ ...state, stickToBottom: stick }));
-      if (stick)
-        doScrollToBottom();
-    }
-  }, [doScrollToBottom, state.stickToBottom]);
+  /*const notifyContentUpdated = React.useCallback(() => {
+    if (DEBUG_SCROLL_TO_BOTTOM)
+      console.log('-= notifyContentUpdated');
+
+    if (state.stickToBottom)
+      doScrollToBottom();
+  }, [doScrollToBottom, state.stickToBottom]);*/
+
+  const setStickToBottom = React.useCallback((stickToBottom: boolean) => {
+    if (DEBUG_SCROLL_TO_BOTTOM)
+      console.log('-= setStickToBottom', stickToBottom);
+
+    setState(state => state.stickToBottom !== stickToBottom
+      ? ({ ...state, stickToBottom })
+      : state,
+    );
+
+    if (stickToBottom)
+      doScrollToBottom();
+  }, [doScrollToBottom]);
 
 
   return (
@@ -173,6 +220,8 @@ export function ScrollToBottom(props: {
     }}>
       <Box ref={scrollableElementRef} sx={props.sx}>
         {props.children}
+        {DEBUG_SCROLL_TO_BOTTOM && <DebugBorderBox heightPx={USER_STICKY_MARGIN} color='red' />}
+        {DEBUG_SCROLL_TO_BOTTOM && <DebugBorderBox heightPx={100} color='blue' />}
       </Box>
     </UseScrollToBottomProvider>
   );

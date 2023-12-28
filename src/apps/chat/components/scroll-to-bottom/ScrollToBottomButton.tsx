@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { IconButton, Tooltip, Typography } from '@mui/joy';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { IconButton } from '@mui/joy';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 import { useScrollToBottom } from './useScrollToBottom';
 
@@ -20,37 +20,37 @@ export function ScrollToBottomButton() {
     return null;
 
   return (
-    <Tooltip title={
-      <Typography variant='solid' level='title-sm' sx={{ px: 1 }}>
-        Scroll to bottom
-      </Typography>
-    }>
-      <IconButton
-        variant='outlined' color='primary' size='sm'
-        onClick={handleStickToBottom}
-        sx={{
-          // place this on the bottom-right corner (FAB-like)
-          position: 'absolute',
-          bottom: '2rem',
-          right: {
-            xs: '1rem',
-            md: '2rem',
-          },
+    // <Tooltip title={
+    //   <Typography variant='solid' level='title-sm' sx={{ px: 1 }}>
+    //     Scroll to bottom
+    //   </Typography>
+    // }>
+    <IconButton
+      variant='outlined' color='neutral' size='md'
+      onClick={handleStickToBottom}
+      sx={{
+        // place this on the bottom-right corner (FAB-like)
+        position: 'absolute',
+        bottom: '2rem',
+        right: {
+          xs: '1rem',
+          md: '2rem',
+        },
 
-          // style it
-          backgroundColor: 'background.surface',
-          borderRadius: '50%',
-          boxShadow: 'sm',
+        // style it
+        backgroundColor: 'background.surface',
+        borderRadius: '50%',
+        boxShadow: 'md',
 
-          // fade it in when hovering
-          transition: 'all 0.15s',
-          '&:hover': {
-            transform: 'scale(1.1)',
-          },
-        }}
-      >
-        <ArrowDropDownIcon />
-      </IconButton>
-    </Tooltip>
+        // fade it in when hovering
+        // transition: 'all 0.15s',
+        // '&:hover': {
+        //   transform: 'scale(1.1)',
+        // },
+      }}
+    >
+      <KeyboardDoubleArrowDownIcon />
+    </IconButton>
+    // </Tooltip>
   );
 }
