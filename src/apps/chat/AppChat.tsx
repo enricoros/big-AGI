@@ -31,6 +31,8 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
+import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
@@ -409,8 +411,8 @@ export function AppChat() {
           onClick={() => setFocusedPane(idx)}
           onCollapse={() => setTimeout(() => removePane(idx), 50)}
           style={{
-            // allows the content to be scrolled (all browsers)
-            overflowY: 'auto',
+            // for anchoring the scroll button in place
+            position: 'relative',
             // border only for active pane (if two or more panes)
             ...(panesConversationIDs.length < 2 ? {}
               : (_conversationId === focusedConversationId)
@@ -419,32 +421,46 @@ export function AppChat() {
           }}
         >
 
-          <ChatMessageList
-            conversationId={_conversationId}
-            capabilityHasT2I={capabilityHasT2I}
-            chatLLMContextTokens={chatLLM?.contextTokens}
-            isMessageSelectionMode={isMessageSelectionMode}
-            setIsMessageSelectionMode={setIsMessageSelectionMode}
-            onConversationBranch={handleConversationBranch}
-            onConversationExecuteHistory={handleConversationExecuteHistory}
-            onTextDiagram={handleTextDiagram}
-            onTextImagine={handleTextImagine}
-            onTextSpeak={handleTextSpeak}
+          <ScrollToBottom
             sx={{
-              backgroundColor: themeBgApp,
-              minHeight: '100%', // ensures filling of the blank space on newer chats
-            }}
-          />
-
-          <Ephemerals
-            conversationId={_conversationId}
-            sx={{
-              // TODO: Fixme post panels?
-              // flexGrow: 0.1,
-              flexShrink: 0.5,
+              // allows the content to be scrolled (all browsers)
               overflowY: 'auto',
-              minHeight: 64,
-            }} />
+              // actually make sure this scrolls & fills
+              height: '100%',
+            }}
+          >
+
+            <ChatMessageList
+              conversationId={_conversationId}
+              capabilityHasT2I={capabilityHasT2I}
+              chatLLMContextTokens={chatLLM?.contextTokens}
+              isMessageSelectionMode={isMessageSelectionMode}
+              setIsMessageSelectionMode={setIsMessageSelectionMode}
+              onConversationBranch={handleConversationBranch}
+              onConversationExecuteHistory={handleConversationExecuteHistory}
+              onTextDiagram={handleTextDiagram}
+              onTextImagine={handleTextImagine}
+              onTextSpeak={handleTextSpeak}
+              sx={{
+                backgroundColor: themeBgApp,
+                minHeight: '100%', // ensures filling of the blank space on newer chats
+              }}
+            />
+
+            <Ephemerals
+              conversationId={_conversationId}
+              sx={{
+                // TODO: Fixme post panels?
+                // flexGrow: 0.1,
+                flexShrink: 0.5,
+                overflowY: 'auto',
+                minHeight: 64,
+              }} />
+
+            {/* Visibility and actions are handled via Context */}
+            <ScrollToBottomButton />
+
+          </ScrollToBottom>
 
         </Panel>
 
