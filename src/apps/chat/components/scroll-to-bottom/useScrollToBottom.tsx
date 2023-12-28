@@ -2,23 +2,19 @@ import * as React from 'react';
 
 
 export interface ScrollToBottomState {
-
   // config
-  stuckToBottom: boolean;
+  bootToBottom: boolean;
+  stickToBottom: boolean;
 
   // state
-  atTop: boolean;
-  atBottom: boolean;
-
+  booting: boolean;
+  atTop: boolean | undefined;
+  atBottom: boolean | undefined;
 }
 
 export interface ScrollToBottomActions {
-
-  scrollToBottom: (animated: boolean) => void;
-
-  stickToBottom: () => void;
-  freeScroll: () => void;
-
+  notifyBooting: () => void;
+  setStickToBottom: (stick: boolean) => void;
 }
 
 type ScrollToBottomContext = ScrollToBottomState & ScrollToBottomActions;

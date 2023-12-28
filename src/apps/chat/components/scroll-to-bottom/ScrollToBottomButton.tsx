@@ -9,10 +9,14 @@ import { useScrollToBottom } from './useScrollToBottom';
 export function ScrollToBottomButton() {
 
   // state
-  const { atBottom, stickToBottom, stuckToBottom } = useScrollToBottom();
+  const { atBottom, stickToBottom, setStickToBottom } = useScrollToBottom();
+
+  const handleStickToBottom = React.useCallback(() => {
+    setStickToBottom(true);
+  }, [setStickToBottom]);
 
   // do not render the button at all if we're already snapping
-  if (atBottom || stuckToBottom)
+  if (atBottom || stickToBottom)
     return null;
 
   return (
@@ -22,8 +26,8 @@ export function ScrollToBottomButton() {
       </Typography>
     }>
       <IconButton
-        variant='outlined' color='primary'
-        onClick={stickToBottom}
+        variant='outlined' color='primary' size='sm'
+        onClick={handleStickToBottom}
         sx={{
           // place this on the bottom-right corner (FAB-like)
           position: 'absolute',
