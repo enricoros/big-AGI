@@ -9,19 +9,19 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import { Brand } from '../app.config';
-import { CloseableMenu } from '../components/CloseableMenu';
-import { Link } from '../components/Link';
-import { LogoSquircle } from '../components/LogoSquircle';
+import { Brand } from '~/common/app.config';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { Link } from '~/common/components/Link';
+import { LogoSquircle } from '~/common/components/LogoSquircle';
+import { ROUTE_INDEX } from '~/common/app.routes';
 
-// import { AppBarSupportItem } from './AppBarSupportItem';
 import { AppBarSwitcherItem } from './AppBarSwitcherItem';
-import { closeLayoutDrawer, closeLayoutMenu, openLayoutPreferences, setLayoutDrawerAnchor, setLayoutMenuAnchor, useLayoutComponents } from './store-applayout';
+import { useOptimaLayout } from './useOptimaLayout';
 
 
 function AppBarTitle() {
   return (
-    <Link href='/'>
+    <Link href={ROUTE_INDEX}>
       <LogoSquircle sx={{
         width: 32,
         height: 32,
@@ -40,12 +40,14 @@ function AppBarTitle() {
 
 
 function CommonMenuItems(props: { onClose: () => void }) {
+
   // external state
+  const { openPreferences } = useOptimaLayout();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
-    openLayoutPreferences();
+    openPreferences();
     props.onClose();
   };
 
@@ -93,10 +95,14 @@ export function AppBar(props: { sx?: SxProps }) {
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
-  const { centerItems, drawerAnchor, drawerItems, menuAnchor, menuItems } = useLayoutComponents();
+  const {
+    appBarItems, appDrawerAnchor, appPaneContent, appMenuAnchor, appMenuItems,
+    closeAppMenu, closeAppDrawer,
+    setAppDrawerAnchor, setAppMenuAnchor,
+  } = useOptimaLayout();
 
   const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeLayoutMenu} />, []);
+    <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
 
   return <>
 
@@ -110,47 +116,47 @@ export function AppBar(props: { sx?: SxProps }) {
       }}>
 
       {/* Drawer Anchor */}
-      {!drawerItems ? (
-        <IconButton component={Link} href='/' noLinkStyle variant='plain'>
+      {!appPaneContent ? (
+        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle variant='plain'>
           <ArrowBackIcon />
         </IconButton>
       ) : (
-        <IconButton disabled={!!drawerAnchor || !drawerItems} variant='plain' onClick={event => setLayoutDrawerAnchor(event.currentTarget)}>
+        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
           <MenuIcon />
         </IconButton>
       )}
 
       {/* Center Items */}
       <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
-        {!!centerItems ? centerItems : <AppBarTitle />}
+        {!!appBarItems ? appBarItems : <AppBarTitle />}
       </Box>
 
       {/* Menu Anchor */}
-      <IconButton disabled={!!menuAnchor /*|| !menuItems*/} variant='plain' onClick={event => setLayoutMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>
 
 
     {/* Drawer Menu */}
-    {!!drawerItems && <CloseableMenu
+    {!!appPaneContent && <CloseableMenu
       maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!drawerAnchor} anchorEl={drawerAnchor} onClose={closeLayoutDrawer}
+      open={!!appDrawerAnchor} anchorEl={appDrawerAnchor} onClose={closeAppDrawer}
       placement='bottom-start'
     >
-      {drawerItems}
+      {appPaneContent}
     </CloseableMenu>}
 
     {/* Menu Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!menuAnchor} anchorEl={menuAnchor} onClose={closeLayoutMenu}
+      open={!!appMenuAnchor} anchorEl={appMenuAnchor} onClose={closeAppMenu}
       placement='bottom-end'
     >
       {commonMenuItems}
-      {!!menuItems && <ListDivider sx={{ mt: 0 }} />}
-      {!!menuItems && <Box sx={{ overflowY: 'auto' }}>{menuItems}</Box>}
-      {!!menuItems && <ListDivider sx={{ mb: 0 }} />}
+      {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
+      {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
+      {!!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
       <AppBarSwitcherItem />
       {/*<AppBarSupportItem />*/}
     </CloseableMenu>

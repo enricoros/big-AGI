@@ -4,10 +4,11 @@ import { useRouter } from 'next/router';
 import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
-import { Brand } from '../app.config';
+import { Brand } from '~/common/app.config';
+import { ROUTE_APP_CHAT, ROUTE_APP_NEWS } from '~/common/app.routes';
 
 import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
-import { closeLayoutMenu } from './store-applayout';
+import { useOptimaLayout } from './useOptimaLayout';
 
 
 // routes for the quick switcher menu item
@@ -19,7 +20,7 @@ const AppItems: ContainedAppType[] = ['chat', 'news'];
 const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } } = {
   'chat': {
     name: 'Chat',
-    route: '/',
+    route: ROUTE_APP_CHAT,
   },
   // 'data': {
   //   name: 'Data',
@@ -27,13 +28,15 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
   // },
   'news': {
     name: 'News',
-    route: '/news',
+    route: ROUTE_APP_NEWS,
   },
 };
 
 
 export function AppBarSwitcherItem() {
+
   // external state
+  const { closeAppMenu } = useOptimaLayout();
   const { route, push: routerPush } = useRouter();
 
   // find the current ContainedAppType or null
@@ -42,7 +45,7 @@ export function AppBarSwitcherItem() {
   // switcher
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
-      closeLayoutMenu();
+      closeAppMenu();
       void routerPush(AppRouteMap[app].route);
     }
   };

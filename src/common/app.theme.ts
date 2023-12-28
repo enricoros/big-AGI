@@ -48,9 +48,15 @@ export const appTheme = extendTheme({
           secondary: 'var(--joy-palette-neutral-800)',      // increase contrast a bit
           // tertiary: 'var(--joy-palette-neutral-700)',       // increase contrast a bit
         },
-        // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300] > body [white -> 400]
+        // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300 -> unused] > body [white -> 300]
         background: {
-          body: 'var(--joy-palette-neutral-400, #9FA6AD)',  // background to stand back after all levels
+          // New
+          surface: 'var(--joy-palette-neutral-50, #FBFCFE)',
+          level1: 'var(--joy-palette-neutral-100, #F0F4F8)',
+          level2: 'var(--joy-palette-neutral-200, #DDE7EE)',
+          body: 'var(--joy-palette-neutral-300, #CDD7E1)',
+          // Former
+          // body: 'var(--joy-palette-neutral-400, #9FA6AD)',
         },
       },
     },
@@ -62,10 +68,12 @@ export const appTheme = extendTheme({
           // tertiary: 'var(--joy-palette-neutral-400, #9FA6AD)',
         },
         background: {
-          surface: 'var(--joy-palette-neutral-900, #131318)',
-          level1: 'var(--joy-palette-common-black, #09090D)',
-          level2: 'var(--joy-palette-neutral-800, #25252D)',
-          // popup: 'var(--joy-palette-common-black, #09090D)',
+          // New
+          surface: 'var(--joy-palette-neutral-800, #171A1C)',
+          level1: 'var(--joy-palette-neutral-900, #0B0D0E)',
+          level2: 'var(--joy-palette-neutral-800, #171A1C)',
+          body: 'var(--joy-palette-common-black, #000)',
+          // Former: surface [900] > level 1 [black], level 2 [800] > body [black]
         },
       },
     },
@@ -133,6 +141,10 @@ export const appTheme = extendTheme({
     },
   },
 });
+
+export const themeBgApp = 'background.level1';
+export const themeBgAppDarker = 'background.level2';
+export const themeBgAppChatComposer = 'background.surface';
 
 export const bodyFontClassName = inter.className;
 export const themeBreakpoints = appTheme.breakpoints.values;

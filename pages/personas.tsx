@@ -2,13 +2,9 @@ import * as React from 'react';
 
 import { AppPersonas } from '../src/apps/personas/AppPersonas';
 
-import { AppLayout } from '~/common/layout/AppLayout';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 export default function PersonasPage() {
-  return (
-    <AppLayout>
-      <AppPersonas />
-    </AppLayout>
-  );
+  return withLayout({ type: 'optima' }, <AppPersonas />);
 }

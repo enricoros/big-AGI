@@ -13,7 +13,6 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { closeLayoutPreferences, openLayoutShortcuts, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -102,20 +101,24 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
  */
-export function SettingsModal() {
+export function SettingsModal(props: {
+  open: boolean,
+  tabIndex: number,
+  onClose: () => void,
+  onOpenShortcuts: () => void,
+}) {
 
   // external state
   const isMobile = useIsMobile();
-  const settingsTabIndex = useLayoutPreferencesTab();
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal
       title='Preferences' strongerTitle
-      open={!!settingsTabIndex} onClose={closeLayoutPreferences}
+      open={props.open} onClose={props.onClose}
       startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={openLayoutShortcuts}>
+        <Button variant='soft' onClick={props.onOpenShortcuts}>
           👉 See Shortcuts
         </Button>
       )}
@@ -126,7 +129,7 @@ export function SettingsModal() {
 
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsTabIndex}>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
         <TabList
           variant='soft'
           disableUnderline

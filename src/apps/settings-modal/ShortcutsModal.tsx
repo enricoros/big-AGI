@@ -3,7 +3,6 @@ import * as React from 'react';
 import { ChatMessage } from '../chat/components/message/ChatMessage';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { closeLayoutShortcuts, useLayoutShortcuts } from '~/common/layout/store-applayout';
 import { createDMessage } from '~/common/state/store-chats';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
@@ -36,17 +35,9 @@ const shortcutsMd = `
 const shortcutsMessage = createDMessage('assistant', platformAwareKeystrokes(shortcutsMd));
 
 
-export function ShortcutsModal() {
-
-  // external state
-  const showShortcuts = useLayoutShortcuts();
-
+export function ShortcutsModal(props: { onClose: () => void }) {
   return (
-    <GoodModal
-      open={showShortcuts}
-      title='Desktop Shortcuts'
-      onClose={closeLayoutShortcuts}
-    >
+    <GoodModal open title='Desktop Shortcuts' onClose={props.onClose}>
       <ChatMessage message={shortcutsMessage} hideAvatars noBottomBorder sx={{ p: 0, m: 0 }} />
     </GoodModal>
   );

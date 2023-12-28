@@ -9,8 +9,8 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { isPwa } from '~/common/util/pwaUtils';
-import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -18,10 +18,14 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 const SHOW_PURPOSE_FINDER = false;
 
 
-const ModelOptionsButton = () =>
-  <Button
+const ModelsSetupButton = () => {
+
+  // external state
+  const { openModelsSetup } = useOptimaLayout();
+
+  return <Button
     // variant='soft' color='success'
-    onClick={openLayoutModelsSetup}
+    onClick={openModelsSetup}
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
@@ -29,6 +33,7 @@ const ModelOptionsButton = () =>
   >
     Models
   </Button>;
+};
 
 
 export function AppChatSettingsUI() {
@@ -64,7 +69,7 @@ export function AppChatSettingsUI() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='AI Models'
                       description='Setup' />
-      <ModelOptionsButton />
+      <ModelsSetupButton />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>

@@ -12,6 +12,7 @@ import { isBrowser } from './util/pwaUtils';
 
 export const ROUTE_INDEX = '/';
 export const ROUTE_APP_CHAT = '/';
+export const ROUTE_APP_CALL = '/call';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
 export const ROUTE_APP_PERSONAS = '/personas';
@@ -39,21 +40,6 @@ export const getChatLinkRelativePath = (chatLinkId: string) => ROUTE_APP_LINK_CH
 
 export const navigateToIndex = navigateFn(ROUTE_INDEX);
 
-export const navigateToChat = async (conversationId?: DConversationId) => {
-  if (conversationId) {
-    await Router.push(
-      {
-        pathname: ROUTE_APP_CHAT,
-        query: {
-          conversationId,
-        },
-      },
-      ROUTE_APP_CHAT,
-    );
-  } else {
-    await Router.push(ROUTE_APP_CHAT, ROUTE_APP_CHAT);
-  }
-};
 export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
 
 export const navigateToPersonas = navigateFn(ROUTE_APP_PERSONAS);
@@ -69,6 +55,24 @@ function navigateFn(path: string) {
 
 /// Launch Apps
 
+/* Note: not used yet
+export interface AppChatQueryParams {
+  conversationId?: string;
+}*/
+
+export const launchAppChat = async (conversationId?: DConversationId) => {
+  await Router.push(
+    {
+      pathname: ROUTE_APP_CHAT,
+      query: conversationId ? {
+          conversationId,
+        } /*satisfies AppChatQueryParams*/
+        : undefined,
+    },
+    ROUTE_APP_CHAT,
+  );
+};
+
 export interface AppCallQueryParams {
   conversationId: string;
   personaId: string;
@@ -77,12 +81,12 @@ export interface AppCallQueryParams {
 export function launchAppCall(conversationId: string, personaId: string) {
   void Router.push(
     {
-      pathname: `/call`,
+      pathname: ROUTE_APP_CALL,
       query: {
         conversationId,
         personaId,
       } satisfies AppCallQueryParams,
     },
-    // '/call',
+    // ROUTE_APP_CALL,
   ).then();
 }

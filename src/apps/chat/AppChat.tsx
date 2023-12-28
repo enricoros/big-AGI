@@ -1,7 +1,8 @@
 import * as React from 'react';
-
-import { Box } from '@mui/joy';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+
+import { Box, useTheme } from '@mui/joy';
 
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
@@ -18,7 +19,8 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { openLayoutLLMOptions, useLayoutPluggable } from '~/common/layout/store-applayout';
+import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
+import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
@@ -29,7 +31,9 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
-import { usePanesManager } from './components/usePanesManager';
+import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
+import { usePanesManager } from './components/panes/usePanesManager';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseUpdatingState } from './editors/browse-load';
@@ -62,6 +66,10 @@ export function AppChat() {
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // external state
+  const theme = useTheme();
+
+  const { openLlmOptions } = useOptimaLayout();
+
   const { chatLLM } = useChatLLM();
 
   const {
@@ -70,7 +78,10 @@ export function AppChat() {
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
     openConversationInSplitPane,
-    setFocusedPaneIndex,
+    paneIndex,
+    duplicatePane,
+    removePane,
+    setFocusedPane,
   } = usePanesManager();
 
   const {
@@ -92,11 +103,8 @@ export function AppChat() {
 
   // Window actions
 
-  const chatPaneIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
-
-  const setActivePaneIndex = React.useCallback((idx: number) => {
-    setFocusedPaneIndex(idx);
-  }, [setFocusedPaneIndex]);
+  const panesConversationIDs = chatPanes.length > 0 ? chatPanes.map(pane => pane.conversationId) : [null];
+  const isSplitPane = chatPanes.length > 1;
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -105,6 +113,13 @@ export function AppChat() {
   const openSplitConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInSplitPane(conversationId);
   }, [openConversationInSplitPane]);
+
+  const toggleSplitPane = React.useCallback(() => {
+    if (isSplitPane)
+      removePane(paneIndex ?? chatPanes.length - 1);
+    else
+      duplicatePane(paneIndex ?? chatPanes.length - 1);
+  }, [chatPanes.length, duplicatePane, isSplitPane, paneIndex, removePane]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -324,8 +339,8 @@ export function AppChat() {
   const handleOpenChatLlmOptions = React.useCallback(() => {
     const { chatLLMId } = useModelsStore.getState();
     if (!chatLLMId) return;
-    openLayoutLLMOptions(chatLLMId);
-  }, []);
+    openLlmOptions(chatLLMId);
+  }, [openLlmOptions]);
 
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     ['o', true, true, false, handleOpenChatLlmOptions],
@@ -343,8 +358,12 @@ export function AppChat() {
   // Pluggable ApplicationBar components
 
   const centerItems = React.useMemo(() =>
-      <ChatDropdowns conversationId={focusedConversationId} />,
-    [focusedConversationId],
+      <ChatDropdowns
+        conversationId={focusedConversationId}
+        isSplitPanes={isSplitPane}
+        onToggleSplitPanes={toggleSplitPane}
+      />,
+    [focusedConversationId, isSplitPane, toggleSplitPane],
   );
 
   const drawerItems = React.useMemo(() =>
@@ -375,63 +394,95 @@ export function AppChat() {
     [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
-  useLayoutPluggable(centerItems, drawerItems, menuItems);
+  usePluggableOptimaLayout(drawerItems, centerItems, menuItems, 'AppChat');
 
   return <>
 
-    <Box sx={{
-      flexGrow: 1,
-      display: 'flex', flexDirection: { xs: 'column', md: 'row' },
-      overflow: 'clip',
-    }}>
+    <PanelGroup direction='horizontal'>
 
-      {chatPaneIDs.map((_conversationId, idx) => (
-        <Box key={'chat-pane-' + idx} onClick={() => setActivePaneIndex(idx)} sx={{
-          flexGrow: 1, flexBasis: 1,
-          display: 'flex', flexDirection: 'column',
-          overflow: 'clip',
-        }}>
+      {panesConversationIDs.map((_conversationId, idx, panels) => <React.Fragment key={`chat-pane-${idx}-${panels.length}-${_conversationId}`}>
 
-          <ChatMessageList
-            conversationId={_conversationId}
-            capabilityHasT2I={capabilityHasT2I}
-            chatLLMContextTokens={chatLLM?.contextTokens}
-            isMessageSelectionMode={isMessageSelectionMode}
-            setIsMessageSelectionMode={setIsMessageSelectionMode}
-            onConversationBranch={handleConversationBranch}
-            onConversationExecuteHistory={handleConversationExecuteHistory}
-            onTextDiagram={handleTextDiagram}
-            onTextImagine={handleTextImagine}
-            onTextSpeak={handleTextSpeak}
+        <Panel
+          id={'chat-pane-' + _conversationId}
+          order={idx}
+          collapsible
+          defaultSize={panels.length > 0 ? Math.round(100 / panels.length) : undefined}
+          minSize={20}
+          onClick={() => setFocusedPane(idx)}
+          onCollapse={() => setTimeout(() => removePane(idx), 50)}
+          style={{
+            // for anchoring the scroll button in place
+            position: 'relative',
+            // border only for active pane (if two or more panes)
+            ...(panesConversationIDs.length < 2 ? {}
+              : (_conversationId === focusedConversationId)
+                ? { border: `2px solid ${theme.palette.primary.solidBg}` }
+                : { border: `2px solid ${theme.palette.background.level1}` }),
+          }}
+        >
+
+          <ScrollToBottom
+            bootToBottom
+            stickToBottom
             sx={{
-              flexGrow: 1,
-              backgroundColor: 'background.level1',
+              // allows the content to be scrolled (all browsers)
               overflowY: 'auto',
-              minHeight: 96,
-              // outline the current focused pane
-              ...(chatPaneIDs.length < 2 ? {}
-                : (_conversationId === focusedConversationId)
-                  ? {
-                    border: '2px solid',
-                    borderColor: 'primary.solidBg',
-                  } : {
-                    padding: '2px',
-                  }),
+              // actually make sure this scrolls & fills
+              height: '100%',
             }}
-          />
+          >
 
-          <Ephemerals
-            conversationId={_conversationId}
-            sx={{
-              // flexGrow: 0.1,
-              flexShrink: 0.5,
-              overflowY: 'auto',
-              minHeight: 64,
+            <ChatMessageList
+              conversationId={_conversationId}
+              capabilityHasT2I={capabilityHasT2I}
+              chatLLMContextTokens={chatLLM?.contextTokens}
+              isMessageSelectionMode={isMessageSelectionMode}
+              setIsMessageSelectionMode={setIsMessageSelectionMode}
+              onConversationBranch={handleConversationBranch}
+              onConversationExecuteHistory={handleConversationExecuteHistory}
+              onTextDiagram={handleTextDiagram}
+              onTextImagine={handleTextImagine}
+              onTextSpeak={handleTextSpeak}
+              sx={{
+                backgroundColor: themeBgApp,
+                minHeight: '100%', // ensures filling of the blank space on newer chats
+              }}
+            />
+
+            <Ephemerals
+              conversationId={_conversationId}
+              sx={{
+                // TODO: Fixme post panels?
+                // flexGrow: 0.1,
+                flexShrink: 0.5,
+                overflowY: 'auto',
+                minHeight: 64,
+              }} />
+
+            {/* Visibility and actions are handled via Context */}
+            <ScrollToBottomButton />
+
+          </ScrollToBottom>
+
+        </Panel>
+
+        {/* Panel Separators & Resizers */}
+        {idx < panels.length - 1 && (
+          <PanelResizeHandle>
+            <Box sx={{
+              backgroundColor: themeBgApp,
+              height: '100%',
+              width: '4px',
+              '&:hover': {
+                backgroundColor: 'primary.softActiveBg',
+              },
             }} />
+          </PanelResizeHandle>
+        )}
 
-        </Box>
-      ))}
-    </Box>
+      </React.Fragment>)}
+
+    </PanelGroup>
 
     <Composer
       chatLLM={chatLLM}
@@ -443,7 +494,7 @@ export function AppChat() {
       onTextImagine={handleTextImagine}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
-        backgroundColor: 'background.surface',
+        backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
         borderTopColor: 'divider',
         p: { xs: 1, md: 2 },
