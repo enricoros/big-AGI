@@ -22,12 +22,13 @@ import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
-import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
+import { ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 function CallMenuItems(props: {
@@ -178,7 +179,7 @@ export function CallUI(props: {
       case 'Goodbye.':
         setStage('ended');
         setTimeout(() => {
-          void routerPush('/');
+          void routerPush(ROUTE_APP_CHAT);
         }, 2000);
         return;
       // command: regenerate answer
@@ -272,7 +273,7 @@ export function CallUI(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  useLayoutPluggable(chatLLMDropdown, null, menuItems);
+  usePluggableOptimaLayout(null, chatLLMDropdown, menuItems, 'CallUI');
 
 
   return <>
@@ -366,7 +367,7 @@ export function CallUI(props: {
       )}
 
       {/* [ended] Back / Call Again */}
-      {(isEnded || isDeclined) && <Link noLinkStyle href='/'><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
+      {(isEnded || isDeclined) && <Link noLinkStyle href={ROUTE_APP_CHAT}><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
       {(isEnded || isDeclined) && <CallButton Icon={CallIcon} text='Call Again' color='success' variant='soft' onClick={() => setStage('connected')} />}
 
     </Box>

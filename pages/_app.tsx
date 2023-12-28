@@ -10,11 +10,12 @@ import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
 
-import { ProviderBackend } from '~/common/state/ProviderBackend';
-import { ProviderSingleTab } from '~/common/state/ProviderSingleTab';
-import { ProviderSnacks } from '~/common/state/ProviderSnacks';
-import { ProviderTRPCQueryClient } from '~/common/state/ProviderTRPCQueryClient';
-import { ProviderTheming } from '~/common/state/ProviderTheming';
+import { ProviderBackendAndNoSSR } from '~/common/providers/ProviderBackendAndNoSSR';
+import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
+import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
+import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
+import { ProviderTRPCQueryClient } from '~/common/providers/ProviderTRPCQueryClient';
+import { ProviderTheming } from '~/common/providers/ProviderTheming';
 
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
@@ -27,13 +28,15 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
 
     <ProviderTheming emotionCache={emotionCache}>
       <ProviderSingleTab>
-        <ProviderTRPCQueryClient>
-          <ProviderSnacks>
-            <ProviderBackend>
-              <Component {...pageProps} />
-            </ProviderBackend>
-          </ProviderSnacks>
-        </ProviderTRPCQueryClient>
+        <ProviderBootstrapLogic>
+          <ProviderTRPCQueryClient>
+            <ProviderSnacks>
+              <ProviderBackendAndNoSSR>
+                <Component {...pageProps} />
+              </ProviderBackendAndNoSSR>
+            </ProviderSnacks>
+          </ProviderTRPCQueryClient>
+        </ProviderBootstrapLogic>
       </ProviderSingleTab>
     </ProviderTheming>
 

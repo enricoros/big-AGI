@@ -444,7 +444,6 @@ export function ChatMessage(props: {
           borderBottomColor: 'divider',
         }),
         ...(ENABLE_COPY_MESSAGE_OVERLAY && { position: 'relative' }),
-        ...(props.isBottom === true && { mb: 'auto' }),
         '&:hover > button': { opacity: 1 },
         ...props.sx,
       }}

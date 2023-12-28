@@ -9,7 +9,8 @@ import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/app.routes';
+import { launchAppChat } from '~/common/app.routes';
+import { themeBgAppDarker } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -58,7 +59,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat(importedId);
+    await launchAppChat(importedId);
     setCloning(false);
   };
 
@@ -67,7 +68,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
 
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level3',
+      backgroundColor: themeBgAppDarker,
       display: 'flex', flexFlow: 'column nowrap', minHeight: 96, alignItems: 'center',
       gap: { xs: 4, md: 5, xl: 6 },
       px: { xs: 2 },

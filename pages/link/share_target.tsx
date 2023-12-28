@@ -8,10 +8,11 @@ import { setComposerStartupText } from '../../src/apps/chat/components/composer/
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { AppLayout } from '~/common/layout/AppLayout';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex } from '~/common/app.routes';
+import { themeBgApp } from '~/common/app.theme';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 /**
@@ -90,7 +91,7 @@ function AppShareTarget() {
   return (
 
     <Box sx={{
-      backgroundColor: 'background.level2',
+      backgroundColor: themeBgApp,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       flexGrow: 1,
     }}>
@@ -132,10 +133,6 @@ function AppShareTarget() {
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
  * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
-export default function LaunchPage() {
-  return (
-    <AppLayout>
-      <AppShareTarget />
-    </AppLayout>
-  );
+export default function ShareTargetPage() {
+  return withLayout({ type: 'plain' }, <AppShareTarget />);
 }

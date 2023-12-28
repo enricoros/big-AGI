@@ -11,9 +11,9 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import WarningIcon from '@mui/icons-material/Warning';
 
 import { navigateBack } from '~/common/app.routes';
-import { openLayoutPreferences } from '~/common/layout/store-applayout';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/state/store-chats';
+import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUICounter } from '~/common/state/store-ui';
 
 
@@ -81,6 +81,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
   const [recognitionOverride, setRecognitionOverride] = React.useState(false);
 
   // external state
+  const { openPreferences } = useOptimaLayout();
   const recognition = useCapabilityBrowserSpeechRecognition();
   const synthesis = useCapabilityElevenLabs();
   const chatIsEmpty = useChatStore(state => {
@@ -103,7 +104,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
   const handleOverrideRecognition = () => setRecognitionOverride(true);
 
   const handleConfigureElevenLabs = () => {
-    openLayoutPreferences(3);
+    openPreferences(3);
   };
 
   const handleFinishButton = () => {
