@@ -16,6 +16,7 @@ import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
+import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
 
 
 /**
@@ -40,6 +41,7 @@ export function ChatMessageList(props: {
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
+  const { notifyBooting } = useScrollToBottom();
   const { openPreferences } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
@@ -158,10 +160,19 @@ export function ChatMessageList(props: {
     return { diffMessage: undefined, diffText: undefined };
   }, [conversationMessages]);
 
+
+  // scroll to the very bottom of a new chat
+  React.useEffect(() => {
+    if (conversationId)
+      notifyBooting();
+  }, [conversationId, notifyBooting]);
+
+
   // no content: show the persona selector
 
   const filteredMessages = conversationMessages
     .filter(m => m.role !== 'system' || showSystemMessages); // hide the System message if the user choses to
+
 
   if (!filteredMessages.length)
     return (
@@ -192,7 +203,7 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {filteredMessages.map((message, idx, {length: count}) =>
+      {filteredMessages.map((message, idx, { length: count }) =>
         props.isMessageSelectionMode ? (
 
           <CleanerMessage
