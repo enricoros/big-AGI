@@ -3,12 +3,10 @@ import * as React from 'react';
 
 export interface ScrollToBottomState {
   // config
-  bootToBottom: boolean;
   stickToBottom: boolean;
 
   // state
   booting: boolean;
-  atTop: boolean | undefined;
   atBottom: boolean | undefined;
 }
 
