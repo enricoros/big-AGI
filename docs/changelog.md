@@ -5,12 +5,22 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.9.0 - Dec 2023
+### 1.10.0 - Jan 2024
 
+- milestone: [1.10.0](https://github.com/enricoros/big-agi/milestone/10)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
-- milestone: [1.9.0](https://github.com/enricoros/big-agi/milestone/9)
 
-### What's New in 1.8.0 · Dec 20, 2023 · To The Moon And Back · 🚀🌕🔙
+### What's New in 1.9.0 · Dec 28, 2023 · Creative Horizons
+
+- **DALL·E 3 integration** for enhanced image generation. [#212](https://github.com/enricoros/big-AGI/issues/212)
+- **Perfect scrolling mechanics** across devices. [#304](https://github.com/enricoros/big-AGI/issues/304)
+- Persona creation now supports **text input**. [#287](https://github.com/enricoros/big-AGI/pull/287)
+- Openrouter updates for better model management and rate limit handling
+- Image drawing UX improvements
+- Layout fix for Firefox users
+- Developer enhancements: Text2Image subsystem, Optima layout, ScrollToBottom library, Panes library, and Llms subsystem updates.
+
+### What's New in 1.8.0 · Dec 20, 2023 · To The Moon And Back
 
 - **Google Gemini Support**: Use the newest Google models. [#275](https://github.com/enricoros/big-agi/issues/275)
 - **Mistral Platform**: Mixtral and future models support. [#273](https://github.com/enricoros/big-agi/issues/273)
