@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-
+/**
+ * State is minimal - to keep state machinery stable and simple
+ */
 export interface ScrollToBottomState {
   // config
   stickToBottom: boolean;
@@ -10,6 +12,9 @@ export interface ScrollToBottomState {
   atBottom: boolean | undefined;
 }
 
+/**
+ * Actions are very simplified, for providing a minimal control surface from the outside
+ */
 export interface ScrollToBottomActions {
   notifyBooting: () => void;
   setStickToBottom: (stick: boolean) => void;
@@ -17,12 +22,11 @@ export interface ScrollToBottomActions {
 
 type ScrollToBottomContext = ScrollToBottomState & ScrollToBottomActions;
 
-// React Context with ...state and ...actions
 const UseScrollToBottom = React.createContext<ScrollToBottomContext | undefined>(undefined);
 
 export const UseScrollToBottomProvider = UseScrollToBottom.Provider;
 
-export const useScrollToBottom = (): ScrollToBottomState & ScrollToBottomActions => {
+export const useScrollToBottom = (): ScrollToBottomContext => {
   const context = React.useContext(UseScrollToBottom);
   if (!context)
     throw new Error('useScrollToBottom must be used within a ScrollToBottomProvider');
