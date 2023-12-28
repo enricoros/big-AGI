@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, IconButton, Tooltip, Typography } from '@mui/joy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReplayIcon from '@mui/icons-material/Replay';
 
@@ -69,8 +69,12 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
   const { url, alt } = props.imageBlock;
   const imageUrls = url.split('\n');
 
-  return imageUrls.map((url, index) => (
-    <Box
+  return imageUrls.map((url, index) => {
+
+    // display a notice for temporary images DallE
+    const isTempDalleUrl = url.startsWith('https://oaidalle');
+
+    return <Box
       key={'gen-img-' + index}
       sx={{
         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
@@ -82,13 +86,29 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
         '& picture': { display: 'flex' },
         '& img': { maxWidth: '100%', maxHeight: '100%' },
         '&:hover > .overlay-buttons': { opacity: 1 },
-      }}>
+      }}
+    >
 
       {/* External Image */}
       {alt ? (
         <Tooltip
           variant='outlined' color='neutral'
-          title={<Typography level='title-sm' sx={{ p: 2 }}>{alt}</Typography>}
+          title={
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
+                <Typography level='title-sm'>⚠️ Temporary Image</Typography>
+                <Typography level='body-sm'>
+                  This image will be deleted from the OpenAI servers in one hour. <b>Please save it to your device</b>.
+                </Typography>
+                {/*<Typography level='body-xs'>*/}
+                {/*  The following is the re-written DALL·E prompt that generated this image.*/}
+                {/*</Typography>*/}
+              </Alert>}
+              <Typography level='title-sm' sx={{ p: 2 }}>
+                {alt}
+              </Typography>
+            </Box>
+          }
           placement='top-start'
           sx={{
             maxWidth: { sm: '90vw', md: '70vw' },
@@ -116,6 +136,6 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
           </IconButton>
         </Tooltip>
       </Box>
-    </Box>
-  ));
+    </Box>;
+  });
 };
