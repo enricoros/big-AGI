@@ -161,8 +161,7 @@ export function ChatMessageList(props: {
   // no content: show the persona selector
 
   const filteredMessages = conversationMessages
-    .filter(m => m.role !== 'system' || showSystemMessages) // hide the System message if the user choses to
-    .reverse(); // 'reverse' is because flexDirection: 'column-reverse' to auto-snap-to-bottom
+    .filter(m => m.role !== 'system' || showSystemMessages); // hide the System message if the user choses to
 
   if (!filteredMessages.length)
     return (
@@ -177,7 +176,8 @@ export function ChatMessageList(props: {
     <List sx={{
       p: 0, ...(props.sx || {}),
       // this makes sure that the the window is scrolled to the bottom (column-reverse)
-      display: 'flex', flexDirection: 'column-reverse',
+      display: 'flex',
+      flexDirection: 'column',
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
       // marginBottom: '-1px',
     }}>
