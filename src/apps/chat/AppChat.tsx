@@ -31,7 +31,7 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
-import { usePanesManager } from './components/usePanesManager';
+import { usePanesManager } from './components/panes/usePanesManager';
 
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseUpdatingState } from './editors/browse-load';
