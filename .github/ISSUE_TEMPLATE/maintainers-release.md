@@ -9,7 +9,7 @@ assignees: enricoros
 
 ## Release checklist:
 
-- [x] Create a new [Release Issue](https://github.com/enricoros/big-AGI/issues/new?assignees=enricoros&template=maintainers-release.md&title=Release+1.2.3)
+- [x] Create a new [Release Issue](https://github.com/enricoros/big-AGI/issues/new?assignees=enricoros&projects=enricoros/4&template=maintainers-release.md&title=Release+1.2.3)
   - [ ] Replace 1.1.0 with the _former_ release, and _1.2.3_ with THIS
 - [ ] Update the [Roadmap](https://github.com/users/enricoros/projects/4/views/2) calling out shipped features
 - [ ] Create and update a [Milestone](https://github.com/enricoros/big-agi/milestones) for the release
