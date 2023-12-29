@@ -1,8 +1,8 @@
 import * as React from 'react';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Panel, PanelGroup } from 'react-resizable-panels';
 
-import { Box, useTheme } from '@mui/joy';
+import { useTheme } from '@mui/joy';
 
 import { CmdRunBrowse } from '~/modules/browse/browse.client';
 import { CmdRunReact } from '~/modules/aifn/react/react';
@@ -17,6 +17,7 @@ import { useChatLLM, useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GoodPanelResizeHandler } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
@@ -398,7 +399,10 @@ export function AppChat() {
 
   return <>
 
-    <PanelGroup direction='horizontal'>
+    <PanelGroup
+      direction='horizontal'
+      id='app-chat-panels'
+    >
 
       {panesConversationIDs.map((_conversationId, idx, panels) => <React.Fragment key={`chat-pane-${idx}-${panels.length}-${_conversationId}`}>
 
@@ -467,18 +471,7 @@ export function AppChat() {
         </Panel>
 
         {/* Panel Separators & Resizers */}
-        {idx < panels.length - 1 && (
-          <PanelResizeHandle>
-            <Box sx={{
-              backgroundColor: themeBgApp,
-              height: '100%',
-              width: '4px',
-              '&:hover': {
-                backgroundColor: 'primary.softActiveBg',
-              },
-            }} />
-          </PanelResizeHandle>
-        )}
+        {idx < panels.length - 1 && <GoodPanelResizeHandler />}
 
       </React.Fragment>)}
 
