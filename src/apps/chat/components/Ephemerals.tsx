@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Grid, IconButton, Sheet, Stack, styled, Typography, useTheme } from '@mui/joy';
+import { Box, Grid, IconButton, Sheet, styled, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -52,11 +52,11 @@ function StateRenderer(props: { state: object }) {
   const entries = Object.entries(props.state);
 
   return (
-    <Stack>
-      <Typography level='body-sm' sx={{ mb: 1 }}>
-        Internal State
+    <Box>
+      <Typography fontSize='smaller' sx={{ mb: 1 }}>
+        ## Internal State
       </Typography>
-      <Sheet>
+      <Sheet sx={{ p: 1 }}>
         {!entries && <Typography level='body-sm'>No state variables</Typography>}
         {entries.map(([key, value]) =>
           isPrimitive(value)
@@ -68,7 +68,7 @@ function StateRenderer(props: { state: object }) {
                 : <Typography key={'state-' + key} level='body-sm'>{key}: {value}</Typography>,
         )}
       </Sheet>
-    </Stack>
+    </Box>
   );
 }
 
@@ -84,8 +84,8 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     }}>
 
     {/* Title */}
-    {ephemeral.title && <Typography>
-      {ephemeral.title} <b>Development Tools</b>
+    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1 }}>
+      {ephemeral.title} Development Tools
     </Typography>}
 
     {/* Vertical | split */}
