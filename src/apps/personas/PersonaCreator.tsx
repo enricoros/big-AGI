@@ -10,6 +10,7 @@ import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { lineHeightChatText, lineHeightTextarea } from '~/common/app.theme';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
@@ -174,7 +175,7 @@ export function PersonaCreator() {
             '&:focus-within': {
               backgroundColor: 'background.popup',
             },
-            lineHeight: 1.75,
+            lineHeight: lineHeightTextarea,
             mb: 1.5,
           }}
         />
@@ -219,7 +220,7 @@ export function PersonaCreator() {
           <Alert variant='soft' color='success' sx={{ mb: 1 }}>
             You may now copy the text below and use it as Custom prompt!
           </Alert>
-          <Typography level='title-sm' sx={{ lineHeight: 1.75 }}>
+          <Typography level='title-sm' sx={{ lineHeight: lineHeightChatText }}>
             {chainOutput}
           </Typography>
         </CardContent>

@@ -26,6 +26,7 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
+import { lineHeightTextarea } from '~/common/app.theme';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
@@ -465,7 +466,7 @@ export function Composer(props: {
                     '&:focus-within': {
                       backgroundColor: 'background.popup',
                     },
-                    lineHeight: 1.75,
+                    lineHeight: lineHeightTextarea,
                   }} />
 
                 {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (

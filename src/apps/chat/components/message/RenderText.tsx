@@ -13,7 +13,6 @@ export const RenderText = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxPro
   return (
     <Typography
       sx={{
-        lineHeight: 1.75,
         mx: 1.5,
         display: 'flex', alignItems: 'baseline',
         overflowWrap: 'anywhere',

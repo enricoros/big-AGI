@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
-import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -29,7 +29,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { cssRainbowColorKeyframes, lineHeightChatText } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -409,15 +409,19 @@ export function ChatMessage(props: {
   // per-blocks css
   const blockSx: SxProps = {
     my: 'auto',
+    lineHeight: lineHeightChatText,
+  };
+  const typographySx: SxProps = {
+    lineHeight: lineHeightChatText,
   };
   const codeSx: SxProps = {
     // backgroundColor: fromAssistant ? 'background.level1' : 'background.level1',
     backgroundColor: props.codeBackground ? props.codeBackground : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
     boxShadow: 'xs',
     fontFamily: 'code',
-    fontSize: '14px',
+    fontSize: '0.875rem',
     fontVariantLigatures: 'none',
-    lineHeight: 1.75,
+    lineHeight: lineHeightChatText,
     borderRadius: 'var(--joy-radius-sm)',
   };
 
@@ -482,7 +486,12 @@ export function ChatMessage(props: {
       {/* Edit / Blocks */}
       {isEditing
 
-        ? <InlineTextarea initialText={messageText} onEdit={handleTextEdited} sx={{ ...blockSx, lineHeight: 1.75, flexGrow: 1 }} />
+        ? <InlineTextarea
+          initialText={messageText} onEdit={handleTextEdited}
+          sx={{
+            ...blockSx,
+            flexGrow: 1,
+          }} />
 
         : <Box
           onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
@@ -526,12 +535,12 @@ export function ChatMessage(props: {
                     : block.type === 'image'
                       ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={handleOpsConversationRestartFrom} />
                       : block.type === 'latex'
-                        ? <RenderLatex key={'latex-' + index} latexBlock={block} />
+                        ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={typographySx} />
                         : block.type === 'diff'
-                          ? <RenderTextDiff key={'latex-' + index} diffBlock={block} />
+                          ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={typographySx} />
                           : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
-                            : <RenderText key={'text-' + index} textBlock={block} />)}
+                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={typographySx} />
+                            : <RenderText key={'text-' + index} textBlock={block} sx={typographySx} />)}
 
           {isCollapsed && (
             <Button variant='plain' color='neutral' onClick={handleUncollapse}>... expand ...</Button>
