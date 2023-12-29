@@ -33,6 +33,7 @@ export function CloseableMenu(props: {
   noBottomPadding?: boolean,
   sx?: SxProps,
   zIndex?: number,
+  listRef?: React.Ref<HTMLUListElement>,
   children?: React.ReactNode,
 }) {
 
@@ -71,6 +72,7 @@ export function CloseableMenu(props: {
     >
       <ClickAwayListener onClickAway={handleClose}>
         <MenuList
+          ref={props.listRef}
           // variant={props.variant} color={props.color}
           onKeyDown={handleListKeyDown}
           sx={{
