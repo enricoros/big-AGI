@@ -5,7 +5,7 @@ import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
 import { Brand } from '~/common/app.config';
-import { bodyFontClassName, createEmotionCache } from '~/common/app.theme';
+import { createEmotionCache } from '~/common/app.theme';
 
 
 interface MyDocumentProps extends DocumentProps {
@@ -14,7 +14,7 @@ interface MyDocumentProps extends DocumentProps {
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
-    <Html lang='en' className={bodyFontClassName}>
+    <Html lang='en'>
       <Head>
         {/* Meta (missing Title, set by the App or Page) */}
         <meta name='description' content={Brand.Meta.Description} />
@@ -51,9 +51,9 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {emotionStyleTags}
       </Head>
       <body>
-        {getInitColorSchemeScript()}
-        <Main />
-        <NextScript />
+      {getInitColorSchemeScript()}
+      <Main />
+      <NextScript />
       </body>
     </Html>
   );
