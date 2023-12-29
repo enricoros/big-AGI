@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, IconButton, Tooltip } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
-import { CameraCaptureModal } from './CameraCaptureModal';
+import { CameraCaptureModal } from '../CameraCaptureModal';
 
 
 const attachCameraLegend = (isMobile: boolean) =>
