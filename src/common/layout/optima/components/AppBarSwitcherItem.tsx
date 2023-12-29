@@ -8,7 +8,7 @@ import { Brand } from '~/common/app.config';
 import { ROUTE_APP_CHAT, ROUTE_APP_NEWS } from '~/common/app.routes';
 
 import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
-import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaLayout } from '../useOptimaLayout';
 
 
 // routes for the quick switcher menu item
