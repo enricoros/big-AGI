@@ -454,33 +454,40 @@ export function ChatMessage(props: {
     >
 
       {/* Avatar */}
-      {showAvatars && <Stack
-        sx={{ alignItems: 'center', minWidth: { xs: 50, md: 64 }, maxWidth: 80, textAlign: 'center' }}
-        onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-        onClick={event => setOpsMenuAnchor(event.currentTarget)}>
+      {showAvatars && (
+        <Box
+          onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
+          onClick={event => setOpsMenuAnchor(event.currentTarget)}
+          sx={{
+            // flexBasis: 0, // this won't let the item grow
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            minWidth: { xs: 50, md: 64 }, maxWidth: 80,
+            textAlign: 'center',
+          }}
+        >
 
-        {isHovering ? (
-          <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
-            <MoreVertIcon />
-          </IconButton>
-        ) : (
-          avatarEl
-        )}
+          {isHovering ? (
+            <IconButton variant='soft' color={fromAssistant ? 'neutral' : 'primary'}>
+              <MoreVertIcon />
+            </IconButton>
+          ) : (
+            avatarEl
+          )}
 
-        {/* Assistant model name */}
-        {fromAssistant && (
-          <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
-            <Typography level='body-sm' sx={{
-              fontSize: { xs: 'xs', sm: 'sm' }, fontWeight: 500,
-              overflowWrap: 'anywhere',
-              ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
-            }}>
-              {prettyBaseModel(messageOriginLLM)}
-            </Typography>
-          </Tooltip>
-        )}
+          {/* Assistant model name */}
+          {fromAssistant && (
+            <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
+              <Typography level='body-xs' sx={{
+                overflowWrap: 'anywhere',
+                ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
+              }}>
+                {prettyBaseModel(messageOriginLLM)}
+              </Typography>
+            </Tooltip>
+          )}
 
-      </Stack>}
+        </Box>
+      )}
 
 
       {/* Edit / Blocks */}
