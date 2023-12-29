@@ -168,24 +168,6 @@ export function Composer(props: {
     return enqueued;
   }, [clearAttachments, conversationId, llmAttachments, onAction, setComposeText]);
 
-  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-
-      // Alt: append the message instead
-      if (e.altKey) {
-        handleSendAction('append-user', composeText);
-        return e.preventDefault();
-      }
-
-      // Shift: toggles the 'enter is newline'
-      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-        if (!assistantAbortible)
-          handleSendAction(chatModeId, composeText);
-        return e.preventDefault();
-      }
-    }
-  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
-
   const handleSendClicked = () => handleSendAction(chatModeId, composeText);
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
@@ -203,6 +185,31 @@ export function Composer(props: {
     props.onTextImagine(props.conversationId, composeText);
     setComposeText('');
   };
+
+
+  // Text actions
+
+  const handleTextAreaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComposeText(e.target.value);
+  }, [setComposeText]);
+
+  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+
+      // Alt: append the message instead
+      if (e.altKey) {
+        handleSendAction('append-user', composeText);
+        return e.preventDefault();
+      }
+
+      // Shift: toggles the 'enter is newline'
+      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+        if (!assistantAbortible)
+          handleSendAction(chatModeId, composeText);
+        return e.preventDefault();
+      }
+    }
+  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
 
   // Mode menu
@@ -446,7 +453,7 @@ export function Composer(props: {
                   minRows={5} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
-                  onChange={(event) => setComposeText(event.target.value)}
+                  onChange={handleTextAreaTextChange}
                   onDragEnter={handleTextareaDragEnter}
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
