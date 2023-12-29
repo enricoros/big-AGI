@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Grid, IconButton, Sheet, styled, Typography, useTheme } from '@mui/joy';
+import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -75,7 +75,6 @@ function StateRenderer(props: { state: object }) {
 
 
 function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
-  const theme = useTheme();
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
@@ -85,7 +84,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     }}>
 
     {/* Title */}
-    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1 }}>
+    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1.5 }}>
       {ephemeral.title} Development Tools
     </Typography>}
 
@@ -103,8 +102,8 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
       {!!ephemeral.state && <Grid
         xs={12} md={6}
         sx={{
-          borderLeft: { md: `1px solid ${theme.palette.divider}` },
-          borderTop: { xs: `1px solid ${theme.palette.divider}`, md: 'none' },
+          borderLeft: { md: `1px dashed` },
+          borderTop: { xs: `1px dashed`, md: 'none' },
         }}>
         <StateRenderer state={ephemeral.state} />
       </Grid>}
@@ -124,10 +123,15 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
   </Box>;
 }
 
+// const dashedBorderSVG = encodeURIComponent(`
+//   <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
+//     <rect x='0' y='0' width='100%' height='100%' fill='none' stroke='currentColor' stroke-width='2' stroke-dasharray='16, 2' />
+//   </svg>
+// `);
+
 
 export function Ephemerals(props: { conversationId: DConversationId | null, sx?: SxProps }) {
   // global state
-  const theme = useTheme();
   const ephemerals = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation ? conversation.ephemerals : [];
@@ -139,7 +143,9 @@ export function Ephemerals(props: { conversationId: DConversationId | null, sx?:
     <Sheet
       variant='soft' color='success' invertedColors
       sx={{
-        border: `4px dashed ${theme.palette.divider}`,
+        // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
+        // backgroundSize: '100% 100%',
+        // backgroundRepeat: 'no-repeat',
         ...(props.sx || {}),
       }}>
 
