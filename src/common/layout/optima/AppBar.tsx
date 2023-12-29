@@ -15,7 +15,7 @@ import { Link } from '~/common/components/Link';
 import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
-import { AppBarSwitcherItem } from './AppBarSwitcherItem';
+import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
