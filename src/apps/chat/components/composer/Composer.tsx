@@ -42,13 +42,13 @@ import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachm
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { ButtonAttachCameraMemo } from './ButtonAttachCamera';
-import { ButtonAttachClipboardMemo } from './ButtonAttachClipboard';
-import { ButtonAttachFileMemo } from './ButtonAttachFile';
-import { ButtonCall } from './ButtonCall';
-import { ButtonMicContinuationMemo } from './ButtonMicContinuation';
-import { ButtonMicMemo } from './ButtonMic';
-import { ButtonOptionsDraw } from './ButtonOptionsDraw';
+import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
+import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
+import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
+import { ButtonCall } from './buttons/ButtonCall';
+import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
+import { ButtonMicMemo } from './buttons/ButtonMic';
+import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
