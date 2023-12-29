@@ -132,6 +132,15 @@ export function ScrollToBottom(props: {
       if (DEBUG_SCROLL_TO_BOTTOM)
         console.log(' -> scrollable children resized', entries.length);
 
+      // Edge case: when the content is smaller, we need to reset the bottom state (#312)
+      const atTop = scrollable.scrollTop == 0;
+      const unScrollable = scrollable.scrollHeight <= scrollable.offsetHeight;
+      if (unScrollable && atTop) {
+        if (DEBUG_SCROLL_TO_BOTTOM)
+          console.log('   -> large enough window', entries.length);
+        setState(state => ({ ...state, atBottom: true }));
+      }
+
       if (entries.length > 0 && state.stickToBottom)
         doScrollToBottom();
     });
