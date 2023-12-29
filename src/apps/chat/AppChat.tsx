@@ -412,7 +412,10 @@ export function AppChat() {
           collapsible
           defaultSize={panels.length > 0 ? Math.round(100 / panels.length) : undefined}
           minSize={20}
-          onClick={() => setFocusedPane(idx)}
+          onClick={(event) => {
+            const setFocus = chatPanes.length < 2 || !event.altKey;
+            setFocusedPane(setFocus ? idx : -1);
+          }}
           onCollapse={() => setTimeout(() => removePane(idx), 50)}
           style={{
             // for anchoring the scroll button in place
