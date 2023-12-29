@@ -36,6 +36,10 @@ import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import type { ActileItem, ActileProvider } from './actile/ActileProvider';
+import { providerCommands } from './actile/providerCommands';
+import { useActileManager } from './actile/useActileManager';
+
 import type { AttachmentId } from './attachments/store-attachments';
 import { Attachments } from './attachments/Attachments';
 import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
@@ -187,13 +191,61 @@ export function Composer(props: {
   };
 
 
-  // Text actions
+  // Mode menu
 
-  const handleTextAreaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleModeSelectorHide = () => setChatModeMenuAnchor(null);
+
+  const handleModeSelectorShow = (event: React.MouseEvent<HTMLAnchorElement>) =>
+    setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
+
+  const handleModeChange = (_chatModeId: ChatModeId) => {
+    handleModeSelectorHide();
+    setChatModeId(_chatModeId);
+  };
+
+
+  // Actiles
+
+  const onActileCommandSelect = React.useCallback((item: ActileItem) => {
+    if (props.composerTextAreaRef.current) {
+      const textArea = props.composerTextAreaRef.current;
+      const currentText = textArea.value;
+      const cursorPos = textArea.selectionStart;
+
+      // Find the position where the command starts
+      const commandStart = currentText.lastIndexOf('/', cursorPos);
+
+      // Construct the new text with the autocompleted command
+      const newText = currentText.substring(0, commandStart) + item.label + ' ' + currentText.substring(cursorPos);
+
+      // Update the text area with the new text
+      setComposeText(newText);
+
+      // Move the cursor to the end of the autocompleted command
+      const newCursorPos = commandStart + item.label.length + 1;
+      textArea.setSelectionRange(newCursorPos, newCursorPos);
+    }
+  }, [props.composerTextAreaRef, setComposeText]);
+
+  const actileProviders: ActileProvider[] = React.useMemo(() => {
+    return [providerCommands(onActileCommandSelect)];
+  }, [onActileCommandSelect]);
+
+  const { actileComponent, actileInterceptKeydown } = useActileManager(actileProviders, props.composerTextAreaRef);
+
+
+  // Text typing
+
+  const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComposeText(e.target.value);
   }, [setComposeText]);
 
-  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // disable keyboard handling if the actile is visible
+    if (actileInterceptKeydown(e))
+      return;
+
+    // Enter: primary action
     if (e.key === 'Enter') {
 
       // Alt: append the message instead
@@ -209,20 +261,8 @@ export function Composer(props: {
         return e.preventDefault();
       }
     }
-  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
-
-  // Mode menu
-
-  const handleModeSelectorHide = () => setChatModeMenuAnchor(null);
-
-  const handleModeSelectorShow = (event: React.MouseEvent<HTMLAnchorElement>) =>
-    setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
-
-  const handleModeChange = (_chatModeId: ChatModeId) => {
-    handleModeSelectorHide();
-    setChatModeId(_chatModeId);
-  };
+  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
 
   // Mic typing & continuation mode
@@ -453,7 +493,7 @@ export function Composer(props: {
                   minRows={isMobile ? 5 : 5} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
-                  onChange={handleTextAreaTextChange}
+                  onChange={handleTextareaTextChange}
                   onDragEnter={handleTextareaDragEnter}
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
@@ -662,6 +702,9 @@ export function Composer(props: {
             capabilityHasTTI={props.capabilityHasT2I}
           />
         )}
+
+        {/* Actile */}
+        {actileComponent}
 
       </Grid>
     </Box>
