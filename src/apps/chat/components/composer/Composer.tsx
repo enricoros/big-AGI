@@ -98,10 +98,10 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantTyping, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(state => {
+  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
-      assistantTyping: conversation ? !!conversation.abortController : false,
+      assistantAbortible: conversation ? !!conversation.abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
       stopTyping: state.stopTyping,
@@ -178,12 +178,12 @@ export function Composer(props: {
 
       // Shift: toggles the 'enter is newline'
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-        if (!assistantTyping)
+        if (!assistantAbortible)
           handleSendAction(chatModeId, composeText);
         return e.preventDefault();
       }
     }
-  }, [assistantTyping, chatModeId, composeText, enterIsNewline, handleSendAction]);
+  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
   const handleSendClicked = () => handleSendAction(chatModeId, composeText);
 
@@ -233,7 +233,7 @@ export function Composer(props: {
     nextText = nextText ? nextText + ' ' + transcript : transcript;
 
     // auto-send (mic continuation mode) if requested
-    const autoSend = micContinuation && nextText.length >= 1 && !!props.conversationId; //&& assistantTyping;
+    const autoSend = micContinuation && nextText.length >= 1 && !!props.conversationId; //&& assistantAbortible;
     const notUserStop = result.doneReason !== 'manual';
     if (autoSend) {
       if (notUserStop)
@@ -255,7 +255,7 @@ export function Composer(props: {
   useGlobalShortcut('m', true, false, false, toggleRecording);
 
   const micIsRunning = !!speechInterimResult;
-  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantTyping;
+  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible;
   const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
   const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
 
@@ -367,7 +367,9 @@ export function Composer(props: {
   const isChat = isText || isAppend;
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
-  const buttonColor: ColorPaletteProp = isReAct ? 'success' : isDraw ? 'warning' : 'primary';
+  const buttonColor: ColorPaletteProp = assistantAbortible
+    ? 'warning'
+    : isReAct ? 'success' : isDraw ? 'warning' : 'primary';
 
   const textPlaceholder: string =
     isDraw
@@ -579,7 +581,7 @@ export function Composer(props: {
                   boxShadow: isMobile ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 20%)`,
                 }}
               >
-                {!assistantTyping ? (
+                {!assistantAbortible ? (
                   <Button
                     key='composer-act'
                     fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
@@ -598,7 +600,7 @@ export function Composer(props: {
                 ) : (
                   <Button
                     key='composer-stop'
-                    fullWidth variant='soft' color={isReAct ? 'success' : 'primary'} disabled={!props.conversationId}
+                    fullWidth variant='soft' disabled={!props.conversationId}
                     onClick={handleStopClicked}
                     endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
                     sx={{ animation: `${animationStopEnter} 0.1s ease-out` }}
@@ -615,7 +617,11 @@ export function Composer(props: {
                 </Tooltip>}
 
                 {/* Mode expander */}
-                <IconButton variant={isDraw ? undefined : undefined} disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor} onClick={handleModeSelectorShow}>
+                <IconButton
+                  variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
+                  disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor}
+                  onClick={handleModeSelectorShow}
+                >
                   <ExpandLessIcon />
                 </IconButton>
               </ButtonGroup>
