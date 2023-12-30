@@ -17,7 +17,6 @@ const RenderLatexDynamic = React.lazy(async () => {
 export const RenderLatex = ({ latexBlock, sx }: { latexBlock: LatexBlock; sx?: SxProps; }) =>
   <Box
     sx={{
-      lineHeight: 1.75,
       mx: 1.5,
       ...(sx || {}),
     }}>

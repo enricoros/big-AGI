@@ -38,14 +38,13 @@ export const RenderTextDiff = ({ diffBlock, sx }: { diffBlock: DiffBlock; sx?: S
   return (
     <Typography
       sx={{
-        lineHeight: 1.75,
         mx: 1.5,
         // display: 'flex', alignItems: 'baseline',
         overflowWrap: 'anywhere',
         whiteSpace: 'break-spaces',
-        ...(sx || {}),
         display: 'block',
         zIndex: 200,
+        ...(sx || {}),
       }}
     >
       {textDiffs.map(([op, text], index) =>

@@ -21,7 +21,7 @@ interface OptimaLayoutState {
   appDrawerAnchor: HTMLElement | null;
   appMenuAnchor: HTMLElement | null;
 
-  // modals that can overlay anything
+  // optima modals that can overlay anything
   showPreferencesTab: number;
   showModelsSetup: boolean;
   showLlmOptions: DLLMId | null;
@@ -57,6 +57,8 @@ interface OptimaLayoutActions {
 
   setAppMenuAnchor: (anchor: HTMLElement | null) => void;
   closeAppMenu: () => void;
+
+  // commands to open/close optima modals
 
   openPreferences: (tab?: number) => void;
   closePreferences: () => void;

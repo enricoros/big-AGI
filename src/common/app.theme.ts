@@ -146,7 +146,9 @@ export const themeBgApp = 'background.level1';
 export const themeBgAppDarker = 'background.level2';
 export const themeBgAppChatComposer = 'background.surface';
 
-export const bodyFontClassName = inter.className;
+export const lineHeightChatText = 1.75;
+export const lineHeightTextarea = 1.75;
+
 export const themeBreakpoints = appTheme.breakpoints.values;
 
 export const cssRainbowColorKeyframes = keyframes`

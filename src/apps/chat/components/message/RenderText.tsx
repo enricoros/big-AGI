@@ -3,28 +3,36 @@ import * as React from 'react';
 import { Chip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { extractCommands } from '../../editors/commands';
+import { extractChatCommand } from '../../commands/commands.registry';
 
-import { TextBlock } from './blocks';
+import type { TextBlock } from './blocks';
 
 
-export const RenderText = ({ textBlock, sx }: { textBlock: TextBlock; sx?: SxProps; }) => {
-  const elements = extractCommands(textBlock.content);
+export const RenderText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
+  const elements = extractChatCommand(props.textBlock.content);
   return (
     <Typography
       sx={{
-        lineHeight: 1.75,
         mx: 1.5,
-        display: 'flex', alignItems: 'baseline',
+        // display: 'flex', // Commented on 2023-12-29: the commands were drawn as columns
+        alignItems: 'baseline',
         overflowWrap: 'anywhere',
         whiteSpace: 'break-spaces',
-        ...(sx || {}),
+        ...(props.sx || {}),
       }}
     >
       {elements.map((element, index) =>
-        element.type === 'cmd'
-          ? <Chip key={index} component='span' size='md' variant='solid' color='neutral' sx={{ mr: 1 }}>{element.value}</Chip>
-          : <span key={index}>{element.value}</span>,
+        <React.Fragment key={index}>
+          {element.type === 'cmd'
+            ? <>
+              <Chip component='span' size='md' variant='solid' color={element.isError ? 'danger' : 'neutral'} sx={{ mr: 1 }}>
+                {element.command}
+              </Chip>
+              <span>{element.params}</span>
+            </>
+            : <span>{element.value}</span>
+          }
+        </React.Fragment>,
       )}
     </Typography>
   );
