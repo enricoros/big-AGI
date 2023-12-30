@@ -26,6 +26,7 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
+import { lineHeightTextarea } from '~/common/app.theme';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
@@ -41,13 +42,13 @@ import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachm
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { ButtonAttachCameraMemo } from './ButtonAttachCamera';
-import { ButtonAttachClipboardMemo } from './ButtonAttachClipboard';
-import { ButtonAttachFileMemo } from './ButtonAttachFile';
-import { ButtonCall } from './ButtonCall';
-import { ButtonMicContinuationMemo } from './ButtonMicContinuation';
-import { ButtonMicMemo } from './ButtonMic';
-import { ButtonOptionsDraw } from './ButtonOptionsDraw';
+import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
+import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
+import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
+import { ButtonCall } from './buttons/ButtonCall';
+import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
+import { ButtonMicMemo } from './buttons/ButtonMic';
+import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
@@ -167,24 +168,6 @@ export function Composer(props: {
     return enqueued;
   }, [clearAttachments, conversationId, llmAttachments, onAction, setComposeText]);
 
-  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-
-      // Alt: append the message instead
-      if (e.altKey) {
-        handleSendAction('append-user', composeText);
-        return e.preventDefault();
-      }
-
-      // Shift: toggles the 'enter is newline'
-      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
-        if (!assistantAbortible)
-          handleSendAction(chatModeId, composeText);
-        return e.preventDefault();
-      }
-    }
-  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
-
   const handleSendClicked = () => handleSendAction(chatModeId, composeText);
 
   const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
@@ -202,6 +185,31 @@ export function Composer(props: {
     props.onTextImagine(props.conversationId, composeText);
     setComposeText('');
   };
+
+
+  // Text actions
+
+  const handleTextAreaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComposeText(e.target.value);
+  }, [setComposeText]);
+
+  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+
+      // Alt: append the message instead
+      if (e.altKey) {
+        handleSendAction('append-user', composeText);
+        return e.preventDefault();
+      }
+
+      // Shift: toggles the 'enter is newline'
+      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+        if (!assistantAbortible)
+          handleSendAction(chatModeId, composeText);
+        return e.preventDefault();
+      }
+    }
+  }, [assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
 
   // Mode menu
@@ -445,7 +453,7 @@ export function Composer(props: {
                   minRows={5} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
-                  onChange={(event) => setComposeText(event.target.value)}
+                  onChange={handleTextAreaTextChange}
                   onDragEnter={handleTextareaDragEnter}
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
@@ -465,7 +473,7 @@ export function Composer(props: {
                     '&:focus-within': {
                       backgroundColor: 'background.popup',
                     },
-                    lineHeight: 1.75,
+                    lineHeight: lineHeightTextarea,
                   }} />
 
                 {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (

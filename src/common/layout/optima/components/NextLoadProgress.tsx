@@ -9,7 +9,7 @@ import 'nprogress/nprogress.css';
 /**
  * Not show the bar for very fast loads (with a delay), and for the same route
  */
-export function NextRouterProgress(props: { color: string, delay?: number }) {
+export function NextLoadProgress(props: { color: string, delay?: number }) {
 
   // external state
   const router = useRouter();

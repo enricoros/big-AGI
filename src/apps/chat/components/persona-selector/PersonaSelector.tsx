@@ -7,6 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { lineHeightTextarea } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -268,7 +269,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               '&:focus-within': {
                 backgroundColor: 'background.popup',
               },
-              lineHeight: 1.75,
+              lineHeight: lineHeightTextarea,
               mt: 1,
             }} />
         )}

@@ -7,8 +7,6 @@ import { useGoogleSearchStore } from './store-module-google';
 export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
 export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
 
-export const CmdRunSearch: string[] = ['/search'];
-
 
 /**
  * This function either returns the Search JSON response, or throws a descriptive error string
