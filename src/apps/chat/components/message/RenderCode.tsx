@@ -173,21 +173,21 @@ function RenderCodeImpl(props: {
           )}
           {isMermaid && (
             <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'} variant='solid'>
-              <IconButton variant={renderMermaid ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowMermaid(!showMermaid)}>
+              <IconButton variant={renderMermaid ? 'solid' : 'outlined'} onClick={() => setShowMermaid(!showMermaid)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isPlantUML && (
             <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
-              <IconButton variant={renderPlantUML ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowPlantUML(!showPlantUML)}>
+              <IconButton variant={renderPlantUML ? 'solid' : 'outlined'} onClick={() => setShowPlantUML(!showPlantUML)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isSVG && (
             <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
-              <IconButton variant={renderSVG ? 'solid' : 'outlined'} color='neutral' onClick={() => setShowSVG(!showSVG)}>
+              <IconButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
                 <ShapeLineOutlinedIcon />
               </IconButton>
             </Tooltip>
@@ -195,7 +195,7 @@ function RenderCodeImpl(props: {
           {canCodepen && <OpenInCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {canReplit && <OpenInReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {props.noCopyButton !== true && <Tooltip title='Copy Code' variant='solid'>
-            <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+            <IconButton variant='outlined' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
             </IconButton>
           </Tooltip>}

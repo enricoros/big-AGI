@@ -104,7 +104,7 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
             </IconButton>
           </Tooltip>
           <Tooltip title='Copy Code' variant='solid'>
-            <IconButton variant='outlined' color='neutral' onClick={handleCopyToClipboard}>
+            <IconButton variant='outlined' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
             </IconButton>
           </Tooltip>

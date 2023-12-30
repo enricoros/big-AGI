@@ -23,7 +23,7 @@ export function Section(props: { title?: string; collapsible?: boolean, collapse
         </FormLabel>
       )}
       {!!props.collapsible && !props.asLink && (
-        <IconButton size='md' variant='plain' color='neutral' onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
+        <IconButton onClick={() => setCollapsed(!collapsed)} sx={{ ml: 1 }}>
           {!collapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </IconButton>
       )}

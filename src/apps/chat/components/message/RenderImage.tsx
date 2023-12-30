@@ -125,13 +125,13 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
       <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
         {props.allowRunAgain && !!props.onRunAgain && (
           <Tooltip title='Draw again' variant='solid'>
-            <IconButton variant='solid' color='neutral' onClick={props.onRunAgain}>
+            <IconButton variant='solid' onClick={props.onRunAgain}>
               <ReplayIcon />
             </IconButton>
           </Tooltip>
         )}
         <Tooltip title='Open in new tab'>
-          <IconButton component={Link} href={url} target='_blank' variant='solid' color='neutral'>
+          <IconButton component={Link} href={url} target='_blank' variant='solid'>
             <OpenInNewIcon />
           </IconButton>
         </Tooltip>

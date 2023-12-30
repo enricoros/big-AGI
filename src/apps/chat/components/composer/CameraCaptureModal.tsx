@@ -170,7 +170,7 @@ export function CameraCaptureModal(props: {
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
             {/* Info */}
-            <IconButton disabled={!info} variant='soft' color='neutral' onClick={() => setShowInfo(info => !info)} sx={{ zIndex: 30 }}>
+            <IconButton size='lg' disabled={!info} variant='soft' onClick={() => setShowInfo(info => !info)} sx={{ zIndex: 30 }}>
               <InfoIcon />
             </IconButton>
             {/*<Button disabled={ocrProgress !== null} fullWidth variant='solid' size='lg' onClick={handleVideoOCRClicked} sx={{ flex: 1, maxWidth: 260 }}>*/}
@@ -189,7 +189,7 @@ export function CameraCaptureModal(props: {
             </Button>
 
             {/* Download */}
-            <IconButton variant='soft' color='neutral' onClick={handleVideoDownloadClicked}>
+            <IconButton size='lg' variant='soft' onClick={handleVideoDownloadClicked}>
               <DownloadIcon />
             </IconButton>
           </Box>

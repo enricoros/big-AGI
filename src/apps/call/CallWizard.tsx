@@ -200,7 +200,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
 
       <IconButton
         size='lg' variant={allGood ? 'soft' : 'solid'} color={allGood ? 'success' : 'danger'}
-        onClick={handleFinishButton} sx={{ borderRadius: '50px' }}
+        onClick={handleFinishButton} sx={{ borderRadius: '50px', mr: 0.5 }}
       >
         {allGood ? <ArrowForwardIcon sx={{ fontSize: '1.5em' }} /> : <CloseIcon sx={{ fontSize: '1.5em' }} />}
       </IconButton>

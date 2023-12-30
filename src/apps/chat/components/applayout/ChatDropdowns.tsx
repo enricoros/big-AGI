@@ -21,7 +21,7 @@ export function ChatDropdowns(props: {
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId);
 
   // external state
-  const labsSplitBranching = useUXLabsStore(state => state.labsSplitBranching);
+  const labsSplitBranching = true; ///useUXLabsStore(state => state.labsSplitBranching);
 
   return <>
 
@@ -33,8 +33,7 @@ export function ChatDropdowns(props: {
 
     {/* Split Panes button */}
     {labsSplitBranching && <IconButton
-      variant={props.isSplitPanes ? 'solid' : 'plain'}
-      color='neutral'
+      variant={props.isSplitPanes ? 'solid' : 'soft'}
       onClick={props.onToggleSplitPanes}
       sx={{
         ml: 'auto',
