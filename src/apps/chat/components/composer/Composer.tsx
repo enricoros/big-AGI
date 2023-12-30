@@ -400,7 +400,7 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 1 } }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
@@ -416,7 +416,7 @@ export function Composer(props: {
 
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 1 } }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
@@ -438,7 +438,7 @@ export function Composer(props: {
           <Box sx={{
             flexGrow: 1,
             display: 'flex', flexDirection: 'column', gap: 1,
-            minWidth: 250, // enable X-scrolling (resetting any possible minWidth due to the attachments)
+            minWidth: 200, // enable X-scrolling (resetting any possible minWidth due to the attachments)
           }}>
 
             {/* Edit box + Overlays + Mic buttons */}
