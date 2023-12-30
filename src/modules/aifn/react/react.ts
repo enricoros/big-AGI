@@ -58,9 +58,6 @@ Answer: The capital of France is Paris
 `;
 
 
-export const CmdRunReact: string[] = ['/react'];
-
-
 const actionRe = /^Action: (\w+): (.*)$/;
 
 
