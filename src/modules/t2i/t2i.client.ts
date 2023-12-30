@@ -12,9 +12,6 @@ import { useProdiaStore } from './prodia/store-module-prodia';
 import { useTextToImageStore } from './store-module-t2i';
 
 
-export const CmdRunT2I: string[] = ['/draw', '/imagine', '/img'];
-
-
 // Capabilities API - used by Settings, and whomever wants to check if this is available
 
 export function useCapabilityTextToImage(): CapabilityTextToImage {

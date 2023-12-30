@@ -4,17 +4,15 @@ import { Panel, PanelGroup } from 'react-resizable-panels';
 
 import { useTheme } from '@mui/joy';
 
-import { CmdRunBrowse } from '~/modules/browse/browse.client';
-import { CmdRunReact } from '~/modules/aifn/react/react';
-import { CmdRunT2I, useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
+import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 import { useChatLLM, useModelsStore } from '~/modules/llms/store-llms';
 
+import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { GoodPanelResizeHandler } from '~/common/components/panes/GoodPanelResizeHandler';
@@ -29,13 +27,13 @@ import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
-import { CmdAddRoleMessage, CmdHelp, createCommandsHelpMessage, extractCommands } from './editors/commands';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { usePanesManager } from './components/panes/usePanesManager';
 
+import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
@@ -146,29 +144,37 @@ export function AppChat() {
     // "/command ...": overrides the chat mode
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
     if (lastMessage?.role === 'user') {
-      const pieces = extractCommands(lastMessage.text);
-      if (pieces.length == 2 && pieces[0].type === 'cmd' && pieces[1].type === 'text') {
-        const [command, prompt] = [pieces[0].value, pieces[1].value];
-        if (CmdRunT2I.includes(command)) {
-          setMessages(conversationId, history);
-          return await runImageGenerationUpdatingState(conversationId, prompt);
-        }
-        if (CmdRunReact.includes(command) && chatLLMId) {
-          setMessages(conversationId, history);
-          return await runReActUpdatingState(conversationId, prompt, chatLLMId);
-        }
-        if (CmdRunBrowse.includes(command) && prompt?.trim() && useBrowseStore.getState().enableCommandBrowse) {
-          setMessages(conversationId, history);
-          return await runBrowseUpdatingState(conversationId, prompt);
-        }
-        if (CmdAddRoleMessage.includes(command)) {
-          lastMessage.role = command.startsWith('/s') ? 'system' : command.startsWith('/a') ? 'assistant' : 'user';
-          lastMessage.sender = 'Bot';
-          lastMessage.text = prompt;
-          return setMessages(conversationId, history);
-        }
-        if (CmdHelp.includes(command)) {
-          return setMessages(conversationId, [...history, createCommandsHelpMessage()]);
+      const chatCommand = extractChatCommand(lastMessage.text)[0];
+      if (chatCommand && chatCommand.type === 'cmd') {
+        switch (chatCommand.providerId) {
+          case 'ass-browse':
+            setMessages(conversationId, history);
+            return await runBrowseUpdatingState(conversationId, chatCommand.params!);
+
+          case 'ass-t2i':
+            setMessages(conversationId, history);
+            return await runImageGenerationUpdatingState(conversationId, chatCommand.params!);
+
+          case 'ass-react':
+            setMessages(conversationId, history);
+            return await runReActUpdatingState(conversationId, chatCommand.params!, chatLLMId);
+
+          case 'chat-alter':
+            Object.assign(lastMessage, {
+              role: chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user',
+              sender: 'Bot',
+              text: chatCommand.params || '',
+            } satisfies Partial<DMessage>);
+            return setMessages(conversationId, history);
+
+          case 'cmd-help':
+            const chatCommandsText = findAllChatCommands()
+              .map(cmd =>
+                ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`,
+              ).join('\n');
+            const helpMessage = createDMessage('assistant', 'Available Chat Commands:\n' + chatCommandsText);
+            helpMessage.originLLM = Brand.Title.Base;
+            return setMessages(conversationId, [...history, helpMessage]);
         }
       }
     }
@@ -185,9 +191,10 @@ export function AppChat() {
         case 'generate-image':
           if (!lastMessage?.text)
             break;
+          // also add a 'fake' user message with the '/draw' command
           setMessages(conversationId, history.map(message => message.id !== lastMessage.id ? message : {
             ...message,
-            text: `${CmdRunT2I[0]} ${lastMessage.text}`,
+            text: `/draw ${lastMessage.text}`,
           }));
           return await runImageGenerationUpdatingState(conversationId, lastMessage.text);
 
