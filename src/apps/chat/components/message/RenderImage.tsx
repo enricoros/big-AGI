@@ -131,7 +131,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
           </Tooltip>
         )}
         <Tooltip title='Open in new tab'>
-          <IconButton component={Link} href={url} target='_blank' variant='solid'>
+          <IconButton component={Link} href={url} download={alt || 'image'} target='_blank' variant='solid'>
             <OpenInNewIcon />
           </IconButton>
         </Tooltip>
