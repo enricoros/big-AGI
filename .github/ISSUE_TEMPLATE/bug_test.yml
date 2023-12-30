@@ -1,0 +1,45 @@
+name: 🐞 Bug Report
+description: Create a report to help us improve
+title: '[BUG]'
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please fill out the information below to help us resolve the issue more quickly.
+  - type: textarea
+    attributes:
+      label: Environment Information
+      description: Please specify your device (Mobile/Desktop), OS version, browser, and browser version. This information is helpful but not mandatory.
+      placeholder: 'Device: [e.g., iPhone 12, Desktop], OS: [e.g., iOS 14, Windows 10], Browser: [e.g., Chrome], Browser Version: [e.g., 88.0]'
+  - type: input
+    attributes:
+      label: Website or Environment
+      description: If applicable, which website or environment is the issue occurring on?
+      placeholder: 'Website/Environment: [e.g., yourdomain.com]'
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: Please provide a clear and concise description of what the bug is.
+      placeholder: 'A clear and concise description of what the bug is.'
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide the steps to reproduce the behavior. If you can't provide steps, describe what you were doing when the issue occurred.
+      placeholder: '1. Go to... 2. Click on... 3. Scroll down to...'
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: Please describe what you expected to happen.
+      placeholder: 'A clear and concise description of what you expected to happen.'
+  - type: textarea
+    attributes:
+      label: Screenshots or Additional Context
+      description: If applicable, add screenshots or any additional context about the problem here.
+      placeholder: 'Attach screenshots or any additional context here.'
+  - type: checkboxes
+    attributes:
+      label: Willingness to Contribute
+      description: We appreciate contributions. Would you be willing to submit a pull request with a fix for this issue?
+      options:
+        - label: '🙋‍♂️ Yes, I would like to contribute a fix.'
