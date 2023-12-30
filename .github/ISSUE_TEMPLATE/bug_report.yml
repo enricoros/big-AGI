@@ -1,7 +1,7 @@
 name: 🐞 Bug Report
 description: Create a report to help us improve
 title: '[BUG]'
-labels: [ 'type%3A%20bug' ]
+labels: [ 'type: bug' ]
 body:
   - type: markdown
     attributes:
