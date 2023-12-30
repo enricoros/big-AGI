@@ -10,14 +10,14 @@ body:
   - type: textarea
     attributes:
       label: Device and Browser Information
-      description: Please specify your device (Mobile/Desktop), OS version, browser, and browser version.
-      placeholder: 'Device: [e.g., iPhone 16, Pixel 9, PC, Macbook...],\\nOS: [e.g., iOS 17, Windows 12],\nBrowser<br/>: [e.g., Chrome 119, Safari 18, Firefox..]'
+      description: '(required) Please specify your Mobile/Desktop device, OS version, browser.'
+      placeholder: 'Device: (e.g., iPhone 16, Pixel 9, PC, Macbook...), OS: (e.g., iOS 17, Windows 12), Browser: (e.g., Chrome 119, Safari 18, Firefox..)'
     validations:
       required: true
   - type: textarea
     attributes:
       label: Describe the bug
-      description: Please provide a clear and concise description of what the bug is. Please also provide the steps to reproduce the behavior. If you can't provide steps, describe what you were doing when the issue occurred.
+      description: (required) Please provide a clear and concise description of what the bug is. Please also provide the steps to reproduce the behavior. If you can't provide steps, describe what you were doing when the issue occurred.
       placeholder: 'Concise description + steps to reproduce.'
     validations:
       required: true
