@@ -145,7 +145,6 @@ function ChatNavigationItem(props: {
       {/* // TODO: Commented code */}
       {/* Edit */}
       {/*<IconButton*/}
-      {/*  variant='plain' color='neutral'*/}
       {/*  onClick={() => props.onEditTitle(props.conversationId)}*/}
       {/*  sx={{*/}
       {/*    opacity: 0, transition: 'opacity 0.3s', ml: 'auto',*/}
@@ -156,7 +155,7 @@ function ChatNavigationItem(props: {
       {/* Delete Arming */}
       {!props.isLonely && !deleteArmed && (
         <IconButton
-          variant={isActive ? 'solid' : 'outlined'} color='neutral'
+          variant={isActive ? 'solid' : 'outlined'}
           size='sm' sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.3s', ...buttonSx }}
           onClick={handleDeleteButtonShow}>
           <DeleteOutlineIcon />

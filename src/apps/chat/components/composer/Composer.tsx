@@ -577,7 +577,7 @@ export function Composer(props: {
                   ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
-                    : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
+                    : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
               )}
 
               {/* Responsive Send/Stop buttons */}

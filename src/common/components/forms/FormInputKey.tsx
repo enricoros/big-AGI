@@ -22,7 +22,7 @@ export function FormInputKey(props: {
   const handleChange = (e: React.ChangeEvent) => props.onChange((e.target as HTMLInputElement).value);
 
   const endDecorator = React.useMemo(() => !!props.value && !props.noKey && (
-    <IconButton variant='plain' color='neutral' onClick={() => setIsVisible(!isVisible)}>
+    <IconButton onClick={() => setIsVisible(!isVisible)}>
       {isVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
     </IconButton>
   ), [props.value, props.noKey, isVisible]);

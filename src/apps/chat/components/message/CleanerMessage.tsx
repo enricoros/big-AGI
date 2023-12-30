@@ -28,7 +28,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens
       Delete
     </Button>
 
-    <IconButton variant='plain' onClick={props.onClose}>
+    <IconButton onClick={props.onClose}>
       <ClearIcon />
     </IconButton>
   </Sheet>;

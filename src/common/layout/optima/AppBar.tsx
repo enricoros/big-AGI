@@ -70,7 +70,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
       <IconButton
-        variant='outlined' color='neutral'
+        variant='outlined'
         onClick={handleToggleDarkMode}
         sx={{ ml: 'auto' }}
       >
@@ -117,11 +117,11 @@ export function AppBar(props: { sx?: SxProps }) {
 
       {/* Drawer Anchor */}
       {!appPaneContent ? (
-        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle variant='plain'>
+        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
           <ArrowBackIcon />
         </IconButton>
       ) : (
-        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
+        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} onClick={event => setAppDrawerAnchor(event.currentTarget)}>
           <MenuIcon />
         </IconButton>
       )}
@@ -132,7 +132,7 @@ export function AppBar(props: { sx?: SxProps }) {
       </Box>
 
       {/* Menu Anchor */}
-      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
+      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} onClick={event => setAppMenuAnchor(event.currentTarget)}>
         <MoreVertIcon />
       </IconButton>
     </Sheet>

@@ -108,9 +108,13 @@ export function AppNews() {
 
                 {showExpander && (
                   <IconButton
-                    variant='plain' size='sm'
+                    variant='outlined'
                     onClick={() => setLastNewsIdx(idx + 1)}
-                    sx={{ position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1 }}
+                    sx={{
+                      position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1,
+                      backgroundColor: 'background.surface',
+                      borderRadius: '50%',
+                    }}
                   >
                     <ExpandMoreIcon />
                   </IconButton>
