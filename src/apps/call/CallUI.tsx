@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { useRouter } from 'next/router';
 
 import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -28,7 +27,7 @@ import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
-import { ROUTE_APP_CHAT } from '~/common/app.routes';
+import { launchAppChat, ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 function CallMenuItems(props: {
@@ -89,7 +88,6 @@ export function CallUI(props: {
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
-  const { push: routerPush } = useRouter();
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
   const { chatTitle, messages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -178,9 +176,7 @@ export function CallUI(props: {
       // command: close the call
       case 'Goodbye.':
         setStage('ended');
-        setTimeout(() => {
-          void routerPush(ROUTE_APP_CHAT);
-        }, 2000);
+        setTimeout(launchAppChat, 2000);
         return;
       // command: regenerate answer
       case 'Retry.':
@@ -236,7 +232,7 @@ export function CallUI(props: {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, chatLLMId, messages, personaVoiceId, personaSystemMessage, routerPush]);
+  }, [isConnected, callMessages, chatLLMId, messages, personaVoiceId, personaSystemMessage]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && isRecordingSpeech;
