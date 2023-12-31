@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Sheet, styled } from '@mui/joy';
+import { Sheet, styled } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
@@ -51,7 +51,12 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
     return null;
 
   return (
-    <Drawer>
+    <Drawer
+      sx={{
+        display: 'flex', flexDirection: 'column',
+        height: '100dvh',
+      }}
+    >
 
       <PageDrawer currentApp={props.currentApp} onClick={closeDrawer}>
         {appPaneContent}
