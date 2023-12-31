@@ -27,6 +27,9 @@ interface OptimaLayoutState {
   showLlmOptions: DLLMId | null;
   showShortcuts: boolean;
 
+  // misc/temp
+  isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
+
 }
 
 const initialState: OptimaLayoutState = {
@@ -42,6 +45,8 @@ const initialState: OptimaLayoutState = {
   showModelsSetup: false,
   showLlmOptions: null,
   showShortcuts: false,
+
+  isFocusedMode: false,
 
 };
 
@@ -71,6 +76,8 @@ interface OptimaLayoutActions {
 
   openShortcuts: () => void;
   closeShortcuts: () => void;
+
+  setIsFocusedMode: (isFocusedMode: boolean) => void;
 }
 
 
@@ -108,6 +115,8 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
 
     openShortcuts: () => setState(state => ({ ...state, showShortcuts: true })),
     closeShortcuts: () => setState(state => ({ ...state, showShortcuts: false })),
+
+    setIsFocusedMode: (isFocusedMode: boolean) => setState(state => ({ ...state, isFocusedMode })),
 
   }), []);
 

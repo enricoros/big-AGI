@@ -90,7 +90,7 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab, setIsFocusedMode } = useOptimaLayout();
   const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
     labsCalling: state.labsCalling,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -458,6 +458,8 @@ export function Composer(props: {
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
+                  onFocusCapture={() => setIsFocusedMode(true)}
+                  onBlurCapture={() => setIsFocusedMode(false)}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
