@@ -81,7 +81,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
   const [recognitionOverride, setRecognitionOverride] = React.useState(false);
 
   // external state
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab } = useOptimaLayout();
   const recognition = useCapabilityBrowserSpeechRecognition();
   const synthesis = useCapabilityElevenLabs();
   const chatIsEmpty = useChatStore(state => {
@@ -104,7 +104,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
   const handleOverrideRecognition = () => setRecognitionOverride(true);
 
   const handleConfigureElevenLabs = () => {
-    openPreferences(3);
+    openPreferencesTab(3);
   };
 
   const handleFinishButton = () => {

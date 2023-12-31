@@ -177,7 +177,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => openPreferences(2);
+  const handleDrawOptionsClicked = () => openPreferencesTab(2);
 
   const handleTextImagineClicked = () => {
     if (!composeText || !props.conversationId)
