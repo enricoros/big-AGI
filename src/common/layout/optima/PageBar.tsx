@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Typography, useColorScheme } from '@mui/joy';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -20,18 +21,18 @@ import { useOptimaLayout } from './useOptimaLayout';
 import { useOptimaDrawer } from '~/common/layout/optima/useOptimaDrawer';
 
 
-function AppBarTitle() {
+function AppBarCenterFallback() {
   return (
     <Link href={ROUTE_INDEX}>
-      <AgiSquircleIcon sx={{
+      <AgiSquircleIcon inverted sx={{
         width: 32,
         height: 32,
         color: 'white',
-        // filter: 'invert(1)',
       }} />
       <Typography sx={{
         ml: { xs: 1, md: 2 },
         color: 'white',
+        textDecoration: 'none',
       }}>
         {Brand.Title.Base}
       </Typography>
@@ -113,23 +114,20 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
 
       {/* [Mobile] Drawer button */}
       {!!props.isMobile && (
+        <InvertedBarCornerItem>
 
-        <IconButton disabled={!appPaneContent} onClick={openDrawer}>
-          <MenuIcon />
-        </IconButton>
+          {!appPaneContent ? (
+            <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
+              <ArrowBackIcon />
+            </IconButton>
+          ) : (
+            <IconButton disabled={!appPaneContent} onClick={openDrawer}>
+              <MenuIcon />
+            </IconButton>
+          )}
 
+        </InvertedBarCornerItem>
       )}
-
-      {/* Drawer Anchor */}
-      {/*{!appPaneContent ? (*/}
-      {/*  <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>*/}
-      {/*    <ArrowBackIcon />*/}
-      {/*  </IconButton>*/}
-      {/*) : (*/}
-      {/*  <IconButton disabled={!!appDrawerAnchor || !appPaneContent} onClick={event => setAppDrawerAnchor(event.currentTarget)}>*/}
-      {/*    <MenuIcon />*/}
-      {/*  </IconButton>*/}
-      {/*)}*/}
 
       {/* Center Items */}
       <Box sx={{
@@ -138,10 +136,10 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
       }}>
-        {!!appBarItems ? appBarItems : <AppBarTitle />}
+        {!!appBarItems ? appBarItems : <AppBarCenterFallback />}
       </Box>
 
-      {/* Menu Anchor */}
+      {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
         <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} onClick={event => setAppMenuAnchor(event.currentTarget)}>
           <MoreVertIcon />
