@@ -26,12 +26,14 @@ const InvertedBarBase = styled(Sheet)({
 
 // This is the AppBar and the MobileAppNav and DesktopNav
 export const InvertedBar = (props: {
+  id?: string,
   direction: 'horizontal' | 'vertical',
   variant?: VariantProp,
   sx?: SxProps
   children: React.ReactNode,
 }) =>
   <InvertedBarBase
+    id={props.id}
     variant={props.variant || 'solid'} invertedColors={(props.variant || 'solid') === 'solid' ? true : undefined}
     sx={
       props.direction === 'horizontal'
@@ -40,7 +42,7 @@ export const InvertedBar = (props: {
           flexDirection: 'row',
           ...props.sx,
         } : {
-          minWidth: 'var(--Bar)',
+          // minWidth: 'var(--Bar)',
           flexDirection: 'column',
           ...props.sx,
         }

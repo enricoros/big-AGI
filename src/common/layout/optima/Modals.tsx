@@ -6,7 +6,7 @@ import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-export function AppModals(props: { suspendAutoModelsSetup?: boolean }) {
+export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
   const {

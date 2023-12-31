@@ -1,35 +1,18 @@
 import * as React from 'react';
+import { useRouter } from 'next/router';
 
+import { Box } from '@mui/joy';
+
+import { navItems } from '~/common/app.nav';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
-import { AppContainer } from './AppContainer';
-import { AppModals } from './AppModals';
-import { useNextLoadProgress } from './components/useNextLoadProgress';
-
-
-/*function ResponsiveNavigation() {
-  return <>
-    <Drawer
-      open={false}
-      variant='solid'
-      anchor='left'
-      onClose={() => {
-      }}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 256,
-          boxSizing: 'border-box',
-        },
-      }}
-    >
-      <Box sx={{ width: 256, height: '100%' }}>
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ flexGrow: 1 }} />
-        </Box>
-      </Box>
-    </Drawer>
-  </>;
-}*/
+import { DesktopDrawer } from './DesktopDrawer';
+import { DesktopNav } from './DesktopNav';
+import { MobileDrawer } from './MobileDrawer';
+import { Modals } from './Modals';
+import { OptimaDrawerProvider } from './useOptimaDrawer';
+import { OptimaLayoutProvider } from './useOptimaLayout';
+import { PageContainer } from './PageContainer';
 
 
 /**
@@ -46,33 +29,42 @@ import { useNextLoadProgress } from './components/useNextLoadProgress';
 export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children: React.ReactNode, }) {
 
   // external state
+  const { route } = useRouter();
   const isMobile = useIsMobile();
 
-  // this will display a progress bar while the next NextJS page is loading
-  useNextLoadProgress();
-
-  return <>
-
-    {/*<Box sx={{*/}
-    {/*  display: 'flex', flexDirection: 'row',*/}
-    {/*  maxWidth: '100%', flexWrap: 'nowrap',*/}
-    {/*  // overflowX: 'hidden',*/}
-    {/*  background: 'lime',*/}
-    {/*}}>*/}
-
-    {/*<Box sx={{ background: 'rgba(100 0 0 / 0.5)' }}>a</Box>*/}
+  // derived state
+  const currentApp = navItems.apps.find(item => item.route === route);
 
   return (
     <OptimaLayoutProvider>
+      <OptimaDrawerProvider>
 
-    {/* "children" goes here - note that it will 'plug' other pieces of layour  */}
-    <AppContainer isMobile={isMobile}>
-      {props.children}
-    </AppContainer>
+        {isMobile ? <>
 
-    {/*<Box sx={{ background: 'rgba(100 0 0 / 0.5)' }}>bb</Box>*/}
+          <PageContainer isMobile currentApp={currentApp}>
+            {props.children}
+          </PageContainer>
 
-    {/*</Box>*/}
+          <MobileDrawer currentApp={currentApp} />
+
+        </> : (
+
+          <Box sx={{ display: 'flex' }} id='desktop-layout'>
+            <DesktopNav currentApp={currentApp} />
+
+            <DesktopDrawer currentApp={currentApp} />
+
+            <PageContainer currentApp={currentApp}>
+              {props.children}
+            </PageContainer>
+          </Box>
+
+        )}
+
+      </OptimaDrawerProvider>
+
+      {/* Overlay Modals */}
+      <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
     </OptimaLayoutProvider>
   );

@@ -4,7 +4,9 @@ import { themeBreakpoints } from '../app.theme';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 
-export const isMobileQuery = () => `(max-width: ${themeBreakpoints.md - 1}px)`;
+const isMobileQuery = () => `(max-width: ${themeBreakpoints.md - 1}px)`;
+
+export const getIsMobile = () => isBrowser ? window.matchMedia(isMobileQuery()).matches : false;
 
 export const useIsMobile = (): boolean => useMatchMedia(isMobileQuery(), false);
 

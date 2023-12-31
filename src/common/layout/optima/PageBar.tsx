@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Typography, useColorScheme } from '@mui/joy';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -16,7 +15,9 @@ import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
+import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaDrawer } from '~/common/layout/optima/useOptimaDrawer';
 
 
 function AppBarTitle() {
@@ -42,12 +43,12 @@ function AppBarTitle() {
 function CommonMenuItems(props: { onClose: () => void }) {
 
   // external state
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab } = useOptimaLayout();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
-    openPreferences();
+    openPreferencesTab();
     props.onClose();
   };
 
@@ -89,63 +90,66 @@ function CommonMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function AppBar(props: { sx?: SxProps }) {
+export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
 
   // external state
   const {
-    appBarItems, appDrawerAnchor, appPaneContent, appMenuAnchor, appMenuItems,
-    closeAppMenu, closeAppDrawer,
-    setAppDrawerAnchor, setAppMenuAnchor,
+    appBarItems, appPaneContent, appMenuAnchor, appMenuItems,
+    closeAppMenu, setAppMenuAnchor,
   } = useOptimaLayout();
+  const {
+    openDrawer,
+  } = useOptimaDrawer();
 
   const commonMenuItems = React.useMemo(() =>
     <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
 
   return <>
 
-    {/* Top Bar */}
-    <Sheet
-      variant='solid' color='neutral' invertedColors
-      sx={{
-        p: 1,
-        display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        ...(props.sx || {}),
-      }}>
+    <InvertedBar direction='horizontal' sx={props.sx}>
 
-      {/* Drawer Anchor */}
-      {!appPaneContent ? (
-        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
-          <ArrowBackIcon />
-        </IconButton>
-      ) : (
-        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} onClick={event => setAppDrawerAnchor(event.currentTarget)}>
+      {/* [Mobile] Drawer button */}
+      {!!props.isMobile && (
+
+        <IconButton disabled={!appPaneContent} onClick={openDrawer}>
           <MenuIcon />
         </IconButton>
+
       )}
 
+      {/* Drawer Anchor */}
+      {/*{!appPaneContent ? (*/}
+      {/*  <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>*/}
+      {/*    <ArrowBackIcon />*/}
+      {/*  </IconButton>*/}
+      {/*) : (*/}
+      {/*  <IconButton disabled={!!appDrawerAnchor || !appPaneContent} onClick={event => setAppDrawerAnchor(event.currentTarget)}>*/}
+      {/*    <MenuIcon />*/}
+      {/*  </IconButton>*/}
+      {/*)}*/}
+
       {/* Center Items */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
+      <Box sx={{
+        flexGrow: 1,
+        minHeight: 'var(--Bar)',
+        display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
+        my: 'auto',
+      }}>
         {!!appBarItems ? appBarItems : <AppBarTitle />}
       </Box>
 
       {/* Menu Anchor */}
-      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} onClick={event => setAppMenuAnchor(event.currentTarget)}>
-        <MoreVertIcon />
-      </IconButton>
-    </Sheet>
+      <InvertedBarCornerItem>
+        <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} onClick={event => setAppMenuAnchor(event.currentTarget)}>
+          <MoreVertIcon />
+        </IconButton>
+      </InvertedBarCornerItem>
 
+    </InvertedBar>
 
-    {/* Drawer Menu */}
-    {!!appPaneContent && <CloseableMenu
-      maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!appDrawerAnchor} anchorEl={appDrawerAnchor} onClose={closeAppDrawer}
-      placement='bottom-start'
-    >
-      {appPaneContent}
-    </CloseableMenu>}
 
     {/* Menu Menu */}
     <CloseableMenu

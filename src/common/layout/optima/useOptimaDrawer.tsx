@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { getIsMobile } from '~/common/components/useMatchMedia';
+
 
 interface OptimaDrawerState {
   isDrawerOpen: boolean;
@@ -15,7 +17,7 @@ interface OptimaDrawerActions {
 const UseOptimaDrawer = React.createContext<(OptimaDrawerState & OptimaDrawerActions) | undefined>(undefined);
 
 // TRICK: this is how we persist the drawer state across page navigations
-let lastOpenState = true;
+let lastOpenState = !getIsMobile();
 
 export function OptimaDrawerProvider(props: { children: React.ReactNode }) {
 
