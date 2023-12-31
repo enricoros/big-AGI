@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
-
-import { Box } from '@mui/joy';
+import { Panel, PanelGroup } from 'react-resizable-panels';
 
 import { navItems } from '~/common/app.nav';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -49,15 +48,17 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
         </> : (
 
-          <Box sx={{ display: 'flex' }} id='desktop-layout'>
+          <PanelGroup direction='horizontal' id='desktop-layout'>
             <DesktopNav currentApp={currentApp} />
 
             <DesktopDrawer currentApp={currentApp} />
 
-            <PageContainer currentApp={currentApp}>
-              {props.children}
-            </PageContainer>
-          </Box>
+            <Panel defaultSize={100}>
+              <PageContainer currentApp={currentApp}>
+                {props.children}
+              </PageContainer>
+            </Panel>
+          </PanelGroup>
 
         )}
 
