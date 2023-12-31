@@ -62,7 +62,8 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     {/*<Box sx={{ background: 'rgba(100 0 0 / 0.5)' }}>a</Box>*/}
 
-    {/*<ResponsiveNavigation />*/}
+  return (
+    <OptimaLayoutProvider>
 
     {/* "children" goes here - note that it will 'plug' other pieces of layour  */}
     <AppContainer isMobile={isMobile}>
@@ -73,7 +74,6 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     {/*</Box>*/}
 
-    <AppModals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
-
-  </>;
+    </OptimaLayoutProvider>
+  );
 }
