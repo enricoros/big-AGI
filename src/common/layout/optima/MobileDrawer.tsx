@@ -22,6 +22,7 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
       open={isDrawerOpen}
       onClose={closeDrawer}
       sx={{
+        '--Drawer-horizontalSize': 'clamp(var(--Agi-drawer-width), 30%, 100%)',
         // '& .MuiDrawer-paper': {
         //   width: 256,
         //   boxSizing: 'border-box',
