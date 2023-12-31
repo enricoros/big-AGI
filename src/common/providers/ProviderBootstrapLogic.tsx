@@ -2,9 +2,14 @@ import * as React from 'react';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { isMobileQuery } from '~/common/components/useMatchMedia';
+import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
 export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
+
+  // wire-up the NextJS router to a top-level loading bar - this will alleviate
+  // the perceived delay on the first 'backend' (provider) capabiliies load
+  useNextLoadProgress();
 
   // NOTE: just a pass-through for now. Will be used for the following:
   //  - loading the latest news (see ChatPage -> useRedirectToNewsOnUpdates)
