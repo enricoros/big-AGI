@@ -400,7 +400,7 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 1 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
@@ -416,7 +416,7 @@ export function Composer(props: {
 
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 1 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
