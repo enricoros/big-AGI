@@ -15,7 +15,7 @@ export function PageDrawer(props: {
 
     {/* Drawer Header */}
     <Sheet
-      // variant='outlined'
+      variant='outlined'
       // invertedColors
       sx={{
         display: 'flex',
@@ -23,6 +23,8 @@ export function PageDrawer(props: {
         justifyContent: 'space-between',
         minHeight: 'var(--Agi-nav-width)',
         borderTop: 'none',
+        borderLeft: 'none',
+        borderRight: 'none',
         px: 1,
       }}
     >
@@ -49,6 +51,7 @@ export function PageDrawer(props: {
         backgroundColor: 'background.popup',
         boxShadow: 'md',
         border: 'none',
+        zIndex: 25,
         // ...(props.maxHeightGapPx !== undefined ? { maxHeight: `calc(100dvh - ${props.maxHeightGapPx}px)`, overflowY: 'auto' } : {}),
         // ...(props.noTopPadding ? { pt: 0 } : {}),
         // ...(props.noBottomPadding ? { pb: 0 } : {}),
