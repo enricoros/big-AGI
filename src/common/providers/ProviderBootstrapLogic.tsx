@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { isBrowser } from '~/common/util/pwaUtils';
-import { isMobileQuery } from '~/common/components/useMatchMedia';
+import { getIsMobile } from '~/common/components/useMatchMedia';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -18,8 +17,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
   // boot-up logic. this is not updated at route changes, but only at app startup
   React.useEffect(() => {
-    const isMobile = isBrowser ? window.matchMedia(isMobileQuery()).matches : false;
-    if (isMobile) {
+    if (getIsMobile()) {
       // TODO: the app booted in mobile mode
     }
   }, []);

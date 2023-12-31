@@ -4,7 +4,6 @@ import { IconButton } from '@mui/joy';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import type { DConversationId } from '~/common/state/store-chats';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
@@ -25,19 +24,19 @@ export function ChatDropdowns(props: {
 
   return <>
 
-    {/* Model selector */}
-    {chatLLMDropdown}
-
     {/* Persona selector */}
     {personaDropdown}
 
+    {/* Model selector */}
+    {chatLLMDropdown}
+
     {/* Split Panes button */}
     {labsSplitBranching && <IconButton
-      variant={props.isSplitPanes ? 'solid' : 'soft'}
+      variant={props.isSplitPanes ? 'solid' : undefined}
       onClick={props.onToggleSplitPanes}
-      sx={{
-        ml: 'auto',
-      }}
+      // sx={{
+      //   ml: 'auto',
+      // }}
     >
       <VerticalSplitIcon />
     </IconButton>}
