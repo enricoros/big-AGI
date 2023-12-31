@@ -50,9 +50,33 @@ Now you can use the following connection string in `big-AGI`: `ws://127.0.0.1:92
 You can also browse to [http://127.0.0.1:9222](http://127.0.0.1:9222) to see the Browserless debug viewer
 and configure some options.
 
+The chat agent won't be able to access the web sites if the browserless container does not have direct Internet access. You can resolve the issue by defining internet proxy for the running container. You can then use the evironment file in the a `docker-compose.yaml
+
+```
+ browserless:
+    image: browserless/chrome:latest
+    env_file:
+      - .env
+    ports:
+      - "9222:3000"  # Map host's port 9222 to container's port 3000
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
+```
+
+You can then add the proyy lines to your `.env` file.
+
+```
+https_proxy=http://PROXY-IP:PROXY-PORT
+http_proxy=http://PROXY-IP:PROXY-PORT
+```
+
+This is how you can define it in a one liner docker
+`docker run --env https_proxy=http://PROXY-IP:PROXY-PORT --env http_proxy=http://PROXY-IP:PROXY-PORT -p 9222:3000 browserless/chrome:latest `
+
 Note: if you are using `docker-compose`, please see the
 [docker/docker-compose-browserless.yaml](docker/docker-compose-browserless.yaml) file for an example
 on how to run `big-AGI` and Browserless simultaneously in a single application.
+
 
 ### 🌐 Your own Chrome browser
 
