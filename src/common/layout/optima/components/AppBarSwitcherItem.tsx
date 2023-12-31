@@ -5,9 +5,10 @@ import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 import { Brand } from '~/common/app.config';
+import { DiscordIcon } from '~/common/components/icons/DiscordIcon';
 import { ROUTE_APP_CHAT, ROUTE_APP_NEWS } from '~/common/app.routes';
 
-import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
+import { BringTheLove } from './AppBarSupportItem';
 import { useOptimaLayout } from '../useOptimaLayout';
 
 
