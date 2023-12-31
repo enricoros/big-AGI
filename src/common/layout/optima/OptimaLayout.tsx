@@ -4,6 +4,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppContainer } from './AppContainer';
 import { AppModals } from './AppModals';
+import { useNextLoadProgress } from './components/useNextLoadProgress';
 
 
 /*function ResponsiveNavigation() {
@@ -46,6 +47,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
   // external state
   const isMobile = useIsMobile();
+
+  // this will display a progress bar while the next NextJS page is loading
+  useNextLoadProgress();
 
   return <>
 
