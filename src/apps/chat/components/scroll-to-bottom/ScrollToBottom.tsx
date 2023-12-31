@@ -32,7 +32,7 @@ const DEBUG_SCROLL_TO_BOTTOM = false;
 // NOTE: in Chrome a wheel scroll event is 100px
 // If you make this too small, the button may show when jumping lines on mobile
 // if you make it too large, the user would need a very large flick to unlock the view
-const USER_STICKY_MARGIN = 40;
+const USER_STICKY_MARGIN = 48;
 
 // during the 'booting' timeout, scrolls happen instantly instead of smoothly
 const BOOTING_TIMEOUT = 400;
