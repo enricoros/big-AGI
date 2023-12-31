@@ -3,7 +3,7 @@ import * as React from 'react';
 import { SvgIcon } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-export const LogoSquircle = (props: {
+export const AgiSquircleIcon = (props: {
   sx?: SxProps
 }) =>
   <SvgIcon

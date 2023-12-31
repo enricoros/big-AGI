@@ -9,10 +9,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
-import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
@@ -22,7 +22,7 @@ import { useOptimaLayout } from './useOptimaLayout';
 function AppBarTitle() {
   return (
     <Link href={ROUTE_INDEX}>
-      <LogoSquircle sx={{
+      <AgiSquircleIcon sx={{
         width: 32,
         height: 32,
         color: 'white',
