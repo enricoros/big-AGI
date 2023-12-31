@@ -4,6 +4,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import CallIcon from '@mui/icons-material/Call';
+import EventNoteIcon from '@mui/icons-material/EventNote';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -100,6 +101,12 @@ export const navItems: {
       type: 'app',
       route: '/workspace',
       hide: true,
+    },
+    {
+      name: 'News',
+      icon: EventNoteIcon,
+      type: 'app',
+      route: '/news',
     },
   ],
 
