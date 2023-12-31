@@ -42,7 +42,7 @@ export function ChatMessageList(props: {
 
   // external state
   const { notifyBooting } = useScrollToBottom();
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -102,21 +102,21 @@ export function ChatMessageList(props: {
 
   const handleTextImagine = React.useCallback(async (text: string) => {
     if (!capabilityHasT2I)
-      return openPreferences(2);
+      return openPreferencesTab(2);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
       setIsImagining(false);
     }
-  }, [capabilityHasT2I, conversationId, onTextImagine, openPreferences]);
+  }, [capabilityHasT2I, conversationId, onTextImagine, openPreferencesTab]);
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)
-      return openPreferences(3);
+      return openPreferencesTab(3);
     setIsSpeaking(true);
     await onTextSpeak(text);
     setIsSpeaking(false);
-  }, [isSpeakable, onTextSpeak, openPreferences]);
+  }, [isSpeakable, onTextSpeak, openPreferencesTab]);
 
 
   // operate on the local selection set

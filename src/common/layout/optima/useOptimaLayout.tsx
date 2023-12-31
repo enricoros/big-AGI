@@ -60,7 +60,7 @@ interface OptimaLayoutActions {
 
   // commands to open/close optima modals
 
-  openPreferences: (tab?: number) => void;
+  openPreferencesTab: (tab?: number) => void;
   closePreferences: () => void;
 
   openModelsSetup: () => void;
@@ -97,7 +97,7 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
     setAppMenuAnchor: (anchor: HTMLElement | null) => setState(state => ({ ...state, appMenuAnchor: anchor })),
     closeAppMenu: () => setState(state => ({ ...state, appMenuAnchor: null })),
 
-    openPreferences: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
+    openPreferencesTab: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),
 
     openModelsSetup: () => setState(state => ({ ...state, showModelsSetup: true })),
@@ -116,7 +116,7 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     ['?', true, true, false, actions.openShortcuts],
     ['m', true, true, false, actions.openModelsSetup],
-    ['p', true, true, false, actions.openPreferences],
+    ['p', true, true, false, actions.openPreferencesTab],
   ], [actions]);
   useGlobalShortcuts(shortcuts);
 
