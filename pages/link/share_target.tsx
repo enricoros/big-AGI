@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
 
 import { Alert, Box, Button, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -10,7 +9,7 @@ import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
-import { navigateToIndex } from '~/common/app.routes';
+import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
 import { themeBgApp } from '~/common/app.theme';
 import { withLayout } from '~/common/layout/withLayout';
 
@@ -32,8 +31,10 @@ function AppShareTarget() {
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   // external state
-  const { query } = useRouter();
-
+  const { url: queryUrl, text: queryText } = useRouterQuery<{
+    url: string | string[] | undefined,
+    text: string | string[] | undefined,
+  }>();
 
   const queueComposerTextAndLaunchApp = React.useCallback((text: string) => {
     setComposerStartupText(text);
@@ -44,11 +45,11 @@ function AppShareTarget() {
   // Detect the share Intent from the query
   React.useEffect(() => {
     // skip when query is not parsed yet
-    if (!Object.keys(query).length)
+    let queryTextItem = queryUrl || queryText || null;
+    if (!queryTextItem)
       return;
 
     // single item from the query
-    let queryTextItem: string[] | string | null = query.url || query.text || null;
     if (Array.isArray(queryTextItem))
       queryTextItem = queryTextItem[0];
 
@@ -59,9 +60,9 @@ function AppShareTarget() {
     else if (queryTextItem)
       setIntentText(queryTextItem);
     else
-      setErrorMessage('No text or url. Received: ' + JSON.stringify(query));
+      setErrorMessage('No text or url. Received: ' + JSON.stringify({ queryText, queryUrl }));
 
-  }, [query.url, query.text, query]);
+  }, [queryText, queryUrl]);
 
 
   // Text -> Composer

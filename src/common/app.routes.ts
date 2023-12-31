@@ -4,7 +4,7 @@
 // We will centralize them here, for UI and routing purposes.
 //
 
-import Router from 'next/router';
+import Router, { useRouter } from 'next/router';
 
 import type { DConversationId } from '~/common/state/store-chats';
 import { isBrowser } from './util/pwaUtils';
@@ -34,6 +34,16 @@ export const getCallbackUrl = (source: 'openrouter') => {
 };
 
 export const getChatLinkRelativePath = (chatLinkId: string) => ROUTE_APP_LINK_CHAT.replace(':linkId', chatLinkId);
+
+export function useRouterQuery<TQuery>(): TQuery {
+  const { query } = useRouter();
+  return query as TQuery;
+}
+
+export function useRouterRoute(): string {
+  const { route } = useRouter();
+  return route;
+}
 
 
 /// Simple Navigation
