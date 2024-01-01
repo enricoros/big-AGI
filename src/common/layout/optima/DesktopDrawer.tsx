@@ -14,6 +14,7 @@ import { PageDrawer } from '~/common/layout/optima/PageDrawer';
 const Drawer = styled(Sheet)(({ theme }) => ({
   // layouting
   minWidth: 'var(--Agi-drawer-width)',
+  maxWidth: 'max(var(--Agi-drawer-width), 30%)',
 
   // flex column
   display: 'flex',
