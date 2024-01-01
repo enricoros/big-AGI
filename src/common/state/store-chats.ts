@@ -8,6 +8,7 @@ import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
+import { useFolderStore } from './store-folders';
 
 
 export type DConversationId = string;
@@ -561,4 +562,15 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     wipeAllConversations: state.wipeAllConversations,
     setMessages: state.setMessages,
   };
+}, shallow);
+
+export const useConversationsByFolder = (folderId: string | null) => useChatStore(state => {
+  if (folderId) {
+    const { conversations } = state;
+    const folder = useFolderStore.getState().folders.find(_f => _f.id === folderId);
+    if (folder)
+      return conversations.filter(_c => folder.conversationIds.includes(_c.id));
+  }
+  // return all conversations if all folder is selected
+  return state.conversations;
 }, shallow);
