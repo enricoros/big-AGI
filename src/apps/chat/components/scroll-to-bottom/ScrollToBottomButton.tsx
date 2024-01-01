@@ -26,7 +26,7 @@ export function ScrollToBottomButton() {
     //   </Typography>
     // }>
     <IconButton
-      variant='outlined' color='neutral' size='md'
+      variant='outlined'
       onClick={handleStickToBottom}
       sx={{
         // place this on the bottom-right corner (FAB-like)

@@ -567,7 +567,7 @@ export function ChatMessage(props: {
       {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
         <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
           <IconButton
-            variant='outlined' color='neutral' onClick={handleOpsCopy}
+            variant='outlined' onClick={handleOpsCopy}
             sx={{
               position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
               opacity: 0, transition: 'opacity 0.3s',

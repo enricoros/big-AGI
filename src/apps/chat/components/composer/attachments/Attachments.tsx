@@ -111,7 +111,7 @@ export function Attachments(props: {
 
       {/* Overall Menu button */}
       <IconButton
-        variant='plain' onClick={handleOverallMenuToggle}
+        onClick={handleOverallMenuToggle}
         sx={{
           // borderRadius: 'sm',
           borderRadius: 0,

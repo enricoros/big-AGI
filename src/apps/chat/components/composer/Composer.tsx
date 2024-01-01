@@ -90,7 +90,7 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab, setIsFocusedMode } = useOptimaLayout();
   const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
     labsCalling: state.labsCalling,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -177,7 +177,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => openPreferences(2);
+  const handleDrawOptionsClicked = () => openPreferencesTab(2);
 
   const handleTextImagineClicked = () => {
     if (!composeText || !props.conversationId)
@@ -400,7 +400,7 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
@@ -416,7 +416,7 @@ export function Composer(props: {
 
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { md: 2 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
@@ -438,7 +438,7 @@ export function Composer(props: {
           <Box sx={{
             flexGrow: 1,
             display: 'flex', flexDirection: 'column', gap: 1,
-            minWidth: 250, // enable X-scrolling (resetting any possible minWidth due to the attachments)
+            minWidth: 200, // enable X-scrolling (resetting any possible minWidth due to the attachments)
           }}>
 
             {/* Edit box + Overlays + Mic buttons */}
@@ -450,7 +450,7 @@ export function Composer(props: {
                 <Textarea
                   variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
                   autoFocus
-                  minRows={5} maxRows={10}
+                  minRows={isMobile ? 5 : 4} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextAreaTextChange}
@@ -458,6 +458,8 @@ export function Composer(props: {
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
+                  onFocusCapture={() => setIsFocusedMode(true)}
+                  onBlurCapture={() => setIsFocusedMode(false)}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
@@ -577,7 +579,7 @@ export function Composer(props: {
                   ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
-                    : <IconButton disabled variant='plain' color='neutral' sx={{ mr: { xs: 1, md: 2 } }} />
+                    : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
               )}
 
               {/* Responsive Send/Stop buttons */}

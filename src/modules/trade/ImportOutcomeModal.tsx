@@ -52,7 +52,7 @@ export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: s
           </Typography>
           {!!props.rawJson && (
             <Tooltip title='Copy JSON to clipboard'>
-              <IconButton variant='outlined' color='neutral' onClick={handleCopyRawJson} sx={{ ml: 'auto' }}>
+              <IconButton variant='outlined' onClick={handleCopyRawJson} sx={{ ml: 'auto' }}>
                 <ContentCopyIcon />
               </IconButton>
             </Tooltip>

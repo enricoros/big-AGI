@@ -17,15 +17,14 @@ interface OptimaLayoutState {
   appBarItems: PC;
   appMenuItems: PC;
 
-  // anchors - for externally closeable menus
-  appDrawerAnchor: HTMLElement | null;
-  appMenuAnchor: HTMLElement | null;
-
   // optima modals that can overlay anything
   showPreferencesTab: number;
   showModelsSetup: boolean;
   showLlmOptions: DLLMId | null;
   showShortcuts: boolean;
+
+  // misc/temp
+  isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
 
 }
 
@@ -35,13 +34,12 @@ const initialState: OptimaLayoutState = {
   appBarItems: null,
   appMenuItems: null,
 
-  appDrawerAnchor: null,
-  appMenuAnchor: null,
-
   showPreferencesTab: 0, // 0 = closed, 1+ open tab n-1
   showModelsSetup: false,
   showLlmOptions: null,
   showShortcuts: false,
+
+  isFocusedMode: false,
 
 };
 
@@ -52,15 +50,9 @@ interface OptimaLayoutActions {
     appMenuItems: PC,
   ) => void;
 
-  setAppDrawerAnchor: (anchor: HTMLElement | null) => void;
-  closeAppDrawer: () => void;
-
-  setAppMenuAnchor: (anchor: HTMLElement | null) => void;
-  closeAppMenu: () => void;
-
   // commands to open/close optima modals
 
-  openPreferences: (tab?: number) => void;
+  openPreferencesTab: (tab?: number) => void;
   closePreferences: () => void;
 
   openModelsSetup: () => void;
@@ -71,6 +63,8 @@ interface OptimaLayoutActions {
 
   openShortcuts: () => void;
   closeShortcuts: () => void;
+
+  setIsFocusedMode: (isFocusedMode: boolean) => void;
 }
 
 
@@ -91,13 +85,7 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
     setPluggableComponents: (appPaneContent: PC, appBarItems: PC, appMenuItems: PC) =>
       setState(state => ({ ...state, appPaneContent, appBarItems, appMenuItems })),
 
-    setAppDrawerAnchor: (anchor: HTMLElement | null) => setState(state => ({ ...state, appDrawerAnchor: anchor })),
-    closeAppDrawer: () => setState(state => ({ ...state, appDrawerAnchor: null })),
-
-    setAppMenuAnchor: (anchor: HTMLElement | null) => setState(state => ({ ...state, appMenuAnchor: anchor })),
-    closeAppMenu: () => setState(state => ({ ...state, appMenuAnchor: null })),
-
-    openPreferences: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
+    openPreferencesTab: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),
 
     openModelsSetup: () => setState(state => ({ ...state, showModelsSetup: true })),
@@ -109,6 +97,8 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
     openShortcuts: () => setState(state => ({ ...state, showShortcuts: true })),
     closeShortcuts: () => setState(state => ({ ...state, showShortcuts: false })),
 
+    setIsFocusedMode: (isFocusedMode: boolean) => setState(state => ({ ...state, isFocusedMode })),
+
   }), []);
 
 
@@ -116,7 +106,7 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     ['?', true, true, false, actions.openShortcuts],
     ['m', true, true, false, actions.openModelsSetup],
-    ['p', true, true, false, actions.openPreferences],
+    ['p', true, true, false, actions.openPreferencesTab],
   ], [actions]);
   useGlobalShortcuts(shortcuts);
 

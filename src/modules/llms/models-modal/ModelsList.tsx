@@ -49,7 +49,7 @@ function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, 
         {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
 
         {llm.hidden && (
-          <IconButton disabled size='sm' variant='plain' color='neutral'>
+          <IconButton disabled size='sm'>
             <VisibilityOffOutlinedIcon />
           </IconButton>
         )}
