@@ -41,9 +41,6 @@ export function ChatFolderList({
 
   return (
     <Sheet variant="soft" sx={{ width: 343, p: 2, borderRadius: 'sm' }}>
-      <Typography level="h3" fontSize="xl" fontWeight="xl" mb={1}>
-        Folders
-      </Typography>
       <List
         aria-labelledby="ios-example-demo"
         sx={(theme) => ({
