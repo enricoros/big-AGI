@@ -39,7 +39,6 @@ type RenderItemProps = {
 const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
   // internal state
   const [deleteArmed, setDeleteArmed] = useState(false);
-  const [deleteArmedFolderId, setDeleteArmedFolderId] = useState<string | null>(null);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState<string>('');
 
@@ -47,7 +46,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
   const [menuOpen, setMenuOpen] = useState(false);
 
   // external state
-  const { folders, moveFolder, updateFolderName, deleteFolder } = useFolderStore((state) => ({
+  const { updateFolderName, deleteFolder } = useFolderStore((state) => ({
     folders: state.folders,
     moveFolder: state.moveFolder,
     updateFolderName: state.updateFolderName,
@@ -110,9 +109,6 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
     setMenuOpen(false);
     setDeleteArmed(false); // Reset delete armed state
   };
-
-  // Handler to disarm the delete action
-  const handleDeleteButtonHide = () => setDeleteArmed(false);
 
   // Handler to delete the folder
   const handleDeleteConfirmed = (event: React.MouseEvent) => {
