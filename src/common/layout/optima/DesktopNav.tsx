@@ -87,6 +87,16 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
     showModelsSetup, openModelsSetup,
   } = useOptimaLayout();
 
+
+  // show/hide the pane when clicking on the logo
+  const appUsesPane = !!props.currentApp?.drawer;
+  const logoButtonTogglesPane = (appUsesPane && !isDrawerOpen) || isDrawerOpen;
+  const handleLogoButtonClick = React.useCallback(() => {
+    if (logoButtonTogglesPane)
+      toggleDrawer();
+  }, [logoButtonTogglesPane, toggleDrawer]);
+
+
   // App items
   const navAppItems = React.useMemo(() => {
     return navItems.apps.map(item => {
@@ -167,17 +177,11 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
     <InvertedBar id='desktop-nav' direction='vertical'>
 
       <InvertedBarCornerItem>
-
-        <AgiSquircleIcon inverted sx={{
-          // animation: `${cssRainbowColorKeyframes} 15s linear infinite`,
-        }} />
-
-        {/*<DesktopNavItem>*/}
-        {/*  {isDrawerOpen*/}
-        {/*    ? <MenuIcon onClick={toggleDrawer} />*/}
-        {/*    : */}
-        {/*  }*/}
-        {/*</DesktopNavItem>*/}
+        <Tooltip title={isDrawerOpen ? 'Close' : 'Open Drawer'}>
+          <DesktopNavItem disabled={!logoButtonTogglesPane} onClick={handleLogoButtonClick}>
+            <AgiSquircleIcon inverted sx={{/* animation: `${cssRainbowColorKeyframes} 15s linear infinite` */ }} />
+          </DesktopNavItem>
+        </Tooltip>
       </InvertedBarCornerItem>
 
       <DesktopNavGroupButton>
