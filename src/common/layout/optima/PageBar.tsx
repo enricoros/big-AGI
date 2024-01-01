@@ -19,6 +19,7 @@ import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaLayout } from './useOptimaLayout';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
+import type { NavItemApp } from '~/common/app.nav';
 
 
 function PageBarItemsFallback() {
@@ -91,7 +92,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
+export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
@@ -109,6 +110,10 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
   const commonMenuItems = React.useMemo(() => {
     return <CommonMenuItems onClose={closePageMenu} />;
   }, [closePageMenu]);
+
+  // [Desktop] hide the app bar if the current app doesn't use it
+  if (props.currentApp?.hideBar && !props.isMobile)
+    return null;
 
   return <>
 
@@ -143,7 +148,7 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
-        <IconButton disabled={!pageMenuAnchor || !appMenuItems} onClick={openPageMenu} ref={pageMenuAnchor}>
+        <IconButton disabled={!pageMenuAnchor || (!appMenuItems && !props.isMobile)} onClick={openPageMenu} ref={pageMenuAnchor}>
           <MoreVertIcon />
         </IconButton>
       </InvertedBarCornerItem>

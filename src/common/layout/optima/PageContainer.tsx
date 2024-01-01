@@ -13,7 +13,7 @@ import { PageBar } from './PageBar';
 /**
  * Loaded Application component, fromt the NextJS page router, wrapped in a Container for centering.
  */
-export function PageContainer(props: { isMobile?: boolean, currentApp?: NavItemApp, children: React.ReactNode }) {
+export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
 
   // external state
   const amplitude = useUIPreferencesStore(state =>
@@ -39,9 +39,13 @@ export function PageContainer(props: { isMobile?: boolean, currentApp?: NavItemA
       }}>
 
         {/* Responsive page bar (pluggable App Center Items and App Menu) */}
-        <PageBar isMobile={props.isMobile} sx={{
-          zIndex: 20,
-        }} />
+        <PageBar
+          currentApp={props.currentApp}
+          isMobile={props.isMobile}
+          sx={{
+            zIndex: 20,
+          }}
+        />
 
         {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
         {props.children}
