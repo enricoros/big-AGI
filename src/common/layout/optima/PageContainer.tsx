@@ -51,7 +51,8 @@ export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boole
         {props.children}
 
         {/* [Mobile] Nav bar at the bottom */}
-        {props.isMobile && <MobileNav hideOnFocusMode currentApp={props.currentApp} />}
+        {/* FIXME: TEMP: Disable mobilenav */}
+        {/*{props.isMobile && <MobileNav hideOnFocusMode currentApp={props.currentApp} />}*/}
 
       </Box>
     </Container>
