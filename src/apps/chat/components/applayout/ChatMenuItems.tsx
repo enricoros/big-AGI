@@ -11,7 +11,7 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import type { DConversationId } from '~/common/state/store-chats';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
@@ -30,7 +30,7 @@ export function ChatMenuItems(props: {
 }) {
 
   // external state
-  const { closeAppMenu } = useOptimaLayout();
+  const { closePageMenu } = useOptimaDrawers();
   const { touch: shareTouch } = useUICounter('export-share');
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
@@ -40,7 +40,7 @@ export function ChatMenuItems(props: {
 
   const closeMenu = (event: React.MouseEvent) => {
     event.stopPropagation();
-    closeAppMenu();
+    closePageMenu();
   };
 
   const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {

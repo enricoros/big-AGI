@@ -4,7 +4,7 @@ import { Sheet, styled } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { useOptimaDrawer } from './useOptimaDrawer';
+import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { PageDrawer } from '~/common/layout/optima/PageDrawer';
 
@@ -32,7 +32,7 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
   // external state
   const {
     isDrawerOpen, closeDrawer, toggleDrawer,
-  } = useOptimaDrawer();
+  } = useOptimaDrawers();
   const {
     appPaneContent,
   } = useOptimaLayout();

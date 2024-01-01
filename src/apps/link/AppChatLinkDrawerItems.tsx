@@ -9,7 +9,7 @@ import { useChatLinkItems } from '~/modules/trade/store-module-trade';
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 
 /**
@@ -19,7 +19,7 @@ import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 export function AppChatLinkDrawerItems() {
 
   // external state
-  const { closeAppDrawer } = useOptimaLayout();
+  const { closeDrawer } = useOptimaDrawers();
   const chatLinkItems = useChatLinkItems()
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -28,7 +28,7 @@ export function AppChatLinkDrawerItems() {
   return <>
 
     <MenuItem
-      onClick={closeAppDrawer}
+      onClick={closeDrawer}
       component={Link} href={ROUTE_INDEX} noLinkStyle
     >
       <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
