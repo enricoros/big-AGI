@@ -11,6 +11,7 @@ import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useFolderStore } from '~/common/state/store-folders';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
 import { ChatFolderList } from './folder/ChatFolderList';
@@ -27,17 +28,21 @@ function ChatDrawerItems(props: {
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
+  selectedFolderId: string | null,
+  setSelectedFolderId: (folderId: string | null) => void,
 }) {
 
   // local state
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
   // const [grouping] = React.useState<ListGrouping>('off');
+  const { selectedFolderId, setSelectedFolderId } = props;
 
   // external state
   const { closeDrawer } = useOptimaDrawers();
   const conversations = useChatStore(state => state.conversations, shallow);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
+  const createFolder = useFolderStore((state) => state.createFolder);
 
   // derived state
   const maxChatMessages = conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 1);
@@ -62,6 +67,10 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
+  const handleFolderSelect = (folderId: string | null) => {
+    // Logic to handle folder selection
+    setSelectedFolderId(folderId);
+  };
 
   // grouping
   /*let sortedIds = conversationIDs;
@@ -91,8 +100,12 @@ function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <ChatFolderList />
-
+    <ChatFolderList
+        onFolderSelect={handleFolderSelect} 
+        folders={useFolderStore((state) => state.folders)}
+        selectedFolderId={selectedFolderId}
+        conversationsByFolder={conversations}
+        />
     <ListDivider sx={{ mb: 0 }} />
 
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
