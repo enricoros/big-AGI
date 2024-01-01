@@ -13,7 +13,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
-
+import { ChatFolderList } from './folder/ChatFolderList';
 
 // type ListGrouping = 'off' | 'persona';
 
@@ -90,6 +90,10 @@ function ChatDrawerItems(props: {
     {/*    Active chats*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}
+
+    <ChatFolderList />
+
+    <ListDivider sx={{ mb: 0 }} />
 
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
