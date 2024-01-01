@@ -63,6 +63,7 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
 
   // external state
   const theme = useTheme();
@@ -383,8 +384,10 @@ export function AppChat() {
         onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}
+        selectedFolderId={selectedFolderId}
+        setSelectedFolderId={setSelectedFolderId}
       />,
-    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId, selectedFolderId],
   );
 
   const menuItems = React.useMemo(() =>
