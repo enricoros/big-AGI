@@ -400,7 +400,7 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
@@ -450,7 +450,7 @@ export function Composer(props: {
                 <Textarea
                   variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
                   autoFocus
-                  minRows={5} maxRows={10}
+                  minRows={isMobile ? 5 : 4} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextAreaTextChange}
