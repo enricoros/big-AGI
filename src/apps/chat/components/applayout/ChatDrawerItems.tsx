@@ -27,7 +27,7 @@ function ChatDrawerItems(props: {
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
-  onConversationsDeleteAll: () => void,
+  onConversationsDeleteAll: (folderId: string | null) => void,
   selectedFolderId: string | null,
   setSelectedFolderId: (folderId: string | null) => void,
 }) {
@@ -158,7 +158,7 @@ function ChatDrawerItems(props: {
       <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
     </MenuItem>
 
-    <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
+    <MenuItem disabled={!hasChats} onClick={() => props.onConversationsDeleteAll(selectedFolderId)}>
       <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
       <Typography>
         Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
