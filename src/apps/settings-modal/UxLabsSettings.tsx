@@ -34,7 +34,7 @@ export function UxLabsSettings() {
     />}
 
     <FormSwitchControl
-      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'} disabled
+      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'}
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
