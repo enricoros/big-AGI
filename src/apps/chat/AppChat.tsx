@@ -66,8 +66,10 @@ export function AppChat() {
 
   const { chatLLM } = useChatLLM();
 
-    // Get the list of conversations from the store
-    const conversations = useChatStore(state => state.conversations);
+  // Get the list of conversations from the store
+  const conversations = useChatStore(state => state.conversations);
+
+  const addConversationToFolder = useFolderStore((state) => state.addConversationToFolder);
 
   const {
     chatPanes,
@@ -276,10 +278,17 @@ export function AppChat() {
 
   const handleConversationNew = React.useCallback(() => {
     // activate an existing new conversation if present, or create another
-    setFocusedConversationId(newConversationId ? newConversationId : prependNewConversation(focusedSystemPurposeId ?? undefined));
+    const conversationId = newConversationId ? newConversationId : prependNewConversation(focusedSystemPurposeId ?? undefined);
+    setFocusedConversationId(conversationId);
     composerTextAreaRef.current?.focus();
-  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
-
+  
+    // If a folder is selected, add the new conversation to the folder
+    if (selectedFolderId && conversationId) {
+      addConversationToFolder(selectedFolderId, conversationId);
+    }
+  
+  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId, selectedFolderId, addConversationToFolder]);
+  
   const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
   const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
