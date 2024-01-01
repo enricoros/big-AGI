@@ -18,10 +18,10 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaLayout } from './useOptimaLayout';
-import { useOptimaDrawer } from '~/common/layout/optima/useOptimaDrawer';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 
-function AppBarCenterFallback() {
+function PageBarItemsFallback() {
   return (
     <Link href={ROUTE_INDEX}>
       <AgiSquircleIcon inverted sx={{
@@ -95,18 +95,20 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
+  const pageMenuAnchor = React.useRef<HTMLButtonElement>(null);
 
   // external state
   const {
-    appBarItems, appPaneContent, appMenuAnchor, appMenuItems,
-    closeAppMenu, setAppMenuAnchor,
+    appBarItems, appPaneContent, appMenuItems,
   } = useOptimaLayout();
   const {
     openDrawer,
-  } = useOptimaDrawer();
+    isPageMenuOpen, openPageMenu, closePageMenu,
+  } = useOptimaDrawers();
 
-  const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
+  const commonMenuItems = React.useMemo(() => {
+    return <CommonMenuItems onClose={closePageMenu} />;
+  }, [closePageMenu]);
 
   return <>
 
@@ -136,12 +138,12 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
       }}>
-        {!!appBarItems ? appBarItems : <AppBarCenterFallback />}
+        {!!appBarItems ? appBarItems : <PageBarItemsFallback />}
       </Box>
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
-        <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} onClick={event => setAppMenuAnchor(event.currentTarget)}>
+        <IconButton disabled={!pageMenuAnchor || !appMenuItems} onClick={openPageMenu} ref={pageMenuAnchor}>
           <MoreVertIcon />
         </IconButton>
       </InvertedBarCornerItem>
@@ -149,10 +151,10 @@ export function PageBar(props: { isMobile?: boolean, sx?: SxProps }) {
     </InvertedBar>
 
 
-    {/* Menu Menu */}
+    {/* Page Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!appMenuAnchor} anchorEl={appMenuAnchor} onClose={closeAppMenu}
+      open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
       placement='bottom-end'
     >
       {commonMenuItems}

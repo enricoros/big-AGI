@@ -8,7 +8,7 @@ import { Link } from '~/common/components/Link';
 import { NavItemApp, navItems } from '~/common/app.nav';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { useOptimaDrawer } from './useOptimaDrawer';
+import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
@@ -81,7 +81,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
   // external state
   const {
     isDrawerOpen, toggleDrawer,
-  } = useOptimaDrawer();
+  } = useOptimaDrawers();
   const {
     showPreferencesTab, openPreferencesTab,
     showModelsSetup, openModelsSetup,

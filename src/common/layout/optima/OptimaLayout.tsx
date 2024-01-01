@@ -9,7 +9,7 @@ import { DesktopDrawer } from './DesktopDrawer';
 import { DesktopNav } from './DesktopNav';
 import { MobileDrawer } from './MobileDrawer';
 import { Modals } from './Modals';
-import { OptimaDrawerProvider } from './useOptimaDrawer';
+import { OptimaDrawerProvider } from './useOptimaDrawers';
 import { OptimaLayoutProvider } from './useOptimaLayout';
 import { PageContainer } from './PageContainer';
 

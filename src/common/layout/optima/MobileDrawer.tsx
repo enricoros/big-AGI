@@ -3,9 +3,10 @@ import * as React from 'react';
 import { Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
-import { useOptimaDrawer } from './useOptimaDrawer';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { PageDrawer } from '~/common/layout/optima/PageDrawer';
+
+import { PageDrawer } from './PageDrawer';
+import { useOptimaDrawers } from './useOptimaDrawers';
+import { useOptimaLayout } from './useOptimaLayout';
 
 
 export function MobileDrawer(props: { currentApp?: NavItemApp }) {
@@ -15,7 +16,7 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
   } = useOptimaLayout();
   const {
     isDrawerOpen, closeDrawer,
-  } = useOptimaDrawer();
+  } = useOptimaDrawers();
 
   return (
     <Drawer

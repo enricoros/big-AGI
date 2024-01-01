@@ -17,10 +17,6 @@ interface OptimaLayoutState {
   appBarItems: PC;
   appMenuItems: PC;
 
-  // anchors - for externally closeable menus
-  appDrawerAnchor: HTMLElement | null;
-  appMenuAnchor: HTMLElement | null;
-
   // optima modals that can overlay anything
   showPreferencesTab: number;
   showModelsSetup: boolean;
@@ -38,9 +34,6 @@ const initialState: OptimaLayoutState = {
   appBarItems: null,
   appMenuItems: null,
 
-  appDrawerAnchor: null,
-  appMenuAnchor: null,
-
   showPreferencesTab: 0, // 0 = closed, 1+ open tab n-1
   showModelsSetup: false,
   showLlmOptions: null,
@@ -56,12 +49,6 @@ interface OptimaLayoutActions {
     appBarItems: PC,
     appMenuItems: PC,
   ) => void;
-
-  setAppDrawerAnchor: (anchor: HTMLElement | null) => void;
-  closeAppDrawer: () => void;
-
-  setAppMenuAnchor: (anchor: HTMLElement | null) => void;
-  closeAppMenu: () => void;
 
   // commands to open/close optima modals
 
@@ -97,12 +84,6 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
 
     setPluggableComponents: (appPaneContent: PC, appBarItems: PC, appMenuItems: PC) =>
       setState(state => ({ ...state, appPaneContent, appBarItems, appMenuItems })),
-
-    setAppDrawerAnchor: (anchor: HTMLElement | null) => setState(state => ({ ...state, appDrawerAnchor: anchor })),
-    closeAppDrawer: () => setState(state => ({ ...state, appDrawerAnchor: null })),
-
-    setAppMenuAnchor: (anchor: HTMLElement | null) => setState(state => ({ ...state, appMenuAnchor: anchor })),
-    closeAppMenu: () => setState(state => ({ ...state, appMenuAnchor: null })),
 
     openPreferencesTab: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),

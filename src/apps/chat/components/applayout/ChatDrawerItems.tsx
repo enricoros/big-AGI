@@ -8,7 +8,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -34,7 +34,7 @@ function ChatDrawerItems(props: {
   // const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const { closeAppDrawer } = useOptimaLayout();
+  const { closeDrawer } = useOptimaDrawers();
   const conversations = useChatStore(state => state.conversations, shallow);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
@@ -49,14 +49,14 @@ function ChatDrawerItems(props: {
 
   const handleButtonNew = React.useCallback(() => {
     onConversationNew();
-    closeAppDrawer();
-  }, [closeAppDrawer, onConversationNew]);
+    closeDrawer();
+  }, [closeDrawer, onConversationNew]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
     if (closeMenu)
-      closeAppDrawer();
-  }, [closeAppDrawer, onConversationActivate]);
+      closeDrawer();
+  }, [closeDrawer, onConversationActivate]);
 
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
