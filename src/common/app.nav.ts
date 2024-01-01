@@ -4,6 +4,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import CallIcon from '@mui/icons-material/Call';
+import Diversity2Icon from '@mui/icons-material/Diversity2';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -31,6 +32,7 @@ export interface NavItemApp extends ItemBase {
   type: 'app',
   route: string,
   drawer?: boolean,     // can make use of the drawer
+  hideBar?: boolean,    // set to true to hide the page bar
   automatic?: boolean,  // only accessible by the machine
   hide?: boolean,       // delete from the UI
 }
@@ -103,10 +105,18 @@ export const navItems: {
       hide: true,
     },
     {
+      name: 'Personas',
+      icon: Diversity2Icon,
+      type: 'app',
+      route: '/personas',
+      hideBar: true,
+    },
+    {
       name: 'News',
       icon: EventNoteIcon,
       type: 'app',
       route: '/news',
+      hideBar: true,
     },
   ],
 
