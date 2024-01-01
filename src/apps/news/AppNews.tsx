@@ -28,7 +28,7 @@ export const cssColorKeyframes = keyframes`
         color: #0B6BCB; /* Primary main color (500) */
     }
     75% {
-        color: #97C3F0; /* Primary lighter shade (300) */
+        color: #083e75; /* Primary lighter shade (300) */
     }`;
 
 
