@@ -6,7 +6,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, useChatStore, useConversationsByFolder } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -39,7 +39,9 @@ function ChatDrawerItems(props: {
 
   // external state
   const { closeDrawer } = useOptimaDrawers();
-  const conversations = useChatStore(state => state.conversations, shallow);
+  //const conversations = useChatStore(state => state.conversations, shallow);
+  const conversations = useConversationsByFolder(selectedFolderId);
+
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
   const createFolder = useFolderStore((state) => state.createFolder);
