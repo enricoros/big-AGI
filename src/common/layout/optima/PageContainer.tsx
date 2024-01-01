@@ -2,16 +2,18 @@ import * as React from 'react';
 
 import { Box, Container } from '@mui/joy';
 
+import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { AppBar } from './AppBar';
+import { MobileNav } from './MobileNav';
+import { PageBar } from './PageBar';
 
 
 /**
  * Loaded Application component, fromt the NextJS page router, wrapped in a Container for centering.
  */
-export function AppContainer(props: { isMobile?: boolean, children: React.ReactNode }) {
+export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
 
   // external state
   const amplitude = useUIPreferencesStore(state =>
@@ -36,12 +38,21 @@ export function AppContainer(props: { isMobile?: boolean, children: React.ReactN
         height: '100dvh',
       }}>
 
-        <AppBar sx={{
-          zIndex: 20,
-        }} />
+        {/* Responsive page bar (pluggable App Center Items and App Menu) */}
+        <PageBar
+          currentApp={props.currentApp}
+          isMobile={props.isMobile}
+          sx={{
+            zIndex: 20,
+          }}
+        />
 
-        {/* Children must make the assumption they're in a flex-col layout */}
+        {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
         {props.children}
+
+        {/* [Mobile] Nav bar at the bottom */}
+        {/* FIXME: TEMP: Disable mobilenav */}
+        {/*{props.isMobile && <MobileNav hideOnFocusMode currentApp={props.currentApp} />}*/}
 
       </Box>
     </Container>

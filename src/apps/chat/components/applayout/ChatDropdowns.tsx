@@ -25,20 +25,19 @@ export function ChatDropdowns(props: {
 
   return <>
 
-    {/* Model selector */}
-    {chatLLMDropdown}
-
     {/* Persona selector */}
     {personaDropdown}
 
+    {/* Model selector */}
+    {chatLLMDropdown}
+
     {/* Split Panes button */}
     {labsSplitBranching && <IconButton
-      variant={props.isSplitPanes ? 'solid' : 'plain'}
-      color='neutral'
+      variant={props.isSplitPanes ? 'solid' : undefined}
       onClick={props.onToggleSplitPanes}
-      sx={{
-        ml: 'auto',
-      }}
+      // sx={{
+      //   ml: 'auto',
+      // }}
     >
       <VerticalSplitIcon />
     </IconButton>}

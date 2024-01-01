@@ -1,34 +1,17 @@
 import * as React from 'react';
+import { useRouter } from 'next/router';
+import { Panel, PanelGroup } from 'react-resizable-panels';
 
+import { navItems } from '~/common/app.nav';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
-import { AppContainer } from './AppContainer';
-import { AppModals } from './AppModals';
-
-
-/*function ResponsiveNavigation() {
-  return <>
-    <Drawer
-      open={false}
-      variant='solid'
-      anchor='left'
-      onClose={() => {
-      }}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 256,
-          boxSizing: 'border-box',
-        },
-      }}
-    >
-      <Box sx={{ width: 256, height: '100%' }}>
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ flexGrow: 1 }} />
-        </Box>
-      </Box>
-    </Drawer>
-  </>;
-}*/
+import { DesktopDrawer } from './DesktopDrawer';
+import { DesktopNav } from './DesktopNav';
+import { MobileDrawer } from './MobileDrawer';
+import { Modals } from './Modals';
+import { OptimaDrawerProvider } from './useOptimaDrawers';
+import { OptimaLayoutProvider } from './useOptimaLayout';
+import { PageContainer } from './PageContainer';
 
 
 /**
@@ -45,31 +28,45 @@ import { AppModals } from './AppModals';
 export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children: React.ReactNode, }) {
 
   // external state
+  const { route } = useRouter();
   const isMobile = useIsMobile();
 
-  return <>
+  // derived state
+  const currentApp = navItems.apps.find(item => item.route === route);
 
-    {/*<Box sx={{*/}
-    {/*  display: 'flex', flexDirection: 'row',*/}
-    {/*  maxWidth: '100%', flexWrap: 'nowrap',*/}
-    {/*  // overflowX: 'hidden',*/}
-    {/*  background: 'lime',*/}
-    {/*}}>*/}
+  return (
+    <OptimaLayoutProvider>
+      <OptimaDrawerProvider>
 
-    {/*<Box sx={{ background: 'rgba(100 0 0 / 0.5)' }}>a</Box>*/}
+        {isMobile ? <>
 
-    {/*<ResponsiveNavigation />*/}
+          <PageContainer isMobile currentApp={currentApp}>
+            {props.children}
+          </PageContainer>
 
-    {/* "children" goes here - note that it will 'plug' other pieces of layour  */}
-    <AppContainer isMobile={isMobile}>
-      {props.children}
-    </AppContainer>
+          <MobileDrawer currentApp={currentApp} />
 
-    {/*<Box sx={{ background: 'rgba(100 0 0 / 0.5)' }}>bb</Box>*/}
+        </> : (
 
-    {/*</Box>*/}
+          <PanelGroup direction='horizontal' id='desktop-layout'>
+            <DesktopNav currentApp={currentApp} />
 
-    <AppModals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+            <DesktopDrawer currentApp={currentApp} />
 
-  </>;
+            <Panel defaultSize={100}>
+              <PageContainer currentApp={currentApp}>
+                {props.children}
+              </PageContainer>
+            </Panel>
+          </PanelGroup>
+
+        )}
+
+      </OptimaDrawerProvider>
+
+      {/* Overlay Modals */}
+      <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+
+    </OptimaLayoutProvider>
+  );
 }

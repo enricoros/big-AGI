@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { OptimaLayout } from './optima/OptimaLayout';
-import { OptimaLayoutProvider } from './optima/useOptimaLayout';
 import { PlainLayout } from './plain/PlainLayout';
 
 
@@ -20,7 +19,7 @@ export function withLayout(layoutOptions: WithLayout, children: React.ReactNode)
 
   // Optima layout: also wrap it in the OptimaLayoutProvider
   if (layoutOptions.type === 'optima')
-    return <OptimaLayoutProvider><OptimaLayout {...layoutOptions}>{children}</OptimaLayout></OptimaLayoutProvider>;
+    return <OptimaLayout {...layoutOptions}>{children}</OptimaLayout>;
 
   else if (layoutOptions.type === 'plain')
     return <PlainLayout {...layoutOptions}>{children}</PlainLayout>;

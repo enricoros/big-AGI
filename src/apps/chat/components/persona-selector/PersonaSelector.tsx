@@ -130,7 +130,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         placeholder='Search for purpose…'
         startDecorator={<SearchIcon />}
         endDecorator={searchQuery && (
-          <IconButton variant='plain' color='neutral' onClick={handleSearchClear}>
+          <IconButton onClick={handleSearchClear}>
             <ClearIcon />
           </IconButton>
         )}
@@ -248,7 +248,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 ? <>
                   Example: {selectedExample}
                   <IconButton
-                    variant='plain' color='primary' size='md'
+                    color='primary'
                     onClick={() => props.runExample(selectedExample)}
                     sx={{ opacity: 0, transition: 'opacity 0.3s' }}
                   >

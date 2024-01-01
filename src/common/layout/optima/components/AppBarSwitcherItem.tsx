@@ -5,10 +5,11 @@ import { Box, Button, ButtonGroup, ListItem } from '@mui/joy';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 import { Brand } from '~/common/app.config';
+import { DiscordIcon } from '~/common/components/icons/DiscordIcon';
 import { ROUTE_APP_CHAT, ROUTE_APP_NEWS } from '~/common/app.routes';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
-import { BringTheLove, DiscordIcon } from './AppBarSupportItem';
-import { useOptimaLayout } from '../useOptimaLayout';
+import { BringTheLove } from './AppBarSupportItem';
 
 
 // routes for the quick switcher menu item
@@ -36,7 +37,7 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
 export function AppBarSwitcherItem() {
 
   // external state
-  const { closeAppMenu } = useOptimaLayout();
+  const { closeDrawer } = useOptimaDrawers();
   const { route, push: routerPush } = useRouter();
 
   // find the current ContainedAppType or null
@@ -45,7 +46,7 @@ export function AppBarSwitcherItem() {
   // switcher
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
-      closeAppMenu();
+      closeDrawer();
       void routerPush(AppRouteMap[app].route);
     }
   };

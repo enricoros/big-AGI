@@ -23,7 +23,7 @@ function ButtonAttachCamera(props: { isMobile?: boolean, onAttachImage: (file: F
 
     {/* The Button */}
     {props.isMobile ? (
-      <IconButton variant='plain' color='neutral' onClick={() => setOpen(true)}>
+      <IconButton onClick={() => setOpen(true)}>
         <AddAPhotoIcon />
       </IconButton>
     ) : (

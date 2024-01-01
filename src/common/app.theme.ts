@@ -80,27 +80,6 @@ export const appTheme = extendTheme({
   },
   components: {
     /**
-     * IconButton
-     *  - enlarge 'md' a bit: https://github.com/mui/material-ui/commit/7f81475ea148a416ec8fab252120ce6567c62897#diff-45dca083057933d78377b59e031146804cfedb68fe1514955bc8a5b3c38d7c44
-     */
-    JoyIconButton: {
-      styleOverrides: {
-        root: ({ ownerState }) => ({
-          ...(ownerState.instanceSize && {
-            '--IconButton-size': { sm: '2rem', md: '2.5rem', lg: '3rem' }[ownerState.instanceSize],
-          }),
-          ...(ownerState.size === 'md' && {
-            '--Icon-fontSize': 'calc(var(--IconButton-size, 2.5rem) / 1.667)',
-            '--CircularProgress-size': '24px',
-            '--CircularProgress-thickness': '3px',
-            minWidth: 'var(--IconButton-size, 2.5rem)',
-            minHeight: 'var(--IconButton-size, 2.5rem)',
-          }),
-        }),
-      },
-    },
-
-    /**
      * Input
      *  - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
      */

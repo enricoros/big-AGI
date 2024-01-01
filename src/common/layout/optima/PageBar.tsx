@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography, useColorScheme } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Typography, useColorScheme } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -9,28 +9,31 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
-import { LogoSquircle } from '~/common/components/LogoSquircle';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
+import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
+import type { NavItemApp } from '~/common/app.nav';
 
 
-function AppBarTitle() {
+function PageBarItemsFallback() {
   return (
     <Link href={ROUTE_INDEX}>
-      <LogoSquircle sx={{
+      <AgiSquircleIcon inverted sx={{
         width: 32,
         height: 32,
         color: 'white',
-        // filter: 'invert(1)',
       }} />
       <Typography sx={{
         ml: { xs: 1, md: 2 },
         color: 'white',
+        textDecoration: 'none',
       }}>
         {Brand.Title.Base}
       </Typography>
@@ -42,12 +45,12 @@ function AppBarTitle() {
 function CommonMenuItems(props: { onClose: () => void }) {
 
   // external state
-  const { openPreferences } = useOptimaLayout();
+  const { openPreferencesTab } = useOptimaLayout();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
   const handleShowSettings = (event: React.MouseEvent) => {
     event.stopPropagation();
-    openPreferences();
+    openPreferencesTab();
     props.onClose();
   };
 
@@ -70,7 +73,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
       <IconButton
-        variant='outlined' color='neutral'
+        variant='outlined'
         onClick={handleToggleDarkMode}
         sx={{ ml: 'auto' }}
       >
@@ -89,68 +92,74 @@ function CommonMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function AppBar(props: { sx?: SxProps }) {
+export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
+  const pageMenuAnchor = React.useRef<HTMLButtonElement>(null);
 
   // external state
   const {
-    appBarItems, appDrawerAnchor, appPaneContent, appMenuAnchor, appMenuItems,
-    closeAppMenu, closeAppDrawer,
-    setAppDrawerAnchor, setAppMenuAnchor,
+    appBarItems, appPaneContent, appMenuItems,
   } = useOptimaLayout();
+  const {
+    openDrawer,
+    isPageMenuOpen, openPageMenu, closePageMenu,
+  } = useOptimaDrawers();
 
-  const commonMenuItems = React.useMemo(() =>
-    <CommonMenuItems onClose={closeAppMenu} />, [closeAppMenu]);
+  const commonMenuItems = React.useMemo(() => {
+    return <CommonMenuItems onClose={closePageMenu} />;
+  }, [closePageMenu]);
+
+  // [Desktop] hide the app bar if the current app doesn't use it
+  if (props.currentApp?.hideBar && !props.isMobile)
+    return null;
 
   return <>
 
-    {/* Top Bar */}
-    <Sheet
-      variant='solid' color='neutral' invertedColors
-      sx={{
-        p: 1,
-        display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        ...(props.sx || {}),
-      }}>
+    <InvertedBar direction='horizontal' sx={props.sx}>
 
-      {/* Drawer Anchor */}
-      {!appPaneContent ? (
-        <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle variant='plain'>
-          <ArrowBackIcon />
-        </IconButton>
-      ) : (
-        <IconButton disabled={!!appDrawerAnchor || !appPaneContent} variant='plain' onClick={event => setAppDrawerAnchor(event.currentTarget)}>
-          <MenuIcon />
-        </IconButton>
+      {/* [Mobile] Drawer button */}
+      {!!props.isMobile && (
+        <InvertedBarCornerItem>
+
+          {!appPaneContent ? (
+            <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
+              <ArrowBackIcon />
+            </IconButton>
+          ) : (
+            <IconButton disabled={!appPaneContent} onClick={openDrawer}>
+              <MenuIcon />
+            </IconButton>
+          )}
+
+        </InvertedBarCornerItem>
       )}
 
       {/* Center Items */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', my: 'auto' }}>
-        {!!appBarItems ? appBarItems : <AppBarTitle />}
+      <Box sx={{
+        flexGrow: 1,
+        minHeight: 'var(--Bar)',
+        display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
+        my: 'auto',
+      }}>
+        {!!appBarItems ? appBarItems : <PageBarItemsFallback />}
       </Box>
 
-      {/* Menu Anchor */}
-      <IconButton disabled={!!appMenuAnchor /*|| !appMenuItems*/} variant='plain' onClick={event => setAppMenuAnchor(event.currentTarget)}>
-        <MoreVertIcon />
-      </IconButton>
-    </Sheet>
+      {/* Page Menu Anchor */}
+      <InvertedBarCornerItem>
+        <IconButton disabled={!pageMenuAnchor || (!appMenuItems && !props.isMobile)} onClick={openPageMenu} ref={pageMenuAnchor}>
+          <MoreVertIcon />
+        </IconButton>
+      </InvertedBarCornerItem>
+
+    </InvertedBar>
 
 
-    {/* Drawer Menu */}
-    {!!appPaneContent && <CloseableMenu
-      maxHeightGapPx={56 + 24} sx={{ minWidth: 320 }}
-      open={!!appDrawerAnchor} anchorEl={appDrawerAnchor} onClose={closeAppDrawer}
-      placement='bottom-start'
-    >
-      {appPaneContent}
-    </CloseableMenu>}
-
-    {/* Menu Menu */}
+    {/* Page Menu */}
     <CloseableMenu
       maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
-      open={!!appMenuAnchor} anchorEl={appMenuAnchor} onClose={closeAppMenu}
+      open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
       placement='bottom-end'
     >
       {commonMenuItems}
