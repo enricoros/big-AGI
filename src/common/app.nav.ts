@@ -34,6 +34,7 @@ export interface NavItemApp extends ItemBase {
   drawer?: boolean,     // can make use of the drawer
   hideBar?: boolean,    // set to true to hide the page bar
   automatic?: boolean,  // only accessible by the machine
+  fullWidth?: boolean,  // set to true to override the user preference
   hide?: boolean,       // delete from the UI
 }
 
@@ -75,6 +76,7 @@ export const navItems: {
       route: '/call',
       drawer: true,
       automatic: true,
+      fullWidth: true,
     },
     {
       name: 'Draw',
