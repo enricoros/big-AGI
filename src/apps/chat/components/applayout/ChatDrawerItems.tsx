@@ -6,14 +6,15 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, useChatStore, useConversationsByFolder } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useFolderStore } from '~/common/state/store-folders';
 
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
-
+import { ChatFolderList } from './folder/ChatFolderList';
 
 // type ListGrouping = 'off' | 'persona';
 
@@ -26,18 +27,23 @@ function ChatDrawerItems(props: {
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
-  onConversationsDeleteAll: () => void,
+  onConversationsDeleteAll: (folderId: string | null) => void,
+  selectedFolderId: string | null,
+  setSelectedFolderId: (folderId: string | null) => void,
 }) {
 
   // local state
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
   // const [grouping] = React.useState<ListGrouping>('off');
+  const { selectedFolderId, setSelectedFolderId } = props;
 
   // external state
   const { closeDrawerOnMobile } = useOptimaDrawers();
-  const conversations = useChatStore(state => state.conversations, shallow);
+  //const conversations = useChatStore(state => state.conversations, shallow);
+  const conversations = useConversationsByFolder(selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
+  const createFolder = useFolderStore((state) => state.createFolder);
 
   // derived state
   const maxChatMessages = conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 1);
@@ -62,6 +68,10 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
+  const handleFolderSelect = (folderId: string | null) => {
+    // Logic to handle folder selection
+    setSelectedFolderId(folderId);
+  };
 
   // grouping
   /*let sortedIds = conversationIDs;
@@ -90,6 +100,14 @@ function ChatDrawerItems(props: {
     {/*    Active chats*/}
     {/*  </Typography>*/}
     {/*</ListItem>*/}
+
+    <ChatFolderList
+        onFolderSelect={handleFolderSelect}
+        folders={useFolderStore((state) => state.folders)}
+        selectedFolderId={selectedFolderId}
+        conversationsByFolder={conversations}
+        />
+    <ListDivider sx={{ mb: 0 }} />
 
     <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
       <ListItemDecorator><AddIcon /></ListItemDecorator>
@@ -139,7 +157,7 @@ function ChatDrawerItems(props: {
       <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
     </MenuItem>
 
-    <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
+    <MenuItem disabled={!hasChats} onClick={() => props.onConversationsDeleteAll(selectedFolderId)}>
       <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
       <Typography>
         Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}

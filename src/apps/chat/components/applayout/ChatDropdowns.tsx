@@ -8,6 +8,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
+import { useFolderDropdown } from './folder/useFolderDropdown';
 
 
 export function ChatDropdowns(props: {
@@ -19,6 +20,7 @@ export function ChatDropdowns(props: {
   // state
   const { chatLLMDropdown } = useChatLLMDropdown();
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId);
+  const { folderDropdown } = useFolderDropdown(props.conversationId);
 
   // external state
   const labsSplitBranching = useUXLabsStore(state => state.labsSplitBranching);
@@ -30,6 +32,9 @@ export function ChatDropdowns(props: {
 
     {/* Model selector */}
     {chatLLMDropdown}
+
+    {/* Folder selector */}
+    {folderDropdown}
 
     {/* Split Panes button */}
     {labsSplitBranching && <IconButton
