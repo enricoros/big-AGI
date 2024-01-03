@@ -10,13 +10,14 @@ import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
+import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 
 
 /**
  * Drawer Items are all the links already shared, for quick access.
  * This is stores in the Trade Store (local storage).
  */
-export function AppChatLinkDrawerItems() {
+export function AppChatLinkDrawerContent() {
 
   // external state
   const { closeDrawerOnMobile } = useOptimaDrawers();
@@ -25,7 +26,7 @@ export function AppChatLinkDrawerItems() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const notEmpty = chatLinkItems.length > 0;
 
-  return <>
+  return <PageDrawerList>
 
     <MenuItem
       onClick={closeDrawerOnMobile}
@@ -64,6 +65,6 @@ export function AppChatLinkDrawerItems() {
 
       ))}
     </Box>}
-  </>;
+  </PageDrawerList>;
 
 }

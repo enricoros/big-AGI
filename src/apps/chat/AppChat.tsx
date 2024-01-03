@@ -23,7 +23,7 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { ChatDrawerItemsMemo } from './components/applayout/ChatDrawerItems';
+import { ChatDrawerContentMemo } from './components/applayout/ChatDrawerItems';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -384,9 +384,9 @@ export function AppChat() {
     [focusedConversationId, isSplitPane, toggleSplitPane],
   );
 
-  const drawerItems = React.useMemo(
+  const drawerContent = React.useMemo(
     () => (
-      <ChatDrawerItemsMemo
+      <ChatDrawerContentMemo
         activeConversationId={focusedConversationId}
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
@@ -422,7 +422,7 @@ export function AppChat() {
   ? useFolderStore.getState().folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
   : conversations.length;
 
-  usePluggableOptimaLayout(drawerItems, centerItems, menuItems, 'AppChat');
+  usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
 
   return (
     <>
