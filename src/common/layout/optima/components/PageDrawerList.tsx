@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { ColorPaletteProp, MenuList, VariantProp } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
 
 export const PageDrawerTallItemSx: SxProps = {

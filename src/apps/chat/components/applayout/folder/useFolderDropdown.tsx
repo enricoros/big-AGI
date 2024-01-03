@@ -11,8 +11,15 @@ const SPECIAL_ID_REMOVE = '_REMOVE_';
 
 
 export function useFolderDropdown(conversationId: DConversationId | null) {
-  // Get folders from the store
-  const folders = useFolderStore(state => state.folders);
+
+  // external state
+  const { folders } = useFolderStore();
+
+  // derived state
+
+  // current folder ID for the selected conversation
+  const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
+
 
   // Prepare items for the dropdown
   const folderItems: DropdownItems = React.useMemo(() => {
@@ -47,8 +54,6 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
     }
   };
 
-  // Get the current folder ID for the selected conversation
-  const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
 
   // Create the dropdown component
   const folderDropdown = (
@@ -56,7 +61,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
       items={folderItems}
       value={currentFolderId}
       onChange={handleFolderChange}
-      placeholder="Select a folder"
+      placeholder='Select a folder'
       showSymbols={true}
     />
   );
