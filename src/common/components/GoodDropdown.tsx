@@ -80,7 +80,7 @@ export function GoodDropdown<TValue extends string>(props: {
 
         return (
           <Option key={'key-' + idx} value={key} sx={{ whiteSpace: 'nowrap' }}>
-            {props.showSymbols && <ListItemDecorator sx={{ fontSize: 'xl' }}>{item?.symbol + ' '}</ListItemDecorator>}
+            {props.showSymbols && item?.symbol && <ListItemDecorator sx={{ fontSize: 'xl' }}>{item?.symbol + ' '}</ListItemDecorator>}
             {props.showSymbols && !!item.icon && <ListItemDecorator>{item?.icon}</ListItemDecorator>}
             {item.title}
             {/*{key === props.value && (*/}
