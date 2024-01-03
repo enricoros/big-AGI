@@ -15,24 +15,23 @@ interface FolderState {
 }
 
 interface FolderActions {
-  createFolder: (title: string, color?: string) => string;
-  updateFolderName: (folderId: string, title: string) => void;
+  createFolder: (title: string, color?: string) => void;
   deleteFolder: (folderId: string) => void;
+  moveFolder: (fromIndex: number, toIndex: number) => void;
+  setFolderName: (folderId: string, title: string) => void;
+  setFolderColor: (folderId: string, color: string) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
-  moveFolder: (fromIndex: number, toIndex: number) => void;
-  setFolders: (folders: DFolder[]) => void;
-  setFolderColor: (folderId: string, color: string) => void;
 }
 
 type FolderStore = FolderState & FolderActions;
 
 export const useFolderStore = create<FolderStore>()(devtools(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       folders: [], // Initial state
 
-      createFolder: (title: string, color?: string): string => {
+      createFolder: (title: string, color?: string) => {
         const newFolder: DFolder = {
           id: uuidv4(),
           title,
@@ -43,27 +42,40 @@ export const useFolderStore = create<FolderStore>()(devtools(
         set(state => ({
           folders: [...state.folders, newFolder],
         }));
-
-        return newFolder.id;
       },
 
-      updateFolderName: (folderId: string, title: string): void => {
+      deleteFolder: (folderId: string): void =>
+        set(state => ({
+          folders: state.folders.filter(folder => folder.id !== folderId),
+        })),
+
+      moveFolder: (fromIndex: number, toIndex: number): void =>
+        set(state => {
+          const newFolders = [...state.folders];
+          const [movedFolder] = newFolders.splice(fromIndex, 1);
+          newFolders.splice(toIndex, 0, movedFolder);
+          return { folders: newFolders };
+        }),
+
+      setFolderName: (folderId: string, title: string): void =>
         set(state => ({
           folders: state.folders.map(folder =>
             folder.id === folderId
               ? { ...folder, title }
-              : folder
+              : folder,
           ),
-        }));
-      },
+        })),
 
-      deleteFolder: (folderId: string): void => {
+      setFolderColor: (folderId: string, color: string): void =>
         set(state => ({
-          folders: state.folders.filter(folder => folder.id !== folderId),
-        }));
-      },
+          folders: state.folders.map(folder =>
+            folder.id === folderId
+              ? { ...folder, color }
+              : folder,
+          ),
+        })),
 
-      addConversationToFolder: (folderId: string, conversationId: string) => {
+      addConversationToFolder: (folderId: string, conversationId: string) =>
         set(state => {
           const folders = state.folders.map(folder => {
             // Check if this is the correct folder and if the conversationId is not already present
@@ -74,41 +86,17 @@ export const useFolderStore = create<FolderStore>()(devtools(
             return folder;
           });
           return { folders };
-        });
-      },
+        }),
 
-      removeConversationFromFolder: (folderId: string, conversationId: DConversationId): void => {
+      removeConversationFromFolder: (folderId: string, conversationId: DConversationId): void =>
         set(state => ({
           folders: state.folders.map(folder =>
             folder.id === folderId
               ? { ...folder, conversationIds: folder.conversationIds.filter(id => id !== conversationId) }
-              : folder
+              : folder,
           ),
-        }));
-      },
+        })),
 
-      moveFolder: (fromIndex: number, toIndex: number): void => {
-        set(state => {
-          const newFolders = Array.from(state.folders);
-          const [movedFolder] = newFolders.splice(fromIndex, 1);
-          newFolders.splice(toIndex, 0, movedFolder);
-          return { folders: newFolders };
-        });
-      },
-
-      setFolders: (folders: DFolder[]): void => {
-        set({ folders });
-      },
-
-      setFolderColor: (folderId: string, color: string): void => {
-        set(state => ({
-          folders: state.folders.map(folder =>
-            folder.id === folderId
-              ? { ...folder, color }
-              : folder
-          ),
-        }));
-      },
     }),
     {
       name: 'app-folders',

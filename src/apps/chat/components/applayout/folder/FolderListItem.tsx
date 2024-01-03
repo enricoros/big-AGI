@@ -33,10 +33,10 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
   const [menuOpen, setMenuOpen] = useState(false);
 
   // external state
-  const { updateFolderName, deleteFolder } = useFolderStore((state) => ({
+  const { setFolderName, deleteFolder } = useFolderStore((state) => ({
     folders: state.folders,
     moveFolder: state.moveFolder,
-    updateFolderName: state.updateFolderName,
+    setFolderName: state.setFolderName,
     deleteFolder: state.deleteFolder,
   }));
 
@@ -61,9 +61,8 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
   };
 
   const handleSaveFolder = (newTitle: string, folderId: string) => {
-    if (newTitle.trim()) {
-      updateFolderName(folderId, newTitle.trim());
-    }
+    if (newTitle.trim())
+      setFolderName(folderId, newTitle.trim());
     setEditingFolderId(null); // Exit edit mode
     // Blur the input element if it's currently focused
     if (document.activeElement instanceof HTMLElement) {
@@ -301,5 +300,3 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
     </ListItem>
   );
 };
-
-export default FolderListItem;
