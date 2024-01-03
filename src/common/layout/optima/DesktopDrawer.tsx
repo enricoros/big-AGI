@@ -1,43 +1,70 @@
 import * as React from 'react';
 
-import { Sheet, styled } from '@mui/joy';
+import { Box, Sheet, styled } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
+import { PageDrawer } from './PageDrawer';
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { PageDrawer } from '~/common/layout/optima/PageDrawer';
+import { useOptimaLayout } from './useOptimaLayout';
+
+
+// set to 0 to always keep the drawer mounted (smoother on/off)
+const UNMOUNT_DELAY_MS = 0;
 
 
 // Desktop Drawer
 
-const Drawer = styled(Sheet)(({ theme }) => ({
+const DesktopDrawerFixRoot = styled(Box)({
+  // fix the drawer size
+  width: 'var(--AGI-Desktop-Drawer-width)',
+  flexShrink: 0,
+  flexGrow: 0,
+});
+
+const DesktopDrawerTranslatingSheet = styled(Sheet)({
   // layouting
-  minWidth: 'var(--Agi-drawer-width)',
-  maxWidth: 'max(var(--Agi-drawer-width), 30%)',
+  width: '100%',
+  height: '100dvh',
+
+  // sliding
+  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
+  zIndex: themeZIndexDesktopDrawer,
 
   // flex column
   display: 'flex',
   flexDirection: 'column',
-
-  // style
-  // backgroundColor: theme.palette.background.level2,
-  // borderRight: '0.125rem solid',
-  // borderRightColor: theme.palette.background.level1,
-  // boxShadow: theme.shadow.sm,
-}));
+});
 
 
 export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
 
   // external state
-  const {
-    isDrawerOpen, closeDrawer, toggleDrawer,
-  } = useOptimaDrawers();
-  const {
-    appPaneContent,
-  } = useOptimaLayout();
+  const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
+  const { appPaneContent } = useOptimaLayout();
+
+  // local state
+  const [softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
+
+
+  // 'soft unmount': remove contents after a delay
+  React.useEffect(() => {
+    if (!UNMOUNT_DELAY_MS)
+      return;
+
+    // drawer open: do not unmount
+    if (isDrawerOpen) {
+      setSoftDrawerUnmount(false);
+      return;
+    }
+
+    // drawer closed: delayed unmount
+    const unmountTimeoutId = setTimeout(() =>
+        setSoftDrawerUnmount(true)
+      , UNMOUNT_DELAY_MS);
+    return () => clearTimeout(unmountTimeoutId);
+  }, [isDrawerOpen]);
 
 
   // [effect] Desktop-only?: close the drawer if the current app doesn't use it
@@ -48,22 +75,28 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
   }, [closeDrawer, currentAppUsesDrawer]);
 
 
-  // TODO: do not unmount like this, or we cannot animate-out
-  if (!isDrawerOpen)
-    return null;
-
   return (
-    <Drawer
+    <DesktopDrawerFixRoot
       sx={{
-        display: 'flex', flexDirection: 'column',
-        height: '100dvh',
+        contain: isDrawerOpen ? undefined : 'strict',
       }}
     >
 
-      <PageDrawer currentApp={props.currentApp} onClick={closeDrawer}>
-        {appPaneContent}
-      </PageDrawer>
+      <DesktopDrawerTranslatingSheet
+        sx={{
+          transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
+        }}
+      >
 
-    </Drawer>
+        {/* [UX Responsiveness] Keep Mounted for now */}
+        {(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) && (
+          <PageDrawer currentApp={props.currentApp} onClick={closeDrawer}>
+            {appPaneContent}
+          </PageDrawer>
+        )}
+
+      </DesktopDrawerTranslatingSheet>
+
+    </DesktopDrawerFixRoot>
   );
 }

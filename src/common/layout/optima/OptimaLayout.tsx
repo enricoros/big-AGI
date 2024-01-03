@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
-import { Panel, PanelGroup } from 'react-resizable-panels';
+import { PanelGroup } from 'react-resizable-panels';
 
 import { navItems } from '~/common/app.nav';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -49,15 +49,17 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
         </> : (
 
           <PanelGroup direction='horizontal' id='desktop-layout'>
+
             <DesktopNav currentApp={currentApp} />
 
             <DesktopDrawer currentApp={currentApp} />
 
-            <Panel defaultSize={100}>
-              <PageContainer currentApp={currentApp}>
-                {props.children}
-              </PageContainer>
-            </Panel>
+            {/*<Panel defaultSize={100}>*/}
+            <PageContainer currentApp={currentApp}>
+              {props.children}
+            </PageContainer>
+            {/*</Panel>*/}
+
           </PanelGroup>
 
         )}
