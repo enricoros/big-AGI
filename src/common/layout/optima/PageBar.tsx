@@ -120,10 +120,10 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
     <InvertedBar direction='horizontal' sx={props.sx}>
 
       {/* [Mobile] Drawer button */}
-      {!!props.isMobile && (
+      {(!!props.isMobile || props.currentApp?.hideNav) && (
         <InvertedBarCornerItem>
 
-          {!appPaneContent ? (
+          {(!appPaneContent || props.currentApp?.hideNav) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
