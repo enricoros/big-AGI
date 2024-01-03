@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Sheet, styled } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
+import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';

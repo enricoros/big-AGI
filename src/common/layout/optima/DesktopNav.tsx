@@ -6,6 +6,7 @@ import { Box, IconButton, styled, Tooltip } from '@mui/joy';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Link } from '~/common/components/Link';
 import { NavItemApp, navItems } from '~/common/app.nav';
+import { themeZIndexDesktopNav } from '~/common/app.theme';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
@@ -174,7 +175,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
 
   return (
-    <InvertedBar id='desktop-nav' direction='vertical'>
+    <InvertedBar id='desktop-nav' direction='vertical' sx={{ zIndex: themeZIndexDesktopNav }}>
 
       <InvertedBarCornerItem>
         <Tooltip title={isDrawerOpen ? 'Close' : 'Open Drawer'}>
