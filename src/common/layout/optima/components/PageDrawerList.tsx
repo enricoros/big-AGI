@@ -37,7 +37,6 @@ export function PageDrawerList(props: {
         // style
         backgroundColor: 'background.popup',
         border: 'none',
-        boxShadow: 'md',
         ...(!!props.noTopPadding && { pt: 0 }),
         ...(!!props.noBottomPadding && { pb: 0 }),
       }}
