@@ -131,7 +131,7 @@ export const navItems: {
       overlayId: 'models',
     },
     {
-      name: 'Settings',
+      name: 'Preferences',
       icon: SettingsIcon,
       type: 'modal',
       overlayId: 'settings',
