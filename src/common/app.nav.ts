@@ -32,7 +32,7 @@ interface ItemBase {
 export interface NavItemApp extends ItemBase {
   type: 'app',
   route: string,
-  drawer?: boolean,     // can make use of the drawer
+  drawer?: string,      // if set, show the drawer, with this name
   hideBar?: boolean,    // set to true to hide the page bar
   hideNav?: boolean,    // set to hide the Nav bar (note: must have a way to navigate back)
   automatic?: boolean,  // only accessible by the machine
@@ -69,14 +69,14 @@ export const navItems: {
       icon: TelegramIcon,
       type: 'app',
       route: '/',
-      drawer: true,
+      drawer: 'Chats',
     },
     {
       name: 'Call',
       icon: CallIcon,
       type: 'app',
       route: '/call',
-      drawer: true,
+      drawer: 'Recent Calls',
       automatic: true,
       fullWidth: true,
     },
@@ -129,7 +129,7 @@ export const navItems: {
       icon: IosShareIcon,
       type: 'app',
       route: '/link/chat/[chatLinkId]',
-      drawer: true,
+      drawer: 'Shared Chats',
       automatic: true,
       hideNav: true,
     },

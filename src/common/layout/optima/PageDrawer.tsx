@@ -11,33 +11,39 @@ export function PageDrawer(props: {
   onClick: () => void,
   children?: React.ReactNode,
 }) {
+
+  // derived state
+  const hasDrawer = !!props.currentApp?.drawer;
+
   return <>
 
     {/* Drawer Header */}
-    <Sheet
-      variant='outlined'
-      // invertedColors
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        minHeight: 'var(--AGI-Nav-width)',
-        borderTop: 'none',
-        borderLeft: 'none',
-        borderRight: 'none',
-        px: 1,
-      }}
-    >
-      <IconButton disabled />
+    {hasDrawer && (
+      <Sheet
+        variant='outlined'
+        // invertedColors
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 'var(--AGI-Nav-width)',
+          borderTop: 'none',
+          borderLeft: 'none',
+          borderRight: 'none',
+          px: 1,
+        }}
+      >
+        <IconButton disabled />
 
-      <Typography level='title-md'>
-        {props.currentApp?.name || ''}s
-      </Typography>
+        <Typography level='title-md'>
+          {props.currentApp?.drawer || ''}
+        </Typography>
 
-      <IconButton onClick={props.onClick}>
-        <CloseIcon />
-      </IconButton>
-    </Sheet>
+        <IconButton onClick={props.onClick}>
+          <CloseIcon />
+        </IconButton>
+      </Sheet>
+    )}
 
     {/* Pluggable Drawer Content */}
     {props.children}
