@@ -6,10 +6,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
+import FolderIcon from '@mui/icons-material/Folder';
 import MoreVert from '@mui/icons-material/MoreVert';
-import OutlineFolderIcon from '@mui/icons-material/Folder';
 
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/state/store-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
@@ -23,7 +23,7 @@ type RenderItemProps = {
   // Include any other props that RenderItem needs
 };
 
-const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
+export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
 
   // internal state
   const [deleteArmed, setDeleteArmed] = useState(false);
@@ -166,7 +166,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
             userSelect: 'none',
           }}
         >
-          <OutlineFolderIcon style={{ color: folder.color || 'inherit' }} />
+          <FolderIcon style={{ color: folder.color || 'inherit' }} />
         </ListItemDecorator>
 
         {editingFolderId === folder.id ? (
@@ -253,34 +253,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                 onChange={handleColorChange}
                 sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row', maxWidth: 240 }}
               >
-                {(
-                  [
-                    '#828282',
-                    '#f22a85',
-                    '#f13d41',
-                    '#cb6701',
-                    '#42940f',
-                    '#068fa6',
-                    '#407cf8',
-
-                    '#626262',
-                    '#b91e64',
-                    '#b72e30',
-                    '#9b4d01',
-                    '#2f7007',
-                    '#076c7e',
-                    '#1c5dc8',
-
-                    '#474747',
-                    '#8c0f49',
-                    '#891e20',
-                    '#713804',
-                    '#1f5200',
-                    '#004f5d',
-                    '#1d4294',
-
-                  ] as const
-                ).map((color, index) => (
+                {FOLDERS_COLOR_PALETTE.map((color, index) => (
                   <Sheet
                     key={index}
                     sx={{

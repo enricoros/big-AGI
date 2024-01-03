@@ -3,24 +3,30 @@ import { shallow } from 'zustand/shallow';
 
 import { Button, ListItem, ListItemDecorator } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import OutlineFolderIcon from '@mui/icons-material/Folder';
+import FolderIcon from '@mui/icons-material/Folder';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { useFolderStore } from '~/common/state/store-folders';
+import { getRotatingFolderColor, useFolderStore } from '~/common/state/store-folders';
 
 
 export function AddFolderButton() {
 
   // state
   const [isAddingFolder, setIsAddingFolder] = React.useState(false);
+  const [newFolderColor, setNewFolderColor] = React.useState<string | null>(null);
 
   const { createFolder } = useFolderStore((state) => ({
     createFolder: state.createFolder,
   }), shallow);
 
+  const handleAddFolder = () => {
+    setNewFolderColor(getRotatingFolderColor());
+    setIsAddingFolder(true);
+  };
+
   const handleCreateFolder = (name: string) => {
     if (name.trim())
-      createFolder(name.trim());
+      createFolder(name.trim(), newFolderColor || undefined);
     setIsAddingFolder(false);
   };
 
@@ -35,7 +41,7 @@ export function AddFolderButton() {
       display: 'flex', alignItems: 'center', gap: 1,
     }}>
       <ListItemDecorator>
-        <OutlineFolderIcon />
+        <FolderIcon style={{ color: newFolderColor || 'inherit' }} />
       </ListItemDecorator>
       <InlineTextarea
         initialText='' placeholder='Folder Name'
@@ -53,7 +59,7 @@ export function AddFolderButton() {
       color='neutral'
       variant='plain'
       startDecorator={<AddIcon />}
-      onClick={() => setIsAddingFolder(true)}
+      onClick={handleAddFolder}
       sx={{
         // display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
         // minHeight: '3rem', // --Folder-ListItem-height
