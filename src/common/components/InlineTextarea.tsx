@@ -1,12 +1,17 @@
 import * as React from 'react';
 
 import { Textarea } from '@mui/joy';
-import { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
+import { SxProps } from '@mui/joy/styles/types';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function InlineTextarea(props: { initialText: string, placeholder?: string, color?: ColorPaletteProp, onEdit: (text: string) => void, sx?: SxProps }) {
+export function InlineTextarea(props: {
+  initialText: string, placeholder?: string,
+  onEdit: (text: string) => void,
+  onCancel?: () => void,
+  sx?: SxProps,
+}) {
 
   const [text, setText] = React.useState(props.initialText);
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -20,6 +25,9 @@ export function InlineTextarea(props: { initialText: string, placeholder?: strin
         e.preventDefault();
         props.onEdit(text);
       }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      props.onCancel?.();
     }
   };
 
@@ -27,7 +35,7 @@ export function InlineTextarea(props: { initialText: string, placeholder?: strin
 
   return (
     <Textarea
-      variant='soft' color={props.color || 'warning'}
+      variant='soft' color='warning'
       autoFocus
       minRows={1}
       placeholder={props.placeholder}

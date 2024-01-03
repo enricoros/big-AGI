@@ -1,30 +1,17 @@
 import React, { useState } from 'react';
-import { DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
-import {
-  ListItem,
-  ListItemButton,
-  ListItemDecorator,
-  ListItemContent,
-  Typography,
-  IconButton,
-  Dropdown,
-  Menu,
-  MenuButton,
-  MenuItem,
-  FormLabel,
-  RadioGroup,
-  Sheet,
-  Radio,
-  radioClasses,
-} from '@mui/joy';
-import OutlineFolderIcon from '@mui/icons-material/Folder';
-import MoreVert from '@mui/icons-material/MoreVert';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
+
+import { Dropdown, FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Menu, MenuButton, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
+import EditIcon from '@mui/icons-material/Edit';
+import MoreVert from '@mui/icons-material/MoreVert';
+import OutlineFolderIcon from '@mui/icons-material/Folder';
+
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
+
 
 // Define the type for your props if you're using TypeScript
 type RenderItemProps = {
@@ -37,10 +24,10 @@ type RenderItemProps = {
 };
 
 const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
+
   // internal state
   const [deleteArmed, setDeleteArmed] = useState(false);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
-  const [editingFolderName, setEditingFolderName] = useState<string>('');
 
   // State to control the open state of the Menu
   const [menuOpen, setMenuOpen] = useState(false);
@@ -62,16 +49,20 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
     setMenuOpen(false);
   };
 
-  // Handlers for editing and deleting
-  const handleEdit = (event: React.MouseEvent<HTMLElement, MouseEvent>, folderId: string, folderTitle: string) => {
+
+  // Edit Title
+  const handleEditTitle = (event: React.MouseEvent<HTMLElement, MouseEvent>, folderId: string) => {
     event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
     setEditingFolderId(folderId);
-    setEditingFolderName(folderTitle);
   };
 
-  const handleSaveFolder = (folderId: string) => {
-    if (editingFolderName.trim() !== '') {
-      updateFolderName(folderId, editingFolderName.trim());
+  const handleCancelEditTitle = () => {
+    setEditingFolderId(null);
+  };
+
+  const handleSaveFolder = (newTitle: string, folderId: string) => {
+    if (newTitle.trim()) {
+      updateFolderName(folderId, newTitle.trim());
     }
     setEditingFolderId(null); // Exit edit mode
     // Blur the input element if it's currently focused
@@ -80,22 +71,8 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
     }
   };
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEditingFolderName(event.target.value);
-  };
 
-  const handleInputKeyUp = (event: React.KeyboardEvent<HTMLInputElement>, folderId: string) => {
-    if (event.key === 'Enter') {
-      handleSaveFolder(folderId);
-    } else if (event.key === 'Escape') {
-      handleCancelEdit();
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingFolderId(null); // Exit edit mode without saving
-    setEditingFolderName(''); // Reset editing name
-  };
+  // Deletion
 
   // Modified handler to arm the delete action and keep the menu open
   const handleDeleteButtonShow = (event: React.MouseEvent) => {
@@ -176,6 +153,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
         }}
         selected={folder.id === selectedFolderId}
         sx={{
+          border: 0,
           justifyContent: 'space-between',
           '&:hover .menu-icon': {
             visibility: 'visible', // Hide delete icon for default folder
@@ -192,26 +170,15 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
         </ListItemDecorator>
 
         {editingFolderId === folder.id ? (
-          <input
-            type="text"
-            value={editingFolderName}
-            onChange={handleInputChange}
-            onKeyUp={(event) => handleInputKeyUp(event, folder.id)}
-            onBlur={() => handleSaveFolder(folder.id)}
-            autoFocus
-            style={{
-              // Add styles for the input field
-              fontSize: 'inherit',
-              fontWeight: 'inherit',
-              color: 'inherit',
-              background: 'none',
-              border: 'none',
-              outline: 'none',
-              width: '100%', // Ensure the input field expands as needed
-            }}
+          <InlineTextarea
+            initialText={folder.title}
+            onEdit={newTitle => handleSaveFolder(newTitle, folder.id)}
+            onCancel={handleCancelEditTitle}
+            sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }}
           />
         ) : (
           <ListItemContent
+            onDoubleClick={event => handleEditTitle(event, folder.id)}
             style={{
               ...getListItemContentStyle(snapshot.isDragging, provided.draggableProps.style),
               userSelect: 'none',
@@ -223,7 +190,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
 
         <Dropdown>
           <MenuButton
-            className="menu-icon"
+            className='menu-icon'
             sx={{ visibility: 'hidden' }}
             slots={{ root: IconButton }}
             slotProps={{ root: { variant: 'outlined', color: 'neutral' } }}
@@ -234,7 +201,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
           <Menu open={menuOpen} onClose={handleCloseMenu}>
             <MenuItem
               onClick={(event) => {
-                handleEdit(event, folder.id, folder.title); // Pass the folder's title here
+                handleEditTitle(event, folder.id);
                 handleCloseMenu();
               }}
             >
@@ -248,7 +215,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
               </MenuItem>
             ) : (
               <>
-                <MenuItem onClick={handleDeleteConfirmed} color="danger" sx={{ color: 'danger' }}>
+                <MenuItem onClick={handleDeleteConfirmed} color='danger' sx={{ color: 'danger' }}>
                   <DeleteOutlineIcon />
                   Confirm Delete
                 </MenuItem>
@@ -269,7 +236,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
               }}
             >
               <FormLabel
-                id="folder-color"
+                id='folder-color'
                 sx={{
                   mb: 1.5,
                   fontWeight: 'xl',
@@ -281,7 +248,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                 Color
               </FormLabel>
               <RadioGroup
-                aria-labelledby="product-color-attribute"
+                aria-labelledby='product-color-attribute'
                 defaultValue={folder.color || 'warning'}
                 onChange={handleColorChange}
                 sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row', maxWidth: 240 }}
@@ -311,7 +278,7 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                     '#1f5200',
                     '#004f5d',
                     '#1d4294',
-                    
+
                   ] as const
                 ).map((color, index) => (
                   <Sheet
@@ -330,10 +297,10 @@ const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot,
                   >
                     <Radio
                       overlay
-                      variant="solid"
+                      variant='solid'
                       checkedIcon={<Done />}
                       value={color}
-                      color="neutral"
+                      color='neutral'
                       slotProps={{
                         input: { 'aria-label': color },
                         radio: {
