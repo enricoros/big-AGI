@@ -576,26 +576,3 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     setMessages: state.setMessages,
   };
 }, shallow);
-
-export const useConversationsByFolder = (folderId: string | null) => {
-  // monitor folder changes
-  const { currentFolder, folders } = useFolderStore(state => {
-    const currentFolder = folderId ? state.folders.find(_f => _f.id === folderId) ?? null : null;
-    return {
-      folders: state.folders,
-      currentFolder,
-    };
-  }, shallow);
-
-  // select conversations
-  const selectConversations = useChatStore(state => {
-    return currentFolder
-      ? state.conversations.filter(_c => currentFolder.conversationIds.includes(_c.id))
-      : state.conversations;
-  }, shallow);
-
-  return {
-    conversations: selectConversations,
-    folders,
-  };
-};
