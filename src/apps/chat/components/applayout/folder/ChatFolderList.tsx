@@ -3,14 +3,13 @@ import { shallow } from 'zustand/shallow';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
 import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuList, Sheet, Typography } from '@mui/joy';
-import OutlineFolderIcon from '@mui/icons-material/Folder';
+import FolderIcon from '@mui/icons-material/Folder';
 
 import type { DConversation } from '~/common/state/store-chats';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 
 import { AddFolderButton } from './AddFolderButton';
-import FolderListItem from './FolderListItem';
-
+import { FolderListItem } from './FolderListItem';
 import { StrictModeDroppable } from './StrictModeDroppable';
 
 
@@ -112,7 +111,7 @@ export function ChatFolderList({
                       }}
                     >
                       <ListItemDecorator>
-                        <OutlineFolderIcon style={{ color: 'inherit' }} />
+                        <FolderIcon />
                       </ListItemDecorator>
 
                       <ListItemContent>
