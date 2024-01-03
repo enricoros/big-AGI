@@ -1,10 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Button, IconButton, ListItem, ListItemDecorator } from '@mui/joy';
+import { Button, ListItem, ListItemDecorator } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
-import DoneIcon from '@mui/icons-material/Done';
 import OutlineFolderIcon from '@mui/icons-material/Folder';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
@@ -15,22 +13,18 @@ export function AddFolderButton() {
 
   // state
   const [isAddingFolder, setIsAddingFolder] = React.useState(false);
-  const [newFolderName, setNewFolderName] = React.useState('');
 
   const { createFolder } = useFolderStore((state) => ({
     createFolder: state.createFolder,
   }), shallow);
 
-  const handleCreateFolder = () => {
-    if (newFolderName.trim()) {
-      createFolder(newFolderName.trim());
-      setNewFolderName('');
-    }
+  const handleCreateFolder = (name: string) => {
+    if (name.trim())
+      createFolder(name.trim());
     setIsAddingFolder(false);
   };
 
   const handleCancelAddFolder = () => {
-    setNewFolderName('');
     setIsAddingFolder(false);
   };
 
@@ -43,21 +37,31 @@ export function AddFolderButton() {
       <ListItemDecorator>
         <OutlineFolderIcon />
       </ListItemDecorator>
-      <InlineTextarea initialText={newFolderName} placeholder='Folder Name' onEdit={setNewFolderName} />
-      <IconButton color='success' onClick={handleCreateFolder}>
-        <DoneIcon />
-      </IconButton>
-      <IconButton color='danger' onClick={handleCancelAddFolder}>
-        <CloseIcon />
-      </IconButton>
+      <InlineTextarea
+        initialText='' placeholder='Folder Name'
+        onEdit={handleCreateFolder}
+        onCancel={handleCancelAddFolder}
+        sx={{
+          flexGrow: 1,
+        }} />
+      {/*<IconButton color='danger' onClick={handleCancelAddFolder}>*/}
+      {/*  <CloseIcon />*/}
+      {/*</IconButton>*/}
     </ListItem>
   ) : (
     <Button
-      color='primary'
+      color='neutral'
       variant='plain'
       startDecorator={<AddIcon />}
       onClick={() => setIsAddingFolder(true)}
-      sx={{ minHeight: '3rem' }} // --Folder-ListItem-height
+      sx={{
+        // display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+        // minHeight: '3rem', // --Folder-ListItem-height
+        // match the forder elements
+        paddingInline: '1.2rem',
+        gap: '0.75rem',
+        // fontWeight: 400,
+      }}
     >
       New folder
     </Button>
