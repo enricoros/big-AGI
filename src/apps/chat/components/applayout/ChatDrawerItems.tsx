@@ -110,7 +110,7 @@ function ChatDrawerItems(props: {
 
     <ListDivider />
 
-    <PageDrawerList noTopPadding noBottomPadding tallRows>
+    <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
 
       <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
