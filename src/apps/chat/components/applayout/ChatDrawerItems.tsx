@@ -155,19 +155,27 @@ function ChatDrawerItems(props: {
       onFolderSelect={props.setSelectedFolderId}
     />
 
-    <ListDivider />
-
+    {/* Chats List */}
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
 
       <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-          New
+        <Box sx={{
+          // style
+          fontSize: 'sm',
+          fontWeight: 'lg',
+          // content
+          flexGrow: 1,
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 1,
+        }}>
+          New chat
           {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
         </Box>
       </MenuItem>
 
-      <ListDivider sx={{ mt: 0 }} />
+      {/*<ListDivider sx={{ mt: 0 }} />*/}
 
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
