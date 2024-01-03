@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Button, ListItem, ListItemDecorator } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,9 +14,6 @@ export function AddFolderButton() {
   const [isAddingFolder, setIsAddingFolder] = React.useState(false);
   const [newFolderColor, setNewFolderColor] = React.useState<string | null>(null);
 
-  const { createFolder } = useFolderStore((state) => ({
-    createFolder: state.createFolder,
-  }), shallow);
 
   const handleAddFolder = () => {
     setNewFolderColor(getRotatingFolderColor());
@@ -26,7 +22,7 @@ export function AddFolderButton() {
 
   const handleCreateFolder = (name: string) => {
     if (name.trim())
-      createFolder(name.trim(), newFolderColor || undefined);
+      useFolderStore.getState().createFolder(name.trim(), newFolderColor || undefined);
     setIsAddingFolder(false);
   };
 

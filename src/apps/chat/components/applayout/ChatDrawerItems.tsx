@@ -8,13 +8,12 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { DConversationId, useConversationsByFolder } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
-import { useFolderStore } from '~/common/state/store-folders';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ChatNavigationItemMemo } from './ChatNavigationItem';
 import { ChatFolderList } from './folder/ChatFolderList';
+import { ChatNavigationItemMemo } from './ChatNavigationItem';
 
 // type ListGrouping = 'off' | 'persona';
 
@@ -27,23 +26,20 @@ function ChatDrawerItems(props: {
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
-  onConversationsDeleteAll: (folderId: string | null) => void,
+  onConversationsDeleteAll: () => void,
   selectedFolderId: string | null,
   setSelectedFolderId: (folderId: string | null) => void,
 }) {
 
   // local state
-  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
   // const [grouping] = React.useState<ListGrouping>('off');
-  const { selectedFolderId, setSelectedFolderId } = props;
+  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
 
   // external state
   const { closeDrawerOnMobile } = useOptimaDrawers();
-  //const conversations = useChatStore(state => state.conversations, shallow);
-  const conversations = useConversationsByFolder(selectedFolderId);
+  const { conversations, folders } = useConversationsByFolder(props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
-  const createFolder = useFolderStore((state) => state.createFolder);
 
   // derived state
   const maxChatMessages = conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 1);
@@ -68,10 +64,6 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
-  const handleFolderSelect = (folderId: string | null) => {
-    // Logic to handle folder selection
-    setSelectedFolderId(folderId);
-  };
 
   // grouping
   /*let sortedIds = conversationIDs;
@@ -102,10 +94,9 @@ function ChatDrawerItems(props: {
     {/*</ListItem>*/}
 
     <ChatFolderList
-      onFolderSelect={handleFolderSelect}
-      folders={useFolderStore((state) => state.folders)}
-      selectedFolderId={selectedFolderId}
-      conversationsByFolder={conversations}
+      folders={folders}
+      selectedFolderId={props.selectedFolderId}
+      onFolderSelect={props.setSelectedFolderId}
     />
 
     <ListDivider />
@@ -160,7 +151,7 @@ function ChatDrawerItems(props: {
         <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
       </MenuItem>
 
-      <MenuItem disabled={!hasChats} onClick={() => props.onConversationsDeleteAll(selectedFolderId)}>
+      <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
         <Typography>
           Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}

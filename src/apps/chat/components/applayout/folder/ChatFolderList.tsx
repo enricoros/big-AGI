@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
 import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuList, Sheet, Typography } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 
-import type { DConversation } from '~/common/state/store-chats';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 
 import { AddFolderButton } from './AddFolderButton';
@@ -13,28 +11,20 @@ import { FolderListItem } from './FolderListItem';
 import { StrictModeDroppable } from './StrictModeDroppable';
 
 
-export function ChatFolderList({
-    onFolderSelect,
-    folders,
-    selectedFolderId,
-  }: {
-    onFolderSelect: (folderId: string | null) => void;
-    folders: DFolder[];
-    selectedFolderId: string | null;
-    conversationsByFolder: DConversation[];
-  }) {
-  // local state
+export function ChatFolderList(props: {
+  folders: DFolder[];
+  onFolderSelect: (folderId: string | null) => void;
+  selectedFolderId: string | null;
+}) {
 
-  // external state
-  const { moveFolder } = useFolderStore((state) => ({
-    moveFolder: state.moveFolder,
-  }), shallow);
+  // derived props
+  const { folders, onFolderSelect, selectedFolderId } = props;
 
   // handlers
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    moveFolder(result.source.index, result.destination.index);
+    useFolderStore.getState().moveFolder(result.source.index, result.destination.index);
   };
 
 

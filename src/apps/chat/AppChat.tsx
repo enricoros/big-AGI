@@ -90,7 +90,7 @@ export function AppChat() {
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
     newConversationId,
-    conversationsLenght,
+    conversationsLength,
     _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation,
     branchConversation,
@@ -103,7 +103,7 @@ export function AppChat() {
 
   const folderConversationsCount = useFolderStore(state => {
     if (!selectedFolderId)
-      return conversationsLenght;
+      return conversationsLength;
     return state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0;
   });
 
@@ -341,7 +341,7 @@ export function AppChat() {
     }
   };
 
-  const handleConversationsDeleteAll = (folderId: string | null) => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
 
   const handleConversationDelete = React.useCallback(
     (conversationId: DConversationId, bypassConfirmation: boolean) => {

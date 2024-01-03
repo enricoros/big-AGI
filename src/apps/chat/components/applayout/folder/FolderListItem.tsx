@@ -32,20 +32,9 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
   // State to control the open state of the Menu
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // external state
-  const { setFolderName, deleteFolder } = useFolderStore((state) => ({
-    folders: state.folders,
-    moveFolder: state.moveFolder,
-    setFolderName: state.setFolderName,
-    deleteFolder: state.deleteFolder,
-  }));
-
-  const { setFolderColor } = useFolderStore((state) => ({
-    setFolderColor: state.setFolderColor,
-  }));
 
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFolderColor(folder.id, event.target.value);
+    useFolderStore.getState().setFolderColor(folder.id, event.target.value);
     setMenuOpen(false);
   };
 
@@ -62,7 +51,7 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
 
   const handleSaveFolder = (newTitle: string, folderId: string) => {
     if (newTitle.trim())
-      setFolderName(folderId, newTitle.trim());
+      useFolderStore.getState().setFolderName(folderId, newTitle.trim());
     setEditingFolderId(null); // Exit edit mode
     // Blur the input element if it's currently focused
     if (document.activeElement instanceof HTMLElement) {
@@ -91,7 +80,7 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
     if (deleteArmed) {
       setDeleteArmed(false);
       event.stopPropagation();
-      deleteFolder(folder.id);
+      useFolderStore.getState().deleteFolder(folder.id);
       setMenuOpen(false);
     }
   };
