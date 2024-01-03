@@ -100,7 +100,7 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
 
         {/* [UX Responsiveness] Keep Mounted for now */}
         {(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) && (
-          <PageDrawer currentApp={props.currentApp} onClick={closeDrawer}>
+          <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
             {appPaneContent}
           </PageDrawer>
         )}

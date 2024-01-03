@@ -11,12 +11,9 @@ import { useOptimaLayout } from './useOptimaLayout';
 
 export function MobileDrawer(props: { currentApp?: NavItemApp }) {
 
-  const {
-    appPaneContent,
-  } = useOptimaLayout();
-  const {
-    isDrawerOpen, closeDrawer,
-  } = useOptimaDrawers();
+  // external state
+  const { appPaneContent } = useOptimaLayout();
+  const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
 
   return (
     <Drawer
@@ -32,7 +29,7 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
       }}
     >
 
-      <PageDrawer currentApp={props.currentApp} onClick={closeDrawer}>
+      <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
         {appPaneContent}
       </PageDrawer>
 

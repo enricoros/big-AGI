@@ -1,13 +1,16 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, ListDivider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
@@ -82,7 +85,7 @@ function ChatDrawerItems(props: {
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
 
   // external state
-  const { closeDrawerOnMobile } = useOptimaDrawers();
+  const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { chatNavItems, folders } = useChatNavigationItems(props.activeConversationId, props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
@@ -133,11 +136,18 @@ function ChatDrawerItems(props: {
 
   return <>
 
-    {/*<ListItem>*/}
-    {/*  <Typography level='body-sm'>*/}
-    {/*    Active chats*/}
-    {/*  </Typography>*/}
-    {/*</ListItem>*/}
+    {/* Drawer Header */}
+    <PageDrawerHeader
+      title='Chats'
+      onClose={closeDrawer}
+      startButton={
+        <Tooltip title={useFolders ? 'Hide Folders' : 'Use Folders'}>
+          <IconButton onClick={toggleUseFolders}>
+            {useFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
+          </IconButton>
+        </Tooltip>
+      }
+    />
 
     <ChatFolderList
       folders={folders}
