@@ -58,7 +58,8 @@ export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boole
     <Box
       sx={{
         // full width (this is to the right of the fixed-size desktop drawer)
-        flex: 1,
+        flex: '1 1 0px',
+        overflow: 'hidden',
 
         // when the drawer is off, compensate with a negative margin
         // NOTE: this will cause a transition on the container as well, meaning when we
