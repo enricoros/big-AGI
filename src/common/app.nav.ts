@@ -1,4 +1,4 @@
-import { FunctionComponent } from 'react';
+import type { FunctionComponent } from 'react';
 
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -8,6 +8,7 @@ import Diversity2Icon from '@mui/icons-material/Diversity2';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import IosShareIcon from '@mui/icons-material/IosShare';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
@@ -33,6 +34,7 @@ export interface NavItemApp extends ItemBase {
   route: string,
   drawer?: boolean,     // can make use of the drawer
   hideBar?: boolean,    // set to true to hide the page bar
+  hideNav?: boolean,    // set to hide the Nav bar (note: must have a way to navigate back)
   automatic?: boolean,  // only accessible by the machine
   fullWidth?: boolean,  // set to true to override the user preference
   hide?: boolean,       // delete from the UI
@@ -119,6 +121,17 @@ export const navItems: {
       type: 'app',
       route: '/news',
       hideBar: true,
+    },
+
+    // non-user-selectable ('automatic') Apps
+    {
+      name: 'Shared Chat',
+      icon: IosShareIcon,
+      type: 'app',
+      route: '/link/chat/[chatLinkId]',
+      drawer: true,
+      automatic: true,
+      hideNav: true,
     },
   ],
 

@@ -41,7 +41,7 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)({
 export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
 
   // external state
-  const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
+  const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
   const { appPaneContent } = useOptimaLayout();
 
   // local state
@@ -67,12 +67,19 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
   }, [isDrawerOpen]);
 
 
-  // [effect] Desktop-only?: close the drawer if the current app doesn't use it
+  // Desktop-only?: close the drawer if the current app doesn't use it
   const currentAppUsesDrawer = !!props.currentApp?.drawer;
   React.useEffect(() => {
     if (!currentAppUsesDrawer)
       closeDrawer();
   }, [closeDrawer, currentAppUsesDrawer]);
+
+  // [special case] remove in the future
+  const shallOpenNavForSharedLink = !!props.currentApp?.drawer && !!props.currentApp?.hideNav;
+  React.useEffect(() => {
+    if (shallOpenNavForSharedLink)
+      openDrawer();
+  }, [openDrawer, shallOpenNavForSharedLink]);
 
 
   return (
