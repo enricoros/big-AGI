@@ -394,7 +394,7 @@ export function AppChat() {
         selectedFolderId={selectedFolderId}
         setSelectedFolderId={setSelectedFolderId}
       />,
-    [focusedConversationId, folderConversationsCount, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, selectedFolderId, setFocusedConversationId],
+    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, selectedFolderId, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>

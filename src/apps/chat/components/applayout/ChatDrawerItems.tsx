@@ -1,21 +1,67 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { DConversationId, useConversationsByFolder } from '~/common/state/store-chats';
+import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
+import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatFolderList } from './folder/ChatFolderList';
-import { ChatNavigationItemMemo } from './ChatNavigationItem';
+import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
 
 // type ListGrouping = 'off' | 'persona';
+
+
+/*
+ * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
+ * to avoid unnecessary re-renders on each new character typed by the assistant
+ */
+export const useChatNavigationItems = (activeConversationId: DConversationId | null, folderId: string | null): {
+  chatNavItems: ChatNavigationItemData[],
+  folders: DFolder[],
+} => {
+
+  // monitor folder changes
+  const { currentFolder, folders } = useFolderStore(state => {
+    const currentFolder = folderId ? state.folders.find(_f => _f.id === folderId) ?? null : null;
+    return {
+      folders: state.folders,
+      currentFolder,
+    };
+  }, shallow);
+
+  // transform (folder) selected conversation into optimized 'navigation item' data
+  const chatNavItems: ChatNavigationItemData[] = useChatStore(state => {
+
+    const selectConversations = currentFolder
+      ? state.conversations.filter(_c => currentFolder.conversationIds.includes(_c.id))
+      : state.conversations;
+
+    return selectConversations.map(_c => ({
+      conversationId: _c.id,
+      isActive: _c.id === activeConversationId,
+      title: conversationTitle(_c, 'new conversation'),
+      messageCount: _c.messages.length,
+      assistantTyping: !!_c.abortController,
+      systemPurposeId: _c.systemPurposeId,
+    }));
+
+  }, (a: ChatNavigationItemData[], b: ChatNavigationItemData[]) => {
+    // custom equality function to avoid unnecessary re-renders
+    return a.length === b.length && a.every((_a, i) => shallow(_a, b[i]));
+  });
+
+  return { chatNavItems, folders };
+};
+
 
 export const ChatDrawerContentMemo = React.memo(ChatDrawerItems);
 
@@ -37,16 +83,16 @@ function ChatDrawerItems(props: {
 
   // external state
   const { closeDrawerOnMobile } = useOptimaDrawers();
-  const { conversations, folders } = useConversationsByFolder(props.selectedFolderId);
+  const { chatNavItems, folders } = useChatNavigationItems(props.activeConversationId, props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
   // derived state
-  const maxChatMessages = conversations.reduce((longest, _c) => Math.max(longest, _c.messages.length), 1);
-  const totalConversations = conversations.length;
-  const hasChats = totalConversations > 0;
-  const singleChat = totalConversations === 1;
-  const softMaxReached = totalConversations >= 50;
+  const maxChatMessages = chatNavItems.reduce((longest, _c) => Math.max(longest, _c.messageCount), 1);
+  const selectConversationsCount = chatNavItems.length;
+  const hasChats = selectConversationsCount > 0;
+  const singleChat = selectConversationsCount === 1;
+  const softMaxReached = selectConversationsCount >= 50;
 
 
   const handleButtonNew = React.useCallback(() => {
@@ -128,11 +174,10 @@ function ChatDrawerItems(props: {
         {/*  </ToggleButtonGroup>*/}
         {/*</ListItem>*/}
 
-        {conversations.map(conversation =>
-          <ChatNavigationItemMemo
-            key={'nav-' + conversation.id}
-            conversation={conversation}
-            isActive={conversation.id === props.activeConversationId}
+        {chatNavItems.map(item =>
+          <ChatDrawerItemMemo
+            key={'nav-' + item.conversationId}
+            item={item}
             isLonely={singleChat}
             maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
             showSymbols={showSymbols}
@@ -154,7 +199,7 @@ function ChatDrawerItems(props: {
       <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
         <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
         <Typography>
-          Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
+          Delete {selectConversationsCount >= 2 ? `all ${selectConversationsCount} chats` : 'chat'}
         </Typography>
       </MenuItem>
 

@@ -1,33 +1,39 @@
 import * as React from 'react';
 
-import { Avatar, Box, IconButton, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Avatar, Box, IconButton, ListItem, ListItemDecorator, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { SystemPurposes } from '../../../../data';
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
+import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const DEBUG_CONVERSATION_IDs = false;
 
 
-export const ChatNavigationItemMemo = React.memo(ChatNavigationItem);
+export const ChatDrawerItemMemo = React.memo(ChatNavigationItem);
+
+export interface ChatNavigationItemData {
+  conversationId: DConversationId;
+  isActive: boolean;
+  title: string;
+  messageCount: number;
+  assistantTyping: boolean;
+  systemPurposeId: SystemPurposeId;
+}
 
 function ChatNavigationItem(props: {
-  conversation: DConversation,
-  isActive: boolean,
+  item: ChatNavigationItemData,
   isLonely: boolean,
   maxChatMessages: number,
   showSymbols: boolean,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
 }) {
-
-  const { conversation, isActive } = props;
 
   // state
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
@@ -37,13 +43,8 @@ function ChatNavigationItem(props: {
   const doubleClickToEdit = useUIPreferencesStore(state => state.doubleClickToEdit);
 
   // derived state
-  const { id: conversationId } = conversation;
-  const isNew = conversation.messages.length === 0;
-  const messageCount = conversation.messages.length;
-  const assistantTyping = !!conversation.abortController;
-  const systemPurposeId = conversation.systemPurposeId;
-  const title = conversationTitle(conversation, 'new conversation');
-  // const setUserTitle = state.setUserTitle;
+  const { conversationId, isActive, title, messageCount, assistantTyping, systemPurposeId } = props.item;
+  const isNew = messageCount === 0;
 
   // auto-close the arming menu when clicking away
   // NOTE: there currently is a bug (race condition) where the menu closes on a new item right after opening
@@ -88,16 +89,15 @@ function ChatNavigationItem(props: {
   const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
 
   return (
-    <MenuItem
+    <ListItem
       variant={isActive ? 'solid' : 'plain'} color='neutral'
-      selected={isActive}
       onClick={handleConversationActivate}
       sx={{
         // py: 0,
         position: 'relative',
         border: 'none', // note, there's a default border of 1px and invisible.. hmm
+        cursor: 'pointer',
         '&:hover > button': { opacity: 1 },
-        ...(isActive ? { bgcolor: 'red' } : {}),
       }}
     >
 
@@ -171,7 +171,7 @@ function ChatNavigationItem(props: {
           <CloseIcon />
         </IconButton>
       </>}
-    </MenuItem>
 
+    </ListItem>
   );
 }
