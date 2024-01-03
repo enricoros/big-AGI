@@ -15,7 +15,7 @@ export const AgiSquircleIcon = (props: {
     titleAccess={`${capitalizeFirstLetter(Brand.Title.Base)} logo mark`}
     viewBox='0 0 6.3500006 6.3499996' width='24' height='24'
     stroke='none' strokeWidth={0.691986} strokeLinecap='round' strokeLinejoin='round'
-    {...props}
+    sx={props.sx}
   >
     <g transform='translate(51.117939,-42.425365)'>
       <g transform='matrix(0.07058825,0,0,0.07058823,-47.509613,39.430634)'>
