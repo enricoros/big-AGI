@@ -25,7 +25,7 @@ import { PageContainer } from './PageContainer';
  *  - overlays and displays various modals
  *  - flicker free
  */
-export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children: React.ReactNode, }) {
+export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children: React.ReactNode }) {
 
   // external state
   const { route } = useRouter();
@@ -50,7 +50,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
           <PanelGroup direction='horizontal' id='desktop-layout'>
 
-            <DesktopNav currentApp={currentApp} />
+            {!currentApp?.hideNav && <DesktopNav currentApp={currentApp} />}
 
             <DesktopDrawer currentApp={currentApp} />
 
