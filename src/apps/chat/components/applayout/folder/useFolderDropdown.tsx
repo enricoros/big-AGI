@@ -1,22 +1,37 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+
 import FolderIcon from '@mui/icons-material/Folder';
-import { useFolderStore } from '~/common/state/store-folders';
+
+import type { DConversationId } from '~/common/state/store-chats';
 import { DropdownItems, GoodDropdown } from '~/common/components/GoodDropdown';
-import { DConversationId } from '~/common/state/store-chats';
+import { useFolderStore } from '~/common/state/store-folders';
+
+
+const SPECIAL_ID_REMOVE = '_REMOVE_';
+
 
 export function useFolderDropdown(conversationId: DConversationId | null) {
   // Get folders from the store
   const folders = useFolderStore(state => state.folders);
 
   // Prepare items for the dropdown
-  const folderItems: DropdownItems = folders.reduce((items, folder) => {
-    items[folder.id] = {
-      title: folder.title,
-      icon: <FolderIcon sx={{ color: folder.color }} />,
+  const folderItems: DropdownItems = React.useMemo(() => {
+    // add one item per folder
+    const items = folders.reduce((items, folder) => {
+      items[folder.id] = {
+        title: folder.title,
+        icon: <FolderIcon sx={{ color: folder.color }} />,
+      };
+      return items;
+    }, {} as DropdownItems);
+
+    // add one item representing no folder
+    items[SPECIAL_ID_REMOVE] = {
+      title: 'No Folder',
     };
+
     return items;
-  }, {} as DropdownItems);
+  }, [folders]);
 
   // Handle folder change
   const handleFolderChange = (_event: any, folderId: string | null) => {
