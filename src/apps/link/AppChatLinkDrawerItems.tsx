@@ -19,7 +19,7 @@ import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 export function AppChatLinkDrawerItems() {
 
   // external state
-  const { closeDrawer } = useOptimaDrawers();
+  const { closeDrawerOnMobile } = useOptimaDrawers();
   const chatLinkItems = useChatLinkItems()
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -28,7 +28,7 @@ export function AppChatLinkDrawerItems() {
   return <>
 
     <MenuItem
-      onClick={closeDrawer}
+      onClick={closeDrawerOnMobile}
       component={Link} href={ROUTE_INDEX} noLinkStyle
     >
       <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
