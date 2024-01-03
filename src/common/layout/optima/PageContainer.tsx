@@ -4,6 +4,7 @@ import { Box, Container } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
+import { themeZIndexPageBar } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { MobileNav } from './MobileNav';
