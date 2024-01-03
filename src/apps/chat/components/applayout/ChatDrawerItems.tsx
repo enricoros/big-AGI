@@ -34,7 +34,7 @@ function ChatDrawerItems(props: {
   // const [grouping] = React.useState<ListGrouping>('off');
 
   // external state
-  const { closeDrawer } = useOptimaDrawers();
+  const { closeDrawerOnMobile } = useOptimaDrawers();
   const conversations = useChatStore(state => state.conversations, shallow);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
@@ -49,14 +49,14 @@ function ChatDrawerItems(props: {
 
   const handleButtonNew = React.useCallback(() => {
     onConversationNew();
-    closeDrawer();
-  }, [closeDrawer, onConversationNew]);
+    closeDrawerOnMobile();
+  }, [closeDrawerOnMobile, onConversationNew]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
     if (closeMenu)
-      closeDrawer();
-  }, [closeDrawer, onConversationActivate]);
+      closeDrawerOnMobile();
+  }, [closeDrawerOnMobile, onConversationActivate]);
 
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
     !singleChat && conversationId && onConversationDelete(conversationId, true);

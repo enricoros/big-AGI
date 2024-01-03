@@ -12,6 +12,7 @@ interface OptimaDrawersActions {
   toggleDrawer: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
+  closeDrawerOnMobile: () => void;
 
   togglePageMenu: () => void;
   openPageMenu: () => void;
@@ -36,6 +37,7 @@ export function OptimaDrawerProvider(props: { children: React.ReactNode }) {
     toggleDrawer: () => setDrawerOpen(state => lastDrawerOpen = !state),
     openDrawer: () => setDrawerOpen(lastDrawerOpen = true),
     closeDrawer: () => setDrawerOpen(lastDrawerOpen = false),
+    closeDrawerOnMobile: () => getIsMobile() && setDrawerOpen(lastDrawerOpen = false),
 
     togglePageMenu: () => setPageMenuOpen(state => !state),
     openPageMenu: () => setPageMenuOpen(true),

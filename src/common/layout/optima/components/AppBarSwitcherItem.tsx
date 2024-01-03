@@ -37,7 +37,7 @@ const AppRouteMap: { [key in ContainedAppType]: { name: string, route: string } 
 export function AppBarSwitcherItem() {
 
   // external state
-  const { closeDrawer } = useOptimaDrawers();
+  // const { closePageMenu } = useOptimaDrawers();
   const { route, push: routerPush } = useRouter();
 
   // find the current ContainedAppType or null
@@ -46,7 +46,7 @@ export function AppBarSwitcherItem() {
   // switcher
   const switchApp = (app: ContainedAppType) => {
     if (currentApp !== app) {
-      closeDrawer();
+      // closePageMenu();
       void routerPush(AppRouteMap[app].route);
     }
   };
