@@ -51,7 +51,7 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
     return selectConversations.map(_c => ({
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
-      title: conversationTitle(_c, 'new conversation'),
+      title: conversationTitle(_c, 'New Title'),
       messageCount: _c.messages.length,
       assistantTyping: !!_c.abortController,
       systemPurposeId: _c.systemPurposeId,
