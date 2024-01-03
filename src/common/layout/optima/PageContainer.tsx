@@ -44,7 +44,7 @@ export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boole
   // external state
   const { isDrawerOpen } = useOptimaDrawers();
   const amplitude = useUIPreferencesStore(state =>
-    (isPwa() || props.isMobile) ? 'full' : state.centerMode,
+    (isPwa() || props.isMobile || props.currentApp?.fullWidth) ? 'full' : state.centerMode,
   );
 
   // mobile: no outer containers
