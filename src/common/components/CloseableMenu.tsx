@@ -75,7 +75,7 @@ export function CloseableMenu(props: {
           onKeyDown={handleListKeyDown}
           sx={{
             '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-            '--ListItem-minHeight': props.dense ? '2.5rem' : '3rem',
+            '--ListItem-minHeight': props.dense ? '2.25rem' : '3rem',
             '--ListItemDecorator-size': '2.75rem', // icon width
             backgroundColor: 'background.popup',
             boxShadow: 'md',
