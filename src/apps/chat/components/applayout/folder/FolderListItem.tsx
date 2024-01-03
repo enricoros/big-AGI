@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
 
-import { Dropdown, FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Menu, MenuButton, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
+import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
 import FolderIcon from '@mui/icons-material/Folder';
-import MoreVert from '@mui/icons-material/MoreVert';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/state/store-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
@@ -30,16 +31,22 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
   // State to control the open state of the Menu
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLAnchorElement>(null);
 
 
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    useFolderStore.getState().setFolderColor(folder.id, event.target.value);
-    setMenuOpen(false);
+  // Menu
+  const handleMenuOpen = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+    setDeleteArmed(false); // Reset delete armed state
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
   };
 
 
   // Edit Title
+
   const handleEditTitle = (event: React.MouseEvent<HTMLElement, MouseEvent>, folderId: string) => {
     event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
     setEditingFolderId(folderId);
@@ -49,7 +56,7 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
     setEditingFolderId(null);
   };
 
-  const handleSaveFolder = (newTitle: string, folderId: string) => {
+  const handleSetTitle = (newTitle: string, folderId: string) => {
     if (newTitle.trim())
       useFolderStore.getState().setFolderName(folderId, newTitle.trim());
     setEditingFolderId(null); // Exit edit mode
@@ -62,33 +69,35 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
 
   // Deletion
 
-  // Modified handler to arm the delete action and keep the menu open
   const handleDeleteButtonShow = (event: React.MouseEvent) => {
     event.stopPropagation();
     setDeleteArmed(true);
-    setMenuOpen(true); // Keep the menu open
   };
 
-  // Handler to close the menu
-  const handleCloseMenu = () => {
-    setMenuOpen(false);
-    setDeleteArmed(false); // Reset delete armed state
-  };
-
-  // Handler to delete the folder
   const handleDeleteConfirmed = (event: React.MouseEvent) => {
     if (deleteArmed) {
       setDeleteArmed(false);
       event.stopPropagation();
       useFolderStore.getState().deleteFolder(folder.id);
-      setMenuOpen(false);
+      handleMenuClose();
     }
   };
 
-  // Toggle the menu's open state
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+  const handleDeleteCanceled = (event: React.MouseEvent) => {
+    if (deleteArmed) {
+      setDeleteArmed(false);
+      event.stopPropagation();
+    }
   };
+
+
+  // Color
+
+  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    useFolderStore.getState().setFolderColor(folder.id, event.target.value);
+    handleMenuClose();
+  };
+
 
   const getItemStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
     userSelect: 'none',
@@ -105,14 +114,14 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
       }),
   });
 
-  const getListItemContentStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
+  const getListItemContentStyle = (isDragging: boolean, _draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
     ...(isDragging && {
       // Apply any drag-specific styles here
       marginLeft: '20px',
     }),
   });
 
-  const getListItemDecoratorStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
+  const getListItemDecoratorStyle = (isDragging: boolean, _draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
     ...(isDragging && {
       // Apply any drag-specific styles here
       marginLeft: '12px',
@@ -160,7 +169,7 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
         {editingFolderId === folder.id ? (
           <InlineTextarea
             initialText={folder.title}
-            onEdit={newTitle => handleSaveFolder(newTitle, folder.id)}
+            onEdit={newTitle => handleSetTitle(newTitle, folder.id)}
             onCancel={handleCancelEditTitle}
             sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }}
           />
@@ -176,40 +185,56 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
           </ListItemContent>
         )}
 
-        <Dropdown>
-          <MenuButton
-            className='menu-icon'
-            sx={{ visibility: 'hidden' }}
-            slots={{ root: IconButton }}
-            slotProps={{ root: { variant: 'outlined', color: 'neutral' } }}
-            onClick={toggleMenu}
+        {/* Icon to show the Popup menu */}
+        <IconButton
+          variant='outlined'
+          className='menu-icon'
+          onClick={handleMenuOpen}
+          sx={{
+            visibility: 'hidden',
+          }}
+        >
+          <MoreVertIcon />
+        </IconButton>
+
+        {!!menuAnchorEl && (
+          <CloseableMenu
+            open anchorEl={menuAnchorEl} onClose={handleMenuClose}
+            placement='top' sx={{ minWidth: 200 }}
           >
-            <MoreVert />
-          </MenuButton>
-          <Menu open={menuOpen} onClose={handleCloseMenu}>
+
             <MenuItem
               onClick={(event) => {
                 handleEditTitle(event, folder.id);
-                handleCloseMenu();
+                handleMenuClose();
               }}
             >
-              <EditIcon />
+              <ListItemDecorator>
+                <EditIcon />
+              </ListItemDecorator>
               Edit
             </MenuItem>
+
             {!deleteArmed ? (
               <MenuItem onClick={handleDeleteButtonShow}>
-                <DeleteOutlineIcon />
+                <ListItemDecorator>
+                  <DeleteOutlineIcon />
+                </ListItemDecorator>
                 Delete
               </MenuItem>
             ) : (
               <>
-                <MenuItem onClick={handleDeleteConfirmed} color='danger' sx={{ color: 'danger' }}>
-                  <DeleteOutlineIcon />
-                  Confirm Delete
-                </MenuItem>
-                <MenuItem onClick={handleCloseMenu}>
-                  <CloseIcon />
+                <MenuItem onClick={handleDeleteCanceled}>
+                  <ListItemDecorator>
+                    <CloseIcon />
+                  </ListItemDecorator>
                   Cancel
+                </MenuItem>
+                <MenuItem onClick={handleDeleteConfirmed} color='danger' sx={{ color: 'danger' }}>
+                  <ListItemDecorator>
+                    <DeleteOutlineIcon />
+                  </ListItemDecorator>
+                  Confirm Deletion
                 </MenuItem>
               </>
             )}
@@ -283,8 +308,10 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
                 ))}
               </RadioGroup>
             </MenuItem>
-          </Menu>
-        </Dropdown>
+
+          </CloseableMenu>
+        )}
+
       </ListItemButton>
     </ListItem>
   );
