@@ -5,9 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
+import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
-import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
+import { useFolderStore } from './store-folders';
 
 
 export type DConversationId = string;
@@ -119,7 +120,7 @@ interface ChatActions {
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (conversationId: DConversationId, messageId: string | null) => DConversationId | null;
   deleteConversation: (conversationId: DConversationId) => DConversationId | null;
-  wipeAllConversations: (personaId: SystemPurposeId | undefined) => DConversationId;
+  wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null) => DConversationId;
 
   // within a conversation
   startTyping: (conversationId: string, abortController: AbortController | null) => void;
@@ -254,16 +255,27 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           : null;
       },
 
-      wipeAllConversations: (personaId: SystemPurposeId | undefined): DConversationId => {
-        const { conversations } = _get();
+      wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null): DConversationId => {
+        let { conversations } = _get();
 
         // abort any pending requests on all conversations
         conversations.forEach(conversation => conversation.abortController?.abort());
 
+        // If a folder is selected, only delete conversations in that folder
+        if (folderId) {
+          const { folders, removeConversationFromFolder } = useFolderStore.getState();
+          const folderConversations = folders.find(folder => folder.id === folderId)?.conversationIds || [];
+          conversations = conversations.filter(conversation => !folderConversations.includes(conversation.id));
+
+          // Update the folder to remove the deleted conversation IDs
+          folderConversations.forEach(conversationId => removeConversationFromFolder(folderId, conversationId));
+
+        }
+
         const conversation = createDConversation(personaId);
 
         _set({
-          conversations: [conversation],
+          conversations: folderId ? conversations : [conversation],
         });
 
         return conversation.id;
@@ -547,6 +559,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   const isChatEmpty = conversation ? !conversation.messages.length : true;
   const areChatsEmpty = isChatEmpty && conversations.length < 2;
   const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
+  const conversationsLength = conversations.length;
 
   return {
     title,
@@ -554,6 +567,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     isChatEmpty,
     areChatsEmpty,
     newConversationId,
+    conversationsLength,
     _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
@@ -562,3 +576,26 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     setMessages: state.setMessages,
   };
 }, shallow);
+
+export const useConversationsByFolder = (folderId: string | null) => {
+  // monitor folder changes
+  const { currentFolder, folders } = useFolderStore(state => {
+    const currentFolder = folderId ? state.folders.find(_f => _f.id === folderId) ?? null : null;
+    return {
+      folders: state.folders,
+      currentFolder,
+    };
+  }, shallow);
+
+  // select conversations
+  const selectConversations = useChatStore(state => {
+    return currentFolder
+      ? state.conversations.filter(_c => currentFolder.conversationIds.includes(_c.id))
+      : state.conversations;
+  }, shallow);
+
+  return {
+    conversations: selectConversations,
+    folders,
+  };
+};

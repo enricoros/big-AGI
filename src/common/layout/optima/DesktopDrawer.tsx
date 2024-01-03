@@ -23,7 +23,7 @@ const DesktopDrawerFixRoot = styled(Box)({
   flexGrow: 0,
 });
 
-const DesktopDrawerTranslatingSheet = styled(Sheet)({
+const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // layouting
   width: '100%',
   height: '100dvh',
@@ -32,10 +32,13 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)({
   transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
   zIndex: themeZIndexDesktopDrawer,
 
-  // flex column
+  // styling
+  boxShadow: theme.shadow.md,
+
+  // content layout
   display: 'flex',
   flexDirection: 'column',
-});
+}));
 
 
 export function DesktopDrawer(props: { currentApp?: NavItemApp }) {

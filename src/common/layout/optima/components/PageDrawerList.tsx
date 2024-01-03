@@ -1,0 +1,47 @@
+import * as React from 'react';
+
+import type { SxProps } from '@mui/joy/styles/types';
+import { ColorPaletteProp, MenuList, VariantProp } from '@mui/joy';
+
+
+export const PageDrawerTallItemSx: SxProps = {
+  '--ListItem-minHeight': '3rem',
+};
+
+
+/**
+ * Used by pluggable layouts to have a standardized list appearance
+ */
+export function PageDrawerList(props: {
+  variant?: VariantProp,
+  color?: ColorPaletteProp,
+  largeIcons?: boolean,
+  tallRows?: boolean,
+  noTopPadding?: boolean,
+  noBottomPadding?: boolean,
+  children: React.ReactNode
+}) {
+
+  return (
+    <MenuList
+      variant={props.variant}
+      color={props.color}
+      sx={{
+        // size of the list items
+        ...props.largeIcons && {
+          '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+          '--ListItemDecorator-size': '2.75rem', // icon width
+        },
+        ...props.tallRows && PageDrawerTallItemSx,
+
+        // style
+        backgroundColor: 'background.popup',
+        border: 'none',
+        ...(!!props.noTopPadding && { pt: 0 }),
+        ...(!!props.noBottomPadding && { pb: 0 }),
+      }}
+    >
+      {props.children}
+    </MenuList>
+  );
+}

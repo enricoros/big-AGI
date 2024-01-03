@@ -16,7 +16,7 @@ import { conversationTitle } from '~/common/state/store-chats';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
-import { AppChatLinkDrawerItems } from './AppChatLinkDrawerItems';
+import { AppChatLinkDrawerContent } from './AppChatLinkDrawerContent';
 import { AppChatLinkMenuItems } from './AppChatLinkMenuItems';
 import { ViewChatLink } from './ViewChatLink';
 
@@ -84,9 +84,9 @@ export function AppChatLink(props: { linkId: string }) {
 
   // pluggable UI
 
-  const drawerItems = React.useMemo(() => <AppChatLinkDrawerItems />, []);
+  const drawerContent = React.useMemo(() => <AppChatLinkDrawerContent />, []);
   const menuItems = React.useMemo(() => <AppChatLinkMenuItems />, []);
-  usePluggableOptimaLayout(hasLinkItems ? drawerItems : null, null, menuItems, 'AppChatLink');
+  usePluggableOptimaLayout(hasLinkItems ? drawerContent : null, null, menuItems, 'AppChatLink');
 
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
