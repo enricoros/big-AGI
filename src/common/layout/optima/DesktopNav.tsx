@@ -2,6 +2,7 @@ import * as React from 'react';
 import Router from 'next/router';
 
 import { Box, IconButton, styled, Tooltip } from '@mui/joy';
+import MenuIcon from '@mui/icons-material/Menu';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Link } from '~/common/components/Link';
@@ -180,7 +181,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
       <InvertedBarCornerItem>
         <Tooltip title={isDrawerOpen ? 'Close' : 'Open Drawer'}>
           <DesktopNavItem disabled={!logoButtonTogglesPane} onClick={handleLogoButtonClick}>
-            <AgiSquircleIcon inverted sx={{/* animation: `${cssRainbowColorKeyframes} 15s linear infinite` */ }} />
+            {logoButtonTogglesPane ? <MenuIcon /> : <AgiSquircleIcon inverted sx={{ color: 'white' }} />}
           </DesktopNavItem>
         </Tooltip>
       </InvertedBarCornerItem>
