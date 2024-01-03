@@ -15,7 +15,7 @@ export const InvertedBarCornerItem = styled(Box)({
 
 const InvertedBarBase = styled(Sheet)({
   // customization
-  '--Bar': 'var(--Agi-nav-width)',
+  '--Bar': 'var(--AGI-Nav-width)',
 
   // layout
   display: 'flex',
