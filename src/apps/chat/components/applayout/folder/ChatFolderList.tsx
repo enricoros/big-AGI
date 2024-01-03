@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import Sheet, { sheetClasses } from '@mui/joy/Sheet';
+import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator } from '@mui/joy';
 import OutlineFolderIcon from '@mui/icons-material/Folder';
@@ -32,7 +32,7 @@ export function ChatFolderList({
     }));
 
   // handlers
-  
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     moveFolder(result.source.index, result.destination.index);
@@ -40,9 +40,8 @@ export function ChatFolderList({
 
 
   return (
-    <Sheet variant="soft" sx={{ width: 343, p: 2, borderRadius: 'sm' }}>
+    <Sheet variant="soft" color='primary' sx={{ p: 2 }}>
       <List
-        aria-labelledby="ios-example-demo"
         sx={(theme) => ({
           '& ul': {
             '--List-gap': '0px',
