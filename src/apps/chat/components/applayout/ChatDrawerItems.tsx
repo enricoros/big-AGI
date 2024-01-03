@@ -1,23 +1,23 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, useConversationsByFolder } from '~/common/state/store-chats';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import { ChatFolderList } from './folder/ChatFolderList';
 import { ChatNavigationItemMemo } from './ChatNavigationItem';
-
 
 // type ListGrouping = 'off' | 'persona';
 
-export const ChatDrawerItemsMemo = React.memo(ChatDrawerItems);
+export const ChatDrawerContentMemo = React.memo(ChatDrawerItems);
 
 function ChatDrawerItems(props: {
   activeConversationId: DConversationId | null,
@@ -27,15 +27,17 @@ function ChatDrawerItems(props: {
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
+  selectedFolderId: string | null,
+  setSelectedFolderId: (folderId: string | null) => void,
 }) {
 
   // local state
-  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
   // const [grouping] = React.useState<ListGrouping>('off');
+  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
 
   // external state
   const { closeDrawerOnMobile } = useOptimaDrawers();
-  const conversations = useChatStore(state => state.conversations, shallow);
+  const { conversations, folders } = useConversationsByFolder(props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
@@ -91,60 +93,72 @@ function ChatDrawerItems(props: {
     {/*  </Typography>*/}
     {/*</ListItem>*/}
 
-    <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew}>
-      <ListItemDecorator><AddIcon /></ListItemDecorator>
-      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        New
-        {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
+    <ChatFolderList
+      folders={folders}
+      selectedFolderId={props.selectedFolderId}
+      onFolderSelect={props.setSelectedFolderId}
+    />
+
+    <ListDivider />
+
+    <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
+
+      <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
+        <ListItemDecorator><AddIcon /></ListItemDecorator>
+        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+          New
+          {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
+        </Box>
+      </MenuItem>
+
+      <ListDivider sx={{ mt: 0 }} />
+
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
+        {/*  <Typography level='body-sm'>*/}
+        {/*    Conversations*/}
+        {/*  </Typography>*/}
+        {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
+        {/*    <IconButton value='off'>*/}
+        {/*      <AccessTimeIcon />*/}
+        {/*    </IconButton>*/}
+        {/*    <IconButton value='persona'>*/}
+        {/*      <PersonIcon />*/}
+        {/*    </IconButton>*/}
+        {/*  </ToggleButtonGroup>*/}
+        {/*</ListItem>*/}
+
+        {conversations.map(conversation =>
+          <ChatNavigationItemMemo
+            key={'nav-' + conversation.id}
+            conversation={conversation}
+            isActive={conversation.id === props.activeConversationId}
+            isLonely={singleChat}
+            maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
+            showSymbols={showSymbols}
+            onConversationActivate={handleConversationActivate}
+            onConversationDelete={handleConversationDelete}
+          />)}
       </Box>
-    </MenuItem>
 
-    <ListDivider sx={{ mb: 0 }} />
+      <ListDivider sx={{ mt: 0 }} />
 
-    <Box sx={{ flex: 1, overflowY: 'auto' }}>
-      {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
-      {/*  <Typography level='body-sm'>*/}
-      {/*    Conversations*/}
-      {/*  </Typography>*/}
-      {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
-      {/*    <IconButton value='off'>*/}
-      {/*      <AccessTimeIcon />*/}
-      {/*    </IconButton>*/}
-      {/*    <IconButton value='persona'>*/}
-      {/*      <PersonIcon />*/}
-      {/*    </IconButton>*/}
-      {/*  </ToggleButtonGroup>*/}
-      {/*</ListItem>*/}
+      <MenuItem onClick={props.onConversationImportDialog}>
+        <ListItemDecorator>
+          <FileUploadIcon />
+        </ListItemDecorator>
+        Import chats
+        <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
+      </MenuItem>
 
-      {conversations.map(conversation =>
-        <ChatNavigationItemMemo
-          key={'nav-' + conversation.id}
-          conversation={conversation}
-          isActive={conversation.id === props.activeConversationId}
-          isLonely={singleChat}
-          maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
-          showSymbols={showSymbols}
-          onConversationActivate={handleConversationActivate}
-          onConversationDelete={handleConversationDelete}
-        />)}
-    </Box>
+      <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
+        <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+        <Typography>
+          Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
+        </Typography>
+      </MenuItem>
 
-    <ListDivider sx={{ mt: 0 }} />
-
-    <MenuItem onClick={props.onConversationImportDialog}>
-      <ListItemDecorator>
-        <FileUploadIcon />
-      </ListItemDecorator>
-      Import chats
-      <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
-    </MenuItem>
-
-    <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
-      <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-      <Typography>
-        Delete {totalConversations >= 2 ? `all ${totalConversations} chats` : 'chat'}
-      </Typography>
-    </MenuItem>
+    </PageDrawerList>
 
   </>;
 }
