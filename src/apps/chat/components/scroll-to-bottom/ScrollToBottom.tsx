@@ -140,13 +140,17 @@ export function ScrollToBottom(props: {
       if (unScrollable && atTop) {
         if (DEBUG_SCROLL_TO_BOTTOM)
           console.log('   -> large enough window', entries.length);
-        setState(state => ({ ...state, atBottom: true }));
+
+        // udpate state only if this changed
+        setState(state => (state.atBottom !== true)
+          ? ({ ...state, atBottom: true })
+          : state,
+        );
       }
 
       if (entries.length > 0 && state.stickToBottom)
         doScrollToBottom();
     });
-
 
     // cancelable observer of resize of scrollable's children elements
     Array.from(scrollable.children).forEach(child => _containerResizeObserver.observe(child));
