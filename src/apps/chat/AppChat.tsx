@@ -63,7 +63,7 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
+  const [_selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
 
   // external state
   const theme = useTheme();
@@ -101,10 +101,14 @@ export function AppChat() {
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const folderConversationsCount = useFolderStore(state => {
-    if (!selectedFolderId)
-      return conversationsLength;
-    return state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0;
+  const { folderConversationsCount, selectedFolderId } = useFolderStore(state => {
+    const selectedFolderId = state.useFolders ? _selectedFolderId : null;
+    return {
+      folderConversationsCount: selectedFolderId
+        ? state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
+        : conversationsLength,
+      selectedFolderId,
+    };
   });
 
   // Window actions

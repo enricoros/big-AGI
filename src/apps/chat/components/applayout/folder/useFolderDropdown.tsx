@@ -13,12 +13,7 @@ const SPECIAL_ID_REMOVE = '_REMOVE_';
 export function useFolderDropdown(conversationId: DConversationId | null) {
 
   // external state
-  const { folders } = useFolderStore();
-
-  // derived state
-
-  // current folder ID for the selected conversation
-  const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
+  const { folders, useFolders } = useFolderStore();
 
 
   // Prepare items for the dropdown
@@ -40,8 +35,9 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
     return items;
   }, [folders]);
 
-  // Handle folder change
-  const handleFolderChange = (_event: any, folderId: string | null) => {
+
+  // Handle dropdown folder change
+  const handleFolderChange = React.useCallback((_event: any, folderId: string | null) => {
     if (conversationId && folderId) {
       // Remove conversation from all folders
       folders.forEach(folder => {
@@ -52,19 +48,28 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
       // Add conversation to the selected folder
       useFolderStore.getState().addConversationToFolder(folderId, conversationId);
     }
-  };
+  }, [conversationId, folders]);
 
+  // find the folder ID for the active Conversation
+  const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
 
   // Create the dropdown component
-  const folderDropdown = (
-    <GoodDropdown
-      items={folderItems}
-      value={currentFolderId}
-      onChange={handleFolderChange}
-      placeholder='Select a folder'
-      showSymbols={true}
-    />
-  );
+  const folderDropdown = React.useMemo(() => {
+
+    // don't show the dropdown if folders are not enabled
+    if (!useFolders)
+      return null;
+
+    return (
+      <GoodDropdown
+        items={folderItems}
+        value={currentFolderId}
+        onChange={handleFolderChange}
+        placeholder='Select a folder'
+        showSymbols
+      />
+    );
+  }, [currentFolderId, folderItems, handleFolderChange, useFolders]);
 
   return { folderDropdown };
 }

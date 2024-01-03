@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
@@ -33,6 +33,7 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
 } => {
 
   // monitor folder changes
+  // NOTE: we're not checking for state.useFolders, as we strongly assume folderId to be null when folders are disabled
   const { currentFolder, folders } = useFolderStore(state => {
     const currentFolder = folderId ? state.folders.find(_f => _f.id === folderId) ?? null : null;
     return {
@@ -86,6 +87,7 @@ function ChatDrawerItems(props: {
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
+  const { useFolders, toggleUseFolders } = useFoldersToggle();
   const { chatNavItems, folders } = useChatNavigationItems(props.activeConversationId, props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
@@ -149,14 +151,19 @@ function ChatDrawerItems(props: {
       }
     />
 
-    <ChatFolderList
-      folders={folders}
-      selectedFolderId={props.selectedFolderId}
-      onFolderSelect={props.setSelectedFolderId}
-    />
+    {/* Folders List */}
+    {useFolders && (
+      <ChatFolderList
+        folders={folders}
+        selectedFolderId={props.selectedFolderId}
+        onFolderSelect={props.setSelectedFolderId}
+      />
+    )}
 
     {/* Chats List */}
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
+
+      {useFolders && <ListDivider sx={{ mb: 0 }} />}
 
       <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
@@ -171,7 +178,7 @@ function ChatDrawerItems(props: {
           gap: 1,
         }}>
           New chat
-          {/*<KeyStroke combo='Ctrl + Alt + N' />*/}
+          {/*<KeyStroke combo='Ctrl + Alt + N' sx={props.disableNewButton ? { opacity: 0.5 } : undefined} />*/}
         </Box>
       </MenuItem>
 
@@ -215,10 +222,10 @@ function ChatDrawerItems(props: {
       </MenuItem>
 
       <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
-        <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-        <Typography>
-          Delete {selectConversationsCount >= 2 ? `all ${selectConversationsCount} chats` : 'chat'}
-        </Typography>
+        <ListItemDecorator>
+          <DeleteOutlineIcon />
+        </ListItemDecorator>
+        Delete {selectConversationsCount >= 2 ? `all ${selectConversationsCount} chats` : 'chat'}
       </MenuItem>
 
     </PageDrawerList>
