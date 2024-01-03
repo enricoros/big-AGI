@@ -6,7 +6,7 @@ import { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function InlineTextarea(props: { initialText: string, color?: ColorPaletteProp, onEdit: (text: string) => void, sx?: SxProps }) {
+export function InlineTextarea(props: { initialText: string, placeholder?: string, color?: ColorPaletteProp, onEdit: (text: string) => void, sx?: SxProps }) {
 
   const [text, setText] = React.useState(props.initialText);
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -27,7 +27,10 @@ export function InlineTextarea(props: { initialText: string, color?: ColorPalett
 
   return (
     <Textarea
-      variant='soft' color={props.color || 'warning'} autoFocus minRows={1}
+      variant='soft' color={props.color || 'warning'}
+      autoFocus
+      minRows={1}
+      placeholder={props.placeholder}
       value={text} onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown} onBlur={handleEditBlur}
       slotProps={{
