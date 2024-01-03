@@ -450,7 +450,7 @@ export function Composer(props: {
                 <Textarea
                   variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
                   autoFocus
-                  minRows={isMobile ? 5 : 4} maxRows={10}
+                  minRows={isMobile ? 5 : 5} maxRows={10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextAreaTextChange}
