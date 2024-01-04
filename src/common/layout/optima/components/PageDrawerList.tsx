@@ -28,6 +28,7 @@ export function PageDrawerList(props: {
       color={props.color}
       sx={{
         // size of the list items
+        '--List-radius': 0,
         ...props.largeIcons && {
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
           '--ListItemDecorator-size': '2.75rem', // icon width
