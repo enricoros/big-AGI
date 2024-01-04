@@ -9,17 +9,17 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+import type { NavItemApp } from '~/common/app.nav';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
-import { AppBarSwitcherItem } from './components/AppBarSwitcherItem';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
+import { MobilePageBarNav } from './components/MobilePageBarNav';
+import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
-import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
-import type { NavItemApp } from '~/common/app.nav';
 
 
 function PageBarItemsFallback() {
@@ -162,12 +162,18 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
       open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
       placement='bottom-end'
     >
+
+      {/* Common (Preferences) */}
       {commonMenuItems}
+
+      {/* App Menu Items */}
       {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
       {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
-      {!!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      <AppBarSwitcherItem />
-      {/*<AppBarSupportItem />*/}
+
+      {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
+      {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
+      {!!props.isMobile && <MobilePageBarNav currentApp={props.currentApp} />}
+
     </CloseableMenu>
 
   </>;
