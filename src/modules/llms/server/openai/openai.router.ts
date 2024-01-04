@@ -12,10 +12,10 @@ import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
-import { localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
+import { lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
 
 
-const openAIDialects = z.enum(['azure', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter']);
+const openAIDialects = z.enum(['azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter']);
 
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,
@@ -144,14 +144,24 @@ export const llmOpenAIRouter = createTRPCRouter({
       // sort by id
       openAIModels.sort((a, b) => a.id.localeCompare(b.id));
 
-
       // every dialect has a different way to enumerate models - we execute the mapping on the server side
       switch (access.dialect) {
+
+        case 'lmstudio':
+          models = openAIModels
+            .map(({ id }) => lmStudioModelToModelDescription(id));
+          break;
 
         // [LocalAI]: map id to label
         case 'localai':
           models = openAIModels
             .map(model => localAIModelToModelDescription(model.id));
+          break;
+
+        case 'mistral':
+          models = openAIModels
+            .map(mistralModelToModelDescription)
+            .sort(mistralModelsSort);
           break;
 
         // [Oobabooga]: remove virtual models, hidden by default
@@ -184,12 +194,6 @@ export const llmOpenAIRouter = createTRPCRouter({
 
             // to model description
             .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created));
-          break;
-
-        case 'mistral':
-          models = openAIModels
-            .map(mistralModelToModelDescription)
-            .sort(mistralModelsSort);
           break;
 
         case 'openrouter':
@@ -328,6 +332,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
 
+    case 'lmstudio':
     case 'localai':
     case 'oobabooga':
     case 'openai':
