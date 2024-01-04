@@ -187,8 +187,8 @@ export function lmStudioModelToModelDescription(modelId: string): ModelDescripti
     idPrefix: modelId,
     label: getFileName(modelId)
       .replace('.gguf', '')
-      .replace('.bin', '')
-      .replaceAll('-', ' '),
+      .replace('.bin', ''),
+    // .replaceAll('-', ' '),
     description: `Unknown LM Studio model. File: ${modelId}`,
     contextWindow: 4096, // FIXME: we shall know it's unknown
     interfaces: [LLM_IF_OAI_Chat], // assume..
