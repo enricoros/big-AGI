@@ -3,7 +3,7 @@ export namespace AnthropicWire {
     export interface Request {
       prompt: string;
       model: string;
-      max_tokens_to_sample: number;
+      max_tokens_to_sample?: number;
       stop_sequences?: string[];
       stream?: boolean;
       temperature?: number;
