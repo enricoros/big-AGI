@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps, VariantProp } from '@mui/joy/styles/types';
-import { Box, Sheet, styled } from '@mui/joy';
+import { Box, Sheet, styled, useTheme } from '@mui/joy';
 
 
 export const InvertedBarCornerItem = styled(Box)({
@@ -31,10 +31,17 @@ export const InvertedBar = (props: {
   variant?: VariantProp,
   sx?: SxProps
   children: React.ReactNode,
-}) =>
-  <InvertedBarBase
+}) => {
+
+  // check for dark mode
+  const theme = useTheme();
+  const isDark = theme?.palette.mode === 'dark';
+  const variant = isDark ? 'soft' : props.variant || 'solid';
+
+  return <InvertedBarBase
     id={props.id}
-    variant={props.variant || 'solid'} invertedColors={(props.variant || 'solid') === 'solid' ? true : undefined}
+    variant={variant}
+    invertedColors={variant === 'solid' ? true : undefined}
     sx={
       props.direction === 'horizontal'
         ? {
@@ -50,3 +57,4 @@ export const InvertedBar = (props: {
   >
     {props.children}
   </InvertedBarBase>;
+};
