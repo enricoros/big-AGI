@@ -6,11 +6,13 @@ import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
+
 import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { lineHeightChatText, lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextarea } from '~/common/app.theme';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
@@ -83,11 +85,11 @@ export function PersonaCreator() {
 
   // Reset the relevant state when the selected tab changes
   React.useEffect(() => {
-      // reset state
-      setVideoURL('');
-      setVideoID('');
-      setPersonaTranscript(null);
-      setPersonaText('');
+    // reset state
+    setVideoURL('');
+    setVideoID('');
+    setPersonaTranscript(null);
+    setPersonaText('');
   }, [selectedTab]);
 
   // use the transformation sequence to create a persona
@@ -119,8 +121,8 @@ export function PersonaCreator() {
     </Typography>
 
     <Tabs defaultValue={0} variant='outlined'
-      value={selectedTab}
-      onChange={(event, newValue) => setSelectedTab(newValue as number)}>
+          value={selectedTab}
+          onChange={(_event, newValue) => setSelectedTab(newValue as number)}>
       <TabList sx={{ minHeight: 48 }}>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>
@@ -220,9 +222,7 @@ export function PersonaCreator() {
           <Alert variant='soft' color='success' sx={{ mb: 1 }}>
             You may now copy the text below and use it as Custom prompt!
           </Alert>
-          <Typography level='title-sm' sx={{ lineHeight: lineHeightChatText }}>
-            {chainOutput}
-          </Typography>
+          <RenderMarkdown textBlock={{ type: 'text', content: chainOutput }} />
         </CardContent>
       </Card>
     </>}

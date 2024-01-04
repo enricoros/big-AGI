@@ -28,8 +28,10 @@ export const RenderMarkdown = (props: { textBlock: TextBlock, sx?: SxProps }) =>
     <Box
       className={`markdown-body ${theme.palette.mode === 'dark' ? 'markdown-body-dark' : 'markdown-body-light'}`}
       sx={{
-        mx: '12px !important',                                // margin: 1.5 like other blocks
-        '& table': { width: 'inherit !important' },           // un-break auto-width (tables have 'max-content', which overflows)
+        mx: '0.75rem !important',                             // margin: 1.5 like other blocks
+        '& table': {
+          width: 'inherit !important',                        // un-break auto-width (tables have 'max-content', which overflows)
+        },
         '--color-canvas-default': 'transparent !important',   // remove the default background color
         // NOTE: the following are not needed because the CSS is under our control, and we
         //       disabled the redefintions there
