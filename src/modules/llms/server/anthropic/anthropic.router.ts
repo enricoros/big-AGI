@@ -65,9 +65,9 @@ export function anthropicChatCompletionPayload(model: OpenAIModelSchema, history
   return {
     prompt,
     model: model.id,
-    max_tokens_to_sample: model.maxTokens,
     stream,
     ...(model.temperature && { temperature: model.temperature }),
+    ...(model.maxTokens && { max_tokens_to_sample: model.maxTokens })
   };
 }
 
