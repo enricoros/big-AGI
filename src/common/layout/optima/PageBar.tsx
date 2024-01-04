@@ -112,10 +112,19 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
   }, [closePageMenu]);
 
   // [Desktop] hide the app bar if the current app doesn't use it
-  if (props.currentApp?.hideBar && !props.isMobile)
+  const desktopHide = !!props.currentApp?.hideBar && !props.isMobile;
+  if (desktopHide)
     return null;
 
   return <>
+
+    {/* This will animate the height from 0 to auto (and the bar is overflow:hidden */}
+    {/* But we're not using it yet as a NextJS page transition is a full removal */}
+    {/*<Box sx={{*/}
+    {/*  display: 'grid',*/}
+    {/*  gridTemplateRows: desktopHide ? '0fr' : '1fr',*/}
+    {/*  transition: 'grid-template-rows 1.42s linear',*/}
+    {/*}}>*/}
 
     <InvertedBar direction='horizontal' sx={props.sx}>
 
@@ -143,7 +152,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
       }}>
-        {!!appBarItems ? appBarItems : <PageBarItemsFallback />}
+        {desktopHide ? null : !!appBarItems ? appBarItems : <PageBarItemsFallback />}
       </Box>
 
       {/* Page Menu Anchor */}
@@ -154,6 +163,8 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
       </InvertedBarCornerItem>
 
     </InvertedBar>
+
+    {/*</Box>*/}
 
 
     {/* Page Menu */}
