@@ -47,6 +47,7 @@ export const InvertedBar = (props: {
         ? {
           // minHeight: 'var(--Bar)',
           flexDirection: 'row',
+          overflow: 'hidden',
           ...props.sx,
         } : {
           // minWidth: 'var(--Bar)',

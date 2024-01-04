@@ -49,12 +49,15 @@ export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boole
 
   // mobile: no outer containers
   if (props.isMobile)
-    return <PageCore isMobile currentApp={props.currentApp}>
-      {props.children}
-    </PageCore>;
+    return (
+      <PageCore isMobile currentApp={props.currentApp}>
+        {props.children}
+      </PageCore>
+    );
 
   return (
 
+    // This wrapper widens the Container/PageCore when the drawer is closed
     <Box
       sx={{
         // full width (this is to the right of the fixed-size desktop drawer)
