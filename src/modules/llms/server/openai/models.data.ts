@@ -174,6 +174,28 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 }
 
 
+// [LM Studio]
+export function lmStudioModelToModelDescription(modelId: string): ModelDescriptionSchema {
+
+  // LM Studio model ID's are the file names of the model files
+  function getFileName(filePath: string): string {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    return normalizedPath.split('/').pop() || '';
+  }
+
+  return fromManualMapping([], modelId, undefined, undefined, {
+    idPrefix: modelId,
+    label: getFileName(modelId)
+      .replace('.gguf', '')
+      .replace('.bin', '')
+      .replaceAll('-', ' '),
+    description: `Unknown LM Studio model. File: ${modelId}`,
+    contextWindow: 4096, // FIXME: we shall know it's unknown
+    interfaces: [LLM_IF_OAI_Chat], // assume..
+  });
+}
+
+
 // [LocalAI]
 const _knownLocalAIChatModels: ManualMappings = [
   {

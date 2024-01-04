@@ -1,6 +1,7 @@
 import { ModelVendorAnthropic } from './anthropic/anthropic.vendor';
 import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorGemini } from './gemini/gemini.vendor';
+import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
@@ -15,6 +16,7 @@ export type ModelVendorId =
   | 'anthropic'
   | 'azure'
   | 'googleai'
+  | 'lmstudio'
   | 'localai'
   | 'mistral'
   | 'ollama'
@@ -27,6 +29,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   anthropic: ModelVendorAnthropic,
   azure: ModelVendorAzure,
   googleai: ModelVendorGemini,
+  lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
