@@ -69,32 +69,42 @@ const PersonaCreationSteps: LLMChainStep[] = [
 
 export function PersonaCreator() {
   // state
+  const [selectedTab, setSelectedTab] = React.useState(0);
+  const [inputText, setInputText] = React.useState<string | null>(null);
   const [videoURL, setVideoURL] = React.useState('');
   const [videoID, setVideoID] = React.useState('');
-  const [personaTranscript, setPersonaTranscript] = React.useState<string | null>(null);
   const [personaText, setPersonaText] = React.useState('');
-  const [selectedTab, setSelectedTab] = React.useState(0);
 
   // external state
   const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
 
+
+  // chain to convert a text input string (e.g. youtube transcript) into a persona prompt
+  const savePersona = React.useCallback((personaPrompt: string) => {
+    // TODO.. save the persona prompt here
+  }, []);
+
+  const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
+    useLLMChain(PersonaCreationSteps, personaLlm?.id, inputText ?? undefined, savePersona);
+
+
   // fetch transcript when the Video ID is ready, then store it
   const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
     useTranscriptFromVideo(videoID);
-  React.useEffect(() => setPersonaTranscript(transcript), [transcript]);
+  React.useEffect(() => setInputText(transcript), [transcript]);
+
 
   // Reset the relevant state when the selected tab changes
   React.useEffect(() => {
     // reset state
     setVideoURL('');
     setVideoID('');
-    setPersonaTranscript(null);
+    setInputText(null);
     setPersonaText('');
   }, [selectedTab]);
 
-  // use the transformation sequence to create a persona
-  const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(PersonaCreationSteps, personaLlm?.id, personaTranscript ?? undefined);
+
+  // [Tab: 0] Video download
 
   const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
 
@@ -104,15 +114,15 @@ export function PersonaCreator() {
     if (!videoId) {
       setVideoURL('Invalid');
     } else {
-      setPersonaTranscript(null);
+      setInputText(null);
       setVideoID(videoId);
     }
   };
 
-  // New handler for persona text change
-  const handlePersonaTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPersonaText(e.target.value);
-  };
+
+  // [Tab: 1] Text input
+
+  const handlePersonaTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setPersonaText(e.target.value);
 
   return <>
 
@@ -182,7 +192,7 @@ export function PersonaCreator() {
           }}
         />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setPersonaTranscript(personaText)} sx={{ minWidth: 140 }}>
+          <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setInputText(personaText)} sx={{ minWidth: 140 }}>
             Create
           </Button>
           {!!personaText?.length && <Typography level='body-sm'>{personaText.length.toLocaleString()}</Typography>}
@@ -227,8 +237,8 @@ export function PersonaCreator() {
       </Card>
     </>}
 
-    {/* Input: Transcript*/}
-    {personaTranscript && <>
+    {/* Input: Transcript/Text */}
+    {inputText && <>
       <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
         Input Data
       </Typography>
@@ -241,7 +251,7 @@ export function PersonaCreator() {
           <Box>
             {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Thumbnail' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
             <Typography level='body-sm'>
-              {personaTranscript.slice(0, 280)}...
+              {inputText.slice(0, 280)}...
             </Typography>
           </Box>
         </CardContent>
