@@ -93,6 +93,7 @@ export const navItems: {
       type: 'app',
       route: '/cortex',
       automatic: true,
+      hide: true,
     },
     {
       name: 'Patterns',
@@ -154,22 +155,22 @@ export const navItems: {
   // External links
   links: [
     // {
+    //   type: 'extLink',
     //   name: 'X',
     //   icon: TwitterIcon,
-    //   type: 'extLink',
     //   href: 'https://twitter.com',
     // },
     {
-      name: 'GitHub',
-      icon: GitHubIcon,
       type: 'extLink',
-      href: Brand.URIs.OpenRepo,
-    },
-    {
       name: 'Discord',
       icon: DiscordIcon,
-      type: 'extLink',
       href: Brand.URIs.SupportInvite,
+    },
+    {
+      type: 'extLink',
+      name: 'GitHub',
+      icon: GitHubIcon,
+      href: Brand.URIs.OpenRepo,
     },
   ],
 

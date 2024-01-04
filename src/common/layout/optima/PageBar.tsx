@@ -17,7 +17,7 @@ import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { MobilePageBarNav } from './components/MobilePageBarNav';
+import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
@@ -172,7 +172,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
       {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {!!props.isMobile && <MobilePageBarNav currentApp={props.currentApp} />}
+      {!!props.isMobile && <MobileNavListItem currentApp={props.currentApp} />}
 
     </CloseableMenu>
 

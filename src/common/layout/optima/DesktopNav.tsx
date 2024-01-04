@@ -5,13 +5,14 @@ import { Box, IconButton, styled, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
-import { Link } from '~/common/components/Link';
 import { NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
+
+import { BringTheLove } from '~/common/layout/optima/components/BringTheLove';
 
 
 // Nav Group
@@ -124,27 +125,19 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
   // External link items
   const navExtLinkItems = React.useMemo(() => {
-    return navItems.links.map(item => {
-      return (
-        <IconButton
-          size='sm'
-          key={'nav-ext-' + item.name}
-          component={Link}
-          href={item.href}
-          target='_blank'
-          sx={{
-            mb: 1,
-            opacity: 0.5,
-            transition: 'opacity 0.2s',
-            '&:hover': {
-              opacity: 1,
-            },
-          }}
-        >
-          <item.icon />
-        </IconButton>
-      );
-    });
+    return navItems.links.map((item, index) =>
+      <BringTheLove
+        key={'nav-ext-' + item.name}
+        asIcon
+        text={item.name}
+        icon={item.icon}
+        link={item.href}
+        sx={{
+          p: 1,
+          mb: index > 0 ? 1 : 0,
+        }}
+      />,
+    );
   }, []);
 
 
@@ -191,7 +184,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
       </DesktopNavGroupButton>
 
       <DesktopNavGroupButton>
-        {/*{navExtLinkItems}*/}
+        {navExtLinkItems}
         {navModalItems}
       </DesktopNavGroupButton>
 
