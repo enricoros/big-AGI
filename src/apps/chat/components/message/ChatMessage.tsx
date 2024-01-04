@@ -147,13 +147,14 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
     </>;
   } else if (text.includes('"context_length_exceeded"')) {
     // TODO: propose to summarize or split the input?
-    const pattern = /maximum context length is (\d+) tokens.+you requested (\d+) tokens/;
+    const pattern = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
     const match = pattern.exec(text);
     const usedText = match ? <b>{parseInt(match[2] || '0').toLocaleString()} tokens &gt; {parseInt(match[1] || '0').toLocaleString()}</b> : '';
     errorMessage = <>
       This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}. {usedText}.
       Please consider removing some earlier messages from the conversation, start a new conversation,
       choose a model with larger context, or submit a shorter new message.
+      {!usedText && ` -- ${text}`}
     </>;
   }
   // [OpenAI] {"error":{"message":"Incorrect API key provided: ...","type":"invalid_request_error","param":null,"code":"invalid_api_key"}}
