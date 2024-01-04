@@ -30,7 +30,7 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIModelSchema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).max(1000000),
+  maxTokens: z.number().min(1).max(1000000).optional(),
 });
 export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
 
