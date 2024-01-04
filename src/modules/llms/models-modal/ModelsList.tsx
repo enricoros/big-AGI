@@ -23,10 +23,10 @@ function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, 
   tooltip += ' - ';
   if (llm.contextTokens) {
     tooltip += llm.contextTokens.toLocaleString() + ' tokens';
-    // if (llm.maxOutputTokens)
-    //   tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max';
+    if (llm.maxOutputTokens)
+      tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max output tokens'
   } else
-    tooltip += 'unknown tokens size';
+    tooltip += 'token count not provided';
 
   return (
     <ListItem>

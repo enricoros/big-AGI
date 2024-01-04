@@ -66,7 +66,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llmOptions as any) || {};
-  if (!llmRef || llmTemperature === undefined || llmResponseTokens === undefined)
+  if (!llmRef || llmTemperature === undefined || !llmResponseTokens)
     throw new Error(`Error in configuration for model ${llmId}: ${JSON.stringify(llmOptions)}`);
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate

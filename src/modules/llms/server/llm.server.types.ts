@@ -19,7 +19,7 @@ const modelDescriptionSchema = z.object({
   created: z.number().optional(),
   updated: z.number().optional(),
   description: z.string(),
-  contextWindow: z.number(),
+  contextWindow: z.number().nullable(),
   maxCompletionTokens: z.number().optional(),
   pricing: pricingSchema.optional(),
   // rateLimits: rateLimitsSchema.optional(),

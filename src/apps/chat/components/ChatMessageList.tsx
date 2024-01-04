@@ -25,7 +25,7 @@ import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   capabilityHasT2I: boolean,
-  chatLLMContextTokens?: number,
+  chatLLMContextTokens: number | null,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
   onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => void,
@@ -209,7 +209,7 @@ export function ChatMessageList(props: {
           <CleanerMessage
             key={'sel-' + message.id}
             message={message}
-            remainingTokens={(props.chatLLMContextTokens || 0) - historyTokenCount}
+            remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
             selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
           />
 

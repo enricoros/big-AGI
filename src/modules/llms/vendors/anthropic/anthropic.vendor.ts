@@ -8,7 +8,7 @@ import type { IModelVendor } from '../IModelVendor';
 import type { VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
-import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { AnthropicSourceSetup } from './AnthropicSourceSetup';
@@ -60,14 +60,14 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
     if (functions?.length || forceFunctionName)
       throw new Error('Anthropic does not support functions');
 
-    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
       return await apiAsync.llmAnthropic.chatGenerate.mutate({
         access,
         model: {
-          id: llmRef!,
-          temperature: llmTemperature,
-          maxTokens: maxTokens || llmResponseTokens || 1024,
+          id: llmRef,
+          temperature: llmTemperature ?? FALLBACK_LLM_TEMPERATURE,
+          maxTokens: maxTokens || llmResponseTokens || FALLBACK_LLM_RESPONSE_TOKENS,
         },
         history: messages,
       }) as VChatMessageOut;

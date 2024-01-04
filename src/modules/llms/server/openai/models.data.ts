@@ -190,7 +190,7 @@ export function lmStudioModelToModelDescription(modelId: string): ModelDescripti
       .replace('.bin', ''),
     // .replaceAll('-', ' '),
     description: `Unknown LM Studio model. File: ${modelId}`,
-    contextWindow: 4096, // FIXME: we shall know it's unknown
+    contextWindow: null, // 'not provided'
     interfaces: [LLM_IF_OAI_Chat], // assume..
   });
 }
@@ -222,7 +222,7 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
       .replace('.bin', '')
       .replaceAll('-', ' '),
     description: 'Unknown localAI model. Please update `models.data.ts` with this ID',
-    contextWindow: 4096, // sensible default
+    contextWindow: null, // 'not provided'
     interfaces: [LLM_IF_OAI_Chat], // assume..
   });
 }

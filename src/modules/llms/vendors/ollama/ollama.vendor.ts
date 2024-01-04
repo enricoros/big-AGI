@@ -8,7 +8,7 @@ import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 import type { VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
-import type { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { OllamaSourceSetup } from './OllamaSourceSetup';
@@ -53,14 +53,14 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
     if (functions?.length || forceFunctionName)
       throw new Error('Ollama does not support functions');
 
-    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
       return await apiAsync.llmOllama.chatGenerate.mutate({
         access,
         model: {
-          id: llmRef!,
-          temperature: llmTemperature,
-          maxTokens: maxTokens || llmResponseTokens || 1024,
+          id: llmRef,
+          temperature: llmTemperature ?? FALLBACK_LLM_TEMPERATURE,
+          maxTokens: maxTokens || llmResponseTokens || FALLBACK_LLM_RESPONSE_TOKENS,
         },
         history: messages,
       }) as VChatMessageOut;
