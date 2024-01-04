@@ -16,7 +16,7 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string) => void) {
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
@@ -83,8 +83,12 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     llmChatGenerateOrThrow(llmId, llmChatInput, null, null, chain.overrideResponseTokens ?? undefined)
       .then(({ content }) => {
         stepDone = true;
-        if (!stepAbortController.signal.aborted)
-          setChain(updateChainState(chain, llmChatInput, stepIdx, content));
+        if (stepAbortController.signal.aborted)
+          return;
+        const chainState = updateChainState(chain, llmChatInput, stepIdx, content);
+        if (chainState.output && onSuccess)
+          onSuccess(chainState.output);
+        setChain(chainState);
       })
       .catch((err) => {
         stepDone = true;
