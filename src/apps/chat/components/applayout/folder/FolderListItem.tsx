@@ -200,7 +200,8 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
         {!!menuAnchorEl && (
           <CloseableMenu
             open anchorEl={menuAnchorEl} onClose={handleMenuClose}
-            placement='top' sx={{ minWidth: 200 }}
+            placement='top' zIndex={1301 /* need to be on top of the Modal on Mobile */}
+            sx={{ minWidth: 200 }}
           >
 
             <MenuItem
