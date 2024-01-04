@@ -133,11 +133,11 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             {llm.description}
           </Typography>}
           <Typography level='body-xs'>
-            {!!llm.contextTokens && `context tokens: ${llm.contextTokens.toLocaleString()} · `}
-            {!!llm.maxOutputTokens && `max output tokens: ${llm.maxOutputTokens.toLocaleString()}`}<br />
+            context tokens: <b>{llm.contextTokens ? llm.contextTokens.toLocaleString() : 'not provided'}</b>{` · `}
+            max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br/>
             {!!llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()} · `}
             {/*· tags: {llm.tags.join(', ')}*/}
-            {JSON.stringify(llm.options)}
+            config: {JSON.stringify(llm.options)}
           </Typography>
         </Box>}
       </FormControl>

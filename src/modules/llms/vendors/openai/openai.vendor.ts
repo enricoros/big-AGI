@@ -12,6 +12,11 @@ import { OpenAILLMOptions } from './OpenAILLMOptions';
 import { OpenAISourceSetup } from './OpenAISourceSetup';
 
 
+// shared constants
+export const FALLBACK_LLM_RESPONSE_TOKENS = 1024;
+export const FALLBACK_LLM_TEMPERATURE = 0.5;
+
+
 // special symbols
 export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
@@ -26,7 +31,7 @@ export interface SourceSetupOpenAI {
 export interface LLMOptionsOpenAI {
   llmRef: string;
   llmTemperature: number;
-  llmResponseTokens: number;
+  llmResponseTokens: number | null;
 }
 
 export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
@@ -65,14 +70,14 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
 
   // Chat Generate (non-streaming) with Functions
   rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
-    const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
+    const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
       return await apiAsync.llmOpenAI.chatGenerateWithFunctions.mutate({
         access,
         model: {
-          id: llmRef!,
-          temperature: llmTemperature,
-          maxTokens: maxTokens || llmResponseTokens || 1024,
+          id: llmRef,
+          temperature: llmTemperature ?? FALLBACK_LLM_TEMPERATURE,
+          maxTokens: maxTokens || llmResponseTokens || FALLBACK_LLM_RESPONSE_TOKENS,
         },
         functions: functions ?? undefined,
         forceFunctionName: forceFunctionName ?? undefined,

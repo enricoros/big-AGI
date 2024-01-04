@@ -10,6 +10,7 @@ import type { IModelVendor } from '../IModelVendor';
 import type { VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
+import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { GeminiSourceSetup } from './GeminiSourceSetup';
@@ -73,14 +74,14 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
     if (functions?.length || forceFunctionName)
       throw new Error('Gemini does not support functions');
 
-    const { llmRef, temperature = 0.5, maxOutputTokens } = llmOptions;
+    const { llmRef, temperature, maxOutputTokens } = llmOptions;
     try {
       return await apiAsync.llmGemini.chatGenerate.mutate({
         access,
         model: {
-          id: llmRef!,
-          temperature: temperature,
-          maxTokens: maxTokens || maxOutputTokens || 1024,
+          id: llmRef,
+          temperature: temperature ?? FALLBACK_LLM_TEMPERATURE,
+          maxTokens: maxTokens || maxOutputTokens || FALLBACK_LLM_RESPONSE_TOKENS,
         },
         history: messages,
       }) as VChatMessageOut;

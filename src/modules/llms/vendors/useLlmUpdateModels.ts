@@ -1,6 +1,7 @@
 import type { IModelVendor } from './IModelVendor';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import { DLLM, DModelSource, useModelsStore } from '../store-llms';
+import { FALLBACK_LLM_TEMPERATURE } from './openai/openai.vendor';
 
 
 /**
@@ -20,8 +21,13 @@ function updateModelsFn<TSourceSetup>(data: { models: ModelDescriptionSchema[] }
 }
 
 function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, TLLMOptions> {
-  const maxOutputTokens = model.maxCompletionTokens || Math.round((model.contextWindow || 4096) / 2);
-  const llmResponseTokens = Math.round(maxOutputTokens / (model.maxCompletionTokens ? 2 : 4));
+
+  // null means unknown contenxt/output tokens
+  const contextTokens = model.contextWindow || null;
+  const maxOutputTokens = model.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null);
+  const llmResponseTokensRatio = model.maxCompletionTokens ? 1 / 2 : 1 / 4;
+  const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
+
   return {
     id: `${source.id}-${model.id}`,
 
@@ -30,8 +36,8 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
     updated: model.updated || 0,
     description: model.description,
     tags: [], // ['stream', 'chat'],
-    contextTokens: model.contextWindow,
-    maxOutputTokens: maxOutputTokens,
+    contextTokens,
+    maxOutputTokens,
     hidden: !!model.hidden,
 
     isFree: model.pricing?.cpmPrompt === 0 && model.pricing?.cpmCompletion === 0,
@@ -42,8 +48,8 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
     options: {
       llmRef: model.id,
       // @ts-ignore FIXME: large assumption that this is LLMOptionsOpenAI object
-      llmTemperature: 0.5,
-      llmResponseTokens: llmResponseTokens,
+      llmTemperature: FALLBACK_LLM_TEMPERATURE,
+      llmResponseTokens,
     },
   };
 }

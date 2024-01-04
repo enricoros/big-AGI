@@ -17,8 +17,8 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   description: string;
   tags: string[]; // UNUSED for now
   // modelcaps: DModelCapability[];
-  contextTokens: number;
-  maxOutputTokens: number;
+  contextTokens: number | null;     // null: must assume it's unknown
+  maxOutputTokens: number | null;   // null: must assume it's unknown
   hidden: boolean; // hidden from Chat model UI selectors
 
   // temporary special flags - not graduated yet
@@ -207,11 +207,11 @@ export const useModelsStore = create<LlmsStore>()(
       version: 1,
       migrate: (state: any, fromVersion: number): LlmsStore => {
 
-        // 0 -> 1: add 'maxOutputTokens' where missing,
-        if (state && fromVersion === 0)
+        // 0 -> 1: add 'maxOutputTokens' where missing
+        if (state && fromVersion < 1)
           for (const llm of state.llms)
-            if (!llm.maxOutputTokens)
-              llm.maxOutputTokens = Math.round((llm.contextTokens || 4096) / 2);
+            if (llm.maxOutputTokens === undefined)
+              llm.maxOutputTokens = llm.contextTokens ? Math.round(llm.contextTokens / 2) : null;
 
         return state;
       },
