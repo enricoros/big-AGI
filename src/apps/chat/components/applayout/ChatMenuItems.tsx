@@ -117,7 +117,7 @@ export function ChatMenuItems(props: {
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        Reset
+        Reset Chat
         {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
       </Box>
     </MenuItem>
