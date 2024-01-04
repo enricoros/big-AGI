@@ -16,7 +16,7 @@ export interface SourceSetupLocalAI {
 export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
-  rank: 20,
+  rank: 22,
   location: 'local',
   instanceLimit: 1,
 

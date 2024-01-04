@@ -16,7 +16,7 @@ export interface SourceSetupOobabooga {
 export const ModelVendorOoobabooga: IModelVendor<SourceSetupOobabooga, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'oobabooga',
   name: 'Oobabooga',
-  rank: 25,
+  rank: 23,
   location: 'local',
   instanceLimit: 1,
 
