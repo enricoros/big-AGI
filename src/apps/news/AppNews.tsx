@@ -10,12 +10,12 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { themeBgApp } from '~/common/app.theme';
+import { cssRainbowColorKeyframes, themeBgApp } from '~/common/app.theme';
 
 import { newsCallout, NewsItems } from './news.data';
 
 // number of news items to show by default, before the expander
-const DEFAULT_NEWS_COUNT = 2;
+const DEFAULT_NEWS_COUNT = 3;
 
 export const cssColorKeyframes = keyframes`
     0%, 100% {
@@ -88,7 +88,13 @@ export function AppNews() {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0 }}>
                   <GoodTooltip title={ni.versionName ? `${ni.versionName} ${ni.versionMoji || ''}` : null} placement='top-start'>
                     <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
-                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ${ni.versionName}` : `Version ${ni.versionCode}:`}
+                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ` : `Version ${ni.versionCode}:`}
+                      <Box component='span' sx={!idx ? {
+                        animation: `${cssRainbowColorKeyframes} 5s infinite`,
+                        fontWeight: 600,
+                      } : {}}>
+                        {ni.versionName}
+                      </Box>
                     </Typography>
                   </GoodTooltip>
                   {/*!firstCard &&*/ (
@@ -98,13 +104,15 @@ export function AppNews() {
                   )}
                 </Box>
 
-                {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
-                  {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                    <Typography component='div' level='body-sm'>
-                      {item.text}
-                    </Typography>
-                  </li>)}
-                </ul>}
+                {!!ni.items && (ni.items.length > 0) && (
+                  <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
+                    {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
+                      < Typography component='div' level='body-sm'>
+                        {item.text}
+                      </Typography>
+                    </li>)}
+                  </ul>
+                )}
 
                 {showExpander && (
                   <IconButton

@@ -30,7 +30,7 @@ export const newsCallout =
       <Typography level='title-lg'>
         Open Roadmap
       </Typography>
-      <Typography level='body-md'>
+      <Typography level='body-sm'>
         Take a peek at our roadmap to see what&apos;s in the pipeline.
         Discover upcoming features and let us know what excites you the most!
       </Typography>
