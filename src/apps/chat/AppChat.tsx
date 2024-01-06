@@ -392,6 +392,7 @@ export function AppChat() {
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
+        onConversationExportDialog={handleConversationExport}
         onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}

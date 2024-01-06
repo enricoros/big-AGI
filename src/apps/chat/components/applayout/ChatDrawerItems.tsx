@@ -4,12 +4,12 @@ import { shallow } from 'zustand/shallow';
 import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
-import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
@@ -52,6 +52,7 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
     return selectConversations.map(_c => ({
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
+      isEmpty: !_c.messages.length && !_c.userTitle,
       title: conversationTitle(_c, 'New Title'),
       messageCount: _c.messages.length,
       assistantTyping: !!_c.abortController,
@@ -74,6 +75,7 @@ function ChatDrawerItems(props: {
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
+  onConversationExportDialog: (conversationId: DConversationId | null) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
@@ -95,7 +97,7 @@ function ChatDrawerItems(props: {
   // derived state
   const maxChatMessages = chatNavItems.reduce((longest, _c) => Math.max(longest, _c.messageCount), 1);
   const selectConversationsCount = chatNavItems.length;
-  const hasChats = selectConversationsCount > 0;
+  const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
   const singleChat = selectConversationsCount === 1;
   const softMaxReached = selectConversationsCount >= 50;
 
@@ -213,15 +215,23 @@ function ChatDrawerItems(props: {
 
       <ListDivider sx={{ mt: 0 }} />
 
-      <MenuItem onClick={props.onConversationImportDialog}>
-        <ListItemDecorator>
-          <FileUploadIcon />
-        </ListItemDecorator>
-        Import chats
-        <OpenAIIcon sx={{ fontSize: 'xl', ml: 'auto' }} />
-      </MenuItem>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
-      <MenuItem disabled={!hasChats} onClick={props.onConversationsDeleteAll}>
+        <MenuItem onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
+          <ListItemDecorator>
+            <FileUploadIcon />
+          </ListItemDecorator>
+          Import
+          {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
+        </MenuItem>
+
+        <MenuItem disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 2.5 }}>
+          Export
+          <FileDownloadIcon />
+        </MenuItem>
+      </Box>
+
+      <MenuItem disabled={!nonEmptyChats} onClick={props.onConversationsDeleteAll}>
         <ListItemDecorator>
           <DeleteOutlineIcon />
         </ListItemDecorator>

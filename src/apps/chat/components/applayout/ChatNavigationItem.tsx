@@ -20,6 +20,7 @@ export const ChatDrawerItemMemo = React.memo(ChatNavigationItem);
 export interface ChatNavigationItemData {
   conversationId: DConversationId;
   isActive: boolean;
+  isEmpty: boolean;
   title: string;
   messageCount: number;
   assistantTyping: boolean;
