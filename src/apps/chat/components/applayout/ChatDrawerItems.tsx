@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Input} from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
 import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
@@ -19,6 +20,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatFolderList } from './folder/ChatFolderList';
 import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
+import Search from '@mui/icons-material/Search';
 
 // type ListGrouping = 'off' | 'persona';
 
@@ -82,6 +84,8 @@ function ChatDrawerItems(props: {
 }) {
 
   // local state
+    const [searchQuery, setSearchQuery] = React.useState('');
+
   // const [grouping] = React.useState<ListGrouping>('off');
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
 
@@ -115,6 +119,23 @@ function ChatDrawerItems(props: {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
 
+  // Handle search input changes
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  // Filter chatNavItems based on the search query
+  const filteredChatNavItems = React.useMemo(() => {
+    if (!searchQuery) return chatNavItems;
+    return chatNavItems.filter(item => {
+      // Check if the conversation title includes the search query
+      const titleMatch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+      // Get the conversation by ID and check if any message text includes the search query
+      const conversation = useChatStore.getState().conversations.find(c => c.id === item.conversationId);
+      const messageMatch = conversation?.messages.some(message => message.text.toLowerCase().includes(searchQuery.toLowerCase()));
+      return titleMatch || messageMatch;
+    });
+  }, [chatNavItems, searchQuery]);
 
   // grouping
   /*let sortedIds = conversationIDs;
@@ -165,6 +186,16 @@ function ChatDrawerItems(props: {
 
       {useFolders && <ListDivider sx={{ mb: 0 }} />}
 
+      {/* Search Input Field */}
+      <Input
+        startDecorator={<SearchIcon />}
+        placeholder="Search chats..."
+        variant="outlined"
+        value={searchQuery}
+        onChange={handleSearchChange}
+        sx={{ m: 2 }}
+      />
+
       <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
         <Box sx={{
@@ -199,7 +230,7 @@ function ChatDrawerItems(props: {
         {/*  </ToggleButtonGroup>*/}
         {/*</ListItem>*/}
 
-        {chatNavItems.map(item =>
+        {filteredChatNavItems.map(item =>
           <ChatDrawerItemMemo
             key={'nav-' + item.conversationId}
             item={item}
