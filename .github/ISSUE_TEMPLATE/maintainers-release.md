@@ -23,15 +23,15 @@ assignees: enricoros
   - [ ] Update the release version in package.json, and `npm i`
   - [ ] Update in-app News [src/apps/news/news.data.tsx](/src/apps/news/news.data.tsx)
   - [ ] Update the in-app News version number
-  - [ ] Update the readme with the new release
+  - [ ] Update the README.md with the new release
   - [ ] Copy the highlights to the [docs/changelog.md](/docs/changelog.md)
 - Release:
-  - [ ] merge onto main
+  - [ ] merge onto main `git checkout main && git merge --no-ff release-1.2.3`
+  - [ ] re-tag `git tag -f v1.2.3 && git push opensource --tags -f'
   - [ ] verify deployment on Vercel
   - [ ] verify container on GitHub Packages
-  - create a GitHub release
-    - [ ] name it 'vX.Y.Z'
-    - [ ] copy the release notes and link appropriate artifacts
+  - [ ] update the GitHub release
+  - [ ] push as stable `git push opensource main:main-stable`
 - Announce:
   - [ ] Discord announcement
   - [ ] Twitter announcement
@@ -71,7 +71,7 @@ The following are the new developments for 1.2.3:
 - paste the link to the milestone (closed) and each individual issue (content will be downloaded)
 - paste the git changelog  `git log v1.1.0..v1.2.3 | clip`
 
-### news.data.TSX
+### news.data.tsx
 
 ```markdown
 I need the following from you:
@@ -80,6 +80,13 @@ I need the following from you:
 2. after the table score each feature from a user impact and magnitude point of view
 3. Improve the table, in decreasing order of importance for features, fixing any detail that's missing, in particular check if there are commits of significance from a user or developer point of view, which are not contained in the table
 4. I want you then to update the news.data.tsx for the new release
+```
+
+### Readme (and Changelog)
+
+```markdown
+I need you to update the README.md and the with the new release.
+Attaching the in-app news, with my language for you to improve on, but keep the tone.
 ```
 
 ### GitHub release
