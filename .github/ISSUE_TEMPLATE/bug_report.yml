@@ -5,8 +5,7 @@ labels: [ 'type: bug' ]
 body:
   - type: markdown
     attributes:
-      value: |
-        Thank you for reporting a bug. Please fill out the information below to help us resolve the issue more quickly.
+      value: Thank you for reporting a bug.
   - type: textarea
     attributes:
       label: Description
