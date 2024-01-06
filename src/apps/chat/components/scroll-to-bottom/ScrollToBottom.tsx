@@ -52,6 +52,7 @@ function DebugBorderBox(props: { heightPx: number, color: string }) {
 
 export function ScrollToBottom(props: {
   bootToBottom?: boolean
+  bootSmoothly?: boolean
   stickToBottom?: boolean
   sx?: SxProps
   children: React.ReactNode,
@@ -75,7 +76,7 @@ export function ScrollToBottom(props: {
   // derived state
 
   const bootToBottom = props.bootToBottom || false;
-  const scrollBehavior: ScrollBehavior = state.booting ? 'auto' : 'smooth';
+  const scrollBehavior: ScrollBehavior = (state.booting && !props.bootSmoothly) ? 'auto' : 'smooth';
 
 
   // [Debugging]
