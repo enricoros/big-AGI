@@ -159,18 +159,30 @@ function ChatDrawerItems(props: {
     setSearchQuery(value);
   };
 
-  // Filter chatNavItems based on the search query
+  // Filter chatNavItems based on the search query and rank them by search frequency
   const filteredChatNavItems = React.useMemo(() => {
     if (!searchQuery) return chatNavItems;
-    return chatNavItems.filter(item => {
-      // Check if the conversation title includes the search query
-      const titleMatch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-      // Get the conversation by ID and check if any message text includes the search query
-      const conversation = useChatStore.getState().conversations.find(c => c.id === item.conversationId);
-      const messageMatch = conversation?.messages.some(message => message.text.toLowerCase().includes(searchQuery.toLowerCase()));
-      return titleMatch || messageMatch;
-    });
+    return chatNavItems
+      .map(item => {
+        // Get the conversation by ID
+        const conversation = useChatStore.getState().conversations.find(c => c.id === item.conversationId);
+        // Calculate the frequency of the search term in the title and messages
+        const titleFrequency = (item.title.toLowerCase().match(new RegExp(searchQuery.toLowerCase(), 'g')) || []).length;
+        const messageFrequency = conversation?.messages.reduce((count, message) => {
+          return count + (message.text.toLowerCase().match(new RegExp(searchQuery.toLowerCase(), 'g')) || []).length;
+        }, 0) || 0;
+        // Return the item with the searchFrequency property
+        return {
+          ...item,
+          searchFrequency: titleFrequency + messageFrequency,
+        };
+      })
+      // Exclude items with a searchFrequency of 0
+      .filter(item => item.searchFrequency > 0)
+      // Sort the items by searchFrequency in descending order
+      .sort((a, b) => b.searchFrequency! - a.searchFrequency!);
   }, [chatNavItems, searchQuery]);
+
 
   // grouping
   /*let sortedIds = conversationIDs;
