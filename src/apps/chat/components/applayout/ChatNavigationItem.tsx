@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Avatar, Box, IconButton, ListItem, ListItemDecorator, Typography } from '@mui/joy';
+import { Avatar, Box, IconButton, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -89,8 +89,8 @@ function ChatNavigationItem(props: {
   const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
 
   return (
-    <ListItem
-      variant={isActive ? 'solid' : 'plain'} color='neutral'
+    <ListItemButton
+      variant={isActive ? 'soft' : 'plain'} color='neutral'
       onClick={handleConversationActivate}
       sx={{
         // py: 0,
@@ -156,8 +156,10 @@ function ChatNavigationItem(props: {
       {!props.isLonely && !deleteArmed && (
         <IconButton
           variant={isActive ? 'solid' : 'outlined'}
-          size='sm' sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.3s', ...buttonSx }}
-          onClick={handleDeleteButtonShow}>
+          size='sm'
+          sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s', ...buttonSx }}
+          onClick={handleDeleteButtonShow}
+        >
           <DeleteOutlineIcon />
         </IconButton>
       )}
@@ -172,6 +174,6 @@ function ChatNavigationItem(props: {
         </IconButton>
       </>}
 
-    </ListItem>
+    </ListItemButton>
   );
 }
