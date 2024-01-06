@@ -2,6 +2,8 @@ import * as React from 'react';
 import Head from 'next/head';
 import { MyAppProps } from 'next/app';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
+import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
+
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
@@ -43,6 +45,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     </ProviderTheming>
 
     <VercelAnalytics debug={false} />
+    <VercelSpeedInsights debug={false} />
 
   </>;
 
