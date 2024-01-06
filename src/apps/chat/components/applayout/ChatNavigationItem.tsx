@@ -24,6 +24,7 @@ export interface ChatNavigationItemData {
   messageCount: number;
   assistantTyping: boolean;
   systemPurposeId: SystemPurposeId;
+  searchFrequency?: number;
 }
 
 function ChatNavigationItem(props: {
@@ -43,7 +44,7 @@ function ChatNavigationItem(props: {
   const doubleClickToEdit = useUIPreferencesStore(state => state.doubleClickToEdit);
 
   // derived state
-  const { conversationId, isActive, title, messageCount, assistantTyping, systemPurposeId } = props.item;
+  const { conversationId, isActive, title, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
   // auto-close the arming menu when clicking away
@@ -128,6 +129,15 @@ function ChatNavigationItem(props: {
             </Typography>
           )}
       </ListItemDecorator>}
+
+      {/* Display search frequency if it exists and is greater than 0 */}
+      {searchFrequency && searchFrequency > 0 && (
+        <Box sx={{ ml: 1 }}>
+          <Typography sx={{ color: 'text.secondary' }}>
+            ({searchFrequency})
+          </Typography>
+        </Box>
+      )}
 
       {/* Text */}
       {!isEditingTitle ? (
