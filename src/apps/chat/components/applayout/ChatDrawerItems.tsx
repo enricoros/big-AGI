@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Input, InputProps } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
@@ -19,6 +20,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatFolderList } from './folder/ChatFolderList';
 import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
+import Search from '@mui/icons-material/Search';
 
 // type ListGrouping = 'off' | 'persona';
 
@@ -67,6 +69,41 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
   return { chatNavItems, folders };
 };
 
+type DebounceProps = {
+  handleDebounce: (value: string) => void;
+  debounceTimeout: number;
+};
+
+function DebounceInput(props: InputProps & DebounceProps) {
+  const { handleDebounce, debounceTimeout, ...rest } = props;
+  const [inputValue, setInputValue] = React.useState(''); // Local state for the input value
+  const timerRef = React.useRef<number>();
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setInputValue(value); // Update local state immediately
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    timerRef.current = window.setTimeout(() => {
+      handleDebounce(value); // Only call handleDebounce after the timeout
+    }, debounceTimeout);
+  };
+
+  // Clean up the timer when the component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  return <Input {...rest} value={inputValue} onChange={handleChange} />;
+}
+
 
 export const ChatDrawerContentMemo = React.memo(ChatDrawerItems);
 
@@ -84,6 +121,8 @@ function ChatDrawerItems(props: {
 }) {
 
   // local state
+    const [searchQuery, setSearchQuery] = React.useState('');
+
   // const [grouping] = React.useState<ListGrouping>('off');
   const { onConversationDelete, onConversationNew, onConversationActivate } = props;
 
@@ -116,6 +155,35 @@ function ChatDrawerItems(props: {
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
+
+  // Handle debounced search input changes
+  const handleDebounce = (value: string) => {
+    setSearchQuery(value);
+  };
+
+  // Filter chatNavItems based on the search query and rank them by search frequency
+  const filteredChatNavItems = React.useMemo(() => {
+    if (!searchQuery) return chatNavItems;
+    return chatNavItems
+      .map(item => {
+        // Get the conversation by ID
+        const conversation = useChatStore.getState().conversations.find(c => c.id === item.conversationId);
+        // Calculate the frequency of the search term in the title and messages
+        const titleFrequency = (item.title.toLowerCase().match(new RegExp(searchQuery.toLowerCase(), 'g')) || []).length;
+        const messageFrequency = conversation?.messages.reduce((count, message) => {
+          return count + (message.text.toLowerCase().match(new RegExp(searchQuery.toLowerCase(), 'g')) || []).length;
+        }, 0) || 0;
+        // Return the item with the searchFrequency property
+        return {
+          ...item,
+          searchFrequency: titleFrequency + messageFrequency,
+        };
+      })
+      // Exclude items with a searchFrequency of 0
+      .filter(item => item.searchFrequency > 0)
+      // Sort the items by searchFrequency in descending order
+      .sort((a, b) => b.searchFrequency! - a.searchFrequency!);
+  }, [chatNavItems, searchQuery]);
 
 
   // grouping
@@ -167,6 +235,17 @@ function ChatDrawerItems(props: {
 
       {useFolders && <ListDivider sx={{ mb: 0 }} />}
 
+      {/* Search Input Field */}
+      <DebounceInput
+        startDecorator={<SearchIcon />}
+        placeholder="Search chats..."
+        variant="outlined"
+        value={searchQuery}
+        handleDebounce={handleDebounce}
+        debounceTimeout={300}
+        sx={{ m: 2 }}
+      />
+
       <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
         <Box sx={{
@@ -201,7 +280,7 @@ function ChatDrawerItems(props: {
         {/*  </ToggleButtonGroup>*/}
         {/*</ListItem>*/}
 
-        {chatNavItems.map(item =>
+        {filteredChatNavItems.map(item =>
           <ChatDrawerItemMemo
             key={'nav-' + item.conversationId}
             item={item}
