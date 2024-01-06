@@ -23,6 +23,8 @@ shows the current developments and future ideas.
 
 ### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
 
+https://github.com/enricoros/big-AGI/assets/32999/fbb1be49-5c38-49c8-86fa-3705700f6c39
+
 - **New UI**: for both desktop and mobile, sets the stage for future scale. [#201](https://github.com/enricoros/big-AGI/issues/201)
 - **Conversation Folders**: enhanced conversation organization. [#321](https://github.com/enricoros/big-AGI/issues/321)
 - **[LM Studio](https://lmstudio.ai/)** support and improved token management
