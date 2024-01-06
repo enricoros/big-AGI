@@ -9,25 +9,25 @@ body:
         Thank you for reporting a bug. Please fill out the information below to help us resolve the issue more quickly.
   - type: textarea
     attributes:
-      label: Device and Browser Information
+      label: Description
+      description: (required) Please provide a clear description. Please also provide the steps to reproduce.
+      placeholder: 'Concise description + steps to reproduce.'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Device and browser
       description: '(required) Please specify your Mobile/Desktop device, OS version, browser.'
       placeholder: 'Device: (e.g., iPhone 16, Pixel 9, PC, Macbook...), OS: (e.g., iOS 17, Windows 12), Browser: (e.g., Chrome 119, Safari 18, Firefox..)'
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Describe the bug
-      description: (required) Please provide a clear and concise description of what the bug is. Please also provide the steps to reproduce the behavior. If you can't provide steps, describe what you were doing when the issue occurred.
-      placeholder: 'Concise description + steps to reproduce.'
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Screenshots and Additional Context
+      label: Screenshots and more
       placeholder: 'Attach screenshots, or add any additional context here.'
   - type: checkboxes
     attributes:
       label: Willingness to Contribute
-      description: We appreciate contributions. Would you be willing to submit a pull request with a fix for this issue?
+      description: We appreciate contributions - would you be willing to submit a pull request?
       options:
         - label: '🙋‍♂️ Yes, I would like to contribute a fix.'
