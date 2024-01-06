@@ -103,5 +103,6 @@ some stats (# of commits, etc.), and roll it for the new release.
 ### Discord announcement
 
 ```markdown
-Can you generate my 1.2.3 big-AGI discord announcement from the GitHub Release announcement, and the in-app News?
+Can you generate my 1.2.3 big-AGI discord announcement from the GitHub Release announcement?
+Please keep the formatting and stye of the discord announcement for 1.1.0, but with the new messaging above.
 ```
