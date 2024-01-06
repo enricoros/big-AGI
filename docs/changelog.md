@@ -5,10 +5,19 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.10.0 - Jan 2024
+### 1.11.0 - Jan 2024
 
-- milestone: [1.10.0](https://github.com/enricoros/big-agi/milestone/10)
+- milestone: [1.11.0](https://github.com/enricoros/big-agi/milestone/11)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+
+### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
+
+- **New UI**: for both desktop and mobile, sets the stage for future scale. [#201](https://github.com/enricoros/big-AGI/issues/201)
+- **Conversation Folders**: enhanced conversation organization. [#321](https://github.com/enricoros/big-AGI/issues/321)
+- **[LM Studio](https://lmstudio.ai/)** support and improved token management
+- Resizable panes in split-screen conversations.
+- Large performance optimizations
+- Developer enhancements: new UI framework, updated documentation for proxy settings on browserless/docker
 
 ### What's New in 1.9.0 · Dec 28, 2023 · Creative Horizons
 

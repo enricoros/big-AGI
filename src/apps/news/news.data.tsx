@@ -10,7 +10,7 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 10;
+export const incrementalVersion: number = 11;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
   const boldText = <Typography color={!!props.href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
@@ -30,7 +30,7 @@ export const newsCallout =
       <Typography level='title-lg'>
         Open Roadmap
       </Typography>
-      <Typography level='body-md'>
+      <Typography level='body-sm'>
         Take a peek at our roadmap to see what&apos;s in the pipeline.
         Discover upcoming features and let us know what excites you the most!
       </Typography>
@@ -60,9 +60,23 @@ export const newsCallout =
 export const NewsItems: NewsItem[] = [
   // still unannounced: phone calls, split windows, ...
   {
+    versionCode: '1.10.0',
+    versionName: 'The Year of AGI',
+    versionMoji: '🎊✨',
+    versionDate: new Date('2024-01-06T08:00:00Z'),
+    items: [
+      { text: <><B href={RIssues + '/201'}>New UI</B> for desktop and mobile, enabling future expansions</>, issue: 201 },
+      { text: <><B href={RIssues + '/321'}>Folder categorization</B> for conversation management</>, issue: 321 },
+      { text: <><B>LM Studio</B> support and refined token management</> },
+      { text: <>Draggable panes in split screen mode</>, issue: 308 },
+      { text: <>Bug fixes and UI polish</> },
+      { text: <>Developers: document proxy settings on docker</>, issue: 318, dev: true },
+    ],
+  },
+  {
     versionCode: '1.9.0',
     versionName: 'Creative Horizons',
-    versionMoji: '🎨🌌',
+    // versionMoji: '🎨🌌',
     versionDate: new Date('2023-12-28T22:30:00Z'),
     items: [
       { text: <><B href={RIssues + '/212'}>DALL·E 3</B> support (/draw), with advanced control</>, issue: 212 },
