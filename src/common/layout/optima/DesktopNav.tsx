@@ -4,9 +4,11 @@ import Router from 'next/router';
 import { Box, IconButton, styled, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
 
+import { useModelsStore } from '~/modules/llms/store-llms';
+
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { NavItemApp, navItems } from '~/common/app.nav';
-import { themeZIndexDesktopNav } from '~/common/app.theme';
+import { cssRainbowColorKeyframes, themeZIndexDesktopNav } from '~/common/app.theme';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
@@ -41,6 +43,7 @@ const DesktopNavGroupButton = styled(Box)({
 const navItemClasses = {
   active: 'NavButton-active',
   paneOpen: 'NavButton-paneOpen',
+  attractive: 'NavButton-attractive',
 };
 
 const DesktopNavItem = styled(IconButton)(({ theme }) => ({
@@ -76,6 +79,12 @@ const DesktopNavItem = styled(IconButton)(({ theme }) => ({
     paddingRight: 0,
   },
 
+  // attractive: attract the user to click on this element
+  [`&.${navItemClasses.attractive}`]: {
+    animation: `${cssRainbowColorKeyframes} 5s infinite`,
+    transform: 'scale(1.4)',
+  },
+
 }));
 
 
@@ -89,6 +98,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
     showPreferencesTab, openPreferencesTab,
     showModelsSetup, openModelsSetup,
   } = useOptimaLayout();
+  const noLLMs = useModelsStore(state => !state.llms.length);
 
 
   // show/hide the pane when clicking on the logo
@@ -153,19 +163,22 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
       };
       const { isActive, showModal } = stateActionMap[item.overlayId] ?? stateActionMap[0];
 
+      // attract the attention to the models configuration when no LLMs are available (a bit hardcoded here)
+      const isAttractive = noLLMs && item.overlayId === 'models';
+
       return (
-        <Tooltip followCursor key={'n-m-' + item.overlayId} title={item.name}>
+        <Tooltip followCursor key={'n-m-' + item.overlayId} title={isAttractive ? 'Add Language Models - REQUIRED' : item.name}>
           <DesktopNavItem
             variant={isActive ? 'soft' : undefined}
             onClick={showModal}
-            className={`${isActive ? navItemClasses.active : ''}`}
+            className={`${isActive ? navItemClasses.active : ''} ${isAttractive ? navItemClasses.attractive : ''}`}
           >
             <item.icon />
           </DesktopNavItem>
         </Tooltip>
       );
     });
-  }, [openModelsSetup, openPreferencesTab, showModelsSetup, showPreferencesTab]);
+  }, [noLLMs, openModelsSetup, openPreferencesTab, showModelsSetup, showPreferencesTab]);
 
 
   return (
