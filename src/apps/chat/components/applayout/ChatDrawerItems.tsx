@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Tooltip, Input, InputProps } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-import SearchIcon from '@mui/icons-material/Search';
 
 import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
@@ -17,14 +16,13 @@ import { conversationTitle, DConversationId, useChatStore } from '~/common/state
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import DebounceInput from '~/common/components/DebounceInput';
 
 import { ChatFolderList } from './folder/ChatFolderList';
 import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
-import Search from '@mui/icons-material/Search';
-import DebounceInput from '~/common/components/DebounceInput';
+
 
 // type ListGrouping = 'off' | 'persona';
-
 
 /*
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
@@ -199,14 +197,14 @@ function ChatDrawerItems(props: {
 
       {/* Search Input Field */}
       <DebounceInput
-          onDebounce={setDebouncedSearchQuery}
-          debounceTimeout={300}
-          placeholder="Search..."
-          aria-label="Search"
-          sx={{ m: 2 }}
-        />
+        onDebounce={setDebouncedSearchQuery}
+        debounceTimeout={300}
+        placeholder='Search...'
+        aria-label='Search'
+        sx={{ m: 2 }}
+      />
 
-      <MenuItem disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
+      <ListItemButton disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
         <ListItemDecorator><AddIcon /></ListItemDecorator>
         <Box sx={{
           // style
@@ -221,7 +219,7 @@ function ChatDrawerItems(props: {
           New chat
           {/*<KeyStroke combo='Ctrl + Alt + N' sx={props.disableNewButton ? { opacity: 0.5 } : undefined} />*/}
         </Box>
-      </MenuItem>
+      </ListItemButton>
 
       {/*<ListDivider sx={{ mt: 0 }} />*/}
 
@@ -256,26 +254,26 @@ function ChatDrawerItems(props: {
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
-        <MenuItem onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
+        <ListItemButton onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadIcon />
           </ListItemDecorator>
           Import
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
-        </MenuItem>
+        </ListItemButton>
 
-        <MenuItem disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 2.5 }}>
+        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 2.5 }}>
           Export
           <FileDownloadIcon />
-        </MenuItem>
+        </ListItemButton>
       </Box>
 
-      <MenuItem disabled={!nonEmptyChats} onClick={props.onConversationsDeleteAll}>
+      <ListItemButton disabled={!nonEmptyChats} onClick={props.onConversationsDeleteAll}>
         <ListItemDecorator>
           <DeleteOutlineIcon />
         </ListItemDecorator>
         Delete {selectConversationsCount >= 2 ? `all ${selectConversationsCount} chats` : 'chat'}
-      </MenuItem>
+      </ListItemButton>
 
     </PageDrawerList>
 

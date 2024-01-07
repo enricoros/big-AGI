@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/joy';
 
 import { createConversationFromJsonV1 } from '~/modules/trade/trade.client';
-import { useHasChatLinkItems } from '~/modules/trade/store-module-trade';
 
 import { Brand } from '~/common/app.config';
 import { InlineError } from '~/common/components/InlineError';
@@ -79,14 +78,14 @@ export function AppChatLink(props: { linkId: string }) {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
-  const hasLinkItems = useHasChatLinkItems();
+  // const hasLinkItems = useHasChatLinkItems();
 
 
   // pluggable UI
 
   const drawerContent = React.useMemo(() => <AppChatLinkDrawerContent />, []);
   const menuItems = React.useMemo(() => <AppChatLinkMenuItems />, []);
-  usePluggableOptimaLayout(hasLinkItems ? drawerContent : null, null, menuItems, 'AppChatLink');
+  usePluggableOptimaLayout(drawerContent, null, menuItems, 'AppChatLink');
 
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';

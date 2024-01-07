@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { ColorPaletteProp, MenuList, VariantProp } from '@mui/joy';
+import { ColorPaletteProp, List, VariantProp } from '@mui/joy';
 
 
 export const PageDrawerTallItemSx: SxProps = {
@@ -23,7 +23,7 @@ export function PageDrawerList(props: {
 }) {
 
   return (
-    <MenuList
+    <List
       variant={props.variant}
       color={props.color}
       sx={{
@@ -43,6 +43,6 @@ export function PageDrawerList(props: {
       }}
     >
       {props.children}
-    </MenuList>
+    </List>
   );
 }
