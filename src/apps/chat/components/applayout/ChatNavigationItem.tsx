@@ -66,6 +66,10 @@ function ChatNavigationItem(props: {
     useChatStore.getState().setUserTitle(conversationId, text);
   };
 
+  const handleTitleEditCancel = () => {
+    setIsEditingTitle(false);
+  }
+
   const handleDeleteButtonShow = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!isActive)
@@ -149,7 +153,7 @@ function ChatNavigationItem(props: {
 
       ) : (
 
-        <InlineTextarea initialText={title} onEdit={handleTitleEdited} sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }} />
+        <InlineTextarea initialText={title} onEdit={handleTitleEdited} onCancel={handleTitleEditCancel} sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }} />
 
       )}
 
