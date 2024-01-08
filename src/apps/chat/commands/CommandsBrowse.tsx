@@ -8,6 +8,7 @@ export const CommandsBrowse: ICommandsProvider = {
 
   getCommands: () => [{
     primary: '/browse',
+    arguments: ['URL'],
     description: 'Assistant will download the web page',
     Icon: LanguageIcon,
   }],
