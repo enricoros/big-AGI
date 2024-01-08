@@ -7,7 +7,6 @@ export const CommandsHelp: ICommandsProvider = {
   getCommands: () => [{
     primary: '/help',
     alternatives: ['/?'],
-    noArgs: true,
     description: 'Display this list of commands',
   }],
 

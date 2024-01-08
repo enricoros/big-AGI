@@ -5,7 +5,7 @@ import type { CommandsProviderId } from './commands.registry';
 export interface ChatCommand {
   primary: string; // The primary command
   alternatives?: string[]; // Alternative commands
-  noArgs?: boolean; // Whether the command requires arguments
+  arguments?: string[]; // Arguments for the command
   description: string; // Description of what the command does
   // usage?: string; // Example of how to use the command
   Icon?: FunctionComponent; // Icon to display next to the command

@@ -46,7 +46,7 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
       if (cmd.primary === potentialCommand || cmd.alternatives?.includes(potentialCommand)) {
 
         // command needs arguments: take the rest of the input as parameters
-        if (cmd.noArgs !== true) {
+        if (cmd.arguments?.length) {
           const params = firstSpaceIndex >= 0 ? inputTrimmed.substring(firstSpaceIndex + 1) : '';
           return [{ type: 'cmd', providerId: provider.id, command: potentialCommand, params: params || undefined, isError: !params || undefined }];
         }

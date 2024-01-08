@@ -7,10 +7,12 @@ export const CommandsAlter: ICommandsProvider = {
   getCommands: () => [{
     primary: '/assistant',
     alternatives: ['/a'],
+    arguments: ['text'],
     description: 'Injects assistant response',
   }, {
     primary: '/system',
     alternatives: ['/s'],
+    arguments: ['text'],
     description: 'Injects system message',
   }],
 

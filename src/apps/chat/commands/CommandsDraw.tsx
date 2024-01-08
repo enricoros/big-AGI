@@ -9,7 +9,8 @@ export const CommandsDraw: ICommandsProvider = {
   getCommands: () => [{
     primary: '/draw',
     alternatives: ['/imagine', '/img'],
-    description: 'Generate an image from text',
+    arguments: ['prompt'],
+    description: 'Assistant will draw the text',
     Icon: FormatPaintIcon,
   }],
 
