@@ -97,7 +97,7 @@ function ChatNavigationItem(props: {
   return (
     <ListItemButton
       variant={isActive ? 'soft' : 'plain'} color='neutral'
-      onClick={handleConversationActivate}
+      onClick={!isActive ? handleConversationActivate : event => event.preventDefault()}
       sx={{
         // py: 0,
         position: 'relative',
@@ -147,7 +147,7 @@ function ChatNavigationItem(props: {
       {/* Text */}
       {!isEditingTitle ? (
 
-        <Box onDoubleClick={() => doubleClickToEdit ? handleTitleEdit() : null} sx={{ flexGrow: 1 }}>
+        <Box onDoubleClick={handleTitleEdit} sx={{ flexGrow: 1 }}>
           {DEBUG_CONVERSATION_IDs ? conversationId.slice(0, 10) : title}{assistantTyping && '...'}
         </Box>
 
