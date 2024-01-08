@@ -40,6 +40,9 @@ export function PageDrawerList(props: {
         border: 'none',
         ...(!!props.noTopPadding && { pt: 0 }),
         ...(!!props.noBottomPadding && { pb: 0 }),
+
+        // clipping/scrolling
+        overflow: 'hidden',
       }}
     >
       {props.children}
