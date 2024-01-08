@@ -9,7 +9,6 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const DEBUG_CONVERSATION_IDs = false;
@@ -41,9 +40,6 @@ function ChatNavigationItem(props: {
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
-  // external state
-  const doubleClickToEdit = useUIPreferencesStore(state => state.doubleClickToEdit);
-
   // derived state
   const { conversationId, isActive, title, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
@@ -63,12 +59,12 @@ function ChatNavigationItem(props: {
 
   const handleTitleEdited = (text: string) => {
     setIsEditingTitle(false);
-    useChatStore.getState().setUserTitle(conversationId, text);
+    useChatStore.getState().setUserTitle(conversationId, text.trim());
   };
 
   const handleTitleEditCancel = () => {
     setIsEditingTitle(false);
-  }
+  };
 
   const handleDeleteButtonShow = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -90,7 +86,7 @@ function ChatNavigationItem(props: {
 
 
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
-  const buttonSx: SxProps = { ml: 1, ...(isActive ? { color: 'white' } : {}) };
+  const buttonSx: SxProps = isActive ? { color: 'white' } : {};
 
   const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
 
@@ -123,13 +119,13 @@ function ChatNavigationItem(props: {
               alt='typing' variant='plain'
               src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
               sx={{
-                width: 24,
-                height: 24,
+                width: '1.5rem',
+                height: '1.5rem',
                 borderRadius: 'var(--joy-radius-sm)',
               }}
             />
           ) : (
-            <Typography sx={{ fontSize: '18px' }}>
+            <Typography>
               {isNew ? '' : textSymbol}
             </Typography>
           )}
@@ -148,7 +144,7 @@ function ChatNavigationItem(props: {
       {!isEditingTitle ? (
 
         <Box onDoubleClick={handleTitleEdit} sx={{ flexGrow: 1 }}>
-          {DEBUG_CONVERSATION_IDs ? conversationId.slice(0, 10) : title}{assistantTyping && '...'}
+          {DEBUG_CONVERSATION_IDs ? conversationId.slice(0, 10) : (title.trim() ? title : 'Chat')}{assistantTyping && '...'}
         </Box>
 
       ) : (

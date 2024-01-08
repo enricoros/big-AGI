@@ -54,7 +54,7 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
       isEmpty: !_c.messages.length && !_c.userTitle,
-      title: conversationTitle(_c, 'New Title'),
+      title: conversationTitle(_c),
       messageCount: _c.messages.length,
       assistantTyping: !!_c.abortController,
       systemPurposeId: _c.systemPurposeId,
