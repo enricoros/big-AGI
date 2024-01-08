@@ -143,9 +143,13 @@ function ChatNavigationItem(props: {
       {/* Text */}
       {!isEditingTitle ? (
 
-        <Box onDoubleClick={handleTitleEdit} sx={{ flexGrow: 1 }}>
+        <Typography
+          level={isActive ? 'title-md' : 'body-md'}
+          onDoubleClick={handleTitleEdit}
+          sx={{ flex: 1 }}
+        >
           {DEBUG_CONVERSATION_IDs ? conversationId.slice(0, 10) : (title.trim() ? title : 'Chat')}{assistantTyping && '...'}
-        </Box>
+        </Typography>
 
       ) : (
 
