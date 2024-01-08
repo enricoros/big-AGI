@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, ButtonGroup, CircularProgress, Divider, Grid, IconButton } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, IconButton, Input } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -8,8 +8,9 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
+
 import { ChatMessage } from '../../../apps/chat/components/message/ChatMessage';
-import { streamChat } from '~/modules/llms/transports/streamChat';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
@@ -48,6 +49,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [message, setMessage] = React.useState<DMessage | null>(null);
   const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Visualize');
   const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Style');
+  const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
@@ -81,10 +83,10 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
 
-    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject);
+    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
-      await streamChat(diagramLlm.id, diagramPrompt, stepAbortController.signal,
+      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, null, null, stepAbortController.signal,
         (update: Partial<{ text: string, typing: boolean, originLLM: string }>) => {
           assistantMessage = { ...assistantMessage, ...update };
           setMessage(assistantMessage);
@@ -103,7 +105,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject]);
+  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject, customInstruction]);
 
 
   // [Effect] Auto-abort on unmount
@@ -149,6 +151,12 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <Grid xs={12} xl={6}>
           {llmComponent}
         </Grid>
+        <Grid xs={12} md={6}>
+          <FormControl>
+            <FormLabel>Custom Instruction</FormLabel>
+            <Input title='Custom Instruction' placeholder='e.g. visualize as state' value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} />
+          </FormControl>
+        </Grid>
       </Grid>
     )}
 
@@ -180,7 +188,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         codeBackground='background.surface'
         onMessageEdit={(text) => setMessage({ ...message, text })}
         sx={{
-          backgroundColor: abortController ? 'background.level3' : 'background.level2',
+          backgroundColor: 'background.level2',
           marginX: 'calc(-1 * var(--Card-padding))',
           minHeight: 96,
         }}

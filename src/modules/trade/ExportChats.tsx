@@ -158,9 +158,17 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   return <>
 
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 1 }}>
-      <Typography level='body-sm'>
-        Share or download this conversation
+      <Typography level='title-sm'>
+        Share / Download current chat:
       </Typography>
+
+      <Button variant='soft' disabled={!hasConversation}
+              color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedState === 'ok' ? <DoneIcon /> : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
+              sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              onClick={handleDownloadConversation}>
+        Download chat
+      </Button>
 
       {enableSharing && (
         <Badge color='danger' invisible={!chatLinkBadge}>
@@ -188,16 +196,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       {/*  Publish to ShareGPT*/}
       {/*</Button>*/}
 
-      <Button variant='soft' disabled={!hasConversation}
-              color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
-              endDecorator={downloadedState === 'ok' ? <DoneIcon /> : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
-              sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleDownloadConversation}>
-        Download chat
-      </Button>
-
-      <Typography level='body-sm' sx={{ mt: 2 }}>
-        Store or transfer between devices
+      <Typography level='title-sm' sx={{ mt: 2 }}>
+        Store / Transfer between devices:
       </Typography>
       <Button variant='soft' size='md'
               color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}

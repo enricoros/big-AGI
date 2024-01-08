@@ -10,11 +10,12 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { cssRainbowColorKeyframes, themeBgApp } from '~/common/app.theme';
 
 import { newsCallout, NewsItems } from './news.data';
 
 // number of news items to show by default, before the expander
-const DEFAULT_NEWS_COUNT = 2;
+const DEFAULT_NEWS_COUNT = 3;
 
 export const cssColorKeyframes = keyframes`
     0%, 100% {
@@ -27,7 +28,7 @@ export const cssColorKeyframes = keyframes`
         color: #0B6BCB; /* Primary main color (500) */
     }
     75% {
-        color: #97C3F0; /* Primary lighter shade (300) */
+        color: #083e75; /* Primary lighter shade (300) */
     }`;
 
 
@@ -43,7 +44,7 @@ export function AppNews() {
 
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level1',
+      backgroundColor: themeBgApp,
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },
@@ -84,10 +85,16 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
               <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <GoodTooltip title={ni.versionName || null} placement='top-start'>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0 }}>
+                  <GoodTooltip title={ni.versionName ? `${ni.versionName} ${ni.versionMoji || ''}` : null} placement='top-start'>
                     <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
-                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ${ni.versionName}` : `Version ${ni.versionCode}:`}
+                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ` : `Version ${ni.versionCode}:`}
+                      <Box component='span' sx={!idx ? {
+                        animation: `${cssRainbowColorKeyframes} 5s infinite`,
+                        fontWeight: 600,
+                      } : {}}>
+                        {ni.versionName}
+                      </Box>
                     </Typography>
                   </GoodTooltip>
                   {/*!firstCard &&*/ (
@@ -97,19 +104,25 @@ export function AppNews() {
                   )}
                 </Box>
 
-                {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
-                  {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                    <Typography component='div' level='body-sm'>
-                      {item.text}
-                    </Typography>
-                  </li>)}
-                </ul>}
+                {!!ni.items && (ni.items.length > 0) && (
+                  <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
+                    {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
+                      < Typography component='div' level='body-sm'>
+                        {item.text}
+                      </Typography>
+                    </li>)}
+                  </ul>
+                )}
 
                 {showExpander && (
                   <IconButton
-                    variant='plain' size='sm'
+                    variant='outlined'
                     onClick={() => setLastNewsIdx(idx + 1)}
-                    sx={{ position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1 }}
+                    sx={{
+                      position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1,
+                      backgroundColor: 'background.surface',
+                      borderRadius: '50%',
+                    }}
                   >
                     <ExpandMoreIcon />
                   </IconButton>

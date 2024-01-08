@@ -3,9 +3,7 @@ import * as React from 'react';
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CallIcon from '@mui/icons-material/Call';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
-import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -19,21 +17,11 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCalling, labsCameraDesktop, /*labsEnhancedUI,*/ labsMagicDraw, labsPersonaYTCreator, labsSplitBranching,
-    setLabsCalling, setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsMagicDraw, setLabsPersonaYTCreator, setLabsSplitBranching,
+    labsCalling, labsCameraDesktop, /*labsEnhancedUI,*/ labsSplitBranching,
+    setLabsCalling, setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
-
-    <FormSwitchControl
-      title={<><YouTubeIcon color={labsPersonaYTCreator ? 'primary' : undefined} sx={{ mr: 0.25 }} /> YouTube Personas</>} description={labsPersonaYTCreator ? 'Creator Enabled' : 'Disabled'}
-      checked={labsPersonaYTCreator} onChange={setLabsPersonaYTCreator}
-    />
-
-    <FormSwitchControl
-      title={<><FormatPaintIcon color={labsMagicDraw ? 'primary' : undefined} sx={{ mr: 0.25 }} />Assisted Draw</>} description={labsMagicDraw ? 'Enabled' : 'Disabled'}
-      checked={labsMagicDraw} onChange={setLabsMagicDraw}
-    />
 
     <FormSwitchControl
       title={<><CallIcon color={labsCalling ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Voice Calls</>} description={labsCalling ? 'Call AGI' : 'Disabled'}
@@ -46,7 +34,7 @@ export function UxLabsSettings() {
     />}
 
     <FormSwitchControl
-      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'} disabled
+      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'}
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
@@ -58,7 +46,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Relative chat size · Text Tools · LLM Overheat
+        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Imagine · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 

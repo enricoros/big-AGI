@@ -48,9 +48,15 @@ export const appTheme = extendTheme({
           secondary: 'var(--joy-palette-neutral-800)',      // increase contrast a bit
           // tertiary: 'var(--joy-palette-neutral-700)',       // increase contrast a bit
         },
-        // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300] > body [white -> 400]
+        // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300 -> unused] > body [white -> 300]
         background: {
-          body: 'var(--joy-palette-neutral-400, #9FA6AD)',  // background to stand back after all levels
+          // New
+          surface: 'var(--joy-palette-neutral-50, #FBFCFE)',
+          level1: 'var(--joy-palette-neutral-100, #F0F4F8)',
+          level2: 'var(--joy-palette-neutral-200, #DDE7EE)',
+          body: 'var(--joy-palette-neutral-300, #CDD7E1)',
+          // Former
+          // body: 'var(--joy-palette-neutral-400, #9FA6AD)',
         },
       },
     },
@@ -62,36 +68,18 @@ export const appTheme = extendTheme({
           // tertiary: 'var(--joy-palette-neutral-400, #9FA6AD)',
         },
         background: {
-          surface: 'var(--joy-palette-neutral-900, #131318)',
-          level1: 'var(--joy-palette-common-black, #09090D)',
-          level2: 'var(--joy-palette-neutral-800, #25252D)',
-          // popup: 'var(--joy-palette-common-black, #09090D)',
+          // New
+          popup: '#24292c', // 3: #32383E, 1: #171A1C, 2: #25282B
+          surface: 'var(--joy-palette-neutral-800, #171A1C)',
+          level1: 'var(--joy-palette-neutral-900, #0B0D0E)',
+          level2: 'var(--joy-palette-neutral-800, #171A1C)',
+          body: '#060807',
+          // Former: popup > surface [900] > level 1 [black], level 2 [800] > body [black]
         },
       },
     },
   },
   components: {
-    /**
-     * IconButton
-     *  - enlarge 'md' a bit: https://github.com/mui/material-ui/commit/7f81475ea148a416ec8fab252120ce6567c62897#diff-45dca083057933d78377b59e031146804cfedb68fe1514955bc8a5b3c38d7c44
-     */
-    JoyIconButton: {
-      styleOverrides: {
-        root: ({ ownerState }) => ({
-          ...(ownerState.instanceSize && {
-            '--IconButton-size': { sm: '2rem', md: '2.5rem', lg: '3rem' }[ownerState.instanceSize],
-          }),
-          ...(ownerState.size === 'md' && {
-            '--Icon-fontSize': 'calc(var(--IconButton-size, 2.5rem) / 1.667)',
-            '--CircularProgress-size': '24px',
-            '--CircularProgress-thickness': '3px',
-            minWidth: 'var(--IconButton-size, 2.5rem)',
-            minHeight: 'var(--IconButton-size, 2.5rem)',
-          }),
-        }),
-      },
-    },
-
     /**
      * Input
      *  - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
@@ -134,7 +122,17 @@ export const appTheme = extendTheme({
   },
 });
 
-export const bodyFontClassName = inter.className;
+export const themeBgApp = 'background.level1';
+export const themeBgAppDarker = 'background.level2';
+export const themeBgAppChatComposer = 'background.surface';
+
+export const lineHeightChatText = 1.75;
+export const lineHeightTextarea = 1.75;
+
+export const themeZIndexPageBar = 25;
+export const themeZIndexDesktopDrawer = 26;
+export const themeZIndexDesktopNav = 27;
+
 export const themeBreakpoints = appTheme.breakpoints.values;
 
 export const cssRainbowColorKeyframes = keyframes`

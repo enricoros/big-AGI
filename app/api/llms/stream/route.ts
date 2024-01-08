@@ -1,2 +1,2 @@
 export const runtime = 'edge';
-export { openaiStreamingRelayHandler as POST } from '~/modules/llms/transports/server/openai/openai.streaming';
+export { llmStreamingRelayHandler as POST } from '~/modules/llms/server/llm.server.streaming';

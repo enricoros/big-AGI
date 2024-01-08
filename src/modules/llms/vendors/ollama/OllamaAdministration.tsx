@@ -12,7 +12,7 @@ import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
 import { settingsGap } from '~/common/app.theme';
 
-import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
 
 export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {
@@ -68,7 +68,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
               >
                 {pullable.map(p =>
                   <Option key={p.id} value={p.id}>
-                    {p.isNew === true && <Chip size='sm' variant='outlined'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
+                    {p.isNew === true && <Chip size='sm' variant='solid'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
                   </Option>,
                 )}
               </Select>
@@ -118,7 +118,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
             {pullModelDescription}
           </Typography>
 
-          <Box sx={{ display: 'flex', flexWrap: 1, gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 1, gap: 1, alignItems: 'start' }}>
             <Button
               variant='outlined'
               color={deleteStatus === 'error' ? 'danger' : deleteStatus === 'success' ? 'success' : 'primary'}

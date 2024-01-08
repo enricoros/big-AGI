@@ -7,9 +7,6 @@ import { apiAsyncNode } from '~/common/util/trpc.client';
 const DEBUG_SHOW_SCREENSHOT = false;
 
 
-export const CmdRunBrowse: string[] = ['/browse'];
-
-
 export async function callBrowseFetchPage(url: string) {
 
   // thow if no URL is provided

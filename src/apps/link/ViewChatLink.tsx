@@ -5,11 +5,13 @@ import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
+import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
-import { navigateToChat } from '~/common/app.routes';
+import { launchAppChat } from '~/common/app.routes';
+import { themeBgAppDarker } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -58,7 +60,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await navigateToChat(importedId);
+    await launchAppChat(importedId);
     setCloning(false);
   };
 
@@ -67,7 +69,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
 
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level3',
+      backgroundColor: themeBgAppDarker,
       display: 'flex', flexFlow: 'column nowrap', minHeight: 96, alignItems: 'center',
       gap: { xs: 4, md: 5, xl: 6 },
       px: { xs: 2 },
@@ -96,46 +98,59 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
       <Card sx={{
         borderRadius: 'xl', boxShadow: 'md',
         maxWidth: '100%', // fixes the card growing out of bounds
-        overflowY: 'auto',
+        overflowY: 'hidden',
         p: 0,
       }}>
 
-        <List sx={{
-          p: 0,
-          display: 'flex', flexDirection: 'column',
-          flexGrow: 1,
-        }}>
+        <ScrollToBottom
+          bootToBottom bootSmoothly
+          sx={{
+            // allows the content to be scrolled (all browsers)
+            overflowY: 'auto',
+            // actually make sure this scrolls & fills
+            height: '100%',
+          }}
+        >
 
-          <ListItem sx={{
-            // backgroundColor: 'background.surface',
-            borderBottom: '1px solid',
-            borderBottomColor: 'divider',
-            borderBottomStyle: 'dashed',
-            // justifyContent: 'center',
-            px: { xs: 2.5, md: 3.5 }, py: 2,
+          <List sx={{
+            p: 0,
+            display: 'flex', flexDirection: 'column',
+            flexGrow: 1,
           }}>
-            <Typography level='body-md'>
-              Welcome to the chat! 👋
-            </Typography>
-          </ListItem>
 
-          {filteredMessages.map((message, idx) =>
-            <ChatMessage
-              key={'msg-' + message.id} message={message}
-              showDate={idx === 0 || idx === filteredMessages.length - 1}
-              onMessageEdit={text => message.text = text}
-            />,
-          )}
+            <ListItem sx={{
+              // backgroundColor: 'background.surface',
+              borderBottom: '1px solid',
+              borderBottomColor: 'divider',
+              borderBottomStyle: 'dashed',
+              // justifyContent: 'center',
+              px: { xs: 2.5, md: 3.5 }, py: 2,
+            }}>
+              <Typography level='body-md'>
+                Welcome to the chat! 👋
+              </Typography>
+            </ListItem>
 
-          <ListItem sx={{
-            px: { xs: 2.5, md: 3.5 }, py: 2,
-          }}>
-            <Typography level='body-sm' ref={listBottomRef}>
-              Like the chat? Clone it and keep the talk going! 🚀
-            </Typography>
-          </ListItem>
+            {filteredMessages.map((message, idx) =>
+              <ChatMessage
+                key={'msg-' + message.id} message={message}
+                showDate={idx === 0 || idx === filteredMessages.length - 1}
+                onMessageEdit={text => message.text = text}
+              />,
+            )}
 
-        </List>
+            <ListItem sx={{
+              px: { xs: 2.5, md: 3.5 }, py: 2,
+            }}>
+              <Typography level='body-sm' ref={listBottomRef}>
+                Like the chat? Clone it and keep the talk going! 🚀
+              </Typography>
+            </ListItem>
+
+          </List>
+
+        </ScrollToBottom>
+
       </Card>
 
       {/* Buttons */}

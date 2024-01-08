@@ -6,12 +6,13 @@ import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
+import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
-import { ProdiaSettings } from '~/modules/prodia/ProdiaSettings';
+import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
+import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { closeLayoutPreferences, openLayoutShortcuts, useLayoutPreferencesTab } from '~/common/layout/store-applayout';
 import { settingsGap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -100,20 +101,24 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
  */
-export function SettingsModal() {
+export function SettingsModal(props: {
+  open: boolean,
+  tabIndex: number,
+  onClose: () => void,
+  onOpenShortcuts: () => void,
+}) {
 
   // external state
   const isMobile = useIsMobile();
-  const settingsTabIndex = useLayoutPreferencesTab();
 
   const tabFixSx = { fontFamily: 'body', flex: 1, p: 0, m: 0 };
 
   return (
     <GoodModal
       title='Preferences' strongerTitle
-      open={!!settingsTabIndex} onClose={closeLayoutPreferences}
+      open={props.open} onClose={props.onClose}
       startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={openLayoutShortcuts}>
+        <Button variant='soft' onClick={props.onOpenShortcuts}>
           👉 See Shortcuts
         </Button>
       )}
@@ -124,7 +129,7 @@ export function SettingsModal() {
 
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={settingsTabIndex}>
+      <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
         <TabList
           variant='soft'
           disableUnderline
@@ -151,7 +156,7 @@ export function SettingsModal() {
           <Tab disableIndicator value={4} sx={tabFixSx}>Tools</Tab>
         </TabList>
 
-        <TabPanel value={1} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={1} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -165,7 +170,7 @@ export function SettingsModal() {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={3} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={3} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
@@ -176,15 +181,21 @@ export function SettingsModal() {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={2} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={2} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
-            <Topic icon='🖍️️' title='Prodia API'>
+            <Topic>
+              <T2ISettings />
+            </Topic>
+            <Topic icon='🖍️️' title='OpenAI DALL·E' startCollapsed>
+              <DallESettings />
+            </Topic>
+            <Topic icon='🖍️️' title='Prodia API' startCollapsed>
               <ProdiaSettings />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value={4} sx={{ p: 'var(--Tabs-gap)' }}>
+        <TabPanel value={4} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon={<SearchIcon />} title='Browsing' startCollapsed>
               <BrowseSettings />

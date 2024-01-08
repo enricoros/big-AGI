@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { KeyboardEvent } from 'react';
 
 import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
 import { MenuList, styled } from '@mui/joy';
@@ -34,15 +33,16 @@ export function CloseableMenu(props: {
   noBottomPadding?: boolean,
   sx?: SxProps,
   zIndex?: number,
+  listRef?: React.Ref<HTMLUListElement>,
   children?: React.ReactNode,
 }) {
 
-  const handleClose = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+  const handleClose = (event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
     event.stopPropagation();
     props.onClose();
   };
 
-  const handleListKeyDown = (event: KeyboardEvent) => {
+  const handleListKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
       handleClose(event);
     } else if (event.key === 'Escape') {
@@ -72,11 +72,12 @@ export function CloseableMenu(props: {
     >
       <ClickAwayListener onClickAway={handleClose}>
         <MenuList
+          ref={props.listRef}
           // variant={props.variant} color={props.color}
           onKeyDown={handleListKeyDown}
           sx={{
             '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-            '--ListItem-minHeight': props.dense ? '2.5rem' : '3rem',
+            '--ListItem-minHeight': props.dense ? '2.25rem' : '3rem',
             '--ListItemDecorator-size': '2.75rem', // icon width
             backgroundColor: 'background.popup',
             boxShadow: 'md',

@@ -9,6 +9,8 @@ assignees: enricoros
 
 ## Release checklist:
 
+- [x] Create a new [Release Issue](https://github.com/enricoros/big-AGI/issues/new?assignees=enricoros&projects=enricoros/4&template=maintainers-release.md&title=Release+1.2.3)
+  - [ ] Replace 1.1.0 with the _former_ release, and _1.2.3_ with THIS
 - [ ] Update the [Roadmap](https://github.com/users/enricoros/projects/4/views/2) calling out shipped features
 - [ ] Create and update a [Milestone](https://github.com/enricoros/big-agi/milestones) for the release
   - [ ] Assign this task
@@ -21,38 +23,55 @@ assignees: enricoros
   - [ ] Update the release version in package.json, and `npm i`
   - [ ] Update in-app News [src/apps/news/news.data.tsx](/src/apps/news/news.data.tsx)
   - [ ] Update the in-app News version number
-  - [ ] Update the readme with the new release
+  - [ ] Update the README.md with the new release
   - [ ] Copy the highlights to the [docs/changelog.md](/docs/changelog.md)
 - Release:
-  - [ ] merge onto main
+  - [ ] merge onto main `git checkout main && git merge --no-ff release-1.2.3`
+  - [ ] re-tag `git tag -f v1.2.3 && git push opensource --tags -f'
   - [ ] verify deployment on Vercel
   - [ ] verify container on GitHub Packages
-  - create a GitHub release
-    - [ ] name it 'vX.Y.Z'
-    - [ ] copy the release notes and link appropriate artifacts
+  - [ ] update the GitHub release
+  - [ ] push as stable `git push opensource main:main-stable`
 - Announce:
   - [ ] Discord announcement
   - [ ] Twitter announcement
 
+### Links
 
-## Links
-Milestone: 
-Former release task: 
-GitHub release: 
-
+- Milestone: https://github.com/enricoros/big-AGI/milestone/X
+- GitHub release: https://github.com/enricoros/big-AGI/releases/tag/vX.Y.Z
+- Former release task: https://github.com/enricoros/big-AGI/issues/XXX
 
 ## Artifacts Generation
 
-1) The following is my opensource application
-   - paste README.md
-2) I am announcing a new version, 1.7.0. The following were the announcements for 1.6.0. Discord announcement, GitHub Release, in-app news.data.tsx, changelog.md.
-   - paste the former: `discord announcement`, `GitHub release`, `news.data.tsx`, `changelog.md`
-3) The following is the new data I have for 1.7.0
-   - paste the link to the milestone (closed) and each individual issue (content will be downloaded)
-   - paste the git changelog  `git log v1.6.0..v1.7.0 | clip`
-   
+```markdown
+You help me generate the following collateral for the new release of my opensource application
+called big-AGI. The new release is 1.2.3.
+To familiarize yourself with the application, the following are the Website and the GitHub README.md.
+```
 
-### news.data.TSX
+- paste the URL: https://big-agi.com
+- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/main/README.md)
+
+```markdown
+I am announcing a new version, 1.2.3.
+For reference, the following was the collateral for 1.1.0 (Discord announcement,
+GitHub Release, in-app-news file news.data.tsx, changelog.md).
+```
+
+- paste the former: `discord announcement`,
+- `GitHub release`,
+- `news.data.tsx`,
+- `changelog.md`
+
+```markdown
+The following are the new developments for 1.2.3:
+```
+
+- paste the link to the milestone (closed) and each individual issue (content will be downloaded)
+- paste the git changelog  `git log v1.1.0..v1.2.3 | clip`
+
+### news.data.tsx
 
 ```markdown
 I need the following from you:
@@ -63,13 +82,27 @@ I need the following from you:
 4. I want you then to update the news.data.tsx for the new release
 ```
 
+### Readme (and Changelog)
+
+```markdown
+I need you to update the README.md and the with the new release.
+Attaching the in-app news, with my language for you to improve on, but keep the tone.
+```
+
 ### GitHub release
 
-Now paste the former release (or 1.5.0 which was accurate and great), including the new contributors and
+```markdown
+Please create the 1.2.3 Release Notes for GitHub.
+Use a truthful and honest tone, understanding that people's time and attention span is short.
+Today is 2024-1-1.
+```
+
+Now paste-attachment the former release notes (or 1.5.0 which was accurate and great), including the new contributors and
 some stats (# of commits, etc.), and roll it for the new release.
 
 ### Discord announcement
 
 ```markdown
-Can you generate my 1.2.3 big-AGI discord announcement from the GitHub Release announcement, and the in-app News?
+Can you generate my 1.2.3 big-AGI discord announcement from the GitHub Release announcement?
+Please keep the formatting and stye of the discord announcement for 1.1.0, but with the new messaging above.
 ```

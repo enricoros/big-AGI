@@ -1,0 +1,5 @@
+:root {
+    --AGI-Nav-width: 52px;
+    --AGI-Drawer-width: 320px;
+    --AGI-Desktop-Drawer-width: clamp(320px, 22.1vw, 450px);
+}

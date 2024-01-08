@@ -4,10 +4,10 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorMistral } from './mistral.vendor';
 
@@ -29,14 +29,8 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
   const showKeyError = !!mistralKey && !sourceSetupValid;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
+  const { isFetching, refetch, isError, error } =
+    useLlmUpdateModels(ModelVendorMistral, access, shallFetchSucceed, source);
 
   return <>
 
@@ -51,9 +45,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton
-      refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} error={isError}
-    />
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Grid, IconButton, Sheet, Stack, styled, Typography, useTheme } from '@mui/joy';
+import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
+import { lineHeightChatText } from '~/common/app.theme';
 
 
 const StateLine = styled(Typography)(({ theme }) => ({
@@ -15,7 +16,7 @@ const StateLine = styled(Typography)(({ theme }) => ({
   fontSize: theme.fontSize.xs,
   fontFamily: theme.fontFamily.code,
   marginLeft: theme.spacing(1),
-  lineHeight: 2,
+  lineHeight: lineHeightChatText,
 }));
 
 function isPrimitive(value: any): boolean {
@@ -52,11 +53,11 @@ function StateRenderer(props: { state: object }) {
   const entries = Object.entries(props.state);
 
   return (
-    <Stack>
-      <Typography level='body-sm' sx={{ mb: 1 }}>
-        Internal State
+    <Box>
+      <Typography fontSize='smaller' sx={{ mb: 1 }}>
+        ## Internal State
       </Typography>
-      <Sheet>
+      <Sheet sx={{ p: 1 }}>
         {!entries && <Typography level='body-sm'>No state variables</Typography>}
         {entries.map(([key, value]) =>
           isPrimitive(value)
@@ -68,13 +69,12 @@ function StateRenderer(props: { state: object }) {
                 : <Typography key={'state-' + key} level='body-sm'>{key}: {value}</Typography>,
         )}
       </Sheet>
-    </Stack>
+    </Box>
   );
 }
 
 
 function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
-  const theme = useTheme();
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
@@ -84,8 +84,8 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     }}>
 
     {/* Title */}
-    {ephemeral.title && <Typography>
-      {ephemeral.title} <b>Development Tools</b>
+    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1.5 }}>
+      {ephemeral.title} Development Tools
     </Typography>}
 
     {/* Vertical | split */}
@@ -93,7 +93,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 
       {/* Left pane (console) */}
       <Grid xs={12} md={ephemeral.state ? 6 : 12}>
-        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: 1.75 }}>
+        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatText }}>
           {ephemeral.text}
         </Typography>
       </Grid>
@@ -102,8 +102,8 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
       {!!ephemeral.state && <Grid
         xs={12} md={6}
         sx={{
-          borderLeft: { md: `1px solid ${theme.palette.divider}` },
-          borderTop: { xs: `1px solid ${theme.palette.divider}`, md: 'none' },
+          borderLeft: { md: `1px dashed` },
+          borderTop: { xs: `1px dashed`, md: 'none' },
         }}>
         <StateRenderer state={ephemeral.state} />
       </Grid>}
@@ -123,10 +123,15 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
   </Box>;
 }
 
+// const dashedBorderSVG = encodeURIComponent(`
+//   <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
+//     <rect x='0' y='0' width='100%' height='100%' fill='none' stroke='currentColor' stroke-width='2' stroke-dasharray='16, 2' />
+//   </svg>
+// `);
+
 
 export function Ephemerals(props: { conversationId: DConversationId | null, sx?: SxProps }) {
   // global state
-  const theme = useTheme();
   const ephemerals = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return conversation ? conversation.ephemerals : [];
@@ -138,7 +143,9 @@ export function Ephemerals(props: { conversationId: DConversationId | null, sx?:
     <Sheet
       variant='soft' color='success' invertedColors
       sx={{
-        border: `4px dashed ${theme.palette.divider}`,
+        // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
+        // backgroundSize: '100% 100%',
+        // backgroundRepeat: 'no-repeat',
         ...(props.sx || {}),
       }}>
 

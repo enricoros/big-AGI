@@ -5,13 +5,15 @@ This guide helps you connect [Ollama](https://ollama.ai) [models](https://ollama
 experience. The integration brings the popular big-AGI features to Ollama, including: voice chats,
 editing tools, models switching, personas, and more.
 
-_Last updated Dec 11, 2023_
+_Last updated Dec 16, 2023_
 
 ![config-local-ollama-0-example.png](pixels/config-ollama-0-example.png)
 
 ## Quick Integration Guide
 
 1. **Ensure Ollama API Server is Running**: Follow the official instructions to get Ollama up and running on your machine
+   - For detailed instructions on setting up the Ollama API server, please refer to the
+   [Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md). 
 2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
 3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`)
 4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models
@@ -20,21 +22,29 @@ _Last updated Dec 11, 2023_
    you'll have to press the 'Pull' button again, until a green message appears.
 5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
 
-### Ollama: installation and Setup
+**Visual Configuration Guide**:
 
-For detailed instructions on setting up the Ollama API server, please refer to the
-[Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md).
+* After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:<br/>
+  <img src="pixels/config-ollama-1-models.png" alt="config-local-ollama-1-models.png" width="320">
 
-### Visual Guide
+* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:<br/>
+  <img src="pixels/config-ollama-2-admin-pull.png" alt="config-local-ollama-2-admin-pull.png" width="320">
 
-* After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:
-  <img src="pixels/config-ollama-1-models.png" alt="config-local-ollama-1-models.png" style="max-width: 320px;">
+* You can now switch model/persona dynamically and text/voice chat with the models:<br/>
+  <img src="pixels/config-ollama-3-chat.png" alt="config-local-ollama-3-chat.png" width="320">
 
-* The `Ollama` admin panel, with the `Pull` button highlighted, after pulling the "Yi" model:
-  <img src="pixels/config-ollama-2-admin-pull.png" alt="config-local-ollama-2-admin-pull.png" style="max-width: 320px;">
+<br/>
 
-* You can now switch model/persona dynamically and text/voice chat with the models:
-  <img src="pixels/config-ollama-3-chat.png" alt="config-local-ollama-3-chat.png" style="max-width: 320px;">
+### ⚠️ Network Troubleshooting
+
+If you get errors about the server having trouble connecting with Ollama, please see 
+[this message](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483) on Issue #276.
+
+And in brief, make sure the Ollama endpoint is accessible from the servers where you run big-AGI (which could
+be localhost or cloud servers).
+![Ollama Networking Chart](pixels/config-ollama-network.png)
+
+<br/>
 
 ### Advanced: Model parameters
 
@@ -72,6 +82,8 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
 ```
 
 Reach out to our community if you need help with this.
+
+<br/>
 
 ### Community and Support
 

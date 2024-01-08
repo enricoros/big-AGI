@@ -24,6 +24,7 @@ AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_API_HOST=
+GEMINI_API_KEY=
 MISTRAL_API_KEY=
 OLLAMA_API_HOST=
 OPENROUTER_API_KEY=
@@ -46,7 +47,7 @@ PUPPETEER_WSS_ENDPOINT=
 # Backend Analytics
 BACKEND_ANALYTICS=
 
-# Backend HTTP Basic Authentication
+# Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 ```
@@ -80,6 +81,7 @@ requiring the user to enter an API key
 | `AZURE_OPENAI_API_KEY`      | Azure OpenAI API key, see [config-azure-openai.md](config-azure-openai.md)                                                    | Optional, but if set `AZURE_OPENAI_API_ENDPOINT` must also be set |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                                     | Optional                                                          |
 | `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as [config-aws-bedrock.md](config-aws-bedrock.md) | Optional                                                          |
+| `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                                            | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                                       | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-ollama.md](config-ollama.md)                                      |                                                                   |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                                    | Optional                                                          |
@@ -115,10 +117,7 @@ Enable the app to Talk, Draw, and Google things up.
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing, etc.                                                                  |
 | **Backend**                |                                                                                                                         | 
 | `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
-| `HTTP_BASIC_AUTH_USERNAME` | Username for HTTP Basic Authentication. See the [Authentication](deploy-authentication.md) guide.                       |
+| `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
 
 ---
-
-
-

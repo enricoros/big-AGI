@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/joy';
 
 import { createConversationFromJsonV1 } from '~/modules/trade/trade.client';
-import { useHasChatLinkItems } from '~/modules/trade/store-module-trade';
 
 import { Brand } from '~/common/app.config';
 import { InlineError } from '~/common/components/InlineError';
@@ -13,9 +12,10 @@ import { LogoProgress } from '~/common/components/LogoProgress';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/state/store-chats';
-import { useLayoutPluggable } from '~/common/layout/store-applayout';
+import { themeBgAppDarker } from '~/common/app.theme';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
-import { AppChatLinkDrawerItems } from './AppChatLinkDrawerItems';
+import { AppChatLinkDrawerContent } from './AppChatLinkDrawerContent';
 import { AppChatLinkMenuItems } from './AppChatLinkMenuItems';
 import { ViewChatLink } from './ViewChatLink';
 
@@ -30,7 +30,7 @@ const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }
   </Box>;
 
 const ShowLoading = () =>
-  <Centerer backgroundColor='background.level3'>
+  <Centerer backgroundColor={themeBgAppDarker}>
     <LogoProgress showProgress={true} />
     <Typography level='title-sm' sx={{ mt: 2 }}>
       Loading Chat...
@@ -38,7 +38,7 @@ const ShowLoading = () =>
   </Centerer>;
 
 const ShowError = (props: { error: any }) =>
-  <Centerer backgroundColor='background.level2'>
+  <Centerer backgroundColor={themeBgAppDarker}>
     <InlineError error={props.error} severity='warning' />
   </Centerer>;
 
@@ -78,14 +78,14 @@ export function AppChatLink(props: { linkId: string }) {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
-  const hasLinkItems = useHasChatLinkItems();
+  // const hasLinkItems = useHasChatLinkItems();
 
 
   // pluggable UI
 
-  const drawerItems = React.useMemo(() => <AppChatLinkDrawerItems />, []);
+  const drawerContent = React.useMemo(() => <AppChatLinkDrawerContent />, []);
   const menuItems = React.useMemo(() => <AppChatLinkMenuItems />, []);
-  useLayoutPluggable(null, hasLinkItems ? drawerItems : null, menuItems);
+  usePluggableOptimaLayout(drawerContent, null, menuItems, 'AppChatLink');
 
 
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Chat Link';
@@ -102,7 +102,7 @@ export function AppChatLink(props: { linkId: string }) {
         ? <ShowError error={error} />
         : !!data?.conversation
           ? <ViewChatLink conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
-          : <Centerer backgroundColor='background.level3' />}
+          : <Centerer backgroundColor={themeBgAppDarker} />}
 
   </>;
 }

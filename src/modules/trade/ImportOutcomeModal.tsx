@@ -27,7 +27,7 @@ export interface ImportedOutcome {
 /**
  * Displays the result of an import operation as a modal dialog.
  */
-export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: string | null, onClose: () => void, }) {
+export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: string | null, onClose: () => void }) {
   const { conversations } = props.outcome;
 
   const successes = conversations.filter(c => c.success);
@@ -52,7 +52,7 @@ export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: s
           </Typography>
           {!!props.rawJson && (
             <Tooltip title='Copy JSON to clipboard'>
-              <IconButton variant='outlined' color='neutral' onClick={handleCopyRawJson} sx={{ ml: 'auto' }}>
+              <IconButton variant='outlined' onClick={handleCopyRawJson} sx={{ ml: 'auto' }}>
                 <ContentCopyIcon />
               </IconButton>
             </Tooltip>

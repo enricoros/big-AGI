@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export interface LLMChainStep {
@@ -16,7 +16,7 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string) => void) {
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
@@ -80,11 +80,15 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
     // LLM call
-    callChatGenerate(llmId, llmChatInput, chain.overrideResponseTokens)
+    llmChatGenerateOrThrow(llmId, llmChatInput, null, null, chain.overrideResponseTokens ?? undefined)
       .then(({ content }) => {
         stepDone = true;
-        if (!stepAbortController.signal.aborted)
-          setChain(updateChainState(chain, llmChatInput, stepIdx, content));
+        if (stepAbortController.signal.aborted)
+          return;
+        const chainState = updateChainState(chain, llmChatInput, stepIdx, content);
+        if (chainState.output && onSuccess)
+          onSuccess(chainState.output);
+        setChain(chainState);
       })
       .catch((err) => {
         stepDone = true;
@@ -121,8 +125,8 @@ interface ChainState {
   steps: StepState[];
   chatHistory: VChatMessageIn[];
   progress: number;
-  safeInputLength: number;
-  overrideResponseTokens: number;
+  safeInputLength: number | null;
+  overrideResponseTokens: number | null;
   input: string;
   output: string | null;
 }
@@ -142,8 +146,9 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
     throw new Error(`LLM ${llmId} not found`);
 
   const overrideResponseTokens = llm.maxOutputTokens;
-  const inputTokens = llm.contextTokens - overrideResponseTokens;
-  const safeInputLength = Math.floor(inputTokens * 2); // it's deemed around 4
+  const safeInputLength = (llm.contextTokens && overrideResponseTokens)
+    ? Math.floor((llm.contextTokens - overrideResponseTokens) * 2)
+    : null;
 
   return {
     steps: steps.map((step, i) => ({
@@ -177,8 +182,8 @@ function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx:
   };
 }
 
-function implodeText(text: string, maxLength: number) {
-  if (text.length <= maxLength) return text;
+function implodeText(text: string, maxLength: number | null) {
+  if (!maxLength || text.length <= maxLength) return text;
   const halfLength = Math.floor(maxLength / 2);
   return `${text.substring(0, halfLength)}\n...\n${text.substring(text.length - halfLength)}`;
 }

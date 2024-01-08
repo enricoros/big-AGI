@@ -1,4 +1,4 @@
-import { callChatGenerateWithFunctions, VChatFunctionIn } from '~/modules/llms/transports/chatGenerate';
+import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
@@ -71,7 +71,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Question
   if (suggestQuestions) {
-    // callChatGenerateWithFunctions(funcLLMId, [
+    // llmChatGenerateOrThrow(funcLLMId, [
     //     { role: 'system', content: systemMessage.text },
     //     { role: 'user', content: userMessage.text },
     //     { role: 'assistant', content: assistantMessageText },
@@ -83,15 +83,18 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
-    void callChatGenerateWithFunctions(funcLLMId, [
+    void llmChatGenerateOrThrow(funcLLMId, [
         { role: 'system', content: systemMessage.text },
         { role: 'user', content: userMessage.text },
         { role: 'assistant', content: assistantMessageText },
       ], [suggestPlantUMLFn], 'draw_plantuml_diagram',
     ).then(chatResponse => {
 
+      if (!('function_arguments' in chatResponse))
+        return;
+
       // parse the output PlantUML string, if any
-      const functionArguments = chatResponse?.function_arguments ?? null;
+      const functionArguments = chatResponse.function_arguments ?? null;
       if (functionArguments) {
         const { code, type }: { code: string, type: string } = functionArguments as any;
         if (code && type) {
@@ -105,6 +108,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           editMessage(conversationId, assistantMessageId, { text: assistantMessageText }, false);
         }
       }
+    }).catch(err => {
+      console.error('autoSuggestions::diagram:', err);
     });
   }
 
