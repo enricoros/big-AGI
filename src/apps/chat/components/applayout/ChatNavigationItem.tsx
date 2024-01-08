@@ -30,8 +30,8 @@ export interface ChatNavigationItemData {
 function ChatNavigationItem(props: {
   item: ChatNavigationItemData,
   isLonely: boolean,
-  maxChatMessages: number,
   showSymbols: boolean,
+  bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
 }) {
@@ -88,7 +88,7 @@ function ChatNavigationItem(props: {
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
   const buttonSx: SxProps = isActive ? { color: 'white' } : {};
 
-  const progress = props.maxChatMessages ? 100 * messageCount / props.maxChatMessages : 0;
+  const progress = props.bottomBarBasis ? 100 * (searchFrequency ?? messageCount) / props.bottomBarBasis : 0;
 
   return (
     <ListItemButton
@@ -106,7 +106,7 @@ function ChatNavigationItem(props: {
       {/* Optional progress bar, underlay */}
       {progress > 0 && (
         <Box sx={{
-          backgroundColor: 'neutral.softActiveBg',
+          backgroundColor: 'neutral.softBg',
           position: 'absolute', left: 0, bottom: 0, width: progress + '%', height: 4,
         }} />
       )}
@@ -131,14 +131,6 @@ function ChatNavigationItem(props: {
           )}
       </ListItemDecorator>}
 
-      {/* Display search frequency if it exists and is greater than 0 */}
-      {searchFrequency && searchFrequency > 0 && (
-        <Box sx={{ ml: 1 }}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            ({searchFrequency})
-          </Typography>
-        </Box>
-      )}
 
       {/* Text */}
       {!isEditingTitle ? (
@@ -167,8 +159,17 @@ function ChatNavigationItem(props: {
       {/*  <EditIcon />*/}
       {/*</IconButton>*/}
 
+      {/* Display search frequency if it exists and is greater than 0 */}
+      {searchFrequency && searchFrequency > 0 && (
+        <Box sx={{ ml: 1 }}>
+          <Typography level='body-sm'>
+            {searchFrequency}
+          </Typography>
+        </Box>
+      )}
+
       {/* Delete Arming */}
-      {!props.isLonely && !deleteArmed && (
+      {!props.isLonely && !deleteArmed && !searchFrequency && (
         <IconButton
           variant={isActive ? 'solid' : 'outlined'}
           size='sm'
@@ -180,7 +181,7 @@ function ChatNavigationItem(props: {
       )}
 
       {/* Delete / Cancel buttons */}
-      {!props.isLonely && deleteArmed && <>
+      {!props.isLonely && deleteArmed && !searchFrequency && <>
         <IconButton size='sm' variant='solid' color='danger' sx={buttonSx} onClick={handleConversationDelete}>
           <DeleteOutlineIcon />
         </IconButton>

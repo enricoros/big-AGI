@@ -98,7 +98,6 @@ function ChatDrawerItems(props: {
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
   // derived state
-  const maxChatMessages = chatNavItems.reduce((longest, _c) => Math.max(longest, _c.messageCount), 1);
   const selectConversationsCount = chatNavItems.length;
   const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
   const singleChat = selectConversationsCount === 1;
@@ -144,6 +143,10 @@ function ChatDrawerItems(props: {
       // Sort the items by searchFrequency in descending order
       .sort((a, b) => b.searchFrequency! - a.searchFrequency!);
   }, [chatNavItems, debouncedSearchQuery]);
+
+
+  // basis for the underline bar
+  const bottomBarBasis = filteredChatNavItems.reduce((longest, _c) => Math.max(longest, _c.searchFrequency ?? _c.messageCount), 1);
 
 
   // grouping
@@ -243,8 +246,8 @@ function ChatDrawerItems(props: {
             key={'nav-' + item.conversationId}
             item={item}
             isLonely={singleChat}
-            maxChatMessages={(labsEnhancedUI || softMaxReached) ? maxChatMessages : 0}
             showSymbols={showSymbols}
+            bottomBarBasis={(labsEnhancedUI || softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
             onConversationDelete={handleConversationDelete}
           />)}
