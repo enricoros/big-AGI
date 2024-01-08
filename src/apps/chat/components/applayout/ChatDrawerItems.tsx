@@ -265,9 +265,11 @@ function ChatDrawerItems(props: {
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 2.5 }}>
+        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1 }}>
+          <ListItemDecorator>
+            <FileDownloadIcon />
+          </ListItemDecorator>
           Export
-          <FileDownloadIcon />
         </ListItemButton>
       </Box>
 
