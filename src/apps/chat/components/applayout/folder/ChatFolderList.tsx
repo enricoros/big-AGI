@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
-import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuList, Sheet, Typography } from '@mui/joy';
+import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Sheet, Typography } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
@@ -30,7 +30,7 @@ export function ChatFolderList(props: {
 
   return (
     <Sheet variant='soft' sx={{ p: 2 }}>
-      <MenuList
+      <List
         variant='plain'
         sx={(theme) => ({
           '& ul': {
@@ -129,7 +129,7 @@ export function ChatFolderList(props: {
             </StrictModeDroppable>
           </DragDropContext>
         </ListItem>
-      </MenuList>
+      </List>
 
       <AddFolderButton />
     </Sheet>
