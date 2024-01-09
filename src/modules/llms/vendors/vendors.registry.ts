@@ -83,7 +83,7 @@ export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources
   // create the source
   return {
     id: sourceId,
-    label: vendor.name + (sourceN > 0 ? ` #${sourceN}` : ''),
+    label: vendor.name, // NOTE: will be (re/) numbered upon adding to the store
     vId: vendorId,
     setup: vendor.initializeSetup?.() || {},
   };
