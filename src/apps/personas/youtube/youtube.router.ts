@@ -29,7 +29,7 @@ const youtubeTranscriptionSchema = z.object({
 });
 
 
-export const ytPersonaRouter = createTRPCRouter({
+export const youtubeRouter = createTRPCRouter({
 
   /**
    * Get the transcript for a YouTube video ID
