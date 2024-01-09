@@ -1,12 +1,11 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, Grid, IconButton, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
 import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
-
-import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
@@ -47,9 +46,10 @@ export function PersonaCreator() {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const [chainInputText, setChainInputText] = React.useState<string | null>(null);
   const [_inputTitle, setInputTitle] = React.useState<string | null>(null);
+  const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
-  const [personaLlm, llmComponent] = useFormRadioLlmType('Creation Model');
+  const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
 
 
   // chain to convert a text input string (e.g. youtube transcript) into a persona prompt
@@ -85,6 +85,12 @@ export function PersonaCreator() {
     setInputTitle(title);
   }, []);
 
+  const handleCancel = React.useCallback(() => {
+    setChainInputText(null);
+    setInputTitle(null);
+    abortChain();
+  }, [abortChain]);
+
 
   return <>
 
@@ -99,7 +105,12 @@ export function PersonaCreator() {
       defaultValue={0}
       value={selectedTab}
       onChange={(_event, newValue) => setSelectedTab(newValue as number)}
-      sx={{ borderRadius: 'md' }}
+      sx={{
+        // boxShadow: 'sm',
+        borderRadius: 'md',
+        // overflow: 'hidden',
+        display: isTransforming ? 'none' : undefined,
+      }}
     >
       <TabList sx={{ minHeight: '3rem' }}>
         <Tab>From YouTube Video</Tab>
@@ -111,15 +122,56 @@ export function PersonaCreator() {
       <TabPanel keepMounted value={1} sx={{ p: 3 }}>
         <TabFromText isCreating={isTransforming} onCreate={handleCreate} />
       </TabPanel>
+
+      <Divider orientation='horizontal' />
+
+      <Box sx={{ p: 3 }}>
+        {llmComponent}
+      </Box>
     </Tabs>
 
 
     {/* LLM section */}
-    {!isTransforming && !isFinished && (
-      <Card sx={{ mt: 1 }}>
-        {llmComponent}
-      </Card>
-    )}
+    {/*{!isTransforming && !isFinished && (*/}
+    {/*  <Card sx={{ mt: 1 }}>*/}
+    {/*    {llmComponent}*/}
+    {/*  </Card>*/}
+    {/*)}*/}
+
+
+    {/* Embodiment Progress */}
+    {/* <GoodModal open> */}
+    {isTransforming && <Card><CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
+        <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
+      </Box>
+      <Box>
+        <Typography color='success' level='title-lg'>
+          Embodying Persona ...
+        </Typography>
+        <Typography level='title-sm' sx={{ mt: 1 }}>
+          Using: {personaLlm?.label}
+        </Typography>
+      </Box>
+      <Box>
+        <Typography color='success' level='title-sm' sx={{ fontWeight: 600 }}>
+          {chainStepName}
+        </Typography>
+        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
+        <Typography level='body-sm' sx={{ mt: 1 }}>
+          {chainStepInterimChars === null ? 'Loading ...' : `Generating (${chainStepInterimChars.toLocaleString()} bytes) ...`}
+        </Typography>
+      </Box>
+      <Typography level='title-sm'>
+        This may take 1-2 minutes.
+        While larger models will produce higher quality prompts,
+        if you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
+        please try again with faster/smaller models.
+      </Typography>
+      <Button variant='soft' color='neutral' onClick={handleCancel} sx={{ ml: 'auto', minWidth: 100, mt: 3 }}>
+        Cancel
+      </Button>
+    </CardContent></Card>}
 
 
     {/* Errors */}
@@ -129,7 +181,7 @@ export function PersonaCreator() {
       </Alert>
     )}
 
-    {/* Persona! */}
+    {/* The Persona (Output) */}
     {chainOutput && <>
       <Card sx={{ boxShadow: 'md', mt: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -152,42 +204,38 @@ export function PersonaCreator() {
     </>}
 
 
-    {/* Input: Transcript/Text */}
-    {chainInputText && <>
-      <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
-        Input Data
-      </Typography>
-
-      <Card>
-        <CardContent>
-          <Typography level='title-md' sx={{ mb: 1 }}>
-            Transcript / Text
-          </Typography>
-          <Box>
-            <Typography level='body-sm'>
-              {chainInputText.slice(0, 280)}...
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-    </>}
-
-    {/* Intermediate outputs rendered as cards in a grid */}
-    {chainIntermediates && chainIntermediates.length > 0 && <>
-      <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
-        {isTransforming ? 'Working...' : 'Intermediate Work'}
-      </Typography>
-
+    {/* Input + Intermediate outputs (with expander) */}
+    {(isTransforming || chainIntermediates?.length > 0) && <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 3, mb: 0.5 }}>
+        <Typography level='title-lg'>
+          {isTransforming ? 'Working ...' : 'Intermediate Work'}
+        </Typography>
+        <IconButton size='sm' variant={showIntermediates ? 'solid' : 'outlined'} onClick={() => setShowIntermediates(s => !s)}>
+          <AddIcon />
+        </IconButton>
+      </Box>
       <Grid container spacing={2}>
+        <Grid xs={12} md={showIntermediates ? 12 : 6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography color='success' level='title-sm' sx={{ mb: 1 }}>
+                Input Text
+              </Typography>
+              <Typography level='body-sm'>
+                {showIntermediates ? chainInputText : (chainInputText?.slice(0, 280) + '...')}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
         {chainIntermediates.map((intermediate, i) =>
-          <Grid xs={12} sm={6} md={4} key={i}>
+          <Grid xs={12} md={showIntermediates ? 12 : 6} key={i}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
-                <Typography level='title-sm' sx={{ mb: 1 }}>
+                <Typography color='success' level='title-sm' sx={{ mb: 1 }}>
                   {i + 1}. {PersonaCreationSteps[i].name}
                 </Typography>
                 <Typography level='body-sm'>
-                  {intermediate?.slice(0, 140)}...
+                  {showIntermediates ? intermediate : (intermediate?.slice(0, 280) + '...')}
                 </Typography>
               </CardContent>
             </Card>
@@ -195,40 +243,6 @@ export function PersonaCreator() {
         )}
       </Grid>
     </>}
-
-
-    {/* Dialog: Embodiment Progress */}
-    {isTransforming && <GoodModal open>
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
-        <CircularProgress color='primary' value={Math.max(10, 100 * chainProgress)} />
-      </Box>
-      <Box>
-        <Typography color='success' level='title-lg'>
-          Embodying Persona ...
-        </Typography>
-        <Typography level='title-sm' sx={{ mt: 1 }}>
-          Using: {personaLlm?.label}
-        </Typography>
-      </Box>
-      <Box>
-        <Typography color='success' level='title-sm' sx={{ fontWeight: 600 }}>
-          {chainStepName}
-        </Typography>
-        <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
-        <Typography level='title-sm' sx={{ mt: 1 }}>
-          {chainStepInterimChars === null ? 'Loading ...' : `Generating (${chainStepInterimChars.toLocaleString()} bytes) ...`}
-        </Typography>
-      </Box>
-      <Typography level='title-sm'>
-        This may take 1-2 minutes. Do not close this window or the progress will be lost.
-        While larger models will produce higher quality prompts,
-        if you experience any errors (e.g. LLM timeouts, or context overflows for larger videos)
-        please try again with faster/smaller models.
-      </Typography>
-      <Button variant='soft' color='neutral' onClick={abortChain} sx={{ ml: 'auto', minWidth: 100, mt: 3 }}>
-        Cancel
-      </Button>
-    </GoodModal>}
 
   </>;
 }
