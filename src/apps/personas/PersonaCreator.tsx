@@ -89,7 +89,8 @@ export function PersonaCreator() {
     chainStepInterimChars,
     chainOutput,
     chainError,
-    abortChain,
+    userCancelChain,
+    restartChain,
   } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona);
 
 
@@ -107,8 +108,8 @@ export function PersonaCreator() {
   const handleCancel = React.useCallback(() => {
     setChainInputText(null);
     // setInputTitle(null);
-    abortChain();
-  }, [abortChain]);
+    userCancelChain();
+  }, [userCancelChain]);
 
 
   return <>
