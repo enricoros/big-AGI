@@ -276,8 +276,15 @@ function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: bo
     for (const llm of llms)
       if (llm.id.endsWith(suffix))
         return llm.id;
+  if (!fallbackToFirst) return null;
+
+  // otherwise return first that's not hidden
+  for (const llm of llms)
+    if (!llm.hidden)
+      return llm.id;
+
   // otherwise return first id
-  return fallbackToFirst ? llms[0].id : null;
+  return llms[0].id;
 }
 
 
