@@ -124,7 +124,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     chainProgress: chain?.progress ?? 0,
     chainStepName: chain?.steps?.find((step) => !step.isComplete)?.ref.name ?? null,
     chainStepInterimChars: chainStepInterimText?.length ?? null,
-    chainIntermediates: chain?.steps?.map((step) => step.output ?? null)?.filter(out => out) ?? [],
+    chainIntermediates: chain?.steps?.map((step) => ({ name: step.ref.name, output: step.output ?? null })).filter(i => !!i.output) ?? [],
     chainError: error,
     abortChain: () => {
       chainAbortController.current.abort('user canceled');

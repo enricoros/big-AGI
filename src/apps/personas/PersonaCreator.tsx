@@ -1,68 +1,87 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, Grid, IconButton, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
 import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
+
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
 import { TabFromText } from './TabFromText';
 import { TabFromYouTube } from './TabFromYouTube';
+import { useStringArrayEditor } from './useStringArrayEditor';
 
 
-const PersonaCreationSteps: LLMChainStep[] = [
-  {
-    name: 'Analyzing the transcript / text',
-    setSystem: 'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
-    addUserInput: true,
-    addUser: 'Conduct comprehensive research on the provided transcript. Identify key characteristics of the speaker, including age, professional field, distinct personality traits, style of communication, narrative context, and self-awareness. Additionally, consider any unique aspects such as their use of humor, their cultural background, core values, passions, fears, personal history, and social interactions. Your output for this stage is an in-depth written analysis that exhibits an understanding of both the superficial and more profound aspects of the speaker\'s persona.',
-  },
-  {
-    name: 'Defining the character',
-    addPrevAssistant: true,
-    addUser: 'Craft your documented analysis into a draft of the \'You are a...\' character sheet. It should encapsulate all crucial personality dimensions, along with the motivations and aspirations of the persona. Keep in mind to balance succinctness and depth of detail for each dimension. The deliverable here is a comprehensive draft of the character sheet that captures the speaker\'s unique essence.',
-  },
-  {
-    name: 'Crossing the t\'s',
-    addPrevAssistant: true,
-    addUser: 'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
-  },
-  // {
-  //   name: 'Shrink',
-  //   addPrevAssistant: true,
-  //   addUser: 'Now remove all the uncertain information, omit unknown information, Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and serves as a go-to guide for a recreating the persona.',
-  // },
+const Prompts: string[] = [
+  'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
+  'Conduct comprehensive research on the provided transcript. Identify key characteristics of the speaker, including age, professional field, distinct personality traits, style of communication, narrative context, and self-awareness. Additionally, consider any unique aspects such as their use of humor, their cultural background, core values, passions, fears, personal history, and social interactions. Your output for this stage is an in-depth written analysis that exhibits an understanding of both the superficial and more profound aspects of the speaker\'s persona.',
+  'Craft your documented analysis into a draft of the \'You are a...\' character sheet. It should encapsulate all crucial personality dimensions, along with the motivations and aspirations of the persona. Keep in mind to balance succinctness and depth of detail for each dimension. The deliverable here is a comprehensive draft of the character sheet that captures the speaker\'s unique essence.',
+  'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
 ];
+
+const PromptTitles: string[] = [
+  'Common: Creator System Prompt',
+  'Analyze the transcript',
+  'Define the character',
+  'Cross the t\'s',
+];
+
+// chain to convert a text input string (e.g. youtube transcript) into a persona prompt
+function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
+  return [
+    {
+      name: titles[1],
+      setSystem: instructions[0],
+      addUserInput: true,
+      addUser: instructions[1],
+    },
+    {
+      name: titles[2],
+      addPrevAssistant: true,
+      addUser: instructions[2],
+    },
+    {
+      name: titles[3],
+      addPrevAssistant: true,
+      addUser: instructions[3],
+    },
+  ];
+}
 
 
 export function PersonaCreator() {
 
   // state
+  const advanced = useToggleableBoolean();
   const [selectedTab, setSelectedTab] = React.useState(0);
   const [chainInputText, setChainInputText] = React.useState<string | null>(null);
-  const [_inputTitle, setInputTitle] = React.useState<string | null>(null);
   const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
   const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
 
 
-  // chain to convert a text input string (e.g. youtube transcript) into a persona prompt
-  const creationChainSteps = React.useMemo((): LLMChainStep[] => {
-    return [...PersonaCreationSteps];
-  }, []);
+  // editable prompts
+  const {
+    strings: editedInstructions, stringEditors: instructionEditors,
+  } = useStringArrayEditor(Prompts, PromptTitles);
+
+  const creationChainSteps = React.useMemo(() => {
+    return createChain(editedInstructions, PromptTitles);
+  }, [editedInstructions]);
 
   const savePersona = React.useCallback((_personaPrompt: string) => {
     // TODO.. save the persona prompt here
   }, []);
 
   const {
-    isFinished,
+    // isFinished,
     isTransforming,
     chainProgress,
     chainIntermediates,
@@ -82,12 +101,12 @@ export function PersonaCreator() {
 
   const handleCreate = React.useCallback((text: string, title: string | null) => {
     setChainInputText(text);
-    setInputTitle(title);
+    // setInputTitle(title);
   }, []);
 
   const handleCancel = React.useCallback(() => {
     setChainInputText(null);
-    setInputTitle(null);
+    // setInputTitle(null);
     abortChain();
   }, [abortChain]);
 
@@ -125,8 +144,18 @@ export function PersonaCreator() {
 
       <Divider orientation='horizontal' />
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {llmComponent}
+
+        {advanced.on && (
+          <Box sx={{ my: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {instructionEditors}
+          </Box>
+        )}
+
+        <FormLabel onClick={advanced.toggle} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>
+          {advanced.on ? 'Hide Advanced' : 'Advanced: Prompts'}
+        </FormLabel>
       </Box>
     </Tabs>
 
@@ -206,7 +235,7 @@ export function PersonaCreator() {
 
     {/* Input + Intermediate outputs (with expander) */}
     {(isTransforming || chainIntermediates?.length > 0) && <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 3, mb: 0.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 3, mb: 0.5, mx: 1 }}>
         <Typography level='title-lg'>
           {isTransforming ? 'Working ...' : 'Intermediate Work'}
         </Typography>
@@ -232,10 +261,10 @@ export function PersonaCreator() {
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Typography color='success' level='title-sm' sx={{ mb: 1 }}>
-                  {i + 1}. {PersonaCreationSteps[i].name}
+                  {i + 1}. {intermediate.name}
                 </Typography>
                 <Typography level='body-sm'>
-                  {showIntermediates ? intermediate : (intermediate?.slice(0, 280) + '...')}
+                  {showIntermediates ? intermediate.output : (intermediate.output?.slice(0, 280) + '...')}
                 </Typography>
               </CardContent>
             </Card>
