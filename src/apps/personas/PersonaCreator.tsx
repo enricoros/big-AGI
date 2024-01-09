@@ -67,6 +67,7 @@ export function PersonaCreator() {
     chainProgress,
     chainIntermediates,
     chainStepName,
+    chainStepInterimChars,
     chainOutput,
     chainError,
     abortChain,
@@ -214,6 +215,9 @@ export function PersonaCreator() {
           {chainStepName}
         </Typography>
         <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
+        <Typography level='title-sm' sx={{ mt: 1 }}>
+          {chainStepInterimChars === null ? 'Loading ...' : 'Generating ...'}
+        </Typography>
       </Box>
       <Typography level='title-sm'>
         This may take 1-2 minutes. Do not close this window or the progress will be lost.

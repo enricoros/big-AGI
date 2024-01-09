@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export interface LLMChainStep {
@@ -21,6 +21,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
   // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [chainStepInterimText, setChainStepInterimText] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
 
   // restart Chain on inputs change
@@ -81,21 +82,30 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     const globalToStepListener = () => stepAbortController.abort('chain aborted');
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
-    // LLM call
-    llmChatGenerateOrThrow(llmId, llmChatInput, null, null, chain.overrideResponseTokens ?? undefined)
-      .then(({ content }) => {
-        stepDone = true;
+    // interim text
+    let interimText = '';
+    setChainStepInterimText(null);
+
+    // LLM call (streaming, cancelable)
+    llmStreamingChatGenerate(llmId, llmChatInput, null, null, stepAbortController.signal,
+      (update) => {
+        update.text && setChainStepInterimText(interimText = update.text);
+      })
+      .then(() => {
         if (stepAbortController.signal.aborted)
           return;
-        const chainState = updateChainState(chain, llmChatInput, stepIdx, content);
+        const chainState = updateChainState(chain, llmChatInput, stepIdx, interimText);
         if (chainState.output && onSuccess)
           onSuccess(chainState.output);
         setChain(chainState);
       })
       .catch((err) => {
-        stepDone = true;
         if (!stepAbortController.signal.aborted)
           setError(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
+      })
+      .finally(() => {
+        stepDone = true;
+        setChainStepInterimText(null);
       });
 
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted
@@ -113,6 +123,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     chainOutput: chain?.output ?? null,
     chainProgress: chain?.progress ?? 0,
     chainStepName: chain?.steps?.find((step) => !step.isComplete)?.ref.name ?? null,
+    chainStepInterimChars: chainStepInterimText?.length ?? null,
     chainIntermediates: chain?.steps?.map((step) => step.output ?? null)?.filter(out => out) ?? [],
     chainError: error,
     abortChain: () => {
