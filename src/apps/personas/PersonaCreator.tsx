@@ -18,6 +18,10 @@ import { TabFromYouTube } from './TabFromYouTube';
 import { useStringArrayEditor } from './useStringArrayEditor';
 
 
+// delay to start a new chain after the previous one finishes
+const CONTINUE_DELAY: number | false = false;
+
+
 const Prompts: string[] = [
   'You are skilled in analyzing and embodying diverse characters. You meticulously study transcripts to capture key attributes, draft comprehensive character sheets, and refine them for authenticity. Feel free to make assumptions without hedging, be concise and be creative.',
   'Conduct comprehensive research on the provided transcript. Identify key characteristics of the speaker, including age, professional field, distinct personality traits, style of communication, narrative context, and self-awareness. Additionally, consider any unique aspects such as their use of humor, their cultural background, core values, passions, fears, personal history, and social interactions. Your output for this stage is an in-depth written analysis that exhibits an understanding of both the superficial and more profound aspects of the speaker\'s persona.',
@@ -98,6 +102,16 @@ export function PersonaCreator() {
   React.useEffect(() => {
     setChainInputText(null);
   }, [selectedTab]);
+
+
+  // [debug] Restart the chain when complete after a delay
+  const debugRestart = !!CONTINUE_DELAY && !isTransforming && (chainProgress === 1 || !!chainError);
+  React.useEffect(() => {
+    if (debugRestart) {
+      const timeout = setTimeout(restartChain, CONTINUE_DELAY);
+      return () => clearTimeout(timeout);
+    }
+  }, [debugRestart, restartChain]);
 
 
   const handleCreate = React.useCallback((text: string, title: string | null) => {
