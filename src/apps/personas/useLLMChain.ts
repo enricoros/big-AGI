@@ -17,6 +17,8 @@ export interface LLMChainStep {
  * React hook to manage a chain of LLM transformations.
  */
 export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string) => void) {
+
+  // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
@@ -31,7 +33,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     // error if no LLM
     setError(!llmId ? 'LLM not provided' : null);
 
-    // abort if no input
+    // skip start if no input
     if (!chainInput || !llmId)
       return;
 
@@ -102,7 +104,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
         stepAbortController.abort('step aborted');
       _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
-  }, [chain, llmId]);
+  }, [chain, llmId, onSuccess]);
 
 
   return {
@@ -167,7 +169,7 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
 }
 
 function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx: number, output: string): ChainState {
-  const steps = chain.steps.length;
+  const stepsCount = chain.steps.length;
   return {
     ...chain,
     steps: chain.steps.map((step, i) =>
@@ -177,8 +179,8 @@ function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx:
         isComplete: true,
       } : step),
     chatHistory: history,
-    progress: Math.round(100 * (stepIdx + 1) / steps) / 100,
-    output: (stepIdx === steps - 1) ? output : null,
+    progress: Math.round(100 * (stepIdx + 1) / stepsCount) / 100,
+    output: (stepIdx === stepsCount - 1) ? output : null,
   };
 }
 

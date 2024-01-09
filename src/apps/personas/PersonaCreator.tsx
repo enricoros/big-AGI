@@ -1,45 +1,19 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, Input, LinearProgress, Tab, TabList, TabPanel, Tabs, Textarea, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
-import TextFieldsIcon from '@mui/icons-material/TextFields';
-import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { apiQuery } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { lineHeightTextarea } from '~/common/app.theme';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
-
-
-function extractVideoID(videoURL: string): string | null {
-  const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
-  const match = videoURL.match(regExp);
-  return (match && match[1]?.length == 11) ? match[1] : null;
-}
-
-
-function useTranscriptFromVideo(videoID: string | null) {
-  const { data, isFetching, isError, error } =
-    apiQuery.ytpersona.getTranscript.useQuery({ videoId: videoID || '' }, {
-      enabled: !!videoID,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    });
-  return {
-    title: data?.videoTitle ?? null,
-    thumbnailUrl: data?.thumbnailUrl ?? null,
-    transcript: data?.transcript?.trim() ?? null,
-    isFetching,
-    isError, error,
-  };
-}
+import { TabFromText } from './TabFromText';
+import { TabFromYouTube } from './TabFromYouTube';
 
 
 const PersonaCreationSteps: LLMChainStep[] = [
@@ -68,61 +42,48 @@ const PersonaCreationSteps: LLMChainStep[] = [
 
 
 export function PersonaCreator() {
+
   // state
   const [selectedTab, setSelectedTab] = React.useState(0);
-  const [inputText, setInputText] = React.useState<string | null>(null);
-  const [videoURL, setVideoURL] = React.useState('');
-  const [videoID, setVideoID] = React.useState('');
-  const [personaText, setPersonaText] = React.useState('');
+  const [chainInputText, setChainInputText] = React.useState<string | null>(null);
+  const [_inputTitle, setInputTitle] = React.useState<string | null>(null);
 
   // external state
-  const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
+  const [personaLlm, llmComponent] = useFormRadioLlmType('Creation Model');
 
 
   // chain to convert a text input string (e.g. youtube transcript) into a persona prompt
-  const savePersona = React.useCallback((personaPrompt: string) => {
+  const creationChainSteps = React.useMemo((): LLMChainStep[] => {
+    return [...PersonaCreationSteps];
+  }, []);
+
+  const savePersona = React.useCallback((_personaPrompt: string) => {
     // TODO.. save the persona prompt here
   }, []);
 
-  const { isFinished, isTransforming, chainProgress, chainIntermediates, chainStepName, chainOutput, chainError, abortChain } =
-    useLLMChain(PersonaCreationSteps, personaLlm?.id, inputText ?? undefined, savePersona);
-
-
-  // fetch transcript when the Video ID is ready, then store it
-  const { transcript, thumbnailUrl, title, isFetching, isError, error: transcriptError } =
-    useTranscriptFromVideo(videoID);
-  React.useEffect(() => setInputText(transcript), [transcript]);
+  const {
+    isFinished,
+    isTransforming,
+    chainProgress,
+    chainIntermediates,
+    chainStepName,
+    chainOutput,
+    chainError,
+    abortChain,
+  } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona);
 
 
   // Reset the relevant state when the selected tab changes
   React.useEffect(() => {
-    // reset state
-    setVideoURL('');
-    setVideoID('');
-    setInputText(null);
-    setPersonaText('');
+    setChainInputText(null);
   }, [selectedTab]);
 
 
-  // [Tab: 0] Video download
+  const handleCreate = React.useCallback((text: string, title: string | null) => {
+    setChainInputText(text);
+    setInputTitle(title);
+  }, []);
 
-  const handleVideoIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setVideoURL(e.target.value);
-
-  const handleFetchTranscript = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // stop the form submit
-    const videoId = extractVideoID(videoURL);
-    if (!videoId) {
-      setVideoURL('Invalid');
-    } else {
-      setInputText(null);
-      setVideoID(videoId);
-    }
-  };
-
-
-  // [Tab: 1] Text input
-
-  const handlePersonaTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setPersonaText(e.target.value);
 
   return <>
 
@@ -130,85 +91,37 @@ export function PersonaCreator() {
       Create the <em>System Prompt</em> of an AI Persona from YouTube or Text.
     </Typography>
 
-    <Tabs defaultValue={0} variant='outlined'
-          value={selectedTab}
-          onChange={(_event, newValue) => setSelectedTab(newValue as number)}>
-      <TabList sx={{ minHeight: 48 }}>
+
+    {/* Inputs */}
+    <Tabs
+      variant='outlined'
+      defaultValue={0}
+      value={selectedTab}
+      onChange={(_event, newValue) => setSelectedTab(newValue as number)}
+      sx={{ borderRadius: 'md' }}
+    >
+      <TabList sx={{ minHeight: '3rem' }}>
         <Tab>From YouTube Video</Tab>
         <Tab>From Text</Tab>
       </TabList>
-
-      {/* YouTube URL inputs */}
-      <TabPanel value={0} sx={{ p: 3 }}>
-
-        <Typography level='title-md' startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />} sx={{ mb: 3 }}>
-          YouTube -&gt; Persona
-        </Typography>
-
-        <form onSubmit={handleFetchTranscript}>
-          <Input
-            required
-            type='url'
-            fullWidth
-            variant='outlined'
-            placeholder='YouTube Video URL'
-            value={videoURL}
-            onChange={handleVideoIdChange}
-            sx={{ mb: 1.5 }}
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button type='submit' variant='solid' disabled={isFetching || isTransforming || !videoURL} loading={isFetching} sx={{ minWidth: 140 }}>
-              Create
-            </Button>
-            <GoodTooltip title='This example comes from the popular Fireship YouTube channel, which presents technical topics with irreverent humor.'>
-              <Button variant='outlined' color='neutral' onClick={() => setVideoURL('https://www.youtube.com/watch?v=M_wZpSEvOkc')}>
-                Example
-              </Button>
-            </GoodTooltip>
-          </Box>
-        </form>
+      <TabPanel keepMounted value={0} sx={{ p: 3 }}>
+        <TabFromYouTube isTransforming={isTransforming} onCreate={handleCreate} />
       </TabPanel>
-
-      {/* Text area for users to paste copied text */}
-      <TabPanel value={1} sx={{ p: 3 }}>
-
-        <Typography level='title-md' startDecorator={<TextFieldsIcon />} sx={{ mb: 3 }}>
-          <b>Text</b> -&gt; Persona
-        </Typography>
-
-        <Textarea
-          variant='outlined'
-          minRows={4} maxRows={8}
-          placeholder='Paste your text here...'
-          value={personaText}
-          onChange={handlePersonaTextChange}
-          sx={{
-            backgroundColor: 'background.level1',
-            '&:focus-within': {
-              backgroundColor: 'background.popup',
-            },
-            lineHeight: lineHeightTextarea,
-            mb: 1.5,
-          }}
-        />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button variant='solid' disabled={isFetching || isTransforming || !personaText} onClick={() => setInputText(personaText)} sx={{ minWidth: 140 }}>
-            Create
-          </Button>
-          {!!personaText?.length && <Typography level='body-sm'>{personaText.length.toLocaleString()}</Typography>}
-        </Box>
+      <TabPanel keepMounted value={1} sx={{ p: 3 }}>
+        <TabFromText isCreating={isTransforming} onCreate={handleCreate} />
       </TabPanel>
     </Tabs>
 
-    {/* LLM selector (chat vs fast) */}
-    {!isTransforming && !isFinished && <Box sx={{ mt: 3 }}>{llmComponent}</Box>}
+
+    {/* LLM section */}
+    {!isTransforming && !isFinished && (
+      <Card sx={{ mt: 1 }}>
+        {llmComponent}
+      </Card>
+    )}
+
 
     {/* Errors */}
-    {isError && (
-      <Alert color='warning' sx={{ mt: 1 }}>
-        <Typography component='div'>{transcriptError?.message || 'Unknown error'}</Typography>
-      </Alert>
-    )}
     {!!chainError && (
       <Alert color='warning' sx={{ mt: 1 }}>
         <Typography component='div'>{chainError}</Typography>
@@ -237,8 +150,9 @@ export function PersonaCreator() {
       </Card>
     </>}
 
+
     {/* Input: Transcript/Text */}
-    {inputText && <>
+    {chainInputText && <>
       <Typography level='title-lg' sx={{ mt: 3, mb: 0.5 }}>
         Input Data
       </Typography>
@@ -246,12 +160,11 @@ export function PersonaCreator() {
       <Card>
         <CardContent>
           <Typography level='title-md' sx={{ mb: 1 }}>
-            {title || 'Transcript / Text'}
+            Transcript / Text
           </Typography>
           <Box>
-            {!!thumbnailUrl && <picture><img src={thumbnailUrl} alt='YouTube Video Thumbnail' height={80} style={{ float: 'left', marginRight: 8 }} /></picture>}
             <Typography level='body-sm'>
-              {inputText.slice(0, 280)}...
+              {chainInputText.slice(0, 280)}...
             </Typography>
           </Box>
         </CardContent>
