@@ -19,7 +19,7 @@ function VendorSourceSetup(props: { source: DModelSource }) {
   const vendor = findVendorById(props.source.vId);
   if (!vendor)
     return 'Configuration issue: Vendor not found for Source ' + props.source.id;
-  return <vendor.SourceSetupComponent sourceId={props.source.id} />;
+  return <vendor.SourceSetupComponent key={props.source.id} sourceId={props.source.id} />;
 }
 
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Avatar, Badge, Box, Button, Chip, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -81,22 +81,37 @@ export function ModelsSourceSelector(props: {
   const vendorItems = React.useMemo(() => findAllVendors()
     .filter(v => !!v.instanceLimit)
     .map(vendor => {
-        const sourceCount = modelSources.filter(source => source.vId === vendor.id).length;
-        const enabled = vendor.instanceLimit > sourceCount;
+        const sourceInstanceCount = modelSources.filter(source => source.vId === vendor.id).length;
+        const enabled = vendor.instanceLimit > sourceInstanceCount;
         return {
           vendor,
           enabled,
-          sourceCount,
           component: (
             <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
               <ListItemDecorator>
                 {vendorIcon(vendor, !!vendor.hasBackendCap && vendor.hasBackendCap())}
               </ListItemDecorator>
               {vendor.name}
-              {/*{sourceCount > 0 && ` (added)`}*/}
+
+              {/*{sourceInstanceCount > 0 && ` (added)`}*/}
+
+              {/* Free indication */}
               {!!vendor.hasFreeModels && ` 🎁`}
-              {/*{!!vendor.instanceLimit && ` (${sourceCount}/${vendor.instanceLimit})`}*/}
-              {vendor.location === 'local' && <span style={{ opacity: 0.5 }}>local</span>}
+
+              {/* Multiple instance hint */}
+              {vendor.instanceLimit > 1 && !!sourceInstanceCount && enabled && (
+                <Typography component='span' level='body-sm'>
+                  #{sourceInstanceCount + 1}
+                  {/*/{vendor.instanceLimit}*/}
+                </Typography>
+              )}
+
+              {/* Local chip */}
+              {vendor.location === 'local' && (
+                <Chip variant='outlined' size='sm'>
+                  local
+                </Chip>
+              )}
             </MenuItem>
           ),
         };

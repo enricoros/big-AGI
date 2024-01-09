@@ -25,7 +25,7 @@ const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
-  const advanced = useToggleableBoolean();
+  const advanced = useToggleableBoolean(!!props.sourceId?.includes('-'));
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
@@ -58,19 +58,19 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     {advanced.on && <FormTextField
+      title='API Endpoint'
+      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
+      placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
+      value={oaiHost}
+      onChange={text => updateSetup({ oaiHost: text })}
+    />}
+
+    {advanced.on && <FormTextField
       title='Organization ID'
       description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
       onChange={text => updateSetup({ oaiOrg: text })}
-    />}
-
-    {advanced.on && <FormTextField
-      title='API Host'
-      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
-      placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
-      value={oaiHost}
-      onChange={text => updateSetup({ oaiHost: text })}
     />}
 
     {advanced.on && <FormTextField
