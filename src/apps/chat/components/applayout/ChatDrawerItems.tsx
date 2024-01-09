@@ -185,6 +185,16 @@ function ChatDrawerItems(props: {
     />
 
     {/* Folders List */}
+    {/*<Box sx={{*/}
+    {/*  display: 'grid',*/}
+    {/*  gridTemplateRows: !useFolders ? '0fr' : '1fr',*/}
+    {/*  transition: 'grid-template-rows 0.42s cubic-bezier(.17,.84,.44,1)',*/}
+    {/*  '& > div': {*/}
+    {/*    padding: useFolders ? 2 : 0,*/}
+    {/*    transition: 'padding 0.42s cubic-bezier(.17,.84,.44,1)',*/}
+    {/*    overflow: 'hidden',*/}
+    {/*  },*/}
+    {/*}}>*/}
     {useFolders && (
       <ChatFolderList
         folders={folders}
@@ -192,6 +202,7 @@ function ChatDrawerItems(props: {
         onFolderSelect={props.setSelectedFolderId}
       />
     )}
+    {/*</Box>*/}
 
     {/* Chats List */}
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
