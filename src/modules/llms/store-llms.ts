@@ -163,9 +163,23 @@ export const useModelsStore = create<LlmsStore>()(
 
 
       addSource: (source: DModelSource) =>
-        set(state => ({
-          sources: [...state.sources, source],
-        })),
+        set(state => {
+
+          // re-number all sources for the given vendor
+          let n = 0;
+          const sourceVId = source.vId;
+
+          return {
+            sources: [...state.sources, source].map(_source =>
+              _source.vId != sourceVId
+                ? _source
+                : {
+                  ..._source,
+                  label: _source.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : ''),
+                },
+            ),
+          };
+        }),
 
       removeSource: (id: DModelSourceId) =>
         set(state => {
