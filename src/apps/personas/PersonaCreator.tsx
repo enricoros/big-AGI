@@ -216,7 +216,7 @@ export function PersonaCreator() {
         </Typography>
         <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
         <Typography level='title-sm' sx={{ mt: 1 }}>
-          {chainStepInterimChars === null ? 'Loading ...' : 'Generating ...'}
+          {chainStepInterimChars === null ? 'Loading ...' : `Generating (${chainStepInterimChars.toLocaleString()} bytes) ...`}
         </Typography>
       </Box>
       <Typography level='title-sm'>
