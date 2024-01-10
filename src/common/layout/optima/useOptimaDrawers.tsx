@@ -60,5 +60,11 @@ export const useOptimaDrawers = () => {
   const context = React.useContext(UseOptimaDrawers);
   if (!context)
     throw new Error('useOptimaDrawer must be used within an OptimaDrawerProvider');
+  // NOTE: shall we merge Drawers and Layout? They cascade anyway, and there are benefits to having them together
+  // const { appPaneContent } = useOptimaLayout();
+  // return {
+  //   ...context,
+  //   isDrawerOpen: context.isDrawerOpen && !!appPaneContent,
+  // };
   return context;
 };
