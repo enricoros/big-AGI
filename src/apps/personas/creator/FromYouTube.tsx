@@ -5,10 +5,10 @@ import { Box, Button, Card, IconButton, Input, Typography } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
+
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
-
-import { useYouTubeTranscript, YTVideoTranscript } from './youtube/useYouTubeTranscript';
 
 
 function extractVideoID(videoURL: string): string | null {
@@ -66,7 +66,7 @@ function YouTubeVideoTranscriptCard(props: { transcript: YTVideoTranscript, onCl
 }
 
 
-export function TabFromYouTube(props: {
+export function FromYouTube(props: {
   isTransforming: boolean;
   onCreate: (text: string, title: string) => void;
 }) {

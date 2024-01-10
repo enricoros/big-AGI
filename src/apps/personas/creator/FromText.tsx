@@ -10,7 +10,7 @@ import { lineHeightTextarea } from '~/common/app.theme';
 const MIN_CHARS = 100;
 
 
-export function TabFromText(props: {
+export function FromText(props: {
   isCreating: boolean;
   onCreate: (text: string, title: string | null) => void;
 }) {

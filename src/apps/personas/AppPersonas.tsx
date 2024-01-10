@@ -5,6 +5,7 @@ import { Container, ListDivider, Sheet, Typography } from '@mui/joy';
 import { themeBgApp } from '~/common/app.theme';
 
 import { PersonaCreator } from './PersonaCreator';
+import { Creator } from './creator/Creator';
 
 
 export function AppPersonas() {
@@ -24,7 +25,7 @@ export function AppPersonas() {
 
         <ListDivider sx={{ my: 2 }} />
 
-        <PersonaCreator />
+        <Creator />
 
       </Container>
 

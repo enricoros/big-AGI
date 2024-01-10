@@ -5,18 +5,18 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
-import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
+import { RenderMarkdown } from '../../chat/components/message/RenderMarkdown';
 
 import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import { TabFromText } from './TabFromText';
-import { TabFromYouTube } from './TabFromYouTube';
-import { useStringArrayEditor } from './useStringArrayEditor';
+import { FromText } from './FromText';
+import { FromYouTube } from './FromYouTube';
 
 
 // delay to start a new chain after the previous one finishes
@@ -60,7 +60,7 @@ function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
 }
 
 
-export function PersonaCreator() {
+export function Creator() {
 
   // state
   const advanced = useToggleableBoolean();
@@ -75,7 +75,7 @@ export function PersonaCreator() {
   // editable prompts
   const {
     strings: editedInstructions, stringEditors: instructionEditors,
-  } = useStringArrayEditor(Prompts, PromptTitles);
+  } = useFormEditTextArray(Prompts, PromptTitles);
 
   const creationChainSteps = React.useMemo(() => {
     return createChain(editedInstructions, PromptTitles);
@@ -152,10 +152,10 @@ export function PersonaCreator() {
         <Tab>From Text</Tab>
       </TabList>
       <TabPanel keepMounted value={0} sx={{ p: 3 }}>
-        <TabFromYouTube isTransforming={isTransforming} onCreate={handleCreate} />
+        <FromYouTube isTransforming={isTransforming} onCreate={handleCreate} />
       </TabPanel>
       <TabPanel keepMounted value={1} sx={{ p: 3 }}>
-        <TabFromText isCreating={isTransforming} onCreate={handleCreate} />
+        <FromText isCreating={isTransforming} onCreate={handleCreate} />
       </TabPanel>
 
       <Divider orientation='horizontal' />
