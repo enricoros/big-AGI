@@ -8,7 +8,7 @@ import { llmGeminiRouter } from '~/modules/llms/server/gemini/gemini.router';
 import { llmOllamaRouter } from '~/modules/llms/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/server/openai/openai.router';
 import { prodiaRouter } from '~/modules/t2i/prodia/prodia.router';
-import { youtubeRouter } from '../../apps/personas/youtube/youtube.router';
+import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
 /**
  * Primary rooter, and will be sitting on an Edge Runtime.
