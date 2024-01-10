@@ -7,12 +7,13 @@ import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility
 
 import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
 
+import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
+
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import { LLMChainStep, useLLMChain } from './useLLMChain';
 import { TabFromText } from './TabFromText';
 import { TabFromYouTube } from './TabFromYouTube';
 import { useStringArrayEditor } from './useStringArrayEditor';
