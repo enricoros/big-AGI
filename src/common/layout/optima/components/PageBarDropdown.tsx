@@ -16,7 +16,7 @@ export type DropdownItems = Record<string, {
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-export function GoodDropdown<TValue extends string>(props: {
+export function PageBarDropdown<TValue extends string>(props: {
   items: DropdownItems,
   prependOption?: React.JSX.Element,
   appendOption?: React.JSX.Element,

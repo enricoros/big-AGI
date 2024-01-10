@@ -3,7 +3,7 @@ import * as React from 'react';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import type { DConversationId } from '~/common/state/store-chats';
-import { DropdownItems, GoodDropdown } from '~/common/components/GoodDropdown';
+import { DropdownItems, PageBarDropdown } from '~/common/layout/optima/components/PageBarDropdown';
 import { useFolderStore } from '~/common/state/store-folders';
 
 
@@ -61,7 +61,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
       return null;
 
     return (
-      <GoodDropdown
+      <PageBarDropdown
         items={folderItems}
         value={currentFolderId}
         onChange={handleFolderChange}
