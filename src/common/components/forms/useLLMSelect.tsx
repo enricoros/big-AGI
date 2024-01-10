@@ -7,6 +7,7 @@ import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 
 
 /**
@@ -45,7 +46,7 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
     const filteredLLMs = llms.filter(llm => !llm.hidden || llm.id === chatLLMId);
 
     // create the option items
-    let formerVendor = null;
+    let formerVendor: IModelVendor | null = null;
     const options = filteredLLMs.map((llm) => {
 
       const vendor = findVendorById(llm._source?.vId);
