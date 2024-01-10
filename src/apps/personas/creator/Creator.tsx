@@ -17,6 +17,7 @@ import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { FromText } from './FromText';
 import { FromYouTube } from './FromYouTube';
+import { prependSimplePersona, SimplePersonaProvenance } from '../store-app-personas';
 
 
 // delay to start a new chain after the previous one finishes
@@ -66,6 +67,7 @@ export function Creator() {
   const advanced = useToggleableBoolean();
   const [selectedTab, setSelectedTab] = React.useState(0);
   const [chainInputText, setChainInputText] = React.useState<string | null>(null);
+  const [inputProvenance, setInputProvenance] = React.useState<SimplePersonaProvenance | null>(null);
   const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
@@ -81,9 +83,10 @@ export function Creator() {
     return createChain(editedInstructions, PromptTitles);
   }, [editedInstructions]);
 
-  const savePersona = React.useCallback((_personaPrompt: string) => {
-    // TODO.. save the persona prompt here
-  }, []);
+  const llmLabel = personaLlm?.label || undefined;
+  const savePersona = React.useCallback((personaPrompt: string, inputText: string) => {
+    prependSimplePersona(personaPrompt, inputText, inputProvenance ?? undefined, llmLabel);
+  }, [inputProvenance, llmLabel]);
 
   const {
     // isFinished,
@@ -115,14 +118,14 @@ export function Creator() {
   }, [debugRestart, restartChain]);
 
 
-  const handleCreate = React.useCallback((text: string, _title: string | null) => {
+  const handleCreate = React.useCallback((text: string, provenance: SimplePersonaProvenance) => {
     setChainInputText(text);
-    // setInputTitle(title);
+    setInputProvenance(provenance);
   }, []);
 
   const handleCancel = React.useCallback(() => {
     setChainInputText(null);
-    // setInputTitle(null);
+    setInputProvenance(null);
     userCancelChain();
   }, [userCancelChain]);
 

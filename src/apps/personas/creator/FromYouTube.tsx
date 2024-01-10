@@ -10,6 +10,8 @@ import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYo
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
+import type { SimplePersonaProvenance } from '../store-app-personas';
+
 
 function extractVideoID(videoURL: string): string | null {
   const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
@@ -68,7 +70,7 @@ function YouTubeVideoTranscriptCard(props: { transcript: YTVideoTranscript, onCl
 
 export function FromYouTube(props: {
   isTransforming: boolean;
-  onCreate: (text: string, title: string) => void;
+  onCreate: (text: string, provenance: SimplePersonaProvenance) => void;
 }) {
 
   // state
@@ -80,8 +82,16 @@ export function FromYouTube(props: {
   const { onCreate } = props;
   const onNewTranscript = React.useCallback((transcript: YTVideoTranscript) => {
     // setVideoID(null); // reset the video ID, to cycle the refetch
-    onCreate(transcript.transcript, transcript.title);
-  }, [onCreate]);
+    onCreate(
+      transcript.transcript,
+      {
+        type: 'youtube',
+        url: videoURL,
+        title: transcript.title,
+        thumbnailUrl: transcript.thumbnailUrl,
+      },
+    );
+  }, [onCreate, videoURL]);
 
   const {
     transcript,

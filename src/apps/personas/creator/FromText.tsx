@@ -5,6 +5,8 @@ import TextFieldsIcon from '@mui/icons-material/TextFields';
 
 import { lineHeightTextarea } from '~/common/app.theme';
 
+import type { SimplePersonaProvenance } from '../store-app-personas';
+
 
 // minimum number of characters required to create from text
 const MIN_CHARS = 100;
@@ -12,7 +14,7 @@ const MIN_CHARS = 100;
 
 export function FromText(props: {
   isCreating: boolean;
-  onCreate: (text: string, title: string | null) => void;
+  onCreate: (text: string, provenance: SimplePersonaProvenance) => void;
 }) {
 
   // state
@@ -20,7 +22,7 @@ export function FromText(props: {
 
   const handleCreateFromText = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // stop the form submit
-    props.onCreate(text, null);
+    props.onCreate(text, { type: 'text' });
   };
 
   return <>

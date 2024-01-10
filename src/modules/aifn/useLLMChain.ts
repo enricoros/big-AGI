@@ -20,7 +20,7 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string) => void) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string, input: string) => void) {
 
   // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
@@ -123,7 +123,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
           return;
         const chainState = updateChainState(chain, llmChatInput, stepIdx, interimText);
         if (chainState.output && onSuccess)
-          onSuccess(chainState.output);
+          onSuccess(chainState.output, chainState.input);
         setChain(chainState);
       })
       .catch((err) => {
