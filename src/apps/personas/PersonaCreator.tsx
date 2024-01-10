@@ -114,7 +114,7 @@ export function PersonaCreator() {
   }, [debugRestart, restartChain]);
 
 
-  const handleCreate = React.useCallback((text: string, title: string | null) => {
+  const handleCreate = React.useCallback((text: string, _title: string | null) => {
     setChainInputText(text);
     // setInputTitle(title);
   }, []);
@@ -260,7 +260,7 @@ export function PersonaCreator() {
       </Box>
       <Grid container spacing={2}>
         <Grid xs={12} md={showIntermediates ? 12 : 6}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ height: '100%', overflow: 'hidden' }}>
             <CardContent>
               <Typography color='success' level='title-sm' sx={{ mb: 1 }}>
                 Input Text
@@ -273,7 +273,7 @@ export function PersonaCreator() {
         </Grid>
         {chainIntermediates.map((intermediate, i) =>
           <Grid xs={12} md={showIntermediates ? 12 : 6} key={i}>
-            <Card sx={{ height: '100%' }}>
+            <Card sx={{ height: '100%', overflow: 'hidden' }}>
               <CardContent>
                 <Typography color='success' level='title-sm' sx={{ mb: 1 }}>
                   {i + 1}. {intermediate.name}
