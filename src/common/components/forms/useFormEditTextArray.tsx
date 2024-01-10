@@ -9,7 +9,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 /**
  * A simple UI component, string array (ant titles array) in -> edited string array out
  */
-export function useStringArrayEditor(initialStrings: string[], titles: string[]) {
+export function useFormEditTextArray(initialStrings: string[], titles: string[]) {
 
   // state
   const [strings, setStrings] = React.useState<string[]>(initialStrings);
