@@ -27,7 +27,7 @@ export function MobileNavListItem(props: { currentApp?: NavItemApp }) {
           gap: 1,
         }}
       >
-        {navItems.apps.filter(app => ['Chat', 'News'].includes(app.name)).map(app =>
+        {navItems.apps.filter(app => ['Chat', 'Personas', 'News'].includes(app.name)).map(app =>
           <Button
             key={'app-' + app.name}
             disabled={!!app.automatic}
@@ -35,7 +35,7 @@ export function MobileNavListItem(props: { currentApp?: NavItemApp }) {
             variant={app == props.currentApp ? 'soft' : 'solid'}
             onClick={() => Router.push(app.route)}
           >
-            {app.name}
+            {app == props.currentApp ? app.name : <app.icon />}
           </Button>,
         )}
       </ButtonGroup>
