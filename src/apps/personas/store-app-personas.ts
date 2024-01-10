@@ -85,6 +85,13 @@ export function useSimplePersonas() {
   return { simplePersonas };
 }
 
+export function useSimplePersona(simplePersonaId: string) {
+  const simplePersona = useAppPersonasStore(state => {
+    return state.simplePersonas.find(persona => persona.id === simplePersonaId) ?? null;
+  }, shallow);
+  return { simplePersona };
+}
+
 export function prependSimplePersona(systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) {
   useAppPersonasStore.getState().prependSimplePersona(systemPrompt, inputText, inputProvenance, llmLabel);
 }

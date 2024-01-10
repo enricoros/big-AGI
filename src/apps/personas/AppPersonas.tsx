@@ -7,6 +7,7 @@ import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout
 
 import { Creator } from './creator/Creator';
 import { CreatorDrawer } from './creator/CreatorDrawer';
+import { Viewer } from './creator/Viewer';
 
 
 export function AppPersonas() {
@@ -45,7 +46,9 @@ export function AppPersonas() {
 
         <ListDivider sx={{ my: 2 }} />
 
-        <Creator />
+        {!!selectedSimplePersonaId && <Viewer selectedSimplePersonaId={selectedSimplePersonaId} />}
+
+        <Creator display={!selectedSimplePersonaId} />
 
       </Container>
 
