@@ -14,8 +14,8 @@ const DEBUG_TOKEN_COUNT = false;
  * a message, it doesn't stall loading the tokenizer.
  */
 export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) => number = (() => {
-  return () => 0;
-  /*const tokenEncoders: { [modelId: string]: Tiktoken } = {};
+  // return () => 0;
+  const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 
   function tokenCount(text: string, llmId: DLLMId, debugFrom: string): number {
     const { options: { llmRef: openaiModel } } = findLLMOrThrow(llmId);
@@ -45,5 +45,5 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
   if (chatLLMId)
     tokenCount('', chatLLMId, 'warmup');
 
-  return tokenCount;*/
+  return tokenCount;
 })();
