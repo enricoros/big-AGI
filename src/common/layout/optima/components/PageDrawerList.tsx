@@ -15,6 +15,7 @@ export const PageDrawerTallItemSx: SxProps = {
 export function PageDrawerList(props: {
   variant?: VariantProp,
   color?: ColorPaletteProp,
+  onClick?: () => void,
   largeIcons?: boolean,
   tallRows?: boolean,
   noTopPadding?: boolean,
@@ -26,6 +27,7 @@ export function PageDrawerList(props: {
     <List
       variant={props.variant}
       color={props.color}
+      onClick={props.onClick}
       sx={{
         // size of the list items
         '--List-radius': 0,
