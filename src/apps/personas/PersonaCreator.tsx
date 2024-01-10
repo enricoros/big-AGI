@@ -9,7 +9,7 @@ import { RenderMarkdown } from '../chat/components/message/RenderMarkdown';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { LLMChainStep, useLLMChain } from './useLLMChain';
@@ -68,7 +68,7 @@ export function PersonaCreator() {
   const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
-  const [personaLlm, llmComponent] = useFormRadioLlmType('Persona Creation Model');
+  const [personaLlm, llmComponent] = useLLMSelect(true, 'Persona Creation Model');
 
 
   // editable prompts
