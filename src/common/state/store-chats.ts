@@ -3,7 +3,7 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
 
 import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
 import { countModelTokens } from '../util/token-counter';
@@ -354,7 +354,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
-          const chatLLMId = useModelsStore.getState().chatLLMId;
+          const chatLLMId = getChatLLMId();
           const messages = conversation.messages.map((message: DMessage): DMessage =>
             message.id === messageId
               ? {
@@ -542,7 +542,7 @@ function updateDMessageTokenCount(message: DMessage, llmId: DLLMId | null, force
  * Convenience function to update a set of messages, using the current chatLLM
  */
 function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
-  const { chatLLMId } = useModelsStore.getState();
+  const chatLLMId = getChatLLMId();
   return 3 + messages.reduce((sum, message) => 4 + updateDMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum, 0);
 }
 

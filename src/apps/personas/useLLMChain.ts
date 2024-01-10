@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
@@ -178,10 +178,7 @@ interface StepState {
 
 function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): ChainState {
   // max token allocation fo the job
-  const { llms } = useModelsStore.getState();
-  const llm = llms.find(llm => llm.id === llmId);
-  if (!llm)
-    throw new Error(`LLM ${llmId} not found`);
+  const llm = findLLMOrThrow(llmId);
 
   const overrideResponseTokens = llm.maxOutputTokens;
   const safeInputLength = (llm.contextTokens && overrideResponseTokens)
