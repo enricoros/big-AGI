@@ -5,13 +5,13 @@ import { Avatar, Badge, Box, Button, Chip, IconButton, ListItemDecorator, MenuIt
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import { DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+
+import type { IModelVendor } from '../vendors/IModelVendor';
+import { DModelSourceId, useModelsStore } from '../store-llms';
+import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendorId } from '../vendors/vendors.registry';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {

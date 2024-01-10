@@ -253,6 +253,10 @@ export const useModelsStore = create<LlmsStore>()(
 );
 
 
+export const getChatLLMId = (): DLLMId | null => useModelsStore.getState().chatLLMId;
+
+export const getFastLLMId = (): DLLMId | null => useModelsStore.getState().fastLLMId;
+
 export function findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId: DLLMId): DLLM<TSourceSetup, TLLMOptions> {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
   if (!llm) throw new Error(`LLM ${llmId} not found`);

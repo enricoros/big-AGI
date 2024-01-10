@@ -1,5 +1,5 @@
+import { getFastLLMId } from '~/modules/llms/store-llms';
 import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 
 const simpleImagineSystemPrompt =
@@ -11,7 +11,7 @@ Provide output as a lowercase prompt and nothing else.`;
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
 export async function imaginePromptFromText(messageText: string): Promise<string | null> {
-  const { fastLLMId } = useModelsStore.getState();
+  const fastLLMId = getFastLLMId();
   if (!fastLLMId) return null;
   try {
     const chatResponse = await llmChatGenerateOrThrow(fastLLMId, [

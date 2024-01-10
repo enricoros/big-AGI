@@ -1,5 +1,5 @@
+import { getFastLLMId } from '~/modules/llms/store-llms';
 import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -10,7 +10,7 @@ import { useChatStore } from '~/common/state/store-chats';
 export function autoTitle(conversationId: string) {
 
   // use valid fast model
-  const { fastLLMId } = useModelsStore.getState();
+  const fastLLMId = getFastLLMId();
   if (!fastLLMId) return;
 
   // only operate on valid conversations, without any title
