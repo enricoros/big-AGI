@@ -61,7 +61,30 @@ function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
 }
 
 
-export function Creator() {
+export const PersonaPromptCard = (props: { content: string }) =>
+  <Card sx={{ boxShadow: 'md', mt: 3 }}>
+
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Typography level='title-lg' color='success' startDecorator={<SettingsAccessibilityIcon color='success' />}>
+        Persona Prompt
+      </Typography>
+      <GoodTooltip title='Copy system prompt'>
+        <Button color='success' onClick={() => copyToClipboard(props.content, 'Persona prompt')} endDecorator={<ContentCopyIcon />} sx={{ minWidth: 120 }}>
+          Copy
+        </Button>
+      </GoodTooltip>
+    </Box>
+
+    <CardContent>
+      <Alert variant='soft' color='success' sx={{ mb: 1 }}>
+        You may now copy the text below and use it as Custom prompt!
+      </Alert>
+      <RenderMarkdown textBlock={{ type: 'text', content: props.content }} />
+    </CardContent>
+  </Card>;
+
+
+export function Creator(props: { display: boolean }) {
 
   // state
   const advanced = useToggleableBoolean();
@@ -130,6 +153,10 @@ export function Creator() {
   }, [userCancelChain]);
 
 
+  // Hide the GFX, but not the logic (hooks)
+  if (!props.display)
+    return null;
+
   return <>
 
     <Typography level='title-sm' mb={3}>
@@ -179,14 +206,6 @@ export function Creator() {
     </Tabs>
 
 
-    {/* LLM section */}
-    {/*{!isTransforming && !isFinished && (*/}
-    {/*  <Card sx={{ mt: 1 }}>*/}
-    {/*    {llmComponent}*/}
-    {/*  </Card>*/}
-    {/*)}*/}
-
-
     {/* Embodiment Progress */}
     {/* <GoodModal open> */}
     {isTransforming && <Card><CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -231,24 +250,7 @@ export function Creator() {
 
     {/* The Persona (Output) */}
     {chainOutput && <>
-      <Card sx={{ boxShadow: 'md', mt: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography level='title-lg' color='success' startDecorator={<SettingsAccessibilityIcon color='success' />}>
-            Persona Prompt
-          </Typography>
-          <GoodTooltip title='Copy system prompt'>
-            <Button color='success' onClick={() => copyToClipboard(chainOutput, 'Persona prompt')} endDecorator={<ContentCopyIcon />} sx={{ minWidth: 120 }}>
-              Copy
-            </Button>
-          </GoodTooltip>
-        </Box>
-        <CardContent>
-          <Alert variant='soft' color='success' sx={{ mb: 1 }}>
-            You may now copy the text below and use it as Custom prompt!
-          </Alert>
-          <RenderMarkdown textBlock={{ type: 'text', content: chainOutput }} />
-        </CardContent>
-      </Card>
+      <PersonaPromptCard content={chainOutput} />
     </>}
 
 
