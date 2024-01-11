@@ -426,7 +426,7 @@ export function openAIChatCompletionPayload(model: OpenAIModelSchema, history: O
     ...(functions && { functions: functions, function_call: forceFunctionName ? { name: forceFunctionName } : 'auto' }),
     ...(model.temperature && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
-    n,
+    ...(n > 1 && { n }),
     stream,
   };
 }
