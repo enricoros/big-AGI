@@ -3,6 +3,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
 import { wireOpenrouterModelsListOutputSchema } from './openrouter.wiretypes';
+import { wireTogetherAIListOutputSchema } from '~/modules/llms/server/openai/togetherai.wiretypes';
 
 
 // [Azure] / [OpenAI]
@@ -372,6 +373,39 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     interfaces: [LLM_IF_OAI_Chat],
     hidden,
   });
+}
+
+
+// [Together AI]
+
+const _knownTogetherAIChatModels: ManualMappings = [];
+
+export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {
+
+  function togetherAIModelToModelDescription(model: { id: string, created: number }) {
+    return fromManualMapping(_knownTogetherAIChatModels, model.id, model.created, undefined, {
+      idPrefix: model.id,
+      label: model.id.replaceAll('/', ' · ').replaceAll(/[_-]/g, ' '),
+      description: 'New Togehter AI Model',
+      contextWindow: null, // unknown
+      interfaces: [LLM_IF_OAI_Chat], // assume..
+      hidden: true,
+    });
+  }
+
+  function togetherAIModelsSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+    if (a.hidden && !b.hidden)
+      return 1;
+    if (!a.hidden && b.hidden)
+      return -1;
+    if (a.created !== b.created)
+      return (b.created || 0) - (a.created || 0);
+    return a.id.localeCompare(b.id);
+  }
+
+  return wireTogetherAIListOutputSchema.parse(wireModels)
+    .map(togetherAIModelToModelDescription)
+    .sort(togetherAIModelsSort);
 }
 
 
