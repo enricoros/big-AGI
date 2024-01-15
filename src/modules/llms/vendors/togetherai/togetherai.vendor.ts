@@ -14,6 +14,7 @@ import { TogetherAISourceSetup } from './TogetherAISourceSetup';
 export interface SourceSetupTogetherAI {
   togetherKey: string;
   togetherHost: string;
+  togetherFreeTrial: boolean;
 }
 
 export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
@@ -33,6 +34,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
   initializeSetup: () => ({
     togetherKey: '',
     togetherHost: 'https://api.together.xyz',
+    togetherFreeTrial: false,
   }),
   validateSetup: (setup) => {
     return setup.togetherKey?.length >= 64;
@@ -46,8 +48,30 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
     moderationCheck: false,
   }),
 
+  // there is delay for OpenRouter Free API calls
+  getRateLimitDelay: (_llm, partialSetup) => {
+    const now = Date.now();
+    const elapsed = now - nextGenerationTs;
+    const wait = partialSetup?.togetherFreeTrial
+      ? 1000 + 50 /* 1 seconds for free call, plus some safety margin */
+      : 50;
+
+    if (elapsed < wait) {
+      const delay = wait - elapsed;
+      nextGenerationTs = now + delay;
+      return delay;
+    } else {
+      nextGenerationTs = now;
+      return 0;
+    }
+  },
+
+
   // OpenAI transport ('togetherai' dialect in 'access')
   rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };
+
+// rate limit timestamp
+let nextGenerationTs = 0;
