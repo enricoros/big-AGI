@@ -29,37 +29,35 @@ function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, 
     tooltip += 'token count not provided';
 
   return (
-    <ListItem>
-      <ListItemButton onClick={props.onClick} sx={{ alignItems: 'center', gap: 1 }}>
+    <ListItemButton color='primary' onClick={props.onClick} sx={{ alignItems: 'center', gap: 1 }}>
 
-        {/* Model Name */}
-        <GoodTooltip title={tooltip}>
-          <Typography sx={llm.hidden ? { color: 'neutral.plainDisabledColor' } : undefined}>
-            {label}
-          </Typography>
-        </GoodTooltip>
+      {/* Model Name */}
+      <GoodTooltip title={tooltip}>
+        <Typography sx={llm.hidden ? { color: 'neutral.plainDisabledColor' } : undefined}>
+          {label}
+        </Typography>
+      </GoodTooltip>
 
-        {/* --> */}
-        <Box sx={{ flex: 1 }} />
+      {/* --> */}
+      <Box sx={{ flex: 1 }} />
 
-        {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
+      {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
 
-        {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
+      {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
 
-        {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
+      {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
 
-        {llm.hidden && (
-          <IconButton disabled size='sm'>
-            <VisibilityOffOutlinedIcon />
-          </IconButton>
-        )}
-
-        <IconButton size='sm'>
-          <SettingsOutlinedIcon />
+      {llm.hidden && (
+        <IconButton disabled size='sm'>
+          <VisibilityOffOutlinedIcon />
         </IconButton>
+      )}
 
-      </ListItemButton>
-    </ListItem>
+      <IconButton size='sm'>
+        <SettingsOutlinedIcon />
+      </IconButton>
+
+    </ListItemButton>
   );
 }
 
@@ -113,11 +111,10 @@ export function ModelsList(props: {
   }
 
   return (
-    <List variant='soft' size='sm' sx={{
-      borderRadius: 'sm',
-      pl: { xs: 0, md: 1 },
-      overflowY: 'auto',
-    }}>
+    <List
+      variant='soft' size='sm'
+      sx={{ borderRadius: 'md', overflowY: 'auto' }}
+    >
       {items.length > 0 ? items : (
         <ListItem>
           <Typography level='body-sm'>

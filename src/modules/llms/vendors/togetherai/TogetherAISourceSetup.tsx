@@ -63,13 +63,13 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     {advanced.on && <FormSwitchControl
-      title='Rate Limiter' on='Enabled'
+      title='Rate Limiter' on='Enabled' off='Disabled'
       description={partialSetup?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
       checked={partialSetup?.togetherFreeTrial ?? false}
       onChange={on => updateSetup({ togetherFreeTrial: on })}
     />}
 
-    {advanced.on && <Alert variant='soft'>
+    {advanced.on && !!partialSetup?.togetherFreeTrial && <Alert variant='soft'>
       Note: Please refresh the models list if you toggle the rate limiter.
     </Alert>}
 
