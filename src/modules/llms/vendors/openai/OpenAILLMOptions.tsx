@@ -26,6 +26,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
   // derived state
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
+  const { updateLLMOptions } = useModelsStore.getState();
 
   // state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(llmTemperature > 1);
@@ -34,9 +35,9 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
 
   const handleOverheatToggle = React.useCallback(() => {
     if (overheat && llmTemperature > 1)
-      useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: 1 });
+      updateLLMOptions(llmId, { llmTemperature: 1 });
     setOverheat(!overheat);
-  }, [llmId, llmTemperature, overheat]);
+  }, [llmId, llmTemperature, overheat, updateLLMOptions]);
 
 
   return <>
@@ -47,7 +48,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
       min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
       valueLabelDisplay='on'
       value={llmTemperature}
-      onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmTemperature: value })}
+      onChange={value => updateLLMOptions(llmId, { llmTemperature: value })}
       endAdornment={showOverheatButton &&
         <Tooltip title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
           <IconButton
@@ -66,7 +67,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }
         min={256} max={maxOutputTokens} step={256} defaultValue={1024}
         valueLabelDisplay='on'
         value={llmResponseTokens}
-        onChange={value => useModelsStore.getState().updateLLMOptions(llmId, { llmResponseTokens: value })}
+        onChange={value => updateLLMOptions(llmId, { llmResponseTokens: value })}
       />
     ) : (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />

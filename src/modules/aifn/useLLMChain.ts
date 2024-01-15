@@ -1,7 +1,11 @@
 import * as React from 'react';
 
-import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
+import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+
+
+// set to true to log to the console
+const DEBUG_CHAIN = false;
 
 
 export interface LLMChainStep {
@@ -16,32 +20,58 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string) => void) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string, input: string) => void) {
+
+  // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [chainStepInterimText, setChainStepInterimText] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
 
-  // restart Chain on inputs change
-  React.useEffect(() => {
-    // abort any ongoing chain, if any
-    chainAbortController.current.abort();
+
+  // abort an ongoing chain, if any
+  const abortChain = React.useCallback((reason: string) => {
+    DEBUG_CHAIN && console.log('chain: abort (' + reason + ')');
+    chainAbortController.current.abort(reason);
     chainAbortController.current = new AbortController();
-    setChain(null);
+  }, []);
 
-    // error if no LLM
+  const userCancelChain = React.useCallback(() => {
+    abortChain('user canceled');
+    setError('Canceled');
+  }, [abortChain]);
+
+  // starts a chain with the given inputs
+  const startChain = React.useCallback((inputText: string | undefined, llmId: DLLMId | undefined, steps: LLMChainStep[]) => {
+    DEBUG_CHAIN && console.log('chain: restart', { textLen: inputText?.length, llmId, stepsCount: steps.length });
+
+    // abort any former running chain
+    abortChain('restart');
+
+    // init state
     setError(!llmId ? 'LLM not provided' : null);
+    setChain((inputText && llmId)
+      ? initChainState(llmId, inputText, steps)
+      : null,
+    );
+    setChainStepInterimText(null);
 
-    // abort if no input
-    if (!chainInput || !llmId)
-      return;
+  }, [abortChain]);
 
-    // start the chain
-    setChain(initChainState(llmId, chainInput, steps));
-    return () => chainAbortController.current.abort();
-  }, [chainInput, llmId, steps]);
+  // restarts this chain
+  const restartChain = React.useCallback(() => {
+    startChain(chainInput, llmId, steps);
+  }, [chainInput, llmId, startChain, steps]);
 
 
-  // perform Step on Chain update
+  // lifecycle: Start on inputs change + Abort on unmounts
+  React.useEffect(() => {
+    restartChain();
+    return () => abortChain('unmount');
+  }, [restartChain, abortChain]);
+
+
+  // stepper: perform Step on Chain updates
   React.useEffect(() => {
     // skip step if the chain has been aborted
     const _chainAbortController = chainAbortController.current;
@@ -57,7 +87,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     // safety check (re-processing the same step shall never happen)
     const chainStep = chain.steps[stepIdx];
     if (chainStep.output)
-      return console.log('WARNING - Output overlap - why is this happening?', chainStep);
+      return console.log('WARNING - Output overlap - FIXME', chainStep);
 
     // execute step instructions
     let llmChatInput: VChatMessageIn[] = [...chain.chatHistory];
@@ -79,21 +109,30 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     const globalToStepListener = () => stepAbortController.abort('chain aborted');
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
-    // LLM call
-    llmChatGenerateOrThrow(llmId, llmChatInput, null, null, chain.overrideResponseTokens ?? undefined)
-      .then(({ content }) => {
-        stepDone = true;
+    // interim text
+    let interimText = '';
+    setChainStepInterimText(null);
+
+    // LLM call (streaming, cancelable)
+    llmStreamingChatGenerate(llmId, llmChatInput, null, null, stepAbortController.signal,
+      (update) => {
+        update.text && setChainStepInterimText(interimText = update.text);
+      })
+      .then(() => {
         if (stepAbortController.signal.aborted)
           return;
-        const chainState = updateChainState(chain, llmChatInput, stepIdx, content);
+        const chainState = updateChainState(chain, llmChatInput, stepIdx, interimText);
         if (chainState.output && onSuccess)
-          onSuccess(chainState.output);
+          onSuccess(chainState.output, chainState.input);
         setChain(chainState);
       })
       .catch((err) => {
-        stepDone = true;
         if (!stepAbortController.signal.aborted)
           setError(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
+      })
+      .finally(() => {
+        stepDone = true;
+        setChainStepInterimText(null);
       });
 
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted
@@ -102,7 +141,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
         stepAbortController.abort('step aborted');
       _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
-  }, [chain, llmId]);
+  }, [chain, llmId, onSuccess]);
 
 
   return {
@@ -111,12 +150,11 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     chainOutput: chain?.output ?? null,
     chainProgress: chain?.progress ?? 0,
     chainStepName: chain?.steps?.find((step) => !step.isComplete)?.ref.name ?? null,
-    chainIntermediates: chain?.steps?.map((step) => step.output ?? null)?.filter(out => out) ?? [],
+    chainStepInterimChars: chainStepInterimText?.length ?? null,
+    chainIntermediates: chain?.steps?.map((step) => ({ name: step.ref.name, output: step.output ?? null })).filter(i => !!i.output) ?? [],
     chainError: error,
-    abortChain: () => {
-      chainAbortController.current.abort('user canceled');
-      setError('Canceled');
-    },
+    userCancelChain,
+    restartChain,
   };
 }
 
@@ -140,10 +178,7 @@ interface StepState {
 
 function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): ChainState {
   // max token allocation fo the job
-  const { llms } = useModelsStore.getState();
-  const llm = llms.find(llm => llm.id === llmId);
-  if (!llm)
-    throw new Error(`LLM ${llmId} not found`);
+  const llm = findLLMOrThrow(llmId);
 
   const overrideResponseTokens = llm.maxOutputTokens;
   const safeInputLength = (llm.contextTokens && overrideResponseTokens)
@@ -167,7 +202,7 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
 }
 
 function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx: number, output: string): ChainState {
-  const steps = chain.steps.length;
+  const stepsCount = chain.steps.length;
   return {
     ...chain,
     steps: chain.steps.map((step, i) =>
@@ -177,8 +212,8 @@ function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx:
         isComplete: true,
       } : step),
     chatHistory: history,
-    progress: Math.round(100 * (stepIdx + 1) / steps) / 100,
-    output: (stepIdx === steps - 1) ? output : null,
+    progress: Math.round(100 * (stepIdx + 1) / stepsCount) / 100,
+    output: (stepIdx === stepsCount - 1) ? output : null,
   };
 }
 

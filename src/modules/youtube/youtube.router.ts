@@ -1,4 +1,6 @@
-// noinspection ExceptionCaughtLocallyJS
+// Copyright (c) 2023-2024 Enrico Ros
+// This subsystem is responsible for fetching the transcript of a YouTube video.
+// It is used by the Big-AGI Persona Creator to create a character sheet.
 
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -29,7 +31,7 @@ const youtubeTranscriptionSchema = z.object({
 });
 
 
-export const ytPersonaRouter = createTRPCRouter({
+export const youtubeRouter = createTRPCRouter({
 
   /**
    * Get the transcript for a YouTube video ID

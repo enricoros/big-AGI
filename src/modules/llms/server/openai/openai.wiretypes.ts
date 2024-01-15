@@ -24,7 +24,7 @@ export namespace OpenAIWire {
       presence_penalty?: number;
       max_tokens?: number;
       stream: boolean;
-      n: number;
+      n?: number;
       // [FN0613]
       functions?: RequestFunctionDef[],
       function_call?: 'auto' | 'none' | {

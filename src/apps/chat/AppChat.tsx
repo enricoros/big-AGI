@@ -4,13 +4,13 @@ import { Panel, PanelGroup } from 'react-resizable-panels';
 
 import { useTheme } from '@mui/joy';
 
-import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
+import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { useChatLLM, useModelsStore } from '~/modules/llms/store-llms';
+import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -148,7 +148,7 @@ export function AppChat() {
   // Execution
 
   const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
-    const { chatLLMId } = useModelsStore.getState();
+    const chatLLMId = getChatLLMId();
     if (!chatModeId || !conversationId || !chatLLMId) return;
 
     // "/command ...": overrides the chat mode
@@ -358,7 +358,7 @@ export function AppChat() {
   // Shortcuts
 
   const handleOpenChatLlmOptions = React.useCallback(() => {
-    const { chatLLMId } = useModelsStore.getState();
+    const chatLLMId = getChatLLMId();
     if (!chatLLMId) return;
     openLlmOptions(chatLLMId);
   }, [openLlmOptions]);

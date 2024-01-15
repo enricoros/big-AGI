@@ -1,5 +1,5 @@
+import { getFastLLMId } from '~/modules/llms/store-llms';
 import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -10,7 +10,7 @@ import { useChatStore } from '~/common/state/store-chats';
 export function autoTitle(conversationId: string) {
 
   // use valid fast model
-  const { fastLLMId } = useModelsStore.getState();
+  const fastLLMId = getFastLLMId();
   if (!fastLLMId) return;
 
   // only operate on valid conversations, without any title
@@ -27,7 +27,7 @@ export function autoTitle(conversationId: string) {
   });
 
   // LLM
-  void llmChatGenerateOrThrow(fastLLMId, [
+  llmChatGenerateOrThrow(fastLLMId, [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:
@@ -39,17 +39,21 @@ export function autoTitle(conversationId: string) {
         historyLines.join('\n') +
         '```\n',
     },
-  ], null, null).then(chatResponse => {
+  ], null, null)
+    .then(chatResponse => {
 
-    const title = chatResponse?.content
-      ?.trim()
-      ?.replaceAll('"', '')
-      ?.replace('Title: ', '')
-      ?.replace('title: ', '');
+      const title = chatResponse?.content
+        ?.trim()
+        ?.replaceAll('"', '')
+        ?.replace('Title: ', '')
+        ?.replace('title: ', '');
 
-    if (title)
-      useChatStore.getState().setAutoTitle(conversationId, title);
+      if (title)
+        useChatStore.getState().setAutoTitle(conversationId, title);
 
-  });
+    })
+    .catch(err => {
+      console.error('Failed to generate auto title', err);
+    });
 
 }

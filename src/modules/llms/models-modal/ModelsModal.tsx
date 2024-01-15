@@ -3,12 +3,12 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Checkbox, Divider } from '@mui/joy';
 
-import { DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForDefaultVendor, findVendorById } from '~/modules/llms/vendors/vendors.registry';
-
 import { GoodModal } from '~/common/components/GoodModal';
 import { settingsGap } from '~/common/app.theme';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+
+import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
+import { createModelSourceForDefaultVendor, findVendorById } from '../vendors/vendors.registry';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
@@ -19,7 +19,7 @@ function VendorSourceSetup(props: { source: DModelSource }) {
   const vendor = findVendorById(props.source.vId);
   if (!vendor)
     return 'Configuration issue: Vendor not found for Source ' + props.source.id;
-  return <vendor.SourceSetupComponent sourceId={props.source.id} />;
+  return <vendor.SourceSetupComponent key={props.source.id} sourceId={props.source.id} />;
 }
 
 

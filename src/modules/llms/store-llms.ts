@@ -163,9 +163,23 @@ export const useModelsStore = create<LlmsStore>()(
 
 
       addSource: (source: DModelSource) =>
-        set(state => ({
-          sources: [...state.sources, source],
-        })),
+        set(state => {
+
+          // re-number all sources for the given vendor
+          let n = 0;
+          const sourceVId = source.vId;
+
+          return {
+            sources: [...state.sources, source].map(_source =>
+              _source.vId != sourceVId
+                ? _source
+                : {
+                  ..._source,
+                  label: _source.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : ''),
+                },
+            ),
+          };
+        }),
 
       removeSource: (id: DModelSourceId) =>
         set(state => {
@@ -239,6 +253,10 @@ export const useModelsStore = create<LlmsStore>()(
 );
 
 
+export const getChatLLMId = (): DLLMId | null => useModelsStore.getState().chatLLMId;
+
+export const getFastLLMId = (): DLLMId | null => useModelsStore.getState().fastLLMId;
+
 export function findLLMOrThrow<TSourceSetup, TLLMOptions>(llmId: DLLMId): DLLM<TSourceSetup, TLLMOptions> {
   const llm = useModelsStore.getState().llms.find(llm => llm.id === llmId);
   if (!llm) throw new Error(`LLM ${llmId} not found`);
@@ -276,8 +294,15 @@ function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: bo
     for (const llm of llms)
       if (llm.id.endsWith(suffix))
         return llm.id;
+  if (!fallbackToFirst) return null;
+
+  // otherwise return first that's not hidden
+  for (const llm of llms)
+    if (!llm.hidden)
+      return llm.id;
+
   // otherwise return first id
-  return fallbackToFirst ? llms[0].id : null;
+  return llms[0].id;
 }
 
 
