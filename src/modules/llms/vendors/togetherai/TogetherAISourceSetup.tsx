@@ -1,11 +1,13 @@
 import * as React from 'react';
 
-import { Typography } from '@mui/joy';
+import { Alert, Typography } from '@mui/joy';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../useLlmUpdateModels';
@@ -19,9 +21,14 @@ const TOGETHERAI_REG_LINK = 'https://api.together.xyz/settings/api-keys';
 
 export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
+  // state
+  const advanced = useToggleableBoolean();
+
   // external state
-  const { source, access, sourceHasLLMs, sourceSetupValid, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorTogetherAI);
+  const {
+    source, access,
+    partialSetup, sourceSetupValid, updateSetup,
+  } = useSourceSetup(props.sourceId, ModelVendorTogetherAI);
 
   // derived state
   const { oaiKey: togetherKey } = access;
@@ -38,12 +45,6 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
-    <Typography level='body-sm'>
-      The Together Inference platform allows you to run select machine learning models with good speed and low
-      costs. See the <Link href='https://www.together.ai/' target='_blank'>Together AI</Link> website for more
-      information.
-    </Typography>
-
     <FormInputKey
       id='togetherai-key' label='Together AI Key'
       rightLabel={<>{needsUserKey
@@ -55,7 +56,24 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='...'
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    <Typography level='body-sm'>
+      The Together Inference platform allows you to run recent machine learning models with good speed and low
+      cost. See the <Link href='https://www.together.ai/' target='_blank'>Together AI</Link> website for more
+      information.
+    </Typography>
+
+    {advanced.on && <FormSwitchControl
+      title='Rate Limiter' on='Enabled'
+      description={partialSetup?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
+      checked={partialSetup?.togetherFreeTrial ?? false}
+      onChange={on => updateSetup({ togetherFreeTrial: on })}
+    />}
+
+    {advanced.on && <Alert variant='soft'>
+      Note: Please refresh the models list if you toggle the rate limiter.
+    </Alert>}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 
