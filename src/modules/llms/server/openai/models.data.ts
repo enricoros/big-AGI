@@ -378,7 +378,63 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
 // [Together AI]
 
-const _knownTogetherAIChatModels: ManualMappings = [];
+const _knownTogetherAIChatModels: ManualMappings = [
+  {
+    idPrefix: 'NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO',
+    label: 'Nous Hermes 2 - Mixtral 8x7B-DPO',
+    description: 'Nous Hermes 2 Mixtral 7bx8 DPO is the new flagship Nous Research model trained over the Mixtral 7bx8 MoE LLM. The model was trained on over 1,000,000 entries of primarily GPT-4 generated data, as well as other high quality data from open datasets across the AI landscape, achieving state of the art performance on a variety of tasks.',
+    contextWindow: 32768,
+    pricing: {
+      cpmPrompt: 0.0006,
+      cpmCompletion: 0.0006,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'NousResearch/Nous-Hermes-2-Mixtral-8x7B-SFT',
+    label: 'Nous Hermes 2 - Mixtral 8x7B-SFT',
+    description: 'Nous Hermes 2 Mixtral 7bx8 SFT is the new flagship Nous Research model trained over the Mixtral 7bx8 MoE LLM. The model was trained on over 1,000,000 entries of primarily GPT-4 generated data, as well as other high quality data from open datasets across the AI landscape, achieving state of the art performance on a variety of tasks.',
+    contextWindow: 32768,
+    pricing: {
+      cpmPrompt: 0.0006,
+      cpmCompletion: 0.0006,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+    label: 'Mixtral-8x7B Instruct',
+    description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
+    contextWindow: 32768,
+    pricing: {
+      cpmPrompt: 0.0006,
+      cpmCompletion: 0.0006,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistralai/Mistral-7B-Instruct-v0.2',
+    label: 'Mistral (7B) Instruct v0.2',
+    description: 'The Mistral-7B-Instruct-v0.2 Large Language Model (LLM) is an improved instruct fine-tuned version of Mistral-7B-Instruct-v0.1.',
+    contextWindow: 32768,
+    pricing: {
+      cpmPrompt: 0.0002,
+      cpmCompletion: 0.0002,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'NousResearch/Nous-Hermes-2-Yi-34B',
+    label: 'Nous Hermes-2 Yi (34B)',
+    description: 'Nous Hermes 2 - Yi-34B is a state of the art Yi Fine-tune',
+    contextWindow: 4097,
+    pricing: {
+      cpmPrompt: 0.0008,
+      cpmCompletion: 0.0008,
+    },
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+];
 
 export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {
 
