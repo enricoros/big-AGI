@@ -8,6 +8,7 @@ import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
+import { ModelVendorTogetherAI } from '~/modules/llms/vendors/togetherai/togetherai.vendor';
 
 import type { IModelVendor } from './IModelVendor';
 import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow, findSourceOrThrow } from '../store-llms';
@@ -22,7 +23,8 @@ export type ModelVendorId =
   | 'ollama'
   | 'oobabooga'
   | 'openai'
-  | 'openrouter';
+  | 'openrouter'
+  | 'togetherai';
 
 /** Global: Vendor Instances Registry **/
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
@@ -36,6 +38,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
+  togetherai: ModelVendorTogetherAI,
 } as Record<string, IModelVendor>;
 
 const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';

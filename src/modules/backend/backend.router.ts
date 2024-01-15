@@ -33,6 +33,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
+        hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
       } satisfies BackendCapabilities;
     }),

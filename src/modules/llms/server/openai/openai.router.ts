@@ -12,10 +12,12 @@ import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
-import { lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models.data';
+import { lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models.data';
 
 
-const openAIDialects = z.enum(['azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter']);
+const openAIDialects = z.enum([
+  'azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'togetherai',
+]);
 
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,
@@ -133,6 +135,11 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
       const openAIWireModelsResponse = await openaiGET<OpenAIWire.Models.Response>(access, '/v1/models');
+
+      // [Together] missing the .data property
+      if (access.dialect === 'togetherai')
+        return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
+
       let openAIModels: OpenAIWire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
@@ -303,6 +310,7 @@ const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
+const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
   switch (access.dialect) {
@@ -416,6 +424,22 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         },
         url: orHost + apiPath,
       };
+
+    case 'togetherai':
+      const togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
+      const togetherHost = fixupHost(access.oaiHost || DEFAULT_TOGETHERAI_HOST, apiPath);
+      if (!togetherKey || !togetherHost)
+        throw new Error('Missing TogetherAI API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${togetherKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        url: togetherHost + apiPath,
+      };
+
   }
 }
 

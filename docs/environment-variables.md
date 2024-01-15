@@ -28,6 +28,7 @@ GEMINI_API_KEY=
 MISTRAL_API_KEY=
 OLLAMA_API_HOST=
 OPENROUTER_API_KEY=
+TOGETHERAI_API_KEY=
 
 # Model Observability: Helicone
 HELICONE_API_KEY=
@@ -85,6 +86,7 @@ requiring the user to enter an API key
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                                       | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-ollama.md](config-ollama.md)                                      |                                                                   |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                                    | Optional                                                          |
+| `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                                   | Optional                                                          |
 
 ### Model Observability: Helicone
 

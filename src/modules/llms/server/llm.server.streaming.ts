@@ -99,6 +99,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
       case 'oobabooga':
       case 'openai':
       case 'openrouter':
+      case 'togetherai':
         requestAccess = openAIAccess(access, model.id, '/v1/chat/completions');
         body = openAIChatCompletionPayload(model, history, null, null, 1, true);
         vendorStreamParser = createStreamParserOpenAI();
