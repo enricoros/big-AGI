@@ -10,6 +10,10 @@ import { getClipboardItems } from '~/common/util/clipboardUtils';
 import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
 
 
+// enable to debug attachment operations
+const ATTACHMENTS_DEBUG = false;
+
+
 export const useAttachments = (enableLoadURLs: boolean) => {
 
   // state
@@ -24,14 +28,19 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
   // Creation helpers
 
-  const attachAppendFile = React.useCallback((origin: AttachmentSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) =>
-      createAttachment({
-        media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
-      })
-    , [createAttachment]);
+  const attachAppendFile = React.useCallback((origin: AttachmentSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) => {
+    if (ATTACHMENTS_DEBUG)
+      console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
+
+    return createAttachment({
+      media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
+    });
+  }, [createAttachment]);
 
 
   const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+    if (ATTACHMENTS_DEBUG)
+      console.log('attachAppendDataTransfer', dt.types, dt.files);
 
     // attach File(s)
     if (dt.files.length >= 1) {
@@ -99,6 +108,9 @@ export const useAttachments = (enableLoadURLs: boolean) => {
       });
       return;
     }
+
+    if (ATTACHMENTS_DEBUG)
+      console.log('attachAppendClipboardItems', clipboardItems);
 
     // loop on all the possible attachments
     for (const clipboardItem of clipboardItems) {
