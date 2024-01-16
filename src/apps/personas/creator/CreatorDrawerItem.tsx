@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, IconButton, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
+import { Box, Checkbox, IconButton, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
@@ -13,6 +13,8 @@ import type { SimplePersona } from '../store-app-personas';
 export function CreatorDrawerItem(props: {
   item: SimplePersona,
   isActive: boolean,
+  isSelected: boolean,
+  isSelection: boolean,
   onClick: (event: React.MouseEvent) => void,
   onDelete: (simplePersonaId: string) => void,
 }) {
@@ -46,7 +48,9 @@ export function CreatorDrawerItem(props: {
     >
       {/* Symbol or Thumbnail picture */}
       <ListItemDecorator>
-        {icon}
+        {props.isSelection ? (
+          <Checkbox checked={props.isSelected} />
+        ) : icon}
       </ListItemDecorator>
 
       <Box sx={{ overflow: 'hidden' }}>
@@ -70,7 +74,7 @@ export function CreatorDrawerItem(props: {
 
 
       {/* Delete Arming */}
-      {!deleteArmed && (
+      {!props.isSelection && !deleteArmed && (
         <IconButton
           variant={isActive ? 'solid' : 'outlined'}
           size='sm'
@@ -82,7 +86,7 @@ export function CreatorDrawerItem(props: {
       )}
 
       {/* Delete / Cancel buttons */}
-      {deleteArmed && <>
+      {!props.isSelection && deleteArmed && <>
         <IconButton size='sm' variant='solid' color='danger' onClick={() => props.onDelete(item.id)}>
           <DeleteOutlineIcon />
         </IconButton>
