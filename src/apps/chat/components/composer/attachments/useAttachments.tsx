@@ -39,11 +39,16 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
 
   const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+
+    // https://github.com/enricoros/big-AGI/issues/286
+    const textHtml = dt.getData('text/html') || '';
+    const heuristicsIsExcel = textHtml.includes('"urn:schemas-microsoft-com:office:excel"');
+
     if (ATTACHMENTS_DEBUG)
-      console.log('attachAppendDataTransfer', dt.types, dt.files);
+      console.log('attachAppendDataTransfer', dt.types, dt.items, dt.files, textHtml);
 
     // attach File(s)
-    if (dt.files.length >= 1) {
+    if (dt.files.length >= 1 && !heuristicsIsExcel /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
       // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
       let overrideFileNames: string[] = [];
       if (dt.types.includes('text/plain')) {
@@ -77,7 +82,6 @@ export const useAttachments = (enableLoadURLs: boolean) => {
     }
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
-    const textHtml = dt.getData('text/html') || '';
     if (attachText && (textHtml || textPlain)) {
       void createAttachment({
         media: 'text', method, textPlain, textHtml,
@@ -109,16 +113,20 @@ export const useAttachments = (enableLoadURLs: boolean) => {
       return;
     }
 
-    if (ATTACHMENTS_DEBUG)
-      console.log('attachAppendClipboardItems', clipboardItems);
-
-    // loop on all the possible attachments
+    // loop on all the clipboard items
     for (const clipboardItem of clipboardItems) {
+
+      // https://github.com/enricoros/big-AGI/issues/286
+      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
+      const heuristicsIsExcel = textHtml.startsWith('<table ');
+
+      if (ATTACHMENTS_DEBUG)
+        console.log(' - attachAppendClipboardItems.item:', clipboardItem, textHtml, heuristicsIsExcel);
 
       // attach as image
       let imageAttached = false;
       for (const mimeType of clipboardItem.types) {
-        if (mimeType.startsWith('image/')) {
+        if (mimeType.startsWith('image/') && !heuristicsIsExcel) {
           try {
             const imageBlob = await clipboardItem.getType(mimeType);
             const imageName = mimeType.replace('image/', 'clipboard.').replaceAll('/', '.') || 'clipboard.png';
@@ -148,7 +156,6 @@ export const useAttachments = (enableLoadURLs: boolean) => {
       }
 
       // attach as Text
-      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
       if (textHtml || textPlain) {
         void createAttachment({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
