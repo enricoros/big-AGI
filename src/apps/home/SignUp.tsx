@@ -9,6 +9,7 @@ export default function SignUpPage() {
         sx={{
           minHeight: '100vh',
           display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
           alignItems: 'center',
           justifyContent: 'center',
           background:
