@@ -3,11 +3,13 @@ import { Box, Typography, Button, CssVarsProvider } from '@mui/joy';
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from 'src/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const { isSignedIn, user } = useUser();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -65,7 +67,7 @@ export default function Home() {
         <SignedIn>
           {isAuthCheckComplete &&
             (isAuthorized ? (
-              <Button variant="solid" sx={{ mt: 2 }}>
+              <Button variant="solid" sx={{ mt: 2 }} onClick={() => router.push('/chat')}>
                 Start a Conversation
               </Button>
             ) : (
