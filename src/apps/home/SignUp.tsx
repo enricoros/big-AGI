@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box, Typography, CssVarsProvider } from '@mui/joy';
 import { SignUp } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
+  const router = useRouter();
   return (
     <CssVarsProvider>
       <Box
