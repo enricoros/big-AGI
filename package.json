@@ -13,6 +13,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.29.3",
     "@dqbd/tiktoken": "^1.0.7",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.3",
@@ -20,6 +21,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.2",
     "@mui/joy": "^5.0.0-beta.20",
+    "@mui/material": "^5.15.4",
     "@next/bundle-analyzer": "^14.0.4",
     "@prisma/client": "^5.7.1",
     "@sanity/diff-match-patch": "^3.1.1",
@@ -33,6 +35,7 @@
     "@vercel/speed-insights": "^1.0.2",
     "browser-fs-access": "^0.35.0",
     "eventsource-parser": "^1.1.1",
+    "firebase": "^10.7.1",
     "idb-keyval": "^6.2.1",
     "next": "^14.0.4",
     "nprogress": "^0.2.0",

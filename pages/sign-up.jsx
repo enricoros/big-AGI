@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import Home from '../src/apps/home/AppHome';
+import SignUpPage from 'src/apps/home/SignUp';
 export default function HomePage() {
-  return <Home />;
+  return <SignUpPage />;
 }
