@@ -68,7 +68,7 @@ export const navItems: {
       name: 'Chat',
       icon: TelegramIcon,
       type: 'app',
-      route: '/',
+      route: '/chat',
       drawer: true,
     },
     {
