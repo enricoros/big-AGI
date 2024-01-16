@@ -303,7 +303,7 @@ export function Composer(props: {
   useGlobalShortcut('m', true, false, false, toggleRecording);
 
   const micIsRunning = !!speechInterimResult;
-  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible;
+  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !isSpeechError;
   const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
   const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
 
