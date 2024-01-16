@@ -5,10 +5,19 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.11.0 - Jan 2024
+### 1.12.0 - Jan 2024
 
-- milestone: [1.11.0](https://github.com/enricoros/big-agi/milestone/11)
+- milestone: [1.12.0](https://github.com/enricoros/big-agi/milestone/12)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+
+### What's New in 1.11.0 · Jan 16, 2024 · Singularity
+
+- **Find chats**: search in titles and content, with frequency ranking. [#329](https://github.com/enricoros/big-AGI/issues/329)
+- **Commands**: command auto-completion (type '/'). [#327](https://github.com/enricoros/big-AGI/issues/327)
+- **[Together AI](https://www.together.ai/products#inference)** inference platform support. [#346](https://github.com/enricoros/big-AGI/issues/346)
+- Persona Creator history, deletion, custom creation, fix llm API timeouts
+- Enable adding up to five custom OpenAI-compatible endpoints
+- Developer enhancements: new 'Actiles' framework
 
 ### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
 
