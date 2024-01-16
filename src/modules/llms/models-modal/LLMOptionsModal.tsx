@@ -9,7 +9,6 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { settingsGap } from '~/common/app.theme';
 
 import { DLLMId, useModelsStore } from '../store-llms';
 import { findVendorById } from '../vendors/vendors.registry';
@@ -79,7 +78,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       }
     >
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+      <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
         <VendorLLMOptions llmId={props.id} />
       </Box>
 

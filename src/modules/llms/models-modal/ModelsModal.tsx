@@ -4,7 +4,6 @@ import { shallow } from 'zustand/shallow';
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { settingsGap } from '~/common/app.theme';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
@@ -85,7 +84,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       {!!activeSource && <Divider />}
 
       {!!activeSource && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+        <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
           <VendorSourceSetup source={activeSource} />
         </Box>
       )}

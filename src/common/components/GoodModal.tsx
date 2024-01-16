@@ -28,15 +28,15 @@ export function GoodModal(props: {
           sx={{
             minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
             maxWidth: 700,
-            display: 'flex', flexDirection: 'column', gap: 3,
+            display: 'flex', flexDirection: 'column', gap: 'var(--Card-padding)',
             ...props.sx,
           }}>
 
-          {!props.noTitleBar && <Box sx={{ mb: -1, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          {!props.noTitleBar && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator}>
               {props.title || ''}
             </Typography>
-            {!!props.onClose && <ModalClose sx={{ position: 'static', mr: -1 }} />}
+            {!!props.onClose && <ModalClose sx={{ position: 'static', my: -1, mr: -0.5 }} />}
           </Box>}
 
           {props.dividers === true && <Divider />}
