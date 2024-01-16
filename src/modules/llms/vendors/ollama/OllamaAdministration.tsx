@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Chip, FormControl, IconButton, Input, Option, Select, Stack, Typography } from '@mui/joy';
+import { Box, Button, Chip, FormControl, IconButton, Input, Option, Select, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 import FormatListNumberedRtlIcon from '@mui/icons-material/FormatListNumberedRtl';
 
@@ -10,7 +10,6 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';
-import { settingsGap } from '~/common/app.theme';
 
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
@@ -51,7 +50,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
   return (
     <GoodModal title='Ollama Administration' dividers open onClose={props.onClose}>
 
-      <Stack direction='column' sx={{ gap: settingsGap }}>
+      <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
         <Typography level='body-sm'>
           We assume your Ollama host is running and models are already available.
           However we provide a way to pull models from the Ollama host, for convenience.
@@ -145,7 +144,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
           timeout, the server is still downloading the model. Check back again later and the model should be available.
         </Typography>}
 
-      </Stack>
+      </Box>
 
     </GoodModal>
   );

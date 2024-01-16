@@ -5,7 +5,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { settingsCol1Width } from '~/common/app.theme';
+import { formLabelStartWidth } from '~/common/app.theme';
 
 
 /**
@@ -23,7 +23,7 @@ export const FormLabelStart = (props: {
       <FormLabel
         onClick={props.onClick}
         sx={{
-          minWidth: settingsCol1Width,
+          minWidth: formLabelStartWidth,
           ...(!!props.onClick && { cursor: 'pointer', textDecoration: 'underline' }),
           ...props.sx,
         }}

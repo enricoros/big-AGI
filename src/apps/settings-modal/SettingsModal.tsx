@@ -13,7 +13,6 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { settingsGap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
@@ -87,7 +86,7 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
       )}
 
       <AccordionDetails>
-        <Stack sx={{ gap: settingsGap, border: 'none' }}>
+        <Stack sx={{ gap: 'calc(var(--Card-padding) / 2)', border: 'none' }}>
           {props.children}
         </Stack>
       </AccordionDetails>
@@ -122,9 +121,6 @@ export function SettingsModal(props: {
           👉 See Shortcuts
         </Button>
       )}
-      sx={{
-        '--Card-padding': { xs: '8px', sm: '16px', lg: '24px' },
-      }}
     >
 
       <Divider />
