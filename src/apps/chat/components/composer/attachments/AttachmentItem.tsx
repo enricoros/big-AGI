@@ -87,6 +87,13 @@ function attachmentConverterIcon(attachment: Attachment) {
 }
 
 function attachmentLabelText(attachment: Attachment): string {
+  const converter = attachment.converterIdx !== null ? attachment.converters[attachment.converterIdx] ?? null : null;
+  if (converter && attachment.label === 'Rich Text') {
+    if (converter.id === 'rich-text-table')
+      return 'Rich Table';
+    if (converter.id === 'rich-text')
+      return 'Rich HTML';
+  }
   return ellipsizeFront(attachment.label, 24);
 }
 
