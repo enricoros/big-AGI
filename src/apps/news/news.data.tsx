@@ -10,7 +10,7 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 11;
+export const incrementalVersion: number = 12;
 
 const B = (props: { href?: string, children: React.ReactNode }) => {
   const boldText = <Typography color={!!props.href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
@@ -60,9 +60,23 @@ export const newsCallout =
 export const NewsItems: NewsItem[] = [
   // still unannounced: phone calls, split windows, ...
   {
+    versionCode: '1.11.0',
+    versionName: 'Singularity',
+    versionMoji: '🌌🌠',
+    versionDate: new Date('2024-01-16T06:30:00Z'),
+    items: [
+      { text: <><B href={RIssues + '/329'}>Search</B> past conversations (@joriskalz) 🔍</>, issue: 329 },
+      { text: <>Quick <B href={RIssues + '/327'}>commands pane</B> (open with &apos;/&apos;)</>, issue: 327 },
+      { text: <><B>Together AI</B> Inference platform support</>, issue: 346 },
+      { text: <>Persona creation: <B href={RIssues + '/301'}>history</B></>, issue: 301 },
+      { text: <>Persona creation: fix <B href={RIssues + '/328'}>API timeouts</B></>, issue: 328 },
+      { text: <>Support up to five <B href={RIssues + '/323'}>OpenAI-compatible</B> endpoints</>, issue: 323 },
+    ],
+  },
+  {
     versionCode: '1.10.0',
     versionName: 'The Year of AGI',
-    versionMoji: '🎊✨',
+    // versionMoji: '🎊✨',
     versionDate: new Date('2024-01-06T08:00:00Z'),
     items: [
       { text: <><B href={RIssues + '/201'}>New UI</B> for desktop and mobile, enabling future expansions</>, issue: 201 },
