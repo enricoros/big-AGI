@@ -11,7 +11,7 @@ import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsSt
 
 
 // enable to debug attachment operations
-const ATTACHMENTS_DEBUG = false;
+const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
 export const useAttachments = (enableLoadURLs: boolean) => {
@@ -29,7 +29,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
   // Creation helpers
 
   const attachAppendFile = React.useCallback((origin: AttachmentSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) => {
-    if (ATTACHMENTS_DEBUG)
+    if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
 
     return createAttachment({
@@ -42,13 +42,15 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
     // https://github.com/enricoros/big-AGI/issues/286
     const textHtml = dt.getData('text/html') || '';
-    const heuristicsIsExcel = textHtml.includes('"urn:schemas-microsoft-com:office:excel"');
+    const heuristicIsExcel = textHtml.includes('"urn:schemas-microsoft-com:office:excel"');
+    const heuristicIsPowerPoint = textHtml.includes('xmlns:m="http://schemas.microsoft.com/office/20') && textHtml.includes('<meta name=Generator content="Microsoft PowerPoint');
+    const heuristicBypassImage = heuristicIsExcel || heuristicIsPowerPoint;
 
-    if (ATTACHMENTS_DEBUG)
+    if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendDataTransfer', dt.types, dt.items, dt.files, textHtml);
 
     // attach File(s)
-    if (dt.files.length >= 1 && !heuristicsIsExcel /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
+    if (dt.files.length >= 1 && !heuristicBypassImage /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
       // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
       let overrideFileNames: string[] = [];
       if (dt.types.includes('text/plain')) {
@@ -118,15 +120,15 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
       // https://github.com/enricoros/big-AGI/issues/286
       const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
-      const heuristicsIsExcel = textHtml.startsWith('<table ');
+      const heuristicBypassImage = textHtml.startsWith('<table ');
 
-      if (ATTACHMENTS_DEBUG)
-        console.log(' - attachAppendClipboardItems.item:', clipboardItem, textHtml, heuristicsIsExcel);
+      if (ATTACHMENTS_DEBUG_INTAKE)
+        console.log(' - attachAppendClipboardItems.item:', clipboardItem, textHtml, heuristicBypassImage);
 
       // attach as image
       let imageAttached = false;
       for (const mimeType of clipboardItem.types) {
-        if (mimeType.startsWith('image/') && !heuristicsIsExcel) {
+        if (mimeType.startsWith('image/') && !heuristicBypassImage) {
           try {
             const imageBlob = await clipboardItem.getType(mimeType);
             const imageName = mimeType.replace('image/', 'clipboard.').replaceAll('/', '.') || 'clipboard.png';
