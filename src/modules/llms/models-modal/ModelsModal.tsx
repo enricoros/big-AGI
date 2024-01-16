@@ -74,6 +74,10 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
         /> : undefined
       }
       open onClose={closeModelsSetup}
+      sx={{
+        // forces some shrinkage of the contents (ModelsList)
+        overflow: 'auto',
+      }}
     >
 
       <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
@@ -88,7 +92,17 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <ModelsList filterSourceId={showAllSources ? null : selectedSourceId} onOpenLLMOptions={openLlmOptions} />}
+      {!!llmCount && (
+        <ModelsList
+          filterSourceId={showAllSources ? null : selectedSourceId}
+          onOpenLLMOptions={openLlmOptions}
+          sx={{
+            // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
+            minHeight: '6rem',
+            overflowY: 'auto',
+          }}
+        />
+      )}
 
       <Divider />
 

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
@@ -64,6 +65,7 @@ function ModelItem(props: { llm: DLLM, vendor: IModelVendor, chipChat: boolean, 
 export function ModelsList(props: {
   filterSourceId: DModelSourceId | null,
   onOpenLLMOptions: (id: DLLMId) => void,
+  sx?: SxProps,
 }) {
 
   // external state
@@ -113,7 +115,10 @@ export function ModelsList(props: {
   return (
     <List
       variant='soft' size='sm'
-      sx={{ borderRadius: 'md', overflowY: 'auto' }}
+      sx={{
+        borderRadius: 'md',
+        ...props.sx,
+      }}
     >
       {items.length > 0 ? items : (
         <ListItem>
