@@ -118,7 +118,11 @@ export function CreatorDrawer(props: {
               startDecorator={selectedIds.size === simplePersonas.length ? <CheckBoxOutlineBlankIcon /> : <CheckBoxIcon />}
               onClick={handleSelectionInvert}
             >
-              {selectedIds.size === simplePersonas.length ? 'Select None' : selectedIds.size !== 0 ? 'Invert' : 'Select All'}
+              {selectedIds.size === simplePersonas.length
+                ? 'Select None'
+                : selectedIds.size === 0
+                  ? `Select ${simplePersonas.length.toLocaleString() || 'All'}`
+                  : 'Invert'}
             </Button>
             <Button
               variant='solid'
