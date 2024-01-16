@@ -290,11 +290,12 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
   }, []);
 
   const toggleRecording = React.useCallback(() => {
-    if (refStarted.current)
+    if (refStarted.current || isSpeechError) {
       stopRecording();
-    else
+      setIsSpeechError(false);
+    } else
       startRecording();
-  }, [startRecording, stopRecording]);
+  }, [isSpeechError, startRecording, stopRecording]);
 
 
   return {
