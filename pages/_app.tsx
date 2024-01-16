@@ -61,6 +61,9 @@ const Redirect = () => {
   const router = useRouter();
 
   const checkAndRedirect = React.useCallback(async () => {
+    if (window.location.pathname === '/' || window.location.pathname === '/sign-in' || window.location.pathname === '/sign-up') {
+      return;
+    }
     if (!user?.primaryEmailAddress) {
       router.push('/');
       return;
