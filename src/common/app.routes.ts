@@ -11,7 +11,7 @@ import { isBrowser } from './util/pwaUtils';
 
 
 export const ROUTE_INDEX = '/';
-export const ROUTE_APP_CHAT = '/';
+export const ROUTE_APP_CHAT = '/chat';
 export const ROUTE_APP_CALL = '/call';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/:linkId';
 export const ROUTE_APP_NEWS = '/news';
@@ -75,8 +75,8 @@ export const launchAppChat = async (conversationId?: DConversationId) => {
     {
       pathname: ROUTE_APP_CHAT,
       query: conversationId ? {
-          conversationId,
-        } /*satisfies AppChatQueryParams*/
+        conversationId,
+      } /*satisfies AppChatQueryParams*/
         : undefined,
     },
     ROUTE_APP_CHAT,
