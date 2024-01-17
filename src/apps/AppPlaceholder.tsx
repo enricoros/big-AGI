@@ -21,7 +21,6 @@ export function AppPlaceholder() {
   return (
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: themeBgApp,
       overflowY: 'auto',
       p: { xs: 3, md: 6 },
       border: '1px solid blue',

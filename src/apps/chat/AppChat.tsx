@@ -18,7 +18,7 @@ import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/commo
 import { GoodPanelResizeHandler } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
+import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -474,7 +474,6 @@ export function AppChat() {
                 onTextImagine={handleTextImagine}
                 onTextSpeak={handleTextSpeak}
                 sx={{
-                  backgroundColor: themeBgApp,
                   minHeight: '100%', // ensures filling of the blank space on newer chats
                 }}
               />

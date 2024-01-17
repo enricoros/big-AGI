@@ -7,7 +7,6 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
-import { themeBgApp } from '~/common/app.theme';
 import { withLayout } from '~/common/layout/withLayout';
 
 
@@ -42,7 +41,6 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
   return (
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: themeBgApp,
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },

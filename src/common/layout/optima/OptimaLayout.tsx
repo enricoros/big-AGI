@@ -11,7 +11,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { Modals } from './Modals';
 import { OptimaDrawerProvider } from './useOptimaDrawers';
 import { OptimaLayoutProvider } from './useOptimaLayout';
-import { PageContainer } from './PageContainer';
+import { PageWrapper } from './PageWrapper';
 
 
 /**
@@ -40,9 +40,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
         {isMobile ? <>
 
-          <PageContainer isMobile currentApp={currentApp}>
+          <PageWrapper isMobile currentApp={currentApp}>
             {props.children}
-          </PageContainer>
+          </PageWrapper>
 
           <MobileDrawer currentApp={currentApp} />
 
@@ -55,9 +55,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
             <DesktopDrawer currentApp={currentApp} />
 
             {/*<Panel defaultSize={100}>*/}
-            <PageContainer currentApp={currentApp}>
+            <PageWrapper currentApp={currentApp}>
               {props.children}
-            </PageContainer>
+            </PageWrapper>
             {/*</Panel>*/}
 
           </PanelGroup>

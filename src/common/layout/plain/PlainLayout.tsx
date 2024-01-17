@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Box, Container } from '@mui/joy';
 
+import { themeBgApp } from '~/common/app.theme';
+
 
 export function PlainLayout(props: { children?: React.ReactNode }) {
   return <>
@@ -10,6 +12,7 @@ export function PlainLayout(props: { children?: React.ReactNode }) {
 
     <Container disableGutters>
       <Box sx={{
+        backgroundColor: themeBgApp,
         display: 'flex', flexDirection: 'column',
         minHeight: '100dvh',
       }}>

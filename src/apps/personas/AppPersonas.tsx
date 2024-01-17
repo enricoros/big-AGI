@@ -1,8 +1,6 @@
 import * as React from 'react';
 
-import { Container, ListDivider, Sheet, Typography } from '@mui/joy';
-
-import { themeBgApp } from '~/common/app.theme';
+import { Box, Container, ListDivider, Typography } from '@mui/joy';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { Creator } from './creator/Creator';
@@ -31,10 +29,9 @@ export function AppPersonas() {
 
 
   return (
-    <Sheet sx={{
+    <Box sx={{
       flexGrow: 1,
       overflowY: 'auto',
-      backgroundColor: themeBgApp,
       p: { xs: 3, md: 6 },
     }}>
 
@@ -52,6 +49,6 @@ export function AppPersonas() {
 
       </Container>
 
-    </Sheet>
+    </Box>
   );
 }
