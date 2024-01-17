@@ -255,7 +255,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       outputs.push({
         type: 'text-block',
         text: input.altData!,
-        title: ref,
+        title: ref || '\n<!DOCTYPE html>',
         collapsible: true,
       });
       break;
