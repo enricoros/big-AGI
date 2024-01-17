@@ -37,10 +37,10 @@ export function CallStatus(props: {
       </Typography>}
 
       {props.micError && <InlineError
-        severity='danger' error='But this browser does not support speech recognition... 🤦‍♀️ - Try Chrome on Windows?' />}
+        severity='danger' error='Looks like this Browser may not support speech recognition. You can try Chrome on Windows or Android instead.' />}
 
       {props.speakError && <InlineError
-        severity='danger' error='And text-to-speech is not configured... 🤦‍♀️ - Configure it in Settings?' />}
+        severity='danger' error='Text-to-speech does not appear to be configured. Please set it up in Preferences > Voice.' />}
 
     </Box>
   );
