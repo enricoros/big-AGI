@@ -3,8 +3,9 @@ import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { keyframes } from '@emotion/react';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
@@ -46,7 +47,7 @@ import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachm
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
+import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
 import { ButtonCall } from './buttons/ButtonCall';
@@ -333,6 +334,8 @@ export function Composer(props: {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
+  const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
+
   const handleAttachFilePicker = React.useCallback(async () => {
     try {
       const selectedFiles: FileWithHandle[] = await fileOpen({ multiple: true });
@@ -440,19 +443,32 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
-              {/* Responsive Camera OCR button */}
-              <ButtonAttachCameraMemo isMobile onAttachImage={handleAttachCameraImage} />
+              <Dropdown>
+                <MenuButton slots={{ root: IconButton }}>
+                  <AddCircleOutlineIcon />
+                </MenuButton>
+                <Menu>
+                  {/* Responsive Camera OCR button */}
+                  <MenuItem>
+                    <ButtonAttachCameraMemo onOpenCamera={openCamera} />
+                  </MenuItem>
 
-              {/* Responsive Open Files button */}
-              <ButtonAttachFileMemo isMobile onAttachFilePicker={handleAttachFilePicker} />
+                  {/* Responsive Open Files button */}
+                  <MenuItem>
+                    <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
+                  </MenuItem>
 
-              {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonAttachClipboardMemo isMobile onClick={attachAppendClipboardItems} />}
+                  {/* Responsive Paste button */}
+                  {supportsClipboardRead && <MenuItem>
+                    <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
+                  </MenuItem>}
+                </Menu>
+              </Dropdown>
 
             </Box>
           ) : (
@@ -469,7 +485,7 @@ export function Composer(props: {
               {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
 
               {/* Responsive Camera OCR button */}
-              {labsCameraDesktop && <ButtonAttachCameraMemo onAttachImage={handleAttachCameraImage} />}
+              {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
 
             </Box>
           )}
@@ -490,7 +506,7 @@ export function Composer(props: {
                 <Textarea
                   variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
                   autoFocus
-                  minRows={isMobile ? 5 : 5} maxRows={10}
+                  minRows={isMobile ? 4 : 5} maxRows={isMobile ? 8 : 10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextareaTextChange}
@@ -702,6 +718,9 @@ export function Composer(props: {
             capabilityHasTTI={props.capabilityHasT2I}
           />
         )}
+
+        {/* Camera */}
+        {cameraCaptureComponent}
 
         {/* Actile */}
         {actileComponent}
