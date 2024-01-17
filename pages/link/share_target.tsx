@@ -10,7 +10,6 @@ import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
-import { themeBgApp } from '~/common/app.theme';
 import { withLayout } from '~/common/layout/withLayout';
 
 
@@ -92,7 +91,6 @@ function AppShareTarget() {
   return (
 
     <Box sx={{
-      backgroundColor: themeBgApp,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       flexGrow: 1,
     }}>

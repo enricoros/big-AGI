@@ -4,7 +4,7 @@ import { Box, Container } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
-import { themeZIndexPageBar } from '~/common/app.theme';
+import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { PageBar } from './PageBar';
@@ -13,8 +13,10 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 
 const PageCore = (props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) =>
   <Box sx={{
-    display: 'flex', flexDirection: 'column',
+    // background: 'url(/images/big-agi-background-3.png) no-repeat center bottom fixed',
+    backgroundColor: themeBgApp,
     height: '100dvh',
+    display: 'flex', flexDirection: 'column',
   }}>
 
     {/* Responsive page bar (pluggable App Center Items and App Menu) */}
@@ -39,7 +41,7 @@ const PageCore = (props: { currentApp?: NavItemApp, isMobile?: boolean, children
 /**
  * Loaded Application component, fromt the NextJS page router, wrapped in a Container for centering.
  */
-export function PageContainer(props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
+export function PageWrapper(props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
 
   // external state
   const { isDrawerOpen } = useOptimaDrawers();
