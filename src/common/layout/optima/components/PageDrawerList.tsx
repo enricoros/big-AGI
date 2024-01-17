@@ -40,6 +40,7 @@ export function PageDrawerList(props: {
         // style
         backgroundColor: 'background.popup',
         border: 'none',
+        // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
         ...(!!props.noTopPadding && { pt: 0 }),
         ...(!!props.noBottomPadding && { pb: 0 }),
 

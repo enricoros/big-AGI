@@ -27,6 +27,7 @@ export const PageDrawerHeader = (props: {
       borderTop: 'none',
       borderLeft: 'none',
       borderRight: 'none',
+      // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
     }}
   >
 

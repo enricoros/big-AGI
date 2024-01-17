@@ -27,6 +27,16 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
         //   boxSizing: 'border-box',
         // },
       }}
+      slotProps={{
+        content: {
+          sx: {
+            // style: round the right drawer corners
+            backgroundColor: 'transparent',
+            borderTopRightRadius: 'var(--AGI-Optima-Radius)',
+            borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+          },
+        },
+      }}
     >
 
       <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
