@@ -76,6 +76,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
 
 
 export function CallWizard(props: { strict?: boolean, conversationId: string, children: React.ReactNode }) {
+
   // state
   const [chatEmptyOverride, setChatEmptyOverride] = React.useState(false);
   const [recognitionOverride, setRecognitionOverride] = React.useState(false);
@@ -123,7 +124,8 @@ export function CallWizard(props: { strict?: boolean, conversationId: string, ch
       <Typography
         component='span'
         sx={{
-          backgroundColor: 'primary.solidActiveBg', mx: -0.5, px: 0.5,
+          color: '#f0f4f8',
+          backgroundColor: 'primary.solidActiveBg', px: 1, py: 0.5,
           animation: `${cssRainbowBackgroundKeyframes} 15s linear infinite`,
         }}>
         your first call
