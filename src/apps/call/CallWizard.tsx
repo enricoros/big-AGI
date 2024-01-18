@@ -75,7 +75,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
 }
 
 
-export function CallWizard(props: { strict?: boolean, conversationId: string, children: React.ReactNode }) {
+export function CallWizard(props: { strict?: boolean, conversationId?: string, children: React.ReactNode }) {
 
   // state
   const [chatEmptyOverride, setChatEmptyOverride] = React.useState(false);

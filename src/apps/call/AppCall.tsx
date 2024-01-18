@@ -3,40 +3,48 @@ import * as React from 'react';
 import { Container, Sheet } from '@mui/joy';
 
 import { AppCallQueryParams, useRouterQuery } from '~/common/app.routes';
-import { InlineError } from '~/common/components/InlineError';
 
-import { CallUI } from './CallUI';
 import { CallWizard } from './CallWizard';
+import { Contacts } from './Contacts';
+import { Telephone } from './Telephone';
 
 
 export function AppCall() {
 
   // external state
-  const { conversationId, personaId } = useRouterQuery<AppCallQueryParams>();
+  const { conversationId, personaId: queryPersonaId } = useRouterQuery<Partial<AppCallQueryParams>>();
 
-  // derived state
-  const validInput = !!conversationId && !!personaId;
+  // state
+  const [personaId, setPersonaId] = React.useState<string | null>(queryPersonaId || null);
+
+
+  // [effect] update to query params (shall be already initally loaded)
+  React.useEffect(() => {
+    if (queryPersonaId)
+      setPersonaId(queryPersonaId);
+  }, [queryPersonaId]);
+
 
   return (
     <Sheet variant='solid' color='neutral' invertedColors sx={{
-      display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      flexGrow: 1,
+      // take the full V-area (we're inside PageWrapper) and scroll as needed
+      flex: 1,
       overflowY: 'auto',
-      minHeight: 96,
+
+      // container will take the full v-area
+      display: 'grid',
     }}>
 
       <Container maxWidth='sm' sx={{
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center',
-        minHeight: '80dvh', justifyContent: 'space-evenly',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly',
         gap: { xs: 2, md: 4 },
       }}>
 
-        {!validInput && <InlineError error={`Something went wrong. ${conversationId}:${personaId}`} />}
-
-        {validInput && (
+        {!personaId ? (
+          <Contacts personaId={personaId} setPersonaId={setPersonaId} />
+        ) : (
           <CallWizard conversationId={conversationId}>
-            <CallUI conversationId={conversationId} personaId={personaId} />
+            <Telephone conversationId={conversationId} personaId={personaId} />
           </CallWizard>
         )}
 

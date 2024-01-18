@@ -72,8 +72,8 @@ function CallMenuItems(props: {
 }
 
 
-export function CallUI(props: {
-  conversationId: string,
+export function Telephone(props: {
+  conversationId?: string,
   personaId: string,
 }) {
 
@@ -90,7 +90,9 @@ export function CallUI(props: {
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
   const { chatTitle, messages } = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+    const conversation = props.conversationId
+      ? state.conversations.find(conversation => conversation.id === props.conversationId) ?? null
+      : null;
     return {
       chatTitle: conversation ? conversationTitle(conversation) : 'no conversation',
       messages: conversation ? conversation.messages : [],
