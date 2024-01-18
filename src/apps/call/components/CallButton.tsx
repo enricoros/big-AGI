@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Box, ColorPaletteProp, IconButton, Typography, VariantProp } from '@mui/joy';
+import { SxProps } from '@mui/joy/styles/types';
 
 
 /**
@@ -14,6 +15,7 @@ export function CallButton(props: {
   Icon: React.FC, text: string,
   variant?: VariantProp, color?: ColorPaletteProp, disabled?: boolean,
   onClick?: () => void,
+  sx?: SxProps,
 }) {
   return (
     <Box
@@ -30,6 +32,7 @@ export function CallButton(props: {
           '--IconButton-size': { xs: '4.2rem', md: '5rem' },
           borderRadius: '50%',
           // boxShadow: 'lg',
+          ...props.sx,
         }}>
         <props.Icon />
       </IconButton>
