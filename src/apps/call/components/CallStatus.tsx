@@ -28,12 +28,12 @@ export function CallStatus(props: {
 
       {/*{props.llmComponent}*/}
 
-      <Typography level='body-md' sx={{ textAlign: 'center' }}>
+      {!!props.statusText && <Typography level='body-md' sx={{ textAlign: 'center' }}>
         {props.statusText}
-      </Typography>
+      </Typography>}
 
-      {!!props.regardingText && <Typography level='body-md' sx={{ textAlign: 'center', mt: 0 }}>
-        re: {props.regardingText}
+      {!!props.regardingText && <Typography level='body-md' sx={{ textAlign: 'center', mt: 1 }}>
+        Re: <Box component='span' sx={{ color: 'text.primary' }}>{props.regardingText}</Box>
       </Typography>}
 
       {props.micError && <InlineError

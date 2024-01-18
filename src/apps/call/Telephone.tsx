@@ -296,7 +296,7 @@ export function Telephone(props: {
 
     <CallStatus
       callerName={isConnected ? undefined : personaName}
-      statusText={isRinging ? 'is calling you' : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
+      statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
       micError={!isMicEnabled} speakError={!isTTSEnabled}
     />
@@ -305,11 +305,18 @@ export function Telephone(props: {
     {(isConnected || isEnded) && (
       <Card variant='soft' sx={{
         flexGrow: 1,
-        minHeight: '15dvh', maxHeight: '24dvh',
-        overflow: 'auto',
+        maxHeight: '24%',
+        minHeight: '15%',
         width: '100%',
+
+        // style
+        backgroundColor: 'background.surface',
         borderRadius: 'lg',
-        flexDirection: 'column-reverse',
+        boxShadow: 'sm',
+
+        // children
+        display: 'flex', flexDirection: 'column-reverse',
+        overflow: 'auto',
       }}>
 
         {/* Messages in reverse order, for auto-scroll from the bottom */}
@@ -346,18 +353,18 @@ export function Telephone(props: {
     )}
 
     {/* Call Buttons */}
-    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly' }}>
+    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly', gap: 4 }}>
 
       {/* [ringing] Decline / Accept */}
-      {isRinging && <CallButton Icon={CallEndIcon} text='Decline' color='danger' onClick={() => setStage('declined')} />}
-      {isRinging && isEnabled && <CallButton Icon={CallIcon} text='Accept' color='success' variant='soft' onClick={() => setStage('connected')} />}
+      {isRinging && <CallButton Icon={CallEndIcon} text='Decline' color='danger' variant='solid' onClick={() => setStage('declined')} />}
+      {isRinging && isEnabled && <CallButton Icon={CallIcon} text='Accept' color='success' variant='solid' onClick={() => setStage('connected')} />}
 
       {/* [Calling] Hang / PTT (mute not enabled yet) */}
-      {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' onClick={handleCallStop} />}
+      {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' variant='soft' onClick={handleCallStop} />}
       {isConnected && (pushToTalk
           ? <CallButton Icon={MicIcon} onClick={toggleRecording}
                         text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
-                        variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'} />
+                        variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'} sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined} />
           : null
         // <CallButton disabled={true} Icon={MicOffIcon} onClick={() => setMicMuted(muted => !muted)}
         //               text={micMuted ? 'Muted' : 'Mute'}

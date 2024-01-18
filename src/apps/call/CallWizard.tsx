@@ -10,6 +10,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import WarningIcon from '@mui/icons-material/Warning';
 
+import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { navigateBack } from '~/common/app.routes';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/state/store-chats';
@@ -119,17 +120,11 @@ export function CallWizard(props: { strict?: boolean, conversationId?: string, c
 
     <Box sx={{ flexGrow: 0.5 }} />
 
-    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 200, lineHeight: '1.5em', textAlign: 'center' }}>
+    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 200, textAlign: 'center' }}>
       Welcome to<br />
-      <Typography
-        component='span'
-        sx={{
-          color: '#f0f4f8',
-          backgroundColor: 'primary.solidActiveBg', px: 1, py: 0.5,
-          animation: `${cssRainbowBackgroundKeyframes} 15s linear infinite`,
-        }}>
+      <Box component='span' sx={{ animation: `${cssRainbowColorKeyframes} 15s linear infinite` }}>
         your first call
-      </Typography>
+      </Box>
     </Typography>
 
     <Box sx={{ flexGrow: 0.5 }} />
@@ -201,14 +196,21 @@ export function CallWizard(props: { strict?: boolean, conversationId?: string, c
       </Typography>
 
       <IconButton
-        size='lg' variant={allGood ? 'soft' : 'solid'} color={allGood ? 'success' : 'danger'}
-        onClick={handleFinishButton} sx={{ borderRadius: '50px', mr: 0.5 }}
+        size='lg'
+        variant='solid' color={allGood ? 'success' : 'danger'}
+        onClick={handleFinishButton}
+        sx={{
+          borderRadius: '50px',
+          mr: 0.5,
+          // animation: `${cssRainbowBackgroundKeyframes} 15s linear infinite`,
+          // boxShadow: allGood ? 'md' : 'none',
+        }}
       >
         {allGood ? <ArrowForwardIcon sx={{ fontSize: '1.5em' }} /> : <CloseIcon sx={{ fontSize: '1.5em' }} />}
       </IconButton>
     </Box>
 
-    <Box sx={{ flexGrow: 0.5 }} />
+    <Box sx={{ flexGrow: 2 }} />
 
   </>;
 }

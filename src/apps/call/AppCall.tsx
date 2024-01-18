@@ -9,6 +9,10 @@ import { Contacts } from './Contacts';
 import { Telephone } from './Telephone';
 
 
+// set to false to try out non-iverted colors
+const DEFAULT_INVERT_COLORS = false;
+
+
 export function AppCall() {
 
   // external state
@@ -26,18 +30,21 @@ export function AppCall() {
 
 
   return (
-    <Sheet variant='solid' color='neutral' invertedColors sx={{
-      // take the full V-area (we're inside PageWrapper) and scroll as needed
-      flex: 1,
-      overflowY: 'auto',
+    <Sheet
+      variant={DEFAULT_INVERT_COLORS ? 'solid' : 'soft'}
+      invertedColors={DEFAULT_INVERT_COLORS /* even in 'soft', =true makes icons look prettier */}
+      sx={{
+        // take the full V-area (we're inside PageWrapper) and scroll as needed
+        flex: 1,
+        overflowY: 'auto',
 
-      // container will take the full v-area
-      display: 'grid',
-    }}>
+        // container will take the full v-area
+        display: 'grid',
+      }}>
 
       <Container maxWidth='sm' sx={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly',
-        gap: { xs: 2, md: 4 },
+        gap: { xs: 1, md: 3 },
       }}>
 
         {!personaId ? (
