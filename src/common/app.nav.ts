@@ -114,7 +114,7 @@ export const navItems: {
       icon: Diversity2Icon,
       type: 'app',
       route: '/personas',
-      drawer: 'Recent',
+      drawer: true,
       hideBar: true,
     },
     {

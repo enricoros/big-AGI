@@ -33,6 +33,9 @@ export const env = createEnv({
     // LLM: OpenRouter
     OPENROUTER_API_KEY: z.string().optional(),
 
+    // LLM: Toghether AI
+    TOGETHERAI_API_KEY: z.string().optional(),
+
     // Helicone - works on both OpenAI and Anthropic vendors
     HELICONE_API_KEY: z.string().optional(),
 

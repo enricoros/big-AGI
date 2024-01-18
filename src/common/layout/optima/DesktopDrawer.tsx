@@ -33,6 +33,10 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   zIndex: themeZIndexDesktopDrawer,
 
   // styling
+  backgroundColor: 'transparent',
+  // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
+  // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+  // contain: 'strict',
   boxShadow: theme.shadow.md,
 
   // content layout

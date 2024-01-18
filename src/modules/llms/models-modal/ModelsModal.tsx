@@ -4,7 +4,6 @@ import { shallow } from 'zustand/shallow';
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
-import { settingsGap } from '~/common/app.theme';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
@@ -74,6 +73,10 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
         /> : undefined
       }
       open onClose={closeModelsSetup}
+      sx={{
+        // forces some shrinkage of the contents (ModelsList)
+        overflow: 'auto',
+      }}
     >
 
       <ModelsSourceSelector selectedSourceId={selectedSourceId} setSelectedSourceId={setSelectedSourceId} />
@@ -81,14 +84,24 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       {!!activeSource && <Divider />}
 
       {!!activeSource && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: settingsGap }}>
+        <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
           <VendorSourceSetup source={activeSource} />
         </Box>
       )}
 
       {!!llmCount && <Divider />}
 
-      {!!llmCount && <ModelsList filterSourceId={showAllSources ? null : selectedSourceId} onOpenLLMOptions={openLlmOptions} />}
+      {!!llmCount && (
+        <ModelsList
+          filterSourceId={showAllSources ? null : selectedSourceId}
+          onOpenLLMOptions={openLlmOptions}
+          sx={{
+            // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
+            minHeight: '6rem',
+            overflowY: 'auto',
+          }}
+        />
+      )}
 
       <Divider />
 

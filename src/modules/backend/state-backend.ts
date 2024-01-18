@@ -14,6 +14,7 @@ export interface BackendCapabilities {
   hasLlmOllama: boolean;
   hasLlmOpenAI: boolean;
   hasLlmOpenRouter: boolean;
+  hasLlmTogetherAI: boolean;
   hasVoiceElevenLabs: boolean;
 }
 
@@ -37,6 +38,7 @@ const useBackendStore = create<BackendStore>()(
     hasLlmOllama: false,
     hasLlmOpenAI: false,
     hasLlmOpenRouter: false,
+    hasLlmTogetherAI: false,
     hasVoiceElevenLabs: false,
 
     loadedCapabilities: false,
