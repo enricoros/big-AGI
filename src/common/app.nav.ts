@@ -99,6 +99,7 @@ export const navItems: {
     {
       name: 'Draw',
       icon: FormatPaintOutlinedIcon,
+      iconActive: FormatPaintIcon,
       type: 'app',
       route: '/draw',
       hide: true,
