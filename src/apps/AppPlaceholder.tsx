@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Box, Typography } from '@mui/joy';
 
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { themeBgApp } from '~/common/app.theme';
 import { useRouterRoute } from '~/common/app.routes';
 
 
