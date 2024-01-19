@@ -18,7 +18,7 @@ import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUICounter } from '~/common/state/store-ui';
 
 
-const cssRainbowBackgroundKeyframes = keyframes`
+/*export const cssRainbowBackgroundKeyframes = keyframes`
     100%, 0% {
         background-color: rgb(128, 0, 0);
     }
@@ -54,7 +54,7 @@ const cssRainbowBackgroundKeyframes = keyframes`
     }
     91% {
         background-color: rgb(102, 0, 51);
-    }`;
+    }`;*/
 
 function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: string, button?: React.JSX.Element }) {
   return (
@@ -76,7 +76,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
 }
 
 
-export function CallWizard(props: { strict?: boolean, conversationId?: string, children: React.ReactNode }) {
+export function CallWizard(props: { strict?: boolean, conversationId: string | null, children: React.ReactNode }) {
 
   // state
   const [chatEmptyOverride, setChatEmptyOverride] = React.useState(false);
@@ -87,12 +87,15 @@ export function CallWizard(props: { strict?: boolean, conversationId?: string, c
   const recognition = useCapabilityBrowserSpeechRecognition();
   const synthesis = useCapabilityElevenLabs();
   const chatIsEmpty = useChatStore(state => {
+    if (!props.conversationId)
+      return false;
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return !(conversation?.messages?.length);
   });
   const { novel, touch } = useUICounter('call-wizard');
 
   // derived state
+  const outOfTheBlue = !props.conversationId;
   const overriddenEmptyChat = chatEmptyOverride || !chatIsEmpty;
   const overriddenRecognition = recognitionOverride || recognition.mayWork;
   const allGood = overriddenEmptyChat && overriddenRecognition && synthesis.mayWork;
@@ -135,7 +138,7 @@ export function CallWizard(props: { strict?: boolean, conversationId?: string, c
     </Typography>
 
     {/* Chat Empty status */}
-    <StatusCard
+    {!outOfTheBlue && <StatusCard
       icon={<ChatIcon />}
       hasIssue={!overriddenEmptyChat}
       text={overriddenEmptyChat ? 'Great! Your chat has messages.' : 'The chat is empty. Calls are effective when the caller has context.'}
@@ -144,7 +147,7 @@ export function CallWizard(props: { strict?: boolean, conversationId?: string, c
           Ignore
         </Button>
       )}
-    />
+    />}
 
     {/* Add the speech to text feature status */}
     <StatusCard

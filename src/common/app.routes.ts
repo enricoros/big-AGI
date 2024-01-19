@@ -6,6 +6,7 @@
 
 import Router, { useRouter } from 'next/router';
 
+import type { AppCallIntent } from '../apps/call/AppCall';
 import type { DConversationId } from '~/common/state/store-chats';
 import { isBrowser } from './util/pwaUtils';
 
@@ -83,10 +84,6 @@ export const launchAppChat = async (conversationId?: DConversationId) => {
   );
 };
 
-export interface AppCallQueryParams {
-  conversationId: string;
-  personaId: string;
-}
 
 export function launchAppCall(conversationId: string, personaId: string) {
   void Router.push(
@@ -95,7 +92,8 @@ export function launchAppCall(conversationId: string, personaId: string) {
       query: {
         conversationId,
         personaId,
-      } satisfies AppCallQueryParams,
+        backTo: 'app-chat'
+      } satisfies AppCallIntent,
     },
     // ROUTE_APP_CALL,
   ).then();
