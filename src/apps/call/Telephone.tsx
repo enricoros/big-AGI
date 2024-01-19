@@ -20,14 +20,15 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
+import type { AppCallIntent } from './AppCall';
 import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
-import { launchAppChat, ROUTE_APP_CHAT } from '~/common/app.routes';
 
 
 function CallMenuItems(props: {
@@ -73,8 +74,8 @@ function CallMenuItems(props: {
 
 
 export function Telephone(props: {
-  conversationId?: string,
-  personaId: string,
+  callIntent: AppCallIntent,
+  backToContacts: () => void,
 }) {
 
   // state
@@ -90,15 +91,15 @@ export function Telephone(props: {
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
   const { chatTitle, messages } = useChatStore(state => {
-    const conversation = props.conversationId
-      ? state.conversations.find(conversation => conversation.id === props.conversationId) ?? null
+    const conversation = props.callIntent.conversationId
+      ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
       : null;
     return {
       chatTitle: conversation ? conversationTitle(conversation) : 'no conversation',
       messages: conversation ? conversation.messages : [],
     };
   }, shallow);
-  const persona = SystemPurposes[props.personaId as SystemPurposeId] ?? undefined;
+  const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
   const personaCallStarters = persona?.call?.starters ?? undefined;
   const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
   const personaSystemMessage = persona?.systemMessage ?? undefined;
@@ -372,7 +373,7 @@ export function Telephone(props: {
       )}
 
       {/* [ended] Back / Call Again */}
-      {(isEnded || isDeclined) && <Link noLinkStyle href={ROUTE_APP_CHAT}><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
+      {(isEnded || isDeclined) && <CallButton Icon={ArrowBackIcon} text='Back' variant='soft' onClick={() => props.callIntent.backTo === 'app-chat' ? navigateToIndex() : props.backToContacts()} />}
       {(isEnded || isDeclined) && <CallButton Icon={CallIcon} text='Call Again' color='success' variant='soft' onClick={() => setStage('connected')} />}
 
     </Box>
