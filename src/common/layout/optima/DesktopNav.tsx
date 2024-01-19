@@ -65,6 +65,8 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
         </Tooltip>
       );
     });
+    // (disabled) add this code after the map to add a divider
+    //.toSpliced(-1, 0, <Divider sx={{ my: 1, width: '50%', mx: 'auto' }} />);
   }, [props.currentApp, isDrawerOpen, toggleDrawer]);
 
 
