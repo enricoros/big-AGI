@@ -1,91 +1,26 @@
 import * as React from 'react';
 import Router from 'next/router';
 
-import { Box, IconButton, styled, Tooltip } from '@mui/joy';
+import { Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { NavItemApp, navItems } from '~/common/app.nav';
-import { cssRainbowColorKeyframes, themeZIndexDesktopNav } from '~/common/app.theme';
+import { themeZIndexDesktopNav } from '~/common/app.theme';
 
+import { BringTheLove } from './components/BringTheLove';
+import { DesktopNavGroupButton, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
-import { BringTheLove } from '~/common/layout/optima/components/BringTheLove';
-
 
 // Nav Group
 
-const DesktopNavGroupButton = styled(Box)({
-  // flex column
-  display: 'flex',
-  flexDirection: 'column',
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  alignItems: 'center',
-
-  // nav items, reduce the marginBlock a little
-  '--GroupMarginY': '0.125rem',
-
-  // style
-  // backgroundColor: 'rgba(0 0 0 / 0.5)',
-  // borderRadius: '1rem',
-  // paddingBlock: '0.5rem',
-  // overflow: 'hidden',
-});
-
 
 // Nav Item
-
-const navItemClasses = {
-  active: 'NavButton-active',
-  paneOpen: 'NavButton-paneOpen',
-  attractive: 'NavButton-attractive',
-};
-
-const DesktopNavItem = styled(IconButton)(({ theme }) => ({
-  // --Bar is defined in InvertedBar
-  '--MarginX': '0.25rem',
-
-  // IconButton customization: the objective is to have a square button, with a smaller group margin,
-  // and with the nice little animation on pane open and hover
-  '--IconButton-size': 'calc(var(--Bar) - 2 * var(--MarginX))',
-  '--Icon-fontSize': '1.5rem',
-  // border: '1px solid red',
-  borderRadius: 'calc(var(--IconButton-size) / 2)',
-  marginBlock: 'var(--GroupMarginY)',
-  //marginInline: .. not needd because we center the items
-  padding: 0,
-  transition: 'border-radius 0.4s, margin 0.2s, padding 0.2s',
-
-  [`&:hover`]: {
-    // backgroundColor: theme.palette.primary.softHoverBg,
-  },
-
-  // pane open: show a connected half
-  [`&.${navItemClasses.paneOpen}`]: {
-    // squircle animation
-    borderStartEndRadius: 0,
-    borderEndEndRadius: 0,
-    marginLeft: 'calc(2 * var(--MarginX))',
-    paddingRight: 'calc(2 * var(--MarginX))',
-  },
-  [`&.${navItemClasses.paneOpen}:hover`]: {
-    borderRadius: 'calc(var(--IconButton-size) / 2)',
-    marginLeft: 0,
-    paddingRight: 0,
-  },
-
-  // attractive: attract the user to click on this element
-  [`&.${navItemClasses.attractive}`]: {
-    animation: `${cssRainbowColorKeyframes} 5s infinite`,
-    transform: 'scale(1.4)',
-  },
-
-}));
 
 
 export function DesktopNav(props: { currentApp?: NavItemApp }) {
@@ -119,14 +54,14 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
       const isNotForUser = !!item.automatic && !isActive;
       return (
         <Tooltip disableInteractive enterDelay={600} key={'n-m-' + item.route.slice(1)} title={item.name}>
-          <DesktopNavItem
+          <DesktopNavIcon
             disabled={isNotForUser}
             variant={isActive ? 'soft' : undefined}
             onClick={isPanelable ? toggleDrawer : () => Router.push(item.route)}
-            className={`${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
+            className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
           >
             <item.icon />
-          </DesktopNavItem>
+          </DesktopNavIcon>
         </Tooltip>
       );
     });
@@ -168,13 +103,13 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
       return (
         <Tooltip followCursor key={'n-m-' + item.overlayId} title={isAttractive ? 'Add Language Models - REQUIRED' : item.name}>
-          <DesktopNavItem
+          <DesktopNavIcon
             variant={isActive ? 'soft' : undefined}
             onClick={showModal}
-            className={`${isActive ? navItemClasses.active : ''} ${isAttractive ? navItemClasses.attractive : ''}`}
+            className={`${navItemClasses.typeLinkOrModal} ${isActive ? navItemClasses.active : ''} ${isAttractive ? navItemClasses.attractive : ''}`}
           >
             <item.icon />
-          </DesktopNavItem>
+          </DesktopNavIcon>
         </Tooltip>
       );
     });
@@ -185,10 +120,10 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
     <InvertedBar id='desktop-nav' direction='vertical' sx={{ zIndex: themeZIndexDesktopNav }}>
 
       <InvertedBarCornerItem>
-        <Tooltip title={isDrawerOpen ? 'Close' : 'Open Drawer'}>
-          <DesktopNavItem disabled={!logoButtonTogglesPane} onClick={handleLogoButtonClick}>
+        <Tooltip title={isDrawerOpen ? undefined : 'Open Drawer'}>
+          <DesktopNavIcon disabled={!logoButtonTogglesPane} onClick={handleLogoButtonClick}>
             {logoButtonTogglesPane ? <MenuIcon /> : <AgiSquircleIcon inverted sx={{ color: 'white' }} />}
-          </DesktopNavItem>
+          </DesktopNavIcon>
         </Tooltip>
       </InvertedBarCornerItem>
 
@@ -196,7 +131,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
         {navAppItems}
       </DesktopNavGroupButton>
 
-      <DesktopNavGroupButton>
+      <DesktopNavGroupButton sx={{ mb: 'calc(2 * var(--GroupMarginY))' }}>
         {navExtLinkItems}
         {navModalItems}
       </DesktopNavGroupButton>

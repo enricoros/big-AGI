@@ -44,7 +44,7 @@ export function AppCall() {
 
       <Container maxWidth='sm' sx={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly',
-        gap: { xs: 1, md: 3 },
+        gap: 1,
       }}>
 
         {!personaId ? (
