@@ -157,7 +157,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
-        <IconButton disabled={!pageMenuAnchor || (!appMenuItems && !props.isMobile)} onClick={openPageMenu} ref={pageMenuAnchor}>
+        <IconButton disabled={!pageMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/} onClick={openPageMenu} ref={pageMenuAnchor}>
           <MoreVertIcon />
         </IconButton>
       </InvertedBarCornerItem>
