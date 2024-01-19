@@ -60,7 +60,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
             onClick={isPanelable ? toggleDrawer : () => Router.push(item.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
           >
-            <item.icon />
+            {(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}
           </DesktopNavIcon>
         </Tooltip>
       );
@@ -108,7 +108,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
             onClick={showModal}
             className={`${navItemClasses.typeLinkOrModal} ${isActive ? navItemClasses.active : ''} ${isAttractive ? navItemClasses.attractive : ''}`}
           >
-            <item.icon />
+            {(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}
           </DesktopNavIcon>
         </Tooltip>
       );
