@@ -3,14 +3,14 @@ import type { FunctionComponent } from 'react';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
-import CallIcon from '@mui/icons-material/Call';
-import Diversity2Icon from '@mui/icons-material/Diversity2';
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
+import Diversity2OutlinedIcon from '@mui/icons-material/Diversity2Outlined';
+import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
+import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import SettingsIcon from '@mui/icons-material/Settings';
-import TelegramIcon from '@mui/icons-material/Telegram';
+import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 
 import { Brand } from '~/common/app.config';
@@ -66,23 +66,23 @@ export const navItems: {
   apps: [
     {
       name: 'Chat',
-      icon: TelegramIcon,
+      icon: TextsmsOutlinedIcon,
       type: 'app',
       route: '/',
       drawer: true,
     },
     {
       name: 'Call',
-      icon: CallIcon,
+      icon: CallOutlinedIcon,
       type: 'app',
       route: '/call',
-      drawer: 'Recent Calls',
+      // drawer: 'Recent Calls',
       automatic: true,
       fullWidth: true,
     },
     {
       name: 'Draw',
-      icon: FormatPaintIcon,
+      icon: FormatPaintOutlinedIcon,
       type: 'app',
       route: '/draw',
       hide: true,
@@ -111,7 +111,7 @@ export const navItems: {
     },
     {
       name: 'Personas',
-      icon: Diversity2Icon,
+      icon: Diversity2OutlinedIcon,
       type: 'app',
       route: '/personas',
       drawer: true,
@@ -119,7 +119,7 @@ export const navItems: {
     },
     {
       name: 'News',
-      icon: EventNoteIcon,
+      icon: EventNoteOutlinedIcon,
       type: 'app',
       route: '/news',
       hideBar: true,
