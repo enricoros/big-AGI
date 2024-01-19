@@ -18,6 +18,7 @@ import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import WorkspacesOutlinedIcon from '@mui/icons-material/WorkspacesOutlined';
 // Automatic apps
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
 // Link icons
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -93,7 +94,6 @@ export const navItems: {
       type: 'app',
       route: '/call',
       // drawer: 'Recent Calls',
-      automatic: true,
       fullWidth: true,
     },
     {
@@ -110,7 +110,6 @@ export const navItems: {
       iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
-      automatic: true,
       hide: true,
     },
     {
@@ -148,6 +147,14 @@ export const navItems: {
     },
 
     // non-user-selectable ('automatic') Apps
+    {
+      name: 'Media Library',
+      icon: ImageOutlinedIcon,
+      type: 'app',
+      route: '/media',
+      automatic: true,
+      hideNav: true,
+    },
     {
       name: 'Shared Chat',
       icon: IosShareIcon,
