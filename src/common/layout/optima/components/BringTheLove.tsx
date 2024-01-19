@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Button, Tooltip } from '@mui/joy';
+import { Box, Button, Tooltip } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
@@ -26,17 +26,20 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
   return (
     <Tooltip followCursor title={props.text}>
       {props.asIcon ? (
-        <DesktopNavIcon className={navItemClasses.typeLinkOrModal} onClick={() => setLoved(true)} sx={{
-          opacity: loved ? 1 : 0.4,
-          '&:hover': { opacity: 1 },
+        <Box component='a' href={props.link} target='_blank' sx={{
+          textDecoration: 'none',
+          '&:hover': { textDecoration: 'none' },
         }}>
-          <Link href={props.link} target='_blank' sx={{
-            textDecoration: 'none',
-            '&:hover': { textDecoration: 'none' },
+          <DesktopNavIcon variant='solid' className={navItemClasses.typeLinkOrModal} onClick={() => setLoved(true)} sx={{
+            background: 'transparent',
+            // color: 'text.tertiary',
+            '&:hover': {
+              animation: `${cssRainbowColorKeyframes} 5s linear infinite`,
+            },
           }}>
             {icon}
-          </Link>
-        </DesktopNavIcon>
+          </DesktopNavIcon>
+        </Box>
       ) : (
         <Button
           onClick={() => setLoved(true)}
