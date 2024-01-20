@@ -95,7 +95,7 @@ export function Telephone(props: {
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
       : null;
     return {
-      chatTitle: conversation ? conversationTitle(conversation) : 'no conversation',
+      chatTitle: conversation ? conversationTitle(conversation) : null,
       messages: conversation ? conversation.messages : [],
     };
   }, shallow);
