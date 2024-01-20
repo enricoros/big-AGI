@@ -90,13 +90,13 @@ export function Telephone(props: {
 
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
-  const { chatTitle, messages } = useChatStore(state => {
+  const { chatTitle, reMessages } = useChatStore(state => {
     const conversation = props.callIntent.conversationId
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
       : null;
     return {
       chatTitle: conversation ? conversationTitle(conversation) : null,
-      messages: conversation ? conversation.messages : [],
+      reMessages: conversation ? conversation.messages : null,
     };
   }, shallow);
   const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
@@ -196,8 +196,8 @@ export function Telephone(props: {
     if (!chatLLMId) return;
 
     // temp fix: when the chat has no messages, only assume a single system message
-    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = messages.length > 0
-      ? messages
+    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = (reMessages && reMessages.length > 0)
+      ? reMessages
       : personaSystemMessage
         ? [{ role: 'system', text: personaSystemMessage }]
         : [];
@@ -237,7 +237,7 @@ export function Telephone(props: {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, chatLLMId, messages, personaVoiceId, personaSystemMessage]);
+  }, [isConnected, callMessages, chatLLMId, personaVoiceId, personaSystemMessage, reMessages]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && isRecordingSpeech;
