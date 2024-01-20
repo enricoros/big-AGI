@@ -96,8 +96,7 @@ export function Composer(props: {
   // external state
   const isMobile = useIsMobile();
   const { openPreferencesTab, setIsFocusedMode } = useOptimaLayout();
-  const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
-    labsCalling: state.labsCalling,
+  const { labsCameraDesktop } = useUXLabsStore(state => ({
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
@@ -632,7 +631,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
-                  ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <ButtonCall isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
@@ -699,7 +698,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {isChat && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}

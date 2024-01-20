@@ -12,9 +12,6 @@ import { persist } from 'zustand/middleware';
  */
 interface UXLabsStore {
 
-  labsCalling: boolean;
-  setLabsCalling: (labsCalling: boolean) => void;
-
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
 
@@ -29,9 +26,6 @@ interface UXLabsStore {
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
-
-      labsCalling: false,
-      setLabsCalling: (labsCalling: boolean) => set({ labsCalling }),
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),

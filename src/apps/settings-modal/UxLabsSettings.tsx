@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
-import CallIcon from '@mui/icons-material/Call';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -17,16 +16,11 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCalling, labsCameraDesktop, /*labsEnhancedUI,*/ labsSplitBranching,
-    setLabsCalling, setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsSplitBranching,
+    labsCameraDesktop, /*labsEnhancedUI,*/ labsSplitBranching,
+    setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
-
-    <FormSwitchControl
-      title={<><CallIcon color={labsCalling ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Voice Calls</>} description={labsCalling ? 'Call AGI' : 'Disabled'}
-      checked={labsCalling} onChange={setLabsCalling}
-    />
 
     {!isMobile && <FormSwitchControl
       title={<><AddAPhotoIcon color={labsCameraDesktop ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Webcam</>} description={labsCameraDesktop ? 'Enabled' : 'Disabled'}
@@ -46,7 +40,7 @@ export function UxLabsSettings() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Imagine · Relative chat size · Text Tools · LLM Overheat
+        <Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link> · <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Imagine · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 
