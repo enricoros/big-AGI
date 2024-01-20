@@ -180,9 +180,10 @@ function CallContactCard(props: {
               {persona.title}
             </Typography>
             <MuiLink overlay onClick={handleCallPersona}>
-              <IconButton size='md' variant='soft' color='success' sx={{
-                borderRadius: '50%',
+              <IconButton size='md' variant='soft' sx={{
+                // borderRadius: '50%',
                 ml: 'auto',
+                mr: -1,
               }}>
                 <CallIcon />
               </IconButton>
