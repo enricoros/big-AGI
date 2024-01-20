@@ -226,9 +226,11 @@ export function Telephone(props: {
         error = err;
     }).finally(() => {
       setPersonaTextInterim(null);
-      setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
+      if (finalText || error)
+        setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
       // fire/forget
-      void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
+      if (finalText?.length >= 1)
+        void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
     });
 
     return () => {
