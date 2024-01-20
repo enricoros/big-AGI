@@ -20,7 +20,7 @@ export async function prodiaGenerateImages(imageText: string, count: number) {
 
       const images = await apiAsync.prodia.createImage.query({
         ...(!!prodiaKey && { prodiaKey }),
-        prodiaModel: prodiaModelId || 'Realistic_Vision_V5.0.safetensors [614d1063]', // data versioning fix
+        prodiaModel: prodiaModelId || 'sd_xl_base_1.0.safetensors [be9edd61]', // was: Realistic_Vision_V5.0.safetensors [614d1063]
         prodiaGen: prodiaModelGen || 'sd', // data versioning fix
         prompt: imageText,
         ...(!!negativePrompt && { negativePrompt }),
