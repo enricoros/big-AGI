@@ -1,22 +1,16 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItemButton, ListItemDecorator } from '@mui/joy';
-import CallIcon from '@mui/icons-material/Call';
-
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PageBarDropdown } from '~/common/layout/optima/components/PageBarDropdown';
-import { launchAppCall } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 function AppBarPersonaDropdown(props: {
   systemPurposeId: SystemPurposeId | null,
   setSystemPurposeId: (systemPurposeId: SystemPurposeId | null) => void,
-  onCall?: () => void,
 }) {
 
   // external state
@@ -29,23 +23,13 @@ function AppBarPersonaDropdown(props: {
 
   // options
 
-  let appendOption: React.JSX.Element | undefined = undefined;
-
-  if (props.onCall) {
-    const enableCallOption = !!props.systemPurposeId;
-    appendOption = (
-      <ListItemButton color='primary' disabled={!enableCallOption} key='menu-call-persona' onClick={props.onCall} sx={{ minWidth: 160 }}>
-        <ListItemDecorator><CallIcon color={enableCallOption ? 'primary' : 'warning'} /></ListItemDecorator>
-        Call&nbsp; {!!props.systemPurposeId && SystemPurposes[props.systemPurposeId]?.symbol}
-      </ListItemButton>
-    );
-  }
+  // let appendOption: React.JSX.Element | undefined = undefined;
 
   return (
     <PageBarDropdown
       items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
       value={props.systemPurposeId} onChange={handleSystemPurposeChange}
-      appendOption={appendOption}
+      // appendOption={appendOption}
     />
   );
 
@@ -54,7 +38,6 @@ function AppBarPersonaDropdown(props: {
 export function usePersonaIdDropdown(conversationId: DConversationId | null) {
 
   // external state
-  const labsCalling = useUXLabsStore(state => state.labsCalling);
   const { systemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === conversationId);
     return {
@@ -69,12 +52,8 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null) {
           if (conversationId && systemPurposeId)
             useChatStore.getState().setSystemPurposeId(conversationId, systemPurposeId);
         }}
-        onCall={labsCalling ? () => {
-          if (conversationId && systemPurposeId)
-            launchAppCall(conversationId, systemPurposeId);
-        } : undefined}
       /> : null,
-    [conversationId, labsCalling, systemPurposeId],
+    [conversationId, systemPurposeId],
   );
 
   return { personaDropdown };
