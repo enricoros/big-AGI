@@ -1,11 +1,13 @@
 import * as React from 'react';
 
 import { useRouterQuery } from '~/common/app.routes';
-import { Box, Chip, IconButton, ListDivider, Typography } from '@mui/joy';
-
-import { niceShadowKeyframes } from '../call/Contacts';
+import { Box, Chip, IconButton, Typography } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+
+import { T2ISettings } from '~/modules/t2i/T2ISettings';
+
 import { AppPlaceholder } from '../AppPlaceholder';
+import { niceShadowKeyframes } from '../call/Contacts';
 
 
 export interface AppDrawIntent {
@@ -76,9 +78,9 @@ export function AppDraw() {
         </Box>
       </Box>
 
-      <ListDivider />
+      <T2ISettings />
 
-      <AppPlaceholder/>
+      <AppPlaceholder text='Drawing App is under development. v1.12 or v1.13.' />
 
     </Box>
   );
