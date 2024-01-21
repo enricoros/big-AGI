@@ -4,7 +4,6 @@ import { Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { PageDrawer } from './PageDrawer';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
@@ -12,7 +11,7 @@ import { useOptimaLayout } from './useOptimaLayout';
 export function MobileDrawer(props: { currentApp?: NavItemApp }) {
 
   // external state
-  const { appPaneContent } = useOptimaLayout();
+  const { appDrawerContent } = useOptimaLayout();
   const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
 
   return (
@@ -39,9 +38,7 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
       }}
     >
 
-      <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
-        {appPaneContent}
-      </PageDrawer>
+      {appDrawerContent}
 
     </Drawer>
   );

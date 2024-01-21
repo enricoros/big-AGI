@@ -13,7 +13,7 @@ type PC = React.JSX.Element | null;
 interface OptimaLayoutState {
 
   // pluggable UI
-  appPaneContent: PC;
+  appDrawerContent: PC;
   appBarItems: PC;
   appMenuItems: PC;
 
@@ -30,7 +30,7 @@ interface OptimaLayoutState {
 
 const initialState: OptimaLayoutState = {
 
-  appPaneContent: null,
+  appDrawerContent: null,
   appBarItems: null,
   appMenuItems: null,
 
@@ -45,7 +45,7 @@ const initialState: OptimaLayoutState = {
 
 interface OptimaLayoutActions {
   setPluggableComponents: (
-    appPaneContent: PC,
+    appDrawerContent: PC,
     appBarItems: PC,
     appMenuItems: PC,
   ) => void;
@@ -82,8 +82,8 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
   // actions
   const actions: OptimaLayoutActions = React.useMemo(() => ({
 
-    setPluggableComponents: (appPaneContent: PC, appBarItems: PC, appMenuItems: PC) =>
-      setState(state => ({ ...state, appPaneContent, appBarItems, appMenuItems })),
+    setPluggableComponents: (appDrawerContent: PC, appBarItems: PC, appMenuItems: PC) =>
+      setState(state => ({ ...state, appDrawerContent, appBarItems, appMenuItems })),
 
     openPreferencesTab: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),
@@ -133,18 +133,18 @@ export const useOptimaLayout = (): OptimaLayoutState & OptimaLayoutActions => {
 /**
  * used by the active UI client to register its components (and unregister on cleanup)
  */
-export const usePluggableOptimaLayout = (appPaneContent: PC, appBarItems: PC, appMenuItems: PC, debugCallerName: string) => {
+export const usePluggableOptimaLayout = (appDrawerContent: PC, appBarItems: PC, appMenuItems: PC, debugCallerName: string) => {
   const { setPluggableComponents } = useOptimaLayout();
 
   React.useEffect(() => {
     if (DEBUG_OPTIMA_LAYOUT_PLUGGING)
       console.log(' +PLUG layout', debugCallerName);
-    setPluggableComponents(appPaneContent, appBarItems, appMenuItems);
+    setPluggableComponents(appDrawerContent, appBarItems, appMenuItems);
 
     return () => {
       if (DEBUG_OPTIMA_LAYOUT_PLUGGING)
         console.log(' -UNplug layout', debugCallerName);
       setPluggableComponents(null, null, null);
     };
-  }, [appBarItems, appMenuItems, appPaneContent, debugCallerName, setPluggableComponents]);
+  }, [appBarItems, appMenuItems, appDrawerContent, debugCallerName, setPluggableComponents]);
 };

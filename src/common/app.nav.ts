@@ -49,6 +49,7 @@ export interface NavItemApp extends ItemBase {
   route: string,
   drawer?: string | true, // true: can make use of the drawer, string: also set the title
   hideBar?: boolean,      // set to true to hide the page bar
+  hideDrawer?: boolean,   // set to true to hide the drawer
   hideNav?: boolean,      // set to hide the Nav bar (note: must have a way to navigate back)
   automatic?: boolean,    // only accessible by the machine
   fullWidth?: boolean,    // set to true to override the user preference
