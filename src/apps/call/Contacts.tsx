@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Card, CardContent, CardOverflow, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
+import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
@@ -80,6 +80,7 @@ const ContactCardConversationCall = (props: { conversation: DConversation, onCon
 function CallContactCard(props: {
   persona: MockPersona,
   conversations: DConversation[],
+  invertedColors: boolean,
   setCallIntent: (intent: AppCallIntent) => void,
 }) {
 
@@ -168,30 +169,36 @@ function CallContactCard(props: {
         {/*<Divider />*/}
 
         {/* Bottom Name and "Call" Button */}
-        <CardOverflow
-          variant='soft' color='primary'
-          sx={{ py: 1 }}
+        <Sheet
+          variant='soft' color='primary' invertedColors={props.invertedColors ? undefined : true}
+          sx={{
+            // emulate CardOverflow, because CardOverflow doesn't work well with Sheet/Inverted
+            // (there's also a potential top-level inversion)
+            '--variant-borderWidth': '1px',
+            '--CardOverflow-offset': 'calc(-1 * var(--Card-padding))',
+            '--CardOverflow-radius': 'calc(var(--Card-radius) - var(--variant-borderWidth, 0px))',
+            margin: '0 var(--CardOverflow-offset) var(--CardOverflow-offset)',
+            borderRadius: '0 0 var(--CardOverflow-radius) var(--CardOverflow-radius)',
+            padding: '0.5rem var(--Card-padding)',
+
+            // contents
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 1,
+          }}
         >
-          <Sheet
-            variant='soft' color='primary' invertedColors
-            sx={{
-              display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'space-between',
-            }}
-          >
-            <Typography level='title-md'>
-              {persona.title}
-            </Typography>
-            <MuiLink overlay onClick={handleCallPersona}>
-              <IconButton size='md' variant='soft' sx={{
-                // borderRadius: '50%',
-                ml: 'auto',
-                mr: -1,
-              }}>
-                <CallIcon />
-              </IconButton>
-            </MuiLink>
-          </Sheet>
-        </CardOverflow>
+          <Typography level='title-md'>
+            {persona.title}
+          </Typography>
+          <MuiLink overlay onClick={handleCallPersona}>
+            <IconButton size='md' variant='soft' sx={{
+              // borderRadius: '50%',
+              ml: 'auto',
+              mr: -1,
+            }}>
+              <CallIcon />
+            </IconButton>
+          </MuiLink>
+        </Sheet>
 
       </Card>
 
@@ -222,7 +229,7 @@ function useConversationsByPersona() {
 }
 
 
-export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
+export function Contacts(props: { invertedColors: boolean, setCallIntent: (intent: AppCallIntent) => void, setInvertedColors: React.Dispatch<React.SetStateAction<boolean>> }) {
 
   // state
   const [hideConversations, setHideConversations] = React.useState(false);
@@ -235,11 +242,15 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   // pluggable UI
 
+  const { invertedColors, setInvertedColors } = props;
+
   const menuItems = React.useMemo(() => {
 
     const handleConversationsToggle = () => setHideConversations(on => !on);
 
     const handleSupportToggle = () => setHideSupport(on => !on);
+
+    const handleInverseColorsToggle = () => setInvertedColors(on => !on);
 
     return <>
 
@@ -253,8 +264,13 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
         <Switch checked={!hideSupport} sx={{ ml: 'auto' }} />
       </MenuItem>
 
+      <MenuItem onClick={handleInverseColorsToggle}>
+        Grayed UI
+        <Switch checked={invertedColors} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
     </>;
-  }, [hideConversations, hideSupport]);
+  }, [hideConversations, hideSupport, invertedColors, setInvertedColors]);
 
   usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
 
@@ -273,6 +289,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
           '--IconButton-size': { xs: '4.2rem', md: '5rem' },
           borderRadius: '50%',
           pointerEvents: 'none',
+          // backgroundColor: 'background.popup',
           animation: `${niceShadowKeyframes} 5s infinite`,
         }}>
         <CallIcon />
@@ -310,6 +327,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
           key={persona.personaId}
           persona={persona}
           conversations={hideConversations ? [] : conversationsByPersona[persona.personaId] || []}
+          invertedColors={invertedColors}
           setCallIntent={props.setCallIntent}
         />,
       )}
@@ -320,6 +338,10 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
     {!hideSupport && <GitHubProjectIssueCard
       issue={354}
       text='Call App: Support thread and compatibility matrix'
+      note={<>
+        Voice input uses the HTML Web Speech API, and speech output requires an ElevenLabs API Key.
+      </>}
+      // note2='Please report any issues you encounter'
       sx={{
         width: '100%',
         mb: 2,

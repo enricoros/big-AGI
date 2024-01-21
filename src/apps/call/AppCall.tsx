@@ -10,10 +10,6 @@ import { Contacts } from './Contacts';
 import { Telephone } from './Telephone';
 
 
-// set to false to try out non-iverted colors
-const DEFAULT_INVERT_COLORS = false;
-
-
 /**
  * Used to define the intent of the call from other apps (via query params) or
  * from the contacts list (via the 'call' button).
@@ -29,6 +25,7 @@ export function AppCall() {
 
   // state
   const [callIntent, setCallIntent] = React.useState<AppCallIntent | null>(null);
+  const [invertedColors, setInvertedColors] = React.useState<boolean>(false);
 
   // external state
   const query = useRouterQuery<Partial<AppCallIntent>>();
@@ -50,8 +47,8 @@ export function AppCall() {
 
   return (
     <Sheet
-      variant={DEFAULT_INVERT_COLORS ? 'solid' : 'soft'}
-      invertedColors={DEFAULT_INVERT_COLORS /* even in 'soft', =true makes icons look prettier */}
+      variant={invertedColors ? 'solid' : 'soft'}
+      invertedColors={invertedColors}
       sx={{
         // take the full V-area (we're inside PageWrapper) and scroll as needed
         flexGrow: 1,
@@ -70,7 +67,11 @@ export function AppCall() {
         }}>
 
         {!hasIntent ? (
-          <Contacts setCallIntent={setCallIntent} />
+          <Contacts
+            invertedColors={invertedColors}
+            setCallIntent={setCallIntent}
+            setInvertedColors={setInvertedColors}
+          />
         ) : (
           <CallWizard conversationId={callIntent.conversationId}>
             <Telephone callIntent={callIntent} backToContacts={() => setCallIntent(null)} />
