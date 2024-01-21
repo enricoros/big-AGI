@@ -27,7 +27,7 @@ export function MobileNavListItem(props: { currentApp?: NavItemApp }) {
           gap: 1,
         }}
       >
-        {navItems.apps.filter(app => ['Chat', 'Personas', 'News'].includes(app.name)).map(app =>
+        {navItems.apps.filter(app => !app.hideOnMobile && !app.hideNav).map(app =>
           <Button
             key={'app-' + app.name}
             disabled={!!app.automatic}

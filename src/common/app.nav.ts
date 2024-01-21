@@ -47,13 +47,14 @@ interface ItemBase {
 export interface NavItemApp extends ItemBase {
   type: 'app',
   route: string,
-  drawer?: string | true, // true: can make use of the drawer, string: also set the title
+  barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
   hideBar?: boolean,      // set to true to hide the page bar
   hideDrawer?: boolean,   // set to true to hide the drawer
   hideNav?: boolean,      // set to hide the Nav bar (note: must have a way to navigate back)
+  hideOnMobile?: boolean, // set to true to hide on mobile
   automatic?: boolean,    // only accessible by the machine
   fullWidth?: boolean,    // set to true to override the user preference
-  hide?: boolean,         // delete from the UI
+  _delete?: boolean,      // delete from the UI
 }
 
 export interface NavItemModal extends ItemBase {
@@ -73,8 +74,8 @@ export interface NavItemExtLink extends ItemBase {
 
 
 export const navItems: {
-  apps: NavItemApp[]
-  modals: NavItemModal[]
+  apps: NavItemApp[],
+  modals: NavItemModal[],
   links: NavItemExtLink[],
 } = {
 
@@ -86,15 +87,15 @@ export const navItems: {
       iconActive: TextsmsIcon,
       type: 'app',
       route: '/',
-      drawer: true,
     },
     {
       name: 'Call',
+      barTitle: 'Voice Calls',
       icon: CallOutlinedIcon,
       iconActive: CallIcon,
       type: 'app',
       route: '/call',
-      // drawer: 'Recent Calls',
+      hideDrawer: true,
       fullWidth: true,
     },
     {
@@ -103,7 +104,8 @@ export const navItems: {
       iconActive: FormatPaintIcon,
       type: 'app',
       route: '/draw',
-      hide: true,
+      hideDrawer: true,
+      _delete: true,
     },
     {
       name: 'Cortex',
@@ -111,7 +113,7 @@ export const navItems: {
       iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
-      hide: true,
+      _delete: true,
     },
     {
       name: 'Patterns',
@@ -119,7 +121,7 @@ export const navItems: {
       iconActive: AccountTreeIcon,
       type: 'app',
       route: '/patterns',
-      hide: true,
+      _delete: true,
     },
     {
       name: 'Workspace',
@@ -127,7 +129,7 @@ export const navItems: {
       iconActive: WorkspacesIcon,
       type: 'app',
       route: '/workspace',
-      hide: true,
+      _delete: true,
     },
     {
       name: 'Personas',
@@ -135,7 +137,6 @@ export const navItems: {
       iconActive: Diversity2Icon,
       type: 'app',
       route: '/personas',
-      drawer: true,
       hideBar: true,
     },
     {
@@ -145,6 +146,7 @@ export const navItems: {
       type: 'app',
       route: '/news',
       hideBar: true,
+      hideDrawer: true,
     },
 
     // non-user-selectable ('automatic') Apps
@@ -155,13 +157,13 @@ export const navItems: {
       route: '/media',
       automatic: true,
       hideNav: true,
+      _delete: true,
     },
     {
       name: 'Shared Chat',
       icon: IosShareIcon,
       type: 'app',
       route: '/link/chat/[chatLinkId]',
-      drawer: 'Shared Chats',
       automatic: true,
       hideNav: true,
     },
@@ -208,4 +210,4 @@ export const navItems: {
 };
 
 // apply UI filtering right away - do it here, once, and for all
-navItems.apps = navItems.apps.filter(app => !app.hide || SHOW_ALL_APPS);
+navItems.apps = navItems.apps.filter(app => !app._delete || SHOW_ALL_APPS);

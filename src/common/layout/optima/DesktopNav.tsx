@@ -47,7 +47,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
   // App items
   const navAppItems = React.useMemo(() => {
-    return navItems.apps.filter(app => !app.hideNav /* .automatic */).map(item => {
+    return navItems.apps.filter(app => !app.hideNav).map(item => {
       const isActive = item === props.currentApp;
       const isDrawerable = isActive && !item.hideDrawer;
       const isPaneOpen = isDrawerable && isDrawerOpen;

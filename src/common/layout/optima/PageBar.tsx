@@ -22,24 +22,20 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-function PageBarItemsFallback() {
-  return (
+const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
+  <Box sx={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: { xs: 1, md: 2 },
+  }}>
     <Link href={ROUTE_INDEX}>
-      <AgiSquircleIcon inverted sx={{
-        width: 32,
-        height: 32,
-        color: 'white',
-      }} />
-      <Typography sx={{
-        ml: { xs: 1, md: 2 },
-        color: 'white',
-        textDecoration: 'none',
-      }}>
-        {Brand.Title.Base}
-      </Typography>
+      <AgiSquircleIcon inverted sx={{ width: 32, height: 32, color: 'white' }} />
     </Link>
-  );
-}
+
+    <Typography level='title-md'>
+      {props.currentApp?.barTitle || props.currentApp?.name || Brand.Title.Base}
+    </Typography>
+  </Box>;
 
 
 function CommonMenuItems(props: { onClose: () => void }) {
@@ -100,7 +96,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
   // external state
   const {
-    appBarItems, appPaneContent, appMenuItems,
+    appBarItems, appDrawerContent, appMenuItems,
   } = useOptimaLayout();
   const {
     openDrawer,
@@ -132,12 +128,12 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
       {(!!props.isMobile || props.currentApp?.hideNav) && (
         <InvertedBarCornerItem>
 
-          {(!appPaneContent || props.currentApp?.hideNav) ? (
+          {(!appDrawerContent || props.currentApp?.hideNav) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={!appPaneContent} onClick={openDrawer}>
+            <IconButton disabled={!appDrawerContent} onClick={openDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -152,7 +148,10 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
       }}>
-        {desktopHide ? null : !!appBarItems ? appBarItems : <PageBarItemsFallback />}
+        {appBarItems
+          ? appBarItems
+          : <PageBarItemsFallback currentApp={props.currentApp} />
+        }
       </Box>
 
       {/* Page Menu Anchor */}
