@@ -37,8 +37,8 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
 
   // show/hide the pane when clicking on the logo
-  const appUsesPane = !!props.currentApp?.drawer;
-  const logoButtonTogglesPane = (appUsesPane && !isDrawerOpen) || isDrawerOpen;
+  const appUsesDrawer = !props.currentApp?.hideDrawer;
+  const logoButtonTogglesPane = (appUsesDrawer && !isDrawerOpen) || isDrawerOpen;
   const handleLogoButtonClick = React.useCallback(() => {
     if (logoButtonTogglesPane)
       toggleDrawer();
@@ -49,15 +49,15 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
   const navAppItems = React.useMemo(() => {
     return navItems.apps.filter(app => !app.hideNav /* .automatic */).map(item => {
       const isActive = item === props.currentApp;
-      const isPanelable = isActive && !!item.drawer;
-      const isPaneOpen = isPanelable && isDrawerOpen;
+      const isDrawerable = isActive && !item.hideDrawer;
+      const isPaneOpen = isDrawerable && isDrawerOpen;
       const isNotForUser = !!item.automatic && !isActive;
       return (
         <Tooltip disableInteractive enterDelay={600} key={'n-m-' + item.route.slice(1)} title={item.name}>
           <DesktopNavIcon
             disabled={isNotForUser}
             variant={isActive ? 'soft' : undefined}
-            onClick={isPanelable ? toggleDrawer : () => Router.push(item.route)}
+            onClick={isDrawerable ? toggleDrawer : () => Router.push(item.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
           >
             {(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}

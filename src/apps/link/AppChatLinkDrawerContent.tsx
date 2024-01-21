@@ -8,9 +8,10 @@ import { useChatLinkItems } from '~/modules/trade/store-module-trade';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
+import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
+import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 import { getChatLinkRelativePath, ROUTE_INDEX } from '~/common/app.routes';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
-import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 
 
 /**
@@ -20,53 +21,62 @@ import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList
 export function AppChatLinkDrawerContent() {
 
   // external state
-  const { closeDrawerOnMobile } = useOptimaDrawers();
+  const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const chatLinkItems = useChatLinkItems()
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const notEmpty = chatLinkItems.length > 0;
 
-  return <PageDrawerList>
+  return <>
 
-    {notEmpty && (
-      <ListItemButton
-        onClick={closeDrawerOnMobile}
-        component={Link} href={ROUTE_INDEX} noLinkStyle
-      >
-        <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
-        {Brand.Title.Base}
-      </ListItemButton>
-    )}
+    <PageDrawerHeader
+      title='Your Shared Links'
+      onClose={closeDrawer}
+    />
 
-    {notEmpty && <ListDivider />}
+    <PageDrawerList>
 
-    <ListItem>
-      <Typography level='body-sm'>
-        {notEmpty ? 'Links shared by you' : 'No prior shared links'}
-      </Typography>
-    </ListItem>
-
-    {notEmpty && <Box sx={{ overflowY: 'auto' }}>
-      {chatLinkItems.map(item => (
-
+      {notEmpty && (
         <ListItemButton
-          key={'chat-link-' + item.objectId}
-          component={Link} href={getChatLinkRelativePath(item.objectId)} noLinkStyle
-          sx={{
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'flex-start',
-          }}
+          onClick={closeDrawerOnMobile}
+          component={Link} href={ROUTE_INDEX} noLinkStyle
         >
-          <Typography level='title-sm'>
-            {item.chatTitle || 'Untitled Chat'}
-          </Typography>
-          <Typography level='body-xs'>
-            <TimeAgo date={item.createdAt} />
-          </Typography>
+          <ListItemDecorator><ArrowBackIcon /></ListItemDecorator>
+          {Brand.Title.Base}
         </ListItemButton>
+      )}
 
-      ))}
-    </Box>}
-  </PageDrawerList>;
+      {notEmpty && <ListDivider />}
+
+      <ListItem>
+        <Typography level='body-sm'>
+          {notEmpty ? 'Links shared by you' : 'No prior shared links'}
+        </Typography>
+      </ListItem>
+
+      {notEmpty && <Box sx={{ overflowY: 'auto' }}>
+        {chatLinkItems.map(item => (
+
+          <ListItemButton
+            key={'chat-link-' + item.objectId}
+            component={Link} href={getChatLinkRelativePath(item.objectId)} noLinkStyle
+            sx={{
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'flex-start',
+            }}
+          >
+            <Typography level='title-sm'>
+              {item.chatTitle || 'Untitled Chat'}
+            </Typography>
+            <Typography level='body-xs'>
+              <TimeAgo date={item.createdAt} />
+            </Typography>
+          </ListItemButton>
+
+        ))}
+      </Box>}
+    </PageDrawerList>
+
+  </>;
 
 }
