@@ -3,11 +3,12 @@ import { shallow } from 'zustand/shallow';
 import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Card, CardContent, CardOverflow, Chip, IconButton, Link as MuiLink, ListDivider, Sheet, Typography } from '@mui/joy';
+import { Avatar, Box, Card, CardContent, CardOverflow, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
 import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import type { AppCallIntent } from './AppCall';
 import { MockPersona, useMockPersonas } from './useMockPersonas';
@@ -223,9 +224,40 @@ function useConversationsByPersona() {
 
 export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
 
+  // state
+  const [hideConversations, setHideConversations] = React.useState(false);
+  const [hideSupport, setHideSupport] = React.useState(false);
+
   // external state
   const { personas } = useMockPersonas();
   const conversationsByPersona = useConversationsByPersona();
+
+
+  // pluggable UI
+
+  const menuItems = React.useMemo(() => {
+
+    const handleConversationsToggle = () => setHideConversations(on => !on);
+
+    const handleSupportToggle = () => setHideSupport(on => !on);
+
+    return <>
+
+      <MenuItem onClick={handleConversationsToggle}>
+        Conversations
+        <Switch checked={!hideConversations} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+      <MenuItem onClick={handleSupportToggle}>
+        Support
+        <Switch checked={!hideSupport} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+    </>;
+  }, [hideConversations, hideSupport]);
+
+  usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
+
 
   return <>
 
@@ -277,15 +309,15 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
         <CallContactCard
           key={persona.personaId}
           persona={persona}
-          conversations={conversationsByPersona[persona.personaId] || []}
+          conversations={hideConversations ? [] : conversationsByPersona[persona.personaId] || []}
           setCallIntent={props.setCallIntent}
         />,
       )}
     </Box>
 
-    <ListDivider sx={{ my: 1 }} />
+    {!hideSupport && <ListDivider sx={{ my: 1 }} />}
 
-    <GitHubProjectIssueCard
+    {!hideSupport && <GitHubProjectIssueCard
       issue={354}
       text='Call App: Support thread and compatibility matrix'
       sx={{
@@ -293,7 +325,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
         mb: 2,
         mt: 5,
       }}
-    />
+    />}
 
   </>;
 }
