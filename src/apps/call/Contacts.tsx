@@ -11,7 +11,8 @@ import { conversationTitle, DConversation, DConversationId, useChatStore } from 
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import type { AppCallIntent } from './AppCall';
-import { MockPersona, useMockPersonas } from './useMockPersonas';
+import { MockPersona, useMockPersonas } from './state/useMockPersonas';
+import { useCallToggleGrayUI } from './state/store-app-call';
 
 
 // number of conversations to show before collapsing
@@ -79,8 +80,8 @@ const ContactCardConversationCall = (props: { conversation: DConversation, onCon
 
 function CallContactCard(props: {
   persona: MockPersona,
+  callGrayUI: boolean,
   conversations: DConversation[],
-  invertedColors: boolean,
   setCallIntent: (intent: AppCallIntent) => void,
 }) {
 
@@ -170,7 +171,8 @@ function CallContactCard(props: {
 
         {/* Bottom Name and "Call" Button */}
         <Sheet
-          variant='soft' color='primary' invertedColors={props.invertedColors ? undefined : true}
+          variant='soft' color='primary'
+          invertedColors={props.callGrayUI ? undefined : true}
           sx={{
             // emulate CardOverflow, because CardOverflow doesn't work well with Sheet/Inverted
             // (there's also a potential top-level inversion)
@@ -229,7 +231,7 @@ function useConversationsByPersona() {
 }
 
 
-export function Contacts(props: { invertedColors: boolean, setCallIntent: (intent: AppCallIntent) => void, setInvertedColors: React.Dispatch<React.SetStateAction<boolean>> }) {
+export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
 
   // state
   const [hideConversations, setHideConversations] = React.useState(false);
@@ -237,20 +239,17 @@ export function Contacts(props: { invertedColors: boolean, setCallIntent: (inten
 
   // external state
   const { personas } = useMockPersonas();
+  const { callGrayUI, callToggleGrayUI } = useCallToggleGrayUI();
   const conversationsByPersona = useConversationsByPersona();
 
 
   // pluggable UI
-
-  const { invertedColors, setInvertedColors } = props;
 
   const menuItems = React.useMemo(() => {
 
     const handleConversationsToggle = () => setHideConversations(on => !on);
 
     const handleSupportToggle = () => setHideSupport(on => !on);
-
-    const handleInverseColorsToggle = () => setInvertedColors(on => !on);
 
     return <>
 
@@ -264,13 +263,13 @@ export function Contacts(props: { invertedColors: boolean, setCallIntent: (inten
         <Switch checked={!hideSupport} sx={{ ml: 'auto' }} />
       </MenuItem>
 
-      <MenuItem onClick={handleInverseColorsToggle}>
+      <MenuItem onClick={callToggleGrayUI}>
         Grayed UI
-        <Switch checked={invertedColors} sx={{ ml: 'auto' }} />
+        <Switch checked={callGrayUI} sx={{ ml: 'auto' }} />
       </MenuItem>
 
     </>;
-  }, [hideConversations, hideSupport, invertedColors, setInvertedColors]);
+  }, [callGrayUI, callToggleGrayUI, hideConversations, hideSupport]);
 
   usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
 
@@ -326,8 +325,8 @@ export function Contacts(props: { invertedColors: boolean, setCallIntent: (inten
         <CallContactCard
           key={persona.personaId}
           persona={persona}
+          callGrayUI={callGrayUI}
           conversations={hideConversations ? [] : conversationsByPersona[persona.personaId] || []}
-          invertedColors={invertedColors}
           setCallIntent={props.setCallIntent}
         />,
       )}

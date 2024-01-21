@@ -8,6 +8,7 @@ import { useRouterQuery } from '~/common/app.routes';
 import { CallWizard } from './CallWizard';
 import { Contacts } from './Contacts';
 import { Telephone } from './Telephone';
+import { useCallToggleGrayUI } from './state/store-app-call';
 
 
 /**
@@ -25,9 +26,9 @@ export function AppCall() {
 
   // state
   const [callIntent, setCallIntent] = React.useState<AppCallIntent | null>(null);
-  const [invertedColors, setInvertedColors] = React.useState<boolean>(false);
 
   // external state
+  const { callGrayUI } = useCallToggleGrayUI();
   const query = useRouterQuery<Partial<AppCallIntent>>();
 
 
@@ -47,8 +48,8 @@ export function AppCall() {
 
   return (
     <Sheet
-      variant={invertedColors ? 'solid' : 'soft'}
-      invertedColors={invertedColors}
+      variant={callGrayUI ? 'solid' : 'soft'}
+      invertedColors={callGrayUI}
       sx={{
         // take the full V-area (we're inside PageWrapper) and scroll as needed
         flexGrow: 1,
@@ -67,11 +68,7 @@ export function AppCall() {
         }}>
 
         {!hasIntent ? (
-          <Contacts
-            invertedColors={invertedColors}
-            setCallIntent={setCallIntent}
-            setInvertedColors={setInvertedColors}
-          />
+          <Contacts setCallIntent={setCallIntent} />
         ) : (
           <CallWizard conversationId={callIntent.conversationId}>
             <Telephone callIntent={callIntent} backToContacts={() => setCallIntent(null)} />
