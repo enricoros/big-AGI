@@ -27,5 +27,5 @@ export function useMockPersonas(): { personas: MockPersona[], personaIDs: System
         personaId: key as SystemPurposeId,
       }));
     return { personas, personaIDs };
-  }, []);
+  }, [hiddenPurposeIDs]);
 }
