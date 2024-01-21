@@ -36,7 +36,7 @@ export function FromText(props: {
         required
         variant='outlined'
         minRows={4} maxRows={8}
-        placeholder='Paste your text here...'
+        placeholder='Paste your text (e.g. tweets, social media, etc.) here...'
         value={text}
         onChange={event => setText(event.target.value)}
         sx={{
