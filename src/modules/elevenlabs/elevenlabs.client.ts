@@ -54,12 +54,18 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
   const { preferredLanguage } = useUIPreferencesStore.getState();
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
-  const edgeResponse = await fetchApiElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
+  try {
+    const edgeResponse = await fetchApiElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
 
-  // if (!liveAudioPlayer)
-  const liveAudioPlayer = new AudioLivePlayer();
-  // fire/forget
-  void liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse);
+    // if (!liveAudioPlayer)
+    const liveAudioPlayer = new AudioLivePlayer();
+    // fire/forget
+    void liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse);
+
+  } catch (error) {
+    // has happened once in months of testing, not sure what was the cause
+    console.error('EXPERIMENTAL_speakTextStream:', error);
+  }
 }
 
 
