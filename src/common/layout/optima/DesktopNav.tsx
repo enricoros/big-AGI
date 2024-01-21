@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Router from 'next/router';
 
-import { Tooltip } from '@mui/joy';
+import { Divider, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
@@ -56,17 +56,18 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
         <Tooltip disableInteractive enterDelay={600} key={'n-m-' + item.route.slice(1)} title={item.name}>
           <DesktopNavIcon
             disabled={isNotForUser}
-            variant={isActive ? 'soft' : undefined}
+            variant={isActive ? 'solid' : undefined}
             onClick={isDrawerable ? toggleDrawer : () => Router.push(item.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
           >
-            {(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}
+            {/*{(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}*/}
+            <item.icon />
           </DesktopNavIcon>
         </Tooltip>
       );
-    });
-    // (disabled) add this code after the map to add a divider
-    //.toSpliced(-1, 0, <Divider sx={{ my: 1, width: '50%', mx: 'auto' }} />);
+    })
+      // (disabled) add this code after the map to add a divider
+      .toSpliced(-2, 0, <Divider sx={{ my: 1, width: '50%', mx: 'auto' }} />);
   }, [props.currentApp, isDrawerOpen, toggleDrawer]);
 
 
