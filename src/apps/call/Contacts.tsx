@@ -6,6 +6,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, Card, CardContent, CardOverflow, Chip, IconButton, Link as MuiLink, ListDivider, Sheet, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
+import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
 import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
 
 import type { AppCallIntent } from './AppCall';
@@ -230,7 +231,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
     {/* Header "Call AGI" */}
     <Box sx={{
-      my: { xs: 3, md: 6 },
+      my: 6,
       display: 'flex', alignItems: 'center',
       gap: 3,
     }}>
@@ -246,7 +247,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
       </IconButton>
 
       <Box>
-        <Typography level='h4'>
+        <Typography level='title-lg'>
           Call AGI
         </Typography>
         <Typography level='title-sm' sx={{ mt: 1 }}>
@@ -266,7 +267,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
     <Box
       sx={{
         width: '100%',
-        my: { xs: 3, md: 6 },
+        my: 5,
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
         gap: { xs: 1, md: 2 },
@@ -281,6 +282,18 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
         />,
       )}
     </Box>
+
+    <ListDivider sx={{ my: 1 }} />
+
+    <GitHubProjectIssueCard
+      issue={354}
+      text='Call App: Support thread and compatibility matrix'
+      sx={{
+        width: '100%',
+        mb: 2,
+        mt: 5,
+      }}
+    />
 
   </>;
 }
