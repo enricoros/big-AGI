@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { Box, Card, ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
-import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
@@ -29,6 +28,7 @@ import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
+import { useAppCallStore } from './state/store-app-call';
 
 
 function CallMenuItems(props: {
@@ -39,6 +39,7 @@ function CallMenuItems(props: {
 }) {
 
   // external state
+  const { grayUI, toggleGrayUI } = useAppCallStore();
   const { voicesDropdown } = useElevenLabsVoiceDropdown(false, !props.override);
 
   const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
@@ -64,8 +65,14 @@ function CallMenuItems(props: {
       {voicesDropdown}
     </MenuItem>
 
+    <ListDivider />
+
+    <MenuItem onClick={toggleGrayUI}>
+      Grayed UI
+      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
+    </MenuItem>
+
     <MenuItem component={Link} href='https://github.com/enricoros/big-agi/issues/175' target='_blank'>
-      <ListItemDecorator><ChatOutlinedIcon /></ListItemDecorator>
       Voice Calls Feedback
     </MenuItem>
 

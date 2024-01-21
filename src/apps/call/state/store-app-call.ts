@@ -1,29 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
 
 
 // Call settings
 
 interface AppCallStore {
+
   grayUI: boolean;
   toggleGrayUI: () => void;
+
+  showConversations: boolean;
+  toggleShowConversations: () => void;
+
+  showSupport: boolean;
+  toggleShowSupport: () => void;
+
 }
 
-const useAppCallStore = create<AppCallStore>()(persist(
+export const useAppCallStore = create<AppCallStore>()(persist(
   (_set, _get) => ({
 
     grayUI: false,
     toggleGrayUI: () => _set(state => ({ grayUI: !state.grayUI })),
 
+    showConversations: true,
+    toggleShowConversations: () => _set(state => ({ showConversations: !state.showConversations })),
+
+    showSupport: true,
+    toggleShowSupport: () => _set(state => ({ showSupport: !state.showSupport })),
+
   }), {
     name: 'app-app-call',
   },
 ));
-
-
-export const useCallToggleGrayUI = () =>
-  useAppCallStore(state => ({
-    callGrayUI: state.grayUI,
-    callToggleGrayUI: () => state.toggleGrayUI(),
-  }), shallow);
