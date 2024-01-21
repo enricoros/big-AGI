@@ -5,6 +5,7 @@ import { Box, Chip, IconButton, ListDivider, Typography } from '@mui/joy';
 
 import { niceShadowKeyframes } from '../call/Contacts';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import { AppPlaceholder } from '../AppPlaceholder';
 
 
 export interface AppDrawIntent {
@@ -77,6 +78,7 @@ export function AppDraw() {
 
       <ListDivider />
 
+      <AppPlaceholder/>
 
     </Box>
   );
