@@ -281,7 +281,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
           '--IconButton-size': { xs: '4.2rem', md: '5rem' },
           borderRadius: '50%',
           pointerEvents: 'none',
-          // backgroundColor: 'background.popup',
+          backgroundColor: 'background.popup',
           animation: `${niceShadowKeyframes} 5s infinite`,
         }}>
         <CallIcon />

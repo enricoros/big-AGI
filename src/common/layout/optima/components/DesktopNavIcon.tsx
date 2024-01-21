@@ -53,9 +53,13 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
   },
 
   [`&.${navItemClasses.typeApp}:hover`]: {
-    backgroundColor: theme.palette.neutral.softHoverBg,
+    backgroundColor: 'var(--variant-solidHoverBg)',
+    // backgroundColor: theme.palette.neutral.softHoverBg,
     color: theme.palette.neutral.softColor,
   },
+
+  // app active (non hover)
+  // [`&.${navItemClasses.typeApp}.${navItemClasses.active}`]: {},
 
   // pane open: show a connected half
   [`&.${navItemClasses.paneOpen}`]: {
