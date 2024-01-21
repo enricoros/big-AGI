@@ -100,12 +100,12 @@ export const navItems: {
     },
     {
       name: 'Draw',
+      barTitle: 'Generate Images',
       icon: FormatPaintOutlinedIcon,
       iconActive: FormatPaintIcon,
       type: 'app',
       route: '/draw',
       hideDrawer: true,
-      _delete: true,
     },
     {
       name: 'Cortex',
