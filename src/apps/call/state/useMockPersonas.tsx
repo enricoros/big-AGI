@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../data';
+import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../data';
 
 
 /**
