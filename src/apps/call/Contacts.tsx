@@ -12,7 +12,7 @@ import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout
 
 import type { AppCallIntent } from './AppCall';
 import { MockPersona, useMockPersonas } from './state/useMockPersonas';
-import { useCallToggleGrayUI } from './state/store-app-call';
+import { useAppCallStore } from './state/store-app-call';
 
 
 // number of conversations to show before collapsing
@@ -233,43 +233,36 @@ function useConversationsByPersona() {
 
 export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
 
-  // state
-  const [hideConversations, setHideConversations] = React.useState(false);
-  const [hideSupport, setHideSupport] = React.useState(false);
-
   // external state
+  const {
+    grayUI, toggleGrayUI,
+    showConversations, toggleShowConversations,
+    showSupport, toggleShowSupport,
+  } = useAppCallStore();
   const { personas } = useMockPersonas();
-  const { callGrayUI, callToggleGrayUI } = useCallToggleGrayUI();
   const conversationsByPersona = useConversationsByPersona();
 
 
   // pluggable UI
 
-  const menuItems = React.useMemo(() => {
+  const menuItems = React.useMemo(() => <>
 
-    const handleConversationsToggle = () => setHideConversations(on => !on);
+    <MenuItem onClick={toggleShowConversations}>
+      Conversations
+      <Switch checked={showConversations} sx={{ ml: 'auto' }} />
+    </MenuItem>
 
-    const handleSupportToggle = () => setHideSupport(on => !on);
+    <MenuItem onClick={toggleShowSupport}>
+      Support
+      <Switch checked={showSupport} sx={{ ml: 'auto' }} />
+    </MenuItem>
 
-    return <>
+    <MenuItem onClick={toggleGrayUI}>
+      Grayed UI
+      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
+    </MenuItem>
 
-      <MenuItem onClick={handleConversationsToggle}>
-        Conversations
-        <Switch checked={!hideConversations} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem onClick={handleSupportToggle}>
-        Support
-        <Switch checked={!hideSupport} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-      <MenuItem onClick={callToggleGrayUI}>
-        Grayed UI
-        <Switch checked={callGrayUI} sx={{ ml: 'auto' }} />
-      </MenuItem>
-
-    </>;
-  }, [callGrayUI, callToggleGrayUI, hideConversations, hideSupport]);
+  </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
   usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
 
@@ -325,16 +318,16 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
         <CallContactCard
           key={persona.personaId}
           persona={persona}
-          callGrayUI={callGrayUI}
-          conversations={hideConversations ? [] : conversationsByPersona[persona.personaId] || []}
+          callGrayUI={grayUI}
+          conversations={!showConversations ? [] : conversationsByPersona[persona.personaId] || []}
           setCallIntent={props.setCallIntent}
         />,
       )}
     </Box>
 
-    {!hideSupport && <ListDivider sx={{ my: 1 }} />}
+    {showSupport && <ListDivider sx={{ my: 1 }} />}
 
-    {!hideSupport && <GitHubProjectIssueCard
+    {showSupport && <GitHubProjectIssueCard
       issue={354}
       text='Call App: Support thread and compatibility matrix'
       note={<>
