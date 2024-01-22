@@ -20,7 +20,7 @@ import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
 import type { StorageDeleteSchema, StoragePutSchema } from '../server/link';
-import { removeChatLinkItem } from '../store-module-trade';
+import { removeChatLinkItem } from './store-chatlink';
 
 
 export function ChatLinkDetails(props: { onClose: () => void, storageItem: StoragePutSchema, open: boolean }) {
