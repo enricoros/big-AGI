@@ -23,7 +23,7 @@ import { DEFAULT_PRODIA_RESOLUTION, HARDCODED_PRODIA_RESOLUTIONS, useProdiaStore
 const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 36;
 
 
-export function ProdiaSettings() {
+export function ProdiaSettings(props: { noSkipKey?: boolean }) {
 
   // state
   const advanced = useToggleableBoolean();
@@ -78,7 +78,7 @@ export function ProdiaSettings() {
 
   return <>
 
-    {!backendHasProdia && <FormInputKey
+    {!backendHasProdia && !!props.noSkipKey && <FormInputKey
       id='prodia-key' label='Prodia API Key'
       rightLabel={backendHasProdia ? '✔️ already set in server' : 'required'}
       value={apiKey} onChange={setApiKey}
