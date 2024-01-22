@@ -16,7 +16,7 @@ import { openAIImageModelsPricing } from './openaiGenerateImages';
 export function DallESettings() {
 
   // state
-  const advanced = useToggleableBoolean(true);
+  const advanced = useToggleableBoolean(false);
 
   // external state
   const { dalleModelId, setDalleModelId, dalleQuality, setDalleQuality, dalleSize, setDalleSize, dalleStyle, setDalleStyle, dalleNoRewrite, setDalleNoRewrite } = useDalleStore(state => ({
@@ -66,7 +66,7 @@ export function DallESettings() {
       value={isDallE3 ? dalleStyle : 'natural'} onChange={setDalleStyle}
     />}
 
-    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Resolution'
                       description={!hasResolution
                         ? 'Unsupported'
@@ -88,6 +88,13 @@ export function DallESettings() {
           </Option>,
         )}
       </Select>
+    </FormControl>
+
+    {isDallE3 && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Quality'
+                      description={isHD ? 'Detailed' : 'Default'} />
+      <Switch checked={isHD} onChange={handleDalleQualityChange}
+              startDecorator={isHD ? 'HD' : 'Standard'} />
     </FormControl>}
 
     {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
@@ -104,21 +111,14 @@ export function DallESettings() {
               startDecorator={dalleNoRewrite ? 'No' : 'Improve'} />
     </FormControl>}
 
-    {advanced.on && isDallE3 && <FormControl orientation='horizontal' disabled={!isDallE3} sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Quality'
-                      description={isHD ? 'Detailed' : 'Default'} />
-      <Switch checked={isHD} onChange={handleDalleQualityChange}
-              startDecorator={isHD ? 'HD' : 'Standard'} />
-    </FormControl>}
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Cost per Image'
                       description={<Link href='https://openai.com/pricing' target='_blank' noLinkStyle sx={{ textDecoration: 'none' }}>OpenAI Pricing </Link>} />
       <Typography>$ {costPerImage}</Typography>
-    </FormControl>
+    </FormControl>}
 
 
-    {/*<FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />*/}
+    <FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />
 
   </>;
 }
