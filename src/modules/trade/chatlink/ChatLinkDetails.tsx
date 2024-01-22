@@ -1,9 +1,11 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Button, Card, Input, Stack, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Card, IconButton, Input, Stack, Tooltip, Typography } from '@mui/joy';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DoneIcon from '@mui/icons-material/Done';
+import EditIcon from '@mui/icons-material/Edit';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LinkIcon from '@mui/icons-material/Link';
@@ -12,6 +14,7 @@ import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -23,12 +26,18 @@ import type { StorageDeleteSchema, StoragePutSchema } from '../server/link';
 import { forgetChatLinkItem } from './store-chatlink';
 
 
-export function ChatLinkDetails(props: { onClose: () => void, storageItem: StoragePutSchema, open: boolean }) {
+export function ChatLinkDetails(props: {
+  open: boolean,
+  onClose: () => void,
+  storageItem: StoragePutSchema,
+  onChangeDeletionKey: (deletionKey: string) => void,
+}) {
 
   // state
   const [opened, setOpened] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [native, setNative] = React.useState(false);
+  const [isEditingDeletionKey, setIsEditingDeletionKey] = React.useState(false);
   const [confirmDeletion, setConfirmDeletion] = React.useState(false);
   const [deletionResponse, setDeletionResponse] = React.useState<StorageDeleteSchema | null>(null);
 
@@ -45,6 +54,26 @@ export function ChatLinkDetails(props: { onClose: () => void, storageItem: Stora
   const { objectId, deletionKey, expiresAt } = props.storageItem;
   const relativeUrl = getChatLinkRelativePath(objectId);
   const fullUrl = getOriginUrl() + relativeUrl;
+
+
+  // Deletion Key Edit
+
+  const handleKeyEditBegin = () => setIsEditingDeletionKey(true);
+
+  const handleKeyEditCancel = () => setIsEditingDeletionKey(false);
+
+  const handleKeyEditChange = (text: string) => {
+    if (text) {
+      setIsEditingDeletionKey(false);
+      props.onChangeDeletionKey(text.trim());
+    }
+  };
+
+  // Deletion Key Copy
+
+  const handleKeyCopy = () => {
+    copyToClipboard(deletionKey, 'Link Deletion Key');
+  };
 
 
   const onOpen = () => setOpened(true);
@@ -138,7 +167,50 @@ export function ChatLinkDetails(props: { onClose: () => void, storageItem: Stora
           Deletion Key
         </Typography>
 
-        <Input readOnly variant='plain' value={deletionKey} sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {isEditingDeletionKey ? (
+            <InlineTextarea
+              invertedColors
+              initialText={deletionKey}
+              onEdit={handleKeyEditChange}
+              onCancel={handleKeyEditCancel}
+              sx={{
+                flexGrow: 1,
+                ml: -1.5, mr: -0.5,
+              }}
+            />
+          ) : (
+            <Input
+              readOnly
+              variant='plain'
+              value={deletionKey}
+              endDecorator={
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Tooltip title='Edit Deletion Key'>
+                    <IconButton
+                      variant='soft'
+                      color='primary'
+                      disabled={isEditingDeletionKey}
+                      onClick={handleKeyEditBegin}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <IconButton
+                    variant='soft'
+                    color='primary'
+                    disabled={isEditingDeletionKey}
+                    onClick={handleKeyCopy}
+                  >
+                    <ContentCopyIcon />
+                  </IconButton>
+                </Box>
+              }
+              sx={{ flexGrow: 1 }}
+            />
+          )}
+        </Box>
+
 
         <Typography level='body-sm'>
           IMPORTANT - <b>keep this key safe</b>, you will need it if you decide to delete the link at a later time,

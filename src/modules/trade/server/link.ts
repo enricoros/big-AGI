@@ -71,9 +71,22 @@ export const storageDeleteOutputSchema = z.object({
   error: z.string().optional(),
 });
 
+const storageUpdateDeletionKeyInputSchema = z.object({
+  objectId: z.string(),
+  ownerId: z.string().optional(),
+  formerKey: z.string(),
+  newKey: z.string(),
+});
+
+export const storageUpdateDeletionKeyOutputSchema = z.object({
+  type: z.enum(['success', 'error']),
+  error: z.string().optional(),
+});
+
 
 export type StoragePutSchema = z.infer<typeof storagePutOutputSchema>;
 export type StorageDeleteSchema = z.infer<typeof storageDeleteOutputSchema>;
+export type StorageUpdateDeletionKeySchema = z.infer<typeof storageUpdateDeletionKeyOutputSchema>;
 
 
 /// tRPC procedures
@@ -212,6 +225,36 @@ export const storageMarkAsDeletedProcedure =
         data: {
           isDeleted: true,
           deletedAt: new Date(),
+        },
+      });
+
+      const success = result.count === 1;
+
+      return {
+        type: success ? 'success' : 'error',
+        error: success ? undefined : 'Not found',
+      };
+    });
+
+
+/**
+ * Update the deletion Key of a public object by ID and deletion key
+ */
+export const storageUpdateDeletionKeyProcedure =
+  publicProcedure
+    .input(storageUpdateDeletionKeyInputSchema)
+    .output(storageUpdateDeletionKeyOutputSchema)
+    .mutation(async ({ input: { objectId, ownerId, formerKey, newKey } }) => {
+
+      const result = await db.linkStorage.updateMany({
+        where: {
+          id: objectId,
+          ownerId: ownerId || undefined,
+          deletionKey: formerKey,
+          isDeleted: false,
+        },
+        data: {
+          deletionKey: newKey,
         },
       });
 

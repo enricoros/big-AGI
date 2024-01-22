@@ -7,14 +7,15 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
-import type { StoragePutSchema } from '../server/link';
+import type { StoragePutSchema, StorageUpdateDeletionKeySchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
 import { conversationToJsonV1 } from '../trade.client';
-import { rememberChatLinkItem, useLinkStorageOwnerId } from './store-chatlink';
+import { rememberChatLinkItem, updateChatLinkDeletionKey, useLinkStorageOwnerId } from './store-chatlink';
 
 
 export function ChatLinkExport(props: {
@@ -70,6 +71,45 @@ export function ChatLinkExport(props: {
     setIsUploading(false);
   };
 
+  const handleChangeDeletionKey = async (newKey: string) => {
+    if (!linkPutResult || linkPutResult.type !== 'success') return;
+    const { objectId, deletionKey: formerKey } = linkPutResult;
+    if (!objectId || !formerKey || !newKey || formerKey === newKey) return;
+
+    // update it in the Storage
+    try {
+      const response: StorageUpdateDeletionKeySchema = await apiAsyncNode.trade.storageUpdateDeletionKey.mutate({
+        objectId,
+        formerKey,
+        newKey,
+      });
+      if (response.type === 'error') {
+        addSnackbar({
+          key: 'chatlink-deletion-key-update-error',
+          type: 'issue',
+          message: `Failed to update deletion key: ${response.error}`,
+        });
+        return;
+      }
+    } catch (error: any) {
+      addSnackbar({
+        key: 'chatlink-deletion-key-update-exception',
+        type: 'issue',
+        message: `Failed to update deletion key: ${error?.message ?? error?.toString() ?? 'unknown error'}`,
+      });
+      return;
+    }
+
+    // update it in the local storage
+    updateChatLinkDeletionKey(objectId, newKey);
+
+    // update it in the status
+    setLinkPutResult({
+      ...linkPutResult,
+      deletionKey: newKey,
+    });
+  };
+
   const handleCloseDetails = () => setLinkPutResult(null);
 
 
@@ -107,7 +147,12 @@ export function ChatLinkExport(props: {
 
     {/* [chat link] response */}
     {!!linkPutResult && (
-      <ChatLinkDetails open storageItem={linkPutResult} onClose={handleCloseDetails} />
+      <ChatLinkDetails
+        open
+        storageItem={linkPutResult}
+        onClose={handleCloseDetails}
+        onChangeDeletionKey={handleChangeDeletionKey}
+      />
     )}
 
   </>;
