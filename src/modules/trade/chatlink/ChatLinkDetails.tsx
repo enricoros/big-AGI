@@ -20,7 +20,7 @@ import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
 import type { StorageDeleteSchema, StoragePutSchema } from '../server/link';
-import { removeChatLinkItem } from './store-chatlink';
+import { forgetChatLinkItem } from './store-chatlink';
 
 
 export function ChatLinkDetails(props: { onClose: () => void, storageItem: StoragePutSchema, open: boolean }) {
@@ -64,7 +64,7 @@ export function ChatLinkDetails(props: { onClose: () => void, storageItem: Stora
     const result: StorageDeleteSchema = await apiAsyncNode.trade.storageDelete.mutate({ objectId, deletionKey });
     setDeletionResponse(result);
     if (result.type === 'success')
-      removeChatLinkItem(objectId);
+      forgetChatLinkItem(objectId);
     setConfirmDeletion(false);
   };
 
