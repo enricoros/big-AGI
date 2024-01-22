@@ -7,7 +7,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
-import { NavItemApp, navItems } from '~/common/app.nav';
+import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 
 import { BringTheLove } from './components/BringTheLove';
@@ -47,27 +47,29 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
   // App items
   const navAppItems = React.useMemo(() => {
-    return navItems.apps.filter(app => !app.hideNav).map(item => {
-      const isActive = item === props.currentApp;
-      const isDrawerable = isActive && !item.hideDrawer;
-      const isPaneOpen = isDrawerable && isDrawerOpen;
-      const isNotForUser = !!item.automatic && !isActive;
-      return (
-        <Tooltip disableInteractive enterDelay={600} key={'n-m-' + item.route.slice(1)} title={item.name}>
-          <DesktopNavIcon
-            disabled={isNotForUser}
-            variant={isActive ? 'solid' : undefined}
-            onClick={isDrawerable ? toggleDrawer : () => Router.push(item.route)}
-            className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
-          >
-            {/*{(isActive && item.iconActive) ? <item.iconActive /> : <item.icon />}*/}
-            <item.icon />
-          </DesktopNavIcon>
-        </Tooltip>
-      );
-    })
-      // (disabled) add this code after the map to add a divider
-      .toSpliced(-2, 0, <Divider sx={{ my: 1, width: '50%', mx: 'auto' }} />);
+    return navItems.apps
+      .filter(_app => checkVisibileIcon(_app, props.currentApp))
+      .map((app, appIdx) => {
+        const isActive = app === props.currentApp;
+        const isDrawerable = isActive && !app.hideDrawer;
+        const isPaneOpen = isDrawerable && isDrawerOpen;
+
+        if (checkDivider(app))
+          return <Divider key={'div-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
+
+        return (
+          <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name}>
+            <DesktopNavIcon
+              variant={isActive ? 'solid' : undefined}
+              onClick={isDrawerable ? toggleDrawer : () => Router.push(app.landingRoute || app.route)}
+              className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
+            >
+              {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
+              <app.icon />
+            </DesktopNavIcon>
+          </Tooltip>
+        );
+      });
   }, [props.currentApp, isDrawerOpen, toggleDrawer]);
 
 

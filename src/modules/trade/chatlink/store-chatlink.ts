@@ -64,3 +64,4 @@ export const useLinkStorageOwnerId = () =>
 export const rememberChatLinkItem = useTradeStore.getState().rememberChatLinkItem;
 export const forgetChatLinkItem = useTradeStore.getState().forgetChatLinkItem;
 export const updateChatLinkDeletionKey = useTradeStore.getState().updateChatLinkDeletionKey;
+export const hasNoChatLinkItems = () => !useTradeStore.getState().chatLinkItems.length;

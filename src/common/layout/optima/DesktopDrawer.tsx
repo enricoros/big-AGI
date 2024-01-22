@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Sheet, styled } from '@mui/joy';
 
-import type { NavItemApp } from '~/common/app.nav';
+import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
@@ -81,7 +81,7 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
   }, [closeDrawer, currentAppUsesDrawer]);
 
   // [special case] remove in the future
-  const shallOpenNavForSharedLink = !props.currentApp?.hideDrawer && !!props.currentApp?.hideNav;
+  const shallOpenNavForSharedLink = !props.currentApp?.hideDrawer && checkVisibleNav(props.currentApp);
   React.useEffect(() => {
     if (shallOpenNavForSharedLink)
       openDrawer();
