@@ -1,9 +1,12 @@
 import * as React from 'react';
 
-import { useRouterQuery } from '~/common/app.routes';
 import { Box } from '@mui/joy';
 
+import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
+import { useRouterQuery } from '~/common/app.routes';
+
 import { DrawHeading } from './components/DrawHeading';
+import { DrawUnconfigured } from './components/DrawUnconfigured';
 import { Gallery } from './Gallery';
 import { TextToImage } from './TextToImage';
 
@@ -20,6 +23,7 @@ export function AppDraw() {
 
   // external state
   const query = useRouterQuery<Partial<AppDrawIntent>>();
+  const { activeProviderId, mayWork, providers, setActiveProviderId } = useCapabilityTextToImage();
 
 
   // [effect] set intent from the query parameters
@@ -40,12 +44,22 @@ export function AppDraw() {
       overflowY: 'auto',
 
       // contents margin
-      px: { xs: 3, md: 6 },
+      display: 'flex', flexDirection: 'column',
+      p: { xs: 3, md: 6 },
+      gap: { xs: 3, md: 6 },
     }}>
 
       <DrawHeading />
 
-      <TextToImage />
+      {!mayWork && <DrawUnconfigured />}
+
+      {mayWork && (
+        <TextToImage
+          providers={providers}
+          activeProviderId={activeProviderId}
+          setActiveProviderId={setActiveProviderId}
+        />
+      )}
 
       <Gallery />
 
