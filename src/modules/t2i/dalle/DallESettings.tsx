@@ -16,7 +16,7 @@ import { openAIImageModelsPricing } from './openaiGenerateImages';
 export function DallESettings() {
 
   // state
-  const advanced = useToggleableBoolean(false);
+  const advanced = useToggleableBoolean(false, 'DallESettings');
 
   // external state
   const { dalleModelId, setDalleModelId, dalleQuality, setDalleQuality, dalleSize, setDalleSize, dalleStyle, setDalleStyle, dalleNoRewrite, setDalleNoRewrite } = useDalleStore(state => ({

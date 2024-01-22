@@ -26,7 +26,7 @@ const isValidProdiaApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.leng
 export function ProdiaSettings(props: { noSkipKey?: boolean }) {
 
   // state
-  const advanced = useToggleableBoolean();
+  const advanced = useToggleableBoolean(false, 'ProdiaSettings');
 
   // external state
   const backendHasProdia = backendCaps().hasImagingProdia;
