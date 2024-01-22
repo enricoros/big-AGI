@@ -48,7 +48,7 @@ import { parseBlocks } from './blocks';
 // How long is the user collapsed message
 const USER_COLLAPSED_LINES: number = 8;
 
-// Enable the automatic menu on text selection
+// Enable the menu on text selection
 const ENABLE_SELECTION_RIGHT_CLICK_MENU: boolean = true;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
