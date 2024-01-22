@@ -13,7 +13,7 @@ import { useUICounter } from '~/common/state/store-ui';
 
 import type { StoragePutSchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
-import { addChatLinkItem, useLinkStorageOwnerId } from '../store-module-trade';
+import { addChatLinkItem, useLinkStorageOwnerId } from './store-chatlink';
 import { conversationToJsonV1 } from '../trade.client';
 
 
