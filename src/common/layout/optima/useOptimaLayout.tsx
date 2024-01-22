@@ -8,6 +8,17 @@ import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useG
 const DEBUG_OPTIMA_LAYOUT_PLUGGING = false;
 
 
+export const PreferencesTab = {
+  None: 0,
+  Chat: 1,
+  Voice: 2,
+  Draw: 3,
+  Tools: 4,
+} as const;
+
+type PreferencesTabType = typeof PreferencesTab[keyof typeof PreferencesTab];
+
+
 type PC = React.JSX.Element | null;
 
 interface OptimaLayoutState {
@@ -18,7 +29,7 @@ interface OptimaLayoutState {
   appMenuItems: PC;
 
   // optima modals that can overlay anything
-  showPreferencesTab: number;
+  showPreferencesTab: PreferencesTabType;
   showModelsSetup: boolean;
   showLlmOptions: DLLMId | null;
   showShortcuts: boolean;
@@ -52,7 +63,7 @@ interface OptimaLayoutActions {
 
   // commands to open/close optima modals
 
-  openPreferencesTab: (tab?: number) => void;
+  openPreferencesTab: (tab?: PreferencesTabType) => void;
   closePreferences: () => void;
 
   openModelsSetup: () => void;
@@ -85,7 +96,7 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
     setPluggableComponents: (appDrawerContent: PC, appBarItems: PC, appMenuItems: PC) =>
       setState(state => ({ ...state, appDrawerContent, appBarItems, appMenuItems })),
 
-    openPreferencesTab: (tab?: number) => setState(state => ({ ...state, showPreferencesTab: tab || 1 })),
+    openPreferencesTab: (tab?: PreferencesTabType) => setState(state => ({ ...state, showPreferencesTab: tab || PreferencesTab.Chat })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),
 
     openModelsSetup: () => setState(state => ({ ...state, showModelsSetup: true })),

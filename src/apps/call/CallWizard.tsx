@@ -10,11 +10,11 @@ import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import WarningIcon from '@mui/icons-material/Warning';
 
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
 import { navigateBack } from '~/common/app.routes';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/state/store-chats';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUICounter } from '~/common/state/store-ui';
 
 
@@ -109,7 +109,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
   const handleOverrideRecognition = () => setRecognitionOverride(true);
 
   const handleConfigureElevenLabs = () => {
-    openPreferencesTab(3);
+    openPreferencesTab(PreferencesTab.Voice);
   };
 
   const handleFinishButton = () => {

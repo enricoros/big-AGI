@@ -24,6 +24,7 @@ import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vend
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
@@ -33,7 +34,6 @@ import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -181,7 +181,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => openPreferencesTab(2);
+  const handleDrawOptionsClicked = () => openPreferencesTab(PreferencesTab.Draw);
 
   const handleTextImagineClicked = () => {
     if (!composeText || !props.conversationId)
