@@ -165,7 +165,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
           }}
         >
           {hasExistingChat
-            ? `Import as New on ${Brand.Title.Base}`
+            ? `Import as New`
             : `Import on ${Brand.Title.Base}`}
         </Button>
 
