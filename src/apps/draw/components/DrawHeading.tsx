@@ -1,15 +1,19 @@
 import * as React from 'react';
 
-import { Box, Chip, IconButton, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Chip, Divider, IconButton, Typography } from '@mui/joy';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 
 import { niceShadowKeyframes } from '../../call/Contacts';
 
 
-export const DrawHeading = () =>
+export const DrawHeading = (props: {
+  section: number,
+  setSection: (section: number) => void,
+  showSections?: boolean,
+}) =>
   <Box sx={{
     my: 3,
-    display: 'flex', alignItems: 'center',
+    display: 'flex', flexWrap: 'wrap', alignItems: 'center',
     gap: 3,
   }}>
     <IconButton
@@ -35,4 +39,42 @@ export const DrawHeading = () =>
         Multi-models, AI assisted
       </Chip>
     </Box>
+
+    {props.showSections && <Divider sx={{ flex: 1 }}>
+      <ButtonGroup
+        // color='primary'
+        size='sm'
+        orientation='horizontal'
+        sx={{
+          mx: 'auto',
+          backgroundColor: 'background.surface',
+          boxShadow: 'sm',
+          '& > button': {
+            minWidth: 104,
+          },
+        }}
+      >
+        <Button
+          variant={props.section === 0 ? 'solid' : 'plain'}
+          onClick={() => props.setSection(0)}
+        >
+          Generate
+        </Button>
+        <Button
+          disabled
+          variant={props.section === 1 ? 'solid' : 'plain'}
+          onClick={() => props.setSection(1)}
+        >
+          Edit
+        </Button>
+        {/*<Button*/}
+        {/*  disabled*/}
+        {/*  variant={props.section === 2 ? 'solid' : 'plain'}*/}
+        {/*  onClick={() => props.setSection(1)}*/}
+        {/*>*/}
+        {/*  Gallery*/}
+        {/*</Button>*/}
+      </ButtonGroup>
+    </Divider>}
+
   </Box>;
