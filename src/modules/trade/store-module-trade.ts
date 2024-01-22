@@ -46,7 +46,12 @@ const useTradeStore = create<ModuleTradeStore>()(
   ),
 );
 
-// by Export
+
+// by AppChatLink
+export const useChatLinkItems = () => useTradeStore(state => state.chatLinkItems, shallow);
+export const useHasChatLinkItems = () => useTradeStore(state => state.chatLinkItems.length > 0);
+
+// by ChatLinkExport
 export const useLinkStorageOwnerId = () =>
   useTradeStore(state => ({
     linkStorageOwnerId: state.linkStorageOwnerId,
@@ -54,7 +59,3 @@ export const useLinkStorageOwnerId = () =>
   }), shallow);
 export const addChatLinkItem = useTradeStore.getState().addChatLinkItem;
 export const removeChatLinkItem = useTradeStore.getState().removeChatLinkItem;
-
-// by AppChatLink
-export const useChatLinkItems = () => useTradeStore(state => state.chatLinkItems, shallow);
-export const useHasChatLinkItems = () => useTradeStore(state => state.chatLinkItems.length > 0);
