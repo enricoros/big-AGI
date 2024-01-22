@@ -13,6 +13,7 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import { GoodModal } from '~/common/components/GoodModal';
+import { PreferencesTab } from '~/common/layout/optima/useOptimaLayout';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
@@ -146,13 +147,13 @@ export function SettingsModal(props: {
             },
           }}
         >
-          <Tab disableIndicator value={1} sx={tabFixSx}>Chat</Tab>
-          <Tab disableIndicator value={3} sx={tabFixSx}>Voice</Tab>
-          <Tab disableIndicator value={2} sx={tabFixSx}>Draw</Tab>
-          <Tab disableIndicator value={4} sx={tabFixSx}>Tools</Tab>
+          <Tab disableIndicator value={PreferencesTab.Chat} sx={tabFixSx}>Chat</Tab>
+          <Tab disableIndicator value={PreferencesTab.Voice} sx={tabFixSx}>Voice</Tab>
+          <Tab disableIndicator value={PreferencesTab.Draw} sx={tabFixSx}>Draw</Tab>
+          <Tab disableIndicator value={PreferencesTab.Tools} sx={tabFixSx}>Tools</Tab>
         </TabList>
 
-        <TabPanel value={1} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Chat} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -166,7 +167,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={3} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Voice} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
@@ -177,7 +178,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={2} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Draw} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <T2ISettings />
@@ -191,7 +192,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={4} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Tools} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon={<SearchIcon />} title='Browsing' startCollapsed>
               <BrowseSettings />

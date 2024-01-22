@@ -6,11 +6,11 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
-import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
@@ -102,7 +102,7 @@ export function ChatMessageList(props: {
 
   const handleTextImagine = React.useCallback(async (text: string) => {
     if (!capabilityHasT2I)
-      return openPreferencesTab(2);
+      return openPreferencesTab(PreferencesTab.Draw);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
@@ -112,7 +112,7 @@ export function ChatMessageList(props: {
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)
-      return openPreferencesTab(3);
+      return openPreferencesTab(PreferencesTab.Voice);
     setIsSpeaking(true);
     await onTextSpeak(text);
     setIsSpeaking(false);
