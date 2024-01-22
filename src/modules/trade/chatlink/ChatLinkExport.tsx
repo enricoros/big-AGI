@@ -4,20 +4,20 @@ import { Badge, Button } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import IosShareIcon from '@mui/icons-material/IosShare';
 
-import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { Link } from '~/common/components/Link';
+import { apiAsyncNode } from '~/common/util/trpc.client';
+import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
 import type { StoragePutSchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
 import { addChatLinkItem, useLinkStorageOwnerId } from '../store-module-trade';
-import { conversationToJsonV1 } from '~/modules/trade/trade.client';
-import { apiAsyncNode } from '~/common/util/trpc.client';
-import { Link } from '~/common/components/Link';
+import { conversationToJsonV1 } from '../trade.client';
 
 
-export function ChatLinkManager(props: {
+export function ChatLinkExport(props: {
   conversationId: DConversationId | null;
   enableSharing: boolean;
   onClose: () => void;
