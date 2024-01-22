@@ -8,7 +8,7 @@ import { niceShadowKeyframes } from '../../call/Contacts';
 
 export const DrawHeading = () =>
   <Box sx={{
-    my: 6,
+    // my: 6,
     display: 'flex', alignItems: 'center',
     gap: 3,
   }}>
