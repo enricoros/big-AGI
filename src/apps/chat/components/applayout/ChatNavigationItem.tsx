@@ -16,7 +16,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
 // set to true to display the conversation IDs
-const DEBUG_CONVERSATION_IDS = false;
+// const DEBUG_CONVERSATION_IDS = false;
 
 
 const FadeInButton = styled(IconButton)({
@@ -140,7 +140,7 @@ function ChatNavigationItem(props: {
           flex: 1,
         }}
       >
-        {DEBUG_CONVERSATION_IDS && `${conversationId} - `}
+        {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
         {title.trim() ? title : 'Chat'}{assistantTyping && '...'}
       </Typography>
     ) : (
