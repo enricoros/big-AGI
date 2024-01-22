@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Card, CardContent } from '@mui/joy';
+import { Box, Button, Card, CardContent } from '@mui/joy';
+import ConstructionIcon from '@mui/icons-material/Construction';
 
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
@@ -16,6 +17,9 @@ export function TextToImage(props: {
   setActiveProviderId: (providerId: (string | null)) => void
 }) {
 
+  // state
+  const [showProviderSettings, setShowProviderSettings] = React.useState(false);
+
 
   // derived state
   const { provider, ProviderConfig } = React.useMemo(() => {
@@ -26,20 +30,36 @@ export function TextToImage(props: {
       ProviderConfig,
     };
   }, [props.providers, props.activeProviderId]);
+  const settingsShown = showProviderSettings && !!ProviderConfig;
 
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+  const handleToggleProviderSettings = React.useCallback(() => {
+    setShowProviderSettings(on => !on);
+  }, [setShowProviderSettings]);
 
-    <Box sx={{ display: 'flex', gap: 3 }}>
+
+  return <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+
+    {/* Service */}
+    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
       <ProviderSelect {...props} />
+      <Button
+        variant={settingsShown ? 'solid' : 'outlined'}
+        endDecorator={<ConstructionIcon />}
+        onClick={handleToggleProviderSettings}
+      >
+        Options
+      </Button>
     </Box>
 
-    {!!ProviderConfig &&
-      <Card variant='outlined'>
+    {/* Service Settings */}
+    {settingsShown && (
+      <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
         <CardContent sx={{ gap: 2 }}>
           <ProviderConfig />
         </CardContent>
-      </Card>}
+      </Card>
+    )}
 
   </Box>;
 }
