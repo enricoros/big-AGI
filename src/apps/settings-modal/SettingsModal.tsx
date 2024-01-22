@@ -187,7 +187,7 @@ export function SettingsModal(props: {
               <DallESettings />
             </Topic>
             <Topic icon='🖍️️' title='Prodia API' startCollapsed>
-              <ProdiaSettings />
+              <ProdiaSettings noSkipKey />
             </Topic>
           </Topics>
         </TabPanel>

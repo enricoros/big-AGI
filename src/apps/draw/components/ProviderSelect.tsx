@@ -46,7 +46,7 @@ export function ProviderSelect(props: {
         }}
       >
         {providerOptions.map(option => (
-          <Option key={option.value} value={option.value}>
+          <Option key={option.value} value={option.value} disabled={!option.configured}>
             <ListItemDecorator>
               {!!option.Icon && <option.Icon />}
             </ListItemDecorator>
