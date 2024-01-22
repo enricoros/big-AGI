@@ -164,7 +164,9 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
             boxShadow: 'md',
           }}
         >
-          Clone on {Brand.Title.Base}
+          {hasExistingChat
+            ? `Import as New on ${Brand.Title.Base}`
+            : `Import on ${Brand.Title.Base}`}
         </Button>
 
         {hasExistingChat && (
@@ -175,7 +177,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
               endDecorator={<TelegramIcon />}
               onClick={() => handleClone(true)}
             >
-              Replace Existing
+              Import Over
             </Button>
           </Tooltip>
         )}
