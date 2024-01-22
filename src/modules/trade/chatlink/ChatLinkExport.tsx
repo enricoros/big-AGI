@@ -13,8 +13,8 @@ import { useUICounter } from '~/common/state/store-ui';
 
 import type { StoragePutSchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
-import { addChatLinkItem, useLinkStorageOwnerId } from './store-chatlink';
 import { conversationToJsonV1 } from '../trade.client';
+import { rememberChatLinkItem, useLinkStorageOwnerId } from './store-chatlink';
 
 
 export function ChatLinkExport(props: {
@@ -24,25 +24,27 @@ export function ChatLinkExport(props: {
 }) {
 
   // state
-  const [chatLinkConfirmId, setChatLinkConfirmId] = React.useState<DConversationId | null>(null);
-  const [chatLinkUploading, setChatLinkUploading] = React.useState(false);
-  const [chatLinkResponse, setChatLinkResponse] = React.useState<StoragePutSchema | null>(null);
+  const [confirmConversationId, setConfirmConversationId] = React.useState<DConversationId | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [linkPutResult, setLinkPutResult] = React.useState<StoragePutSchema | null>(null);
 
   // external state
   const { novel: chatLinkBadge, touch: clearChatLinkBadge } = useUICounter('share-chat-link');
   const { linkStorageOwnerId, setLinkStorageOwnerId } = useLinkStorageOwnerId();
 
 
-  const handleChatLinkCreate = () => setChatLinkConfirmId(props.conversationId);
+  const handleConfirm = () => setConfirmConversationId(props.conversationId);
 
-  const handleChatLinkConfirmed = async () => {
-    if (!chatLinkConfirmId) return;
+  const handleCancel = () => setConfirmConversationId(null);
 
-    const conversation = getConversation(chatLinkConfirmId);
-    setChatLinkConfirmId(null);
+  const handleCreate = async () => {
+    if (!confirmConversationId) return;
+
+    const conversation = getConversation(confirmConversationId);
+    setConfirmConversationId(null);
     if (!conversation) return;
 
-    setChatLinkUploading(true);
+    setIsUploading(true);
     try {
       const chatV1 = conversationToJsonV1(conversation);
       const chatTitle = conversationTitle(conversation) || undefined;
@@ -52,21 +54,23 @@ export function ChatLinkExport(props: {
         dataTitle: chatTitle,
         dataObject: chatV1,
       });
-      setChatLinkResponse(response);
+      setLinkPutResult(response);
       if (response.type === 'success') {
-        addChatLinkItem(chatTitle, response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
         if (!linkStorageOwnerId)
           setLinkStorageOwnerId(response.ownerId);
+        rememberChatLinkItem(chatTitle, response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
       }
       clearChatLinkBadge();
     } catch (error: any) {
-      setChatLinkResponse({
+      setLinkPutResult({
         type: 'error',
         error: error?.message ?? error?.toString() ?? 'unknown error',
       });
     }
-    setChatLinkUploading(false);
+    setIsUploading(false);
   };
+
+  const handleCloseDetails = () => setLinkPutResult(null);
 
 
   const hasConversation = !!props.conversationId;
@@ -75,20 +79,20 @@ export function ChatLinkExport(props: {
   return <>
 
     <Badge color='danger' invisible={!chatLinkBadge}>
-      <Button variant='soft' disabled={!hasConversation || chatLinkUploading}
-              loading={chatLinkUploading}
-              color={chatLinkResponse ? 'success' : 'primary'}
-              endDecorator={chatLinkResponse ? <DoneIcon /> : <IosShareIcon />}
+      <Button variant='soft' disabled={!hasConversation || isUploading}
+              loading={isUploading}
+              color={linkPutResult ? 'success' : 'primary'}
+              endDecorator={linkPutResult ? <DoneIcon /> : <IosShareIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleChatLinkCreate}>
+              onClick={handleConfirm}>
         Share on {Brand.Title.Base}
       </Button>
     </Badge>
 
     {/* [chat link] confirmation */}
-    {!!chatLinkConfirmId && (
+    {!!confirmConversationId && (
       <ConfirmationModal
-        open onClose={() => setChatLinkConfirmId(null)} onPositive={handleChatLinkConfirmed}
+        open onClose={handleCancel} onPositive={handleCreate}
         title='Upload Confirmation'
         confirmationText={<>
           Everyone who has the unlisted link will be able to access this chat.
@@ -102,8 +106,8 @@ export function ChatLinkExport(props: {
     )}
 
     {/* [chat link] response */}
-    {!!chatLinkResponse && (
-      <ChatLinkDetails open onClose={() => setChatLinkResponse(null)} storageItem={chatLinkResponse} />
+    {!!linkPutResult && (
+      <ChatLinkDetails open storageItem={linkPutResult} onClose={handleCloseDetails} />
     )}
 
   </>;

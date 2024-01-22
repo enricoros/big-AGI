@@ -15,8 +15,8 @@ interface ModuleTradeStore {
 
   // exported items
   chatLinkItems: ChatLinkItem[];
-  addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
-  removeChatLinkItem: (objectId: string) => void;
+  rememberChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
+  forgetChatLinkItem: (objectId: string) => void;
 
   // ID assigned by the server upon first PUT
   linkStorageOwnerId: string | undefined;
@@ -29,10 +29,10 @@ const useTradeStore = create<ModuleTradeStore>()(
     (set) => ({
 
       chatLinkItems: [],
-      addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
+      rememberChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
         chatLinkItems: [...state.chatLinkItems, { chatTitle, objectId, createdAt: createdAt.toISOString(), expiresAt: expiresAt?.toISOString() ?? null, deletionKey }],
       })),
-      removeChatLinkItem: (objectId: string) => set(state => ({
+      forgetChatLinkItem: (objectId: string) => set(state => ({
         chatLinkItems: state.chatLinkItems.filter(item => item.objectId !== objectId),
       })),
 
@@ -57,5 +57,5 @@ export const useLinkStorageOwnerId = () =>
     linkStorageOwnerId: state.linkStorageOwnerId,
     setLinkStorageOwnerId: state.setLinkStorageOwnerId,
   }), shallow);
-export const addChatLinkItem = useTradeStore.getState().addChatLinkItem;
-export const removeChatLinkItem = useTradeStore.getState().removeChatLinkItem;
+export const rememberChatLinkItem = useTradeStore.getState().rememberChatLinkItem;
+export const forgetChatLinkItem = useTradeStore.getState().forgetChatLinkItem;
