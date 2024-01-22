@@ -1,10 +1,9 @@
 import * as React from 'react';
 
-import { Badge, Box, Button, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import IosShareIcon from '@mui/icons-material/IosShare';
 
 import { getChatShowSystemMessages } from '../../apps/chat/store-app-chat';
 
@@ -14,16 +13,14 @@ import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
+import { DConversationId, getConversation } from '~/common/state/store-chats';
 import { isBrowser } from '~/common/util/pwaUtils';
-import { useUICounter } from '~/common/state/store-ui';
 
 import type { PublishedSchema } from './server/pastegg';
-import type { StoragePutSchema } from './server/link';
-import { ExportedChatLink } from './ExportedChatLink';
 import { ExportedPublish } from './ExportedPublish';
-import { addChatLinkItem, useLinkStorageOwnerId } from './store-module-trade';
-import { conversationToJsonV1, conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade.client';
+import { conversationToMarkdown, downloadAllConversationsJson, downloadConversationJson } from './trade.client';
+
+import { ChatLinkManager } from './chatlink/ChatLinkManager';
 
 
 export type ExportConfig = { dir: 'export', conversationId: DConversationId | null };
@@ -48,55 +45,12 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   // state
   const [downloadedState, setDownloadedState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
-  const [chatLinkConfirmId, setChatLinkConfirmId] = React.useState<DConversationId | null>(null);
-  const [chatLinkUploading, setChatLinkUploading] = React.useState(false);
-  const [chatLinkResponse, setChatLinkResponse] = React.useState<StoragePutSchema | null>(null);
   const [publishConversationId, setPublishConversationId] = React.useState<DConversationId | null>(null);
   const [publishUploading, setPublishUploading] = React.useState(false);
   const [publishResponse, setPublishResponse] = React.useState<PublishedSchema | null>(null);
 
   // external state
   const enableSharing = backendCaps().hasDB;
-  const { novel: chatLinkBadge, touch: clearChatLinkBadge } = useUICounter('share-chat-link');
-  const { linkStorageOwnerId, setLinkStorageOwnerId } = useLinkStorageOwnerId();
-
-
-  // chat link
-
-  const handleChatLinkCreate = () => setChatLinkConfirmId(props.config.conversationId);
-
-  const handleChatLinkConfirmed = async () => {
-    if (!chatLinkConfirmId) return;
-
-    const conversation = getConversation(chatLinkConfirmId);
-    setChatLinkConfirmId(null);
-    if (!conversation) return;
-
-    setChatLinkUploading(true);
-    try {
-      const chatV1 = conversationToJsonV1(conversation);
-      const chatTitle = conversationTitle(conversation) || undefined;
-      const response: StoragePutSchema = await apiAsyncNode.trade.storagePut.mutate({
-        ownerId: linkStorageOwnerId,
-        dataType: 'CHAT_V1',
-        dataTitle: chatTitle,
-        dataObject: chatV1,
-      });
-      setChatLinkResponse(response);
-      if (response.type === 'success') {
-        addChatLinkItem(chatTitle, response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
-        if (!linkStorageOwnerId)
-          setLinkStorageOwnerId(response.ownerId);
-      }
-      clearChatLinkBadge();
-    } catch (error: any) {
-      setChatLinkResponse({
-        type: 'error',
-        error: error?.message ?? error?.toString() ?? 'unknown error',
-      });
-    }
-    setChatLinkUploading(false);
-  };
 
 
   // publish
@@ -171,16 +125,11 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       </Button>
 
       {enableSharing && (
-        <Badge color='danger' invisible={!chatLinkBadge}>
-          <Button variant='soft' disabled={!hasConversation || chatLinkUploading}
-                  loading={chatLinkUploading}
-                  color={chatLinkResponse ? 'success' : 'primary'}
-                  endDecorator={chatLinkResponse ? <DoneIcon /> : <IosShareIcon />}
-                  sx={{ minWidth: 240, justifyContent: 'space-between' }}
-                  onClick={handleChatLinkCreate}>
-            Share on {Brand.Title.Base}
-          </Button>
-        </Badge>
+        <ChatLinkManager
+          conversationId={props.config.conversationId}
+          enableSharing={enableSharing}
+          onClose={props.onClose}
+        />
       )}
 
       <Button variant='soft' disabled={!hasConversation || publishUploading}
@@ -207,28 +156,6 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
         Download all chats
       </Button>
     </Box>
-
-
-    {/* [chat link] confirmation */}
-    {enableSharing && !!chatLinkConfirmId && (
-      <ConfirmationModal
-        open onClose={() => setChatLinkConfirmId(null)} onPositive={handleChatLinkConfirmed}
-        title='Upload Confirmation'
-        confirmationText={<>
-          Everyone who has the unlisted link will be able to access this chat.
-          It will be automatically deleted after 30 days.
-          For more information, please see the <Link href={Brand.URIs.PrivacyPolicy} target='_blank'>privacy
-          policy</Link> of this server. <br />
-          Do you wish to continue?
-        </>} positiveActionText={'Yes, Create Link'}
-      />
-    )}
-
-    {/* [chat link] response */}
-    {enableSharing && !!chatLinkResponse && (
-      <ExportedChatLink open onClose={() => setChatLinkResponse(null)} response={chatLinkResponse} />
-    )}
-
 
     {/* [publish] confirmation */}
     {publishConversationId && (
