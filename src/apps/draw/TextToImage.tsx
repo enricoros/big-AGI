@@ -9,6 +9,7 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 
 import { ProviderSelect } from './components/ProviderSelect';
+import { AppPlaceholder } from '../AppPlaceholder';
 
 
 export function TextToImage(props: {
@@ -38,28 +39,37 @@ export function TextToImage(props: {
   }, [setShowProviderSettings]);
 
 
-  return <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+  return <>
 
-    {/* Service */}
-    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
-      <ProviderSelect {...props} />
-      <Button
-        variant={settingsShown ? 'solid' : 'outlined'}
-        endDecorator={<ConstructionIcon />}
-        onClick={handleToggleProviderSettings}
-      >
-        Options
-      </Button>
+    <Box sx={{ flex: 0, display: 'flex', flexDirection: 'column' }}>
+
+      {/* Service / Options Button */}
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+        <ProviderSelect {...props} />
+        <Button
+          variant={settingsShown ? 'solid' : 'outlined'}
+          color={settingsShown ? 'primary' : 'neutral'}
+          endDecorator={<ConstructionIcon />}
+          onClick={handleToggleProviderSettings}
+          sx={{ backgroundColor: settingsShown ? undefined : 'background.surface' }}
+        >
+          Options
+        </Button>
+      </Box>
+
+      {/* Options */}
+      {settingsShown && (
+        <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
+          <CardContent sx={{ gap: 2 }}>
+            <ProviderConfig />
+          </CardContent>
+        </Card>
+      )}
+
     </Box>
 
-    {/* Service Settings */}
-    {settingsShown && (
-      <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
-        <CardContent sx={{ gap: 2 }}>
-          <ProviderConfig />
-        </CardContent>
-      </Card>
-    )}
+    {/* Main */}
+    <AppPlaceholder />
 
-  </Box>;
+  </>;
 }
