@@ -17,6 +17,7 @@ interface ModuleTradeStore {
   chatLinkItems: ChatLinkItem[];
   rememberChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
   forgetChatLinkItem: (objectId: string) => void;
+  updateChatLinkDeletionKey: (objectId: string, deletionKey: string) => void;
 
   // ID assigned by the server upon first PUT
   linkStorageOwnerId: string | undefined;
@@ -34,6 +35,9 @@ const useTradeStore = create<ModuleTradeStore>()(
       })),
       forgetChatLinkItem: (objectId: string) => set(state => ({
         chatLinkItems: state.chatLinkItems.filter(item => item.objectId !== objectId),
+      })),
+      updateChatLinkDeletionKey: (objectId: string, deletionKey: string) => set(state => ({
+        chatLinkItems: state.chatLinkItems.map(item => item.objectId === objectId ? { ...item, deletionKey } : item),
       })),
 
       linkStorageOwnerId: undefined,
@@ -59,3 +63,4 @@ export const useLinkStorageOwnerId = () =>
   }), shallow);
 export const rememberChatLinkItem = useTradeStore.getState().rememberChatLinkItem;
 export const forgetChatLinkItem = useTradeStore.getState().forgetChatLinkItem;
+export const updateChatLinkDeletionKey = useTradeStore.getState().updateChatLinkDeletionKey;
