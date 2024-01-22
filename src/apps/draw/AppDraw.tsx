@@ -7,7 +7,6 @@ import { useRouterQuery } from '~/common/app.routes';
 
 import { DrawHeading } from './components/DrawHeading';
 import { DrawUnconfigured } from './components/DrawUnconfigured';
-import { Gallery } from './Gallery';
 import { TextToImage } from './TextToImage';
 
 
@@ -20,6 +19,8 @@ export function AppDraw() {
 
   // state
   const [drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
+  const [section, setSection] = React.useState<number>(0);
+
 
   // external state
   const query = useRouterQuery<Partial<AppDrawIntent>>();
@@ -49,7 +50,7 @@ export function AppDraw() {
       gap: { xs: 3, md: 6 },
     }}>
 
-      <DrawHeading />
+      <DrawHeading section={section} setSection={setSection} showSections />
 
       {!mayWork && <DrawUnconfigured />}
 
@@ -61,7 +62,7 @@ export function AppDraw() {
         />
       )}
 
-      <Gallery />
+      {/*<Gallery />*/}
 
     </Box>
   );
