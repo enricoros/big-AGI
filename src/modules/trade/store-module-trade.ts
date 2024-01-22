@@ -13,23 +13,20 @@ interface ChatLinkItem {
 
 interface ModuleTradeStore {
 
-  // ID assigned by the server upon first PUT
-  linkStorageOwnerId: string | undefined;
-  setLinkStorageOwnerId: (linkStorageOwnerId: string) => void;
-
   // exported items
   chatLinkItems: ChatLinkItem[];
   addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => void;
   removeChatLinkItem: (objectId: string) => void;
+
+  // ID assigned by the server upon first PUT
+  linkStorageOwnerId: string | undefined;
+  setLinkStorageOwnerId: (linkStorageOwnerId: string) => void;
 
 }
 
 const useTradeStore = create<ModuleTradeStore>()(
   persist(
     (set) => ({
-
-      linkStorageOwnerId: undefined,
-      setLinkStorageOwnerId: (linkStorageOwnerId: string) => set({ linkStorageOwnerId }),
 
       chatLinkItems: [],
       addChatLinkItem: (chatTitle: string | undefined, objectId: string, createdAt: Date, expiresAt: Date | null, deletionKey: string) => set(state => ({
@@ -38,6 +35,9 @@ const useTradeStore = create<ModuleTradeStore>()(
       removeChatLinkItem: (objectId: string) => set(state => ({
         chatLinkItems: state.chatLinkItems.filter(item => item.objectId !== objectId),
       })),
+
+      linkStorageOwnerId: undefined,
+      setLinkStorageOwnerId: (linkStorageOwnerId: string) => set({ linkStorageOwnerId }),
 
     }),
     {

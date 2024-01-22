@@ -19,11 +19,11 @@ import { getChatLinkRelativePath } from '~/common/app.routes';
 import { getOriginUrl } from '~/common/util/urlUtils';
 import { webShare, webSharePresent } from '~/common/util/pwaUtils';
 
-import type { StorageDeleteSchema, StoragePutSchema } from './server/link';
-import { removeChatLinkItem } from './store-module-trade';
+import type { StorageDeleteSchema, StoragePutSchema } from '../server/link';
+import { removeChatLinkItem } from '../store-module-trade';
 
 
-export function ExportedChatLink(props: { onClose: () => void, response: StoragePutSchema, open: boolean }) {
+export function ChatLinkDetails(props: { onClose: () => void, storageItem: StoragePutSchema, open: boolean }) {
 
   // state
   const [opened, setOpened] = React.useState(false);
@@ -33,16 +33,16 @@ export function ExportedChatLink(props: { onClose: () => void, response: Storage
   const [deletionResponse, setDeletionResponse] = React.useState<StorageDeleteSchema | null>(null);
 
   // in case of 'put' error, just display the message
-  if (props.response.type === 'error') {
+  if (props.storageItem.type === 'error') {
     return (
       <GoodModal title='❌ Upload Error' dividers open={props.open} onClose={props.onClose}>
-        <InlineError error={props.response.error} />
+        <InlineError error={props.storageItem.error} />
       </GoodModal>
     );
   }
 
   // success
-  const { objectId, deletionKey, expiresAt } = props.response;
+  const { objectId, deletionKey, expiresAt } = props.storageItem;
   const relativeUrl = getChatLinkRelativePath(objectId);
   const fullUrl = getOriginUrl() + relativeUrl;
 
