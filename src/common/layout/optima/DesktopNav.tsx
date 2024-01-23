@@ -48,7 +48,7 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
   // App items
   const navAppItems = React.useMemo(() => {
     return navItems.apps
-      .filter(_app => checkVisibileIcon(_app, props.currentApp))
+      .filter(_app => checkVisibileIcon(_app, false, props.currentApp))
       .map((app, appIdx) => {
         const isActive = app === props.currentApp;
         const isDrawerable = isActive && !app.hideDrawer;

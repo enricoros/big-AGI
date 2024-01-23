@@ -53,6 +53,7 @@ export interface NavItemApp extends ItemBase {
   route: string,
   landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
   barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
+  hideOnMobile?: boolean, // set to true to hide the icon on mobile, unless this is the active app
   hideIcon?: boolean
     | (() => boolean),    // set to true to hide the icon, unless this is the active app
   hideBar?: boolean,      // set to true to hide the page bar
@@ -167,6 +168,7 @@ export const navItems: {
       type: 'app',
       route: '/link/chat/[chatLinkId]',
       landingRoute: '/link/chat/list',
+      hideOnMobile: true,
       hideIcon: hasNoChatLinkItems,
       hideNav: hasNoChatLinkItems,
     },
@@ -228,8 +230,8 @@ export function checkDivider(app?: NavItemApp) {
   return app?.name === SPECIAL_DIVIDER;
 }
 
-export function checkVisibileIcon(app: NavItemApp, currentApp?: NavItemApp) {
-  return app === currentApp ? true : typeof app.hideIcon === 'function' ? !app.hideIcon() : !app.hideIcon;
+export function checkVisibileIcon(app: NavItemApp, isMobile: boolean, currentApp?: NavItemApp) {
+  return app.hideOnMobile && isMobile ? false : app === currentApp ? true : typeof app.hideIcon === 'function' ? !app.hideIcon() : !app.hideIcon;
 }
 
 export function checkVisibleNav(app?: NavItemApp) {
