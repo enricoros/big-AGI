@@ -85,6 +85,6 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
   // const { chatLLMId } = useModelsStore.getState();
   // if (chatLLMId)
   //   _tokenCount('', chatLLMId, 'warmup');
-console.log('NOW')
+
   return _tokenCount;
 })();
