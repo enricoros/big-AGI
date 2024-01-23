@@ -4,6 +4,9 @@ import { shallow } from 'zustand/shallow';
 
 import { createBase36Uid } from '~/common/util/textUtils';
 
+// constraint the max number of saved prompts, to stay below localStorage quota
+const MAX_SAVED_PROMPTS = 100;
+
 
 /**
  * Very simple personas store for the "Persona Creator" - note that we shall
@@ -54,19 +57,23 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
     simplePersonas: [],
 
     prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) =>
-      _set(state => ({
-        simplePersonas: [
-          {
-            id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
-            systemPrompt,
-            creationDate: new Date().toISOString(),
-            inputProvenance,
-            inputText,
-            llmLabel,
-          },
-          ...state.simplePersonas,
-        ],
-      })),
+      _set(state => {
+        const newPersona: SimplePersona = {
+          id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
+          systemPrompt,
+          creationDate: new Date().toISOString(),
+          inputProvenance,
+          // to save bytes, do not save input text when from YouTube
+          inputText: inputProvenance?.type === 'youtube' ? '' : inputText,
+          llmLabel,
+        };
+        return {
+          simplePersonas: [
+            newPersona,
+            ...state.simplePersonas.slice(0, MAX_SAVED_PROMPTS - 1),
+          ],
+        };
+      }),
 
     deleteSimplePersona: (simplePersonaId: string) =>
       _set(state => ({
