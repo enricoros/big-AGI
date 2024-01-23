@@ -24,7 +24,7 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { ChatDrawerContentMemo } from './components/applayout/ChatDrawerItems';
+import { ChatDrawerMemo } from './components/applayout/ChatDrawer';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -387,7 +387,7 @@ export function AppChat() {
   );
 
   const drawerContent = React.useMemo(() =>
-      <ChatDrawerContentMemo
+      <ChatDrawerMemo
         activeConversationId={focusedConversationId}
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
