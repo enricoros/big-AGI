@@ -11,5 +11,5 @@ export default function ChatLinkPage() {
   // external state
   const { chatLinkId } = useRouterQuery<{ chatLinkId: string | undefined }>();
 
-  return withLayout({ type: 'optima', suspendAutoModelsSetup: true }, <AppChatLink linkId={chatLinkId || ''} />);
+  return withLayout({ type: 'optima', suspendAutoModelsSetup: true }, <AppChatLink chatLinkId={chatLinkId || null} />);
 }

@@ -2,7 +2,7 @@ import * as React from 'react';
 import Head from 'next/head';
 import { useQuery } from '@tanstack/react-query';
 
-import { Box, Typography } from '@mui/joy';
+import { Box, Card, CardContent, Typography } from '@mui/joy';
 
 import { createConversationFromJsonV1 } from '~/modules/trade/trade.client';
 
@@ -20,6 +20,9 @@ import { AppChatLinkMenuItems } from './AppChatLinkMenuItems';
 import { ViewChatLink } from './ViewChatLink';
 
 
+const SPECIAL_LIST_PAGE_ID = 'list';
+
+
 const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }) =>
   <Box sx={{
     backgroundColor: props.backgroundColor,
@@ -28,6 +31,21 @@ const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }
   }}>
     {props.children}
   </Box>;
+
+const ListPlaceholder = () =>
+  <Box sx={{ p: { xs: 3, md: 6 } }}>
+    <Card>
+      <CardContent>
+        <Typography level='title-md'>
+          Shared Conversations
+        </Typography>
+        <Typography level='body-sm'>
+          Here you can see formely exported shared conversations. Please select a conversation from the drawer.
+        </Typography>
+      </CardContent>
+    </Card>
+  </Box>;
+
 
 const ShowLoading = () =>
   <Centerer backgroundColor={themeBgAppDarker}>
@@ -48,7 +66,10 @@ const ShowError = (props: { error: any }) =>
  * Note: we don't have react-query for the Node functions, so we use the immediate API here,
  *       and wrap it in a react-query hook
  */
-async function fetchStoredChatV1(objectId: string) {
+async function fetchStoredChatV1(objectId: string | null) {
+  if (!objectId)
+    throw new Error('No Stored Chat');
+
   // fetch
   const result = await apiAsyncNode.trade.storageGet.query({ objectId });
   if (result.type === 'error')
@@ -68,13 +89,17 @@ async function fetchStoredChatV1(objectId: string) {
 }
 
 
-export function AppChatLink(props: { linkId: string }) {
+export function AppChatLink(props: { chatLinkId: string | null }) {
+
+  // derived state
+  const isListPage = props.chatLinkId === SPECIAL_LIST_PAGE_ID;
+  const linkId = isListPage ? null : props.chatLinkId;
 
   // external state
   const { data, isError, error, isLoading } = useQuery({
-    enabled: !!props.linkId,
-    queryKey: ['chat-link', props.linkId],
-    queryFn: () => fetchStoredChatV1(props.linkId),
+    enabled: !!linkId,
+    queryKey: ['chat-link', linkId],
+    queryFn: () => fetchStoredChatV1(linkId),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
@@ -96,13 +121,15 @@ export function AppChatLink(props: { linkId: string }) {
       <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
     </Head>
 
-    {isLoading
-      ? <ShowLoading />
-      : isError
-        ? <ShowError error={error} />
-        : !!data?.conversation
-          ? <ViewChatLink conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
-          : <Centerer backgroundColor={themeBgAppDarker} />}
+    {isListPage
+      ? <ListPlaceholder />
+      : isLoading
+        ? <ShowLoading />
+        : isError
+          ? <ShowError error={error} />
+          : !!data?.conversation
+            ? <ViewChatLink conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+            : <Centerer backgroundColor={themeBgAppDarker} />}
 
   </>;
 }
