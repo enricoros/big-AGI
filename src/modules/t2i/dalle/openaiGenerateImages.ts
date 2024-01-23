@@ -53,11 +53,25 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
     _count -= count;
   }
 
-  // run all image generation requests in parallel
-  const imageRefsBatches: string[][] = await Promise.all(imagePromises);
+  // run all image generation requests
+  const imageRefsBatchesResults: PromiseSettledResult<string[]>[] = await Promise.allSettled(imagePromises);
 
-  // flatten the resulting array
-  return imageRefsBatches.flat();
+  // throw if ALL promises were rejected
+  const allRejected = imageRefsBatchesResults.every(result => result.status === 'rejected');
+  if (allRejected) {
+    const errorMessages = imageRefsBatchesResults
+      .map(result => (result as PromiseRejectedResult).reason || '')
+      .filter(message => !!message)
+      .join(', ');
+
+    throw new Error(`Image generation request failed: ${errorMessages}`);
+  }
+
+  // take successful results and return as string[]
+  return imageRefsBatchesResults
+    .filter(result => result.status === 'fulfilled') // Only take fulfilled promises
+    .map(result => (result as PromiseFulfilledResult<string[]>).value) // Extract the value
+    .flat();
 }
 
 
