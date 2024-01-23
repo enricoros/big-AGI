@@ -1,6 +1,6 @@
 import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from 'tiktoken';
 
-import { DLLMId, findLLMOrThrow, useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 
 
 // Do not set this to true in production, it's very verbose
@@ -44,10 +44,11 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
     return count;
   }
 
+  // NOTE: disabled on 2024-01-23, as the first load is more important than instant reactivity
   // preload the tokenizer for the default model
-  const { chatLLMId } = useModelsStore.getState();
-  if (chatLLMId)
-    tokenCount('', chatLLMId, 'warmup');
+  // const { chatLLMId } = useModelsStore.getState();
+  // if (chatLLMId)
+  //   tokenCount('', chatLLMId, 'warmup');
 
   return tokenCount;
 })();
