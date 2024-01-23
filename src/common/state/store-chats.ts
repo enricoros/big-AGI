@@ -362,7 +362,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
                 ...updatedMessage,
                 ...(setUpdated && { updated: Date.now() }),
                 ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
-                  tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)'),
+                  tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)') ?? 0,
                 })),
               }
               : message);
@@ -534,7 +534,7 @@ function _migrateLocalStorageData(): ChatState | {} {
  */
 function updateDMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number {
   if (forceUpdate || !message.tokenCount)
-    message.tokenCount = llmId ? countModelTokens(message.text, llmId, debugFrom) : 0;
+    message.tokenCount = llmId ? countModelTokens(message.text, llmId, debugFrom) ?? 0 : 0;
   return message.tokenCount;
 }
 

@@ -78,7 +78,7 @@ function toLLMAttachment(attachment: Attachment, supportedOutputPartTypes: Compo
   const tokenCountApprox = llmForTokenCount
     ? attachmentOutputs.reduce((acc, output) => {
       if (output.type === 'text-block')
-        return acc + countModelTokens(output.text, llmForTokenCount, 'attachments tokens count');
+        return acc + (countModelTokens(output.text, llmForTokenCount, 'attachments tokens count') ?? 0);
       console.warn('Unhandled token preview for output type:', output.type);
       return acc;
     }, 0)
