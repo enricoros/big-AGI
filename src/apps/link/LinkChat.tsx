@@ -84,7 +84,7 @@ export function LinkChat(props: { conversation: DConversation, storedAt: Date, e
         // borderRadius: 'xl',
         // boxShadow: 'xs',
         px: 2.5,
-        width: '100%',
+        maxWidth: '100%',
         // animation: `${cssMagicSwapKeyframes} 0.4s cubic-bezier(0.22, 1, 0.36, 1)`,
       }}>
         <CardContent sx={{ gap: 1 }}>
