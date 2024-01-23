@@ -26,6 +26,11 @@ let nextConfig = {
 
     return config;
   },
+
+  // Uncomment the following leave console messages in production
+  // compiler: {
+  //   removeConsole: false,
+  // },
 };
 
 // Validate environment variables, if set at build time. Will be actually read and used at runtime.
