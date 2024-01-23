@@ -16,6 +16,7 @@ const DEBUG_TOKEN_COUNT = false;
 export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) => number = (() => {
   // return () => 0;
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
+  let encodingCL100K: Tiktoken | null = null;
 
   function tokenCount(text: string, llmId: DLLMId, debugFrom: string): number {
     const { options: { llmRef: openaiModel } } = findLLMOrThrow(llmId);
@@ -24,7 +25,10 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
       try {
         tokenEncoders[openaiModel] = encoding_for_model(openaiModel as TiktokenModel);
       } catch (e) {
-        tokenEncoders[openaiModel] = get_encoding('cl100k_base');
+        // make sure we recycle the default encoding across all models
+        if (!encodingCL100K)
+          encodingCL100K = get_encoding('cl100k_base');
+        tokenEncoders[openaiModel] = encodingCL100K;
       }
     }
     let count: number = 0;
