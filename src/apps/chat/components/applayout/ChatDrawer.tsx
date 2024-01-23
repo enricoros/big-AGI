@@ -69,9 +69,9 @@ export const useChatNavigationItems = (activeConversationId: DConversationId | n
 };
 
 
-export const ChatDrawerContentMemo = React.memo(ChatDrawerItems);
+export const ChatDrawerMemo = React.memo(ChatDrawer);
 
-function ChatDrawerItems(props: {
+function ChatDrawer(props: {
   activeConversationId: DConversationId | null,
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
