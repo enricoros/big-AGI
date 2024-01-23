@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, Card, List, ListItem, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Card, CardContent, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessage } from '../chat/components/message/ChatMessage';
@@ -9,6 +9,7 @@ import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBott
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
@@ -18,7 +19,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 /**
  * Renders a chat link view with conversation details and messages.
  */
-export function ViewChatLink(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
+export function LinkChat(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
 
   // state
   const [cloning, setCloning] = React.useState<boolean>(false);
@@ -76,23 +77,26 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
       py: { xs: 4, md: 5, xl: 6 },
     }}>
 
-      {/* Heading */}
-      <Box sx={{
+      {/* Title Card */}
+      <Card sx={{
         display: 'flex', flexDirection: 'column',
-        backgroundColor: 'background.level1', borderRadius: 'xl', boxShadow: 'xs',
-        gap: 1,
-        px: { xs: 2.5, md: 3.5 },
-        py: { xs: 2, md: 3 },
+        // backgroundColor: 'background.level1',
+        // borderRadius: 'xl',
+        // boxShadow: 'xs',
+        px: 2.5,
+        width: '100%',
         // animation: `${cssMagicSwapKeyframes} 0.4s cubic-bezier(0.22, 1, 0.36, 1)`,
       }}>
-        <Typography level='h3' startDecorator={<TelegramIcon sx={{ fontSize: 'xl3', mr: 0.5 }} />}>
-          {conversationTitle(props.conversation, 'Chat')}
-        </Typography>
-        <Typography level='title-sm'>
-          Uploaded <TimeAgo date={props.storedAt} />
-          {!!props.expiresAt && <>, expires <TimeAgo date={props.expiresAt} /></>}.
-        </Typography>
-      </Box>
+        <CardContent sx={{ gap: 1 }}>
+          <Typography level='h4' startDecorator={<TelegramIcon sx={{ fontSize: 'xl2' }} />}>
+            {capitalizeFirstLetter(conversationTitle(props.conversation, 'Chat'))}
+          </Typography>
+          <Typography level='body-xs'>
+            Uploaded <TimeAgo date={props.storedAt} />
+            {!!props.expiresAt && <>, expires <TimeAgo date={props.expiresAt} /></>}.
+          </Typography>
+        </CardContent>
+      </Card>
 
       {/* Messages */}
       <Card sx={{
@@ -143,7 +147,7 @@ export function ViewChatLink(props: { conversation: DConversation, storedAt: Dat
               px: { xs: 2.5, md: 3.5 }, py: 2,
             }}>
               <Typography level='body-sm' ref={listBottomRef}>
-                Like the chat? Clone it and keep the talk going! 🚀
+                Like the chat? Import it and keep the talk going! 🚀
               </Typography>
             </ListItem>
 
