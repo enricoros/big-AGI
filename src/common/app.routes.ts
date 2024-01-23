@@ -56,6 +56,8 @@ export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
 
 export const navigateToPersonas = navigateFn(ROUTE_APP_PERSONAS);
 
+export const navigateToChatLinkList = navigateFn(ROUTE_APP_LINK_CHAT.replace('[chatLinkId]', 'list'));
+
 export const navigateBack = Router.back;
 
 export const reloadPage = () => isBrowser && window.location.reload();
