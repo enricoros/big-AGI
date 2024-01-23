@@ -8,7 +8,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 
 import { DConversationId, getConversation } from '~/common/state/store-chats';
 
-import { ChatLinkExport } from './chatlink/ChatLinkExport';
+import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
 import { downloadAllConversationsJson, downloadConversationJson } from './trade.client';
 

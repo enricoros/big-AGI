@@ -15,7 +15,7 @@ import { useUICounter } from '~/common/state/store-ui';
 import type { StoragePutSchema, StorageUpdateDeletionKeySchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
 import { conversationToJsonV1 } from '../trade.client';
-import { rememberChatLinkItem, updateChatLinkDeletionKey, useLinkStorageOwnerId } from './store-chatlink';
+import { rememberChatLinkItem, updateChatLinkDeletionKey, useLinkStorageOwnerId } from './store-link';
 
 
 export function ChatLinkExport(props: {
