@@ -110,7 +110,7 @@ after installing the required dependencies.
 ```bash
 # .. repeat the steps above up to `npm install`, then:
 npm run build
-npm run start --port 3000
+next start --port 3000
 ```
 
 The app will be running on the specified port, e.g. `http://localhost:3000`.
