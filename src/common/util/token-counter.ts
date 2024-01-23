@@ -1,4 +1,4 @@
-import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from '@dqbd/tiktoken';
+import { encoding_for_model, get_encoding, Tiktoken, TiktokenModel } from 'tiktoken';
 
 import { DLLMId, findLLMOrThrow, useModelsStore } from '~/modules/llms/store-llms';
 
