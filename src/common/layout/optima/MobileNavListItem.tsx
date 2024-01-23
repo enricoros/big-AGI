@@ -1,8 +1,8 @@
 import * as React from 'react';
 import Router from 'next/router';
-import { Button, ButtonGroup, ListItem } from '@mui/joy';
+import { Button, ButtonGroup, ListItem, Tooltip } from '@mui/joy';
 
-import { NavItemApp, navItems } from '~/common/app.nav';
+import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
 import { BringTheLove } from './components/BringTheLove';
 
@@ -27,17 +27,28 @@ export function MobileNavListItem(props: { currentApp?: NavItemApp }) {
           gap: 1,
         }}
       >
-        {navItems.apps.filter(app => !app.hideOnMobile && !app.hideNav).map(app =>
-          <Button
-            key={'app-' + app.name}
-            disabled={!!app.automatic}
-            size='sm'
-            variant={app == props.currentApp ? 'soft' : 'solid'}
-            onClick={() => Router.push(app.route)}
-          >
-            {app == props.currentApp ? app.name : <app.icon />}
-          </Button>,
-        )}
+        {navItems.apps
+          .filter(app => checkVisibileIcon(app))
+          .map((app, appIdx) => {
+            const isActive = app === props.currentApp;
+
+            if (checkDivider(app))
+              return null;
+            // return <Divider orientation='vertical' key={'div-' + appIdx} />;
+
+            return (
+              <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name}>
+                <Button
+                  key={'app-' + app.name}
+                  size='sm'
+                  variant={isActive ? 'soft' : 'solid'}
+                  onClick={() => Router.push(app.landingRoute || app.route)}
+                >
+                  {isActive ? app.name : <app.icon />}
+                </Button>
+              </Tooltip>
+            );
+          })}
       </ButtonGroup>
 
       {/* Group 2: Social Links */}

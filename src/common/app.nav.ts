@@ -13,13 +13,14 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
+import ImageIcon from '@mui/icons-material/Image';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import IosShareIcon from '@mui/icons-material/IosShare';
+import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import TextsmsIcon from '@mui/icons-material/Textsms';
 import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import WorkspacesOutlinedIcon from '@mui/icons-material/WorkspacesOutlined';
-// Automatic apps
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import IosShareIcon from '@mui/icons-material/IosShare';
 // Link icons
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { DiscordIcon } from '~/common/components/icons/DiscordIcon';
@@ -29,10 +30,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
+import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
 
 
 // enable to show all items, for layout development
 const SHOW_ALL_APPS = false;
+
+const SPECIAL_DIVIDER = '__DIVIDER__';
 
 
 // Nav items
@@ -47,12 +51,14 @@ interface ItemBase {
 export interface NavItemApp extends ItemBase {
   type: 'app',
   route: string,
+  landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
   barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
+  hideIcon?: boolean
+    | (() => boolean),    // set to true to hide the icon, unless this is the active app
   hideBar?: boolean,      // set to true to hide the page bar
   hideDrawer?: boolean,   // set to true to hide the drawer
-  hideNav?: boolean,      // set to hide the Nav bar (note: must have a way to navigate back)
-  hideOnMobile?: boolean, // set to true to hide on mobile
-  automatic?: boolean,    // only accessible by the machine
+  hideNav?: boolean
+    | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
   _delete?: boolean,      // delete from the UI
 }
@@ -131,6 +137,13 @@ export const navItems: {
       route: '/workspace',
       _delete: true,
     },
+    // <-- divider here -->
+    {
+      name: SPECIAL_DIVIDER,
+      type: 'app',
+      route: SPECIAL_DIVIDER,
+      icon: () => null,
+    },
     {
       name: 'Personas',
       icon: Diversity2OutlinedIcon,
@@ -140,6 +153,24 @@ export const navItems: {
       hideBar: true,
     },
     {
+      name: 'Media Library',
+      icon: ImageOutlinedIcon,
+      iconActive: ImageIcon,
+      type: 'app',
+      route: '/media',
+      _delete: true,
+    },
+    {
+      name: 'Shared Chat',
+      icon: IosShareOutlinedIcon,
+      iconActive: IosShareIcon,
+      type: 'app',
+      route: '/link/chat/[chatLinkId]',
+      landingRoute: '/link/chat/list',
+      hideIcon: hasNoChatLinkItems,
+      hideNav: hasNoChatLinkItems,
+    },
+    {
       name: 'News',
       icon: EventNoteOutlinedIcon,
       iconActive: EventNoteIcon,
@@ -147,25 +178,6 @@ export const navItems: {
       route: '/news',
       hideBar: true,
       hideDrawer: true,
-    },
-
-    // non-user-selectable ('automatic') Apps
-    {
-      name: 'Media Library',
-      icon: ImageOutlinedIcon,
-      type: 'app',
-      route: '/media',
-      automatic: true,
-      hideNav: true,
-      _delete: true,
-    },
-    {
-      name: 'Shared Chat',
-      icon: IosShareIcon,
-      type: 'app',
-      route: '/link/chat/[chatLinkId]',
-      automatic: true,
-      hideNav: true,
     },
   ],
 
@@ -211,3 +223,15 @@ export const navItems: {
 
 // apply UI filtering right away - do it here, once, and for all
 navItems.apps = navItems.apps.filter(app => !app._delete || SHOW_ALL_APPS);
+
+export function checkDivider(app?: NavItemApp) {
+  return app?.name === SPECIAL_DIVIDER;
+}
+
+export function checkVisibileIcon(app: NavItemApp, currentApp?: NavItemApp) {
+  return app === currentApp ? true : typeof app.hideIcon === 'function' ? !app.hideIcon() : !app.hideIcon;
+}
+
+export function checkVisibleNav(app?: NavItemApp) {
+  return !app ? false : typeof app.hideNav === 'function' ? !app.hideNav() : !app.hideNav;
+}

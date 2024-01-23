@@ -15,6 +15,10 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
+// set to true to display the conversation IDs
+// const DEBUG_CONVERSATION_IDS = false;
+
+
 const FadeInButton = styled(IconButton)({
   opacity: 0.5,
   transition: 'opacity 0.2s',
@@ -136,6 +140,7 @@ function ChatNavigationItem(props: {
           flex: 1,
         }}
       >
+        {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
         {title.trim() ? title : 'Chat'}{assistantTyping && '...'}
       </Typography>
     ) : (

@@ -9,7 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import type { NavItemApp } from '~/common/app.nav';
+import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -125,10 +125,10 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
     <InvertedBar direction='horizontal' sx={props.sx}>
 
       {/* [Mobile] Drawer button */}
-      {(!!props.isMobile || props.currentApp?.hideNav) && (
+      {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
         <InvertedBarCornerItem>
 
-          {(!appDrawerContent || props.currentApp?.hideNav) ? (
+          {(!appDrawerContent || !checkVisibleNav(props.currentApp)) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
