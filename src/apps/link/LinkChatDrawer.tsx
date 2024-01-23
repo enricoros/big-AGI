@@ -20,6 +20,7 @@ import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 export function LinkChatDrawer(props: {
   activeLinkId: string | null,
   sharedChatLinkItems: SharedChatLinkItem[]
+  showDeletionKeys: boolean,
   onDeleteLink: (linkId: string) => void,
 }) {
 
@@ -70,6 +71,9 @@ export function LinkChatDrawer(props: {
                 <Typography level='title-sm'>
                   {item.chatTitle || 'Untitled Chat'}
                 </Typography>
+                {props.showDeletionKeys && <Typography level='body-xs'>
+                  Deletion Key: {item.deletionKey}
+                </Typography>}
                 <Typography level='body-xs'>
                   <TimeAgo date={item.createdAt} />
                 </Typography>

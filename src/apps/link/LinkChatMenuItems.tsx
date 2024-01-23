@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -14,7 +14,9 @@ import { useChatShowSystemMessages } from '../chat/store-app-chat';
  */
 export function LinkChatMenuItems(props: {
   activeLinkId: string | null,
+  showDeletionKeys: boolean,
   onDeleteLink: (linkId: string) => void,
+  onToggleDeletionKeys: () => void,
 }) {
 
   // external state
@@ -78,6 +80,18 @@ export function LinkChatMenuItems(props: {
         slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
       />
     </MenuItem>
+
+    <MenuItem onClick={props.onToggleDeletionKeys} sx={{ justifyContent: 'space-between' }}>
+      <Typography>
+        Show Keys
+      </Typography>
+      <Switch
+        checked={props.showDeletionKeys}
+        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+      />
+    </MenuItem>
+
+    <ListDivider />
 
     <MenuItem onClick={handleDeleteLink} sx={{ justifyContent: 'space-between' }}>
       Delete

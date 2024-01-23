@@ -102,6 +102,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
   // state
   const [deleteConfirmId, setDeleteConfirmId] = React.useState<string | null>(null);
   const [deleteConfirmKey, setDeleteConfirmKey] = React.useState<string | null>(null);
+  const [showDeletionKeys, setShowDeletionKeys] = React.useState<boolean>(false);
 
   // derived state 1
   const isListPage = props.chatLinkId === SPECIAL_LIST_PAGE_ID;
@@ -189,13 +190,16 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
   const drawerContent = React.useMemo(() => <LinkChatDrawer
     activeLinkId={linkId}
     sharedChatLinkItems={sharedChatLinkItems}
+    showDeletionKeys={showDeletionKeys}
     onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId, sharedChatLinkItems]);
+  />, [handleConfirmDeletion, linkId, sharedChatLinkItems, showDeletionKeys]);
 
   const menuItems = React.useMemo(() => <LinkChatMenuItems
     activeLinkId={linkId}
+    showDeletionKeys={showDeletionKeys}
     onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId]);
+    onToggleDeletionKeys={() => setShowDeletionKeys(on => !on)}
+  />, [handleConfirmDeletion, linkId, showDeletionKeys]);
 
   usePluggableOptimaLayout(drawerContent, null, menuItems, 'AppChatLink');
 
