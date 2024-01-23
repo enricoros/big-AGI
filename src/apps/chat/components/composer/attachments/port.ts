@@ -24,7 +24,7 @@ import { ContentReducer } from '~/modules/aifn/summarize/ContentReducer';
 
     // see how we fare on budget
     if (chatLLMId) {
-      const newTextTokens = countModelTokens(newText, chatLLMId, 'reducer trigger');
+      const newTextTokens = countModelTokens(newText, chatLLMId, 'reducer trigger') ?? 0;
 
       // simple trigger for the reduction dialog
       if (newTextTokens > remainingTokens) {
