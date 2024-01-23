@@ -6,7 +6,7 @@ import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
-import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure } from './link';
+import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure, storageUpdateDeletionKeyProcedure } from './link';
 
 
 export const importChatGptShareInputSchema = z.union([
@@ -64,6 +64,11 @@ export const tradeRouter = createTRPCRouter({
    * Delete a stored object by ID and deletion key
    */
   storageDelete: storageMarkAsDeletedProcedure,
+
+  /**
+   * Update the deletion Key of a stored object by ID and deletion key
+   */
+  storageUpdateDeletionKey: storageUpdateDeletionKeyProcedure,
 
   /**
    * Publish a text file (with title, content, name) to a sharing service
