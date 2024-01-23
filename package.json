@@ -13,7 +13,6 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.7",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.3",
     "@emotion/server": "^11.11.0",
@@ -49,6 +48,7 @@
     "remark-gfm": "^4.0.0",
     "superjson": "^2.2.1",
     "tesseract.js": "^5.0.4",
+    "tiktoken": "^1.0.11",
     "uuid": "^9.0.1",
     "zod": "^3.22.4",
     "zustand": "^4.4.7"
