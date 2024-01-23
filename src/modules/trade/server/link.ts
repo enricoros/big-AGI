@@ -220,7 +220,7 @@ export const storageMarkAsDeletedProcedure =
           id: objectId,
           ownerId: ownerId || undefined,
           deletionKey,
-          isDeleted: false,
+          // isDeleted: false,
         },
         data: {
           isDeleted: true,
@@ -232,7 +232,7 @@ export const storageMarkAsDeletedProcedure =
 
       return {
         type: success ? 'success' : 'error',
-        error: success ? undefined : 'Not found',
+        error: success ? undefined : 'invalid deletion key?',
       };
     });
 
@@ -251,7 +251,7 @@ export const storageUpdateDeletionKeyProcedure =
           id: objectId,
           ownerId: ownerId || undefined,
           deletionKey: formerKey,
-          isDeleted: false,
+          // isDeleted: false,
         },
         data: {
           deletionKey: newKey,
@@ -262,6 +262,6 @@ export const storageUpdateDeletionKeyProcedure =
 
       return {
         type: success ? 'success' : 'error',
-        error: success ? undefined : 'Not found',
+        error: success ? undefined : 'invalid former key',
       };
     });
