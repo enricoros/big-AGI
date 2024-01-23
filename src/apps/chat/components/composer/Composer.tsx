@@ -130,7 +130,7 @@ export function Composer(props: {
   const tokensComposerText = React.useMemo(() => {
     if (!debouncedText || !chatLLMId)
       return 0;
-    return countModelTokens(debouncedText, chatLLMId, 'composer text');
+    return countModelTokens(debouncedText, chatLLMId, 'composer text') ?? 0;
   }, [chatLLMId, debouncedText]);
   let tokensComposer = tokensComposerText + llmAttachments.tokenCountApprox;
   if (tokensComposer > 0)
