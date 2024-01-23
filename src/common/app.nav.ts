@@ -30,7 +30,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
-import { hasNoChatLinkItems } from '~/modules/trade/chatlink/store-chatlink';
+import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
 
 
 // enable to show all items, for layout development
