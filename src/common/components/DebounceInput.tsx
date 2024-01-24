@@ -4,11 +4,13 @@ import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
 type DebounceInputProps = Omit<InputProps, 'onChange'> & {
+  minChars?: number;
   onDebounce: (value: string) => void;
   debounceTimeout: number;
 };
 
 const DebounceInput: React.FC<DebounceInputProps> = ({
+  minChars,
   onDebounce,
   debounceTimeout,
   ...rest
@@ -25,6 +27,9 @@ const DebounceInput: React.FC<DebounceInputProps> = ({
     }
 
     timerRef.current = setTimeout(() => {
+      // Don't call onDebounce if the input value is too short
+      if (newValue && minChars && newValue?.length < minChars)
+        return;
       onDebounce(newValue); // Call onDebounce after the debounce timeout
     }, debounceTimeout);
   };
