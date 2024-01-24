@@ -13,7 +13,7 @@ const SPECIAL_ID_REMOVE = '_REMOVE_';
 export function useFolderDropdown(conversationId: DConversationId | null) {
 
   // external state
-  const { folders, useFolders } = useFolderStore();
+  const { folders, enableFolders } = useFolderStore();
 
 
   // Prepare items for the dropdown
@@ -57,7 +57,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
   const folderDropdown = React.useMemo(() => {
 
     // don't show the dropdown if folders are not enabled
-    if (!useFolders)
+    if (!enableFolders)
       return null;
 
     return (
@@ -69,7 +69,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
         showSymbols
       />
     );
-  }, [currentFolderId, folderItems, handleFolderChange, useFolders]);
+  }, [currentFolderId, enableFolders, folderItems, handleFolderChange]);
 
   return { folderDropdown };
 }

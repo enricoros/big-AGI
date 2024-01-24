@@ -15,7 +15,7 @@ export interface DFolder {
 
 interface FolderState {
   folders: DFolder[];
-  useFolders: boolean; // user setting - default to off until we get enough feedback
+  enableFolders: boolean; // user setting - default to off until we get enough feedback
 }
 
 interface FolderActions {
@@ -26,7 +26,7 @@ interface FolderActions {
   setFolderColor: (folderId: string, color: string) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
-  toggleUseFolders: () => void;
+  toggleEnableFolders: () => void;
 }
 
 type FolderStore = FolderState & FolderActions;
@@ -37,7 +37,7 @@ export const useFolderStore = create<FolderStore>()(devtools(
 
       // Initial state
       folders: [],
-      useFolders: false,
+      enableFolders: false,
 
       createFolder: (title: string, color?: string) => {
         const newFolder: DFolder = {
@@ -105,8 +105,8 @@ export const useFolderStore = create<FolderStore>()(devtools(
           ),
         })),
 
-      toggleUseFolders: () => set(state => ({
-        useFolders: !state.useFolders,
+      toggleEnableFolders: () => set(state => ({
+        enableFolders: !state.enableFolders,
       })),
 
     }),
@@ -148,8 +148,7 @@ export function getRotatingFolderColor(): string {
   return FOLDERS_COLOR_PALETTE[randomIndex];
 }
 
-export const useFoldersToggle = () =>
-  useFolderStore(state => ({
-    useFolders: state.useFolders,
-    toggleUseFolders: state.toggleUseFolders,
-  }), shallow);
+export const useFoldersToggle = () => useFolderStore(state => ({
+  enableFolders: state.enableFolders,
+  toggleEnableFolders: state.toggleEnableFolders,
+}), shallow);

@@ -92,7 +92,7 @@ function ChatDrawer(props: {
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
-  const { useFolders, toggleUseFolders } = useFoldersToggle();
+  const { enableFolders, toggleEnableFolders } = useFoldersToggle();
   const { chatNavItems, folders } = useChatNavigationItems(props.activeConversationId, props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
@@ -176,9 +176,9 @@ function ChatDrawer(props: {
       title='Chats'
       onClose={closeDrawer}
       startButton={
-        <Tooltip title={useFolders ? 'Hide Folders' : 'Use Folders'}>
-          <IconButton onClick={toggleUseFolders}>
-            {useFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
+        <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
+          <IconButton onClick={toggleEnableFolders}>
+            {enableFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
           </IconButton>
         </Tooltip>
       }
@@ -187,15 +187,15 @@ function ChatDrawer(props: {
     {/* Folders List */}
     {/*<Box sx={{*/}
     {/*  display: 'grid',*/}
-    {/*  gridTemplateRows: !useFolders ? '0fr' : '1fr',*/}
+    {/*  gridTemplateRows: !enableFolders ? '0fr' : '1fr',*/}
     {/*  transition: 'grid-template-rows 0.42s cubic-bezier(.17,.84,.44,1)',*/}
     {/*  '& > div': {*/}
-    {/*    padding: useFolders ? 2 : 0,*/}
+    {/*    padding: enableFolders ? 2 : 0,*/}
     {/*    transition: 'padding 0.42s cubic-bezier(.17,.84,.44,1)',*/}
     {/*    overflow: 'hidden',*/}
     {/*  },*/}
     {/*}}>*/}
-    {useFolders && (
+    {enableFolders && (
       <ChatFolderList
         folders={folders}
         selectedFolderId={props.selectedFolderId}
@@ -207,7 +207,7 @@ function ChatDrawer(props: {
     {/* Chats List */}
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
 
-      {useFolders && <ListDivider sx={{ mb: 0 }} />}
+      {enableFolders && <ListDivider sx={{ mb: 0 }} />}
 
       {/* Search Input Field */}
       <DebounceInput
