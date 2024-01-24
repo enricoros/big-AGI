@@ -495,16 +495,18 @@ export function ChatMessage(props: {
 
 
       {/* Edit / Blocks */}
-      {isEditing
+      {isEditing ? (
 
-        ? <InlineTextarea
+        <InlineTextarea
           initialText={messageText} onEdit={handleTextEdited}
           sx={{
             ...blockSx,
             flexGrow: 1,
           }} />
 
-        : <Box
+      ) : (
+
+        <Box
           onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
           onDoubleClick={event => (doubleClickToEdit && props.onMessageEdit) ? handleOpsEdit(event) : null}
           sx={{
@@ -550,7 +552,7 @@ export function ChatMessage(props: {
                         : block.type === 'diff'
                           ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={typographySx} />
                           : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={typographySx} />
+                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                             : <RenderText key={'text-' + index} textBlock={block} sx={typographySx} />)}
 
           {isCollapsed && (
@@ -564,7 +566,7 @@ export function ChatMessage(props: {
           {/*</Chip>*/}
 
         </Box>
-      }
+      )}
 
 
       {/* Overlay copy icon */}

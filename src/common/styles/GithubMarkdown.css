@@ -2,7 +2,7 @@
  * enable programmatic switching between light and dark modes. The original file has a media query that
  * switches the theme based on the user's OS settings (but not the Joy UI theme). */
 
-.markdown-body-dark {
+[data-joy-color-scheme="dark"] .markdown-body {
   color-scheme: dark;
   --color-prettylights-syntax-comment: #8b949e;
   --color-prettylights-syntax-constant: #79c0ff;
@@ -55,7 +55,7 @@
   --color-done-emphasis: #8957e5;
 }
 
-.markdown-body-light {
+[data-joy-color-scheme="light"] .markdown-body {
   color-scheme: light;
   --color-prettylights-syntax-comment: #57606a;
   --color-prettylights-syntax-constant: #0550ae;
@@ -114,9 +114,9 @@
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
-  color: var(--color-fg-default);
-  background-color: var(--color-canvas-default);
   /* Big-AGI: Note: disabled because we have good CSS already */
+  /*color: var(--color-fg-default);*/
+  /*background-color: var(--color-canvas-default);*/
   /*font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";*/
   /*font-size: 16px;*/
   /*line-height: 1.5;*/

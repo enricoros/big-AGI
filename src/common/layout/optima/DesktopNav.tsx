@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Router from 'next/router';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Divider, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
 
@@ -15,6 +16,11 @@ import { DesktopNavGroupButton, DesktopNavIcon, navItemClasses } from './compone
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
+
+
+const desktopInvertedSx: SxProps = {
+  zIndex: themeZIndexDesktopNav,
+};
 
 
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
@@ -120,9 +126,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       id='desktop-nav'
       component={props.component}
       direction='vertical'
-      sx={{
-        zIndex: themeZIndexDesktopNav,
-      }}
+      sx={desktopInvertedSx}
     >
 
       <InvertedBarCornerItem>
