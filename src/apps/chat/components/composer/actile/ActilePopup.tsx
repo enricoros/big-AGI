@@ -21,7 +21,7 @@ export function ActilePopup(props: {
   const hasAnyIcon = props.items.some(item => !!item.Icon);
 
   return (
-    <CloseableMenu open anchorEl={props.anchorEl} onClose={props.onClose} noTopPadding noBottomPadding sx={{ minWidth: 260 }}>
+    <CloseableMenu open anchorEl={props.anchorEl} onClose={props.onClose} noTopPadding noBottomPadding sx={{ minWidth: 320 }}>
 
       {!!props.title && (
         <Sheet variant='soft' sx={{ p: 1, borderBottom: '1px solid', borderBottomColor: 'neutral.softActiveBg' }}>
@@ -40,35 +40,39 @@ export function ActilePopup(props: {
       )}
 
       {props.items.map((item, idx) => {
+          const isActive = idx === props.activeItemIndex;
           const labelBold = item.label.slice(0, props.activePrefixLength);
           const labelNormal = item.label.slice(props.activePrefixLength);
           return (
-            <ListItemButton
+            <ListItem
               key={item.id}
-              variant={idx === props.activeItemIndex ? 'soft' : undefined}
+              variant={isActive ? 'soft' : undefined}
+              color={isActive ? 'primary' : undefined}
               onClick={() => props.onItemClick(item)}
             >
-              {hasAnyIcon && (
-                <ListItemDecorator>
-                  {item.Icon ? <item.Icon /> : null}
-                </ListItemDecorator>
-              )}
-              <Box>
+              <ListItemButton>
+                {hasAnyIcon && (
+                  <ListItemDecorator>
+                    {item.Icon ? <item.Icon /> : null}
+                  </ListItemDecorator>
+                )}
+                <Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography level='title-md' color='primary'>
-                    <span style={{ fontWeight: 600, textDecoration: 'underline' }}>{labelBold}</span>{labelNormal}
-                  </Typography>
-                  {item.argument && <Typography level='body-sm'>
-                    {item.argument}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography level='title-sm' color={isActive ? 'primary' : undefined}>
+                      <span style={{ fontWeight: 600, textDecoration: 'underline' }}>{labelBold}</span>{labelNormal}
+                    </Typography>
+                    {item.argument && <Typography level='body-sm'>
+                      {item.argument}
+                    </Typography>}
+                  </Box>
+
+                  {!!item.description && <Typography level='body-xs'>
+                    {item.description}
                   </Typography>}
                 </Box>
-
-                {!!item.description && <Typography level='body-xs'>
-                  {item.description}
-                </Typography>}
-              </Box>
-            </ListItemButton>
+              </ListItemButton>
+            </ListItem>
           );
         },
       )}

@@ -17,6 +17,7 @@ export const GoodTooltip = (props: {
   <Tooltip
     title={props.title}
     placement={props.placement}
+    disableInteractive
     variant={(props.isError || props.isWarning) ? 'soft' : undefined}
     color={props.isError ? 'danger' : props.isWarning ? 'warning' : undefined}
     sx={{
