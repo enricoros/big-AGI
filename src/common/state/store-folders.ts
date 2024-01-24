@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { shallow } from 'zustand/shallow';
 import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -147,8 +146,3 @@ export function getRotatingFolderColor(): string {
   const randomIndex = Math.floor(Math.random() * (FOLDERS_COLOR_PALETTE.length / 3));
   return FOLDERS_COLOR_PALETTE[randomIndex];
 }
-
-export const useFoldersToggle = () => useFolderStore(state => ({
-  enableFolders: state.enableFolders,
-  toggleEnableFolders: state.toggleEnableFolders,
-}), shallow);
