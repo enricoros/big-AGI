@@ -8,7 +8,7 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-export function MobileDrawer(props: { currentApp?: NavItemApp }) {
+export function MobileDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
   const { appDrawerContent } = useOptimaLayout();
@@ -16,6 +16,8 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
 
   return (
     <Drawer
+      id='mobile-drawer'
+      component={props.component}
       open={isDrawerOpen}
       onClose={closeDrawer}
       sx={{

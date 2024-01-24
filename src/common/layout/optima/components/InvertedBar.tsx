@@ -13,7 +13,7 @@ export const InvertedBarCornerItem = styled(Box)({
 });
 
 
-const InvertedBarBase = styled(Sheet)({
+const StyledSheet = styled(Sheet)({
   // customization
   '--Bar': 'var(--AGI-Nav-width)',
 
@@ -21,12 +21,13 @@ const InvertedBarBase = styled(Sheet)({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-});
+}) as typeof Sheet;
 
 
 // This is the AppBar and the MobileAppNav and DesktopNav
 export const InvertedBar = (props: {
   id?: string,
+  component: React.ElementType,
   direction: 'horizontal' | 'vertical',
   sx?: SxProps
   children: React.ReactNode,
@@ -36,24 +37,32 @@ export const InvertedBar = (props: {
   const theme = useTheme();
   const isDark = theme?.palette.mode === 'dark';
 
-  return <InvertedBarBase
-    id={props.id}
-    variant={isDark ? 'soft' : 'solid'}
-    invertedColors={!isDark ? true : undefined}
-    sx={
-      props.direction === 'horizontal'
-        ? {
-          // minHeight: 'var(--Bar)',
-          flexDirection: 'row',
-          // overflow: 'hidden',
-          ...props.sx,
-        } : {
-          // minWidth: 'var(--Bar)',
-          flexDirection: 'column',
-          ...props.sx,
-        }
-    }
-  >
-    {props.children}
-  </InvertedBarBase>;
+
+  // memoize the Sx for stability, based on direction
+  const sx: SxProps = React.useMemo(() => (
+    props.direction === 'horizontal'
+      ? {
+        // minHeight: 'var(--Bar)',
+        flexDirection: 'row',
+        // overflow: 'hidden',
+        ...props.sx,
+      } : {
+        // minWidth: 'var(--Bar)',
+        flexDirection: 'column',
+        ...props.sx,
+      }
+  ), [props.direction, props.sx]);
+
+
+  return (
+    <StyledSheet
+      id={props.id}
+      component={props.component}
+      variant={isDark ? 'soft' : 'solid'}
+      invertedColors={!isDark ? true : undefined}
+      sx={sx}
+    >
+      {props.children}
+    </StyledSheet>
+  );
 };

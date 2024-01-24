@@ -8,7 +8,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
-export function MobileNav(props: { currentApp?: NavItemApp, hideOnFocusMode?: boolean }) {
+export function MobileNav(props: { component: React.ElementType, currentApp?: NavItemApp, hideOnFocusMode?: boolean }) {
 
   // external state
   const { isFocusedMode } = useOptimaLayout();
@@ -19,7 +19,9 @@ export function MobileNav(props: { currentApp?: NavItemApp, hideOnFocusMode?: bo
 
   return (
     <InvertedBar
-      id='mobile-nav' direction='horizontal'
+      id='mobile-nav'
+      component={props.component}
+      direction='horizontal'
       sx={{
         justifyContent: 'space-around',
       }}
@@ -29,6 +31,7 @@ export function MobileNav(props: { currentApp?: NavItemApp, hideOnFocusMode?: bo
           Chat
         </Typography>
       </InvertedBarCornerItem>
+
       <Typography>
         FIXME: MobileNav
       </Typography>

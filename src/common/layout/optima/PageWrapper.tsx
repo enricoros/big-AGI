@@ -4,44 +4,18 @@ import { Box, Container } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
-import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { PageBar } from './PageBar';
+import { PageCore } from './PageCore';
 import { useOptimaDrawers } from './useOptimaDrawers';
 
 
-const PageCore = (props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) =>
-  <Box sx={{
-    // background: 'url(/images/big-agi-background-3.png) no-repeat center bottom fixed',
-    backgroundColor: themeBgApp,
-    height: '100dvh',
-    display: 'flex', flexDirection: 'column',
-  }}>
-
-    {/* Responsive page bar (pluggable App Center Items and App Menu) */}
-    <PageBar
-      currentApp={props.currentApp}
-      isMobile={props.isMobile}
-      sx={{
-        zIndex: themeZIndexPageBar,
-      }}
-    />
-
-    {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
-    {props.children}
-
-    {/* [Mobile] Nav bar at the bottom */}
-    {/* FIXME: TEMP: Disable mobilenav */}
-    {/*{props.isMobile && <MobileNav hideOnFocusMode currentApp={props.currentApp} />}*/}
-
-  </Box>;
-
-
 /**
- * Loaded Application component, fromt the NextJS page router, wrapped in a Container for centering.
+ * Wraps the NextJS Page Component (from the pages router).
+ *  - mobile: just the 100dvh pageCore
+ *  - desktop: animated left margin (sync with the drawer) and centering via the Container, then the PageCore
  */
-export function PageWrapper(props: { currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
+export function PageWrapper(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
 
   // external state
   const { isDrawerOpen } = useOptimaDrawers();
@@ -52,7 +26,7 @@ export function PageWrapper(props: { currentApp?: NavItemApp, isMobile?: boolean
   // mobile: no outer containers
   if (props.isMobile)
     return (
-      <PageCore isMobile currentApp={props.currentApp}>
+      <PageCore component={props.component} isMobile currentApp={props.currentApp}>
         {props.children}
       </PageCore>
     );
@@ -89,7 +63,7 @@ export function PageWrapper(props: { currentApp?: NavItemApp, isMobile?: boolean
         }}
       >
 
-        <PageCore currentApp={props.currentApp}>
+        <PageCore component={props.component} currentApp={props.currentApp}>
           {props.children}
         </PageCore>
 
