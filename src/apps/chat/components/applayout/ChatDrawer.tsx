@@ -28,7 +28,7 @@ import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
  * to avoid unnecessary re-renders on each new character typed by the assistant
  */
-export const useChatNavigationItems = (activeConversationId: DConversationId | null, folderId: string | null): {
+export const useChatNavigationItemsData = (activeConversationId: DConversationId | null, folderId: string | null): {
   chatNavItems: ChatNavigationItemData[],
   folders: DFolder[],
 } => {
@@ -93,7 +93,7 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { enableFolders, toggleEnableFolders } = useFoldersToggle();
-  const { chatNavItems, folders } = useChatNavigationItems(props.activeConversationId, props.selectedFolderId);
+  const { chatNavItems, folders } = useChatNavigationItemsData(props.activeConversationId, props.selectedFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
