@@ -211,6 +211,7 @@ function ChatDrawerItem(props: {
         // common
         '--ListItem-minHeight': '2.75rem',
         position: 'relative', // for the progress bar
+        // '--variant-borderWidth': '0.125rem',
         border: 'none', // there's a default border of 1px and invisible.. hmm
         // style
         borderRadius: 'md',

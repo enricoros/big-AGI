@@ -13,10 +13,12 @@ const ReactMarkdown = React.lazy(async () => {
     import('remark-gfm'),
   ]);
 
+  // NOTE: extracted here instead of inline as a large performance optimization
+  const remarkPlugins = [remarkGfmModule.default];
+
   // Pass the dynamically imported remarkGfm as children
-  const ReactMarkdownWithRemarkGfm = (props: any) => (
-    <markdownModule.default remarkPlugins={[remarkGfmModule.default]} {...props} />
-  );
+  const ReactMarkdownWithRemarkGfm = (props: any) =>
+    <markdownModule.default remarkPlugins={remarkPlugins} {...props} />;
 
   return { default: ReactMarkdownWithRemarkGfm };
 });
