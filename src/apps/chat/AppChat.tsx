@@ -146,7 +146,7 @@ export function AppChat() {
 
   // Execution
 
-  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
+  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]): Promise<void> => {
     const chatLLMId = getChatLLMId();
     if (!chatModeId || !conversationId || !chatLLMId) return;
 
@@ -247,8 +247,9 @@ export function AppChat() {
     return true;
   };
 
-  const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
     await _handleExecute('generate-text', conversationId, history);
+  }, [_handleExecute]);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedConversationId);
@@ -261,9 +262,9 @@ export function AppChat() {
     }
   }, [focusedConversationId, _handleExecute]);
 
-  const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+  const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
-  const handleTextImagine = async (conversationId: DConversationId, messageText: string) => {
+  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string): Promise<void> => {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
@@ -272,11 +273,11 @@ export function AppChat() {
       ...conversation.messages,
       createDMessage('user', imaginedPrompt),
     ]);
-  };
+  }, [_handleExecute]);
 
-  const handleTextSpeak = async (text: string) => {
+  const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
     await speakText(text);
-  };
+  }, []);
 
   // Chat actions
 
@@ -371,7 +372,7 @@ export function AppChat() {
     ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
-  ], [focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
+  ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
   // Pluggable ApplicationBar components
