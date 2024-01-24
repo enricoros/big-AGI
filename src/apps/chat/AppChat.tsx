@@ -102,7 +102,7 @@ export function AppChat() {
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
   const { folderConversationsCount, selectedFolderId } = useFolderStore(state => {
-    const selectedFolderId = state.useFolders ? _selectedFolderId : null;
+    const selectedFolderId = state.enableFolders ? _selectedFolderId : null;
     return {
       folderConversationsCount: selectedFolderId
         ? state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
