@@ -298,20 +298,23 @@ function ChatDrawerItem(props: {
   ) : (
 
     // Inactive Conversation - click to activate
-    <ListItemButton
-      onClick={handleConversationActivate}
-      sx={{
-        '--ListItem-minHeight': '2.75rem',
-        position: 'relative', // for the progress bar
-        border: 'none', // there's a default border of 1px and invisible.. hmm
-      }}
-    >
+    <ListItem sx={{ '--ListItem-minHeight': '2.75rem' }}>
 
-      {titleRowComponent}
+      <ListItemButton
+        onClick={handleConversationActivate}
+        sx={{
+          border: 'none', // there's a default border of 1px and invisible.. hmm
+          position: 'relative', // for the progress bar
+        }}
+      >
 
-      {/* Optional progress bar, underlay */}
-      {progressBarFixedComponent}
+        {titleRowComponent}
 
-    </ListItemButton>
+        {/* Optional progress bar, underlay */}
+        {progressBarFixedComponent}
+
+      </ListItemButton>
+
+    </ListItem>
   );
 }

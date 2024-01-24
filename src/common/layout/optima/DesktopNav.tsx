@@ -126,7 +126,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     >
 
       <InvertedBarCornerItem>
-        <Tooltip title={isDrawerOpen ? undefined : 'Open Drawer'}>
+        <Tooltip title={isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer'}>
           <DesktopNavIcon disabled={!logoButtonTogglesPane} onClick={handleLogoButtonClick}>
             {logoButtonTogglesPane ? <MenuIcon /> : <AgiSquircleIcon inverted sx={{ color: 'white' }} />}
           </DesktopNavIcon>
