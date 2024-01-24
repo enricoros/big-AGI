@@ -231,14 +231,15 @@ export function Composer(props: {
     return [providerCommands(onActileCommandSelect)];
   }, [onActileCommandSelect]);
 
-  const { actileComponent, actileInterceptKeydown } = useActileManager(actileProviders, props.composerTextAreaRef);
+  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 
 
   // Text typing
 
   const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComposeText(e.target.value);
-  }, [setComposeText]);
+    isMobile && actileInterceptTextChange(e.target.value);
+  }, [actileInterceptTextChange, isMobile, setComposeText]);
 
   const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // disable keyboard handling if the actile is visible

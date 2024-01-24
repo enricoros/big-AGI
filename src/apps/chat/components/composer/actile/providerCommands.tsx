@@ -5,6 +5,7 @@ import { findAllChatCommands } from '../../../commands/commands.registry';
 export const providerCommands = (onItemSelect: (item: ActileItem) => void): ActileProvider => ({
   id: 'actile-commands',
   title: 'Chat Commands',
+  searchPrefix: '/',
 
   checkTriggerText: (trailingText: string) =>
     trailingText.trim() === '/',

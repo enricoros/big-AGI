@@ -13,6 +13,7 @@ type ActileProviderIds = 'actile-commands' | 'actile-attach-reference';
 export interface ActileProvider {
   id: ActileProviderIds;
   title: string;
+  searchPrefix: string;
 
   checkTriggerText: (trailingText: string) => boolean;
 
