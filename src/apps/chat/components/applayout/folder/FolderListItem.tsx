@@ -200,7 +200,8 @@ export function FolderListItem(props: {
         {!!menuAnchorEl && (
           <CloseableMenu
             open anchorEl={menuAnchorEl} onClose={handleMenuClose}
-            placement='top' zIndex={1301 /* need to be on top of the Modal on Mobile */}
+            placement='top'
+            zIndex={1301 /* need to be on top of the Modal on Mobile */}
             sx={{ minWidth: 200 }}
           >
 

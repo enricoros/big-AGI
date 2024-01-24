@@ -1,39 +1,45 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FolderIcon from '@mui/icons-material/Folder';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
+import DebounceInput from '~/common/components/DebounceInput';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import DebounceInput from '~/common/components/DebounceInput';
 
+import { ChatDrawerItemMemo, ChatNavigationItemData, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folder/ChatFolderList';
-import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
+import { ClearFolderText } from './folder/useFolderDropdown';
 
+
+// this is here to make shallow comparisons work on the next hook
+const noFolders: DFolder[] = [];
 
 /*
  * Lists folders and returns the active folder
  */
-export const useFolders = (activeFolderId: string | null) => useFolderStore(({ enableFolders, folders: allFolders, toggleEnableFolders }) => {
+export const useFolders = (activeFolderId: string | null) => useFolderStore(({ enableFolders, folders, toggleEnableFolders }) => {
 
   // finds the active folder if any
-  const activeFolder = activeFolderId
-    ? allFolders.find(folder => folder.id === activeFolderId) ?? null
+  const activeFolder = (enableFolders && activeFolderId)
+    ? folders.find(folder => folder.id === activeFolderId) ?? null
     : null;
 
   return {
     activeFolder,
-    allFolders,
+    allFolders: enableFolders ? folders : noFolders,
     enableFolders,
     toggleEnableFolders,
   };
@@ -44,7 +50,7 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
  * to avoid unnecessary re-renders on each new character typed by the assistant
  */
-export const useChatNavigationItemsData = (activeFolder: DFolder | null, activeConversationId: DConversationId | null): ChatNavigationItemData[] =>
+export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFolders: DFolder[], activeConversationId: DConversationId | null): ChatNavigationItemData[] =>
   useChatStore(({ conversations }) => {
 
     const activeConversations = activeFolder
@@ -56,6 +62,11 @@ export const useChatNavigationItemsData = (activeFolder: DFolder | null, activeC
       isActive: _c.id === activeConversationId,
       isEmpty: !_c.messages.length && !_c.userTitle,
       title: conversationTitle(_c),
+      folder: !allFolders.length
+        ? undefined                             // don't show folder select if folders are disabled
+        : _c.id === activeConversationId        // only show the folder for active conversation(s)
+          ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
+          : null,
       messageCount: _c.messages.length,
       assistantTyping: !!_c.abortController,
       systemPurposeId: _c.systemPurposeId,
@@ -86,11 +97,12 @@ function ChatDrawer(props: {
 
   // local state
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
+  const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
-  const chatNavItems = useChatNavigationItemsData(activeFolder, props.activeConversationId);
+  const chatNavItems = useChatNavigationItemsData(activeFolder, allFolders, props.activeConversationId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
 
   // derived state
@@ -105,15 +117,36 @@ function ChatDrawer(props: {
     closeDrawerOnMobile();
   }, [closeDrawerOnMobile, onConversationNew]);
 
+
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
     if (closeMenu)
       closeDrawerOnMobile();
   }, [closeDrawerOnMobile, onConversationActivate]);
 
+
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
     !singleChat && conversationId && onConversationDelete(conversationId, true);
   }, [onConversationDelete, singleChat]);
+
+
+  // Folder change request
+
+  const handleConversationFolderChange = React.useCallback((folderChangeRequest: FolderChangeRequest) => setFolderChangeRequest(folderChangeRequest), []);
+
+  const handleConversationFolderCancel = React.useCallback(() => setFolderChangeRequest(null), []);
+
+  const handleConversationFolderSet = React.useCallback((conversationId: DConversationId, nextFolderId: string | null) => {
+    // Remove conversation from existing folders
+    const { addConversationToFolder, folders, removeConversationFromFolder } = useFolderStore.getState();
+    folders.forEach(folder => folder.conversationIds.includes(conversationId) && removeConversationFromFolder(folder.id, conversationId));
+
+    // Add conversation to the selected folder
+    nextFolderId && addConversationToFolder(nextFolderId, conversationId);
+
+    // Close the menu
+    setFolderChangeRequest(null);
+  }, []);
 
 
   // Filter chatNavItems based on the search query and rank them by search frequency
@@ -257,6 +290,7 @@ function ChatDrawer(props: {
             bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
             onConversationDelete={handleConversationDelete}
+            onConversationFolderChange={handleConversationFolderChange}
           />)}
       </Box>
 
@@ -288,6 +322,47 @@ function ChatDrawer(props: {
       </ListItemButton>
 
     </PageDrawerList>
+
+
+    {/* [Menu] Chat Item Folder Change */}
+    {!!folderChangeRequest?.anchorEl && (
+      <CloseableMenu
+        open anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
+        placement='bottom-start'
+        zIndex={1301 /* need to be on top of the Modal on Mobile */}
+        sx={{ minWidth: 200 }}
+      >
+
+        {/* Folder Assignment Buttons */}
+        {allFolders.map(folder => {
+          const isRequestFolder = folder === folderChangeRequest.currentFolder;
+          return (
+            <ListItem
+              key={folder.id}
+              variant={isRequestFolder ? 'soft' : 'plain'}
+              onClick={() => handleConversationFolderSet(folderChangeRequest.conversationId, folder.id)}
+            >
+              <ListItemButton>
+                <ListItemDecorator>
+                  <FolderIcon sx={{ color: folder.color }} />
+                </ListItemDecorator>
+                {folder.title}
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+
+        {/* Remove Folder Assignment */}
+        {!!folderChangeRequest.currentFolder && (
+          <ListItem onClick={() => handleConversationFolderSet(folderChangeRequest.conversationId, null)}>
+            <ListItemButton>
+              {ClearFolderText}
+            </ListItemButton>
+          </ListItem>
+        )}
+
+      </CloseableMenu>
+    )}
 
   </>;
 }
