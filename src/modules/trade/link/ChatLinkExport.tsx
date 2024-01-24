@@ -125,7 +125,7 @@ export function ChatLinkExport(props: {
               endDecorator={linkPutResult ? <DoneIcon /> : <IosShareIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleConfirm}>
-        Share on {Brand.Title.Base}
+        Share · {Brand.Title.Base}
       </Button>
     </Badge>
 

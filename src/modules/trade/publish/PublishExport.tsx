@@ -51,7 +51,7 @@ export function PublishExport(props: {
 
     setPublishUploading(true);
     const showSystemMessages = getChatShowSystemMessages();
-    const markdownContent = conversationToMarkdown(conversation, !showSystemMessages);
+    const markdownContent = conversationToMarkdown(conversation, !showSystemMessages, false);
     try {
       const paste = await apiAsyncNode.trade.publishTo.mutate({
         to: 'paste.gg',
@@ -85,7 +85,7 @@ export function PublishExport(props: {
             endDecorator={<ExitToAppIcon />}
             sx={{ minWidth: 240, justifyContent: 'space-between' }}
             onClick={handlePublishConversation}>
-      Publish to Paste.gg
+      Share · Paste.gg
     </Button>
 
     {/* [publish] confirmation */}

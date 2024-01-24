@@ -10,7 +10,7 @@ import { DConversationId, getConversation } from '~/common/state/store-chats';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
-import { downloadAllConversationsJson, downloadConversationJson } from './trade.client';
+import { downloadAllConversationsJson, downloadConversation } from './trade.client';
 
 
 export type ExportConfig = { dir: 'export', conversationId: DConversationId | null };
@@ -22,7 +22,8 @@ export type ExportConfig = { dir: 'export', conversationId: DConversationId | nu
 export function ExportChats(props: { config: ExportConfig, onClose: () => void }) {
 
   // state
-  const [downloadedState, setDownloadedState] = React.useState<'ok' | 'fail' | null>(null);
+  const [downloadedJSONState, setDownloadedJSONState] = React.useState<'ok' | 'fail' | null>(null);
+  const [downloadedMarkdownState, setDownloadedMarkdownState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
 
   // external state
@@ -31,16 +32,25 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   // download chats
 
-  const handleDownloadConversation = () => {
+  const handleDownloadConversationJSON = () => {
     if (!props.config.conversationId) return;
     const conversation = getConversation(props.config.conversationId);
     if (!conversation) return;
-    downloadConversationJson(conversation)
-      .then(() => setDownloadedState('ok'))
-      .catch(() => setDownloadedState('fail'));
+    downloadConversation(conversation, 'json')
+      .then(() => setDownloadedJSONState('ok'))
+      .catch(() => setDownloadedJSONState('fail'));
   };
 
-  const handleDownloadAllConversations = () => {
+  const handleDownloadConversationMarkdown = () => {
+    if (!props.config.conversationId) return;
+    const conversation = getConversation(props.config.conversationId);
+    if (!conversation) return;
+    downloadConversation(conversation, 'markdown')
+      .then(() => setDownloadedMarkdownState('ok'))
+      .catch(() => setDownloadedMarkdownState('fail'));
+  };
+
+  const handleDownloadAllConversationsJSON = () => {
     downloadAllConversationsJson()
       .then(() => setDownloadedAllState('ok'))
       .catch(() => setDownloadedAllState('fail'));
@@ -58,11 +68,19 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       </Typography>
 
       <Button variant='soft' disabled={!hasConversation}
-              color={downloadedState === 'ok' ? 'success' : downloadedState === 'fail' ? 'warning' : 'primary'}
-              endDecorator={downloadedState === 'ok' ? <DoneIcon /> : downloadedState === 'fail' ? '✘' : <FileDownloadIcon />}
+              color={downloadedJSONState === 'ok' ? 'success' : downloadedJSONState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedJSONState === 'ok' ? <DoneIcon /> : downloadedJSONState === 'fail' ? '✘' : <FileDownloadIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleDownloadConversation}>
-        Download chat
+              onClick={handleDownloadConversationJSON}>
+        Download · JSON
+      </Button>
+
+      <Button variant='soft' disabled={!hasConversation}
+              color={downloadedMarkdownState === 'ok' ? 'success' : downloadedMarkdownState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedMarkdownState === 'ok' ? <DoneIcon /> : downloadedMarkdownState === 'fail' ? '✘' : <FileDownloadIcon />}
+              sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              onClick={handleDownloadConversationMarkdown}>
+        Export · Markdown
       </Button>
 
       {enableSharing && (
@@ -90,8 +108,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
               endDecorator={downloadedAllState === 'ok' ? <DoneIcon /> : downloadedAllState === 'fail' ? '✘' : <FileDownloadIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleDownloadAllConversations}>
-        Download all chats
+              onClick={handleDownloadAllConversationsJSON}>
+        Download All · JSON
       </Button>
     </Box>
 
