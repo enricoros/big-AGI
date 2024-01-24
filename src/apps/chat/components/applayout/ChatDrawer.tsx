@@ -9,7 +9,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
-import { DFolder, useFoldersToggle, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
@@ -22,35 +22,37 @@ import { ChatFolderList } from './folder/ChatFolderList';
 import { ChatDrawerItemMemo, ChatNavigationItemData } from './ChatNavigationItem';
 
 
-// type ListGrouping = 'off' | 'persona';
+/*
+ * Lists folders and returns the active folder
+ */
+export const useFolders = (activeFolderId: string | null) => useFolderStore(({ enableFolders, folders: allFolders, toggleEnableFolders }) => {
+
+  // finds the active folder if any
+  const activeFolder = activeFolderId
+    ? allFolders.find(folder => folder.id === activeFolderId) ?? null
+    : null;
+
+  return {
+    activeFolder,
+    allFolders,
+    enableFolders,
+    toggleEnableFolders,
+  };
+}, shallow);
+
 
 /*
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
  * to avoid unnecessary re-renders on each new character typed by the assistant
  */
-export const useChatNavigationItemsData = (activeConversationId: DConversationId | null, folderId: string | null): {
-  chatNavItems: ChatNavigationItemData[],
-  folders: DFolder[],
-} => {
+export const useChatNavigationItemsData = (activeFolder: DFolder | null, activeConversationId: DConversationId | null): ChatNavigationItemData[] =>
+  useChatStore(({ conversations }) => {
 
-  // monitor folder changes
-  // NOTE: we're not checking for state.useFolders, as we strongly assume folderId to be null when folders are disabled
-  const { currentFolder, folders } = useFolderStore(state => {
-    const currentFolder = folderId ? state.folders.find(_f => _f.id === folderId) ?? null : null;
-    return {
-      folders: state.folders,
-      currentFolder,
-    };
-  }, shallow);
+    const activeConversations = activeFolder
+      ? conversations.filter(_c => activeFolder.conversationIds.includes(_c.id))
+      : conversations;
 
-  // transform (folder) selected conversation into optimized 'navigation item' data
-  const chatNavItems: ChatNavigationItemData[] = useChatStore(state => {
-
-    const selectConversations = currentFolder
-      ? state.conversations.filter(_c => currentFolder.conversationIds.includes(_c.id))
-      : state.conversations;
-
-    return selectConversations.map(_c => ({
+    return activeConversations.map((_c): ChatNavigationItemData => ({
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
       isEmpty: !_c.messages.length && !_c.userTitle,
@@ -60,13 +62,10 @@ export const useChatNavigationItemsData = (activeConversationId: DConversationId
       systemPurposeId: _c.systemPurposeId,
     }));
 
-  }, (a: ChatNavigationItemData[], b: ChatNavigationItemData[]) => {
+  }, (a, b) => {
     // custom equality function to avoid unnecessary re-renders
     return a.length === b.length && a.every((_a, i) => shallow(_a, b[i]));
   });
-
-  return { chatNavItems, folders };
-};
 
 
 export const ChatDrawerMemo = React.memo(ChatDrawer);
@@ -84,16 +83,15 @@ function ChatDrawer(props: {
   setActiveFolderId: (folderId: string | null) => void,
 }) {
 
+  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
+
   // local state
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
 
-  // const [grouping] = React.useState<ListGrouping>('off');
-  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
-
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
-  const { enableFolders, toggleEnableFolders } = useFoldersToggle();
-  const { chatNavItems, folders } = useChatNavigationItemsData(props.activeConversationId, props.activeFolderId);
+  const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
+  const chatNavItems = useChatNavigationItemsData(activeFolder, props.activeConversationId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
@@ -197,7 +195,7 @@ function ChatDrawer(props: {
     {/*}}>*/}
     {enableFolders && (
       <ChatFolderList
-        folders={folders}
+        folders={allFolders}
         activeFolderId={props.activeFolderId}
         onFolderSelect={props.setActiveFolderId}
       />
