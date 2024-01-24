@@ -1,16 +1,19 @@
 import * as React from 'react';
 
-import { Avatar, Box, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Divider, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
+import FolderIcon from '@mui/icons-material/Folder';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 
+import type { DFolder } from '~/common/state/store-folders';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
@@ -19,33 +22,41 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 // const DEBUG_CONVERSATION_IDS = false;
 
 
-const FadeInButton = styled(IconButton)({
-  opacity: 0.5,
+export const FadeInButton = styled(IconButton)({
+  opacity: 0.6,
   transition: 'opacity 0.2s',
   '&:hover': { opacity: 1 },
 });
 
 
-export const ChatDrawerItemMemo = React.memo(ChatNavigationItem);
+export const ChatDrawerItemMemo = React.memo(ChatDrawerItem);
 
 export interface ChatNavigationItemData {
   conversationId: DConversationId;
   isActive: boolean;
   isEmpty: boolean;
   title: string;
+  folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   messageCount: number;
   assistantTyping: boolean;
   systemPurposeId: SystemPurposeId;
   searchFrequency?: number;
 }
 
-function ChatNavigationItem(props: {
+export interface FolderChangeRequest {
+  conversationId: DConversationId;
+  anchorEl: HTMLButtonElement;
+  currentFolder: DFolder | null;
+}
+
+function ChatDrawerItem(props: {
   item: ChatNavigationItemData,
   isLonely: boolean,
   showSymbols: boolean,
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
+  onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
 }) {
 
   // state
@@ -53,7 +64,7 @@ function ChatNavigationItem(props: {
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // derived state
-  const { conversationId, isActive, title, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
+  const { conversationId, isActive, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
 
@@ -68,6 +79,20 @@ function ChatNavigationItem(props: {
   // Activate
 
   const handleConversationActivate = () => props.onConversationActivate(conversationId, true);
+
+
+  // Folder change
+
+  const { onConversationFolderChange } = props;
+
+  const handleFolderChangeBegin = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onConversationFolderChange({
+      conversationId,
+      anchorEl: event.currentTarget,
+      currentFolder: folder ?? null,
+    });
+  }, [conversationId, folder, onConversationFolderChange]);
 
 
   // Title Edit
@@ -176,7 +201,7 @@ function ChatNavigationItem(props: {
     ), [progress]);
 
 
-  return isActive ?
+  return isActive ? (
 
     // Active Conversation
     <Sheet
@@ -198,7 +223,7 @@ function ChatNavigationItem(props: {
 
       <ListItem sx={{ border: 'none', display: 'grid', gap: 0, px: 'calc(var(--ListItem-paddingX) - 0.25rem)' }}>
 
-        {/* title row */}
+        {/* Title row */}
         <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minHeight: '2.25rem', alignItems: 'center' }}>
 
           {titleRowComponent}
@@ -206,18 +231,28 @@ function ChatNavigationItem(props: {
         </Box>
 
         {/* buttons row */}
-        <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minHeight: '2.25rem', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
 
           <ListItemDecorator />
 
-          <Tooltip title='Rename Chat'>
+          {/* Current Folder color, and change initiator */}
+          {(folder !== undefined) && <>
+            <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
+              <FadeInButton onClick={handleFolderChangeBegin}>
+                {folder ? <FolderIcon style={{ color: folder?.color || 'inherit' }} /> : <FolderOutlinedIcon />}
+              </FadeInButton>
+            </Tooltip>
+            <Divider orientation='vertical' sx={{ my: 1 }} />
+          </>}
+
+          <Tooltip disableInteractive title='Rename Chat'>
             <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditBegin}>
               <EditIcon />
             </FadeInButton>
           </Tooltip>
 
           {!isNew && (
-            <Tooltip title='Auto-title Chat'>
+            <Tooltip disableInteractive title='Auto-title Chat'>
               <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
                 <AutoFixHighIcon />
               </FadeInButton>
@@ -227,17 +262,17 @@ function ChatNavigationItem(props: {
           {/* --> */}
           <Box sx={{ flex: 1 }} />
 
-          {/* Delete Button(s) */}
+          {/* Delete [armed, arming] buttons */}
           {!props.isLonely && !searchFrequency && <>
             {deleteArmed && (
-              <Tooltip title='Confirm Deletion'>
+              <Tooltip disableInteractive title='Confirm Deletion'>
                 <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1 }}>
                   <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
                 </FadeInButton>
               </Tooltip>
             )}
 
-            <Tooltip title={deleteArmed ? 'Cancel' : 'Delete?'}>
+            <Tooltip disableInteractive title={deleteArmed ? 'Cancel' : 'Delete?'}>
               <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
                 {deleteArmed ? <CloseIcon /> : <DeleteOutlineIcon />}
               </FadeInButton>
@@ -253,7 +288,7 @@ function ChatNavigationItem(props: {
 
     </Sheet>
 
-    :
+  ) : (
 
     // Inactive Conversation - click to activate
     <ListItemButton
@@ -270,5 +305,6 @@ function ChatNavigationItem(props: {
       {/* Optional progress bar, underlay */}
       {progressBarFixedComponent}
 
-    </ListItemButton>;
+    </ListItemButton>
+  );
 }
