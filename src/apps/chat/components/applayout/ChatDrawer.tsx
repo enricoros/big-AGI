@@ -236,6 +236,7 @@ function ChatDrawer(props: {
 
       {/* Search Input Field */}
       <DebounceInput
+        minChars={2}
         onDebounce={setDebouncedSearchQuery}
         debounceTimeout={300}
         placeholder='Search...'
