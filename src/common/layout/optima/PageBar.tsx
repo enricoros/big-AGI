@@ -122,7 +122,11 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
     {/*  transition: 'grid-template-rows 1.42s linear',*/}
     {/*}}>*/}
 
-    <InvertedBar direction='horizontal' sx={props.sx}>
+    <InvertedBar
+      component='header'
+      direction='horizontal'
+      sx={props.sx}
+    >
 
       {/* [Mobile] Drawer button */}
       {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (

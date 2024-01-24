@@ -17,13 +17,7 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-// Nav Group
-
-
-// Nav Item
-
-
-export function DesktopNav(props: { currentApp?: NavItemApp }) {
+export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
   const {
@@ -122,7 +116,14 @@ export function DesktopNav(props: { currentApp?: NavItemApp }) {
 
 
   return (
-    <InvertedBar id='desktop-nav' direction='vertical' sx={{ zIndex: themeZIndexDesktopNav }}>
+    <InvertedBar
+      id='desktop-nav'
+      component={props.component}
+      direction='vertical'
+      sx={{
+        zIndex: themeZIndexDesktopNav,
+      }}
+    >
 
       <InvertedBarCornerItem>
         <Tooltip title={isDrawerOpen ? undefined : 'Open Drawer'}>

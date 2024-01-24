@@ -41,10 +41,10 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // content layout
   display: 'flex',
   flexDirection: 'column',
-}));
+})) as typeof Sheet;
 
 
-export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
+export function DesktopDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
   const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
@@ -96,6 +96,7 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
     >
 
       <DesktopDrawerTranslatingSheet
+        component={props.component}
         sx={{
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
         }}
