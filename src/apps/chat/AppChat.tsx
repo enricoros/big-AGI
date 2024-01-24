@@ -63,7 +63,7 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [_selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
+  const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
   // external state
   const theme = useTheme();
@@ -101,13 +101,12 @@ export function AppChat() {
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const { folderConversationsCount, selectedFolderId } = useFolderStore(state => {
-    const selectedFolderId = state.enableFolders ? _selectedFolderId : null;
+  const { activeFolderId, activeFolderConversationsCount } = useFolderStore(({ enableFolders, folders }) => {
+    const activeFolderId = enableFolders ? _activeFolderId : null;
+    const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
     return {
-      folderConversationsCount: selectedFolderId
-        ? state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
-        : conversationsLength,
-      selectedFolderId,
+      activeFolderId: activeFolder?.id ?? null,
+      activeFolderConversationsCount: activeFolder ? activeFolder.conversationIds.length : conversationsLength,
     };
   });
 
@@ -289,14 +288,14 @@ export function AppChat() {
       : prependNewConversation(focusedSystemPurposeId ?? undefined);
     setFocusedConversationId(conversationId);
 
-    // if a folder is selected, add the new conversation to the folder
-    if (selectedFolderId && conversationId)
-      useFolderStore.getState().addConversationToFolder(selectedFolderId, conversationId);
+    // if a folder is active, add the new conversation to the folder
+    if (activeFolderId && conversationId)
+      useFolderStore.getState().addConversationToFolder(activeFolderId, conversationId);
 
     // focus the composer
     composerTextAreaRef.current?.focus();
 
-  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, selectedFolderId, setFocusedConversationId]);
+  }, [activeFolderId, focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
   const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
 
@@ -337,7 +336,7 @@ export function AppChat() {
     if (deleteConversationId) {
       let nextConversationId: DConversationId | null;
       if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
-        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, selectedFolderId);
+        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, activeFolderId);
       else
         nextConversationId = deleteConversation(deleteConversationId);
       setFocusedConversationId(nextConversationId);
@@ -389,6 +388,7 @@ export function AppChat() {
   const drawerContent = React.useMemo(() =>
       <ChatDrawerMemo
         activeConversationId={focusedConversationId}
+        activeFolderId={activeFolderId}
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
@@ -396,10 +396,9 @@ export function AppChat() {
         onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}
-        selectedFolderId={selectedFolderId}
-        setSelectedFolderId={setSelectedFolderId}
+        setActiveFolderId={setActiveFolderId}
       />,
-    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, selectedFolderId, setFocusedConversationId],
+    [activeFolderId, focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -554,10 +553,10 @@ export function AppChat() {
     {!!deleteConversationId && <ConfirmationModal
       open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
       confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Are you absolutely sure you want to delete ${selectedFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
+        ? `Are you absolutely sure you want to delete ${activeFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
         : 'Are you sure you want to delete this conversation?'}
       positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Yes, delete all ${folderConversationsCount} conversations`
+        ? `Yes, delete all ${activeFolderConversationsCount} conversations`
         : 'Delete conversation'}
     />}
   </>;
