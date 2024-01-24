@@ -1,11 +1,24 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
 
 import { PageBar } from './PageBar';
+
+
+const pageCoreSx: SxProps = {
+  // background: 'url(/images/big-agi-background-3.png) no-repeat center bottom fixed',
+  backgroundColor: themeBgApp,
+  height: '100dvh',
+  display: 'flex', flexDirection: 'column',
+};
+
+const pageCoreBarSx: SxProps = {
+  zIndex: themeZIndexPageBar,
+};
 
 
 export const PageCore = (props: {
@@ -16,21 +29,15 @@ export const PageCore = (props: {
 }) =>
   <Box
     component={props.component}
-    sx={{
-      // background: 'url(/images/big-agi-background-3.png) no-repeat center bottom fixed',
-      backgroundColor: themeBgApp,
-      height: '100dvh',
-      display: 'flex', flexDirection: 'column',
-    }}
+    sx={pageCoreSx}
   >
 
     {/* Responsive page bar (pluggable App Center Items and App Menu) */}
     <PageBar
+      component='header'
       currentApp={props.currentApp}
       isMobile={props.isMobile}
-      sx={{
-        zIndex: themeZIndexPageBar,
-      }}
+      sx={pageCoreBarSx}
     />
 
     {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
@@ -38,6 +45,12 @@ export const PageCore = (props: {
 
     {/* [Mobile] Nav bar at the bottom */}
     {/* FIXME: TEMP: Disable mobilenav */}
-    {/*{props.isMobile && <MobileNav hideOnFocusMode currentApp={props.currentApp} />}*/}
+    {/*{props.isMobile && (*/}
+    {/*  <MobileNav*/}
+    {/*    component='nav'*/}
+    {/*    currentApp={props.currentApp}*/}
+    {/*    hideOnFocusMode*/}
+    {/*  />*/}
+    {/*)}*/}
 
   </Box>;

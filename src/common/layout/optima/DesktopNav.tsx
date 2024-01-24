@@ -18,7 +18,7 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-const desktopInvertedSx: SxProps = {
+const desktopNavBarSx: SxProps = {
   zIndex: themeZIndexDesktopNav,
 };
 
@@ -126,7 +126,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       id='desktop-nav'
       component={props.component}
       direction='vertical'
-      sx={desktopInvertedSx}
+      sx={desktopNavBarSx}
     >
 
       <InvertedBarCornerItem>
