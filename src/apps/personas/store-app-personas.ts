@@ -44,6 +44,7 @@ interface AppPersonasStore {
   // actions
   prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) => void;
   deleteSimplePersona: (id: string) => void;
+  deleteSimplePersonas: (ids: Set<string>) => void;
 
 }
 
@@ -80,6 +81,11 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
         simplePersonas: state.simplePersonas.filter(persona => persona.id !== simplePersonaId),
       })),
 
+    deleteSimplePersonas: (simplePersonaIds: Set<string>) =>
+      _set(state => ({
+        simplePersonas: state.simplePersonas.filter(persona => !simplePersonaIds.has(persona.id)),
+      })),
+
   }),
   {
     name: 'app-app-personas',
@@ -105,4 +111,8 @@ export function prependSimplePersona(systemPrompt: string, inputText: string, in
 
 export function deleteSimplePersona(simplePersonaId: string) {
   useAppPersonasStore.getState().deleteSimplePersona(simplePersonaId);
+}
+
+export function deleteSimplePersonas(simplePersonaIds: Set<string>) {
+  useAppPersonasStore.getState().deleteSimplePersonas(simplePersonaIds);
 }

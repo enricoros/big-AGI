@@ -12,7 +12,7 @@ import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 import { CreatorDrawerItem } from './CreatorDrawerItem';
-import { deleteSimplePersona, useSimplePersonas } from '../store-app-personas';
+import { deleteSimplePersona, deleteSimplePersonas, useSimplePersonas } from '../store-app-personas';
 
 
 export function CreatorDrawer(props: {
@@ -79,10 +79,7 @@ export function CreatorDrawer(props: {
   }, [simplePersonas]);
 
   const handleSelectionDelete = React.useCallback(() => {
-    selectedIds.forEach(simplePersonaId => {
-      deleteSimplePersona(simplePersonaId);
-    });
-    // clear the selection after deletion
+    deleteSimplePersonas(selectedIds);
     setSelectedIds(new Set());
   }, [selectedIds]);
 
