@@ -238,9 +238,9 @@ function ChatDrawerItem(props: {
           {/* Current Folder color, and change initiator */}
           {(folder !== undefined) && <>
             <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
-              <FadeInButton onClick={handleFolderChangeBegin}>
+              <IconButton onClick={handleFolderChangeBegin}>
                 {folder ? <FolderIcon style={{ color: folder?.color || 'inherit' }} /> : <FolderOutlinedIcon />}
-              </FadeInButton>
+              </IconButton>
             </Tooltip>
             <Divider orientation='vertical' sx={{ my: 1 }} />
           </>}
