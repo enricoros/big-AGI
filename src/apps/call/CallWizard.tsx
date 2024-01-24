@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
 
 import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typography } from '@mui/joy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';

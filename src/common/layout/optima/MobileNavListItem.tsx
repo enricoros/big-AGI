@@ -29,7 +29,7 @@ export function MobileNavListItem(props: { currentApp?: NavItemApp }) {
       >
         {navItems.apps
           .filter(app => checkVisibileIcon(app, true, undefined))
-          .map((app, appIdx) => {
+          .map((app) => {
             const isActive = app === props.currentApp;
 
             if (checkDivider(app))
