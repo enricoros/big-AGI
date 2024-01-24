@@ -1,7 +1,7 @@
-import { ActileItem, ActileProvider } from './ActileProvider';
+//import { ActileItem, ActileProvider } from './ActileProvider';
 
 
-export const providerAttachReference: ActileProvider = {
+/*export const providerAttachReference: ActileProvider = {
   id: 'actile-attach-reference',
   title: 'Attach Reference',
 
@@ -20,4 +20,4 @@ export const providerAttachReference: ActileProvider = {
   onItemSelect: (item: ActileItem) => {
     console.log('Selected item:', item);
   },
-};
+};*/
