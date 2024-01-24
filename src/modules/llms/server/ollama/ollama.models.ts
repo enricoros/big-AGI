@@ -1,7 +1,7 @@
 /**
  * This is here because the API does not provide a list of available upstream models, and does not provide
  * descriptions for the models.
- * (nor does it reliably provide context window sizes) - TODO: open a bug upstream
+ * (nor does it reliably provide context window sizes - upstream bug: https://github.com/ollama/ollama/issues/1473)
  *
  * from: https://ollama.ai/library?sort=featured
  */
