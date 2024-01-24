@@ -201,17 +201,13 @@ function ChatDrawer(props: {
   return <>
 
     {/* Drawer Header */}
-    <PageDrawerHeader
-      title='Chats'
-      onClose={closeDrawer}
-      startButton={
-        <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
-          <IconButton onClick={toggleEnableFolders}>
-            {enableFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
-          </IconButton>
-        </Tooltip>
-      }
-    />
+    <PageDrawerHeader title='Chats' onClose={closeDrawer}>
+      <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
+        <IconButton onClick={toggleEnableFolders}>
+          {enableFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
+        </IconButton>
+      </Tooltip>
+    </PageDrawerHeader>
 
     {/* Folders List */}
     {/*<Box sx={{*/}

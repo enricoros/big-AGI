@@ -297,9 +297,9 @@ export function AppChat() {
 
   }, [activeFolderId, focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
-  const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
+  const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
-  const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
+  const handleConversationExport = React.useCallback((conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId }), []);
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
     showNextTitle.current = true;
@@ -330,7 +330,7 @@ export function AppChat() {
     }
   }, [clearConversationId, setMessages]);
 
-  const handleConversationClear = (conversationId: DConversationId) => setClearConversationId(conversationId);
+  const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
 
   const handleConfirmedDeleteConversation = () => {
     if (deleteConversationId) {
@@ -344,7 +344,7 @@ export function AppChat() {
     }
   };
 
-  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+  const handleConversationsDeleteAll = React.useCallback(() => setDeleteConversationId(SPECIAL_ID_WIPE_ALL), []);
 
   const handleConversationDelete = React.useCallback(
     (conversationId: DConversationId, bypassConfirmation: boolean) => {
@@ -398,7 +398,7 @@ export function AppChat() {
         onConversationsDeleteAll={handleConversationsDeleteAll}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, setFocusedConversationId],
+    [activeFolderId, focusedConversationId, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -413,7 +413,7 @@ export function AppChat() {
         onConversationExport={handleConversationExport}
         onConversationFlatten={handleConversationFlatten}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationExport, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
