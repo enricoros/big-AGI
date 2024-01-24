@@ -73,6 +73,7 @@ export const ChatDrawerMemo = React.memo(ChatDrawer);
 
 function ChatDrawer(props: {
   activeConversationId: DConversationId | null,
+  activeFolderId: string | null,
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
@@ -80,8 +81,7 @@ function ChatDrawer(props: {
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
-  selectedFolderId: string | null,
-  setSelectedFolderId: (folderId: string | null) => void,
+  setActiveFolderId: (folderId: string | null) => void,
 }) {
 
   // local state
@@ -93,7 +93,7 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { enableFolders, toggleEnableFolders } = useFoldersToggle();
-  const { chatNavItems, folders } = useChatNavigationItemsData(props.activeConversationId, props.selectedFolderId);
+  const { chatNavItems, folders } = useChatNavigationItemsData(props.activeConversationId, props.activeFolderId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
   const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
@@ -198,8 +198,8 @@ function ChatDrawer(props: {
     {enableFolders && (
       <ChatFolderList
         folders={folders}
-        selectedFolderId={props.selectedFolderId}
-        onFolderSelect={props.setSelectedFolderId}
+        activeFolderId={props.activeFolderId}
+        onFolderSelect={props.setActiveFolderId}
       />
     )}
     {/*</Box>*/}
