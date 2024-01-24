@@ -16,8 +16,8 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCameraDesktop, /*labsEnhancedUI,*/ labsSplitBranching,
-    setLabsCameraDesktop, /*setLabsEnhancedUI,*/ setLabsSplitBranching,
+    labsCameraDesktop, labsSplitBranching,
+    setLabsCameraDesktop, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
@@ -31,11 +31,6 @@ export function UxLabsSettings() {
       title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'}
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
-
-    {/*<FormSwitchControl*/}
-    {/*  title='Enhanced UI' description={labsEnhancedUI ? 'Enabled' : 'Disabled'}*/}
-    {/*  checked={labsEnhancedUI} onChange={setLabsEnhancedUI}*/}
-    {/*/>*/}
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />

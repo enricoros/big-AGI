@@ -15,7 +15,6 @@ import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/com
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 import DebounceInput from '~/common/components/DebounceInput';
 
 import { ChatFolderList } from './folder/ChatFolderList';
@@ -93,7 +92,6 @@ function ChatDrawer(props: {
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const chatNavItems = useChatNavigationItemsData(activeFolder, props.activeConversationId);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
-  const labsEnhancedUI = useUXLabsStore(state => state.labsEnhancedUI);
 
   // derived state
   const selectConversationsCount = chatNavItems.length;
@@ -256,7 +254,7 @@ function ChatDrawer(props: {
             item={item}
             isLonely={singleChat}
             showSymbols={showSymbols}
-            bottomBarBasis={(labsEnhancedUI || softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
+            bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
             onConversationDelete={handleConversationDelete}
           />)}
