@@ -214,7 +214,7 @@ export function ChatMessage(props: {
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
   onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number) => void,
+  onConversationRestartFrom?: (messageId: string, offset: number) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
@@ -302,10 +302,10 @@ export function ChatMessage(props: {
     closeOperationsMenu();
   };
 
-  const handleOpsConversationRestartFrom = (e: React.MouseEvent) => {
+  const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onConversationRestartFrom && props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
     closeOperationsMenu();
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
