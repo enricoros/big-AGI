@@ -4,6 +4,7 @@
 /*export const providerAttachReference: ActileProvider = {
   id: 'actile-attach-reference',
   title: 'Attach Reference',
+  searchPrefix: '@',
 
   checkTriggerText: (trailingText: string) =>
     trailingText.endsWith(' @'),

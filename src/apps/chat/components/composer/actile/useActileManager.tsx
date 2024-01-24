@@ -40,6 +40,26 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   }, [activeItem, handlePopupItemClicked]);
 
 
+  const actileInterceptTextChange = React.useCallback((trailingText: string) => {
+    for (const provider of providers) {
+      if (provider.checkTriggerText(trailingText)) {
+        setProvider(provider);
+        setPopupOpen(true);
+        setActiveSearchString(provider.searchPrefix);
+        provider
+          .fetchItems()
+          .then(items => setItems(items))
+          .catch(error => {
+            handleClose();
+            console.error('Failed to fetch popup items:', error);
+          });
+        return true;
+      }
+    }
+    return false;
+  }, [handleClose, providers]);
+
+
   const actileInterceptKeydown = React.useCallback((_event: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
 
     // Popup open: Intercept
@@ -69,32 +89,10 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
     }
 
     // Popup closed: Check for triggers
-
-    // optimization
-    if (key !== '/' && key !== '@')
-      return false;
-
     const trailingText = (currentTarget.value || '') + key;
+    return actileInterceptTextChange(trailingText);
 
-    // check all rules to find one that triggers
-    for (const provider of providers) {
-      if (provider.checkTriggerText(trailingText)) {
-        setProvider(provider);
-        setPopupOpen(true);
-        setActiveSearchString(key);
-        provider
-          .fetchItems()
-          .then(items => setItems(items))
-          .catch(error => {
-            handleClose();
-            console.error('Failed to fetch popup items:', error);
-          });
-        return true;
-      }
-    }
-
-    return false;
-  }, [activeItems.length, handleClose, handleEnterKey, popupOpen, providers]);
+  }, [actileInterceptTextChange, activeItems.length, handleClose, handleEnterKey, popupOpen]);
 
 
   const actileComponent = React.useMemo(() => {
@@ -114,5 +112,6 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   return {
     actileComponent,
     actileInterceptKeydown,
+    actileInterceptTextChange,
   };
 };
