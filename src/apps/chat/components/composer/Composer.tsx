@@ -265,6 +265,13 @@ export function Composer(props: {
   }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
 
 
+  // Focus mode
+
+  const handleFocusModeOn = React.useCallback(() => setIsFocusedMode(true), [setIsFocusedMode]);
+
+  const handleFocusModeOff = React.useCallback(() => setIsFocusedMode(false), [setIsFocusedMode]);
+
+
   // Mic typing & continuation mode
 
   const onSpeechResultCallback = React.useCallback((result: SpeechResult) => {
@@ -513,8 +520,8 @@ export function Composer(props: {
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
-                  onFocusCapture={() => setIsFocusedMode(true)}
-                  onBlurCapture={() => setIsFocusedMode(false)}
+                  onFocusCapture={handleFocusModeOn}
+                  onBlurCapture={handleFocusModeOff}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',

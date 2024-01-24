@@ -25,8 +25,7 @@ export function ActilePopup(props: {
 
       {!!props.title && (
         <Sheet variant='soft' sx={{ p: 1, borderBottom: '1px solid', borderBottomColor: 'neutral.softActiveBg' }}>
-          {/*<ListItemDecorator/>*/}
-          <Typography level='title-md'>
+          <Typography level='title-sm'>
             {props.title}
           </Typography>
         </Sheet>
