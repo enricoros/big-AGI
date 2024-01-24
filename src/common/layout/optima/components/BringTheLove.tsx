@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Tooltip } from '@mui/joy';
+import { Button, Tooltip } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
@@ -26,20 +26,21 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
   return (
     <Tooltip followCursor title={props.text}>
       {props.asIcon ? (
-        <Box component='a' href={props.link} target='_blank' sx={{
-          textDecoration: 'none',
-          '&:hover': { textDecoration: 'none' },
-        }}>
-          <DesktopNavIcon variant='solid' className={navItemClasses.typeLinkOrModal} onClick={() => setLoved(true)} sx={{
+        <DesktopNavIcon
+          variant='solid'
+          className={navItemClasses.typeLinkOrModal}
+          component={Link} href={props.link} target='_blank'
+          onClick={() => setLoved(true)}
+          sx={{
             background: 'transparent',
             // color: 'text.tertiary',
             '&:hover': {
               animation: `${cssRainbowColorKeyframes} 5s linear infinite`,
             },
-          }}>
-            {icon}
-          </DesktopNavIcon>
-        </Box>
+          }}
+        >
+          {icon}
+        </DesktopNavIcon>
       ) : (
         <Button
           onClick={() => setLoved(true)}
