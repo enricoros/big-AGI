@@ -83,4 +83,4 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
     transform: 'scale(1.4)',
   },
 
-}));
+})) as typeof IconButton;
