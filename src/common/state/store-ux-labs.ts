@@ -15,9 +15,6 @@ interface UXLabsStore {
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
 
-  labsEnhancedUI: boolean;
-  setLabsEnhancedUI: (labsEnhancedUI: boolean) => void;
-
   labsSplitBranching: boolean;
   setLabsSplitBranching: (labsSplitBranching: boolean) => void;
 
@@ -29,9 +26,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
-
-      labsEnhancedUI: false,
-      setLabsEnhancedUI: (labsEnhancedUI: boolean) => set({ labsEnhancedUI }),
 
       labsSplitBranching: false,
       setLabsSplitBranching: (labsSplitBranching: boolean) => set({ labsSplitBranching }),
