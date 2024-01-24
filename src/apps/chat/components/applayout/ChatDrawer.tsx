@@ -109,7 +109,7 @@ function ChatDrawer(props: {
   const selectConversationsCount = chatNavItems.length;
   const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
   const singleChat = selectConversationsCount === 1;
-  const softMaxReached = selectConversationsCount >= 50;
+  const softMaxReached = selectConversationsCount >= 10;
 
 
   const handleButtonNew = React.useCallback(() => {
@@ -244,22 +244,24 @@ function ChatDrawer(props: {
         sx={{ m: 2 }}
       />
 
-      <ListItemButton disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
-        <ListItemDecorator><AddIcon /></ListItemDecorator>
-        <Box sx={{
-          // style
-          fontSize: 'sm',
-          fontWeight: 'lg',
-          // content
-          flexGrow: 1,
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 1,
-        }}>
-          New chat
-          {/*<KeyStroke combo='Ctrl + Alt + N' sx={props.disableNewButton ? { opacity: 0.5 } : undefined} />*/}
-        </Box>
-      </ListItemButton>
+      <ListItem sx={{ '--ListItem-minHeight': '2.75rem' }}>
+        <ListItemButton disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
+          <ListItemDecorator><AddIcon /></ListItemDecorator>
+          <Box sx={{
+            // style
+            fontSize: 'sm',
+            fontWeight: 'lg',
+            // content
+            flexGrow: 1,
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 1,
+          }}>
+            New chat
+            {/*<KeyStroke combo='Ctrl + Alt + N' sx={props.disableNewButton ? { opacity: 0.5 } : undefined} />*/}
+          </Box>
+        </ListItemButton>
+      </ListItem>
 
       {/*<ListDivider sx={{ mt: 0 }} />*/}
 
@@ -294,7 +296,6 @@ function ChatDrawer(props: {
       <ListDivider sx={{ mt: 0 }} />
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-
         <ListItemButton onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadIcon />
