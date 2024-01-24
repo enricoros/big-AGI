@@ -273,7 +273,7 @@ function ChatDrawerItem(props: {
               </Tooltip>
             )}
 
-            <Tooltip disableInteractive title={deleteArmed ? 'Cancel' : 'Delete?'}>
+            <Tooltip disableInteractive title={deleteArmed ? 'Cancel' : 'Delete Chat'}>
               <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
                 {deleteArmed ? <CloseIcon /> : <DeleteOutlineIcon />}
               </FadeInButton>
