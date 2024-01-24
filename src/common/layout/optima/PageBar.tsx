@@ -88,7 +88,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
+export function PageBar(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
@@ -123,7 +123,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
     {/*}}>*/}
 
     <InvertedBar
-      component='header'
+      component={props.component}
       direction='horizontal'
       sx={props.sx}
     >
@@ -186,7 +186,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
       {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {!!props.isMobile && <MobileNavListItem currentApp={props.currentApp} />}
+      {!!props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
 
     </CloseableMenu>
 
