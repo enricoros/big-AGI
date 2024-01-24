@@ -33,10 +33,10 @@ export function GoodModal(props: {
           }}>
 
           {!props.noTitleBar && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator}>
+            <Typography component='h1' level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator}>
               {props.title || ''}
             </Typography>
-            {!!props.onClose && <ModalClose sx={{ position: 'static', my: -1, mr: -0.5 }} />}
+            {!!props.onClose && <ModalClose aria-label='Close Dialog' sx={{ position: 'static', my: -1, mr: -0.5 }} />}
           </Box>}
 
           {props.dividers === true && <Divider />}
@@ -47,7 +47,7 @@ export function GoodModal(props: {
 
           {(!!props.startButton || showBottomClose) && <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
             {props.startButton}
-            {showBottomClose && <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
+            {showBottomClose && <Button aria-label='Close Dialog' variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
               Close
             </Button>}
           </Box>}
