@@ -437,8 +437,8 @@ export function Composer(props: {
         : props.isDeveloperMode
           ? 'Chat with me · drop source files · attach code...'
           : props.capabilityHasT2I
-            ? 'Chat · /react · /draw · drop text files...'
-            : 'Chat · /react · drop text files...';
+            ? 'Chat · /react · /draw · drop files...'
+            : 'Chat · /react · drop files...';
 
 
   return (

@@ -19,7 +19,7 @@ function ButtonAttachFile(props: { isMobile?: boolean, onAttachFilePicker: () =>
       <AttachFileOutlinedIcon />
     </IconButton>
   ) : (
-    <Tooltip variant='solid' placement='top-start' title={attachFileLegend}>
+    <Tooltip disableInteractive variant='solid' placement='top-start' title={attachFileLegend}>
       <Button fullWidth variant='plain' color='neutral' onClick={props.onAttachFilePicker} startDecorator={<AttachFileOutlinedIcon />}
               sx={{ justifyContent: 'flex-start' }}>
         File
