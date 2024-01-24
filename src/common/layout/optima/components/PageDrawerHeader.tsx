@@ -8,8 +8,8 @@ import CloseIcon from '@mui/icons-material/Close';
 export const PageDrawerHeader = (props: {
   title: string,
   onClose: () => void,
-  startButton?: React.ReactNode,
-  sx?: SxProps
+  sx?: SxProps,
+  children?: React.ReactNode,
 }) =>
   <Sheet
     variant='outlined'
@@ -31,9 +31,7 @@ export const PageDrawerHeader = (props: {
     }}
   >
 
-    {props.startButton
-      ? props.startButton
-      : <IconButton disabled />}
+    {props.children || <IconButton disabled />}
 
     <Typography level='title-md'>
       {props.title}

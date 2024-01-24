@@ -90,14 +90,15 @@ export function CreatorDrawer(props: {
     <PageDrawerHeader
       title={selectMode ? 'Selection Mode' : 'Recent'}
       onClose={selectMode ? handleSelectionClose : closeDrawer}
-      startButton={(!hasPersonas || selectMode) ? undefined :
+    >
+      {hasPersonas && !selectMode && (
         <Tooltip title={selectMode ? 'Done' : 'Select'}>
           <IconButton onClick={selectMode ? handleSelectionClose : () => setSelectMode(true)}>
             {selectMode ? <DoneIcon /> : <CheckBoxOutlineBlankIcon />}
           </IconButton>
         </Tooltip>
-      }
-    />
+      )}
+    </PageDrawerHeader>
 
     <PageDrawerList
       variant='plain'
