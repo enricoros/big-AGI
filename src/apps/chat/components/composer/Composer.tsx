@@ -60,7 +60,7 @@ import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 
 
-const animationStopEnter = keyframes`
+export const animationStopEnter = keyframes`
     from {
         opacity: 0;
         transform: translateY(8px)
