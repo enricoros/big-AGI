@@ -65,7 +65,7 @@ export const DrawHeading = (props: {
           variant={props.section === 1 ? 'solid' : 'plain'}
           onClick={() => props.setSection(1)}
         >
-          Edit
+          Refine
         </Button>
         {/*<Button*/}
         {/*  disabled*/}
