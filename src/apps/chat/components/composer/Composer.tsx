@@ -511,9 +511,11 @@ export function Composer(props: {
               <Box sx={{ position: 'relative' }}>
 
                 <Textarea
-                  variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
+                  variant='outlined'
+                  color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                   autoFocus
-                  minRows={isMobile ? 4 : 5} maxRows={isMobile ? 8 : 10}
+                  minRows={isMobile ? 4 : 5}
+                  maxRows={isMobile ? 8 : 10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextareaTextChange}

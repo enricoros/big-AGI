@@ -411,7 +411,6 @@ export function AppChat() {
         setIsMessageSelectionMode={setIsMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
-        onConversationExport={handleConversationExport}
         onConversationFlatten={handleConversationFlatten}
       />,
     [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationExport, isFocusedChatEmpty, isMessageSelectionMode],

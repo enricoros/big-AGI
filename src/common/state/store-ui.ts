@@ -91,7 +91,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
   ),
 );
 
-export function useUICounter(key: 'export-share' | 'share-chat-link' | 'call-wizard') {
+// formerly:
+//  - export-share: badge on the 'share' button in the Chat Menu
+export function useUICounter(key: 'share-chat-link' | 'call-wizard') {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
   return {
     value,
