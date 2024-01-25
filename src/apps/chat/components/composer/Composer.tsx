@@ -442,7 +442,7 @@ export function Composer(props: {
 
 
   return (
-    <Box sx={props.sx}>
+    <Box aria-label='User Message' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Button column and composer Text (mobile: top, desktop: left and center) */}
