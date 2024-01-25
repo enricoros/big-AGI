@@ -12,7 +12,7 @@ import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 
 import { BringTheLove } from './components/BringTheLove';
-import { DesktopNavGroupButton, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
+import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
@@ -137,14 +137,14 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
         </Tooltip>
       </InvertedBarCornerItem>
 
-      <DesktopNavGroupButton>
+      <DesktopNavGroupBox>
         {navAppItems}
-      </DesktopNavGroupButton>
+      </DesktopNavGroupBox>
 
-      <DesktopNavGroupButton sx={{ mb: 'calc(2 * var(--GroupMarginY))' }}>
+      <DesktopNavGroupBox sx={{ mb: 'calc(2 * var(--GroupMarginY))' }}>
         {navExtLinkItems}
         {navModalItems}
-      </DesktopNavGroupButton>
+      </DesktopNavGroupBox>
 
     </InvertedBar>
   );

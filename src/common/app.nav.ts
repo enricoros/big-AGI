@@ -112,6 +112,7 @@ export const navItems: {
       iconActive: FormatPaintIcon,
       type: 'app',
       route: '/draw',
+      // hideOnMobile: true,
       hideDrawer: true,
     },
     {
