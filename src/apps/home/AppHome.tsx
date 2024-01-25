@@ -78,7 +78,7 @@ export default function Home() {
         </SignedIn>
         <Box sx={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '8px' }}>
           <Button
-            variant="text"
+            variant="plain"
             sx={{
               color: 'rgba(255, 255, 255, 0.5)', // Subtle color
               fontSize: '0.75rem', // Smaller text
@@ -93,7 +93,7 @@ export default function Home() {
             Terms
           </Button>
           <Button
-            variant="text"
+            variant="plain"
             sx={{
               color: 'rgba(255, 255, 255, 0.5)', // Subtle color
               fontSize: '0.75rem', // Smaller text
