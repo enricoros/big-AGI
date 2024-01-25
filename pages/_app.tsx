@@ -55,17 +55,14 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
     </ClerkProvider>
   );
 };
+const allowedURLS = ['/', '/sign-in', '/sign-up', '/privacy', '/terms'];
 
 const Redirect = () => {
   const { user } = useUser();
   const router = useRouter();
 
   const checkAndRedirect = React.useCallback(async () => {
-    if (window.location.pathname === '/' || window.location.pathname === '/sign-in' || window.location.pathname === '/sign-up') {
-      return;
-    }
     if (!user?.primaryEmailAddress) {
-      router.push('/');
       return;
     }
 
@@ -88,6 +85,7 @@ const Redirect = () => {
       console.error('Error checking user authorization:', error);
       // Handle any errors, e.g., redirect or show a message
     }
+    console.log('User is authorized');
   }, [user, router]);
 
   React.useEffect(() => {

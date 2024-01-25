@@ -76,6 +76,38 @@ export default function Home() {
               </Typography>
             ))}
         </SignedIn>
+        <Box sx={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '8px' }}>
+          <Button
+            variant="text"
+            sx={{
+              color: 'rgba(255, 255, 255, 0.5)', // Subtle color
+              fontSize: '0.75rem', // Smaller text
+              textTransform: 'none', // No capitalization
+              p: '6px', // Padding
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.1)', // Subtle hover effect
+              },
+            }}
+            onClick={() => router.push('/terms')}
+          >
+            Terms
+          </Button>
+          <Button
+            variant="text"
+            sx={{
+              color: 'rgba(255, 255, 255, 0.5)', // Subtle color
+              fontSize: '0.75rem', // Smaller text
+              textTransform: 'none', // No capitalization
+              p: '6px', // Padding
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.1)', // Subtle hover effect
+              },
+            }}
+            onClick={() => router.push('/privacy')}
+          >
+            Privacy
+          </Button>
+        </Box>
       </Box>
     </CssVarsProvider>
   );
