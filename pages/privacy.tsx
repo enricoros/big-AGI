@@ -52,8 +52,8 @@ export default function Privacy() {
           1. Information Collection
         </CustomTypography>
         <CustomTypography level="body-md" mb={2}>
-          <strong>Google OAuth API:</strong> We use the Google OAuth API for authentication. We collect and store only your email address to grant access to our
-          services. No other personal information is collected.
+          <strong>Google OAuth API:</strong> We use the Google OAuth API for authentication. We collect and store only your google email address to grant access
+          to our services. No other personal information is collected. Your email is not shared with any third parties.
         </CustomTypography>
         <CustomTypography level="body-md" mb={2}>
           <strong>Chat Histories:</strong> We store chat histories to enhance and evaluate the performance of bigAGI. This data is used solely for statistical
