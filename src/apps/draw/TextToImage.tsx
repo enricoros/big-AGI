@@ -13,6 +13,7 @@ import { AppPlaceholder } from '../AppPlaceholder';
 
 
 export function TextToImage(props: {
+  isMobile: boolean,
   providers: TextToImageProvider[],
   activeProviderId: string | null,
   setActiveProviderId: (providerId: (string | null)) => void

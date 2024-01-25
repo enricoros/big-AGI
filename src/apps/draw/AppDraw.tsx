@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useRouterQuery } from '~/common/app.routes';
 
 import { DrawHeading } from './components/DrawHeading';
@@ -23,6 +24,7 @@ export function AppDraw() {
 
 
   // external state
+  const isMobile = useIsMobile();
   const query = useRouterQuery<Partial<AppDrawIntent>>();
   const { activeProviderId, mayWork, providers, setActiveProviderId } = useCapabilityTextToImage();
 
@@ -56,6 +58,7 @@ export function AppDraw() {
 
       {mayWork && (
         <TextToImage
+          isMobile={isMobile}
           providers={providers}
           activeProviderId={activeProviderId}
           setActiveProviderId={setActiveProviderId}
