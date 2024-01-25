@@ -85,7 +85,7 @@ export function PublishExport(props: {
             endDecorator={<ExitToAppIcon />}
             sx={{ minWidth: 240, justifyContent: 'space-between' }}
             onClick={handlePublishConversation}>
-      Share · Paste.gg
+      Share Link · Paste.gg
     </Button>
 
     {/* [publish] confirmation */}
