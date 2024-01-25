@@ -4,7 +4,7 @@ import { Box } from '@mui/joy';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 
-import { PromptDesigner } from './components/PromptDesigner';
+import { DesignerPrompt, PromptDesigner } from './components/PromptDesigner';
 import { ProviderConfigure } from './components/ProviderConfigure';
 
 
@@ -14,6 +14,18 @@ export function TextToImage(props: {
   activeProviderId: string | null,
   setActiveProviderId: (providerId: (string | null)) => void
 }) {
+
+  // state
+  const [prompts, setPrompts] = React.useState<DesignerPrompt[]>([]);
+
+
+  const handleStopDrawing = React.useCallback(() => {
+    setPrompts([]);
+  }, []);
+
+  const handlePromptEnqueue = React.useCallback((prompt: DesignerPrompt) => {
+    setPrompts(prompts => [...prompts, prompt]);
+  }, []);
 
 
   return <>
@@ -38,14 +50,25 @@ export function TextToImage(props: {
       <Box sx={{
         my: 'auto',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 4,
         border: '1px solid red',
         minHeight: '300px',
-      }} />
+      }}>
+        {prompts.map((prompt, index) => (
+          <Box key={index} sx={{
+            border: '1px solid green',
+            width: '100%',
+          }}>
+            {prompt.prompt}
+          </Box>
+        ))}
+      </Box>
     </Box>
 
     <PromptDesigner
       isMobile={props.isMobile}
+      queueLength={prompts.length}
+      onDrawingStop={handleStopDrawing}
+      onPromptEnqueue={handlePromptEnqueue}
       sx={{
         borderTop: `1px solid`,
         borderTopColor: 'divider',
