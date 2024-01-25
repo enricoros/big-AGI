@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import { Box, Card, ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
-import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
@@ -20,14 +19,16 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
+import type { AppCallIntent } from './AppCall';
 import { CallAvatar } from './components/CallAvatar';
 import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
-import { launchAppChat, ROUTE_APP_CHAT } from '~/common/app.routes';
+import { useAppCallStore } from './state/store-app-call';
 
 
 function CallMenuItems(props: {
@@ -38,6 +39,7 @@ function CallMenuItems(props: {
 }) {
 
   // external state
+  const { grayUI, toggleGrayUI } = useAppCallStore();
   const { voicesDropdown } = useElevenLabsVoiceDropdown(false, !props.override);
 
   const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
@@ -63,8 +65,14 @@ function CallMenuItems(props: {
       {voicesDropdown}
     </MenuItem>
 
+    <ListDivider />
+
+    <MenuItem onClick={toggleGrayUI}>
+      Grayed UI
+      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
+    </MenuItem>
+
     <MenuItem component={Link} href='https://github.com/enricoros/big-agi/issues/175' target='_blank'>
-      <ListItemDecorator><ChatOutlinedIcon /></ListItemDecorator>
       Voice Calls Feedback
     </MenuItem>
 
@@ -72,9 +80,9 @@ function CallMenuItems(props: {
 }
 
 
-export function CallUI(props: {
-  conversationId: string,
-  personaId: string,
+export function Telephone(props: {
+  callIntent: AppCallIntent,
+  backToContacts: () => void,
 }) {
 
   // state
@@ -89,14 +97,16 @@ export function CallUI(props: {
 
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
-  const { chatTitle, messages } = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+  const { chatTitle, reMessages } = useChatStore(state => {
+    const conversation = props.callIntent.conversationId
+      ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
+      : null;
     return {
-      chatTitle: conversation ? conversationTitle(conversation) : 'no conversation',
-      messages: conversation ? conversation.messages : [],
+      chatTitle: conversation ? conversationTitle(conversation) : null,
+      reMessages: conversation ? conversation.messages : null,
     };
   }, shallow);
-  const persona = SystemPurposes[props.personaId as SystemPurposeId] ?? undefined;
+  const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
   const personaCallStarters = persona?.call?.starters ?? undefined;
   const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
   const personaSystemMessage = persona?.systemMessage ?? undefined;
@@ -193,8 +203,8 @@ export function CallUI(props: {
     if (!chatLLMId) return;
 
     // temp fix: when the chat has no messages, only assume a single system message
-    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = messages.length > 0
-      ? messages
+    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = (reMessages && reMessages.length > 0)
+      ? reMessages
       : personaSystemMessage
         ? [{ role: 'system', text: personaSystemMessage }]
         : [];
@@ -223,16 +233,18 @@ export function CallUI(props: {
         error = err;
     }).finally(() => {
       setPersonaTextInterim(null);
-      setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
+      if (finalText || error)
+        setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
       // fire/forget
-      void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
+      if (finalText?.length >= 1)
+        void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
     });
 
     return () => {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, chatLLMId, messages, personaVoiceId, personaSystemMessage]);
+  }, [isConnected, callMessages, chatLLMId, personaVoiceId, personaSystemMessage, reMessages]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && isRecordingSpeech;
@@ -294,7 +306,7 @@ export function CallUI(props: {
 
     <CallStatus
       callerName={isConnected ? undefined : personaName}
-      statusText={isRinging ? 'is calling you' : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
+      statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
       regardingText={chatTitle}
       micError={!isMicEnabled} speakError={!isTTSEnabled}
     />
@@ -303,11 +315,18 @@ export function CallUI(props: {
     {(isConnected || isEnded) && (
       <Card variant='soft' sx={{
         flexGrow: 1,
-        minHeight: '15dvh', maxHeight: '24dvh',
-        overflow: 'auto',
+        maxHeight: '24%',
+        minHeight: '15%',
         width: '100%',
+
+        // style
+        backgroundColor: 'background.surface',
         borderRadius: 'lg',
-        flexDirection: 'column-reverse',
+        boxShadow: 'sm',
+
+        // children
+        display: 'flex', flexDirection: 'column-reverse',
+        overflow: 'auto',
       }}>
 
         {/* Messages in reverse order, for auto-scroll from the bottom */}
@@ -344,18 +363,18 @@ export function CallUI(props: {
     )}
 
     {/* Call Buttons */}
-    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly' }}>
+    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly', gap: 4 }}>
 
       {/* [ringing] Decline / Accept */}
-      {isRinging && <CallButton Icon={CallEndIcon} text='Decline' color='danger' onClick={() => setStage('declined')} />}
-      {isRinging && isEnabled && <CallButton Icon={CallIcon} text='Accept' color='success' variant='soft' onClick={() => setStage('connected')} />}
+      {isRinging && <CallButton Icon={CallEndIcon} text='Decline' color='danger' variant='solid' onClick={() => setStage('declined')} />}
+      {isRinging && isEnabled && <CallButton Icon={CallIcon} text='Accept' color='success' variant='solid' onClick={() => setStage('connected')} />}
 
       {/* [Calling] Hang / PTT (mute not enabled yet) */}
-      {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' onClick={handleCallStop} />}
+      {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' variant='soft' onClick={handleCallStop} />}
       {isConnected && (pushToTalk
           ? <CallButton Icon={MicIcon} onClick={toggleRecording}
                         text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
-                        variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'} />
+                        variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'} sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined} />
           : null
         // <CallButton disabled={true} Icon={MicOffIcon} onClick={() => setMicMuted(muted => !muted)}
         //               text={micMuted ? 'Muted' : 'Mute'}
@@ -363,7 +382,7 @@ export function CallUI(props: {
       )}
 
       {/* [ended] Back / Call Again */}
-      {(isEnded || isDeclined) && <Link noLinkStyle href={ROUTE_APP_CHAT}><CallButton Icon={ArrowBackIcon} text='Back' variant='soft' /></Link>}
+      {(isEnded || isDeclined) && <CallButton Icon={ArrowBackIcon} text='Back' variant='soft' onClick={() => props.callIntent.backTo === 'app-chat' ? navigateToIndex() : props.backToContacts()} />}
       {(isEnded || isDeclined) && <CallButton Icon={CallIcon} text='Call Again' color='success' variant='soft' onClick={() => setStage('connected')} />}
 
     </Box>

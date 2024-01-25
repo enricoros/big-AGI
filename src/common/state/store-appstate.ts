@@ -12,9 +12,6 @@ interface AppStateData {
 
 interface AppStateActions {
   setLastSeenNewsVersion: (version: number) => void;
-  suppressItem: (key: string) => void;
-  unSuppressItem: (key: string) => void;
-  resetSuppressedItems: () => void;
 }
 
 
@@ -28,20 +25,6 @@ export const useAppStateStore = create<AppStateData & AppStateActions>()(
 
       setLastSeenNewsVersion: (version: number) => set({ lastSeenNewsVersion: version }),
 
-      suppressItem: (key: string) => set((state) => ({
-        suppressedItems: {
-          ...state.suppressedItems,
-          [key]: true,
-        },
-      })),
-      unSuppressItem: (key: string) => set((state) => {
-        const {
-          [key]: _,
-          ...rest
-        } = state.suppressedItems;
-        return { suppressedItems: rest };
-      }),
-      resetSuppressedItems: () => set({ suppressedItems: {} }),
     }),
     {
       name: 'app-state',

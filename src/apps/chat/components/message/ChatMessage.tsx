@@ -48,7 +48,7 @@ import { parseBlocks } from './blocks';
 // How long is the user collapsed message
 const USER_COLLAPSED_LINES: number = 8;
 
-// Enable the automatic menu on text selection
+// Enable the menu on text selection
 const ENABLE_SELECTION_RIGHT_CLICK_MENU: boolean = true;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
@@ -214,7 +214,7 @@ export function ChatMessage(props: {
   isBottom?: boolean, noBottomBorder?: boolean,
   isImagining?: boolean, isSpeaking?: boolean,
   onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number) => void,
+  onConversationRestartFrom?: (messageId: string, offset: number) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
@@ -302,10 +302,10 @@ export function ChatMessage(props: {
     closeOperationsMenu();
   };
 
-  const handleOpsConversationRestartFrom = (e: React.MouseEvent) => {
+  const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
-    props.onConversationRestartFrom && props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
     closeOperationsMenu();
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -495,16 +495,18 @@ export function ChatMessage(props: {
 
 
       {/* Edit / Blocks */}
-      {isEditing
+      {isEditing ? (
 
-        ? <InlineTextarea
+        <InlineTextarea
           initialText={messageText} onEdit={handleTextEdited}
           sx={{
             ...blockSx,
             flexGrow: 1,
           }} />
 
-        : <Box
+      ) : (
+
+        <Box
           onContextMenu={(ENABLE_SELECTION_RIGHT_CLICK_MENU && props.onMessageEdit) ? event => handleMouseUp(event.nativeEvent) : undefined}
           onDoubleClick={event => (doubleClickToEdit && props.onMessageEdit) ? handleOpsEdit(event) : null}
           sx={{
@@ -550,7 +552,7 @@ export function ChatMessage(props: {
                         : block.type === 'diff'
                           ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={typographySx} />
                           : (renderMarkdown && props.noMarkdown !== true && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} sx={typographySx} />
+                            ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
                             : <RenderText key={'text-' + index} textBlock={block} sx={typographySx} />)}
 
           {isCollapsed && (
@@ -564,7 +566,7 @@ export function ChatMessage(props: {
           {/*</Chip>*/}
 
         </Box>
-      }
+      )}
 
 
       {/* Overlay copy icon */}
@@ -635,7 +637,7 @@ export function ChatMessage(props: {
           {!!props.onConversationBranch && <ListDivider />}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Visualize ...
+            Diagram ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
@@ -673,7 +675,7 @@ export function ChatMessage(props: {
           </MenuItem>
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Visualize ...
+            Diagram ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
             <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>

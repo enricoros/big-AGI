@@ -9,7 +9,7 @@ export const CommandsReact: ICommandsProvider = {
   getCommands: () => [{
     primary: '/react',
     arguments: ['prompt'],
-    description: 'Use the AI ReAct strategy to answer your query (as sidebar)',
+    description: 'Use the AI ReAct strategy to answer your query',
     Icon: PsychologyIcon,
   }],
 

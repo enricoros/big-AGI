@@ -3,8 +3,9 @@ import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { keyframes } from '@emotion/react';
 
-import { Box, Button, ButtonGroup, Card, Grid, IconButton, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
@@ -23,6 +24,7 @@ import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vend
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
@@ -32,7 +34,6 @@ import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -46,7 +47,7 @@ import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachm
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { ButtonAttachCameraMemo } from './buttons/ButtonAttachCamera';
+import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
 import { ButtonCall } from './buttons/ButtonCall';
@@ -59,7 +60,7 @@ import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 
 
-const animationStopEnter = keyframes`
+export const animationStopEnter = keyframes`
     from {
         opacity: 0;
         transform: translateY(8px)
@@ -95,8 +96,7 @@ export function Composer(props: {
   // external state
   const isMobile = useIsMobile();
   const { openPreferencesTab, setIsFocusedMode } = useOptimaLayout();
-  const { labsCalling, labsCameraDesktop } = useUXLabsStore(state => ({
-    labsCalling: state.labsCalling,
+  const { labsCameraDesktop } = useUXLabsStore(state => ({
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
@@ -130,7 +130,7 @@ export function Composer(props: {
   const tokensComposerText = React.useMemo(() => {
     if (!debouncedText || !chatLLMId)
       return 0;
-    return countModelTokens(debouncedText, chatLLMId, 'composer text');
+    return countModelTokens(debouncedText, chatLLMId, 'composer text') ?? 0;
   }, [chatLLMId, debouncedText]);
   let tokensComposer = tokensComposerText + llmAttachments.tokenCountApprox;
   if (tokensComposer > 0)
@@ -181,7 +181,7 @@ export function Composer(props: {
 
   const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
-  const handleDrawOptionsClicked = () => openPreferencesTab(2);
+  const handleDrawOptionsClicked = () => openPreferencesTab(PreferencesTab.Draw);
 
   const handleTextImagineClicked = () => {
     if (!composeText || !props.conversationId)
@@ -231,14 +231,15 @@ export function Composer(props: {
     return [providerCommands(onActileCommandSelect)];
   }, [onActileCommandSelect]);
 
-  const { actileComponent, actileInterceptKeydown } = useActileManager(actileProviders, props.composerTextAreaRef);
+  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 
 
   // Text typing
 
   const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComposeText(e.target.value);
-  }, [setComposeText]);
+    isMobile && actileInterceptTextChange(e.target.value);
+  }, [actileInterceptTextChange, isMobile, setComposeText]);
 
   const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // disable keyboard handling if the actile is visible
@@ -263,6 +264,13 @@ export function Composer(props: {
     }
 
   }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
+
+
+  // Focus mode
+
+  const handleFocusModeOn = React.useCallback(() => setIsFocusedMode(true), [setIsFocusedMode]);
+
+  const handleFocusModeOff = React.useCallback(() => setIsFocusedMode(false), [setIsFocusedMode]);
 
 
   // Mic typing & continuation mode
@@ -303,7 +311,7 @@ export function Composer(props: {
   useGlobalShortcut('m', true, false, false, toggleRecording);
 
   const micIsRunning = !!speechInterimResult;
-  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible;
+  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !isSpeechError;
   const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
   const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
 
@@ -332,6 +340,8 @@ export function Composer(props: {
   const handleAttachCameraImage = React.useCallback((file: FileWithHandle) => {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
+
+  const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
 
   const handleAttachFilePicker = React.useCallback(async () => {
     try {
@@ -427,12 +437,12 @@ export function Composer(props: {
         : props.isDeveloperMode
           ? 'Chat with me · drop source files · attach code...'
           : props.capabilityHasT2I
-            ? 'Chat · /react · /draw · drop text files...'
-            : 'Chat · /react · drop text files...';
+            ? 'Chat · /react · /draw · drop files...'
+            : 'Chat · /react · drop files...';
 
 
   return (
-    <Box sx={props.sx}>
+    <Box aria-label='User Message' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Button column and composer Text (mobile: top, desktop: left and center) */}
@@ -440,19 +450,32 @@ export function Composer(props: {
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
-              {/* Responsive Camera OCR button */}
-              <ButtonAttachCameraMemo isMobile onAttachImage={handleAttachCameraImage} />
+              <Dropdown>
+                <MenuButton slots={{ root: IconButton }}>
+                  <AddCircleOutlineIcon />
+                </MenuButton>
+                <Menu>
+                  {/* Responsive Camera OCR button */}
+                  <MenuItem>
+                    <ButtonAttachCameraMemo onOpenCamera={openCamera} />
+                  </MenuItem>
 
-              {/* Responsive Open Files button */}
-              <ButtonAttachFileMemo isMobile onAttachFilePicker={handleAttachFilePicker} />
+                  {/* Responsive Open Files button */}
+                  <MenuItem>
+                    <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
+                  </MenuItem>
 
-              {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonAttachClipboardMemo isMobile onClick={attachAppendClipboardItems} />}
+                  {/* Responsive Paste button */}
+                  {supportsClipboardRead && <MenuItem>
+                    <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
+                  </MenuItem>}
+                </Menu>
+              </Dropdown>
 
             </Box>
           ) : (
@@ -469,7 +492,7 @@ export function Composer(props: {
               {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
 
               {/* Responsive Camera OCR button */}
-              {labsCameraDesktop && <ButtonAttachCameraMemo onAttachImage={handleAttachCameraImage} />}
+              {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
 
             </Box>
           )}
@@ -488,9 +511,11 @@ export function Composer(props: {
               <Box sx={{ position: 'relative' }}>
 
                 <Textarea
-                  variant='outlined' color={isDraw ? 'warning' : isReAct ? 'success' : 'neutral'}
+                  variant='outlined'
+                  color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                   autoFocus
-                  minRows={isMobile ? 5 : 5} maxRows={10}
+                  minRows={isMobile ? 4 : 5}
+                  maxRows={isMobile ? 8 : 10}
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextareaTextChange}
@@ -498,8 +523,8 @@ export function Composer(props: {
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
-                  onFocusCapture={() => setIsFocusedMode(true)}
-                  onBlurCapture={() => setIsFocusedMode(false)}
+                  onFocusCapture={handleFocusModeOn}
+                  onBlurCapture={handleFocusModeOff}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
@@ -512,9 +537,7 @@ export function Composer(props: {
                   }}
                   sx={{
                     backgroundColor: 'background.level1',
-                    '&:focus-within': {
-                      backgroundColor: 'background.popup',
-                    },
+                    '&:focus-within': { backgroundColor: 'background.popup' },
                     lineHeight: lineHeightTextarea,
                   }} />
 
@@ -616,7 +639,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (isChat
-                  ? <ButtonCall isMobile disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <ButtonCall isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
@@ -683,7 +706,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <ButtonCall disabled={!labsCalling || !props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {isChat && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
@@ -702,6 +725,9 @@ export function Composer(props: {
             capabilityHasTTI={props.capabilityHasT2I}
           />
         )}
+
+        {/* Camera */}
+        {cameraCaptureComponent}
 
         {/* Actile */}
         {actileComponent}

@@ -16,17 +16,16 @@ const cssScaleKeyframes = keyframes`
     }`;
 
 
-export function CallAvatar(props: { symbol: string, imageUrl?: string, isRinging: boolean, onClick: () => void }) {
+export function CallAvatar(props: { symbol: string, imageUrl?: string, isRinging?: boolean, onClick: () => void }) {
   return (
     <Avatar
-      variant='soft' color='neutral'
       onClick={props.onClick}
       src={props.imageUrl}
       sx={{
-        '--Avatar-size': { xs: '160px', md: '200px' },
-        '--variant-borderWidth': '4px',
-        boxShadow: !props.imageUrl ? 'md' : null,
-        fontSize: { xs: '100px', md: '120px' },
+        '--Avatar-size': { xs: '10rem', md: '11.5rem' },
+        backgroundColor: 'background.popup',
+        boxShadow: !props.imageUrl ? 'sm' : null,
+        fontSize: { xs: '6rem', md: '7rem' },
       }}
     >
 

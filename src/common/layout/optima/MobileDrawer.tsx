@@ -4,19 +4,20 @@ import { Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { PageDrawer } from './PageDrawer';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-export function MobileDrawer(props: { currentApp?: NavItemApp }) {
+export function MobileDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const { appPaneContent } = useOptimaLayout();
+  const { appDrawerContent } = useOptimaLayout();
   const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
 
   return (
     <Drawer
+      id='mobile-drawer'
+      component={props.component}
       open={isDrawerOpen}
       onClose={closeDrawer}
       sx={{
@@ -27,11 +28,19 @@ export function MobileDrawer(props: { currentApp?: NavItemApp }) {
         //   boxSizing: 'border-box',
         // },
       }}
+      slotProps={{
+        content: {
+          sx: {
+            // style: round the right drawer corners
+            backgroundColor: 'transparent',
+            borderTopRightRadius: 'var(--AGI-Optima-Radius)',
+            borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+          },
+        },
+      }}
     >
 
-      <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
-        {appPaneContent}
-      </PageDrawer>
+      {appDrawerContent}
 
     </Drawer>
   );

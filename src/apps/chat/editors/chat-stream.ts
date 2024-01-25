@@ -1,7 +1,7 @@
 import { DLLMId } from '~/modules/llms/store-llms';
 import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
@@ -42,7 +42,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   startTyping(conversationId, null);
 
   if (autoTitleChat)
-    autoTitle(conversationId);
+    conversationAutoTitle(conversationId, false);
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);

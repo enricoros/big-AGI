@@ -2,10 +2,9 @@ import * as React from 'react';
 
 import { Box, Sheet, styled } from '@mui/joy';
 
-import type { NavItemApp } from '~/common/app.nav';
+import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
-import { PageDrawer } from './PageDrawer';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
@@ -33,19 +32,23 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   zIndex: themeZIndexDesktopDrawer,
 
   // styling
+  backgroundColor: 'transparent',
+  // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
+  // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+  // contain: 'strict',
   boxShadow: theme.shadow.md,
 
   // content layout
   display: 'flex',
   flexDirection: 'column',
-}));
+})) as typeof Sheet;
 
 
-export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
+export function DesktopDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
   const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
-  const { appPaneContent } = useOptimaLayout();
+  const { appDrawerContent } = useOptimaLayout();
 
   // local state
   const [softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
@@ -71,14 +74,14 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
 
 
   // Desktop-only?: close the drawer if the current app doesn't use it
-  const currentAppUsesDrawer = !!props.currentApp?.drawer;
+  const currentAppUsesDrawer = !props.currentApp?.hideDrawer;
   React.useEffect(() => {
     if (!currentAppUsesDrawer)
       closeDrawer();
   }, [closeDrawer, currentAppUsesDrawer]);
 
   // [special case] remove in the future
-  const shallOpenNavForSharedLink = !!props.currentApp?.drawer && !!props.currentApp?.hideNav;
+  const shallOpenNavForSharedLink = !props.currentApp?.hideDrawer && checkVisibleNav(props.currentApp);
   React.useEffect(() => {
     if (shallOpenNavForSharedLink)
       openDrawer();
@@ -93,17 +96,16 @@ export function DesktopDrawer(props: { currentApp?: NavItemApp }) {
     >
 
       <DesktopDrawerTranslatingSheet
+        component={props.component}
         sx={{
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
         }}
       >
 
         {/* [UX Responsiveness] Keep Mounted for now */}
-        {(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) && (
-          <PageDrawer currentApp={props.currentApp} onClose={closeDrawer}>
-            {appPaneContent}
-          </PageDrawer>
-        )}
+        {(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) &&
+          appDrawerContent
+        }
 
       </DesktopDrawerTranslatingSheet>
 

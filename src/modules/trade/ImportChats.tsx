@@ -30,7 +30,7 @@ const chatGptMedia: FormRadioOption<'source' | 'link'>[] = [
  * Components and functionality to import conversations
  * Supports our own JSON files, and ChatGPT Share Links
  */
-export function ImportConversations(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
+export function ImportChats(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
 
   // state
   const [importMedia, importMediaControl] = useFormRadio('link', chatGptMedia);

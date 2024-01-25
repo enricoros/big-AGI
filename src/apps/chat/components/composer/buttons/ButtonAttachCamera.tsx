@@ -15,33 +15,37 @@ const attachCameraLegend = (isMobile: boolean) =>
 
 export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
 
-function ButtonAttachCamera(props: { isMobile?: boolean, onAttachImage: (file: File) => void }) {
+function ButtonAttachCamera(props: { isMobile?: boolean, onOpenCamera: () => void }) {
+  return props.isMobile ? (
+    <IconButton onClick={props.onOpenCamera}>
+      <AddAPhotoIcon />
+    </IconButton>
+  ) : (
+    <Tooltip disableInteractive variant='solid' placement='top-start' title={attachCameraLegend(!!props.isMobile)}>
+      <Button fullWidth variant='plain' color='neutral' onClick={props.onOpenCamera} startDecorator={<AddAPhotoIcon />}
+              sx={{ justifyContent: 'flex-start' }}>
+        Camera
+      </Button>
+    </Tooltip>
+  );
+}
+
+export function useCameraCaptureModal(onAttachImage: (file: File) => void) {
+
   // state
   const [open, setOpen] = React.useState(false);
 
-  return <>
+  const openCamera = React.useCallback(() => setOpen(true), []);
 
-    {/* The Button */}
-    {props.isMobile ? (
-      <IconButton onClick={() => setOpen(true)}>
-        <AddAPhotoIcon />
-      </IconButton>
-    ) : (
-      <Tooltip variant='solid' placement='top-start' title={attachCameraLegend(!!props.isMobile)}>
-        <Button fullWidth variant='plain' color='neutral' onClick={() => setOpen(true)} startDecorator={<AddAPhotoIcon />}
-                sx={{ justifyContent: 'flex-start' }}>
-          Camera
-        </Button>
-      </Tooltip>
-    )}
+  const cameraCaptureComponent = React.useMemo(() => open && (
+    <CameraCaptureModal
+      onCloseModal={() => setOpen(false)}
+      onAttachImage={onAttachImage}
+    />
+  ), [open, onAttachImage]);
 
-    {/* The actual capture dialog, which will stream the video */}
-    {open && (
-      <CameraCaptureModal
-        onCloseModal={() => setOpen(false)}
-        onAttachImage={props.onAttachImage}
-      />
-    )}
-
-  </>;
+  return {
+    openCamera,
+    cameraCaptureComponent,
+  };
 }

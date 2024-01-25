@@ -18,13 +18,13 @@ import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/commo
 import { GoodPanelResizeHandler } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
-import { themeBgApp, themeBgAppChatComposer } from '~/common/app.theme';
+import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { ChatDrawerContentMemo } from './components/applayout/ChatDrawerItems';
+import { ChatDrawerMemo } from './components/applayout/ChatDrawer';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
 import { ChatMenuItems } from './components/applayout/ChatMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -63,7 +63,7 @@ export function AppChat() {
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitle = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [_selectedFolderId, setSelectedFolderId] = React.useState<string | null>(null);
+  const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
   // external state
   const theme = useTheme();
@@ -101,13 +101,12 @@ export function AppChat() {
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const { folderConversationsCount, selectedFolderId } = useFolderStore(state => {
-    const selectedFolderId = state.useFolders ? _selectedFolderId : null;
+  const { activeFolderId, activeFolderConversationsCount } = useFolderStore(({ enableFolders, folders }) => {
+    const activeFolderId = enableFolders ? _activeFolderId : null;
+    const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
     return {
-      folderConversationsCount: selectedFolderId
-        ? state.folders.find(folder => folder.id === selectedFolderId)?.conversationIds.length || 0
-        : conversationsLength,
-      selectedFolderId,
+      activeFolderId: activeFolder?.id ?? null,
+      activeFolderConversationsCount: activeFolder ? activeFolder.conversationIds.length : conversationsLength,
     };
   });
 
@@ -147,7 +146,7 @@ export function AppChat() {
 
   // Execution
 
-  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
+  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]): Promise<void> => {
     const chatLLMId = getChatLLMId();
     if (!chatModeId || !conversationId || !chatLLMId) return;
 
@@ -248,8 +247,9 @@ export function AppChat() {
     return true;
   };
 
-  const handleConversationExecuteHistory = async (conversationId: DConversationId, history: DMessage[]) =>
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
     await _handleExecute('generate-text', conversationId, history);
+  }, [_handleExecute]);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedConversationId);
@@ -262,9 +262,9 @@ export function AppChat() {
     }
   }, [focusedConversationId, _handleExecute]);
 
-  const handleTextDiagram = async (diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig);
+  const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
-  const handleTextImagine = async (conversationId: DConversationId, messageText: string) => {
+  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string): Promise<void> => {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
@@ -273,11 +273,11 @@ export function AppChat() {
       ...conversation.messages,
       createDMessage('user', imaginedPrompt),
     ]);
-  };
+  }, [_handleExecute]);
 
-  const handleTextSpeak = async (text: string) => {
+  const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
     await speakText(text);
-  };
+  }, []);
 
   // Chat actions
 
@@ -289,18 +289,18 @@ export function AppChat() {
       : prependNewConversation(focusedSystemPurposeId ?? undefined);
     setFocusedConversationId(conversationId);
 
-    // if a folder is selected, add the new conversation to the folder
-    if (selectedFolderId && conversationId)
-      useFolderStore.getState().addConversationToFolder(selectedFolderId, conversationId);
+    // if a folder is active, add the new conversation to the folder
+    if (activeFolderId && conversationId)
+      useFolderStore.getState().addConversationToFolder(activeFolderId, conversationId);
 
     // focus the composer
     composerTextAreaRef.current?.focus();
 
-  }, [focusedSystemPurposeId, newConversationId, prependNewConversation, selectedFolderId, setFocusedConversationId]);
+  }, [activeFolderId, focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
-  const handleConversationImportDialog = () => setTradeConfig({ dir: 'import' });
+  const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
-  const handleConversationExport = (conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId });
+  const handleConversationExport = React.useCallback((conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId }), []);
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
     showNextTitle.current = true;
@@ -331,13 +331,13 @@ export function AppChat() {
     }
   }, [clearConversationId, setMessages]);
 
-  const handleConversationClear = (conversationId: DConversationId) => setClearConversationId(conversationId);
+  const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
 
   const handleConfirmedDeleteConversation = () => {
     if (deleteConversationId) {
       let nextConversationId: DConversationId | null;
       if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
-        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, selectedFolderId);
+        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, activeFolderId);
       else
         nextConversationId = deleteConversation(deleteConversationId);
       setFocusedConversationId(nextConversationId);
@@ -345,7 +345,7 @@ export function AppChat() {
     }
   };
 
-  const handleConversationsDeleteAll = () => setDeleteConversationId(SPECIAL_ID_WIPE_ALL);
+  const handleConversationsDeleteAll = React.useCallback(() => setDeleteConversationId(SPECIAL_ID_WIPE_ALL), []);
 
   const handleConversationDelete = React.useCallback(
     (conversationId: DConversationId, bypassConfirmation: boolean) => {
@@ -372,7 +372,7 @@ export function AppChat() {
     ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
-  ], [focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
+  ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
   // Pluggable ApplicationBar components
@@ -387,8 +387,9 @@ export function AppChat() {
   );
 
   const drawerContent = React.useMemo(() =>
-      <ChatDrawerContentMemo
+      <ChatDrawerMemo
         activeConversationId={focusedConversationId}
+        activeFolderId={activeFolderId}
         disableNewButton={isFocusedChatEmpty}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
@@ -396,10 +397,9 @@ export function AppChat() {
         onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
         onConversationsDeleteAll={handleConversationsDeleteAll}
-        selectedFolderId={selectedFolderId}
-        setSelectedFolderId={setSelectedFolderId}
+        setActiveFolderId={setActiveFolderId}
       />,
-    [focusedConversationId, handleConversationDelete, handleConversationNew, isFocusedChatEmpty, selectedFolderId, setFocusedConversationId],
+    [activeFolderId, focusedConversationId, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -411,10 +411,9 @@ export function AppChat() {
         setIsMessageSelectionMode={setIsMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
-        onConversationExport={handleConversationExport}
         onConversationFlatten={handleConversationFlatten}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, isFocusedChatEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
@@ -474,7 +473,6 @@ export function AppChat() {
                 onTextImagine={handleTextImagine}
                 onTextSpeak={handleTextSpeak}
                 sx={{
-                  backgroundColor: themeBgApp,
                   minHeight: '100%', // ensures filling of the blank space on newer chats
                 }}
               />
@@ -555,10 +553,10 @@ export function AppChat() {
     {!!deleteConversationId && <ConfirmationModal
       open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
       confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Are you absolutely sure you want to delete ${selectedFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
+        ? `Are you absolutely sure you want to delete ${activeFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
         : 'Are you sure you want to delete this conversation?'}
       positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Yes, delete all ${folderConversationsCount} conversations`
+        ? `Yes, delete all ${activeFolderConversationsCount} conversations`
         : 'Delete conversation'}
     />}
   </>;

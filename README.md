@@ -1,7 +1,7 @@
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 10 vendors and
+simplicity, and speed. Powered by the latest models from 11 vendors and
 open-source model servers, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
 visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
 
@@ -21,9 +21,18 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
+### What's New in 1.11.0 · Jan 16, 2024 · Singularity
 
-https://github.com/enricoros/big-AGI/assets/32999/fbb1be49-5c38-49c8-86fa-3705700f6c39
+https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cfcb110c68
+
+- **Find chats**: search in titles and content, with frequency ranking. [#329](https://github.com/enricoros/big-AGI/issues/329)
+- **Commands**: command auto-completion (type '/'). [#327](https://github.com/enricoros/big-AGI/issues/327)
+- **[Together AI](https://www.together.ai/products#inference)** inference platform support (good speed and newer models). [#346](https://github.com/enricoros/big-AGI/issues/346)
+- Persona Creator history, deletion, custom creation, fix llm API timeouts
+- Enable adding up to five custom OpenAI-compatible endpoints
+- Developer enhancements: new 'Actiles' framework
+
+### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
 
 - **New UI**: for both desktop and mobile, sets the stage for future scale. [#201](https://github.com/enricoros/big-AGI/issues/201)
 - **Conversation Folders**: enhanced conversation organization. [#321](https://github.com/enricoros/big-AGI/issues/321)
@@ -42,22 +51,7 @@ https://github.com/enricoros/big-AGI/assets/32999/fbb1be49-5c38-49c8-86fa-370570
 - Layout fix for Firefox users
 - Developer enhancements: Text2Image subsystem, Optima layout, ScrollToBottom library, Panes library, and Llms subsystem updates.
 
-### What's New in 1.8.0 · Dec 20, 2023
-
-- **Google Gemini Support**: Use the newest Google models. [#275](https://github.com/enricoros/big-agi/issues/275)
-- **Mistral Platform**: Mixtral and future models support. [#273](https://github.com/enricoros/big-agi/issues/273)
-- **Diagram Instructions**. Thanks to @joriskalz! [#280](https://github.com/enricoros/big-agi/pull/280)
-- Ollama Chats: Enhanced chatting experience. [#270](https://github.com/enricoros/big-agi/issues/270)
-- Mac Shortcuts Fix: Improved UX on Mac
-- **Single-Tab Mode**: Data integrity with single window. [#268](https://github.com/enricoros/big-agi/issues/268)
-- **Updated Models**: Latest Ollama (v0.1.17) and OpenRouter models
-- Official Downloads: Easy access to the latest big-AGI on [big-AGI.com](https://big-agi.com)
-- For developers: [troubleshot networking](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483), fixed Vercel deployment, cleaned up the LLMs/Streaming framework
-
-### What's New in... ?
-
-> [To The Moon And Back, Attachment Theory, Surf's Up, Loaded, and more releases...](docs/changelog.md).  
-> Check out the [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2)
+For full details and former releases, check out the [changelog](docs/changelog.md).
 
 ## ✨ Key Features 👊
 
@@ -116,7 +110,7 @@ after installing the required dependencies.
 ```bash
 # .. repeat the steps above up to `npm install`, then:
 npm run build
-npm run start --port 3000
+next start --port 3000
 ```
 
 The app will be running on the specified port, e.g. `http://localhost:3000`.
