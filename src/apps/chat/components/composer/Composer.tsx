@@ -537,9 +537,7 @@ export function Composer(props: {
                   }}
                   sx={{
                     backgroundColor: 'background.level1',
-                    '&:focus-within': {
-                      backgroundColor: 'background.popup',
-                    },
+                    '&:focus-within': { backgroundColor: 'background.popup' },
                     lineHeight: lineHeightTextarea,
                   }} />
 
