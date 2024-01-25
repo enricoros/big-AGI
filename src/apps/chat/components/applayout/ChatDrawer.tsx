@@ -93,7 +93,7 @@ function ChatDrawer(props: {
   setActiveFolderId: (folderId: string | null) => void,
 }) {
 
-  const { onConversationDelete, onConversationNew, onConversationActivate } = props;
+  const { onConversationActivate, onConversationDelete, onConversationExportDialog, onConversationNew } = props;
 
   // local state
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
@@ -289,6 +289,7 @@ function ChatDrawer(props: {
             bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
             onConversationDelete={handleConversationDelete}
+            onConversationExport={onConversationExportDialog}
             onConversationFolderChange={handleConversationFolderChange}
           />)}
       </Box>

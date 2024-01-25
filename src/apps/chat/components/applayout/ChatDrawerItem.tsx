@@ -6,6 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
@@ -23,7 +24,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
 export const FadeInButton = styled(IconButton)({
-  opacity: 0.6,
+  opacity: 0.5,
   transition: 'opacity 0.2s',
   '&:hover': { opacity: 1 },
 });
@@ -56,6 +57,7 @@ function ChatDrawerItem(props: {
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
+  onConversationExport: (conversationId: DConversationId) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
 }) {
 
@@ -64,6 +66,7 @@ function ChatDrawerItem(props: {
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // derived state
+  const { onConversationExport, onConversationFolderChange } = props;
   const { conversationId, isActive, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
@@ -81,9 +84,15 @@ function ChatDrawerItem(props: {
   const handleConversationActivate = () => props.onConversationActivate(conversationId, true);
 
 
-  // Folder change
+  // export
 
-  const { onConversationFolderChange } = props;
+  const handleConversationExport = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    conversationId && onConversationExport(conversationId);
+  }, [conversationId, onConversationExport]);
+
+
+  // Folder change
 
   const handleFolderChangeBegin = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -252,19 +261,30 @@ function ChatDrawerItem(props: {
             <Divider orientation='vertical' sx={{ my: 1 }} />
           </>}
 
-          <Tooltip disableInteractive title='Rename Chat'>
+          <Tooltip disableInteractive title='Rename'>
             <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditBegin}>
               <EditIcon />
             </FadeInButton>
           </Tooltip>
 
-          {!isNew && (
-            <Tooltip disableInteractive title='Auto-title Chat'>
+          {!isNew && <>
+
+            <Tooltip disableInteractive title='Auto-Rename'>
               <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
                 <AutoFixHighIcon />
               </FadeInButton>
             </Tooltip>
-          )}
+
+            <Divider orientation='vertical' sx={{ my: 1 }} />
+
+            <Tooltip disableInteractive title='Export'>
+              <FadeInButton size='sm' onClick={handleConversationExport}>
+                <FileDownloadOutlinedIcon />
+              </FadeInButton>
+            </Tooltip>
+
+          </>}
+
 
           {/* --> */}
           <Box sx={{ flex: 1 }} />
@@ -279,7 +299,7 @@ function ChatDrawerItem(props: {
               </Tooltip>
             )}
 
-            <Tooltip disableInteractive title={deleteArmed ? 'Cancel' : 'Delete Chat'}>
+            <Tooltip disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
               <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
                 {deleteArmed ? <CloseIcon /> : <DeleteOutlineIcon />}
               </FadeInButton>
