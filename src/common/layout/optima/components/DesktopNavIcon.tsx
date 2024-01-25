@@ -3,7 +3,7 @@ import { Box, IconButton, styled } from '@mui/joy';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
 
-export const DesktopNavGroupButton = styled(Box)({
+export const DesktopNavGroupBox = styled(Box)({
   // flex column
   display: 'flex',
   flexDirection: 'column',

@@ -6,6 +6,7 @@ import { Box } from '@mui/joy';
 import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
 
+import { MobileNav } from './MobileNav';
 import { PageBar } from './PageBar';
 
 
@@ -18,6 +19,10 @@ const pageCoreSx: SxProps = {
 
 const pageCoreBarSx: SxProps = {
   zIndex: themeZIndexPageBar,
+};
+
+const pageCoreMobileNavSx: SxProps = {
+  flex: 0,
 };
 
 
@@ -44,13 +49,13 @@ export const PageCore = (props: {
     {props.children}
 
     {/* [Mobile] Nav bar at the bottom */}
-    {/* FIXME: TEMP: Disable mobilenav */}
-    {/*{props.isMobile && (*/}
-    {/*  <MobileNav*/}
-    {/*    component='nav'*/}
-    {/*    currentApp={props.currentApp}*/}
-    {/*    hideOnFocusMode*/}
-    {/*  />*/}
-    {/*)}*/}
+    {!!props.isMobile && (
+      <MobileNav
+        component='nav'
+        currentApp={props.currentApp}
+        hideOnFocusMode
+        sx={pageCoreMobileNavSx}
+      />
+    )}
 
   </Box>;

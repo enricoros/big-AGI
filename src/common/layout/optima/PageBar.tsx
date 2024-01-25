@@ -186,7 +186,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
       {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {!!props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
+      {!!props.isMobile && <MobileNavListItem variant='solid' hideApps currentApp={props.currentApp} />}
 
     </CloseableMenu>
 
