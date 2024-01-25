@@ -5,14 +5,12 @@ import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlin
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import CompressIcon from '@mui/icons-material/Compress';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 import type { DConversationId } from '~/common/state/store-chats';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
-import { useUICounter } from '~/common/state/store-ui';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 
@@ -25,13 +23,11 @@ export function ChatMenuItems(props: {
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
-  onConversationExport: (conversationId: DConversationId | null) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
 }) {
 
   // external state
   const { closePageMenu } = useOptimaDrawers();
-  const { touch: shareTouch } = useUICounter('export-share');
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
   // derived state
@@ -51,12 +47,6 @@ export function ChatMenuItems(props: {
   const handleConversationBranch = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
     props.conversationId && props.onConversationBranch(props.conversationId, null);
-  };
-
-  const handleConversationExport = (event: React.MouseEvent<HTMLDivElement>) => {
-    closeMenu(event);
-    props.onConversationExport(!disabled ? props.conversationId : null);
-    shareTouch();
   };
 
   const handleConversationFlatten = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -105,13 +95,6 @@ export function ChatMenuItems(props: {
       <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
         Cleanup ...
       </span>
-    </MenuItem>
-
-    <MenuItem disabled={!props.hasConversations} onClick={handleConversationExport}>
-      <ListItemDecorator>
-        <FileDownloadIcon />
-      </ListItemDecorator>
-      Share / Export ...
     </MenuItem>
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
