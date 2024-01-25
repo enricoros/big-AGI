@@ -16,8 +16,6 @@ export function TextToImage(props: {
 }) {
 
 
-  // usePluggableOptimaLayout(null, null, null, 'aa');
-
   return <>
 
     <ProviderConfigure
