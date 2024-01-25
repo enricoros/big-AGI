@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, Grid, IconButton, Input, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import DoneIcon from '@mui/icons-material/Done';
+import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -144,13 +146,15 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
       <Box sx={{ maxWidth: bpMaxWidth }}>
 
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Typography level='title-sm'>
             AI Persona
           </Typography>
-          <Button variant='plain' color='neutral' size='sm' onClick={toggleEditMode}>
-            {editMode ? 'Done' : 'Edit'}
-          </Button>
+          <Tooltip disableInteractive title={editMode ? 'Done Editing' : 'Edit Tiles'}>
+            <IconButton size='sm' onClick={toggleEditMode}>
+              {editMode ? <DoneIcon /> : <EditIcon />}
+            </IconButton>
+          </Tooltip>
         </Box>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
