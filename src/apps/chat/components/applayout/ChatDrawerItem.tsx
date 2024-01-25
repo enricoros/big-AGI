@@ -214,7 +214,7 @@ function ChatDrawerItem(props: {
 
     // Active Conversation
     <Sheet
-      variant={isActive ? 'solid' : 'plain'} color='neutral'
+      variant={isActive ? 'solid' : 'plain'}
       invertedColors={isActive}
       sx={{
         // common
@@ -258,7 +258,8 @@ function ChatDrawerItem(props: {
                 </FadeInButton>
               )}
             </Tooltip>
-            <Divider orientation='vertical' sx={{ my: 1 }} />
+
+            <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
           </>}
 
           <Tooltip disableInteractive title='Rename'>
@@ -268,21 +269,19 @@ function ChatDrawerItem(props: {
           </Tooltip>
 
           {!isNew && <>
-
-            <Tooltip disableInteractive title='Auto-Rename'>
+            <Tooltip disableInteractive title='Auto-Title'>
               <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
                 <AutoFixHighIcon />
               </FadeInButton>
             </Tooltip>
 
-            <Divider orientation='vertical' sx={{ my: 1 }} />
+            <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
 
             <Tooltip disableInteractive title='Export'>
               <FadeInButton size='sm' onClick={handleConversationExport}>
                 <FileDownloadOutlinedIcon />
               </FadeInButton>
             </Tooltip>
-
           </>}
 
 
