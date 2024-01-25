@@ -413,7 +413,7 @@ export function AppChat() {
         onConversationClear={handleConversationClear}
         onConversationFlatten={handleConversationFlatten}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationExport, isFocusedChatEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, isFocusedChatEmpty, isMessageSelectionMode],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
