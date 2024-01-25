@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Grid, IconButton, Textarea, Tooltip } from '@mui/joy';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
@@ -15,6 +16,7 @@ const promptButtonClass = 'PromptDesigner-button';
 
 export function PromptDesigner(props: {
   isMobile: boolean,
+  sx?: SxProps,
 }) {
 
   // state
@@ -72,6 +74,7 @@ export function PromptDesigner(props: {
     };
 
     return (
+      // TextArea Effect Buttons
       <Box sx={{
         flex: 1,
         margin: 1,
@@ -129,12 +132,10 @@ export function PromptDesigner(props: {
   }, [currentIdea.prompt, nextRandomIdea, userHasText]);
 
   return (
-
-    <Box aria-label='Prompt Designer' component='section' sx={{ flex: 0 }}>
-
+    <Box aria-label='Drawing Prompt' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
-        {/* Enriched and Magical Text Box */}
+        {/* Effected Text Box */}
         <Grid xs={12} md={9}>
 
           <Textarea
@@ -164,7 +165,6 @@ export function PromptDesigner(props: {
 
         {/* [Desktop: Right, Mobile: Bottom] Buttons */}
         <Grid xs={12} md={3}>
-
           <Button
             fullWidth
             variant='solid'
@@ -178,12 +178,12 @@ export function PromptDesigner(props: {
           >
             Draw
           </Button>
-
         </Grid>
 
       </Grid> {/* Prompt Designer */}
 
       {/* Modals...  */}
+      {/* ... */}
 
     </Box>
   );
