@@ -1,13 +1,12 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
-
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useRouterQuery } from '~/common/app.routes';
 
 import { DrawHeading } from './components/DrawHeading';
 import { DrawUnconfigured } from './components/DrawUnconfigured';
+import { Gallery } from './Gallery';
 import { TextToImage } from './TextToImage';
 
 
@@ -40,33 +39,34 @@ export function AppDraw() {
 
   // const hasIntent = !!drawIntent && !!drawIntent.backTo;
 
-  return (
-    <Box sx={{
-      // take the full V-area (we're inside PageWrapper) and scroll as needed
-      flexGrow: 1,
-      overflowY: 'auto',
+  // usePluggableOptimaLayout(null, null, null, 'aa');
 
-      // contents margin
-      display: 'flex', flexDirection: 'column',
-      p: { xs: 3, md: 6 },
-      gap: { xs: 3, md: 6 },
-    }}>
+  return <>
 
-      <DrawHeading section={section} setSection={setSection} showSections />
+    {/* The container is a 100dvh, flex column with App bg (see `pageCoreSx`) */}
 
-      {!mayWork && <DrawUnconfigured />}
+    <DrawHeading
+      section={section}
+      setSection={setSection}
+      showSections
+      sx={{
+        px: { xs: 1, md: 2 },
+        py: { xs: 1, md: 6 },
+      }}
+    />
 
-      {mayWork && (
-        <TextToImage
-          isMobile={isMobile}
-          providers={providers}
-          activeProviderId={activeProviderId}
-          setActiveProviderId={setActiveProviderId}
-        />
-      )}
+    {!mayWork && <DrawUnconfigured />}
 
-      {/*<Gallery />*/}
+    {mayWork && <Gallery />}
 
-    </Box>
-  );
+    {mayWork && (
+      <TextToImage
+        isMobile={isMobile}
+        providers={providers}
+        activeProviderId={activeProviderId}
+        setActiveProviderId={setActiveProviderId}
+      />
+    )}
+
+  </>;
 }
