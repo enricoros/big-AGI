@@ -94,7 +94,7 @@ Attaching the in-app news, with my language for you to improve on, but keep the 
 ### GitHub release
 
 ```markdown
-Please create the 1.2.3 Release Notes for GitHub.
+Please create the 1.2.3 Release Notes for GitHub, following the format of the 1.1.0 GitHub release notes attached before.
 Use a truthful and honest tone, understanding that people's time and attention span is short.
 Today is 2024-XXXX-YYYY.
 ```
