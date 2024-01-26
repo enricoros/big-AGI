@@ -23,6 +23,8 @@ shows the current developments and future ideas.
 
 ## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
+https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
+
 - **Voice Calls**: real-time voice call your personas out of the blue or in relation to a chat [#354](https://github.com/enricoros/big-AGI/issues/354)
 - Support OpenAI 0125 Models. [#364](https://github.com/enricoros/big-AGI/issues/364)
 - Rename or Auto-Rename chats.  [#222](https://github.com/enricoros/big-AGI/issues/222), [#360](https://github.com/enricoros/big-AGI/issues/360)
