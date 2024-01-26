@@ -16,8 +16,8 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCameraDesktop, labsSplitBranching, labsDrawing,
-    setLabsCameraDesktop, setLabsSplitBranching, setLabsDrawing,
+    labsCameraDesktop, labsSplitBranching, //labsDrawing,
+    setLabsCameraDesktop, setLabsSplitBranching, //setLabsDrawing,
   } = useUXLabsStore();
 
   return <>
