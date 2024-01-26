@@ -145,7 +145,7 @@ export const llmOllamaRouter = createTRPCRouter({
           tag: 'latest',
           description: model.description,
           pulls: model.pulls,
-          isNew: !!model.added && model.added >= OLLAMA_PREV_UPDATE,
+          isNew: !!model.added && model.added > OLLAMA_PREV_UPDATE,
         })),
       };
     }),
