@@ -27,7 +27,7 @@ assignees: enricoros
   - [ ] Copy the highlights to the [docs/changelog.md](/docs/changelog.md)
 - Release:
   - [ ] merge onto main `git checkout main && git merge --no-ff release-1.2.3`
-  - [ ] re-tag `git tag -f v1.2.3 && git push opensource --tags -f'
+  - [ ] re-tag `git tag -f v1.2.3 && git push opensource --tags -f`
   - [ ] verify deployment on Vercel
   - [ ] verify container on GitHub Packages
   - [ ] update the GitHub release
