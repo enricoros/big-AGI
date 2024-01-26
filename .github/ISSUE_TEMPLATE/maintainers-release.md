@@ -39,14 +39,13 @@ assignees: enricoros
 ### Links
 
 - Milestone: https://github.com/enricoros/big-AGI/milestone/X
-- GitHub release: https://github.com/enricoros/big-AGI/releases/tag/vX.Y.Z
-- Former release task: https://github.com/enricoros/big-AGI/issues/XXX
+- GitHub release: https://github.com/enricoros/big-AGI/releases/tag/v1.2.3
+- Former release task: #...
 
 ## Artifacts Generation
 
 ```markdown
-You help me generate the following collateral for the new release of my opensource application
-called big-AGI. The new release is 1.2.3.
+You help me generate the following collateral for the new release of my opensource application called big-AGI. The new release is 1.2.3.
 To familiarize yourself with the application, the following are the Website and the GitHub README.md.
 ```
 
@@ -55,8 +54,7 @@ To familiarize yourself with the application, the following are the Website and 
 
 ```markdown
 I am announcing a new version, 1.2.3.
-For reference, the following was the collateral for 1.1.0 (Discord announcement,
-GitHub Release, in-app-news file news.data.tsx, changelog.md).
+For reference, the following was the collateral for 1.1.0 (Discord announcement, GitHub Release, in-app-news file news.data.tsx).
 ```
 
 - paste the former: `discord announcement`,
@@ -66,20 +64,24 @@ GitHub Release, in-app-news file news.data.tsx, changelog.md).
 
 ```markdown
 The following are the new developments for 1.2.3:
+
+- ...
+- git log --pretty=format:"%h %an %B" v1.1.0..v1.2.3 | clip
 ```
 
 - paste the link to the milestone (closed) and each individual issue (content will be downloaded)
-- paste the git changelog  `git log v1.1.0..v1.2.3 | clip`
+- paste the output of the git log command
 
 ### news.data.tsx
 
 ```markdown
 I need the following from you:
 
-1. a table summarizing all the new features in 1.2.3 (description, significance, usefulness, do not link the commit, but have the issue number), which will be used for the artifacts later
-2. after the table score each feature from a user impact and magnitude point of view
-3. Improve the table, in decreasing order of importance for features, fixing any detail that's missing, in particular check if there are commits of significance from a user or developer point of view, which are not contained in the table
-4. I want you then to update the news.data.tsx for the new release
+1. a table summarizing all the new features in 1.2.3 with the following columns: 4 words description (exactly what it is), short description, usefulness (what it does for the user), significance, link to the issue number (not the commit)), which will be used for the artifacts later
+2. then double-check the git log to see if there are any features of significance that are not in the table
+3. then score each feature in terms of importance for users (1-10), relative impact of the feature (1-10, where 10 applies to the broadest user base), and novelty and uniqueness (1-10, where 10 is truly unique and novel from what exists already) 
+4. then improve the table, in decreasing order of importance for features, fixing any detail that's missing, in particular check if there are commits of significance from a user or developer point of view, which are not contained in the table
+5. then I want you then to update the news.data.tsx for the new release
 ```
 
 ### Readme (and Changelog)
@@ -94,7 +96,7 @@ Attaching the in-app news, with my language for you to improve on, but keep the 
 ```markdown
 Please create the 1.2.3 Release Notes for GitHub.
 Use a truthful and honest tone, understanding that people's time and attention span is short.
-Today is 2024-1-1.
+Today is 2024-XXXX-YYYY.
 ```
 
 Now paste-attachment the former release notes (or 1.5.0 which was accurate and great), including the new contributors and
