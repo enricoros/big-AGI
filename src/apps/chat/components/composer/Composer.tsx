@@ -95,7 +95,7 @@ export function Composer(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const { openPreferencesTab, setIsFocusedMode } = useOptimaLayout();
+  const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
   const { labsCameraDesktop } = useUXLabsStore(state => ({
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
@@ -268,9 +268,9 @@ export function Composer(props: {
 
   // Focus mode
 
-  const handleFocusModeOn = React.useCallback(() => setIsFocusedMode(true), [setIsFocusedMode]);
+  // const handleFocusModeOn = React.useCallback(() => setIsFocusedMode(true), [setIsFocusedMode]);
 
-  const handleFocusModeOff = React.useCallback(() => setIsFocusedMode(false), [setIsFocusedMode]);
+  // const handleFocusModeOff = React.useCallback(() => setIsFocusedMode(false), [setIsFocusedMode]);
 
 
   // Mic typing & continuation mode
@@ -523,8 +523,8 @@ export function Composer(props: {
                   onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
-                  onFocusCapture={handleFocusModeOn}
-                  onBlurCapture={handleFocusModeOff}
+                  // onFocusCapture={handleFocusModeOn}
+                  // onBlurCapture={handleFocusModeOff}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
