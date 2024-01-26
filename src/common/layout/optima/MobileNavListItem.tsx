@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Router from 'next/router';
 
-import { Button, ButtonGroup, ListItem, Tooltip, VariantProp } from '@mui/joy';
+import { Button, ButtonGroup, Divider, ListItem, Tooltip, VariantProp } from '@mui/joy';
 
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
@@ -26,6 +26,7 @@ export function MobileNavListItem(props: { variant?: VariantProp, currentApp?: N
       {/* Group 1: Apps */}
       {!props.hideApps && (
         <ButtonGroup
+          component='nav'
           variant={props.variant}
           sx={{
             '--ButtonGroup-separatorSize': 0,
@@ -50,7 +51,9 @@ export function MobileNavListItem(props: { variant?: VariantProp, currentApp?: N
                     variant={isActive ? 'soft' : 'solid'}
                     onClick={() => Router.push(app.landingRoute || app.route)}
                   >
-                    {isActive ? app.name : <app.icon />}
+                    {/*{isActive ? app.name : <app.icon />}*/}
+                    {(isActive && app.name.length <= 4) ? app.name : <app.icon />}
+                    {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
                   </Button>
                 </Tooltip>
               );
@@ -58,14 +61,18 @@ export function MobileNavListItem(props: { variant?: VariantProp, currentApp?: N
         </ButtonGroup>
       )}
 
+      {!props.hideApps && <Divider orientation='vertical' sx={{ my: 1.25 }} />}
+
       {/* Group 2: Social Links */}
       {!props.hideSocial && (
         <ButtonGroup
           variant={props.variant}
+          size='sm'
           sx={{
             '--ButtonGroup-separatorSize': 0,
             '--ButtonGroup-connected': 0,
             ml: 'auto',
+            gap: 0.5,
           }}
         >
           {navItems.links.map(item =>
