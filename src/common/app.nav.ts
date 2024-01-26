@@ -31,6 +31,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { Brand } from '~/common/app.config';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 // enable to show all items, for layout development
@@ -114,6 +115,7 @@ export const navItems: {
       route: '/draw',
       // hideOnMobile: true,
       hideDrawer: true,
+      hideIcon: () => !useUXLabsStore.getState().labsDrawing,
     },
     {
       name: 'Cortex',

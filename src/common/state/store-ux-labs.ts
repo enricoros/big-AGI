@@ -18,6 +18,9 @@ interface UXLabsStore {
   labsSplitBranching: boolean;
   setLabsSplitBranching: (labsSplitBranching: boolean) => void;
 
+  labsDrawing: boolean;
+  setLabsDrawing: (labsDrawing: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -29,6 +32,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsSplitBranching: false,
       setLabsSplitBranching: (labsSplitBranching: boolean) => set({ labsSplitBranching }),
+
+      labsDrawing: false,
+      setLabsDrawing: (labsDrawing: boolean) => set({ labsDrawing }),
 
     }),
     {
