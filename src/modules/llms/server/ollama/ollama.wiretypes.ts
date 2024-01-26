@@ -2,6 +2,29 @@ import { z } from 'zod';
 
 
 /**
+ * List Local Models (/api/tags) - Response
+ */
+export const wireOllamaListModelsSchema = z.object({
+  models: z.array(z.object({
+    name: z.string(),
+    modified_at: z.string(),
+    size: z.number(),
+    digest: z.string(),
+  })),
+});
+
+/**
+ * Show per-Model Information (/api/show) - Response
+ */
+export const wireOllamaModelInfoSchema = z.object({
+  license: z.string().optional(),
+  modelfile: z.string(),
+  parameters: z.string().optional(),
+  template: z.string().optional(),
+});
+
+
+/**
  * Chat Completion API - Request
  * https://github.com/jmorganca/ollama/blob/main/docs/api.md#generate-a-chat-completion
  */

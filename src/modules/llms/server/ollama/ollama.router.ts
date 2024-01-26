@@ -11,10 +11,10 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsListModelsOutputSchema, ModelDescriptionSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema } from './ollama.wiretypes';
+import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
 
 
 // Default hosts
@@ -192,25 +192,11 @@ export const llmOllamaRouter = createTRPCRouter({
 
       // get the models
       const wireModels = await ollamaGET(input.access, OLLAMA_PATH_TAGS);
-      const wireOllamaListModelsSchema = z.object({
-        models: z.array(z.object({
-          name: z.string(),
-          modified_at: z.string(),
-          size: z.number(),
-          digest: z.string(),
-        })),
-      });
       let models = wireOllamaListModelsSchema.parse(wireModels).models;
 
       // retrieve info for each of the models (/api/show, post call, in parallel)
       const detailedModels = await Promise.all(models.map(async model => {
         const wireModelInfo = await ollamaPOST(input.access, { 'name': model.name }, OLLAMA_PATH_SHOW);
-        const wireOllamaModelInfoSchema = z.object({
-          license: z.string().optional(),
-          modelfile: z.string(),
-          parameters: z.string().optional(),
-          template: z.string().optional(),
-        });
         const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
         return { ...model, ...modelInfo };
       }));
