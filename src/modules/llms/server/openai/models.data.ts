@@ -8,145 +8,194 @@ import { wireTogetherAIListOutputSchema } from '~/modules/llms/server/openai/tog
 
 // [Azure] / [OpenAI]
 const _knownOpenAIChatModels: ManualMappings = [
+  // GPT4 Vision
+  {
+    idPrefix: 'gpt-4-vision-preview',
+    label: 'GPT-4 Turbo · Vision',
+    description: 'GPT-4 Turbo model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    hidden: true, // because no 'image input' support yet
+    isLatest: true,
+  },
+
   // GPT4 Turbo
   {
+    idPrefix: 'gpt-4-0125-preview',
+    label: 'GPT-4 Turbo (0125)',
+    description: 'The latest GPT-4 model intended to reduce cases of “laziness” where the model doesn’t complete a task.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
+  },
+  {
     idPrefix: 'gpt-4-1106-preview',
-    label: '4-Turbo (1106)',
+    label: 'GPT-4 Turbo (1106)',
     description: '128k context, fresher knowledge, cheaper than GPT-4.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    latest: true,
+    hidden: true,
   },
   {
-    idPrefix: 'gpt-4-vision-preview',
-    label: '4-Turbo (Vision)',
-    description: 'Vision support, 128k context, fresher knowledge, cheaper than GPT-4.',
+    idPrefix: 'gpt-4-turbo-preview',
+    label: '🔗 GPT-4 Turbo → 0125', // '4-Turbo → 🔗 0125',
+    description: 'Currently points to gpt-4-0125-preview.',
+    symLink: 'gpt-4-0125-preview',
+    hidden: true,
+    // copied
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
-    latest: true,
-    hidden: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
   },
 
   // GPT4-32k's
   {
+    idPrefix: 'gpt-4-32k-0613',
+    label: 'GPT-4 32k (0613)',
+    description: 'Snapshot of gpt-4-32 from June 13th 2023.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+    isLatest: true,
+  },
+  {
     idPrefix: 'gpt-4-32k-0314',
-    label: 'GPT-4-32k (0314)',
+    label: 'GPT-4 32k (0314)',
     description: 'Snapshot of gpt-4-32 from March 14th 2023. Will be deprecated on June 13th 2024 at the earliest.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
   {
-    idPrefix: 'gpt-4-32k-0613',
-    label: 'GPT-4-32k (0613)',
-    description: 'Snapshot of gpt-4-32 from June 13th 2023.',
-    contextWindow: 32768,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
     idPrefix: 'gpt-4-32k',
-    label: 'GPT-4-32k',
-    description: 'Largest context window for big problems',
+    label: '🔗 GPT-4 32k → 0613', // 'GPT-4-32k → 🔗 0613',
+    description: 'Currently points to gpt-4-32k-0613.',
+    symLink: 'gpt-4-32k-0613',
+    // copied
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
 
   // GPT4's
   {
     idPrefix: 'gpt-4-0613',
     label: 'GPT-4 (0613)',
-    description: 'Snapshot of gpt-4 from June 13th 2023 with function calling data.',
+    description: 'Snapshot of gpt-4 from June 13th 2023 with function calling data. Data up to Sep 2021.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
   },
   {
     idPrefix: 'gpt-4-0314',
     label: 'GPT-4 (0314)',
-    description: 'Snapshot of gpt-4 from March 14th 2023 with function calling data.',
+    description: 'Snapshot of gpt-4 from March 14th 2023 with function calling data. Data up to Sep 2021.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     hidden: true,
   },
   {
     idPrefix: 'gpt-4',
-    label: 'GPT-4',
-    description: 'Insightful, big thinker, slower, pricey',
+    label: '🔗 GPT-4 → 0613', // 'GPT-4 → 🔗 0613',
+    description: 'Currently points to gpt-4-0613.',
+    symLink: 'gpt-4-0613',
+    // copied
     contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true,
+  },
+
+
+  // 3.5-Turbo-Instruct (Not for Chat)
+  {
+    idPrefix: 'gpt-3.5-turbo-instruct',
+    label: '3.5-Turbo Instruct',
+    description: 'Similar capabilities as GPT-3 era models. Compatible with legacy Completions endpoint and not Chat Completions.',
+    contextWindow: 4097,
+    interfaces: [/* NO: LLM_IF_OAI_Chat,*/ LLM_IF_OAI_Complete],
     hidden: true,
   },
 
 
   // 3.5-Turbo-16k's
   {
+    // NOTE: speculation from the https://openai.com/blog/new-embedding-models-and-api-updates post; hasn't been released yet
+    idPrefix: 'gpt-3.5-turbo-0125',
+    label: '3.5-Turbo (0125)',
+    description: 'Snapshot of gpt-3.5-turbo-16k from January 25th 2023.',
+    contextWindow: 16385,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+    isLatest: true,
+  },
+  {
     idPrefix: 'gpt-3.5-turbo-1106',
-    label: '3.5-Turbo-16k (1106)',
-    description: 'Snapshot of gpt-3.5-turbo-16k from November 6th 2023.',
+    label: '3.5-Turbo (1106)',
+    description: 'The latest GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    latest: true,
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k-0613',
-    label: '3.5-Turbo-16k (0613)',
+    label: '3.5-Turbo 16k (0613)',
     description: 'Snapshot of gpt-3.5-turbo-16k from June 13th 2023.',
     contextWindow: 16385,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
+    isLegacy: true,
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k',
-    label: '3.5-Turbo-16k',
-    description: 'Same capabilities as the standard gpt-3.5-turbo model but with 4 times the context.',
+    label: '🔗 3.5-Turbo 16k → 0613', // '3.5-Turbo-16k → 🔗 0613',
+    description: 'Currently points to gpt-3.5-turbo-16k-0613.',
+    symLink: 'gpt-3.5-turbo-16k-0613',
+    // copied
     contextWindow: 16385,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
+    isLegacy: true,
   },
 
-  // 3.5-Turbo-Instruct
-  {
-    idPrefix: 'gpt-3.5-turbo-instruct',
-    label: '3.5-Turbo-Instruct',
-    description: 'Not for chat.',
-    contextWindow: 4097,
-    interfaces: [LLM_IF_OAI_Complete],
-    hidden: true,
-  },
-
-  // 3.5-Turbo's
-  {
-    idPrefix: 'gpt-3.5-turbo-0301',
-    label: '3.5-Turbo (0301)',
-    description: 'Snapshot of gpt-3.5-turbo from March 1st 2023. Will be deprecated on June 13th 2024 at the earliest.',
-    contextWindow: 4097,
-    hidden: true,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
+  // 3.5-Turbo's (original, 4ks)
   {
     idPrefix: 'gpt-3.5-turbo-0613',
     label: '3.5-Turbo (0613)',
-    description: 'Snapshot of gpt-3.5-turbo from June 13th 2023 with function calling data.',
+    description: 'Snapshot of gpt-3.5-turbo from June 13th 2023. Will be deprecated on June 13, 2024.',
     contextWindow: 4097,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     hidden: true,
+    isLegacy: true,
   },
   {
-    idPrefix: 'gpt-3.5-turbo',
-    label: '3.5-Turbo',
-    description: 'Fair speed and smarts.',
+    idPrefix: 'gpt-3.5-turbo-0301',
+    label: '3.5-Turbo (0301)',
+    description: 'Snapshot of gpt-3.5-turbo from March 1st 2023. Will be deprecated on June 13th 2024.',
     contextWindow: 4097,
-    hidden: true,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+    isLegacy: true,
+  },
+  {
+    // NOTE: will be updated to gpt-3.5-turbo-0125 two weeks after it launches
+    idPrefix: 'gpt-3.5-turbo',
+    label: '🔗 3.5-Turbo → 0613', // '3.5-Turbo → 🔗 0613',
+    description: 'Currently points to gpt-3.5-turbo-0613.',
+    symLink: 'gpt-3.5-turbo-0613',
+    // copied
+    contextWindow: 4097,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true,
+    isLegacy: true,
   },
 
 
   // Azure variants - because someone forgot the dot
   {
     idPrefix: 'gpt-35-turbo-16k',
-    label: '3.5-Turbo-16k',
+    label: '3.5-Turbo 16k',
     description: 'Fair speed and smarts, large context',
     contextWindow: 16384,
     interfaces: [LLM_IF_OAI_Chat], // as azure doesn't version model id's (in the deployments), let's assume no function calling
@@ -378,7 +427,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
 // [Together AI]
 
-const _knownTogetherAIChatModels: ManualMappings = [
+const _knownTogetherAIChatModels
+  :
+  ManualMappings = [
   {
     idPrefix: 'NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO',
     label: 'Nous Hermes 2 - Mixtral 8x7B-DPO',
@@ -467,8 +518,8 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
 
 // Helpers
 
+type ManualMapping = ({ idPrefix: string, isLatest?: boolean, isLegacy?: boolean, symLink?: string } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
 type ManualMappings = ManualMapping[];
-type ManualMapping = ({ idPrefix: string, latest?: boolean } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
 
 function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping): ModelDescriptionSchema {
 
@@ -481,7 +532,10 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
   // return the model description sheet
   return {
     id,
-    label: (known.latest ? '🌟 ' : '') + known.label + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : ''),
+    label: known.label
+      + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
+      + (known.isLatest ? ' 🌟' : '')
+      + (known.isLegacy ? /*' 💩'*/ ' [legacy]' : ''),
     created: created || 0,
     updated: updated || created || 0,
     description: known.description,
