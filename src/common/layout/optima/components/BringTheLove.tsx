@@ -16,7 +16,7 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
   // reset loved after 6.9 seconds
   React.useEffect(() => {
     if (loved) {
-      const timer = setTimeout(() => setLoved(false), 6900);
+      const timer = setTimeout(() => setLoved(false), 6900 + 420);
       return () => clearTimeout(timer);
     }
   }, [loved]);
@@ -43,8 +43,8 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
         </DesktopNavIcon>
       ) : (
         <Button
-          onClick={() => setLoved(true)}
           component={Link} href={props.link} target='_blank' noLinkStyle
+          onClick={() => setLoved(true)}
           sx={{
             '&:hover': { animation: `${cssRainbowColorKeyframes} 5s linear infinite` },
             background: 'transparent',
