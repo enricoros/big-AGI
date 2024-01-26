@@ -37,7 +37,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    hidden: true,
   },
   {
     idPrefix: 'gpt-4-turbo-preview',
