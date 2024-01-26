@@ -10,14 +10,29 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 12;
+export const incrementalVersion: number = 12.1;
 
-const B = (props: { href?: string, children: React.ReactNode }) => {
-  const boldText = <Typography color={!!props.href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>{props.children}</Typography>;
-  return props.href ?
-    <Link href={props.href + clientUtmSource()} target='_blank' sx={{ /*textDecoration: 'underline'*/ }}>{boldText} <LaunchIcon sx={{ ml: 1 }} /></Link> :
-    boldText;
-};
+
+function B(props: {
+  href?: string,
+  issue?: number,
+  children: React.ReactNode
+}) {
+  const href = props.issue ? RIssues + '/' + props.issue : props.href;
+  const boldText = (
+    <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>
+      {props.children}
+    </Typography>
+  );
+  if (!href)
+    return boldText;
+  return (
+    <Link href={href + clientUtmSource()} target='_blank' sx={{ /*textDecoration: 'underline'*/ }}>
+      {boldText} <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+    </Link>
+  );
+}
+
 
 const { OpenRepo, OpenProject } = Brand.URIs;
 const RCode = `${OpenRepo}/blob/main`;
@@ -59,6 +74,24 @@ export const newsCallout =
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   // still unannounced: phone calls, split windows, ...
+  {// 🆕
+    versionCode: '1.12.0',
+    versionName: 'AGI Hotline',
+    versionMoji: '✨🗣️',
+    versionDate: new Date('2024-01-26T12:30:00Z'),
+    items: [
+      { text: <><B issue={354}>Voice Call Personas</B>: save time, recap conversations</>, issue: 354 },
+      { text: <>Updated <B issue={364}>OpenAI Models</B> to the 0125 release</>, issue: 364 },
+      { text: <>Chats: Auto-<B issue={222}>Rename</B> and <B issue={360}>assign folders</B></>, issue: 222 },
+      { text: <><B issue={356}>Link Sharing</B> makeover and control</>, issue: 356 },
+      { text: <><B issue={358}>Accessibility</B> for screen readers</>, issue: 358 },
+      { text: <>Export chats to <B>Markdown</B></>, issue: 337 },
+      { text: <>Paste <B>tables from Excel</B></>, issue: 286 },
+      { text: <>Large optimizations</> },
+      { text: <>Ollama updates</>, issue: 309 },
+      { text: <>Over <B>150 commits</B> and <B>7,000+ lines changed</B> for development enhancements</>, dev: true },
+    ],
+  },
   {
     versionCode: '1.11.0',
     versionName: 'Singularity',
