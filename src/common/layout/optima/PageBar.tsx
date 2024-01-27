@@ -9,7 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-import type { NavItemApp } from '~/common/app.nav';
+import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -22,24 +22,20 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
 
 
-function PageBarItemsFallback() {
-  return (
+const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
+  <Box sx={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: { xs: 1, md: 2 },
+  }}>
     <Link href={ROUTE_INDEX}>
-      <AgiSquircleIcon inverted sx={{
-        width: 32,
-        height: 32,
-        color: 'white',
-      }} />
-      <Typography sx={{
-        ml: { xs: 1, md: 2 },
-        color: 'white',
-        textDecoration: 'none',
-      }}>
-        {Brand.Title.Base}
-      </Typography>
+      <AgiSquircleIcon inverted sx={{ width: 32, height: 32, color: 'white' }} />
     </Link>
-  );
-}
+
+    <Typography level='title-md'>
+      {props.currentApp?.barTitle || props.currentApp?.name || Brand.Title.Base}
+    </Typography>
+  </Box>;
 
 
 function CommonMenuItems(props: { onClose: () => void }) {
@@ -92,7 +88,7 @@ function CommonMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
+export function PageBar(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
@@ -100,7 +96,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
   // external state
   const {
-    appBarItems, appPaneContent, appMenuItems,
+    appBarItems, appDrawerContent, appMenuItems,
   } = useOptimaLayout();
   const {
     openDrawer,
@@ -126,18 +122,22 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
     {/*  transition: 'grid-template-rows 1.42s linear',*/}
     {/*}}>*/}
 
-    <InvertedBar direction='horizontal' sx={props.sx}>
+    <InvertedBar
+      component={props.component}
+      direction='horizontal'
+      sx={props.sx}
+    >
 
       {/* [Mobile] Drawer button */}
-      {(!!props.isMobile || props.currentApp?.hideNav) && (
+      {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
         <InvertedBarCornerItem>
 
-          {(!appPaneContent || props.currentApp?.hideNav) ? (
+          {(!appDrawerContent || !checkVisibleNav(props.currentApp)) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={!appPaneContent} onClick={openDrawer}>
+            <IconButton disabled={!appDrawerContent} onClick={openDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -152,12 +152,15 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
       }}>
-        {desktopHide ? null : !!appBarItems ? appBarItems : <PageBarItemsFallback />}
+        {appBarItems
+          ? appBarItems
+          : <PageBarItemsFallback currentApp={props.currentApp} />
+        }
       </Box>
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
-        <IconButton disabled={!pageMenuAnchor || (!appMenuItems && !props.isMobile)} onClick={openPageMenu} ref={pageMenuAnchor}>
+        <IconButton disabled={!pageMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/} onClick={openPageMenu} ref={pageMenuAnchor}>
           <MoreVertIcon />
         </IconButton>
       </InvertedBarCornerItem>
@@ -183,7 +186,7 @@ export function PageBar(props: { currentApp?: NavItemApp, isMobile?: boolean, sx
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
       {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {!!props.isMobile && <MobileNavListItem currentApp={props.currentApp} />}
+      {!!props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
 
     </CloseableMenu>
 

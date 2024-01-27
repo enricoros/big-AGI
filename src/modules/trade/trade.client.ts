@@ -4,7 +4,9 @@ import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../d
 
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 
-import { DConversation, DMessage, useChatStore } from '~/common/state/store-chats';
+import { Brand } from '~/common/app.config';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { conversationTitle, DConversation, DMessage, useChatStore } from '~/common/state/store-chats';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 
 import { ImportedOutcome } from './ImportOutcomeModal';
@@ -88,14 +90,30 @@ export async function downloadAllConversationsJson() {
  * Download a conversation as a JSON file, for backup and future restore
  * @throws {Error} if the user closes the dialog, or file could not be saved
  */
-export async function downloadConversationJson(conversation: DConversation) {
-  // remove fields from the export
-  const exportableConversation: ExportedConversationJsonV1 = conversationToJsonV1(conversation);
-  const json = JSON.stringify(exportableConversation, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+export async function downloadConversation(conversation: DConversation, format: 'json' | 'markdown') {
+
+  let blob: Blob;
+  let extension: string;
+
+  if (format == 'json') {
+    // remove fields (ephemerals, abortController, etc.) from the export
+    const exportableConversation: ExportedConversationJsonV1 = conversationToJsonV1(conversation);
+    const json = JSON.stringify(exportableConversation, null, 2);
+    blob = new Blob([json], { type: 'application/json' });
+    extension = '.json';
+  } else if (format == 'markdown') {
+    const exportableMarkdown = conversationToMarkdown(conversation, false, true, (sender: string) => `## ${sender} ##`);
+    blob = new Blob([exportableMarkdown], { type: 'text/markdown' });
+    extension = '.md';
+  } else {
+    throw new Error(`Invalid download format: ${format}`);
+  }
+
+  // bonify title for saving to file (spaces to dashes, etc)
+  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
   // link to begin the download
-  await fileSave(blob, { fileName: `conversation-${conversation.id}.json`, extensions: ['.json'] });
+  await fileSave(blob, { fileName: `conversation-${fileTitle ? fileTitle + '-' : ''}${conversation.id}${extension}`, extensions: [extension] });
 }
 
 export function conversationToJsonV1(_conversation: DConversation): ExportedConversationJsonV1 {
@@ -108,13 +126,11 @@ export function conversationToJsonV1(_conversation: DConversation): ExportedConv
 /**
  * Primitive rendering of a Conversation to Markdown
  */
-export function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean): string {
-
-  // const title =
-  //   `# ${conversation.manual/auto/name || 'Conversation'}\n` +
-  //   (new Date(conversation.created)).toLocaleString() + '\n\n';
-
-  return conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
+export function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean, exportTitle: boolean, senderWrap?: (text: string) => string): string {
+  const mdTitle = exportTitle
+    ? `# ${capitalizeFirstLetter(conversationTitle(conversation, Brand.Title.Common + ' Chat'))}\nA ${Brand.Title.Common} conversation, updated on ${(new Date(conversation.updated || conversation.created)).toLocaleString()}.\n\n`
+    : '';
+  return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
     let sender: string = message.sender;
     let text = message.text;
     switch (message.role) {
@@ -132,7 +148,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
         sender = '👤 You';
         break;
     }
-    return `### ${sender}\n\n${text}\n\n`;
+    return (senderWrap?.(sender) || `### ${sender}`) + `\n\n${text}\n\n`;
   }).join('---\n\n');
 
 }

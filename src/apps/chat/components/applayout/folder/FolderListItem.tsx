@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
+import type { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
 
 import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
@@ -14,17 +14,13 @@ import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/state/s
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
-// Define the type for your props if you're using TypeScript
-type RenderItemProps = {
+export function FolderListItem(props: {
+  activeFolderId: string | null;
   folder: DFolder;
+  onFolderSelect: (folderId: string | null) => void;
   provided: DraggableProvided;
   snapshot: DraggableStateSnapshot;
-  onFolderSelect: (folderId: string | null) => void;
-  selectedFolderId: string | null;
-  // Include any other props that RenderItem needs
-};
-
-export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, snapshot, onFolderSelect, selectedFolderId }) => {
+}) {
 
   // internal state
   const [deleteArmed, setDeleteArmed] = useState(false);
@@ -32,6 +28,10 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
 
   // State to control the open state of the Menu
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLAnchorElement>(null);
+
+
+  // derived props
+  const { activeFolderId, folder, onFolderSelect, provided, snapshot } = props;
 
 
   // Menu
@@ -148,7 +148,7 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
           event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
           handleFolderSelect(folder.id);
         }}
-        selected={folder.id === selectedFolderId}
+        selected={folder.id === activeFolderId}
         sx={{
           border: 0,
           justifyContent: 'space-between',
@@ -200,7 +200,8 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
         {!!menuAnchorEl && (
           <CloseableMenu
             open anchorEl={menuAnchorEl} onClose={handleMenuClose}
-            placement='top' zIndex={1301 /* need to be on top of the Modal on Mobile */}
+            placement='top'
+            zIndex={1301 /* need to be on top of the Modal on Mobile */}
             sx={{ minWidth: 200 }}
           >
 
@@ -316,4 +317,4 @@ export const FolderListItem: React.FC<RenderItemProps> = ({ folder, provided, sn
       </ListItemButton>
     </ListItem>
   );
-};
+}

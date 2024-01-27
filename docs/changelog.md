@@ -5,16 +5,31 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.12.0 - Jan 2024
+### 1.13.0 - Feb 2024
 
-- milestone: [1.12.0](https://github.com/enricoros/big-agi/milestone/12)
+- milestone: [1.13.0](https://github.com/enricoros/big-agi/milestone/13)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+
+## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
+
+https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
+
+- **Voice Calls**: real-time voice call your personas out of the blue or in relation to a chat [#354](https://github.com/enricoros/big-AGI/issues/354)
+- Support **OpenAI 0125** Models. [#364](https://github.com/enricoros/big-AGI/issues/364)
+- Rename or Auto-Rename chats.  [#222](https://github.com/enricoros/big-AGI/issues/222), [#360](https://github.com/enricoros/big-AGI/issues/360)
+- More control over **Link Sharing** [#356](https://github.com/enricoros/big-AGI/issues/356)
+- **Accessibility** to screen readers [#358](https://github.com/enricoros/big-AGI/issues/358)
+- Export chats to Markdown [#337](https://github.com/enricoros/big-AGI/issues/337)
+- Paste tables from Excel [#286](https://github.com/enricoros/big-AGI/issues/286)
+- Ollama model updates and context window detection fixes [#309](https://github.com/enricoros/big-AGI/issues/309)
 
 ### What's New in 1.11.0 · Jan 16, 2024 · Singularity
 
+https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cfcb110c68
+
 - **Find chats**: search in titles and content, with frequency ranking. [#329](https://github.com/enricoros/big-AGI/issues/329)
 - **Commands**: command auto-completion (type '/'). [#327](https://github.com/enricoros/big-AGI/issues/327)
-- **[Together AI](https://www.together.ai/products#inference)** inference platform support. [#346](https://github.com/enricoros/big-AGI/issues/346)
+- **[Together AI](https://www.together.ai/products#inference)** inference platform support (good speed and newer models). [#346](https://github.com/enricoros/big-AGI/issues/346)
 - Persona Creator history, deletion, custom creation, fix llm API timeouts
 - Enable adding up to five custom OpenAI-compatible endpoints
 - Developer enhancements: new 'Actiles' framework

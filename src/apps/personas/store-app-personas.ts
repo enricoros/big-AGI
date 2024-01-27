@@ -4,6 +4,9 @@ import { shallow } from 'zustand/shallow';
 
 import { createBase36Uid } from '~/common/util/textUtils';
 
+// constraint the max number of saved prompts, to stay below localStorage quota
+const MAX_SAVED_PROMPTS = 100;
+
 
 /**
  * Very simple personas store for the "Persona Creator" - note that we shall
@@ -41,6 +44,7 @@ interface AppPersonasStore {
   // actions
   prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) => void;
   deleteSimplePersona: (id: string) => void;
+  deleteSimplePersonas: (ids: Set<string>) => void;
 
 }
 
@@ -54,23 +58,32 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
     simplePersonas: [],
 
     prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) =>
-      _set(state => ({
-        simplePersonas: [
-          {
-            id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
-            systemPrompt,
-            creationDate: new Date().toISOString(),
-            inputProvenance,
-            inputText,
-            llmLabel,
-          },
-          ...state.simplePersonas,
-        ],
-      })),
+      _set(state => {
+        const newPersona: SimplePersona = {
+          id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
+          systemPrompt,
+          creationDate: new Date().toISOString(),
+          inputProvenance,
+          // to save bytes, do not save input text when from YouTube
+          inputText: inputProvenance?.type === 'youtube' ? '' : inputText,
+          llmLabel,
+        };
+        return {
+          simplePersonas: [
+            newPersona,
+            ...state.simplePersonas.slice(0, MAX_SAVED_PROMPTS - 1),
+          ],
+        };
+      }),
 
     deleteSimplePersona: (simplePersonaId: string) =>
       _set(state => ({
         simplePersonas: state.simplePersonas.filter(persona => persona.id !== simplePersonaId),
+      })),
+
+    deleteSimplePersonas: (simplePersonaIds: Set<string>) =>
+      _set(state => ({
+        simplePersonas: state.simplePersonas.filter(persona => !simplePersonaIds.has(persona.id)),
       })),
 
   }),
@@ -98,4 +111,8 @@ export function prependSimplePersona(systemPrompt: string, inputText: string, in
 
 export function deleteSimplePersona(simplePersonaId: string) {
   useAppPersonasStore.getState().deleteSimplePersona(simplePersonaId);
+}
+
+export function deleteSimplePersonas(simplePersonaIds: Set<string>) {
+  useAppPersonasStore.getState().deleteSimplePersonas(simplePersonaIds);
 }

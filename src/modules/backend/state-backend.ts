@@ -52,7 +52,7 @@ const useBackendStore = create<BackendStore>()(
 );
 
 
-export function useBackendCapsLoader(): [boolean, (capabilities: Partial<BackendCapabilities>) => void] {
+export function useBackendCapsKnowledge(): [boolean, (capabilities: Partial<BackendCapabilities>) => void] {
   return useBackendStore(state => [state.loadedCapabilities, state.setCapabilities], shallow);
 }
 
