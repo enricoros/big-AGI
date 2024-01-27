@@ -3,14 +3,13 @@ import * as React from 'react';
 import { Box, Typography } from '@mui/joy';
 
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { themeBgApp } from '~/common/app.theme';
 import { useRouterRoute } from '~/common/app.routes';
 
 
 /**
  * https://github.com/enricoros/big-AGI/issues/299
  */
-export function AppPlaceholder() {
+export function AppPlaceholder(props: { text?: string }) {
 
   // external state
   const route = useRouterRoute();
@@ -37,7 +36,7 @@ export function AppPlaceholder() {
           {placeholderAppName}
         </Typography>
         <Typography>
-          Intelligent applications to help you learn, think, and do
+          {props.text || 'Intelligent applications to help you learn, think, and do'}
         </Typography>
 
       </Box>

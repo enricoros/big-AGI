@@ -15,7 +15,7 @@ import { InlineError } from '~/common/components/InlineError';
 export function CallStatus(props: {
   callerName?: string,
   statusText: string,
-  regardingText?: string,
+  regardingText: string | null,
   micError: boolean, speakError: boolean,
   // llmComponent?: React.JSX.Element,
 }) {

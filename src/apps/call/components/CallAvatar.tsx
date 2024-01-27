@@ -16,15 +16,14 @@ const cssScaleKeyframes = keyframes`
     }`;
 
 
-export function CallAvatar(props: { symbol: string, imageUrl?: string, isRinging: boolean, onClick: () => void }) {
+export function CallAvatar(props: { symbol: string, imageUrl?: string, isRinging?: boolean, onClick: () => void }) {
   return (
     <Avatar
       onClick={props.onClick}
       src={props.imageUrl}
       sx={{
         '--Avatar-size': { xs: '10rem', md: '11.5rem' },
-        '--variant-borderWidth': '4px',
-        backgroundColor: 'background.surface',
+        backgroundColor: 'background.popup',
         boxShadow: !props.imageUrl ? 'sm' : null,
         fontSize: { xs: '6rem', md: '7rem' },
       }}

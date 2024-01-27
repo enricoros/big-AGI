@@ -12,7 +12,7 @@ export const HARDCODED_MODELS: { models: ProdiaModelDescription[] } = {
     { id: 'dynavisionXL_0411.safetensors [c39cc051]', label: 'Dynavision XL 0411', gen: 'sdxl' },
     { id: 'juggernautXL_v45.safetensors [e75f5471]', label: 'Juggernaut XL V45', gen: 'sdxl' },
     { id: 'realismEngineSDXL_v10.safetensors [af771c3f]', label: 'Realism Engine SDXL V10', gen: 'sdxl' },
-    { id: 'sd_xl_base_1.0.safetensors [be9edd61]', label: 'SDXL Base V1.0', gen: 'sdxl', priority: 12 },
+    { id: 'sd_xl_base_1.0.safetensors [be9edd61]', label: 'SDXL Base V1.0', gen: 'sdxl', priority: 20 },
     // SD models
     { id: '3Guofeng3_v34.safetensors [50f420de]', label: '3 Guofeng3 V3.4', gen: 'sd' },
     { id: 'absolutereality_V16.safetensors [37db0fc3]', label: 'Absolute Reality V1.6', gen: 'sd' },

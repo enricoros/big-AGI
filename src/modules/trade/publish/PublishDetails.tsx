@@ -4,14 +4,14 @@ import { Alert, Box, Button, Divider, Input, Modal, ModalDialog, Stack, Typograp
 
 import { Link } from '~/common/components/Link';
 
-import type { PublishedSchema } from './server/pastegg';
+import type { PublishedSchema } from '../server/pastegg';
 
 
 /**
  * Displays the result of a Paste.gg paste as a modal dialog.
  * This is to give the user the chance to write down the deletion key, mainly.
  */
-export function ExportedPublish(props: { onClose: () => void, response: PublishedSchema, open: boolean }) {
+export function PublishDetails(props: { onClose: () => void, response: PublishedSchema, open: boolean }) {
   if (!props.response?.url)
     return null;
 

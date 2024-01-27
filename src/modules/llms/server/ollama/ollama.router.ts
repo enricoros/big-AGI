@@ -11,10 +11,10 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsListModelsOutputSchema, ModelDescriptionSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema } from './ollama.wiretypes';
+import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
 
 
 // Default hosts
@@ -145,7 +145,7 @@ export const llmOllamaRouter = createTRPCRouter({
           tag: 'latest',
           description: model.description,
           pulls: model.pulls,
-          isNew: !!model.added && model.added >= OLLAMA_PREV_UPDATE,
+          isNew: !!model.added && model.added > OLLAMA_PREV_UPDATE,
         })),
       };
     }),
@@ -192,25 +192,11 @@ export const llmOllamaRouter = createTRPCRouter({
 
       // get the models
       const wireModels = await ollamaGET(input.access, OLLAMA_PATH_TAGS);
-      const wireOllamaListModelsSchema = z.object({
-        models: z.array(z.object({
-          name: z.string(),
-          modified_at: z.string(),
-          size: z.number(),
-          digest: z.string(),
-        })),
-      });
       let models = wireOllamaListModelsSchema.parse(wireModels).models;
 
       // retrieve info for each of the models (/api/show, post call, in parallel)
       const detailedModels = await Promise.all(models.map(async model => {
         const wireModelInfo = await ollamaPOST(input.access, { 'name': model.name }, OLLAMA_PATH_SHOW);
-        const wireOllamaModelInfoSchema = z.object({
-          license: z.string().optional(),
-          modelfile: z.string(),
-          parameters: z.string().optional(),
-          template: z.string().optional(),
-        });
         const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
         return { ...model, ...modelInfo };
       }));
@@ -224,6 +210,25 @@ export const llmOllamaRouter = createTRPCRouter({
           const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` · ${modelTag}` : '');
           const description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
 
+          /* Find the context window from the 'num_ctx' line in the parameters string, if present
+           *  - https://github.com/enricoros/big-AGI/issues/309
+           *  - Note: as of 2024-01-26 the num_ctx line is present in 50% of the models, and in most cases set to 4096
+           *  - We are tracking the Upstream issue https://github.com/ollama/ollama/issues/1473 for better ways to do this in the future
+           */
+          let contextWindow = 4096;
+          if (model.parameters) {
+            // split the parameters into lines, and find one called "num_ctx ...spaces... number"
+            const paramsNumCtx = model.parameters.split('\n').find(line => line.startsWith('num_ctx '));
+            if (paramsNumCtx) {
+              const numCtxValue: string = paramsNumCtx.split(/\s+/)[1];
+              if (numCtxValue) {
+                const numCtxNumber: number = parseInt(numCtxValue);
+                if (!isNaN(numCtxNumber))
+                  contextWindow = numCtxNumber;
+              }
+            }
+          }
+
           // console.log('>>> ollama model', model.name, model.template, model.modelfile, '\n');
 
           return {
@@ -232,7 +237,7 @@ export const llmOllamaRouter = createTRPCRouter({
             created: Date.parse(model.modified_at) ?? undefined,
             updated: Date.parse(model.modified_at) ?? undefined,
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
-            contextWindow: 4096, // FIXME: request this information upstream?
+            contextWindow,
             interfaces: [LLM_IF_OAI_Chat],
           } satisfies ModelDescriptionSchema;
         }),

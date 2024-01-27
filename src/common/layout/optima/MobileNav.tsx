@@ -1,37 +1,69 @@
 import * as React from 'react';
+import Router from 'next/router';
 
-import { Typography } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
 
-import type { NavItemApp } from '~/common/app.nav';
+import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
-import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { InvertedBar } from './components/InvertedBar';
+import { MobileNavGroupBox, MobileNavIcon, mobileNavItemClasses } from './components/MobileNavIcon';
 
 
-export function MobileNav(props: { currentApp?: NavItemApp, hideOnFocusMode?: boolean }) {
+export function MobileNav(props: {
+  component: React.ElementType,
+  currentApp?: NavItemApp,
+  hideOnFocusMode?: boolean,
+  sx?: SxProps,
+}) {
 
   // external state
-  const { isFocusedMode } = useOptimaLayout();
+  // const { isFocusedMode } = useOptimaLayout();
+
+
+  // App items
+  const navAppItems = React.useMemo(() => {
+    return navItems.apps
+      .filter(app => checkVisibileIcon(app, true, undefined))
+      .map((app) => {
+        const isActive = app === props.currentApp;
+
+        if (checkDivider(app)) {
+          // return <Divider key={'div-' + appIdx} sx={{ mx: 1, height: '50%', my: 'auto' }} />;
+          return null;
+        }
+
+        return (
+          <MobileNavIcon
+            key={'n-m-' + app.route.slice(1)}
+            aria-label={app.name}
+            variant={isActive ? 'solid' : undefined}
+            onClick={() => Router.push(app.landingRoute || app.route)}
+            className={`${mobileNavItemClasses.typeApp} ${isActive ? mobileNavItemClasses.active : ''}`}
+          >
+            {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
+            <app.icon />
+          </MobileNavIcon>
+        );
+      });
+  }, [props.currentApp]);
+
 
   // NOTE: this may be abrupt a little
-  if (isFocusedMode && props.hideOnFocusMode)
-    return null;
+  // if (isFocusedMode && props.hideOnFocusMode)
+  //   return null;
 
   return (
     <InvertedBar
-      id='mobile-nav' direction='horizontal'
-      sx={{
-        justifyContent: 'space-around',
-      }}
+      id='mobile-nav'
+      component={props.component}
+      direction='horizontal'
+      sx={props.sx}
     >
-      <InvertedBarCornerItem sx={{ width: 'auto' }}>
-        <Typography level='title-sm'>
-          Chat
-        </Typography>
-      </InvertedBarCornerItem>
-      <Typography>
-        FIXME: MobileNav
-      </Typography>
+
+      <MobileNavGroupBox>
+        {navAppItems}
+      </MobileNavGroupBox>
+
     </InvertedBar>
   );
 }

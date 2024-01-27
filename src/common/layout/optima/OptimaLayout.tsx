@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
-import { navItems } from '~/common/app.nav';
+import { checkVisibleNav, navItems } from '~/common/app.nav';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { DesktopDrawer } from './DesktopDrawer';
@@ -40,22 +40,22 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
         {isMobile ? <>
 
-          <PageWrapper isMobile currentApp={currentApp}>
+          <PageWrapper component='main' isMobile currentApp={currentApp}>
             {props.children}
           </PageWrapper>
 
-          <MobileDrawer currentApp={currentApp} />
+          <MobileDrawer component='aside' currentApp={currentApp} />
 
         </> : (
 
-          <PanelGroup direction='horizontal' id='desktop-layout'>
+          <PanelGroup direction='horizontal' id='root-layout'>
 
-            {!currentApp?.hideNav && <DesktopNav currentApp={currentApp} />}
+            {checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
 
-            <DesktopDrawer currentApp={currentApp} />
+            <DesktopDrawer component='aside' currentApp={currentApp} />
 
             {/*<Panel defaultSize={100}>*/}
-            <PageWrapper currentApp={currentApp}>
+            <PageWrapper component='main' currentApp={currentApp}>
               {props.children}
             </PageWrapper>
             {/*</Panel>*/}

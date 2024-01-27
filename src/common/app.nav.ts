@@ -1,24 +1,43 @@
 import type { FunctionComponent } from 'react';
 
+// App icons
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import BuildCircleIcon from '@mui/icons-material/BuildCircle';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CallIcon from '@mui/icons-material/Call';
+import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import Diversity2Icon from '@mui/icons-material/Diversity2';
+import Diversity2OutlinedIcon from '@mui/icons-material/Diversity2Outlined';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
-import GitHubIcon from '@mui/icons-material/GitHub';
+import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
+import ImageIcon from '@mui/icons-material/Image';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
-import SettingsIcon from '@mui/icons-material/Settings';
-import TelegramIcon from '@mui/icons-material/Telegram';
+import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
+import TextsmsIcon from '@mui/icons-material/Textsms';
+import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import WorkspacesOutlinedIcon from '@mui/icons-material/WorkspacesOutlined';
+// Link icons
+import GitHubIcon from '@mui/icons-material/GitHub';
+import { DiscordIcon } from '~/common/components/icons/DiscordIcon';
+// Modal icons
+import BuildCircleIcon from '@mui/icons-material/BuildCircle';
+import SettingsIcon from '@mui/icons-material/Settings';
+
 
 import { Brand } from '~/common/app.config';
-import { DiscordIcon } from '~/common/components/icons/DiscordIcon';
+import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 // enable to show all items, for layout development
 const SHOW_ALL_APPS = false;
+
+const SPECIAL_DIVIDER = '__DIVIDER__';
 
 
 // Nav items
@@ -26,18 +45,24 @@ const SHOW_ALL_APPS = false;
 interface ItemBase {
   name: string,
   icon: FunctionComponent,
+  iconActive?: FunctionComponent,
   tooltip?: string,
 }
 
 export interface NavItemApp extends ItemBase {
   type: 'app',
   route: string,
-  drawer?: string | true, // true: can make use of the drawer, string: also set the title
+  landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
+  barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
+  hideOnMobile?: boolean, // set to true to hide the icon on mobile, unless this is the active app
+  hideIcon?: boolean
+    | (() => boolean),    // set to true to hide the icon, unless this is the active app
   hideBar?: boolean,      // set to true to hide the page bar
-  hideNav?: boolean,      // set to hide the Nav bar (note: must have a way to navigate back)
-  automatic?: boolean,    // only accessible by the machine
+  hideDrawer?: boolean,   // set to true to hide the drawer
+  hideNav?: boolean
+    | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
-  hide?: boolean,         // delete from the UI
+  _delete?: boolean,      // delete from the UI
 }
 
 export interface NavItemModal extends ItemBase {
@@ -57,8 +82,8 @@ export interface NavItemExtLink extends ItemBase {
 
 
 export const navItems: {
-  apps: NavItemApp[]
-  modals: NavItemModal[]
+  apps: NavItemApp[],
+  modals: NavItemModal[],
   links: NavItemExtLink[],
 } = {
 
@@ -66,74 +91,99 @@ export const navItems: {
   apps: [
     {
       name: 'Chat',
-      icon: TelegramIcon,
+      icon: TextsmsOutlinedIcon,
+      iconActive: TextsmsIcon,
       type: 'app',
       route: '/chat',
       drawer: true,
     },
     {
       name: 'Call',
-      icon: CallIcon,
+      barTitle: 'Voice Calls',
+      icon: CallOutlinedIcon,
+      iconActive: CallIcon,
       type: 'app',
       route: '/call',
-      drawer: 'Recent Calls',
-      automatic: true,
+      hideDrawer: true,
       fullWidth: true,
     },
     {
       name: 'Draw',
-      icon: FormatPaintIcon,
+      barTitle: 'Generate Images',
+      icon: FormatPaintOutlinedIcon,
+      iconActive: FormatPaintIcon,
       type: 'app',
       route: '/draw',
-      hide: true,
+      // hideOnMobile: true,
+      hideDrawer: true,
+      hideIcon: () => !useUXLabsStore.getState().labsDrawing,
     },
     {
       name: 'Cortex',
-      icon: AutoAwesomeIcon,
+      icon: AutoAwesomeOutlinedIcon,
+      iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
-      automatic: true,
-      hide: true,
+      _delete: true,
     },
     {
       name: 'Patterns',
-      icon: AccountTreeIcon,
+      icon: AccountTreeOutlinedIcon,
+      iconActive: AccountTreeIcon,
       type: 'app',
       route: '/patterns',
-      hide: true,
+      _delete: true,
     },
     {
       name: 'Workspace',
-      icon: WorkspacesIcon,
+      icon: WorkspacesOutlinedIcon,
+      iconActive: WorkspacesIcon,
       type: 'app',
       route: '/workspace',
-      hide: true,
+      _delete: true,
+    },
+    // <-- divider here -->
+    {
+      name: SPECIAL_DIVIDER,
+      type: 'app',
+      route: SPECIAL_DIVIDER,
+      icon: () => null,
     },
     {
       name: 'Personas',
-      icon: Diversity2Icon,
+      icon: Diversity2OutlinedIcon,
+      iconActive: Diversity2Icon,
       type: 'app',
       route: '/personas',
-      drawer: true,
       hideBar: true,
+    },
+    {
+      name: 'Media Library',
+      icon: ImageOutlinedIcon,
+      iconActive: ImageIcon,
+      type: 'app',
+      route: '/media',
+      _delete: true,
+    },
+    {
+      name: 'Shared Chat',
+      icon: IosShareOutlinedIcon,
+      iconActive: IosShareIcon,
+      type: 'app',
+      route: '/link/chat/[chatLinkId]',
+      landingRoute: '/link/chat/list',
+      hideOnMobile: true,
+      hideIcon: hasNoChatLinkItems,
+      hideNav: hasNoChatLinkItems,
     },
     {
       name: 'News',
-      icon: EventNoteIcon,
+      icon: EventNoteOutlinedIcon,
+      iconActive: EventNoteIcon,
       type: 'app',
       route: '/news',
       hideBar: true,
-    },
-
-    // non-user-selectable ('automatic') Apps
-    {
-      name: 'Shared Chat',
-      icon: IosShareIcon,
-      type: 'app',
-      route: '/link/chat/[chatLinkId]',
-      drawer: 'Shared Chats',
-      automatic: true,
-      hideNav: true,
+      hideDrawer: true,
     },
   ],
 
@@ -178,4 +228,16 @@ export const navItems: {
 };
 
 // apply UI filtering right away - do it here, once, and for all
-navItems.apps = navItems.apps.filter(app => !app.hide || SHOW_ALL_APPS);
+navItems.apps = navItems.apps.filter(app => !app._delete || SHOW_ALL_APPS);
+
+export function checkDivider(app?: NavItemApp) {
+  return app?.name === SPECIAL_DIVIDER;
+}
+
+export function checkVisibileIcon(app: NavItemApp, isMobile: boolean, currentApp?: NavItemApp) {
+  return app.hideOnMobile && isMobile ? false : app === currentApp ? true : typeof app.hideIcon === 'function' ? !app.hideIcon() : !app.hideIcon;
+}
+
+export function checkVisibleNav(app?: NavItemApp) {
+  return !app ? false : typeof app.hideNav === 'function' ? !app.hideNav() : !app.hideNav;
+}

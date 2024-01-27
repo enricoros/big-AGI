@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { MenuItem, Switch, Typography } from '@mui/joy';
+import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -11,7 +12,12 @@ import { useChatShowSystemMessages } from '../chat/store-app-chat';
 /**
  * Menu Items are the settings for the chat.
  */
-export function AppChatLinkMenuItems() {
+export function LinkChatMenuItems(props: {
+  activeLinkId: string | null,
+  showDeletionKeys: boolean,
+  onDeleteLink: (linkId: string) => void,
+  onToggleDeletionKeys: () => void,
+}) {
 
   // external state
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
@@ -25,8 +31,17 @@ export function AppChatLinkMenuItems() {
 
 
   const handleRenderSystemMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowSystemMessages(event.target.checked);
+
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+
   const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.checked ? 'cleaner' : 'clean');
+
+  const { activeLinkId, onDeleteLink } = props;
+
+  const handleDeleteLink = React.useCallback(() => {
+    activeLinkId && onDeleteLink(activeLinkId);
+  }, [activeLinkId, onDeleteLink]);
+
 
   const zenOn = zenMode === 'cleaner';
 
@@ -64,6 +79,25 @@ export function AppChatLinkMenuItems() {
         // endDecorator={zenOn ? 'On' : 'Off'}
         slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
       />
+    </MenuItem>
+
+    <MenuItem onClick={props.onToggleDeletionKeys} sx={{ justifyContent: 'space-between' }}>
+      <Typography>
+        Show Keys
+      </Typography>
+      <Switch
+        checked={props.showDeletionKeys}
+        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+      />
+    </MenuItem>
+
+    <ListDivider />
+
+    <MenuItem onClick={handleDeleteLink} sx={{ justifyContent: 'space-between' }}>
+      Delete
+      <ListItemDecorator>
+        <DeleteOutlineIcon />
+      </ListItemDecorator>
     </MenuItem>
 
   </>;

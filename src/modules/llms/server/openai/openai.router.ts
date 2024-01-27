@@ -185,22 +185,35 @@ export const llmOpenAIRouter = createTRPCRouter({
             // limit to only 'gpt' and 'non instruct' models
             .filter(model => model.id.includes('gpt') && !model.id.includes('-instruct'))
 
-            // custom openai sort
-            .sort((a, b) => {
-              const aId = a.id.slice(0, 5);
-              const bId = b.id.slice(0, 5);
-              if (aId === bId) {
-                const aCount = a.id.split('-').length;
-                const bCount = b.id.split('-').length;
-                if (aCount === bCount)
-                  return a.id.localeCompare(b.id);
-                return aCount - bCount;
-              }
-              return bId.localeCompare(aId);
-            })
-
             // to model description
-            .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created));
+            .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
+
+            // custom OpenAI sort
+            .sort((a, b) => {
+              // due to model name, sorting doesn't require special cases anymore
+              return b.label.localeCompare(a.label);
+
+              // move models with the link emoji (🔗) to the bottom
+              // const aLink = a.label.includes('🔗');
+              // const bLink = b.label.includes('🔗');
+              // if (aLink !== bLink)
+              //   return aLink ? 1 : -1;
+
+              // sort by model name
+              // return b.label.replace('🌟 ', '').localeCompare(a.label.replace('🌟 ', ''));
+
+              // sort by model ID~ish
+              // const aId = a.id.slice(0, 5);
+              // const bId = b.id.slice(0, 5);
+              // if (aId === bId) {
+              //   const aCount = a.id.split('-').length;
+              //   const bCount = b.id.split('-').length;
+              //   if (aCount === bCount)
+              //     return a.id.localeCompare(b.id);
+              //   return aCount - bCount;
+              // }
+              // return bId.localeCompare(aId);
+            });
           break;
 
         case 'openrouter':

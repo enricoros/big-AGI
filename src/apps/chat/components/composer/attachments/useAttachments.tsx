@@ -43,6 +43,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
     // https://github.com/enricoros/big-AGI/issues/286
     const textHtml = dt.getData('text/html') || '';
     const heuristicIsExcel = textHtml.includes('"urn:schemas-microsoft-com:office:excel"');
+    // noinspection HttpUrlsUsage
     const heuristicIsPowerPoint = textHtml.includes('xmlns:m="http://schemas.microsoft.com/office/20') && textHtml.includes('<meta name=Generator content="Microsoft PowerPoint');
     const heuristicBypassImage = heuristicIsExcel || heuristicIsPowerPoint;
 

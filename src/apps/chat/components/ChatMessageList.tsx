@@ -6,11 +6,11 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
-import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { InlineError } from '~/common/components/InlineError';
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
@@ -28,10 +28,10 @@ export function ChatMessageList(props: {
   chatLLMContextTokens: number | null,
   isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => void,
-  onTextDiagram: (diagramConfig: DiagramConfig | null) => Promise<any>,
-  onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<any>,
-  onTextSpeak: (selectedText: string) => Promise<any>,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
+  onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
+  onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
+  onTextSpeak: (selectedText: string) => Promise<void>,
   sx?: SxProps,
 }) {
 
@@ -62,8 +62,9 @@ export function ChatMessageList(props: {
 
   // text actions
 
-  const handleRunExample = (text: string) =>
-    conversationId && onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)]);
+  const handleRunExample = React.useCallback(async (text: string) => {
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)]);
+  }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
   // message menu methods proxy
@@ -72,11 +73,11 @@ export function ChatMessageList(props: {
     conversationId && onConversationBranch(conversationId, messageId);
   }, [conversationId, onConversationBranch]);
 
-  const handleConversationRestartFrom = React.useCallback((messageId: string, offset: number) => {
+  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && onConversationExecuteHistory(conversationId, truncatedHistory);
+      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory);
     }
   }, [conversationId, onConversationExecuteHistory]);
 
@@ -97,12 +98,12 @@ export function ChatMessageList(props: {
   }, [conversationId, editMessage]);
 
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
-    conversationId && await onTextDiagram({ conversationId: conversationId, messageId, text });
+    conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
   }, [conversationId, onTextDiagram]);
 
   const handleTextImagine = React.useCallback(async (text: string) => {
     if (!capabilityHasT2I)
-      return openPreferencesTab(2);
+      return openPreferencesTab(PreferencesTab.Draw);
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
@@ -112,7 +113,7 @@ export function ChatMessageList(props: {
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)
-      return openPreferencesTab(3);
+      return openPreferencesTab(PreferencesTab.Voice);
     setIsSpeaking(true);
     await onTextSpeak(text);
     setIsSpeaking(false);

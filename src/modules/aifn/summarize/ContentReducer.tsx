@@ -48,7 +48,7 @@ export function ContentReducer(props: {
   const [processing, setProcessing] = React.useState(false);
 
   // derived state
-  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') : 0;
+  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') ?? 0 : 0;
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 

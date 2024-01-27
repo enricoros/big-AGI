@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, ColorPaletteProp, IconButton, Typography, VariantProp } from '@mui/joy';
+import { ColorPaletteProp, FormControl, IconButton, Typography, VariantProp } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
 
@@ -18,7 +18,7 @@ export function CallButton(props: {
   sx?: SxProps,
 }) {
   return (
-    <Box
+    <FormControl
       onClick={() => !props.disabled && props.onClick?.()}
       sx={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -27,20 +27,23 @@ export function CallButton(props: {
     >
 
       <IconButton
-        disabled={props.disabled} variant={props.variant || 'solid'} color={props.color}
+        aria-label={props.text}
+        variant={props.variant || 'solid'} color={props.color}
+        disabled={props.disabled}
         sx={{
           '--IconButton-size': { xs: '4.2rem', md: '5rem' },
           borderRadius: '50%',
           // boxShadow: 'lg',
           ...props.sx,
-        }}>
+        }}
+      >
         <props.Icon />
       </IconButton>
 
-      <Typography level='title-md' variant={props.disabled ? 'soft' : undefined}>
+      <Typography aria-hidden level='title-md' variant={props.disabled ? 'soft' : undefined}>
         {props.text}
       </Typography>
 
-    </Box>
+    </FormControl>
   );
 }
