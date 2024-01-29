@@ -18,7 +18,7 @@ export interface AppDrawIntent {
 export function AppDraw() {
 
   // state
-  const [drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
+  const [_drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
   const [section, setSection] = React.useState<number>(0);
 
 
