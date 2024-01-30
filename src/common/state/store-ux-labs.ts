@@ -6,9 +6,9 @@ import { persist } from 'zustand/middleware';
 
 /**
  * Graduated:
- *  - Persona YT Creator: still under a 'true' flag, to disable it if needed
+ *  - see `UxLabsSettings.tsx`, and also:
  *  - Text Tools: dinamically shown where applicable
- *  - Chat Mode: follow-ups; moved to Chat Advanced UI, itemized (Auto-title, Auto-diagram)
+ *  - Chat Mode: follow-ups; moved to Chat Advanced UI
  */
 interface UXLabsStore {
 
@@ -17,9 +17,6 @@ interface UXLabsStore {
 
   labsSplitBranching: boolean;
   setLabsSplitBranching: (labsSplitBranching: boolean) => void;
-
-  labsDrawing: boolean;
-  setLabsDrawing: (labsDrawing: boolean) => void;
 
 }
 
@@ -32,9 +29,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsSplitBranching: false,
       setLabsSplitBranching: (labsSplitBranching: boolean) => set({ labsSplitBranching }),
-
-      labsDrawing: false,
-      setLabsDrawing: (labsDrawing: boolean) => set({ labsDrawing }),
 
     }),
     {

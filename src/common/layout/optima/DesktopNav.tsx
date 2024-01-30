@@ -10,7 +10,6 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { BringTheLove } from './components/BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
@@ -35,8 +34,6 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     showModelsSetup, openModelsSetup,
   } = useOptimaLayout();
   const noLLMs = useModelsStore(state => !state.llms.length);
-  // ignore the return value, this just makes sure that the nav is refreshed when UX Labs change - while "drawing" is in there
-  const labsDrawing = useUXLabsStore(state => state.labsDrawing);
 
 
   // show/hide the pane when clicking on the logo
@@ -73,7 +70,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           </Tooltip>
         );
       });
-  }, [props.currentApp, isDrawerOpen, labsDrawing, toggleDrawer]);
+  }, [isDrawerOpen, props.currentApp, toggleDrawer]);
 
 
   // External link items
