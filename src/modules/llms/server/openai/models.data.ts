@@ -218,6 +218,12 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
 ];
 
+export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
+  // if the deployment name mataches an OpenAI model prefix, use that
+  const known = _knownOpenAIChatModels.find(base => azureDeploymentRef == base.idPrefix);
+  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated);
+}
+
 export function openAIModelToModelDescription(modelId: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
   return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated);
 }
