@@ -16,8 +16,8 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCameraDesktop, labsSplitBranching, //labsDrawing,
-    setLabsCameraDesktop, setLabsSplitBranching, //setLabsDrawing,
+    labsCameraDesktop, labsSplitBranching,
+    setLabsCameraDesktop, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
@@ -32,15 +32,14 @@ export function UxLabsSettings() {
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
-    {/*<FormSwitchControl*/}
-    {/*  title={<><AddAPhotoIcon color={labsDrawing ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Drawing</>} description={labsDrawing ? 'Enabled' : 'Disabled'}*/}
-    {/*  checked={labsDrawing} onChange={setLabsDrawing}*/}
-    {/*/>*/}
-
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link> · <Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link> · <Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link> · Imagine · Relative chat size · Text Tools · LLM Overheat
+        <Link href='https://github.com/enricoros/big-AGI/issues/359' target='_blank'>Draw</Link>
+        {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link>
+        {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link>
+        {' · '}<Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link>
+        {' · '}Imagine · Relative chat size · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 
