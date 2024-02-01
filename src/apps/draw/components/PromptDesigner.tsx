@@ -1,11 +1,15 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea } from '@mui/joy';
+import { Box, Button, ButtonGroup, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
+import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
+import RemoveIcon from '@mui/icons-material/Remove';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
 import { animationStopEnter } from '../../chat/components/composer/Composer';
@@ -42,6 +46,7 @@ export function PromptDesigner(props: {
 
   // state
   const [nextPrompt, setNextPrompt] = React.useState<string>('');
+  const [tempCount, setTempCount] = React.useState<number>(2);
 
   // external state
   const { currentIdea, nextRandomIdea } = useDrawIdeas();
@@ -146,19 +151,49 @@ export function PromptDesigner(props: {
           onClick={handleClickMissing}
           sx={{ borderRadius: 'sm' }}
         >
-          Detail
+          Enhance
         </Button>
 
-        <Button
-          variant='soft' color='success'
-          disabled={!userHasText}
-          className={promptButtonClass}
-          endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}
-          onClick={handleClickMissing}
-          sx={{ borderRadius: 'sm' }}
-        >
-          Restyle
-        </Button>
+        {/*<Button*/}
+        {/*  variant='soft' color='success'*/}
+        {/*  disabled={!userHasText}*/}
+        {/*  className={promptButtonClass}*/}
+        {/*  endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}*/}
+        {/*  onClick={handleClickMissing}*/}
+        {/*  sx={{ borderRadius: 'sm' }}*/}
+        {/*>*/}
+        {/*  Restyle*/}
+        {/*</Button>*/}
+
+        <ButtonGroup sx={{ ml: 'auto' }}>
+          {tempCount > 1 && <IconButton onClick={() => setTempCount(count => count - 1)}>
+            <RemoveIcon />
+          </IconButton>}
+          {tempCount > 1 && <>
+            <IconButton>
+              <KeyboardArrowLeftIcon />
+            </IconButton>
+            <Button
+              sx={{
+                px: 0,
+                minWidth: '3rem',
+                pointerEvents: 'none',
+                fontSize: 'xs',
+                fontWeight: 600,
+              }}>
+              <Typography level='body-xs' color='danger' sx={{ fontWeight: 'lg' }}>
+                {tempCount > 1 ? `1 / ${tempCount}` : '1'}
+              </Typography>
+            </Button>
+            <IconButton>
+              <KeyboardArrowRightIcon />
+            </IconButton>
+          </>}
+          <IconButton onClick={() => setTempCount(count => count + 1)}>
+            <AddIcon />
+          </IconButton>
+        </ButtonGroup>
+
 
         {/* Char counter */}
         {/*<Typography level='body-sm' sx={{ ml: 'auto', mr: 1 }}>*/}
@@ -166,7 +201,7 @@ export function PromptDesigner(props: {
         {/*</Typography>*/}
       </Box>
     );
-  }, [userHasText]);
+  }, [tempCount, userHasText]);
 
   return (
     <Box aria-label='Drawing Prompt' component='section' sx={props.sx}>
