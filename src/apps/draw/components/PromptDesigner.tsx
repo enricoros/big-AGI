@@ -292,7 +292,7 @@ export function PromptDesigner(props: {
                   justifyContent: 'space-between',
                 }}
               >
-                Draw
+                Draw {tempCount > 1 ? `(${tempCount})` : ''}
               </Button>
             ) : <>
               <Button
