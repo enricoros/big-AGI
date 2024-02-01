@@ -19,9 +19,9 @@ export function CallMessage(props: {
         alignSelf: props.role === 'user' ? 'end' : 'start',
         whiteSpace: 'break-spaces',
         borderRadius: 'lg',
-        mt: 'auto',
         // boxShadow: 'md',
         py: 1,
+        px: 1.5,
         ...(props.sx || {}),
       }}
     >

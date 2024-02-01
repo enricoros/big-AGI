@@ -9,6 +9,8 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
+import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from '../chat/components/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
 
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
@@ -313,52 +315,74 @@ export function Telephone(props: {
 
     {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
     {(isConnected || isEnded) && (
-      <Card variant='soft' sx={{
+      <Card variant='outlined' sx={{
         flexGrow: 1,
-        maxHeight: '24%',
-        minHeight: '15%',
+        maxHeight: '28%',
+        minHeight: '20%',
         width: '100%',
 
         // style
-        backgroundColor: 'background.surface',
+        // backgroundColor: 'background.surface',
         borderRadius: 'lg',
-        boxShadow: 'sm',
+        // boxShadow: 'sm',
 
         // children
-        display: 'flex', flexDirection: 'column-reverse',
-        overflow: 'auto',
+        padding: 0, // move this to the ScrollToBottom component
       }}>
 
-        {/* Messages in reverse order, for auto-scroll from the bottom */}
-        <Box sx={{ display: 'flex', flexDirection: 'column-reverse', gap: 1 }}>
+        <ScrollToBottom
+          // bootToBottom
+          stickToBottom
+          sx={{
+            // allows the content to be scrolled (all browsers)
+            overflowY: 'auto',
+            // actually make sure this scrolls & fills
+            height: '100%',
 
-          {/* Listening... */}
-          {isRecording && (
-            <CallMessage
-              text={<>{speechInterim?.transcript ? speechInterim.transcript + ' ' : ''}<i>{speechInterim?.interimTranscript}</i></>}
-              variant={isRecordingSpeech ? 'solid' : 'outlined'}
-              role='user'
-            />
-          )}
+            // content
+            display: 'grid',
+            padding: 1,
+          }}
+        >
 
-          {/* Persona streaming text... */}
-          {!!personaTextInterim && (
-            <CallMessage
-              text={personaTextInterim}
-              variant='solid' color='neutral'
-              role='assistant'
-            />
-          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
-          {/* Messages (last 6 messages, in reverse order) */}
-          {callMessages.slice(-6).reverse().map((message) =>
-            <CallMessage
-              key={message.id}
-              text={message.text}
-              variant={message.role === 'assistant' ? 'solid' : 'soft'} color='neutral'
-              role={message.role} />,
-          )}
-        </Box>
+            {/* Call Messages [] */}
+            {callMessages.map((message) =>
+              <CallMessage
+                key={message.id}
+                text={message.text}
+                variant={message.role === 'assistant' ? 'solid' : 'soft'}
+                color={message.role === 'assistant' ? 'neutral' : 'primary'}
+                role={message.role} />,
+            )}
+
+            {/* Persona streaming text... */}
+            {!!personaTextInterim && (
+              <CallMessage
+                text={personaTextInterim}
+                variant='outlined'
+                color='neutral'
+                role='assistant'
+              />
+            )}
+
+            {/* Listening... */}
+            {isRecording && (
+              <CallMessage
+                text={<>{speechInterim?.transcript.trim() || null}{speechInterim?.interimTranscript.trim() ? <i> {speechInterim.interimTranscript}</i> : null}</>}
+                variant={(isRecordingSpeech || !!speechInterim?.transcript) ? 'soft' : 'outlined'}
+                color='primary'
+                role='user'
+              />
+            )}
+
+          </Box>
+
+          {/* Visibility and actions are handled via Context */}
+          <ScrollToBottomButton />
+
+        </ScrollToBottom>
       </Card>
     )}
 
