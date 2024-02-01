@@ -137,7 +137,8 @@ export const navItems: {
       iconActive: WorkspacesIcon,
       type: 'app',
       route: '/workspace',
-      _delete: true,
+      hideDrawer: true,
+      hideOnMobile: true,
     },
     // <-- divider here -->
     {
