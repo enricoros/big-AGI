@@ -23,6 +23,7 @@ export const DesktopNavGroupBox = styled(Box)({
 
 
 export const navItemClasses = {
+  typeMenu: 'NavButton-typeMenu',
   typeApp: 'NavButton-typeApp',
   typeLinkOrModal: 'NavButton-typeLink',
   active: 'NavButton-active',
@@ -41,6 +42,15 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
 
   [`&.${navItemClasses.typeApp},&.${navItemClasses.typeLinkOrModal}`]: {
     '--Icon-fontSize': '1.25rem',
+  },
+
+  // hamburger menu: quick rotate on click
+  [`&.${navItemClasses.typeMenu}`]: {
+    transition: 'rotate 0.6s',
+    '&:active': {
+      rotate: '90deg',
+      transition: 'rotate 0.2s',
+    },
   },
 
   // [`&.${navItemClasses.typeLinkOrModal}`]: {
