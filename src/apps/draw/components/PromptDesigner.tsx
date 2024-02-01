@@ -323,6 +323,22 @@ export function PromptDesigner(props: {
                 Enqueue
               </Button>
             </>}
+
+            <ButtonGroup size='sm' variant='soft' sx={{ flex: 1, display: 'flex' }}>
+              <Button sx={{ flex: 1 }}>
+                1
+              </Button>
+              <Button sx={{ flex: 1 }}>
+                x2
+              </Button>
+              <Button color='primary'  sx={{ flex: 1 }}>
+                x4
+              </Button>
+              <Button sx={{ flex: 1 }}>
+                xN
+              </Button>
+            </ButtonGroup>
+
           </Box>
         </Grid>
 
