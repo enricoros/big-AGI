@@ -1,17 +1,20 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, Grid, IconButton, Textarea, Tooltip } from '@mui/joy';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { Box, Button, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea } from '@mui/joy';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
+import { animationStopEnter } from '../../chat/components/composer/Composer';
+
 import { lineHeightTextarea } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { animationStopEnter } from '../../chat/components/composer/Composer';
+import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
+import { ButtonPromptFromPlaceholder } from './ButtonPromptFromPlaceholder';
 import { useDrawIdeas } from '../state/useDrawIdeas';
 
 
@@ -89,15 +92,15 @@ export function PromptDesigner(props: {
   }, [enterIsNewline, handlePromptEnqueue, userHasText]);
 
 
+  // Ideas
+
+  const handleIdeaUse = React.useCallback(() => {
+    setNextPrompt(currentIdea.prompt);
+  }, [currentIdea.prompt]);
+
   // PromptFx
 
   const textEnrichComponents = React.useMemo(() => {
-
-    const handleIdeaUse = (event: React.MouseEvent) => {
-      event.preventDefault();
-      setNextPrompt(currentIdea.prompt);
-      // setUserHasChanged(false);
-    };
 
     const handleClickMissing = (_event: React.MouseEvent) => {
       alert('Not implemented yet');
@@ -121,16 +124,18 @@ export function PromptDesigner(props: {
       }}>
 
         {/* Change / Use idea */}
-        <ButtonGroup variant='soft' color='neutral' sx={{ borderRadius: 'sm' }}>
-          <Button className={promptButtonClass} disabled={userHasText} onClick={nextRandomIdea}>
-            Idea
-          </Button>
-          <Tooltip disableInteractive title='Use Idea'>
-            <IconButton onClick={handleIdeaUse}>
-              <ArrowDownwardIcon />
-            </IconButton>
-          </Tooltip>
-        </ButtonGroup>
+        {/*{props.isMobile && (*/}
+        {/*  <ButtonGroup variant='soft' color='neutral' sx={{ borderRadius: 'sm' }}>*/}
+        {/*    <Button className={promptButtonClass} disabled={userHasText} onClick={handleIdeaNext}>*/}
+        {/*      Idea*/}
+        {/*    </Button>*/}
+        {/*    <Tooltip disableInteractive title='Use Idea'>*/}
+        {/*      <IconButton onClick={handleIdeaUse}>*/}
+        {/*        <ArrowDownwardIcon />*/}
+        {/*      </IconButton>*/}
+        {/*    </Tooltip>*/}
+        {/*  </ButtonGroup>*/}
+        {/*)}*/}
 
         {/* PromptFx */}
         <Button
@@ -161,20 +166,58 @@ export function PromptDesigner(props: {
         {/*</Typography>*/}
       </Box>
     );
-  }, [currentIdea.prompt, nextRandomIdea, userHasText]);
+  }, [userHasText]);
 
   return (
     <Box aria-label='Drawing Prompt' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Prompt (Text) Box */}
-        <Grid xs={12} md={9}>
+        <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 } }}>
+
+          {props.isMobile ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+              <Dropdown>
+                <MenuButton slots={{ root: IconButton }}>
+                  <ArrowForwardIcon />
+                </MenuButton>
+                <Menu placement='top'>
+                  {/* Add From History? */}
+                  {/*<MenuItem>*/}
+                  {/*  <ButtonPromptFromPlaceholder name='History' disabled />*/}
+                  {/*</MenuItem>*/}
+                  <MenuItem>
+                    <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
+                  </MenuItem>
+                  <MenuItem>
+                    <ButtonPromptFromPlaceholder name='Image' disabled />
+                  </MenuItem>
+                  {/*<MenuItem>*/}
+                  {/*  <ButtonPromptFromPlaceholder name='Chat' disabled />*/}
+                  {/*</MenuItem>*/}
+                </Menu>
+              </Dropdown>
+
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+              <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
+
+              <ButtonPromptFromPlaceholder name='Image' disabled />
+
+              {/*<ButtonPromptFromPlaceholder name='Chats' disabled />*/}
+
+            </Box>
+
+          )}
 
           <Textarea
             variant='outlined'
             // size='sm'
             autoFocus
-            minRows={props.isMobile ? 4 : 3}
+            minRows={props.isMobile ? 5 : 3}
             maxRows={props.isMobile ? 6 : 8}
             placeholder={currentIdea.prompt}
             value={nextPrompt}
@@ -188,12 +231,14 @@ export function PromptDesigner(props: {
               },
             }}
             sx={{
+              flexGrow: 1,
               boxShadow: 'lg',
               '&:focus-within': { backgroundColor: 'background.popup' },
               lineHeight: lineHeightTextarea,
             }}
           />
-        </Grid>
+
+        </Box></Grid>
 
         {/* [Desktop: Right, Mobile: Bottom] Buttons */}
         <Grid xs={12} md={3} spacing={1}>

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { themeBgAppChatComposer } from '~/common/app.theme';
 
 import { DesignerPrompt, PromptDesigner } from './components/PromptDesigner';
 import { ProviderConfigure } from './components/ProviderConfigure';
@@ -70,6 +71,7 @@ export function TextToImage(props: {
       onDrawingStop={handleStopDrawing}
       onPromptEnqueue={handlePromptEnqueue}
       sx={{
+        backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
         borderTopColor: 'divider',
         p: { xs: 1, md: 2 },
