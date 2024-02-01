@@ -395,11 +395,15 @@ export function Telephone(props: {
 
       {/* [Calling] Hang / PTT (mute not enabled yet) */}
       {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' variant='soft' onClick={handleCallStop} />}
-      {isConnected && (pushToTalk
-          ? <CallButton Icon={MicIcon} onClick={toggleRecording}
-                        text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
-                        variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'} sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined} />
-          : null
+      {isConnected && (pushToTalk ? (
+          <CallButton
+            Icon={MicIcon} onClick={toggleRecording}
+            text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
+            variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'}
+            color='primary'
+            sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined}
+          />
+        ) : null
         // <CallButton disabled={true} Icon={MicOffIcon} onClick={() => setMicMuted(muted => !muted)}
         //               text={micMuted ? 'Muted' : 'Mute'}
         //               color={micMuted ? 'warning' : undefined} variant={micMuted ? 'solid' : 'outlined'} />
