@@ -12,6 +12,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/state/store-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 
 export function FolderListItem(props: {
@@ -201,7 +202,7 @@ export function FolderListItem(props: {
           <CloseableMenu
             open anchorEl={menuAnchorEl} onClose={handleMenuClose}
             placement='top'
-            zIndex={1301 /* need to be on top of the Modal on Mobile */}
+            zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
             sx={{ minWidth: 200 }}
           >
 

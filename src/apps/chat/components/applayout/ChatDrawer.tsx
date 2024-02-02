@@ -16,6 +16,7 @@ import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -328,7 +329,7 @@ function ChatDrawer(props: {
       <CloseableMenu
         open anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
         placement='bottom-start'
-        zIndex={1301 /* need to be on top of the Modal on Mobile */}
+        zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
         sx={{ minWidth: 200 }}
       >
 
