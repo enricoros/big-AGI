@@ -200,8 +200,8 @@ export function FolderListItem(props: {
 
         {!!menuAnchorEl && (
           <CloseableMenu
+            dense placement='top'
             open anchorEl={menuAnchorEl} onClose={handleMenuClose}
-            placement='top'
             zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
             sx={{ minWidth: 200 }}
           >
@@ -255,10 +255,10 @@ export function FolderListItem(props: {
                 id='folder-color'
                 sx={{
                   mb: 1.5,
-                  fontWeight: 'xl',
-                  textTransform: 'uppercase',
                   fontSize: 'xs',
+                  fontWeight: 'xl',
                   letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
                 }}
               >
                 Color

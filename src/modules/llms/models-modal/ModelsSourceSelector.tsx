@@ -7,6 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
@@ -173,8 +174,9 @@ export function ModelsSourceSelector(props: {
 
       {/* vendors popup, for adding */}
       <CloseableMenu
-        placement='bottom-start' zIndex={10000} sx={{ minWidth: 280 }}
+        placement='bottom-start' zIndex={themeZIndexOverMobileDrawer}
         open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
+        sx={{ minWidth: 280 }}
       >
         {vendorItems.map(item => item.component)}
       </CloseableMenu>

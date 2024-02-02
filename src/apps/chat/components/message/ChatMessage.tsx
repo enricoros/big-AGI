@@ -587,8 +587,9 @@ export function ChatMessage(props: {
       {/* Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
-          dense placement='bottom-end' sx={{ minWidth: 280 }}
+          dense placement='bottom-end'
           open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
+          sx={{ minWidth: 280 }}
         >
           {/* Edit / Copy */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -679,8 +680,9 @@ export function ChatMessage(props: {
       {/* Selection (Contextual) Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
-          dense placement='bottom-start' sx={{ minWidth: 220 }}
+          dense placement='bottom-start'
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
+          sx={{ minWidth: 220 }}
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>

@@ -96,9 +96,9 @@ export function AttachmentMenu(props: {
 
   return (
     <CloseableMenu
-      dense placement='top' sx={{ minWidth: 200 }}
+      dense placement='top'
       open anchorEl={props.menuAnchor} onClose={props.onClose}
-      noTopPadding noBottomPadding
+      sx={{ minWidth: 200 }}
     >
 
       {/* Move Arrows */}
