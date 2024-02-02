@@ -590,6 +590,7 @@ export function ChatMessage(props: {
           dense placement='bottom-end' sx={{ minWidth: 280 }}
           open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
         >
+          {/* Edit / Copy */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {!!props.onMessageEdit && (
               <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
@@ -603,6 +604,32 @@ export function ChatMessage(props: {
               Copy
             </MenuItem>
           </Box>
+          {/* Delete / Branch / Truncate */}
+          {!!props.onMessageDelete && <ListDivider />}
+          {!!props.onMessageDelete && (
+            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+              <span style={{ opacity: 0.5 }}>message</span>
+            </MenuItem>
+          )}
+          {!!props.onConversationBranch && (
+            <MenuItem onClick={handleOpsConversationBranch} disabled={fromSystem}>
+              <ListItemDecorator>
+                <ForkRightIcon />
+              </ListItemDecorator>
+              Branch
+              {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
+            </MenuItem>
+          )}
+          {!!props.onConversationTruncate && (
+            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
+              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+              Truncate
+              <span style={{ opacity: 0.5 }}>after this</span>
+            </MenuItem>
+          )}
+          {/* Diff Viewer */}
           {!!props.diffPreviousText && <ListDivider />}
           {!!props.diffPreviousText && (
             <MenuItem onClick={handleOpsToggleShowDiff}>
@@ -611,10 +638,31 @@ export function ChatMessage(props: {
               <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
             </MenuItem>
           )}
-          <ListDivider />
+          {/* Diagram / Draw / Speak */}
+          {!!props.onTextDiagram && <ListDivider />}
+          {!!props.onTextDiagram && (
+            <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
+              <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
+              Diagram ...
+            </MenuItem>
+          )}
+          {!!props.onTextImagine && (
+            <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
+              Draw ...
+            </MenuItem>
+          )}
+          {!!props.onTextSpeak && (
+            <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+              Speak
+            </MenuItem>
+          )}
+          {/* Restart/try */}
+          {!!props.onConversationRestartFrom && <ListDivider />}
           {!!props.onConversationRestartFrom && (
             <MenuItem onClick={handleOpsConversationRestartFrom}>
-              <ListItemDecorator>{fromAssistant ? <ReplayIcon /> : <TelegramIcon />}</ListItemDecorator>
+              <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
               {!fromAssistant
                 ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
@@ -622,42 +670,7 @@ export function ChatMessage(props: {
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
                     Retry
                     <KeyStroke combo='Ctrl + Shift + R' />
-                  </Box>
-              }
-            </MenuItem>
-          )}
-          {!!props.onConversationBranch && (
-            <MenuItem onClick={handleOpsConversationBranch} disabled={fromSystem}>
-              <ListItemDecorator>
-                <ForkRightIcon />
-              </ListItemDecorator>
-              Branch {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
-            </MenuItem>
-          )}
-          {!!props.onConversationBranch && <ListDivider />}
-          {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
-            <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Diagram ...
-          </MenuItem>}
-          {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-            Draw ...
-          </MenuItem>}
-          {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
-            Speak
-          </MenuItem>}
-          {!!props.onConversationRestartFrom && <ListDivider />}
-          {!!props.onConversationTruncate && (
-            <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
-              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-              Truncate <span style={{ opacity: 0.5 }}>after</span>
-            </MenuItem>
-          )}
-          {!!props.onMessageDelete && (
-            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete <span style={{ opacity: 0.5 }}>message</span>
+                  </Box>}
             </MenuItem>
           )}
         </CloseableMenu>
