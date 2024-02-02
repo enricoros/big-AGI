@@ -172,9 +172,9 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
     {/* Page Menu */}
     <CloseableMenu
-      maxHeightGapPx={56 + 24} noBottomPadding noTopPadding sx={{ minWidth: 320 }}
+      maxHeightGapPx={36 * 3 /* was: 56 + 24 */} noBottomPadding={props.isMobile} placement='bottom-end'
       open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
-      placement='bottom-end'
+      sx={{ minWidth: 320 }}
     >
 
       {/* Common (Preferences) */}

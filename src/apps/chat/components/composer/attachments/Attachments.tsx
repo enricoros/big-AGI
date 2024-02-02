@@ -141,9 +141,8 @@ export function Attachments(props: {
     {/* Overall Menu */}
     {!!overallMenuAnchor && (
       <CloseableMenu
-        placement='top-start'
+        dense placement='top-start'
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
-        noTopPadding noBottomPadding
       >
         <MenuItem onClick={handleAttachmentsInlineText} disabled={!isOutputTextInlineable}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>

@@ -21,7 +21,11 @@ export function ActilePopup(props: {
   const hasAnyIcon = props.items.some(item => !!item.Icon);
 
   return (
-    <CloseableMenu open anchorEl={props.anchorEl} onClose={props.onClose} noTopPadding noBottomPadding sx={{ minWidth: 320 }}>
+    <CloseableMenu
+      noTopPadding noBottomPadding
+      open anchorEl={props.anchorEl} onClose={props.onClose}
+      sx={{ minWidth: 320 }}
+    >
 
       {!!props.title && (
         <Sheet variant='soft' sx={{ p: 1, borderBottom: '1px solid', borderBottomColor: 'neutral.softActiveBg' }}>
