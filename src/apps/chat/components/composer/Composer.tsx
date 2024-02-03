@@ -31,6 +31,7 @@ import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextarea } from '~/common/app.theme';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
+import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -50,6 +51,7 @@ import type { ComposerOutputMultiPart } from './composer.types';
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
+import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
 import { ButtonCall } from './buttons/ButtonCall';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
@@ -96,7 +98,8 @@ export function Composer(props: {
   // external state
   const isMobile = useIsMobile();
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
-  const { labsCameraDesktop } = useUXLabsStore(state => ({
+  const { labsAttachScreenCapture, labsCameraDesktop } = useUXLabsStore(state => ({
+    labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
@@ -341,6 +344,10 @@ export function Composer(props: {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
+  const handleAttachScreenCapture = React.useCallback((file: File) => {
+    void attachAppendFile('screencapture', file);
+  }, [attachAppendFile]);
+
   const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
 
   const handleAttachFilePicker = React.useCallback(async () => {
@@ -490,6 +497,9 @@ export function Composer(props: {
 
               {/* Responsive Paste button */}
               {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
+
+              {/* Responsive Screen Capture button */}
+              {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
 
               {/* Responsive Camera OCR button */}
               {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}

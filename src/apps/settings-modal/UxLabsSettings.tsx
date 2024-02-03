@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -16,11 +17,17 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsCameraDesktop, labsSplitBranching,
-    setLabsCameraDesktop, setLabsSplitBranching,
+    labsAttachScreenCapture, setLabsAttachScreenCapture,
+    labsCameraDesktop, setLabsCameraDesktop,
+    labsSplitBranching, setLabsSplitBranching,
   } = useUXLabsStore();
 
   return <>
+
+    {!isMobile && <FormSwitchControl
+      title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screenshots</>} description={labsAttachScreenCapture ? 'Enabled' : 'Disabled'}
+      checked={labsAttachScreenCapture} onChange={setLabsAttachScreenCapture}
+    />}
 
     {!isMobile && <FormSwitchControl
       title={<><AddAPhotoIcon color={labsCameraDesktop ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Webcam</>} description={labsCameraDesktop ? 'Enabled' : 'Disabled'}

@@ -12,6 +12,9 @@ import { persist } from 'zustand/middleware';
  */
 interface UXLabsStore {
 
+  labsAttachScreenCapture: boolean;
+  setLabsAttachScreenCapture: (labsAttachScreenCapture: boolean) => void;
+
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
 
@@ -23,6 +26,9 @@ interface UXLabsStore {
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
+
+      labsAttachScreenCapture: false,
+      setLabsAttachScreenCapture: (labsAttachScreenCapture: boolean) => set({ labsAttachScreenCapture }),
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
