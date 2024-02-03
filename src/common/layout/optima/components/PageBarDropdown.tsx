@@ -50,7 +50,7 @@ export function PageBarDropdown<TValue extends string>(props: {
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
           '--ListItem-minHeight': '3rem',
           // do not exceed the height of the screen (minus top bar) with any listbox menu
-          maxHeight: 'calc(100dvh - 56px)',
+          maxHeight: 'calc(100dvh - 56px - 24px)',
           maxWidth: '90dvw',
           [`& .${optionClasses.root}`]: {
             minWidth: 160,
