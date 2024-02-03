@@ -19,6 +19,7 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
@@ -588,7 +589,7 @@ function ChatMessage(props: {
                   onClick={handleOpsConversationRestartBestOf}
                   sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
                 >
-                  <GavelIcon />
+                  <ChatBestOfIcon /> {/*<GavelIcon />*/}
                 </IconButton>
               </Tooltip>
             </MenuItem>
