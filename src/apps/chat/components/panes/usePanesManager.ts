@@ -33,7 +33,7 @@ interface AppChatPanesStore {
   openConversationInFocusedPane: (conversationId: DConversationId) => void;
   openConversationInSplitPane: (conversationId: DConversationId) => void;
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
-  duplicatePane: (paneIndex: number) => void;
+  duplicateFocusedPane: (/*paneIndex: number*/) => void;
   removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
   setFocusedPane: (paneIndex: number) => void;
@@ -161,18 +161,18 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
       return true;
     },
 
-    duplicatePane: (paneIndex: number) =>
+    duplicateFocusedPane: (/*paneIndex: number*/) =>
       _set(state => {
-        const { chatPanes } = state;
+        const { chatPanes, chatPaneFocusIndex: _srcIndex } = state;
 
         // Validate index
-        if (paneIndex < 0 || paneIndex >= chatPanes.length) {
-          console.warn('Attempted to duplicate a pane with an out-of-range index:', paneIndex);
+        if (_srcIndex === null || _srcIndex < 0 || _srcIndex >= chatPanes.length) {
+          console.warn('Attempted to duplicate a pane with an out-of-range index:', _srcIndex);
           return state; // Return the existing state without changes
         }
 
         // Clone the pane at the specified index, including a deep copy of the history array
-        const paneToDuplicate = chatPanes[paneIndex];
+        const paneToDuplicate = chatPanes[_srcIndex];
         const duplicatedPane = {
           ...paneToDuplicate,
           history: [...paneToDuplicate.history], // Deep copy of the history array
@@ -180,14 +180,14 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
         // Insert the duplicated pane into the array, right after the original pane
         const newPanes = [
-          ...chatPanes.slice(0, paneIndex + 1),
+          ...chatPanes.slice(0, _srcIndex + 1),
           duplicatedPane,
-          ...chatPanes.slice(paneIndex + 1),
+          ...chatPanes.slice(_srcIndex + 1),
         ];
 
         return {
           chatPanes: newPanes,
-          chatPaneFocusIndex: paneIndex + 1,
+          chatPaneFocusIndex: _srcIndex + 1,
         };
       }),
 
@@ -301,7 +301,7 @@ export function usePanesManager() {
       onConversationsChanged,
       openConversationInFocusedPane,
       openConversationInSplitPane,
-      duplicatePane,
+      duplicateFocusedPane,
       removeOtherPanes,
       removePane,
       setFocusedPane,
@@ -314,8 +314,8 @@ export function usePanesManager() {
       onConversationsChanged,
       openConversationInFocusedPane,
       openConversationInSplitPane,
-      paneIndex: chatPaneFocusIndex,
-      duplicatePane,
+      focusedPaneIndex: chatPaneFocusIndex,
+      duplicateFocusedPane,
       removeOtherPanes,
       removePane,
       setFocusedPane,
