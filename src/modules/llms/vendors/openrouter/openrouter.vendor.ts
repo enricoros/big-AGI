@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { OpenRouterIcon } from '~/common/components/icons/OpenRouterIcon';
+import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';

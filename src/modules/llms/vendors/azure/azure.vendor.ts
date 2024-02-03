@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { AzureIcon } from '~/common/components/icons/AzureIcon';
+import { AzureIcon } from '~/common/components/icons/vendors/AzureIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';

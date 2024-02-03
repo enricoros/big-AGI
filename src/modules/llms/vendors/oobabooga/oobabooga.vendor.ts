@@ -1,4 +1,4 @@
-import { OobaboogaIcon } from '~/common/components/icons/OobaboogaIcon';
+import { OobaboogaIcon } from '~/common/components/icons/vendors/OobaboogaIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';

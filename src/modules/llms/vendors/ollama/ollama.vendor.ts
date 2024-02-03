@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
+import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
