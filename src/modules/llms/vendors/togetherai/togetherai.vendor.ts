@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { TogetherIcon } from '~/common/components/icons/TogetherIcon';
+import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';

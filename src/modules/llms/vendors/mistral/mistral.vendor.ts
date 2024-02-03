@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { MistralIcon } from '~/common/components/icons/MistralIcon';
+import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';

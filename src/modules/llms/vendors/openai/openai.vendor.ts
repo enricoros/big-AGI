@@ -1,6 +1,6 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';

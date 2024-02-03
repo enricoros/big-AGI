@@ -7,7 +7,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { Brand } from '~/common/app.config';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { InlineError } from '~/common/components/InlineError';
-import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';

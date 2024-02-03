@@ -5,7 +5,7 @@ import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { LMStudioSourceSetup } from './LMStudioSourceSetup';
-import { LMStudioIcon } from '~/common/components/icons/LMStudioIcon';
+import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 
 
 export interface SourceSetupLMStudio {

@@ -4,7 +4,7 @@ import { FormControl, FormLabel, ListItemDecorator, Option, Select } from '@mui/
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { hideOnMobile } from '~/common/app.theme';
 
 
