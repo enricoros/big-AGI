@@ -11,7 +11,6 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
-import GavelIcon from '@mui/icons-material/Gavel';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -24,6 +23,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
+import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -461,7 +461,7 @@ export function Composer(props: {
     micContinuation ? <AutoModeIcon />
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
-          : isBestOf ? <GavelIcon />
+          : isBestOf ? <ChatBestOfIcon /> /* <GavelIcon /> */
             : isDraw ? <FormatPaintIcon />
               : <TelegramIcon />;
 
