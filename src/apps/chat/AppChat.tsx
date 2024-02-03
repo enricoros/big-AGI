@@ -80,6 +80,7 @@ export function AppChat() {
     openConversationInSplitPane,
     paneIndex,
     duplicatePane,
+    removeOtherPanes,
     removePane,
     setFocusedPane,
   } = usePanesManager();
@@ -125,10 +126,10 @@ export function AppChat() {
 
   const toggleSplitPane = React.useCallback(() => {
     if (isSplitPane)
-      removePane(paneIndex ?? chatPanes.length - 1);
+      removeOtherPanes();
     else
       duplicatePane(paneIndex ?? chatPanes.length - 1);
-  }, [chatPanes.length, duplicatePane, isSplitPane, paneIndex, removePane]);
+  }, [chatPanes.length, duplicatePane, isSplitPane, paneIndex, removeOtherPanes]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
