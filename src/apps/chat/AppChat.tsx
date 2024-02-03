@@ -78,8 +78,8 @@ export function AppChat() {
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
     openConversationInSplitPane,
-    paneIndex,
-    duplicatePane,
+    focusedPaneIndex,
+    duplicateFocusedPane,
     removeOtherPanes,
     removePane,
     setFocusedPane,
@@ -128,8 +128,8 @@ export function AppChat() {
     if (isSplitPane)
       removeOtherPanes();
     else
-      duplicatePane(paneIndex ?? chatPanes.length - 1);
-  }, [chatPanes.length, duplicatePane, isSplitPane, paneIndex, removeOtherPanes]);
+      duplicateFocusedPane();
+  }, [duplicateFocusedPane, isSplitPane, removeOtherPanes]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -428,28 +428,30 @@ export function AppChat() {
       id='app-chat-panels'
     >
 
-      {panesConversationIDs.map((_conversationId, idx, panels) =>
-        <React.Fragment key={`chat-pane-${idx}-${panels.length}-${_conversationId}`}>
+      {chatPanes.map((pane, idx) => {
+        const _paneConversationId = pane.conversationId;
+        const _panesCount = chatPanes.length;
+        const _keyAndId = `chat-pane-${idx}-${_paneConversationId}`;
+        return <React.Fragment key={_keyAndId}>
           <Panel
-            id={'chat-pane-' + _conversationId}
+            id={_keyAndId}
             order={idx}
             collapsible
-            defaultSize={panels.length > 0 ? Math.round(100 / panels.length) : undefined}
+            defaultSize={_panesCount > 0 ? Math.round(100 / _panesCount) : undefined}
             minSize={20}
             onClick={(event) => {
               const setFocus = chatPanes.length < 2 || !event.altKey;
               setFocusedPane(setFocus ? idx : -1);
             }}
-            onCollapse={() => setTimeout(() => removePane(idx), 50)}
+            onCollapse={() => removePane(idx)}
             style={{
               // for anchoring the scroll button in place
               position: 'relative',
-              // border only for active pane (if two or more panes)
-              ...(panesConversationIDs.length < 2
-                ? {}
-                : (_conversationId === focusedConversationId)
-                  ? { border: `2px solid ${theme.palette.primary.solidBg}` }
-                  : { border: `2px solid ${theme.palette.background.level1}` }),
+              ...(panesConversationIDs.length >= 2 ? {
+                // border only for active pane (if two or more panes)
+                border: `2px solid ${idx === focusedPaneIndex ? theme.palette.primary.solidBg : theme.palette.background.level1}`,
+                filter: idx === focusedPaneIndex ? undefined : 'grayscale(60%)',
+              } : {}),
             }}
           >
 
@@ -465,7 +467,7 @@ export function AppChat() {
             >
 
               <ChatMessageList
-                conversationId={_conversationId}
+                conversationId={_paneConversationId}
                 capabilityHasT2I={capabilityHasT2I}
                 chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                 isMessageSelectionMode={isMessageSelectionMode}
@@ -481,7 +483,7 @@ export function AppChat() {
               />
 
               <Ephemerals
-                conversationId={_conversationId}
+                conversationId={_paneConversationId}
                 sx={{
                   // TODO: Fixme post panels?
                   // flexGrow: 0.1,
@@ -497,9 +499,10 @@ export function AppChat() {
           </Panel>
 
           {/* Panel Separators & Resizers */}
-          {idx < panels.length - 1 && <GoodPanelResizeHandler />}
+          {idx < _panesCount - 1 && <GoodPanelResizeHandler />}
 
-        </React.Fragment>)}
+        </React.Fragment>;
+      })}
 
     </PanelGroup>
 
