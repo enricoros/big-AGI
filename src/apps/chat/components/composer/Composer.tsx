@@ -34,7 +34,6 @@ import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -78,6 +77,7 @@ export const animationStopEnter = keyframes`
  * A React component for composing messages, with attachments and different modes.
  */
 export function Composer(props: {
+  isMobile?: boolean;
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   conversationId: DConversationId | null;
@@ -96,7 +96,6 @@ export function Composer(props: {
   const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // external state
-  const isMobile = useIsMobile();
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
   const { labsAttachScreenCapture, labsCameraDesktop } = useUXLabsStore(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
@@ -121,7 +120,8 @@ export function Composer(props: {
 
   // derived state
 
-  const isDesktop = !isMobile;
+  const isMobile = !!props.isMobile;
+  const isDesktop = !props.isMobile;
   const chatLLMId = props.chatLLM?.id || null;
 
   // attachments derived state

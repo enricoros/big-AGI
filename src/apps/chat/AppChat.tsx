@@ -20,6 +20,7 @@ import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsSto
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -67,6 +68,8 @@ export function AppChat() {
 
   // external state
   const theme = useTheme();
+
+  const isMobile = useIsMobile();
 
   const { openLlmOptions } = useOptimaLayout();
 
@@ -424,7 +427,7 @@ export function AppChat() {
   return <>
 
     <PanelGroup
-      direction='horizontal'
+      direction={isMobile ? 'horizontal' : 'vertical'}
       id='app-chat-panels'
     >
 
@@ -508,6 +511,7 @@ export function AppChat() {
     </PanelGroup>
 
     <Composer
+      isMobile={isMobile}
       chatLLM={chatLLM}
       composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
