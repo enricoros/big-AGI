@@ -427,7 +427,7 @@ export function AppChat() {
   return <>
 
     <PanelGroup
-      direction={isMobile ? 'horizontal' : 'vertical'}
+      direction={isMobile ? 'vertical' : 'horizontal'}
       id='app-chat-panels'
     >
 
