@@ -2,13 +2,13 @@ import { create } from 'zustand';
 import type { FileWithHandle } from 'browser-fs-access';
 
 import type { ComposerOutputMultiPart } from '../composer.types';
-import { attachmentPerformConversion, attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync } from './pipeline';
+import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './pipeline';
 
 
 // Attachment Types
 
 export type AttachmentSourceOriginDTO = 'drop' | 'paste';
-export type AttachmentSourceOriginFile = 'camera' | 'file-open' | 'clipboard-read' | AttachmentSourceOriginDTO;
+export type AttachmentSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentSourceOriginDTO;
 
 export type AttachmentSource = {
   media: 'url';
