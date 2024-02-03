@@ -7,7 +7,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
@@ -66,13 +66,13 @@ function CommonPageMenuItems(props: { onClose: () => void }) {
     {/* Preferences |...| Dark Mode Toggle */}
     {/*<Tooltip title={<KeyStroke combo='Ctrl + Shift + P' />}>*/}
     <MenuItem onClick={handleShowSettings}>
-      <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
+      <ListItemDecorator><SettingsIcon /></ListItemDecorator>
       Preferences
       <IconButton
         size='sm'
-        variant='outlined'
+        variant='soft'
         onClick={handleToggleDarkMode}
-        sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
+        sx={{ ml: 'auto', /*mr: '2px',*/ my: '-0.25rem' /* absorb the menuItem padding */ }}
       >
         {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
       </IconButton>
@@ -175,7 +175,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     <CloseableMenu
       dense maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'
       open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
-      sx={{ minWidth: 'var(--AGI-Drawer-width)' /* for consistency */ }}
+      sx={{ minWidth: 280 }}
     >
 
       {/* Common (Preferences) */}

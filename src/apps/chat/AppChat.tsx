@@ -26,7 +26,7 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatDrawerMemo } from './components/applayout/ChatDrawer';
 import { ChatDropdowns } from './components/applayout/ChatDropdowns';
-import { ChatMenuItems } from './components/applayout/ChatMenuItems';
+import { ChatPageMenuItems } from './components/applayout/ChatPageMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
@@ -405,7 +405,7 @@ export function AppChat() {
   );
 
   const menuItems = React.useMemo(() =>
-      <ChatMenuItems
+      <ChatPageMenuItems
         isMobile={isMobile}
         conversationId={focusedConversationId}
         hasConversations={!areChatsEmpty}

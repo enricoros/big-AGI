@@ -8,7 +8,7 @@ import CompressIcon from '@mui/icons-material/Compress';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import HorizontalSplitOutlinedIcon from '@mui/icons-material/HorizontalSplitOutlined';
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
@@ -20,7 +20,7 @@ import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useChatShowSystemMessages } from '../../store-app-chat';
 
 
-export function ChatMenuItems(props: {
+export function ChatPageMenuItems(props: {
   isMobile: boolean,
   conversationId: DConversationId | null,
   hasConversations: boolean,
@@ -72,6 +72,13 @@ export function ChatMenuItems(props: {
 
   return <>
 
+    {/* System Message(s) */}
+    <MenuItem onClick={handleToggleSystemMessages}>
+      <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
+      System messages
+      <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
+    </MenuItem>
+
     {/* Split/Unsplit panes */}
     <GoodTooltip title={props.isSplitPane ? 'Close Split Panes' : 'Split Conversation Vertically'}>
       <MenuItem onClick={props.onToggleSplitPanes}>
@@ -86,31 +93,10 @@ export function ChatMenuItems(props: {
 
     <ListDivider />
 
-    {/*<ListItem>*/}
-    {/*  <Typography level='body-sm'>*/}
-    {/*    Conversation*/}
-    {/*  </Typography>*/}
-    {/*</ListItem>*/}
-
-    <MenuItem onClick={handleToggleSystemMessages}>
-      <ListItemDecorator><SettingsSuggestIcon /></ListItemDecorator>
-      System message
-      <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-    <ListDivider inset='startContent' />
-
     <MenuItem disabled={disabled} onClick={handleConversationBranch}>
       <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
       Branch
     </MenuItem>
-
-    <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
-      <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
-      Flatten
-    </MenuItem>
-
-    <ListDivider inset='startContent' />
 
     <MenuItem disabled={disabled} onClick={handleToggleMessageSelectionMode}>
       <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
@@ -118,6 +104,13 @@ export function ChatMenuItems(props: {
         Cleanup ...
       </span>
     </MenuItem>
+
+    <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
+      <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
+      Compress ...
+    </MenuItem>
+
+    <ListDivider inset='startContent' />
 
     <MenuItem disabled={disabled} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
