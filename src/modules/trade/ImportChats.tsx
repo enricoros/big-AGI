@@ -146,23 +146,29 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 1 }}>
+    <Box sx={{ display: 'grid', gap: 1, mx: 'auto' }}>
+
       <Typography level='body-sm'>
-        Select where to import from
+        Select where to <strong>import from</strong>:
       </Typography>
 
-      <Button variant='soft' size='md' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleImportFromFiles}>
-        Upload JSON
+      <Button
+        variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleImportFromFiles}
+      >
+        {Brand.Title.Base} · JSON
       </Button>
 
       {!chatGptEdit && (
-        <Button variant='soft' size='md' endDecorator={<OpenAIIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-                color={chatGptEdit ? 'neutral' : 'primary'}
-                onClick={handleChatGptToggleShown}>
-          ChatGPT shared link
+        <Button
+          variant='soft' endDecorator={<OpenAIIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+          color={chatGptEdit ? 'neutral' : 'primary'}
+          onClick={handleChatGptToggleShown}
+        >
+          ChatGPT · Shared Link
         </Button>
       )}
+
     </Box>
 
     {/* [chatgpt] data & controls */}

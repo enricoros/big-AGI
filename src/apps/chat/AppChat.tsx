@@ -300,7 +300,9 @@ export function AppChat() {
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
-  const handleConversationExport = React.useCallback((conversationId: DConversationId | null) => setTradeConfig({ dir: 'export', conversationId }), []);
+  const handleConversationExport = React.useCallback((conversationId: DConversationId | null, exportAll: boolean) => {
+    setTradeConfig({ dir: 'export', conversationId, exportAll });
+  }, []);
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
     showNextTitle.current = true;

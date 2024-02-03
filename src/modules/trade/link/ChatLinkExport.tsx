@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Badge, Button } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
-import IosShareIcon from '@mui/icons-material/IosShare';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -119,12 +119,14 @@ export function ChatLinkExport(props: {
   return <>
 
     <Badge color='danger' invisible={!chatLinkBadge}>
-      <Button variant='soft' disabled={!hasConversation || isUploading}
-              loading={isUploading}
-              color={linkPutResult ? 'success' : 'primary'}
-              endDecorator={linkPutResult ? <DoneIcon /> : <IosShareIcon />}
-              sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleConfirm}>
+      <Button
+        variant='soft' disabled={!hasConversation || isUploading}
+        loading={isUploading}
+        color={linkPutResult ? 'success' : 'primary'}
+        endDecorator={linkPutResult ? <DoneIcon /> : <ExitToAppIcon />}
+        sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleConfirm}
+      >
         Share Link · {Brand.Title.Base}
       </Button>
     </Badge>
