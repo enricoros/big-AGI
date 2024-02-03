@@ -31,8 +31,12 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     description: 'AI Image Generation',
     requiresTTI: true,
   },
+  'generate-best-of': {
+    label: 'Best-Of', // Best of, Auto-Prime, Top Pick, Select Best
+    description: 'Smarter: best of multiple replies',
+  },
   'generate-react': {
-    label: 'Reason + Act · α',
+    label: 'Reason + Act', //  · α
     description: 'Answers questions in multiple steps',
   },
 };
