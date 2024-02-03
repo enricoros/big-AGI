@@ -6,9 +6,14 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import CompressIcon from '@mui/icons-material/Compress';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
+import HorizontalSplitOutlinedIcon from '@mui/icons-material/HorizontalSplitOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
+import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
 import type { DConversationId } from '~/common/state/store-chats';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
@@ -16,14 +21,17 @@ import { useChatShowSystemMessages } from '../../store-app-chat';
 
 
 export function ChatMenuItems(props: {
+  isMobile: boolean,
   conversationId: DConversationId | null,
   hasConversations: boolean,
   isConversationEmpty: boolean,
   isMessageSelectionMode: boolean,
+  isSplitPane: boolean
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
+  onToggleSplitPanes: () => void,
 }) {
 
   // external state
@@ -63,6 +71,20 @@ export function ChatMenuItems(props: {
 
 
   return <>
+
+    {/* Split/Unsplit panes */}
+    <GoodTooltip title={props.isSplitPane ? 'Close Split Panes' : 'Split Conversation Vertically'}>
+      <MenuItem onClick={props.onToggleSplitPanes}>
+        <ListItemDecorator>{
+          props.isMobile
+            ? (props.isSplitPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
+            : (props.isSplitPane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />)
+        }</ListItemDecorator>
+        {props.isSplitPane ? 'Unsplit' : props.isMobile ? 'Split Down' : 'Split Right'}
+      </MenuItem>
+    </GoodTooltip>
+
+    <ListDivider />
 
     {/*<ListItem>*/}
     {/*  <Typography level='body-sm'>*/}

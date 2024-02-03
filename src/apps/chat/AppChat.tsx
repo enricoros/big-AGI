@@ -22,7 +22,6 @@ import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatDrawerMemo } from './components/applayout/ChatDrawer';
@@ -311,24 +310,23 @@ export function AppChat() {
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
     showNextTitle.current = true;
     const branchedConversationId = branchConversation(conversationId, messageId);
+    if (isSplitPane)
+      openSplitConversationId(branchedConversationId);
+    else
+      setFocusedConversationId(branchedConversationId);
     addSnackbar({
       key: 'branch-conversation',
       message: 'Branch started.',
       type: 'success',
       overrides: {
-        autoHideDuration: 3000,
+        autoHideDuration: 2000,
         startDecorator: <ForkRightIcon />,
       },
     });
-    const branchInAltPanel = useUXLabsStore.getState().labsSplitBranching;
-    if (branchInAltPanel)
-      openSplitConversationId(branchedConversationId);
-    else
-      setFocusedConversationId(branchedConversationId);
     return branchedConversationId;
-  }, [branchConversation, openSplitConversationId, setFocusedConversationId]);
+  }, [branchConversation, isSplitPane, openSplitConversationId, setFocusedConversationId]);
 
-  const handleConversationFlatten = (conversationId: DConversationId) => setFlattenConversationId(conversationId);
+  const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
   const handleConfirmedClearConversation = React.useCallback(() => {
     if (clearConversationId) {
@@ -386,10 +384,8 @@ export function AppChat() {
   const centerItems = React.useMemo(() =>
       <ChatDropdowns
         conversationId={focusedConversationId}
-        isSplitPanes={isSplitPane}
-        onToggleSplitPanes={toggleSplitPane}
       />,
-    [focusedConversationId, isSplitPane, toggleSplitPane],
+    [focusedConversationId],
   );
 
   const drawerContent = React.useMemo(() =>
@@ -410,16 +406,19 @@ export function AppChat() {
 
   const menuItems = React.useMemo(() =>
       <ChatMenuItems
+        isMobile={isMobile}
         conversationId={focusedConversationId}
         hasConversations={!areChatsEmpty}
         isConversationEmpty={isFocusedChatEmpty}
         isMessageSelectionMode={isMessageSelectionMode}
+        isSplitPane={isSplitPane}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
         onConversationFlatten={handleConversationFlatten}
+        onToggleSplitPanes={toggleSplitPane}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, isFocusedChatEmpty, isMessageSelectionMode],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isSplitPane, toggleSplitPane],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
