@@ -27,13 +27,14 @@ interface AppChatPanesStore {
   // state
   chatPanes: ChatPane[];
   chatPaneFocusIndex: number | null;
-  chatPaneInputMode: 'focused' | 'broadcast';
+  // chatPaneInputMode: 'focused' | 'broadcast';
 
   // actions
   openConversationInFocusedPane: (conversationId: DConversationId) => void;
   openConversationInSplitPane: (conversationId: DConversationId) => void;
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   duplicatePane: (paneIndex: number) => void;
+  removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
   setFocusedPane: (paneIndex: number) => void;
   onConversationsChanged: (conversationIds: DConversationId[]) => void;
@@ -54,7 +55,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
     // Initial state: no panes
     chatPanes: [] as ChatPane[],
     chatPaneFocusIndex: null as number | null,
-    chatPaneInputMode: 'focused' as 'focused' | 'broadcast',
+    // chatPaneInputMode: 'focused' as 'focused' | 'broadcast',
 
     openConversationInFocusedPane: (conversationId: DConversationId) => {
       _set((state) => {
@@ -190,6 +191,19 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         };
       }),
 
+    removeOtherPanes: () =>
+      _set(state => {
+        const { chatPanes, chatPaneFocusIndex } = state;
+        if (chatPanes.length < 2)
+          return state;
+
+        const newPanes = [chatPanes[chatPaneFocusIndex ?? 0]];
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: 0,
+        };
+      }),
+
     removePane: (paneIndex: number) =>
       _set(state => {
         const { chatPanes } = state;
@@ -288,6 +302,7 @@ export function usePanesManager() {
       openConversationInFocusedPane,
       openConversationInSplitPane,
       duplicatePane,
+      removeOtherPanes,
       removePane,
       setFocusedPane,
     } = state;
@@ -301,6 +316,7 @@ export function usePanesManager() {
       openConversationInSplitPane,
       paneIndex: chatPaneFocusIndex,
       duplicatePane,
+      removeOtherPanes,
       removePane,
       setFocusedPane,
     };

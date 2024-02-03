@@ -2,8 +2,10 @@ import * as React from 'react';
 
 import { IconButton } from '@mui/joy';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
+import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
 import type { DConversationId } from '~/common/state/store-chats';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
@@ -37,15 +39,17 @@ export function ChatDropdowns(props: {
     {folderDropdown}
 
     {/* Split Panes button */}
-    {labsSplitBranching && <IconButton
-      variant={props.isSplitPanes ? 'solid' : undefined}
-      onClick={props.onToggleSplitPanes}
-      // sx={{
-      //   ml: 'auto',
-      // }}
-    >
-      <VerticalSplitIcon />
-    </IconButton>}
+    {labsSplitBranching && (
+      <GoodTooltip title={props.isSplitPanes ? 'Close Split Panes' : 'Split Conversation Vertically'}>
+        <IconButton
+          variant={props.isSplitPanes ? 'outlined' : undefined}
+          onClick={props.onToggleSplitPanes}
+          // sx={{ mx: 'auto' }}
+        >
+          {props.isSplitPanes ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />}
+        </IconButton>
+      </GoodTooltip>
+    )}
 
   </>;
 }
