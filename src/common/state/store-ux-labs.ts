@@ -18,9 +18,6 @@ interface UXLabsStore {
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
 
-  labsSplitBranching: boolean;
-  setLabsSplitBranching: (labsSplitBranching: boolean) => void;
-
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -32,9 +29,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
-
-      labsSplitBranching: false,
-      setLabsSplitBranching: (labsSplitBranching: boolean) => set({ labsSplitBranching }),
 
     }),
     {
