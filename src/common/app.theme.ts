@@ -111,9 +111,9 @@ export const appTheme = extendTheme({
       styleOverrides: {
         root: ({ ownerState }) => ({
           ...(ownerState.size === 'md' && {
-            '--Switch-trackWidth': '40px',
-            '--Switch-trackHeight': '24px',
-            '--Switch-thumbSize': '18px',
+            '--Switch-trackWidth': '36px',
+            '--Switch-trackHeight': '22px',
+            '--Switch-thumbSize': '17px',
           }),
         }),
       },
