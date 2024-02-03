@@ -190,8 +190,18 @@ export const llmOpenAIRouter = createTRPCRouter({
 
             // custom OpenAI sort
             .sort((a, b) => {
-              // due to model name, sorting doesn't require special cases anymore
-              return b.label.localeCompare(a.label);
+
+              // fix the OpenAI model names to be chronologically sorted
+              function remapReleaseDate(id: string): string {
+                return id
+                  .replace('0314', '230314')
+                  .replace('0613', '230613')
+                  .replace('1106', '231106')
+                  .replace('0125', '240125');
+              }
+
+              // due to using by-label, sorting doesn't require special cases anymore
+              return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
 
               // move models with the link emoji (🔗) to the bottom
               // const aLink = a.label.includes('🔗');

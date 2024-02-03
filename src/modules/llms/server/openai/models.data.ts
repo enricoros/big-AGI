@@ -123,10 +123,10 @@ const _knownOpenAIChatModels: ManualMappings = [
     // NOTE: speculation from the https://openai.com/blog/new-embedding-models-and-api-updates post; hasn't been released yet
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (0125)',
-    description: 'Snapshot of gpt-3.5-turbo-16k from January 25th 2023.',
+    description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     isLatest: true,
   },
   {
@@ -136,6 +136,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 16385,
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true,
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k-0613',
@@ -178,16 +179,16 @@ const _knownOpenAIChatModels: ManualMappings = [
     isLegacy: true,
   },
   {
-    // NOTE: will be updated to gpt-3.5-turbo-0125 two weeks after it launches
+    // NOTE: will link to 0125 on Feb 16th 2024 - we are pre-ready for it on the dev branch
     idPrefix: 'gpt-3.5-turbo',
-    label: '🔗 3.5-Turbo → 0613', // '3.5-Turbo → 🔗 0613',
-    description: 'Currently points to gpt-3.5-turbo-0613.',
-    symLink: 'gpt-3.5-turbo-0613',
+    label: '🔗 3.5-Turbo → 0125', // '3.5-Turbo → 🔗 0125',
+    description: 'Currently points to gpt-3.5-turbo-0125.',
+    symLink: 'gpt-3.5-turbo-0125',
     // copied
-    contextWindow: 4097,
+    contextWindow: 16385,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     hidden: true,
-    isLegacy: true,
   },
 
 
