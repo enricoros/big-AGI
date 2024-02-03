@@ -451,6 +451,7 @@ export function AppChat() {
                 // border only for active pane (if two or more panes)
                 border: `2px solid ${idx === focusedPaneIndex ? theme.palette.primary.solidBg : theme.palette.background.level1}`,
                 filter: idx === focusedPaneIndex ? undefined : 'grayscale(60%)',
+                borderRadius: '0.375rem',
               } : {}),
             }}
           >
