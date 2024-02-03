@@ -38,7 +38,7 @@ const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
   </Box>;
 
 
-function CommonMenuItems(props: { onClose: () => void }) {
+function CommonPageMenuItems(props: { onClose: () => void }) {
 
   // external state
   const { openPreferencesTab } = useOptimaLayout();
@@ -69,9 +69,10 @@ function CommonMenuItems(props: { onClose: () => void }) {
       <ListItemDecorator><SettingsOutlinedIcon /></ListItemDecorator>
       Preferences
       <IconButton
+        size='sm'
         variant='outlined'
         onClick={handleToggleDarkMode}
-        sx={{ ml: 'auto' }}
+        sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
       >
         {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
       </IconButton>
@@ -103,8 +104,8 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     isPageMenuOpen, openPageMenu, closePageMenu,
   } = useOptimaDrawers();
 
-  const commonMenuItems = React.useMemo(() => {
-    return <CommonMenuItems onClose={closePageMenu} />;
+  const commonPageMenuItems = React.useMemo(() => {
+    return <CommonPageMenuItems onClose={closePageMenu} />;
   }, [closePageMenu]);
 
   // [Desktop] hide the app bar if the current app doesn't use it
@@ -172,16 +173,16 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
     {/* Page Menu */}
     <CloseableMenu
-      maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'
+      dense maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'
       open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
-      sx={{ minWidth: 320 }}
+      sx={{ minWidth: 'var(--AGI-Drawer-width)' /* for consistency */ }}
     >
 
       {/* Common (Preferences) */}
-      {commonMenuItems}
+      {commonPageMenuItems}
 
       {/* App Menu Items */}
-      {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
+      {!!appMenuItems && <ListDivider />}
       {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
