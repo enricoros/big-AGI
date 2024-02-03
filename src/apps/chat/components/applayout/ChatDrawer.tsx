@@ -4,8 +4,8 @@ import { shallow } from 'zustand/shallow';
 import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
@@ -87,7 +87,7 @@ function ChatDrawer(props: {
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
-  onConversationExportDialog: (conversationId: DConversationId | null) => void,
+  onConversationExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationImportDialog: () => void,
   onConversationNew: () => void,
   onConversationsDeleteAll: () => void,
@@ -300,15 +300,15 @@ function ChatDrawer(props: {
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <ListItemButton onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
-            <FileUploadIcon />
+            <FileUploadOutlinedIcon />
           </ListItemDecorator>
           Import
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId)} sx={{ flex: 1 }}>
+        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId, true)} sx={{ flex: 1 }}>
           <ListItemDecorator>
-            <FileDownloadIcon />
+            <FileDownloadOutlinedIcon />
           </ListItemDecorator>
           Export
         </ListItemButton>

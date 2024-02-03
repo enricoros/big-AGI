@@ -57,7 +57,7 @@ function ChatDrawerItem(props: {
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
-  onConversationExport: (conversationId: DConversationId) => void,
+  onConversationExport: (conversationId: DConversationId, exportAll: boolean) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
 }) {
 
@@ -88,7 +88,7 @@ function ChatDrawerItem(props: {
 
   const handleConversationExport = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    conversationId && onConversationExport(conversationId);
+    conversationId && onConversationExport(conversationId, false);
   }, [conversationId, onConversationExport]);
 
 
@@ -277,7 +277,7 @@ function ChatDrawerItem(props: {
 
             <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
 
-            <Tooltip disableInteractive title='Export'>
+            <Tooltip disableInteractive title='Export Chat'>
               <FadeInButton size='sm' onClick={handleConversationExport}>
                 <FileDownloadOutlinedIcon />
               </FadeInButton>
