@@ -29,7 +29,7 @@ export function ChatMessageList(props: {
   isMessageSelectionMode: boolean,
   isMobile: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBestOf: boolean) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -65,7 +65,7 @@ export function ChatMessageList(props: {
   // text actions
 
   const handleRunExample = React.useCallback(async (text: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)]);
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)], false);
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
@@ -75,11 +75,11 @@ export function ChatMessageList(props: {
     conversationId && onConversationBranch(conversationId, messageId);
   }, [conversationId, onConversationBranch]);
 
-  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number) => {
+  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number, chatEffectBestOf: boolean) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory);
+      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory, chatEffectBestOf);
     }
   }, [conversationId, onConversationExecuteHistory]);
 

@@ -46,6 +46,7 @@ export type ChatModeId =
   | 'generate-text'
   | 'append-user'
   | 'generate-image'
+  | 'generate-best-of'
   | 'generate-react';
 
 
@@ -223,7 +224,7 @@ export function AppChat() {
     setMessages(conversationId, history);
   }, [focusedSystemPurposeId, setMessages]);
 
-  const handleComposerAction = (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart): boolean => {
+  const handleComposerAction = React.useCallback((chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart): boolean => {
     // validate inputs
     if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
       addSnackbar({
@@ -249,18 +250,15 @@ export function AppChat() {
       const _conversation = getConversation(_cId);
       if (_conversation) {
         // start execution fire/forget
-        void _handleExecute(chatModeId, _cId, [
-          ..._conversation.messages,
-          createDMessage('user', userText),
-        ]);
+        void _handleExecute(chatModeId, _cId, [..._conversation.messages, createDMessage('user', userText)]);
         enqueued = true;
       }
     }
     return enqueued;
-  };
+  }, [chatPanes, willMulticast, _handleExecute]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
-    await _handleExecute('generate-text', conversationId, history);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], effectBestOf: boolean): Promise<void> => {
+    await _handleExecute(effectBestOf ? 'generate-best-of' : 'generate-text', conversationId, history);
   }, [_handleExecute]);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {

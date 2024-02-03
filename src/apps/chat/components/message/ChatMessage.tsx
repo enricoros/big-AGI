@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import GavelIcon from '@mui/icons-material/Gavel';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -186,7 +187,7 @@ function ChatMessage(props: {
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
   onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number) => Promise<void>,
+  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBestOf: boolean) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
@@ -274,7 +275,13 @@ function ChatMessage(props: {
   const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
     closeOpsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
+  };
+
+  const handleOpsConversationRestartBestOf = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    closeOpsMenu();
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -574,6 +581,16 @@ function ChatMessage(props: {
                     Retry
                     <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>}
+              <Tooltip title='Best-Of'>
+                <IconButton
+                  size='sm'
+                  variant='outlined' color='primary'
+                  onClick={handleOpsConversationRestartBestOf}
+                  sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
+                >
+                  <GavelIcon />
+                </IconButton>
+              </Tooltip>
             </MenuItem>
           )}
         </CloseableMenu>

@@ -11,6 +11,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import GavelIcon from '@mui/icons-material/Gavel';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -436,23 +437,41 @@ export function Composer(props: {
 
   const isText = chatModeId === 'generate-text';
   const isAppend = chatModeId === 'append-user';
-  const isChat = isText || isAppend;
+  const isBestOf = chatModeId === 'generate-best-of';
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
-  const buttonColor: ColorPaletteProp = assistantAbortible
-    ? 'warning'
-    : isReAct ? 'success' : isDraw ? 'warning' : 'primary';
+
+  const showCall = isText || isAppend;
+
+  const buttonColor: ColorPaletteProp =
+    assistantAbortible ? 'warning'
+      : isReAct ? 'success'
+        : isBestOf ? 'success'
+          : isDraw ? 'warning'
+            : 'primary';
+
+  const buttonText =
+    isAppend ? 'Write'
+      : isReAct ? 'ReAct'
+        : isBestOf ? 'Best-Of'
+          : isDraw ? 'Draw'
+            : 'Chat';
+
+  const buttonIcon =
+    micContinuation ? <AutoModeIcon />
+      : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
+        : isReAct ? <PsychologyIcon />
+          : isBestOf ? <GavelIcon />
+            : isDraw ? <FormatPaintIcon />
+              : <TelegramIcon />;
 
   let textPlaceholder: string =
-    isDraw
-      ? 'Describe an idea or a drawing...'
-      : isReAct
-        ? 'Multi-step reasoning question...'
-        : props.isDeveloperMode
-          ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
-          : props.capabilityHasT2I
-            ? 'Chat · /react · /draw · drop files...'
-            : 'Chat · /react · drop files...';
+    isDraw ? 'Describe an idea or a drawing...'
+      : isReAct ? 'Multi-step reasoning question...'
+        : isBestOf ? 'Multi-chat with this persona...'
+          : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
+            : props.capabilityHasT2I ? 'Chat · /react · /draw · drop files...'
+              : 'Chat · /react · drop files...';
   if (isDesktop && explainShiftEnter)
     textPlaceholder += !enterIsNewline ? '\nShift+Enter to add a new line' : '\nShift+Enter to send';
 
@@ -660,7 +679,7 @@ export function Composer(props: {
             <Box sx={{ display: 'flex' }}>
 
               {/* [mobile] bottom-corner secondary button */}
-              {isMobile && (isChat
+              {isMobile && (showCall
                   ? <ButtonCall isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
@@ -681,16 +700,10 @@ export function Composer(props: {
                     key='composer-act'
                     fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
                     onClick={handleSendClicked}
-                    endDecorator={
-                      micContinuation ? <AutoModeIcon /> :
-                        isAppend ? <SendIcon sx={{ fontSize: 18 }} /> :
-                          isReAct ? <PsychologyIcon /> :
-                            isDraw ? <FormatPaintIcon />
-                              : <TelegramIcon />
-                    }
+                    endDecorator={buttonIcon}
+                    sx={{ '--Button-gap': '1rem' }}
                   >
-                    {micContinuation && 'Voice '}
-                    {isAppend ? 'Write' : isReAct ? 'ReAct' : isDraw ? 'Draw' : 'Chat'}
+                    {micContinuation && 'Voice '}{buttonText}
                   </Button>
                 ) : (
                   <Button
@@ -730,7 +743,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
-              {isChat && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {showCall && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ '--Button-gap': '1rem' }} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
