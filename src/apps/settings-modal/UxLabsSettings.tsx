@@ -25,24 +25,24 @@ export function UxLabsSettings() {
   return <>
 
     {!isMobile && <FormSwitchControl
-      title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screenshots</>} description={labsAttachScreenCapture ? 'Enabled' : 'Disabled'}
+      title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screen Capture</>} description={'v1.13 · ' + (labsAttachScreenCapture ? 'Enabled' : 'Disabled')}
       checked={labsAttachScreenCapture} onChange={setLabsAttachScreenCapture}
     />}
 
     {!isMobile && <FormSwitchControl
-      title={<><AddAPhotoIcon color={labsCameraDesktop ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Webcam</>} description={labsCameraDesktop ? 'Enabled' : 'Disabled'}
+      title={<><AddAPhotoIcon color={labsCameraDesktop ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Webcam</>} description={/*'v1.8 · ' +*/ (labsCameraDesktop ? 'Enabled' : 'Disabled')}
       checked={labsCameraDesktop} onChange={setLabsCameraDesktop}
     />}
 
     <FormSwitchControl
-      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={labsSplitBranching ? 'Enabled' : 'Disabled'}
+      title={<><VerticalSplitIcon color={labsSplitBranching ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Split Branching</>} description={/*'v1.6 · ' +*/ (labsSplitBranching ? 'Enabled' : 'Disabled')}
       checked={labsSplitBranching} onChange={setLabsSplitBranching}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Graduated' />
+      <FormLabelStart title='Graduated' description='Ex-labs' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/359' target='_blank'>Draw</Link>
+        <Link href='https://github.com/enricoros/big-AGI/issues/359' target='_blank'>Draw App</Link>
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link>
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link>
         {' · '}<Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link>
