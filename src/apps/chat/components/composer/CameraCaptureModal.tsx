@@ -7,7 +7,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { InlineError } from '~/common/components/InlineError';
-import { downloadVideoFrameAsPNG, renderVideoFrameToFile } from '~/common/util/videoUtils';
+import { downloadVideoFrameAsPNG, renderVideoFrameAsPNGFile } from '~/common/util/videoUtils';
 import { useCameraCapture } from '~/common/components/useCameraCapture';
 
 
@@ -16,11 +16,12 @@ export function CameraCaptureModal(props: {
   onAttachImage: (file: File) => void
   // onOCR: (ocrText: string) => void }
 }) {
-  // state
-  // const [ocrProgress/*, setOCRProgress*/] = React.useState<number | null>(null);
-  const [showInfo, setShowInfo] = React.useState(false);
 
-  // camera operations
+  // state
+  const [showInfo, setShowInfo] = React.useState(false);
+  // const [ocrProgress/*, setOCRProgress*/] = React.useState<number | null>(null);
+
+  // external state
   const {
     videoRef,
     cameras, cameraIdx, setCameraIdx,
@@ -29,10 +30,14 @@ export function CameraCaptureModal(props: {
   } = useCameraCapture();
 
 
-  const stopAndClose = () => {
+  // derived state
+  const { onCloseModal, onAttachImage } = props;
+
+
+  const stopAndClose = React.useCallback(() => {
     resetVideo();
-    props.onCloseModal();
-  };
+    onCloseModal();
+  }, [onCloseModal, resetVideo]);
 
   /*const handleVideoOCRClicked = async () => {
     if (!videoRef.current) return;
@@ -53,18 +58,21 @@ export function CameraCaptureModal(props: {
     props.onOCR(result.data.text);
   };*/
 
-  const handleVideoSnapClicked = () => {
+  const handleVideoSnapClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
-    renderVideoFrameToFile(videoRef.current, 'camera', (file) => {
-      props.onAttachImage(file);
+    try {
+      const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
+      onAttachImage(file);
       stopAndClose();
-    });
-  };
+    } catch (error) {
+      console.error('Error capturing video frame:', error);
+    }
+  }, [onAttachImage, stopAndClose, videoRef]);
 
-  const handleVideoDownloadClicked = () => {
+  const handleVideoDownloadClicked = React.useCallback(() => {
     if (!videoRef.current) return;
     downloadVideoFrameAsPNG(videoRef.current, 'camera');
-  };
+  }, [videoRef]);
 
 
   return (
