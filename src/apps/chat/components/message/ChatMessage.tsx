@@ -280,12 +280,12 @@ export function ChatMessage(props: {
 
   // Operations Menu
 
-  const closeOperationsMenu = () => setOpsMenuAnchor(null);
+  const closeOpsMenu = () => setOpsMenuAnchor(null);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
     copyToClipboard(textSel, 'Text');
     e.preventDefault();
-    closeOperationsMenu();
+    closeOpsMenu();
     closeSelectionMenu();
   };
 
@@ -293,19 +293,19 @@ export function ChatMessage(props: {
     if (messageTyping && !isEditing) return; // don't allow editing while typing
     setIsEditing(!isEditing);
     e.preventDefault();
-    closeOperationsMenu();
+    closeOpsMenu();
   };
 
   const handleOpsConversationBranch = (e: React.MouseEvent) => {
     e.preventDefault();
     props.onConversationBranch && props.onConversationBranch(messageId);
-    closeOperationsMenu();
+    closeOpsMenu();
   };
 
   const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
-    closeOperationsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
+    closeOpsMenu();
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -314,7 +314,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextDiagram) {
       await props.onTextDiagram(messageId, textSel);
-      closeOperationsMenu();
+      closeOpsMenu();
       closeSelectionMenu();
     }
   };
@@ -323,7 +323,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextImagine) {
       await props.onTextImagine(textSel);
-      closeOperationsMenu();
+      closeOpsMenu();
       closeSelectionMenu();
     }
   };
@@ -332,14 +332,14 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextSpeak) {
       await props.onTextSpeak(textSel);
-      closeOperationsMenu();
+      closeOpsMenu();
       closeSelectionMenu();
     }
   };
 
   const handleOpsTruncate = (_e: React.MouseEvent) => {
     props.onConversationTruncate && props.onConversationTruncate(messageId);
-    closeOperationsMenu();
+    closeOpsMenu();
   };
 
   const handleOpsDelete = (_e: React.MouseEvent) => {
@@ -588,7 +588,7 @@ export function ChatMessage(props: {
       {!!opsMenuAnchor && (
         <CloseableMenu
           dense placement='bottom-end'
-          open anchorEl={opsMenuAnchor} onClose={closeOperationsMenu}
+          open anchorEl={opsMenuAnchor} onClose={closeOpsMenu}
           sx={{ minWidth: 280 }}
         >
           {/* Edit / Copy */}
