@@ -305,7 +305,7 @@ export function ChatMessage(props: {
   const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
     closeOpsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
+    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
