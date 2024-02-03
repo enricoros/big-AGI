@@ -58,8 +58,8 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 ## ✨ Key Features 👊
 
-![Ask away, paste a ton, copy the gems](docs/pixels/big-AGI-compo1.png)
-[More](docs/pixels/big-AGI-compo2b.png), [screenshots](docs/pixels).
+![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
+[More](docs/pixels/big-AGI-compo1.png), [outdated](docs/pixels/big-AGI-compo2b.png), [screenshots](docs/pixels).
 
 - **AI Personas**: Tailor your AI interactions with customizable personas
 - **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface
