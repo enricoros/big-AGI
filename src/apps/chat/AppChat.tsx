@@ -24,9 +24,9 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { ChatDrawerMemo } from './components/applayout/ChatDrawer';
-import { ChatDropdowns } from './components/applayout/ChatDropdowns';
-import { ChatPageMenuItems } from './components/applayout/ChatPageMenuItems';
+import { ChatDrawerMemo } from './components/ChatDrawer';
+import { ChatDropdowns } from './components/ChatDropdowns';
+import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';

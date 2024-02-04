@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { SystemPurposeId, SystemPurposes } from '../../../data';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';

@@ -4,7 +4,7 @@ import type { DConversationId } from '~/common/state/store-chats';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
-import { useFolderDropdown } from './folder/useFolderDropdown';
+import { useFolderDropdown } from './folders/useFolderDropdown';
 
 
 export function ChatDropdowns(props: {
