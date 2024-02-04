@@ -15,16 +15,15 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider  = "mongodb"
+  url       = env("MDB_URI")
 }
 
 //
 // Storage of Linked Data
 //
 model LinkStorage {
-  id String @id @default(uuid())
+  id String @id @default(uuid()) @map("_id")
 
   ownerId    String
   visibility LinkStorageVisibility
