@@ -17,6 +17,7 @@ import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import type { DFolder } from '~/common/state/store-folders';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { isDeepEqual } from '~/common/util/jsUtils';
 
 
 // set to true to display the conversation IDs
@@ -30,7 +31,17 @@ export const FadeInButton = styled(IconButton)({
 });
 
 
-export const ChatDrawerItemMemo = React.memo(ChatDrawerItem);
+export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
+  // usign a custom function because `ChatNavigationItemData` is a complex object and memo won't work
+  isDeepEqual(prev.item, next.item) &&
+  prev.isLonely === next.isLonely &&
+  prev.showSymbols === next.showSymbols &&
+  prev.bottomBarBasis === next.bottomBarBasis &&
+  prev.onConversationActivate === next.onConversationActivate &&
+  prev.onConversationDelete === next.onConversationDelete &&
+  prev.onConversationExport === next.onConversationExport &&
+  prev.onConversationFolderChange === next.onConversationFolderChange,
+);
 
 export interface ChatNavigationItemData {
   conversationId: DConversationId;
@@ -52,6 +63,7 @@ export interface FolderChangeRequest {
 }
 
 function ChatDrawerItem(props: {
+  // NOTE: always update the Memo comparison if you add or remove props
   item: ChatNavigationItemData,
   isLonely: boolean,
   showSymbols: boolean,
