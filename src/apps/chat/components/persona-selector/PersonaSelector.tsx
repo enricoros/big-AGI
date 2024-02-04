@@ -9,6 +9,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { useAppServicesStore } from '~/common/state/store-atlas-app-services';
 import { lineHeightTextarea } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -48,6 +49,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
+  
+  const { token, setToken } = useAppServicesStore();
+
 
   // external state
   const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
@@ -145,7 +149,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     <Stack direction='column' sx={{ minHeight: '60vh', justifyContent: 'center', alignItems: 'center' }}>
 
       <Box sx={{ maxWidth: bpMaxWidth }}>
-
+      <Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
+            <Typography level='title-sm'>
+              {token}
+              Atlas App Services: <input placeholder="user@mongodb.com" type="text"></input><input placeholder="*********" type="password"></input> <button onClick={()=>setToken("button-magic:"+Math.random())}>login</button>
+            </Typography>
+          </Box>
+        </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Typography level='title-sm'>
             AI Persona
@@ -280,6 +291,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
       </Box>
 
+      
     </Stack>
 
   </>;
