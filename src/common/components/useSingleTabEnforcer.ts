@@ -7,7 +7,7 @@ import * as React from 'react';
  */
 class AloneDetector {
   private readonly clientId: string;
-  private readonly broadcastChannel: BroadcastChannel;
+  private readonly bChannel: BroadcastChannel;
 
   private aloneCallback: ((isAlone: boolean) => void) | null;
   private aloneTimerId: number | undefined;
@@ -17,15 +17,15 @@ class AloneDetector {
     this.clientId = Math.random().toString(36).substring(2, 10);
     this.aloneCallback = onAlone;
 
-    this.broadcastChannel = new BroadcastChannel(channelName);
-    this.broadcastChannel.onmessage = this.handleIncomingMessage;
+    this.bChannel = new BroadcastChannel(channelName);
+    this.bChannel.onmessage = this.handleIncomingMessage;
 
   }
 
   public onUnmount(): void {
     // close channel
-    this.broadcastChannel.onmessage = null;
-    this.broadcastChannel.close();
+    this.bChannel.onmessage = null;
+    this.bChannel.close();
 
     // clear timeout
     if (this.aloneTimerId)
@@ -38,7 +38,7 @@ class AloneDetector {
   public checkIfAlone(): void {
 
     // triggers other clients
-    this.broadcastChannel.postMessage({ type: 'CHECK', sender: this.clientId });
+    this.bChannel.postMessage({ type: 'CHECK', sender: this.clientId });
 
     // if no response within 500ms, assume this client is alone
     this.aloneTimerId = window.setTimeout(() => {
@@ -56,7 +56,7 @@ class AloneDetector {
     switch (event.data.type) {
 
       case 'CHECK':
-        this.broadcastChannel.postMessage({ type: 'ALIVE', sender: this.clientId });
+        this.bChannel.postMessage({ type: 'ALIVE', sender: this.clientId });
         break;
 
       case 'ALIVE':
