@@ -11,7 +11,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
 import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '../chat/components/scroll-to-bottom/ScrollToBottomButton';
-import { useChatLLMDropdown } from '../chat/components/applayout/useLLMDropdown';
+import { useChatLLMDropdown } from '../chat/components/useLLMDropdown';
 
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';

@@ -21,8 +21,8 @@ import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, ChatNavigationItemData, FolderChangeRequest } from './ChatDrawerItem';
-import { ChatFolderList } from './folder/ChatFolderList';
-import { ClearFolderText } from './folder/useFolderDropdown';
+import { ChatFolderList } from './folders/ChatFolderList';
+import { ClearFolderText } from './folders/useFolderDropdown';
 
 
 // this is here to make shallow comparisons work on the next hook
