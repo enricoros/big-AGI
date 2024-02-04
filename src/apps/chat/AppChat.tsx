@@ -55,7 +55,7 @@ const SPECIAL_ID_WIPE_ALL: DConversationId = 'wipe-chats';
 export function AppChat() {
 
   // state
-  const [isComposerBroadcast, setIsComposerBroadcast] = React.useState(false);
+  const [isComposerMulticast, setIsComposerMulticast] = React.useState(false);
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
@@ -116,10 +116,9 @@ export function AppChat() {
 
   // Window actions
 
-  const isSplitPane = chatPanes.length > 1;
-  const panesConversationIDs = chatPanes.length > 0 ? chatPanes.map((pane) => pane.conversationId) : [null];
-  const showBroadcastControl = isSplitPane && new Set(panesConversationIDs).size >= 2;
-  const isRealBroadcast = showBroadcastControl && isComposerBroadcast;
+  const isMultiPane = chatPanes.length >= 2;
+  const isMultiConversationId = isMultiPane && new Set(chatPanes.map((pane) => pane.conversationId)).size >= 2;
+  const willMulticast = isComposerMulticast && isMultiConversationId;
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -129,12 +128,12 @@ export function AppChat() {
     conversationId && openConversationInSplitPane(conversationId);
   }, [openConversationInSplitPane]);
 
-  const toggleSplitPane = React.useCallback(() => {
-    if (isSplitPane)
+  const handleToggleMultiPane = React.useCallback(() => {
+    if (isMultiPane)
       removeOtherPanes();
     else
       duplicateFocusedPane();
-  }, [duplicateFocusedPane, isSplitPane, removeOtherPanes]);
+  }, [duplicateFocusedPane, isMultiPane, removeOtherPanes]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -240,19 +239,19 @@ export function AppChat() {
     }
     const userText = multiPartMessage[0].text;
 
-    // broadcast mode scatterer
-    const uniqueConversationIds = new Set([conversationId]);
-    if (isRealBroadcast)
-      chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
+    // multicast: send the message to all the panes
+    const uniqueIds = new Set([conversationId]);
+    if (willMulticast)
+      chatPanes.forEach(pane => pane.conversationId && uniqueIds.add(pane.conversationId));
 
-    // we loop to handle both the normal and broadcast modes
+    // we loop to handle both the normal and multicast modes
     let enqueued = false;
-    for (const targetConversationId of uniqueConversationIds) {
-      const targetConversation = getConversation(targetConversationId);
-      if (targetConversation) {
+    for (const _cId of uniqueIds) {
+      const _conversation = getConversation(_cId);
+      if (_conversation) {
         // start execution fire/forget
-        void _handleExecute(chatModeId, targetConversationId, [
-          ...targetConversation.messages,
+        void _handleExecute(chatModeId, _cId, [
+          ..._conversation.messages,
           createDMessage('user', userText),
         ]);
         enqueued = true;
@@ -321,7 +320,7 @@ export function AppChat() {
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
     showNextTitleChange.current = true;
     const branchedConversationId = branchConversation(conversationId, messageId);
-    if (isSplitPane)
+    if (isMultiPane)
       openSplitConversationId(branchedConversationId);
     else
       setFocusedConversationId(branchedConversationId);
@@ -335,7 +334,7 @@ export function AppChat() {
       },
     });
     return branchedConversationId;
-  }, [branchConversation, isSplitPane, openSplitConversationId, setFocusedConversationId]);
+  }, [branchConversation, isMultiPane, openSplitConversationId, setFocusedConversationId]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
@@ -422,14 +421,14 @@ export function AppChat() {
         hasConversations={!areChatsEmpty}
         isConversationEmpty={isFocusedChatEmpty}
         isMessageSelectionMode={isMessageSelectionMode}
-        isSplitPane={isSplitPane}
-        setIsMessageSelectionMode={setIsMessageSelectionMode}
+        isMultiPane={isMultiPane}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
         onConversationFlatten={handleConversationFlatten}
-        onToggleSplitPanes={toggleSplitPane}
+        onToggleMultiPane={handleToggleMultiPane}
+        setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isSplitPane, toggleSplitPane],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, handleToggleMultiPane, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isMultiPane],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
@@ -456,18 +455,23 @@ export function AppChat() {
               const setFocus = chatPanes.length < 2 || !event.altKey;
               setFocusedPane(setFocus ? idx : -1);
             }}
-            onCollapse={() => removePane(idx)}
+            onCollapse={() => {
+              // the small delay does not look good but lets the Panel state settle
+              // setTimeout(() => removePane(idx), 50);
+              // NOTE: seems there's an issue anyway with the Pane locking the screen, so we'll just call it directly
+              removePane(idx);
+            }}
             style={{
               // for anchoring the scroll button in place
               position: 'relative',
-              ...(panesConversationIDs.length >= 2 ? {
+              ...(isMultiPane ? {
                 borderRadius: '0.375rem',
                 border: `2px solid ${idx === focusedPaneIndex
-                  ? (isRealBroadcast ? theme.palette.warning.solidBg : theme.palette.primary.solidBg)
-                  : (isRealBroadcast ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
-                filter: (isRealBroadcast || idx === focusedPaneIndex)
-                  ? undefined :
-                  'grayscale(60%)',
+                  ? ((willMulticast || !isMultiConversationId) ? theme.palette.warning.solidBg : theme.palette.primary.solidBg)
+                  : ((willMulticast || !isMultiConversationId) ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
+                filter: (!willMulticast && idx !== focusedPaneIndex)
+                  ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
+                  : undefined,
               } : {}),
             }}
           >
@@ -529,12 +533,11 @@ export function AppChat() {
       composerTextAreaRef={composerTextAreaRef}
       conversationId={focusedConversationId}
       capabilityHasT2I={capabilityHasT2I}
+      isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
-      isBroadcast={isComposerBroadcast}
-      onSetBroadcast={setIsComposerBroadcast}
-      showBroadcastControl={showBroadcastControl}
+      setIsMulticast={setIsComposerMulticast}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
         backgroundColor: themeBgAppChatComposer,

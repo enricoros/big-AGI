@@ -13,7 +13,6 @@ import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
 import type { DConversationId } from '~/common/state/store-chats';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
@@ -26,12 +25,12 @@ export function ChatPageMenuItems(props: {
   hasConversations: boolean,
   isConversationEmpty: boolean,
   isMessageSelectionMode: boolean,
-  isSplitPane: boolean
-  setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
+  isMultiPane: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
-  onToggleSplitPanes: () => void,
+  onToggleMultiPane: () => void,
+  setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
 }) {
 
   // external state
@@ -80,16 +79,13 @@ export function ChatPageMenuItems(props: {
     </MenuItem>
 
     {/* Split/Unsplit panes */}
-    <GoodTooltip title={props.isSplitPane ? 'Close Split Panes' : 'Split Conversation Vertically'}>
-      <MenuItem onClick={props.onToggleSplitPanes}>
-        <ListItemDecorator>{
-          props.isMobile
-            ? (props.isSplitPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
-            : (props.isSplitPane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />)
-        }</ListItemDecorator>
-        {props.isSplitPane ? 'Unsplit' : props.isMobile ? 'Split Down' : 'Split Right'}
-      </MenuItem>
-    </GoodTooltip>
+    <MenuItem onClick={props.onToggleMultiPane}>
+      <ListItemDecorator>{props.isMobile
+        ? (props.isMultiPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
+        : (props.isMultiPane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />)
+      }</ListItemDecorator>
+      {props.isMultiPane ? 'Unsplit' : props.isMobile ? 'Split Down' : 'Split Right'}
+    </MenuItem>
 
     <ListDivider />
 

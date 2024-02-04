@@ -23,8 +23,8 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import { ChatBroadcastOffIcon } from '~/common/components/icons/ChatBroadcastOffIcon';
-import { ChatBroadcastOnIcon } from '~/common/components/icons/ChatBroadcastOnIcon';
+import { ChatMulticastOffIcon } from '~/common/components/icons/ChatMulticastOffIcon';
+import { ChatMulticastOnIcon } from '~/common/components/icons/ChatMulticastOnIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -84,12 +84,11 @@ export function Composer(props: {
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   conversationId: DConversationId | null;
   capabilityHasT2I: boolean;
+  isMulticast: boolean | null;
   isDeveloperMode: boolean;
   onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
-  isBroadcast: boolean;
-  onSetBroadcast: (broadcast: boolean) => void;
-  showBroadcastControl: boolean;
+  setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
 }) {
 
@@ -716,14 +715,16 @@ export function Composer(props: {
 
             </Box>
 
-            {/* [desktop] Broadcast switch (under the Chat button) */}
-            {isDesktop && props.showBroadcastControl && isText && (
-              <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between', alignItems: 'center' }}>
-                <FormLabel sx={{ gap: 1 }}>
-                  {props.isBroadcast ? <ChatBroadcastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatBroadcastOffIcon />}
-                  Broadcast {props.isBroadcast ? ' · On' : ''}
+            {/* [desktop] Multicast switch (under the Chat button) */}
+            {isDesktop && props.isMulticast !== null && (
+              <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between' }}>
+                <FormLabel sx={{ gap: 1, flexFlow: 'row nowrap' }}>
+                  <Box sx={{ display: { xs: 'none', lg: 'inline-block' } }}>
+                    {props.isMulticast ? <ChatMulticastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatMulticastOffIcon />}
+                  </Box>
+                  {props.isMulticast ? 'Multichat · On' : 'Multichat'}
                 </FormLabel>
-                <Switch color={props.isBroadcast ? 'primary' : undefined} checked={props.isBroadcast} onChange={(e) => props.onSetBroadcast(e.target.checked)} />
+                <Switch color={props.isMulticast ? 'primary' : undefined} checked={props.isMulticast} onChange={(e) => props.setIsMulticast(e.target.checked)} />
               </FormControl>
             )}
 
