@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { keyframes } from '@emotion/react';
 
-import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Stack, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Dropdown, FormControl, FormLabel, Grid, IconButton, Menu, MenuButton, MenuItem, Stack, Switch, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -23,6 +23,8 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
+import { ChatBroadcastOffIcon } from '~/common/components/icons/ChatBroadcastOffIcon';
+import { ChatBroadcastOnIcon } from '~/common/components/icons/ChatBroadcastOnIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -85,6 +87,9 @@ export function Composer(props: {
   isDeveloperMode: boolean;
   onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
+  isBroadcast: boolean;
+  onSetBroadcast: (broadcast: boolean) => void;
+  showBroadcastControl: boolean;
   sx?: SxProps;
 }) {
 
@@ -711,6 +716,16 @@ export function Composer(props: {
 
             </Box>
 
+            {/* [desktop] Broadcast switch (under the Chat button) */}
+            {isDesktop && props.showBroadcastControl && isText && (
+              <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                <FormLabel sx={{ gap: 1 }}>
+                  {props.isBroadcast ? <ChatBroadcastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatBroadcastOffIcon />}
+                  Broadcast {props.isBroadcast ? ' · On' : ''}
+                </FormLabel>
+                <Switch color={props.isBroadcast ? 'primary' : undefined} checked={props.isBroadcast} onChange={(e) => props.onSetBroadcast(e.target.checked)} />
+              </FormControl>
+            )}
 
             {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>

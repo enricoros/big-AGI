@@ -27,7 +27,6 @@ interface AppChatPanesStore {
   // state
   chatPanes: ChatPane[];
   chatPaneFocusIndex: number | null;
-  // chatPaneInputMode: 'focused' | 'broadcast';
 
   // actions
   openConversationInFocusedPane: (conversationId: DConversationId) => void;
@@ -55,7 +54,6 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
     // Initial state: no panes
     chatPanes: [] as ChatPane[],
     chatPaneFocusIndex: null as number | null,
-    // chatPaneInputMode: 'focused' as 'focused' | 'broadcast',
 
     openConversationInFocusedPane: (conversationId: DConversationId) => {
       _set((state) => {
@@ -281,7 +279,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         // play it safe, and make sure a pane exists, and is focused
         return {
           chatPanes: newPanes.length ? newPanes : [createPane(conversationIds[0] ?? null)],
-          chatPaneFocusIndex: (newPanes.length && chatPaneFocusIndex !== null && chatPaneFocusIndex < newPanes.length) ? state.chatPaneFocusIndex : 0,
+          chatPaneFocusIndex: (newPanes.length && chatPaneFocusIndex !== null && chatPaneFocusIndex < newPanes.length) ? chatPaneFocusIndex : 0,
         };
       }),
 

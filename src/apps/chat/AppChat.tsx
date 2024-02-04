@@ -55,13 +55,14 @@ const SPECIAL_ID_WIPE_ALL: DConversationId = 'wipe-chats';
 export function AppChat() {
 
   // state
+  const [isComposerBroadcast, setIsComposerBroadcast] = React.useState(false);
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
   const [deleteConversationId, setDeleteConversationId] = React.useState<DConversationId | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
-  const showNextTitle = React.useRef(false);
+  const showNextTitleChange = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
@@ -115,8 +116,10 @@ export function AppChat() {
 
   // Window actions
 
-  const panesConversationIDs = chatPanes.length > 0 ? chatPanes.map((pane) => pane.conversationId) : [null];
   const isSplitPane = chatPanes.length > 1;
+  const panesConversationIDs = chatPanes.length > 0 ? chatPanes.map((pane) => pane.conversationId) : [null];
+  const showBroadcastControl = isSplitPane && new Set(panesConversationIDs).size >= 2;
+  const isRealBroadcast = showBroadcastControl && isComposerBroadcast;
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -135,12 +138,12 @@ export function AppChat() {
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
-      showNextTitle.current = true;
+      showNextTitleChange.current = true;
   }, [navigateHistoryInFocusedPane]);
 
   React.useEffect(() => {
-    if (showNextTitle.current) {
-      showNextTitle.current = false;
+    if (showNextTitleChange.current) {
+      showNextTitleChange.current = false;
       const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
       const id = addSnackbar({ key: 'focused-title', message: title, type: 'title' });
       return () => removeSnackbar(id);
@@ -237,17 +240,25 @@ export function AppChat() {
     }
     const userText = multiPartMessage[0].text;
 
-    // find conversation
-    const conversation = getConversation(conversationId);
-    if (!conversation)
-      return false;
+    // broadcast mode scatterer
+    const uniqueConversationIds = new Set([conversationId]);
+    if (isRealBroadcast)
+      chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
 
-    // start execution (async)
-    void _handleExecute(chatModeId, conversationId, [
-      ...conversation.messages,
-      createDMessage('user', userText),
-    ]);
-    return true;
+    // we loop to handle both the normal and broadcast modes
+    let enqueued = false;
+    for (const targetConversationId of uniqueConversationIds) {
+      const targetConversation = getConversation(targetConversationId);
+      if (targetConversation) {
+        // start execution fire/forget
+        void _handleExecute(chatModeId, targetConversationId, [
+          ...targetConversation.messages,
+          createDMessage('user', userText),
+        ]);
+        enqueued = true;
+      }
+    }
+    return enqueued;
   };
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
@@ -308,7 +319,7 @@ export function AppChat() {
   }, []);
 
   const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
-    showNextTitle.current = true;
+    showNextTitleChange.current = true;
     const branchedConversationId = branchConversation(conversationId, messageId);
     if (isSplitPane)
       openSplitConversationId(branchedConversationId);
@@ -450,10 +461,13 @@ export function AppChat() {
               // for anchoring the scroll button in place
               position: 'relative',
               ...(panesConversationIDs.length >= 2 ? {
-                // border only for active pane (if two or more panes)
-                border: `2px solid ${idx === focusedPaneIndex ? theme.palette.primary.solidBg : theme.palette.background.level1}`,
-                filter: idx === focusedPaneIndex ? undefined : 'grayscale(60%)',
                 borderRadius: '0.375rem',
+                border: `2px solid ${idx === focusedPaneIndex
+                  ? (isRealBroadcast ? theme.palette.warning.solidBg : theme.palette.primary.solidBg)
+                  : (isRealBroadcast ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
+                filter: (isRealBroadcast || idx === focusedPaneIndex)
+                  ? undefined :
+                  'grayscale(60%)',
               } : {}),
             }}
           >
@@ -518,6 +532,9 @@ export function AppChat() {
       isDeveloperMode={focusedSystemPurposeId === 'Developer'}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
+      isBroadcast={isComposerBroadcast}
+      onSetBroadcast={setIsComposerBroadcast}
+      showBroadcastControl={showBroadcastControl}
       sx={{
         zIndex: 21, // position: 'sticky', bottom: 0,
         backgroundColor: themeBgAppChatComposer,

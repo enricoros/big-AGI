@@ -298,6 +298,7 @@ export function ChatMessage(props: {
 
   const handleOpsConversationBranch = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // to try to not steal the focus from the banched conversation
     props.onConversationBranch && props.onConversationBranch(messageId);
     closeOpsMenu();
   };
