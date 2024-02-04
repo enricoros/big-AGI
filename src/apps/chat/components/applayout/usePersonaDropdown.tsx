@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
-import { PageBarDropdown } from '~/common/layout/optima/components/PageBarDropdown';
+import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
@@ -18,18 +18,20 @@ function AppBarPersonaDropdown(props: {
     zenMode: state.zenMode,
   }), shallow);
 
-  const handleSystemPurposeChange = (_event: any, value: SystemPurposeId | null) => props.setSystemPurposeId(value);
 
+  const { setSystemPurposeId } = props;
 
-  // options
+  const handleSystemPurposeChange = React.useCallback((value: string | null) => {
+    setSystemPurposeId(value as (SystemPurposeId | null));
+  }, [setSystemPurposeId]);
 
-  // let appendOption: React.JSX.Element | undefined = undefined;
 
   return (
-    <PageBarDropdown
-      items={SystemPurposes} showSymbols={zenMode !== 'cleaner'}
-      value={props.systemPurposeId} onChange={handleSystemPurposeChange}
-      // appendOption={appendOption}
+    <PageBarDropdownMemo
+      items={SystemPurposes}
+      value={props.systemPurposeId}
+      onChange={handleSystemPurposeChange}
+      showSymbols={zenMode !== 'cleaner'}
     />
   );
 
@@ -45,15 +47,22 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null) {
     };
   }, shallow);
 
-  const personaDropdown = React.useMemo(() => systemPurposeId
-      ? <AppBarPersonaDropdown
-        systemPurposeId={systemPurposeId}
-        setSystemPurposeId={(systemPurposeId) => {
-          if (conversationId && systemPurposeId)
-            useChatStore.getState().setSystemPurposeId(conversationId, systemPurposeId);
-        }}
-      /> : null,
-    [conversationId, systemPurposeId],
+
+  const handleSetSystemPurposeId = React.useCallback((systemPurposeId: SystemPurposeId | null) => {
+    if (conversationId && systemPurposeId)
+      useChatStore.getState().setSystemPurposeId(conversationId, systemPurposeId);
+  }, [conversationId]);
+
+  const personaDropdown = React.useMemo(() => {
+      if (!systemPurposeId) return null;
+      return (
+        <AppBarPersonaDropdown
+          systemPurposeId={systemPurposeId}
+          setSystemPurposeId={handleSetSystemPurposeId}
+        />
+      );
+    },
+    [handleSetSystemPurposeId, systemPurposeId],
   );
 
   return { personaDropdown };

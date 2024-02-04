@@ -13,22 +13,32 @@ export type DropdownItems = Record<string, {
 }>;
 
 
+export const PageBarDropdownMemo = React.memo(PageBarDropdown);
+
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-export function PageBarDropdown<TValue extends string>(props: {
+function PageBarDropdown<TValue extends string>(props: {
   items: DropdownItems,
   prependOption?: React.JSX.Element,
   appendOption?: React.JSX.Element,
   value: TValue | null,
-  onChange: (event: any, value: TValue | null) => void,
+  onChange: (value: TValue | null) => void,
   placeholder?: string,
   showSymbols?: boolean,
   sx?: SxProps
 }) {
+
+  const { onChange } = props;
+
+  const handleOnChange = React.useCallback((_event: any, value: TValue | null) => {
+    onChange(value);
+  }, [onChange]);
+
   return <Select
     variant='plain'
-    value={props.value} onChange={props.onChange}
+    value={props.value}
+    onChange={handleOnChange}
     placeholder={props.placeholder}
     indicator={<KeyboardArrowDownIcon />}
     slotProps={{

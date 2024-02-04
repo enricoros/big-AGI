@@ -3,7 +3,7 @@ import * as React from 'react';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import type { DConversationId } from '~/common/state/store-chats';
-import { DropdownItems, PageBarDropdown } from '~/common/layout/optima/components/PageBarDropdown';
+import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { useFolderStore } from '~/common/state/store-folders';
 
 
@@ -38,7 +38,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
 
 
   // Handle dropdown folder change
-  const handleFolderChange = React.useCallback((_event: any, folderId: string | null) => {
+  const handleFolderChange = React.useCallback((folderId: string | null) => {
     if (conversationId && folderId) {
       // Remove conversation from all folders
       folders.forEach(folder => {
@@ -63,7 +63,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
       return null;
 
     return (
-      <PageBarDropdown
+      <PageBarDropdownMemo
         items={folderItems}
         value={currentFolderId}
         onChange={handleFolderChange}
