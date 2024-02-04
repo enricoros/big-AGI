@@ -51,7 +51,7 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
  * to avoid unnecessary re-renders on each new character typed by the assistant
  */
-export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFolders: DFolder[], activeConversationId: DConversationId | null): ChatNavigationItemData[] =>
+export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFolders: DFolder[], activeConversationId: DConversationId | null, chatPanesConversationIds: DConversationId[]): ChatNavigationItemData[] =>
   useChatStore(({ conversations }) => {
 
     const activeConversations = activeFolder
@@ -61,6 +61,7 @@ export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFold
     return activeConversations.map((_c): ChatNavigationItemData => ({
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
+      isAlsoOpen: chatPanesConversationIds.includes(_c.id),
       isEmpty: !_c.messages.length && !_c.userTitle,
       title: conversationTitle(_c),
       folder: !allFolders.length
@@ -84,6 +85,7 @@ export const ChatDrawerMemo = React.memo(ChatDrawer);
 function ChatDrawer(props: {
   activeConversationId: DConversationId | null,
   activeFolderId: string | null,
+  chatPanesConversationIds: DConversationId[],
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
@@ -103,7 +105,7 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
-  const chatNavItems = useChatNavigationItemsData(activeFolder, allFolders, props.activeConversationId);
+  const chatNavItems = useChatNavigationItemsData(activeFolder, allFolders, props.activeConversationId, props.chatPanesConversationIds);
   const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
 
   // derived state

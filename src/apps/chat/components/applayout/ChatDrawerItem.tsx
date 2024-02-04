@@ -24,7 +24,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 
 export const FadeInButton = styled(IconButton)({
-  opacity: 0.5,
+  opacity: 0.667,
   transition: 'opacity 0.2s',
   '&:hover': { opacity: 1 },
 });
@@ -35,6 +35,7 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem);
 export interface ChatNavigationItemData {
   conversationId: DConversationId;
   isActive: boolean;
+  isAlsoOpen: boolean;
   isEmpty: boolean;
   title: string;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
@@ -67,7 +68,7 @@ function ChatDrawerItem(props: {
 
   // derived state
   const { onConversationExport, onConversationFolderChange } = props;
-  const { conversationId, isActive, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
+  const { conversationId, isActive, isAlsoOpen, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
 
@@ -210,19 +211,28 @@ function ChatDrawerItem(props: {
     ), [progress]);
 
 
-  return isActive ? (
+  return (isActive || isAlsoOpen) ? (
 
-    // Active Conversation
+    // Active or Also Open
     <Sheet
-      variant={isActive ? 'solid' : 'plain'}
+      variant={isActive ? 'solid' : 'outlined'}
       invertedColors={isActive}
+      onClick={!isActive ? handleConversationActivate : undefined}
       sx={{
         // common
+        // position: 'relative', // for the progress bar (now disabled)
         '--ListItem-minHeight': '2.75rem',
-        position: 'relative', // for the progress bar
-        // '--variant-borderWidth': '0.125rem',
-        border: 'none', // there's a default border of 1px and invisible.. hmm
+
+        // differences between primary and secondary variants
+        ...(isActive ? {
+          border: 'none', // there's a default border of 1px and invisible.. hmm
+        } : {
+          // '--variant-borderWidth': '0.125rem',
+          cursor: 'pointer',
+        }),
+
         // style
+        backgroundColor: isActive ? 'neutral.solidActiveBg' : 'neutral.softBg',
         borderRadius: 'md',
         mx: '0.25rem',
         '&:hover > button': {
@@ -235,14 +245,11 @@ function ChatDrawerItem(props: {
 
         {/* Title row */}
         <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minHeight: '2.25rem', alignItems: 'center' }}>
-
           {titleRowComponent}
-
         </Box>
 
         {/* buttons row */}
         <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
-
           <ListItemDecorator />
 
           {/* Current Folder color, and change initiator */}
@@ -284,7 +291,6 @@ function ChatDrawerItem(props: {
             </Tooltip>
           </>}
 
-
           {/* --> */}
           <Box sx={{ flex: 1 }} />
 
@@ -304,13 +310,13 @@ function ChatDrawerItem(props: {
               </FadeInButton>
             </Tooltip>
           </>}
-
         </Box>
 
       </ListItem>
 
       {/* Optional progress bar, underlay */}
-      {progressBarFixedComponent}
+      {/* NOTE: disabled on 20240204: quite distracting on the active chat sheet */}
+      {/*{progressBarFixedComponent}*/}
 
     </Sheet>
 
