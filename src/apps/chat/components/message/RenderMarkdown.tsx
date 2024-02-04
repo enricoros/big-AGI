@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CSVDownload, CSVLink } from 'react-csv';
+import { CSVLink } from 'react-csv';
 
 import { Box, Button, styled } from '@mui/joy';
 
@@ -74,21 +74,25 @@ const DynamicReactGFM = React.lazy(async () => {
 
   interface TableRendererProps {
     children: React.JSX.Element;
+    node?: any; // an optional field we want to not pass to the <table/> element
   }
+
   // Define a custom table renderer
-  const TableRenderer = ({ children, ...props }: TableRendererProps) => {
+  const TableRenderer = ({ children, node, ...props }: TableRendererProps) => {
     // Apply custom styles or modifications here
     const tableData = extractTableData(children);
 
     return (
       <>
-        <table style={{ borderCollapse: 'collapse', width: '100%' }} {...props}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.5rem' }} {...props}>
           {children}
         </table>
         <CSVLink filename='big-agi-export' data={tableData}>
-          <Button variant="outlined">
-            <DownloadIcon />
-            {'Download table as .csv '}
+          <Button variant='outlined' color='neutral' size='md' endDecorator={<DownloadIcon />} sx={{
+            mb: '1rem',
+            backgroundColor: 'background.popup', // make this button 'pop' a bit from the page
+          }}>
+            Download table as .csv
           </Button>
         </CSVLink>
       </>
@@ -102,13 +106,13 @@ const DynamicReactGFM = React.lazy(async () => {
   };
 
   // Pass the dynamically imported remarkGfm as children
-  const ReactMarkdownWithRemarkGfm = (props: any) => 
+  const ReactMarkdownWithRemarkGfm = (props: any) =>
     <markdownModule.default
       remarkPlugins={remarkPlugins}
       {...props}
       components={components}
     />;
-    
+
   return { default: ReactMarkdownWithRemarkGfm };
 });
 
