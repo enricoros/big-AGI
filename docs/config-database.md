@@ -30,7 +30,7 @@ This guide outlines the database options and setup steps for enabling features l
 #### MongoDB:
 | Variable           | Description                                                                                                                                                                             |
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MDB_URI` (if using Atlas) | URI of your MongoDB Atlas database (provided example)                                                                                                                |
+| `MDB_URI` (if using MongoDB Atlas) | URI of your MongoDB Atlas database (provided example)                                                                                                                |
 
 ### Initial Setup Steps:
 
