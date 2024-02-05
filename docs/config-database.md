@@ -39,8 +39,8 @@ This guide outlines the database options and setup steps for enabling features l
 
 ### Additional Resources:
 
-- MongoDB Atlas documentation: [https://www.mongodb.com/docs/guides/atlas/connection-string/](https://www.mongodb.com/docs/guides/atlas/connection-string/): [https://www.mongodb.com/docs/guides/atlas/connection-string/](https://www.mongodb.com/docs/guides/atlas/connection-string/)
-- Prisma documentation: [https://www.prisma.io/docs/](https://www.prisma.io/docs/): [https://www.prisma.io/docs/](https://www.prisma.io/docs/)
+- Prisma documentation: [https://www.prisma.io/docs/](https://www.prisma.io/docs/)
+- MongoDB Atlas: [https://www.mongodb.com/atlas/database](https://www.mongodb.com/atlas/database)
 - Atlas App Services: [https://www.mongodb.com/docs/atlas/app-services/](https://www.mongodb.com/docs/atlas/app-services/)
 - Atlas vector search: [https://www.mongodb.com/products/platform/atlas-vector-search/](https://www.mongodb.com/products/platform/atlas-vector-search)
 - Atlas Data Federation: [https://www.mongodb.com/products/platform/atlas-data-federation](https://www.mongodb.com/products/platform/atlas-data-federation)
