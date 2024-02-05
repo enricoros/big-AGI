@@ -21,16 +21,16 @@ This guide outlines the database options and setup steps for enabling features l
 ### Environment Variables:
 
 #### Postgres:
-| Variable           | Description                                                                                                                                                                             |
+| Variable           |                                                                                                                                                                              |
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `POSTGRES_PRISMA_URL` (if using Postgres) | URL for the Prisma-managed Postgres database (similar format as example)                                                                                                  |
+| `POSTGRES_PRISMA_URL` (if using Postgres) | `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15`                                                                                                  |
 | `POSTGRES_URL_NON_POOLING` (optional) | URL for the Postgres database without pooling (specific use cases)                                                                                                               |
 
 
 #### MongoDB:
-| Variable           | Description                                                                                                                                                                             |
+| Variable           |                                                                                                                                                                              |
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MDB_URI` (if using MongoDB Atlas) | URI of your MongoDB Atlas database (provided example)                                                                                                                |
+| `MDB_URI` (if using MongoDB Atlas) | `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority`                                                                                                                |
 
 ### Initial Setup Steps:
 
