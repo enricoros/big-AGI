@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
+import { runWhenIdle } from '~/common/util/pwaUtils';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
@@ -47,18 +48,21 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   const multiSource = modelSources.length > 1;
 
-  // if no sources at startup, open the modal
+  // Auto-open this dialog - anytime no source is selected
+  const autoOpenTrigger = !selectedSourceId && !props.suspendAutoModelsSetup;
   React.useEffect(() => {
-    if (!selectedSourceId && !props.suspendAutoModelsSetup)
-      openModelsSetup();
-  }, [selectedSourceId, props.suspendAutoModelsSetup, openModelsSetup]);
+    if (autoOpenTrigger)
+      return runWhenIdle(openModelsSetup, 2000);
+  }, [autoOpenTrigger, openModelsSetup]);
 
-  // add the default source on cold - will require setup
+  // Auto-add the default source - at boot, when no source is present
+  const autoAddTrigger = showModelsSetup && !props.suspendAutoModelsSetup;
   React.useEffect(() => {
+    // Note: we use the immediate version to not react to deletions
     const { addSource, sources } = useModelsStore.getState();
-    if (!sources.length && !props.suspendAutoModelsSetup)
+    if (autoAddTrigger && !sources.length)
       addSource(createModelSourceForDefaultVendor(sources));
-  }, [props.suspendAutoModelsSetup]);
+  }, [autoAddTrigger]);
 
 
   return <>
