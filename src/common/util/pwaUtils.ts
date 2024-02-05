@@ -39,3 +39,34 @@ export function clientUtmSource(campaign?: string): string {
     return '';
   return '?utm_source=' + host + '&utm_medium=' + Brand.Title.Base.toLowerCase() + (campaign ? `&utm_campaign=${campaign}` : '');
 }
+
+
+/**
+ * Schedules a callback to be executed during the browser's idle periods or after a specified timeout.
+ *
+ * @param callback - The callback function to execute.
+ * @param timeout - The maximum time to wait before executing the callback, in milliseconds.
+ * @returns A cleanup function that can be used to cancel the scheduled callback (e.g. on an unmount).
+ */
+export function runWhenIdle(callback: () => void, timeout: number): () => void {
+  if (!isBrowser) {
+    console.warn('runWhenIdle is only supported in browser environments.');
+    // Return a no-op function for non-browser environments
+    return () => {
+    };
+  }
+
+  // schedule the callback using either requestIdleCallback or setTimeout
+  const usingIdleCallback = 'requestIdleCallback' in window;
+  let handle = usingIdleCallback
+    ? window.requestIdleCallback(callback, { timeout })
+    : setTimeout(callback, timeout);
+
+  // Return a cleanup function
+  return () => {
+    if (usingIdleCallback)
+      window.cancelIdleCallback(handle as unknown as number);
+    else
+      clearTimeout(handle);
+  };
+}
