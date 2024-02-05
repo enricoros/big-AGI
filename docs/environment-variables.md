@@ -12,9 +12,12 @@ Environment variables can be set by creating a `.env` file in the root directory
 The following is an example `.env` for copy-paste convenience:
 
 ```bash
-# Database
+# Database (Postgres)
 POSTGRES_PRISMA_URL=
 POSTGRES_URL_NON_POOLING=
+
+# Database (MongoDB)
+MDB_URI=
 
 # LLMs
 OPENAI_API_KEY=
@@ -57,16 +60,9 @@ HTTP_BASIC_AUTH_PASSWORD=
 
 ### Database
 
-To enable features such as Chat Link Shring, you need to connect the backend to a database. We require
-serverless Postgres, which is available on Vercel, Neon and more.
+For Database configuration see [config-database.md](config-database.md).
 
-Also make sure that you run `npx prisma db:push` to create the initial schema on the database for the
-first time (or update it on a later stage).
-
-| Variable                   | Description                                                                                                                                                     |
-|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `POSTGRES_PRISMA_URL`      | The URL of the Postgres database used by Prisma - example: `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15` |
-| `POSTGRES_URL_NON_POOLING` | The URL of the Postgres database without pooling                                                                                                                |
+To enable features such as Chat Link Sharing, you need to connect the backend to a database. We currently support Postgres and MongoDB.
 
 ### LLMs
 
