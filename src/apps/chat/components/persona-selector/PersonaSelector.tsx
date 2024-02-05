@@ -13,7 +13,7 @@ import { lineHeightTextarea } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
+import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
 
 
@@ -33,11 +33,6 @@ const bpMaxWidth = Object.entries(bpTileSize).reduce((acc, [key, value], index) 
   return acc;
 }, {} as Record<string, number>);
 const bpTileGap = { xs: 0.5, md: 1 };
-
-
-// Add this utility function to get a random array element
-const getRandomElement = <T, >(array: T[]): T | undefined =>
-  array.length > 0 ? array[Math.floor(Math.random() * array.length)] : undefined;
 
 
 /**
@@ -60,66 +55,79 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, shallow);
   const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
 
-  // safety check - shouldn't happen
-  if (!systemPurposeId || !setSystemPurposeId)
-    return null;
+
+  // derived state
+
+  const { selectedPurpose, selectedExample } = React.useMemo(() => {
+    const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
+    const selectedExample = selectedPurpose?.examples?.length
+      ? selectedPurpose.examples[Math.floor(Math.random() * selectedPurpose.examples.length)]
+      : null;
+    return { selectedPurpose, selectedExample };
+  }, [systemPurposeId]);
 
 
-  const handleSearchClear = () => {
-    setSearchQuery('');
-    setFilteredIDs(null);
-  };
-
-  const handleSearchOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    if (!query)
-      return handleSearchClear();
-    setSearchQuery(query);
-
-    // Filter results based on search term
-    const ids = Object.keys(SystemPurposes)
-      .filter(key => SystemPurposes.hasOwnProperty(key))
-      .filter(key => {
-        const purpose = SystemPurposes[key as SystemPurposeId];
-        return purpose.title.toLowerCase().includes(query.toLowerCase())
-          || (typeof purpose.description === 'string' && purpose.description.toLowerCase().includes(query.toLowerCase()));
-      });
-    setFilteredIDs(ids as SystemPurposeId[]);
-
-    // If there's a search term, activate the first item
-    if (ids.length && !ids.includes(systemPurposeId))
-      handlePurposeChanged(ids[0] as SystemPurposeId);
-  };
-
-  const handleSearchOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key == 'Escape')
-      handleSearchClear();
-  };
+  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const visiblePurposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
+  const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
 
 
-  const toggleEditMode = () => setEditMode(!editMode);
+  // Handlers
 
-
-  const handlePurposeChanged = (purposeId: SystemPurposeId | null) => {
-    if (purposeId)
+  const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
+    if (purposeId && setSystemPurposeId)
       setSystemPurposeId(props.conversationId, purposeId);
-  };
+  }, [props.conversationId, setSystemPurposeId]);
 
-  const handleCustomSystemMessageChange = (v: React.ChangeEvent<HTMLTextAreaElement>): void => {
+  const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
     // TODO: persist this change? Right now it's reset every time.
     //       maybe we shall have a "save" button just save on a state to persist between sessions
     SystemPurposes['Custom'].systemMessage = v.target.value;
-  };
+  }, []);
+
+  const toggleEditMode = React.useCallback(() => setEditMode(on => !on), []);
 
 
-  // we show them all if the filter is clear (null)
-  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
-  const purposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
+  // Search (filtering)
 
-  const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
+  const handleSearchClear = React.useCallback(() => {
+    setSearchQuery('');
+    setFilteredIDs(null);
+  }, []);
 
-  const selectedPurpose = purposeIDs.length ? (SystemPurposes[systemPurposeId] ?? null) : null;
-  const selectedExample = selectedPurpose?.examples && getRandomElement(selectedPurpose.examples) || null;
+  const handleSearchOnChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    if (!query)
+      return handleSearchClear();
+
+    // Filter results based on search term (title and description)
+    const lcQuery = query.toLowerCase();
+    const ids = (Object.keys(SystemPurposes) as SystemPurposeId[])
+      .filter(key => SystemPurposes.hasOwnProperty(key))
+      .filter(key => {
+        const purpose = SystemPurposes[key as SystemPurposeId];
+        return purpose.title.toLowerCase().includes(lcQuery)
+          || (typeof purpose.description === 'string' && purpose.description.toLowerCase().includes(lcQuery));
+      });
+
+    setSearchQuery(query);
+    setFilteredIDs(ids);
+
+    // If there's a search term, activate the first item
+    // if (ids.length && systemPurposeId && !ids.includes(systemPurposeId))
+    //   handlePurposeChanged(ids[0] as SystemPurposeId);
+  }, [handleSearchClear]);
+
+  const handleSearchOnKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key == 'Escape')
+      handleSearchClear();
+  }, [handleSearchClear]);
+
+
+  // safety check - shouldn't happen
+  if (!selectedPurpose || !setSystemPurposeId)
+    return null;
+
 
   return <>
 
@@ -158,7 +166,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         </Box>
 
         <Grid container spacing={tileSpacing} sx={{ justifyContent: 'flex-start' }}>
-          {purposeIDs.map((spId) => (
+
+          {/* Tiles */}
+          {visiblePurposeIDs.map((spId) => (
             <Grid key={spId}>
               <Button
                 variant={(!editMode && systemPurposeId === spId) ? 'solid' : 'soft'}
@@ -197,7 +207,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               </Button>
             </Grid>
           ))}
-          {/* Button to start the Persona Creator */}
+
+          {/* Persona Creator Button */}
           {(editMode || !hidePersonaCreator) && <Grid>
             <Button
               variant='soft' color='neutral'
@@ -237,7 +248,10 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               </div>
             </Button>
           </Grid>}
+
         </Grid>
+
+        {/* Example incipits */}
         <Typography
           level='body-sm'
           sx={{
@@ -269,13 +283,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             minRows={3}
             defaultValue={SystemPurposes['Custom']?.systemMessage} onChange={handleCustomSystemMessageChange}
             sx={{
-              backgroundColor: 'background.level1',
+              backgroundColor: 'background.surface',
               '&:focus-within': {
                 backgroundColor: 'background.popup',
               },
               lineHeight: lineHeightTextarea,
               mt: 1,
-            }} />
+            }}
+          />
         )}
 
       </Box>
