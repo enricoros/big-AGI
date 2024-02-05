@@ -72,6 +72,18 @@ first time (or update it on a later stage).
 | `POSTGRES_URL_NON_POOLING` | The URL of the Postgres database without pooling                                                                                                                |
 | `MDB_URI` | The MongoDB connection string if using MongoDB                                                                                                         |
 
+### MongoDB ONLY
+
+If using MongoDB, the file 'prisma/schema.prisma' should have the following value in the 'db' section...
+
+```
+datasource db {
+  provider  = "mongodb"
+  url       = env("MDB_URI")
+}
+```
+
+
 ### LLMs
 
 The following variables when set will enable the corresponding LLMs on the server-side, without
