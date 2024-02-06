@@ -1,5 +1,4 @@
 import * as React from 'react';
-import ForkRightIcon from '@mui/icons-material/ForkRight';
 import { Panel, PanelGroup } from 'react-resizable-panels';
 
 import { useTheme } from '@mui/joy';
@@ -317,24 +316,23 @@ export function AppChat() {
     setTradeConfig({ dir: 'export', conversationId, exportAll });
   }, []);
 
-  const handleConversationBranch = React.useCallback((conversationId: DConversationId, messageId: string | null): DConversationId | null => {
+  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null): DConversationId | null => {
+    // clone data
+    const branchedConversationId = branchConversation(srcConversationId, messageId);
+
+    // if a folder is active, add the new conversation to the folder
+    if (activeFolderId && branchedConversationId)
+      useFolderStore.getState().addConversationToFolder(activeFolderId, branchedConversationId);
+
+    // replace/open a new pane with this
     showNextTitleChange.current = true;
-    const branchedConversationId = branchConversation(conversationId, messageId);
     if (isMultiPane)
       openSplitConversationId(branchedConversationId);
     else
       setFocusedConversationId(branchedConversationId);
-    addSnackbar({
-      key: 'branch-conversation',
-      message: 'Branch started.',
-      type: 'success',
-      overrides: {
-        autoHideDuration: 2000,
-        startDecorator: <ForkRightIcon />,
-      },
-    });
+
     return branchedConversationId;
-  }, [branchConversation, isMultiPane, openSplitConversationId, setFocusedConversationId]);
+  }, [activeFolderId, branchConversation, isMultiPane, openSplitConversationId, setFocusedConversationId]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
