@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
@@ -22,6 +23,55 @@ const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
 
 // defined looks
 const tileSize = 7.5; // rem
+
+
+function Tile(props: {
+  text?: string,
+  symbol?: string,
+  isActive: boolean,
+  isEditMode: boolean,
+  isHidden?: boolean,
+  isHighlighted?: boolean,
+  onClick: () => void,
+  sx?: SxProps,
+}) {
+  return (
+    <Button
+      variant={(!props.isEditMode && props.isActive) ? 'solid' : 'soft'}
+      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'warning' : 'neutral'}
+      onClick={props.onClick}
+      sx={{
+        aspectRatio: 1,
+        height: `${tileSize}rem`,
+        fontWeight: 500,
+        ...((props.isEditMode || !props.isActive) ? {
+          boxShadow: 'sm',
+          ...(props.isHighlighted ? {} : { backgroundColor: 'background.surface' }),
+        } : {}),
+        flexDirection: 'column', gap: 1,
+        ...props.sx,
+      }}
+    >
+      {/* [Edit mode checkbox] */}
+      {props.isEditMode && (
+        <Checkbox
+          variant='soft' color='neutral'
+          checked={!props.isHidden}
+          // label={<Typography level='body-xs'>show</Typography>}
+          sx={{ position: 'absolute', left: 8, top: 8 }}
+        />
+      )}
+
+      {/* Icon and Text */}
+      <Box sx={{ fontSize: '2rem' }}>
+        {props.symbol}
+      </Box>
+      <div>
+        {props.text}
+      </div>
+    </Button>
+  );
+}
 
 
 /**
@@ -61,7 +111,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [systemPurposeId]);
 
 
-  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes);
+  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes) as SystemPurposeId[];
   const visiblePurposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
   const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
 
@@ -130,7 +180,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
       mx: 'auto',
       minHeight: '60svh',
       display: 'grid',
-      p: { xs: 0.5, sm: 1 },
+      p: { xs: 0.5, sm: 1, md: 2 },
     }}>
 
       {showFinder && <Box>
@@ -177,77 +227,39 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         </Box>
 
         {/* Personas Tiles */}
-        {visiblePurposeIDs.map((spId) => (
-          <Button
-            key={spId}
-            variant={(!editMode && systemPurposeId === spId) ? 'solid' : 'soft'}
-            color={(!editMode && systemPurposeId === spId) ? 'primary' : SystemPurposes[spId as SystemPurposeId]?.highlighted ? 'warning' : 'neutral'}
-            onClick={() => editMode
-              ? toggleHiddenPurposeId(spId)
-              : handlePurposeChanged(spId as SystemPurposeId)
-            }
-            sx={{
-              aspectRatio: 1,
-              height: `${tileSize}rem`,
-              fontWeight: 500,
-              ...((editMode || systemPurposeId !== spId) ? {
-                boxShadow: 'sm',
-                ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { backgroundColor: 'background.surface' }),
-              } : {}),
-              flexDirection: 'column', gap: 1,
-            }}
-          >
-            {editMode && (
-              <Checkbox
-                variant='soft' color='neutral'
-                checked={!hiddenPurposeIDs.includes(spId)}
-                // label={<Typography level='body-xs'>show</Typography>}
-                sx={{ position: 'absolute', left: 8, top: 8 }}
-              />
-            )}
-            <div style={{ fontSize: '2rem' }}>
-              {SystemPurposes[spId as SystemPurposeId]?.symbol}
-            </div>
-            <div>
-              {SystemPurposes[spId as SystemPurposeId]?.title}
-            </div>
-          </Button>
-        ))}
+        {visiblePurposeIDs.map((spId: SystemPurposeId) => {
+          const isActive = systemPurposeId === spId;
+          const systemPurpose = SystemPurposes[spId];
+          return (
+            <Tile
+              key={'tile-' + spId}
+              text={systemPurpose?.title}
+              symbol={systemPurpose?.symbol}
+              isActive={isActive}
+              isEditMode={editMode}
+              isHidden={hiddenPurposeIDs.includes(spId)}
+              isHighlighted={systemPurpose?.highlighted}
+              onClick={() => editMode ? toggleHiddenPurposeId(spId) : handlePurposeChanged(spId)}
+            />
+          );
+        })}
 
         {/* Persona Creator Tile */}
         {(editMode || !hidePersonaCreator) && (
-          <Button
-            variant='soft'
-            color='neutral'
+          <Tile
+            text='Persona Creator'
+            symbol='🎭'
+            isActive={false}
+            isEditMode={editMode}
+            isHidden={hidePersonaCreator}
             onClick={() => editMode ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR) : void navigateToPersonas()}
             sx={{
-              aspectRatio: 1,
-              height: `${tileSize}rem`,
-              fontWeight: 500,
               boxShadow: 'xs',
               backgroundColor: 'neutral.softDisabledBg',
-              flexDirection: 'column', gap: 1,
             }}
-          >
-            {editMode && (
-              <Checkbox
-                variant='soft' color='neutral'
-                checked={!hidePersonaCreator}
-                // label={<Typography level='body-xs'>show</Typography>}
-                sx={{ position: 'absolute', left: 8, top: 8 }}
-              />
-            )}
-            <div>
-              <div style={{ fontSize: '2rem' }}>
-                🎭
-              </div>
-              {/*<SettingsAccessibilityIcon style={{ opacity: 0.5 }} />*/}
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              Persona Creator
-            </div>
-          </Button>
+          />
         )}
+
 
         {/* [row -3] Description */}
         {showExamples && (
