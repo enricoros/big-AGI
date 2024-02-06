@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, ListDivider, ListItemDecorator, MenuItem, Switch } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
+import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -17,6 +18,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 import { useChatShowSystemMessages } from '../store-app-chat';
+import { usePaneDuplicateOrClose } from './panes/usePanesManager';
 
 
 export function ChatPageMenuItems(props: {
@@ -25,20 +27,32 @@ export function ChatPageMenuItems(props: {
   hasConversations: boolean,
   isConversationEmpty: boolean,
   isMessageSelectionMode: boolean,
-  isMultiPane: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
-  onToggleMultiPane: () => void,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
 }) {
 
   // external state
   const { closePageMenu } = useOptimaDrawers();
+  const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
   // derived state
   const disabled = !props.conversationId || props.isConversationEmpty;
+
+
+  const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
+    if (isMultiPane)
+      removeOtherPanes();
+    else
+      duplicateFocusedPane();
+  }, [duplicateFocusedPane, isMultiPane, removeOtherPanes]);
+
+  const handleIncreaseMultiPane = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    duplicateFocusedPane();
+  }, [duplicateFocusedPane]);
 
 
   const closeMenu = (event: React.MouseEvent) => {
@@ -78,13 +92,28 @@ export function ChatPageMenuItems(props: {
       <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
     </MenuItem>
 
-    {/* Split/Unsplit panes */}
-    <MenuItem onClick={props.onToggleMultiPane}>
+    {/* Un /Split */}
+    <MenuItem onClick={handleToggleMultiPane}>
       <ListItemDecorator>{props.isMobile
-        ? (props.isMultiPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
-        : (props.isMultiPane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />)
+        ? (isMultiPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
+        : (isMultiPane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />)
       }</ListItemDecorator>
-      {props.isMultiPane ? 'Unsplit' : props.isMobile ? 'Split Down' : 'Split Right'}
+      {/* Unsplit / Split text*/}
+      {isMultiPane ? 'Unsplit' : props.isMobile ? 'Split Down' : 'Split Right'}
+      {/* '+' */}
+      {isMultiPane && (
+        <Tooltip title='Add Another Split'>
+          <IconButton
+            size='sm'
+            variant='outlined'
+            disabled={!canAddPane}
+            onClick={handleIncreaseMultiPane}
+            sx={{ ml: 'auto', /*mr: '2px',*/ my: '-0.25rem' /* absorb the menuItem padding */ }}
+          >
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
+      )}
     </MenuItem>
 
     <ListDivider />

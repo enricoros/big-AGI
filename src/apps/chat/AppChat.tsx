@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Panel, PanelGroup } from 'react-resizable-panels';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { useTheme } from '@mui/joy';
 
@@ -14,7 +14,7 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
-import { GoodPanelResizeHandler } from '~/common/components/panes/GoodPanelResizeHandler';
+import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
@@ -81,8 +81,6 @@ export function AppChat() {
     openConversationInFocusedPane,
     openConversationInSplitPane,
     focusedPaneIndex,
-    duplicateFocusedPane,
-    removeOtherPanes,
     removePane,
     setFocusedPane,
   } = usePanesManager();
@@ -116,6 +114,7 @@ export function AppChat() {
   // Window actions
 
   const isMultiPane = chatPanes.length >= 2;
+  const isMultiAddable = chatPanes.length < 4;
   const isMultiConversationId = isMultiPane && new Set(chatPanes.map((pane) => pane.conversationId)).size >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
 
@@ -126,13 +125,6 @@ export function AppChat() {
   const openSplitConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInSplitPane(conversationId);
   }, [openConversationInSplitPane]);
-
-  const handleToggleMultiPane = React.useCallback(() => {
-    if (isMultiPane)
-      removeOtherPanes();
-    else
-      duplicateFocusedPane();
-  }, [duplicateFocusedPane, isMultiPane, removeOtherPanes]);
 
   const handleNavigateHistory = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
@@ -326,13 +318,13 @@ export function AppChat() {
 
     // replace/open a new pane with this
     showNextTitleChange.current = true;
-    if (isMultiPane)
+    if (isMultiAddable)
       openSplitConversationId(branchedConversationId);
     else
       setFocusedConversationId(branchedConversationId);
 
     return branchedConversationId;
-  }, [activeFolderId, branchConversation, isMultiPane, openSplitConversationId, setFocusedConversationId]);
+  }, [activeFolderId, branchConversation, isMultiAddable, openSplitConversationId, setFocusedConversationId]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
@@ -420,14 +412,12 @@ export function AppChat() {
         hasConversations={!areChatsEmpty}
         isConversationEmpty={isFocusedChatEmpty}
         isMessageSelectionMode={isMessageSelectionMode}
-        isMultiPane={isMultiPane}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
         onConversationFlatten={handleConversationFlatten}
-        onToggleMultiPane={handleToggleMultiPane}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, handleToggleMultiPane, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isMultiPane],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
@@ -443,22 +433,24 @@ export function AppChat() {
         const _paneConversationId = pane.conversationId;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${idx}-${_paneConversationId}`;
+        const _sepId = `sep-pane-${idx}-${_paneConversationId}`;
         return <React.Fragment key={_keyAndId}>
+
           <Panel
             id={_keyAndId}
             order={idx}
-            collapsible
-            defaultSize={_panesCount > 0 ? Math.round(100 / _panesCount) : undefined}
+            collapsible={chatPanes.length === 2}
+            defaultSize={(_panesCount === 3 && idx === 1) ? 34 : Math.round(100 / _panesCount)}
             minSize={20}
             onClick={(event) => {
               const setFocus = chatPanes.length < 2 || !event.altKey;
               setFocusedPane(setFocus ? idx : -1);
             }}
             onCollapse={() => {
-              // the small delay does not look good but lets the Panel state settle
+              // NOTE: despite the delay to try to let the draggin settle, there seems to be an issue with the Pane locking the screen
               // setTimeout(() => removePane(idx), 50);
-              // NOTE: seems there's an issue anyway with the Pane locking the screen, so we'll just call it directly
-              removePane(idx);
+              // more than 2 will result in an assertion from the framework
+              if (chatPanes.length === 2) removePane(idx);
             }}
             style={{
               // for anchoring the scroll button in place
@@ -519,7 +511,11 @@ export function AppChat() {
           </Panel>
 
           {/* Panel Separators & Resizers */}
-          {idx < _panesCount - 1 && <GoodPanelResizeHandler />}
+          {idx < _panesCount - 1 && (
+            <PanelResizeHandle id={_sepId}>
+              <PanelResizeInset />
+            </PanelResizeHandle>
+          )}
 
         </React.Fragment>;
       })}

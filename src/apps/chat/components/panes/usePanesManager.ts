@@ -299,8 +299,6 @@ export function usePanesManager() {
       onConversationsChanged,
       openConversationInFocusedPane,
       openConversationInSplitPane,
-      duplicateFocusedPane,
-      removeOtherPanes,
       removePane,
       setFocusedPane,
     } = state;
@@ -313,8 +311,6 @@ export function usePanesManager() {
       openConversationInFocusedPane,
       openConversationInSplitPane,
       focusedPaneIndex: chatPaneFocusIndex,
-      duplicateFocusedPane,
-      removeOtherPanes,
       removePane,
       setFocusedPane,
     };
@@ -333,4 +329,13 @@ export function usePanesManager() {
   return {
     ...panesFunctions,
   };
+}
+
+export function usePaneDuplicateOrClose() {
+  return useAppChatPanesStore(state => ({
+    canAddPane: state.chatPanes.length < 4,
+    isMultiPane: state.chatPanes.length > 1,
+    duplicateFocusedPane: state.duplicateFocusedPane,
+    removeOtherPanes: state.removeOtherPanes,
+  }), shallow);
 }
