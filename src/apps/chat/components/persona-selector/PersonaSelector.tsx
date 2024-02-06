@@ -20,10 +20,8 @@ import { usePurposeStore } from './store-purposes';
 // 'special' purpose IDs, for tile hiding purposes
 const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
 
-// Constants for tile sizes / grid width - breakpoints need to be computed here to work around
-// the "flex box cannot shrink over wrapped content" issue
-//
-// Absolutely dislike this workaround, but it's the only way I found to make it work
+// defined looks
+const tileSize = 7.5; // rem
 
 
 /**
@@ -128,14 +126,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   return (
     <Box sx={{
       maxWidth: 'md',
-      minWidth: '18rem',
+      minWidth: `${2 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
       mx: 'auto',
       minHeight: '60svh',
       display: 'grid',
       p: { xs: 0.5, sm: 1 },
     }}>
 
-      {showFinder && <Box sx={{}}>
+      {showFinder && <Box>
         <Input
           fullWidth
           variant='outlined' color='neutral'
@@ -159,7 +157,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         my: 'auto',
         // layout
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(8rem, 8rem))',
+        gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize}rem, ${tileSize}rem))`,
         justifyContent: 'center', gap: 1,
       }}>
 
@@ -190,7 +188,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             }
             sx={{
               aspectRatio: 1,
-              height: '8rem',
+              height: `${tileSize}rem`,
               fontWeight: 500,
               ...((editMode || systemPurposeId !== spId) ? {
                 boxShadow: 'md',
@@ -224,7 +222,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             onClick={() => editMode ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR) : void navigateToPersonas()}
             sx={{
               aspectRatio: 1,
-              height: '8rem',
+              height: `${tileSize}rem`,
               fontWeight: 500,
               boxShadow: 'xs',
               backgroundColor: 'neutral.softDisabledBg',
@@ -233,7 +231,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           >
             {editMode && (
               <Checkbox
-                color='neutral'
+                variant='soft' color='neutral'
                 checked={!hidePersonaCreator}
                 // label={<Typography level='body-xs'>show</Typography>}
                 sx={{ position: 'absolute', left: 8, top: 8 }}
@@ -269,7 +267,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           <List sx={{
             gridColumn: '1 / -1',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(17rem, 1fr))',
+            gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
             gap: 1,
           }}>
             {fourExamples?.map((example, idx) => (
