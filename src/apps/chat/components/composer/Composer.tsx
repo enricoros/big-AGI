@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { keyframes } from '@emotion/react';
 
-import { Box, Button, ButtonGroup, Card, Dropdown, FormControl, FormLabel, Grid, IconButton, Menu, MenuButton, MenuItem, Stack, Switch, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -23,8 +23,6 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import { ChatMulticastOffIcon } from '~/common/components/icons/ChatMulticastOffIcon';
-import { ChatMulticastOnIcon } from '~/common/components/icons/ChatMulticastOnIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -56,6 +54,7 @@ import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCaptu
 import { ButtonCall } from './buttons/ButtonCall';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
+import { ButtonMultiChat } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadgeMemo } from './TokenBadge';
@@ -457,15 +456,17 @@ export function Composer(props: {
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Button column and composer Text (mobile: top, desktop: left and center) */}
-        <Grid xs={12} md={9}><Stack direction='row' spacing={{ xs: 1, md: 2 }}>
+        <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
 
           {/* Vertical (insert) buttons */}
           {isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            // [mobile] Left button column
+            <Box sx={{ display: 'grid', gap: 1 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
+              {/* [mobile] [+] button */}
               <Dropdown>
                 <MenuButton slots={{ root: IconButton }}>
                   <AddCircleOutlineIcon />
@@ -488,9 +489,13 @@ export function Composer(props: {
                 </Menu>
               </Dropdown>
 
+              {/* [Mobile] MultiChat button */}
+              {props.isMulticast !== null && <ButtonMultiChat isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            // [desktop] Left button column
+            <Box sx={{ display: 'grid', gap: 1 }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
@@ -513,12 +518,12 @@ export function Composer(props: {
 
           {/* Vertically stacked [ Edit box + Overlays + Mic | Attachments ] */}
           <Box sx={{
-            flexGrow: 1,
-            display: 'flex', flexDirection: 'column', gap: 1,
+            flexGrow: 1, // fill right
             minWidth: 200, // enable X-scrolling (resetting any possible minWidth due to the attachments)
+            display: 'grid', gap: 1,
           }}>
 
-            {/* Edit box + Overlays + Mic buttons */}
+            {/* Textare + Mic buttons + Mic/Drag overlay */}
             <Box sx={{ position: 'relative' }}>
 
               {/* Edit box with inner Token Progress bar */}
@@ -642,7 +647,7 @@ export function Composer(props: {
 
           </Box>
 
-        </Stack></Grid>
+        </Box></Grid>
 
         {/* Send pane (mobile: bottom, desktop: right) */}
         <Grid xs={12} md={3}>
@@ -716,17 +721,7 @@ export function Composer(props: {
             </Box>
 
             {/* [desktop] Multicast switch (under the Chat button) */}
-            {isDesktop && props.isMulticast !== null && (
-              <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between' }}>
-                <FormLabel sx={{ gap: 1, flexFlow: 'row nowrap' }}>
-                  <Box sx={{ display: { xs: 'none', lg: 'inline-block' } }}>
-                    {props.isMulticast ? <ChatMulticastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatMulticastOffIcon />}
-                  </Box>
-                  {props.isMulticast ? 'Multichat · On' : 'Multichat'}
-                </FormLabel>
-                <Switch color={props.isMulticast ? 'primary' : undefined} checked={props.isMulticast} onChange={(e) => props.setIsMulticast(e.target.checked)} />
-              </FormControl>
-            )}
+            {isDesktop && props.isMulticast !== null && <ButtonMultiChat multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
             {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
             {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
