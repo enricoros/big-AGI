@@ -191,7 +191,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               height: `${tileSize}rem`,
               fontWeight: 500,
               ...((editMode || systemPurposeId !== spId) ? {
-                boxShadow: 'md',
+                boxShadow: 'sm',
                 ...(SystemPurposes[spId as SystemPurposeId]?.highlighted ? {} : { backgroundColor: 'background.surface' }),
               } : {}),
               flexDirection: 'column', gap: 1,
@@ -199,7 +199,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           >
             {editMode && (
               <Checkbox
-                color='neutral'
+                variant='soft' color='neutral'
                 checked={!hiddenPurposeIDs.includes(spId)}
                 // label={<Typography level='body-xs'>show</Typography>}
                 sx={{ position: 'absolute', left: 8, top: 8 }}
