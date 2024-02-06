@@ -34,7 +34,7 @@ import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ActileItem, ActileProvider } from './actile/ActileProvider';
@@ -104,6 +104,7 @@ export function Composer(props: {
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
+  const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
@@ -120,6 +121,7 @@ export function Composer(props: {
   const { inComposer: browsingInComposer } = useBrowseCapability();
   const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
     useAttachments(browsingInComposer && !composeText.startsWith('/'));
+
 
   // derived state
 
@@ -262,6 +264,8 @@ export function Composer(props: {
       }
 
       // Shift: toggles the 'enter is newline'
+      if (e.shiftKey)
+        touchShiftEnter();
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         if (!assistantAbortible)
           handleSendAction(chatModeId, composeText);
@@ -269,7 +273,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction]);
+  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, touchShiftEnter]);
 
 
   // Focus mode
@@ -439,17 +443,18 @@ export function Composer(props: {
     ? 'warning'
     : isReAct ? 'success' : isDraw ? 'warning' : 'primary';
 
-  const textPlaceholder: string =
+  let textPlaceholder: string =
     isDraw
       ? 'Describe an idea or a drawing...'
       : isReAct
         ? 'Multi-step reasoning question...'
         : props.isDeveloperMode
-          ? 'Chat with me · drop source files · attach code...'
+          ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
           : props.capabilityHasT2I
             ? 'Chat · /react · /draw · drop files...'
             : 'Chat · /react · drop files...';
-
+  if (isDesktop && explainShiftEnter)
+    textPlaceholder += !enterIsNewline ? '\nShift+Enter to add a new line' : '\nShift+Enter to send';
 
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
