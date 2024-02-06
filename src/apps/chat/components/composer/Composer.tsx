@@ -455,13 +455,14 @@ export function Composer(props: {
     <Box aria-label='User Message' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
-        {/* Button column and composer Text (mobile: top, desktop: left and center) */}
         <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
 
-          {/* Vertical (insert) buttons */}
-          {isMobile ? (
-            // [mobile] Left button column
-            <Box sx={{ display: 'grid', gap: 1 }}>
+          {/* Start buttons column */}
+          <Box sx={{
+            flexGrow: 0,
+            display: 'grid', gap: 1,
+          }}>
+            {isMobile ? <>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
@@ -492,10 +493,7 @@ export function Composer(props: {
               {/* [Mobile] MultiChat button */}
               {props.isMulticast !== null && <ButtonMultiChat isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
-            </Box>
-          ) : (
-            // [desktop] Left button column
-            <Box sx={{ display: 'grid', gap: 1 }}>
+            </> : <>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
@@ -513,17 +511,17 @@ export function Composer(props: {
               {/* Responsive Camera OCR button */}
               {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
 
-            </Box>
-          )}
+            </>}
+          </Box>
 
-          {/* Vertically stacked [ Edit box + Overlays + Mic | Attachments ] */}
+          {/* [ Textarea + Overlays + Mic | Attachments ] */}
           <Box sx={{
-            flexGrow: 1, // fill right
             minWidth: 200, // enable X-scrolling (resetting any possible minWidth due to the attachments)
+            flexGrow: 1,
             display: 'grid', gap: 1,
           }}>
 
-            {/* Textare + Mic buttons + Mic/Drag overlay */}
+            {/* Textarea + Mic buttons + Mic/Drag overlay */}
             <Box sx={{ position: 'relative' }}>
 
               {/* Edit box with inner Token Progress bar */}
@@ -649,11 +647,11 @@ export function Composer(props: {
 
         </Box></Grid>
 
-        {/* Send pane (mobile: bottom, desktop: right) */}
+
         <Grid xs={12} md={3}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
 
-            {/* Send/Stop (and mobile corner buttons) */}
+            {/* This row is here only for the [mobile] bottom-start corner item */}
             <Box sx={{ display: 'flex' }}>
 
               {/* [mobile] bottom-corner secondary button */}
@@ -724,7 +722,7 @@ export function Composer(props: {
             {isDesktop && props.isMulticast !== null && <ButtonMultiChat multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
             {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
-            {isDesktop && <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'flex-end' }}>
+            {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
               {isChat && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
@@ -737,23 +735,23 @@ export function Composer(props: {
           </Box>
         </Grid>
 
-
-        {/* Mode selector */}
-        {!!chatModeMenuAnchor && (
-          <ChatModeMenu
-            anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
-            chatModeId={chatModeId} onSetChatModeId={handleModeChange}
-            capabilityHasTTI={props.capabilityHasT2I}
-          />
-        )}
-
-        {/* Camera */}
-        {cameraCaptureComponent}
-
-        {/* Actile */}
-        {actileComponent}
-
       </Grid>
+
+      {/* Mode selector */}
+      {!!chatModeMenuAnchor && (
+        <ChatModeMenu
+          anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
+          chatModeId={chatModeId} onSetChatModeId={handleModeChange}
+          capabilityHasTTI={props.capabilityHasT2I}
+        />
+      )}
+
+      {/* Camera */}
+      {cameraCaptureComponent}
+
+      {/* Actile */}
+      {actileComponent}
+
     </Box>
   );
 }
