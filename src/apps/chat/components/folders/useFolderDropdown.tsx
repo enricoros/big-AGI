@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import ClearIcon from '@mui/icons-material/Clear';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import type { DConversationId } from '~/common/state/store-chats';
@@ -7,7 +8,7 @@ import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/compo
 import { useFolderStore } from '~/common/state/store-folders';
 
 
-export const ClearFolderText = 'Clear Folder';
+export const ClearFolderText = 'No Folder';
 const SPECIAL_ID_CLEAR_FOLDER = '_REMOVE_';
 
 
@@ -18,7 +19,10 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
 
 
   // Prepare items for the dropdown
-  const folderItems: DropdownItems = React.useMemo(() => {
+  const folderItems: DropdownItems | null = React.useMemo(() => {
+    if (!folders.length)
+      return null;
+
     // add one item per folder
     const items = folders.reduce((items, folder) => {
       items[folder.id] = {
@@ -31,6 +35,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
     // add one item representing no folder
     items[SPECIAL_ID_CLEAR_FOLDER] = {
       title: ClearFolderText,
+      icon: <ClearIcon />,
     };
 
     return items;
@@ -59,7 +64,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
   const folderDropdown = React.useMemo(() => {
 
     // don't show the dropdown if folders are not enabled
-    if (!enableFolders)
+    if (!enableFolders || !folderItems)
       return null;
 
     return (

@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
@@ -359,6 +360,9 @@ function ChatDrawer(props: {
         {!!folderChangeRequest.currentFolder && (
           <ListItem onClick={() => handleConversationFolderSet(folderChangeRequest.conversationId, null)}>
             <ListItemButton>
+              <ListItemDecorator>
+                <ClearIcon />
+              </ListItemDecorator>
               {ClearFolderText}
             </ListItemButton>
           </ListItem>
