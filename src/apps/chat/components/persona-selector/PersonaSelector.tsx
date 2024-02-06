@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Button, Checkbox, IconButton, Input, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
@@ -30,13 +30,17 @@ const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
 export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: string) => void }) {
+
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const showFinder = useUIPreferencesStore(state => state.showPurposeFinder);
+  const { showExamples, showFinder } = useUIPreferencesStore(state => ({
+    showExamples: state.zenMode !== 'cleaner',
+    showFinder: state.showPurposeFinder,
+  }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -49,12 +53,13 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // derived state
 
-  const { selectedPurpose, selectedExample } = React.useMemo(() => {
+  const { selectedPurpose, fourExamples } = React.useMemo(() => {
     const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
-    const selectedExample = selectedPurpose?.examples?.length
-      ? selectedPurpose.examples[Math.floor(Math.random() * selectedPurpose.examples.length)]
-      : null;
-    return { selectedPurpose, selectedExample };
+    // const selectedExample = selectedPurpose?.examples?.length
+    //   ? selectedPurpose.examples[Math.floor(Math.random() * selectedPurpose.examples.length)]
+    //   : null;
+    const fourExamples = selectedPurpose?.examples?.slice(0, 4) ?? null;
+    return { selectedPurpose, fourExamples };
   }, [systemPurposeId]);
 
 
@@ -127,7 +132,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
       mx: 'auto',
       minHeight: '60svh',
       display: 'grid',
-      p: { xs: 1, sm: 1 },
+      p: { xs: 0.5, sm: 1 },
     }}>
 
       {showFinder && <Box sx={{}}>
@@ -151,11 +156,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
 
       <Box sx={{
-        // mx: 'auto',
         my: 'auto',
-        // width: '100%',
-        // height: '100%',
-
         // layout
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(8rem, 8rem))',
@@ -250,32 +251,50 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           </Button>
         )}
 
+        {/* [row -3] Description */}
+        {showExamples && (
+          <Typography
+            level='body-sm'
+            sx={{
+              gridColumn: '1 / -1',
+              mt: 2,
+            }}>
+            {selectedPurpose?.description || 'No description available'}
+            {/*{fourExamples?.length ? '. Examples:': ''}*/}
+          </Typography>
+        )}
 
         {/* [row -2] Example incipits */}
-        <Typography
-          level='body-sm'
-          sx={{
+        {showExamples && !!fourExamples && (
+          <List sx={{
             gridColumn: '1 / -1',
-            display: 'flex', alignItems: 'center', gap: 1,
-            // justifyContent: 'center',
-            '&:hover > button': { opacity: 1 },
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(17rem, 1fr))',
+            gap: 1,
           }}>
-          {!selectedPurpose
-            ? 'Oops! No AI persona found for your search.'
-            : (selectedExample
-                ? <>
-                  Example: {selectedExample}
-                  <IconButton
-                    color='primary'
-                    onClick={() => props.runExample(selectedExample)}
-                    sx={{ opacity: 0, transition: 'opacity 0.3s' }}
-                  >
-                    <TelegramIcon />
-                  </IconButton>
-                </>
-                : selectedPurpose.description
-            )}
-        </Typography>
+            {fourExamples?.map((example, idx) => (
+              <ListItem
+                key={idx}
+                variant='soft'
+                sx={{
+                  borderRadius: 'xs',
+                  boxShadow: 'xs',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: 'background.surface',
+                  '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
+                  '&:hover svg': { opacity: 1 },
+                }}
+              >
+                <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
+                  <Typography level='body-sm'>
+                    {example}
+                  </Typography>
+                  <TelegramIcon color='primary' sx={{}} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        )}
 
         {/* [row -1] Custom Prompt box */}
         {systemPurposeId === 'Custom' && (
@@ -298,7 +317,6 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 backgroundColor: 'background.popup',
               },
               lineHeight: lineHeightTextarea,
-              mt: 1,
             }}
           />
         )}
