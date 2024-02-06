@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { StaticImageData } from 'next/image';
 
 import { Box, Button, Card, CardContent, Chip, Grid, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -39,7 +40,7 @@ const RCode = `${OpenRepo}/blob/main`;
 const RIssues = `${OpenRepo}/issues`;
 
 // callout, for special occasions
-export const newsCallout =
+export const newsRoadmapCallout =
   <Card>
     <CardContent sx={{ gap: 2 }}>
       <Typography level='title-lg'>
@@ -247,6 +248,7 @@ interface NewsItem {
   versionName?: string;
   versionMoji?: string;
   versionDate?: Date;
+  versionCoverImage?: StaticImageData;
   text?: string | React.JSX.Element;
   items?: {
     text: string | React.JSX.Element;
