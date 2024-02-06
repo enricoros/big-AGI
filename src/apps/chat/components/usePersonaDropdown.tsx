@@ -8,7 +8,7 @@ import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDr
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-function AppBarPersonaDropdown(props: {
+function PersonaDropdown(props: {
   systemPurposeId: SystemPurposeId | null,
   setSystemPurposeId: (systemPurposeId: SystemPurposeId | null) => void,
 }) {
@@ -56,7 +56,7 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null) {
   const personaDropdown = React.useMemo(() => {
       if (!systemPurposeId) return null;
       return (
-        <AppBarPersonaDropdown
+        <PersonaDropdown
           systemPurposeId={systemPurposeId}
           setSystemPurposeId={handleSetSystemPurposeId}
         />

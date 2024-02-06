@@ -152,6 +152,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
         minHeight: 'var(--Bar)',
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
+        gap: props.isMobile ? 0 : 1,
       }}>
         {appBarItems
           ? appBarItems

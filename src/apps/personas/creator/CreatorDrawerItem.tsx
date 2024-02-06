@@ -56,7 +56,7 @@ export function CreatorDrawerItem(props: {
       <Box sx={{ overflow: 'hidden' }}>
 
         {/* Title or System prompt (ellipsized) */}
-        <Typography level='title-sm' sx={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        <Typography level='title-sm' className='agi-ellipsize'>
           {item.name || (item.systemPrompt?.slice(0, 40) + '...')}
         </Typography>
 

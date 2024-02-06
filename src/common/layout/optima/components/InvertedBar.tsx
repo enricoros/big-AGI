@@ -24,7 +24,7 @@ const StyledSheet = styled(Sheet)({
 }) as typeof Sheet;
 
 
-// This is the AppBar and the MobileAppNav and DesktopNav
+// This is the PageBar and the MobileAppNav and DesktopNav
 export const InvertedBar = (props: {
   id?: string,
   component: React.ElementType,

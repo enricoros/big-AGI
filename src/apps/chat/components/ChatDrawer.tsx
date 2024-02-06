@@ -329,7 +329,7 @@ function ChatDrawer(props: {
     {/* [Menu] Chat Item Folder Change */}
     {!!folderChangeRequest?.anchorEl && (
       <CloseableMenu
-        dense bigIcons
+        bigIcons
         open anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
         placement='bottom-start'
         zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
