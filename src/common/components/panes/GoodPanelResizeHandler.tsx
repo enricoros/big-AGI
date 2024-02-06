@@ -1,22 +1,16 @@
-import * as React from 'react';
-import { PanelResizeHandle } from 'react-resizable-panels';
-
-import { Box } from '@mui/joy';
+import { Box, styled } from '@mui/joy';
 
 import { themeBgApp } from '~/common/app.theme';
 
 
-export function GoodPanelResizeHandler() {
-  return (
-    <PanelResizeHandle>
-      <Box sx={{
-        backgroundColor: themeBgApp,
-        height: '100%',
-        width: '4px',
-        '&:hover': {
-          backgroundColor: 'primary.softActiveBg',
-        },
-      }} />
-    </PanelResizeHandle>
-  );
-}
+export const PanelResizeInset = styled(Box)({
+  backgroundColor: themeBgApp,
+  width: '100%',
+  height: '100%',
+  minWidth: '0.25rem',
+  minHeight: '0.25rem',
+  transition: 'background-color 0.2s',
+  '&:hover': {
+    backgroundColor: 'var(--joy-palette-primary-solidBg)',
+  },
+});
