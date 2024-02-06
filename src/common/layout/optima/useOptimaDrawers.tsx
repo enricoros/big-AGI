@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { getIsMobile } from '~/common/components/useMatchMedia';
+import { isBrowser } from '~/common/util/pwaUtils';
 
 
 interface OptimaDrawersState {
@@ -23,7 +24,7 @@ interface OptimaDrawersActions {
 const UseOptimaDrawers = React.createContext<(OptimaDrawersState & OptimaDrawersActions) | undefined>(undefined);
 
 // TRICK: this is how we persist the drawer state across page navigations
-let lastDrawerOpen = !getIsMobile();
+let lastDrawerOpen = !getIsMobile() && !(isBrowser && window.location.pathname === '/news');
 
 export function OptimaDrawerProvider(props: { children: React.ReactNode }) {
 

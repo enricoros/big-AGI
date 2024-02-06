@@ -143,6 +143,7 @@ export function AppNews() {
                         alt={`Cover image for ${ni.versionCode}`}
                         // commented: we scale the images to 600px wide (>300 px tall)
                         // sizes='(max-width: 1200px) 100vw, 50vw'
+                        priority={idx === 0}
                       />
                     </AspectRatio>
                   </CardOverflow>
