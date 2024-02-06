@@ -25,8 +25,11 @@ interface UIPreferencesStore {
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
-  showPurposeFinder: boolean;
-  setShowPurposeFinder: (showPurposeFinder: boolean) => void;
+  showPersonaExamples: boolean;
+  setShowPersonaExamples: (showPersonaExamples: boolean) => void;
+
+  showPersonaFinder: boolean;
+  setShowPersonaFinder: (showPersonaFinder: boolean) => void;
 
   zenMode: 'clean' | 'cleaner';
   setZenMode: (zenMode: 'clean' | 'cleaner') => void;
@@ -59,9 +62,12 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
+      showPersonaExamples: false,
+      setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),
+
       // Deprecated
-      showPurposeFinder: false,
-      setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
+      showPersonaFinder: false,
+      setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
