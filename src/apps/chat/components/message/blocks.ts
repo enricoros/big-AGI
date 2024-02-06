@@ -33,7 +33,7 @@ export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDif
     return legacyImageBlocks;
 
   const regexPatterns = {
-    codeBlock: /`{3,}([\w\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
+    codeBlock: /`{3,}([\w\x20\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     latexBlock: /\$\$([\s\S]*?)\$\$/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };

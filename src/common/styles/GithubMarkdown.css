@@ -114,6 +114,8 @@
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
+  /* Big-AGI: Make sure a block is at least a rem tall */
+  min-height: 1em;
   /* Big-AGI: Note: disabled because we have good CSS already */
   /*color: var(--color-fg-default);*/
   /*background-color: var(--color-canvas-default);*/
