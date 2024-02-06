@@ -2,10 +2,11 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, Chip, chipClasses, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -23,6 +24,7 @@ const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
 
 // defined looks
 const tileSize = 7.5; // rem
+const tileGap = 0.5; // rem
 
 
 function Tile(props: {
@@ -58,7 +60,7 @@ function Tile(props: {
           variant='soft' color='neutral'
           checked={!props.isHidden}
           // label={<Typography level='body-xs'>show</Typography>}
-          sx={{ position: 'absolute', left: 8, top: 8 }}
+          sx={{ position: 'absolute', left: `${tileGap}rem`, top: `${tileGap}rem` }}
         />
       )}
 
@@ -85,9 +87,10 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { showExamples, showFinder } = useUIPreferencesStore(state => ({
-    showExamples: state.zenMode !== 'cleaner',
-    showFinder: state.showPurposeFinder,
+  const { showExamples, showFinder, setShowExamples } = useUIPreferencesStore(state => ({
+    showExamples: state.showPersonaExamples,
+    showFinder: state.showPersonaFinder,
+    setShowExamples: state.setShowPersonaExamples,
   }), shallow);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -208,19 +211,19 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         // layout
         display: 'grid',
         gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize}rem, ${tileSize}rem))`,
-        justifyContent: 'center', gap: 1,
+        justifyContent: 'center', gap: `${tileGap}rem`,
       }}>
 
         {/* [row 0] ...  Edit mode [ ] */}
         <Box sx={{
           gridColumn: '1 / -1',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <Typography level='title-sm'>
             AI Persona
           </Typography>
           <Tooltip disableInteractive title={editMode ? 'Done Editing' : 'Edit Tiles'}>
-            <IconButton size='sm' onClick={toggleEditMode}>
+            <IconButton size='sm' onClick={toggleEditMode} sx={{ my: '-0.25rem' /* absorb the button padding */ }}>
               {editMode ? <DoneIcon /> : <EditIcon />}
             </IconButton>
           </Tooltip>
@@ -262,17 +265,36 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
 
         {/* [row -3] Description */}
-        {showExamples && (
-          <Typography
-            level='body-sm'
-            sx={{
-              gridColumn: '1 / -1',
-              mt: 2,
-            }}>
+        <Box sx={{ gridColumn: '1 / -1', mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+
+
+          {/* Description*/}
+          <Typography level='body-sm' sx={{ color: 'text.primary' }}>
             {selectedPurpose?.description || 'No description available'}
-            {/*{fourExamples?.length ? '. Examples:': ''}*/}
           </Typography>
-        )}
+          {/* Examples Toggle */}
+          {fourExamples && (
+            <Chip
+              variant='outlined'
+              size='md'
+              onClick={() => setShowExamples(!showExamples)}
+              endDecorator={<KeyboardArrowDownIcon />}
+              className={showExamples ? 'agi-expanded' : undefined}
+              sx={{
+                px: 1.5,
+                [`& .${chipClasses.endDecorator}`]: {
+                  transition: 'transform 0.2s',
+                },
+                [`&.agi-expanded .${chipClasses.endDecorator}`]: {
+                  transform: 'rotate(-180deg)',
+                },
+              }}
+            >
+              {showExamples ? 'Examples' : 'Examples'}
+            </Chip>
+          )}
+
+        </Box>
 
         {/* [row -2] Example incipits */}
         {showExamples && !!fourExamples && (
