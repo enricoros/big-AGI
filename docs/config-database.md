@@ -32,6 +32,25 @@ This guide outlines the database options and setup steps for enabling features l
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `MDB_URI`  | `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority`                                                                                                                |
 
+### MongoDB Atlas + Prisma
+When using MongoDB Atlas, you'll need to make the below changes to the file `prisma.schema`
+
+```
+...
+datasource db {
+  provider  = "mongodb"
+  url       = env("MDB_URI")
+}
+
+//
+// Storage of Linked Data
+//
+model LinkStorage {
+  id String @id @default(uuid()) @map("_id")
+
+// ...rest of file
+```
+
 ### Initial Setup Steps:
 
 1. **Run `npx prisma db:push`:** Create or update the database schema (run once after connecting).
