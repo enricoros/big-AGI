@@ -19,7 +19,7 @@ import { PageWrapper } from './PageWrapper';
  *
  * Main functions:
  *  - modern responsive layout
- *  - core layout of the application, with the Nav, Panes, Appbar, etc.
+ *  - core layout of the application, with the Nav, Panes, PageBar, etc.
  *    - the child(ren) of this layout are placed in the main content area
  *  - allows for pluggable components of children applications, via usePluggableOptimaLayout
  *  - overlays and displays various modals

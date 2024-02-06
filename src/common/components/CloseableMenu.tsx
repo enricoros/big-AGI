@@ -82,7 +82,7 @@ export function CloseableMenu(props: {
               : '2.5rem', /* we enlarge the default  */
             ...(props.bigIcons && {
               '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-              '--ListItemDecorator-size': '2.75rem',
+              // '--ListItemDecorator-size': '2.75rem',
             }),
             backgroundColor: 'background.popup',
             boxShadow: 'md',
