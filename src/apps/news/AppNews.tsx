@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { keyframes } from '@emotion/react';
+import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, Card, CardContent, Container, IconButton, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { Brand } from '~/common/app.config';
@@ -12,7 +13,7 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
-import { newsCallout, NewsItems } from './news.data';
+import { NewsItems, newsRoadmapCallout } from './news.data';
 
 // number of news items to show by default, before the expander
 const DEFAULT_NEWS_COUNT = 3;
@@ -77,63 +78,72 @@ export function AppNews() {
           </Button>
         </Box>
 
-        {!!newsCallout && <Container disableGutters maxWidth='sm'>{newsCallout}</Container>}
+        {!!newsRoadmapCallout && <Container disableGutters maxWidth='sm'>{newsRoadmapCallout}</Container>}
 
-        {!!news && <Container disableGutters maxWidth='sm'>
+        <Container disableGutters maxWidth='sm'>
           {news?.map((ni, idx) => {
             // const firstCard = idx === 0;
             const hasCardAfter = news.length < NewsItems.length;
             const showExpander = hasCardAfter && (idx === news.length - 1);
             const addPadding = false; //!firstCard; // || showExpander;
-            return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
-              <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0 }}>
-                  <GoodTooltip title={ni.versionName ? `${ni.versionName} ${ni.versionMoji || ''}` : null} placement='top-start'>
-                    <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
-                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ` : `Version ${ni.versionCode}:`}
-                      <Box component='span' sx={!idx ? {
-                        animation: `${cssRainbowColorKeyframes} 5s infinite`,
-                        fontWeight: 600,
-                      } : {}}>
-                        {ni.versionName}
-                      </Box>
-                    </Typography>
-                  </GoodTooltip>
-                  {/*!firstCard &&*/ (
-                    <Typography level='body-sm'>
-                      {!!ni.versionDate && <TimeAgo date={ni.versionDate} />}
-                    </Typography>
-                  )}
-                </Box>
-
-                {!!ni.items && (ni.items.length > 0) && (
-                  <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
-                    {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                      < Typography component='div' level='body-sm'>
-                        {item.text}
+            return (
+              <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32, gap: 1 }}>
+                <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <GoodTooltip title={ni.versionName ? `${ni.versionName} ${ni.versionMoji || ''}` : null} placement='top-start'>
+                      <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
+                        {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ` : `Version ${ni.versionCode}:`}
+                        <Box component='span' sx={!idx ? {
+                          animation: `${cssRainbowColorKeyframes} 5s infinite`,
+                          fontWeight: 600,
+                        } : {}}>
+                          {ni.versionName}
+                        </Box>
                       </Typography>
-                    </li>)}
-                  </ul>
-                )}
+                    </GoodTooltip>
+                    {/*!firstCard &&*/ (
+                      <Typography level='body-sm'>
+                        {!!ni.versionDate && <TimeAgo date={ni.versionDate} />}
+                      </Typography>
+                    )}
+                  </Box>
 
-                {showExpander && (
-                  <IconButton
-                    variant='outlined'
-                    onClick={() => setLastNewsIdx(idx + 1)}
-                    sx={{
-                      position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1,
-                      backgroundColor: 'background.surface',
-                      borderRadius: '50%',
-                    }}
-                  >
-                    <ExpandMoreIcon />
-                  </IconButton>
-                )}
+                  {!!ni.items && (ni.items.length > 0) && (
+                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
+                      {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
+                        < Typography component='div' level='body-sm'>
+                          {item.text}
+                        </Typography>
+                      </li>)}
+                    </ul>
+                  )}
 
-              </CardContent>
-            </Card>;
+                  {showExpander && (
+                    <IconButton
+                      variant='outlined'
+                      onClick={() => setLastNewsIdx(idx + 1)}
+                      sx={{
+                        position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1,
+                        backgroundColor: 'background.surface',
+                        borderRadius: '50%',
+                      }}
+                    >
+                      <ExpandMoreIcon />
+                    </IconButton>
+                  )}
+                </CardContent>
+
+                {!!ni.versionCoverImage && (
+                  <CardOverflow>
+                    <AspectRatio ratio='2'>
+                      <NextImage src={ni.versionCoverImage} alt={`Cover image for ${ni.versionCode}`} />
+                    </AspectRatio>
+                  </CardOverflow>
+                )}
+              </Card>
+            );
           })}
-        </Container>}
+        </Container>
 
         {/*<Typography sx={{ textAlign: 'center' }}>*/}
         {/*  Enjoy!*/}
