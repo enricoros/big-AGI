@@ -297,9 +297,19 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         </Box>
 
         {/* [row -2] Example incipits */}
-        {showExamples && !!fourExamples && (
+        <Box sx={{
+          gridColumn: '1 / -1',
+          pt: 1,
+          // animated collapser
+          display: 'grid',
+          gridTemplateRows: !showExamples ? '0fr' : '1fr',
+          transition: 'grid-template-rows 0.2s cubic-bezier(.17,.84,.44,1)',
+        }}>
           <List sx={{
-            gridColumn: '1 / -1',
+            // animated collapsee
+            overflow: 'hidden',
+            padding: 0,
+            // items layout
             display: 'grid',
             gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
             gap: 1,
@@ -326,7 +336,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               </ListItem>
             ))}
           </List>
-        )}
+        </Box>
 
         {/* [row -1] Custom Prompt box */}
         {systemPurposeId === 'Custom' && (
