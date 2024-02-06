@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -93,11 +95,16 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
 // formerly:
 //  - export-share: badge on the 'share' button in the Chat Menu
-export function useUICounter(key: 'share-chat-link' | 'call-wizard') {
+export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter') {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
+
+  const touch = React.useCallback(() =>
+      useUIPreferencesStore.getState().incrementActionCounter(key)
+    , [key]);
+
   return {
-    value,
+    // value,
     novel: !value,
-    touch: () => useUIPreferencesStore.getState().incrementActionCounter(key),
+    touch,
   };
 }
