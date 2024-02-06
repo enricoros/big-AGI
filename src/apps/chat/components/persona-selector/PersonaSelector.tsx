@@ -39,16 +39,16 @@ function Tile(props: {
 }) {
   return (
     <Button
-      variant={(!props.isEditMode && props.isActive) ? 'solid' : 'soft'}
-      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'warning' : 'neutral'}
+      variant={(!props.isEditMode && props.isActive) ? 'solid' : props.isHighlighted ? 'soft' : 'soft'}
+      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'primary' : 'neutral'}
       onClick={props.onClick}
       sx={{
         aspectRatio: 1,
         height: `${tileSize}rem`,
         fontWeight: 500,
         ...((props.isEditMode || !props.isActive) ? {
-          boxShadow: 'sm',
-          ...(props.isHighlighted ? {} : { backgroundColor: 'background.surface' }),
+          boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
+          backgroundColor: props.isHighlighted ? undefined : 'background.surface',
         } : {}),
         flexDirection: 'column', gap: 1,
         ...props.sx,
