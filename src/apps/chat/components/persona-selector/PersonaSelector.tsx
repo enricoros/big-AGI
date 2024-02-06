@@ -287,7 +287,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             defaultValue={SystemPurposes['Custom']?.systemMessage}
             onChange={handleCustomSystemMessageChange}
             endDecorator={
-              <Typography level='body-sm' sx={{ px: 1 }}>
+              <Typography level='body-sm' sx={{ px: 0.75 }}>
                 Just start chatting when done.
               </Typography>
             }
