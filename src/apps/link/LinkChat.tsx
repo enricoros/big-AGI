@@ -4,7 +4,7 @@ import TimeAgo from 'react-timeago';
 import { Box, Button, Card, CardContent, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { ChatMessage } from '../chat/components/message/ChatMessage';
+import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
@@ -136,10 +136,11 @@ export function LinkChat(props: { conversation: DConversation, storedAt: Date, e
             </ListItem>
 
             {filteredMessages.map((message, idx) =>
-              <ChatMessage
-                key={'msg-' + message.id} message={message}
-                showDate={idx === 0 || idx === filteredMessages.length - 1}
-                onMessageEdit={text => message.text = text}
+              <ChatMessageMemo
+                key={'msg-' + message.id}
+                message={message}
+                blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
+                onMessageEdit={(_messageId, text: string) => message.text = text}
               />,
             )}
 

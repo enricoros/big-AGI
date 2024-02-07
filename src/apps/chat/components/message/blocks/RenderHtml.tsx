@@ -1,14 +1,14 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WebIcon from '@mui/icons-material/Web';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import { HtmlBlock } from './blocks';
-import { overlayButtonsSx } from './RenderCode';
+import type { HtmlBlock } from './blocks';
+import { overlayButtonsSx } from './code/RenderCode';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { LatexBlock } from './blocks';
+import type { LatexBlock } from './blocks';
 
 
 // Dynamically import the Katex functions
@@ -20,7 +20,7 @@ export const RenderLatex = ({ latexBlock, sx }: { latexBlock: LatexBlock; sx?: S
       mx: 1.5,
       ...(sx || {}),
     }}>
-    <React.Suspense fallback={<div/>}>
+    <React.Suspense fallback={<div />}>
       <RenderLatexDynamic latex={latexBlock.latex} />
     </React.Suspense>
   </Box>;

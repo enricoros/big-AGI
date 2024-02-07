@@ -1,9 +1,10 @@
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import { heuristicIsHtml } from './RenderHtml';
-import { heuristicMarkdownImageReferenceBlocks, heuristicLegacyImageBlocks } from './RenderImage';
+import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks } from './RenderImage';
 
-type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
+// Block types
+export type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
 export type DiffBlock = { type: 'diff'; textDiffs: TextDiff[] };
 export type HtmlBlock = { type: 'html'; html: string; };
@@ -12,9 +13,10 @@ export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
 
-export function parseBlocks(text: string, forceText: boolean, textDiffs: TextDiff[] | null): Block[] {
+export function parseMessageBlocks(text: string, forceText: boolean, textDiffs: TextDiff[] | null): Block[] {
   if (forceText)
     return [{ type: 'text', content: text }];
+
   if (textDiffs && textDiffs.length > 0)
     return [{ type: 'diff', textDiffs }];
 

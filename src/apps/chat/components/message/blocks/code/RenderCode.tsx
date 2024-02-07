@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
@@ -10,11 +10,42 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import { CodeBlock } from './blocks';
-import { OpenInCodepen } from './OpenInCodepen';
-import { OpenInReplit } from './OpenInReplit';
+import type { CodeBlock } from '../blocks';
+import { ButtonCodepen } from './ButtonCodepen';
+import { ButtonReplit } from './ButtonReplit';
 import { RenderCodeMermaid } from './RenderCodeMermaid';
-import { heuristicIsHtml, IFrameComponent } from './RenderHtml';
+import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
+
+
+async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
+  // fetch the PlantUML SVG
+  let text: string = '';
+  try {
+    // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
+    const { encode: plantUmlEncode } = await import('plantuml-encoder');
+
+    // retrieve and manually adapt the SVG, to remove the background
+    const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
+    const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
+    text = await response.text();
+  } catch (e) {
+    return null;
+  }
+  // validate/extract the SVG
+  const start = text.indexOf('<svg ');
+  const end = text.indexOf('</svg>');
+  if (start < 0 || end <= start)
+    throw new Error('Could not render PlantUML');
+  const svg = text
+    .slice(start, end + 6) // <svg ... </svg>
+    .replace('background:#FFFFFF;', ''); // transparent background
+
+  // check for syntax errors
+  if (svg.includes('>Syntax Error?</text>'))
+    throw new Error('syntax issue (it happens!). Please regenerate or change generator model.');
+
+  return svg;
+}
 
 
 export const overlayButtonsSx: SxProps = {
@@ -43,12 +74,11 @@ function RenderCodeImpl(props: {
   } = props;
 
   // heuristic for language, and syntax highlight
-  const { highlightedCode, inferredCodeLanguage } = React.useMemo(
-    () => {
-      const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
-      const highlightedCode = highlightCode(inferredCodeLanguage, blockCode);
-      return { highlightedCode, inferredCodeLanguage };
-    }, [inferCodeLanguage, blockTitle, blockCode, highlightCode]);
+  const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
+    const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
+    const highlightedCode = highlightCode(inferredCodeLanguage, blockCode);
+    return { highlightedCode, inferredCodeLanguage };
+  }, [inferCodeLanguage, blockTitle, blockCode, highlightCode]);
 
 
   // heuristics for specialized rendering
@@ -70,35 +100,7 @@ function RenderCodeImpl(props: {
   const { data: plantUmlHtmlData, error: plantUmlError } = useQuery({
     enabled: renderPlantUML,
     queryKey: ['plantuml', blockCode],
-    queryFn: async () => {
-      // fetch the PlantUML SVG
-      let text: string = '';
-      try {
-        // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
-        const { encode: plantUmlEncode } = await import('plantuml-encoder');
-
-        // retrieve and manually adapt the SVG, to remove the background
-        const encodedPlantUML: string = plantUmlEncode(blockCode);
-        const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
-        text = await response.text();
-      } catch (e) {
-        return null;
-      }
-      // validate/extract the SVG
-      const start = text.indexOf('<svg ');
-      const end = text.indexOf('</svg>');
-      if (start < 0 || end <= start)
-        throw new Error('Could not render PlantUML');
-      const svg = text
-        .slice(start, end + 6) // <svg ... </svg>
-        .replace('background:#FFFFFF;', ''); // transparent background
-
-      // check for syntax errors
-      if (svg.includes('>Syntax Error?</text>'))
-        throw new Error('syntax issue (it happens!). Please regenerate or change generator model.');
-
-      return svg;
-    },
+    queryFn: () => fetchPlantUmlSvg(blockCode),
     staleTime: 24 * 60 * 60 * 1000, // 1 day
   });
   renderPlantUML = renderPlantUML && (!!plantUmlHtmlData || !!plantUmlError);
@@ -192,8 +194,8 @@ function RenderCodeImpl(props: {
               </IconButton>
             </Tooltip>
           )}
-          {canCodepen && <OpenInCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-          {canReplit && <OpenInReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
+          {canCodepen && <ButtonCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
+          {canReplit && <ButtonReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {props.noCopyButton !== true && <Tooltip title='Copy Code' variant='solid'>
             <IconButton variant='outlined' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
