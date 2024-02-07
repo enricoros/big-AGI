@@ -121,7 +121,11 @@ function RenderCodeImpl(props: {
   };
 
   return (
-    <Box sx={{ position: 'relative' /* for overlay buttons to stick properly */ }}>
+    <Box sx={{
+      position: 'relative', /* for overlay buttons to stick properly */
+    }}>
+
+      {/* Code render */}
       <Box
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
@@ -130,6 +134,7 @@ function RenderCodeImpl(props: {
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
+          minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
           ...(props.sx || {}),
         }}>

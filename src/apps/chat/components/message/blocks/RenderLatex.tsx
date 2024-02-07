@@ -18,6 +18,7 @@ export const RenderLatex = ({ latexBlock, sx }: { latexBlock: LatexBlock; sx?: S
   <Box
     sx={{
       mx: 1.5,
+      textAlign: 'center',
       ...(sx || {}),
     }}>
     <React.Suspense fallback={<div />}>
