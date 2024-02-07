@@ -491,13 +491,24 @@
   content: "";
 }
 
-.markdown-body>*:first-child {
+/* big-AGI: NOTE: we are doing this only on the <p> tags because otherwise
+   this collapses the space between blocks */
+.markdown-body>p:first-child {
   margin-top: 0 !important;
 }
 
-.markdown-body>*:last-child {
+.markdown-body>p:last-child {
   margin-bottom: 0 !important;
 }
+
+/*.markdown-body>*:first-child {*/
+/*  margin-top: 0 !important;*/
+/*}*/
+
+/*.markdown-body>*:last-child {*/
+/*  margin-bottom: 0 !important;*/
+/*}*/
+
 
 .markdown-body a:not([href]) {
   color: inherit;
