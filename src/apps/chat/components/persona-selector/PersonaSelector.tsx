@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Checkbox, Chip, chipClasses, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, Checkbox, Chip, chipClasses, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,6 +29,7 @@ const tileGap = 0.5; // rem
 
 function Tile(props: {
   text?: string,
+  imageUrl?: string,
   symbol?: string,
   isActive: boolean,
   isEditMode: boolean,
@@ -49,6 +50,11 @@ function Tile(props: {
         ...((props.isEditMode || !props.isActive) ? {
           boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
           backgroundColor: props.isHighlighted ? undefined : 'background.surface',
+          ...(props.imageUrl && {
+            backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+          }),
         } : {}),
         flexDirection: 'column', gap: 1,
         ...props.sx,
@@ -65,9 +71,21 @@ function Tile(props: {
       )}
 
       {/* Icon and Text */}
-      <Box sx={{ fontSize: '2rem' }}>
+      {/*<Box sx={{ fontSize: '2rem' }}>*/}
+      {/*  {props.symbol}*/}
+      {/*</Box>*/}
+      <Avatar
+        variant='plain'
+        src={props.imageUrl}
+        sx={{
+          '--Avatar-size': '3rem',
+          fontSize: '2rem',
+          borderRadius: props.imageUrl ? 'sm' : 0,
+          boxShadow: (props.imageUrl && !props.isActive) ? 'sm' : undefined,
+        }}
+      >
         {props.symbol}
-      </Box>
+      </Avatar>
       <div>
         {props.text}
       </div>
@@ -238,6 +256,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             <Tile
               key={'tile-' + spId}
               text={systemPurpose?.title}
+              imageUrl={systemPurpose?.imageUri}
               symbol={systemPurpose?.symbol}
               isActive={isActive}
               isEditMode={editMode}
