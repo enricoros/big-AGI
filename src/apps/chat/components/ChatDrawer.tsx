@@ -49,6 +49,18 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
 
 
 /*
+ * Returns a string with the pane indices where the conversation is also open, or false if it's not
+ */
+function findOpenInViewNumbers(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
+  return chatPanesConversationIds.reduce((acc: string[], id, idx) => {
+    if (id === ourId)
+      acc.push((idx + 1).toString());
+    return acc;
+  }, []).join(', ') || false;
+}
+
+
+/*
  * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
  * to avoid unnecessary re-renders on each new character typed by the assistant
  */
@@ -62,7 +74,7 @@ export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFold
     return activeConversations.map((_c): ChatNavigationItemData => ({
       conversationId: _c.id,
       isActive: _c.id === activeConversationId,
-      isAlsoOpen: chatPanesConversationIds.includes(_c.id),
+      isAlsoOpen: findOpenInViewNumbers(chatPanesConversationIds, _c.id),
       isEmpty: !_c.messages.length && !_c.userTitle,
       title: conversationTitle(_c),
       folder: !allFolders.length

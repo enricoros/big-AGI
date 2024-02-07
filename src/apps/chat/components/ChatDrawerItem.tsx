@@ -45,7 +45,7 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
 export interface ChatNavigationItemData {
   conversationId: DConversationId;
   isActive: boolean;
-  isAlsoOpen: boolean;
+  isAlsoOpen: string | false;
   isEmpty: boolean;
   title: string;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
@@ -220,7 +220,6 @@ function ChatDrawerItem(props: {
       }} />
     ), [progress]);
 
-
   return (isActive || isAlsoOpen) ? (
 
     // Active or Also Open
@@ -260,12 +259,12 @@ function ChatDrawerItem(props: {
 
         {/* buttons row */}
         {!isActive ? (
-          <Box sx={{ display: 'flex', gap: 1, minHeight: '2.125rem', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, xminHeight: '2.125rem', alignItems: 'center' }}>
             {/*<ListItemDecorator />*/}
 
             {/* No actions for an 'Also Open' windo */}
-            <Typography level='body-xs' sx={{ mx: 'auto', color: 'neutral.solidBg' }}>
-              Opened in other view.
+            <Typography level='body-xs' sx={{ mx: 'auto' }}>
+              <em>In view {isAlsoOpen}</em>
             </Typography>
           </Box>
         ) : (
