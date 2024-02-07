@@ -52,6 +52,7 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
  * Returns a string with the pane indices where the conversation is also open, or false if it's not
  */
 function findOpenInViewNumbers(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
+  if (chatPanesConversationIds.length <= 1) return false;
   return chatPanesConversationIds.reduce((acc: string[], id, idx) => {
     if (id === ourId)
       acc.push((idx + 1).toString());

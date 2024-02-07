@@ -258,16 +258,7 @@ function ChatDrawerItem(props: {
         </Box>
 
         {/* buttons row */}
-        {!isActive ? (
-          <Box sx={{ display: 'flex', gap: 1, xminHeight: '2.125rem', alignItems: 'center' }}>
-            {/*<ListItemDecorator />*/}
-
-            {/* No actions for an 'Also Open' windo */}
-            <Typography level='body-xs' sx={{ mx: 'auto' }}>
-              <em>In view {isAlsoOpen}</em>
-            </Typography>
-          </Box>
-        ) : (
+        {isActive && (
           <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
             <ListItemDecorator />
 
@@ -330,6 +321,13 @@ function ChatDrawerItem(props: {
               </Tooltip>
             </>}
           </Box>
+        )}
+
+        {/* View places row */}
+        {isAlsoOpen && (
+          <Typography level='body-xs' sx={{ mx: 'auto' }}>
+            <em>In view {isAlsoOpen}</em>
+          </Typography>
         )}
 
       </ListItem>
