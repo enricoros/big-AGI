@@ -179,11 +179,12 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   return (
     <Box sx={{
       maxWidth: 'md',
-      minWidth: `${2 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
+      minWidth: `${2 + 1 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
       mx: 'auto',
       minHeight: '60svh',
       display: 'grid',
-      p: { xs: 0.5, sm: 1, md: 2 },
+      px: { xs: 0.5, sm: 1, md: 2 },
+      py: 2,
     }}>
 
       {showFinder && <Box>
