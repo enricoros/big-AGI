@@ -34,7 +34,6 @@ export const FadeInButton = styled(IconButton)({
 export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
   // usign a custom function because `ChatNavigationItemData` is a complex object and memo won't work
   isDeepEqual(prev.item, next.item) &&
-  prev.isLonely === next.isLonely &&
   prev.showSymbols === next.showSymbols &&
   prev.bottomBarBasis === next.bottomBarBasis &&
   prev.onConversationActivate === next.onConversationActivate &&
@@ -65,7 +64,6 @@ export interface FolderChangeRequest {
 function ChatDrawerItem(props: {
   // NOTE: always update the Memo comparison if you add or remove props
   item: ChatNavigationItemData,
-  isLonely: boolean,
   showSymbols: boolean,
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
@@ -307,7 +305,7 @@ function ChatDrawerItem(props: {
           <Box sx={{ flex: 1 }} />
 
           {/* Delete [armed, arming] buttons */}
-          {!props.isLonely && !searchFrequency && <>
+          {!searchFrequency && <>
             {deleteArmed && (
               <Tooltip disableInteractive title='Confirm Deletion'>
                 <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1 }}>

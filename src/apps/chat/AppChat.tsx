@@ -88,6 +88,7 @@ export function AppChat() {
   const {
     title: focusedChatTitle,
     chatIdx: focusedChatNumber,
+    isNoChat: isNoChat,
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
     newConversationId,
@@ -337,27 +338,24 @@ export function AppChat() {
 
   const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
 
-  const handleConfirmedDeleteConversation = () => {
-    if (deleteConversationId) {
-      let nextConversationId: DConversationId | null;
-      if (deleteConversationId === SPECIAL_ID_WIPE_ALL)
-        nextConversationId = wipeAllConversations(focusedSystemPurposeId ?? undefined, activeFolderId);
-      else
-        nextConversationId = deleteConversation(deleteConversationId);
-      setFocusedConversationId(nextConversationId);
-      setDeleteConversationId(null);
-    }
-  };
-
   const handleConversationsDeleteAll = React.useCallback(() => setDeleteConversationId(SPECIAL_ID_WIPE_ALL), []);
 
-  const handleConversationDelete = React.useCallback(
-    (conversationId: DConversationId, bypassConfirmation: boolean) => {
-      if (bypassConfirmation) setFocusedConversationId(deleteConversation(conversationId));
-      else setDeleteConversationId(conversationId);
-    },
-    [deleteConversation, setFocusedConversationId],
-  );
+  const handleConversationDelete = React.useCallback((conversationId: DConversationId, bypassConfirmation: boolean) => {
+    // show dialog if not bypassed
+    if (!bypassConfirmation)
+      return setDeleteConversationId(conversationId);
+
+    const nextConversationId = conversationId === SPECIAL_ID_WIPE_ALL
+      ? wipeAllConversations(activeFolderId /* restricted to this folder (or null for all) */, focusedSystemPurposeId ?? undefined)
+      : deleteConversation(conversationId, focusedSystemPurposeId ?? undefined);
+    setFocusedConversationId(nextConversationId);
+
+    setDeleteConversationId(null);
+  }, [activeFolderId, deleteConversation, focusedSystemPurposeId, setFocusedConversationId, wipeAllConversations]);
+
+  const handleConfirmedDeleteConversation = React.useCallback(() => {
+    deleteConversationId && handleConversationDelete(deleteConversationId, true);
+  }, [deleteConversationId, handleConversationDelete]);
 
   // Shortcuts
 
@@ -393,7 +391,7 @@ export function AppChat() {
         activeConversationId={focusedConversationId}
         activeFolderId={activeFolderId}
         chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
-        disableNewButton={isFocusedChatEmpty}
+        disableNewButton={isFocusedChatEmpty && !isNoChat}
         onConversationActivate={setFocusedConversationId}
         onConversationDelete={handleConversationDelete}
         onConversationExportDialog={handleConversationExport}
@@ -402,15 +400,15 @@ export function AppChat() {
         onConversationsDeleteAll={handleConversationsDeleteAll}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, focusedConversationId, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, setFocusedConversationId],
+    [activeFolderId, chatPanes, focusedConversationId, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isNoChat, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
       <ChatPageMenuItems
         isMobile={isMobile}
         conversationId={focusedConversationId}
+        disableItems={!focusedConversationId || isFocusedChatEmpty}
         hasConversations={!areChatsEmpty}
-        isConversationEmpty={isFocusedChatEmpty}
         isMessageSelectionMode={isMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}

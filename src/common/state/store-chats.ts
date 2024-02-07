@@ -119,8 +119,8 @@ interface ChatActions {
   prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (conversationId: DConversationId, messageId: string | null) => DConversationId | null;
-  deleteConversation: (conversationId: DConversationId) => DConversationId | null;
-  wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null) => DConversationId;
+  deleteConversation: (conversationId: DConversationId, newConversationPersonaId?: SystemPurposeId) => DConversationId;
+  wipeAllConversations: (folderId: string | null, newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
   startTyping: (conversationId: string, abortController: AbortController | null) => void;
@@ -235,7 +235,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         return branched.id;
       },
 
-      deleteConversation: (conversationId: DConversationId): DConversationId | null => {
+      deleteConversation: (conversationId: DConversationId, newConversationPersonaId?: SystemPurposeId): DConversationId => {
         let { conversations } = _get();
 
         // abort pending requests on this conversation
@@ -245,37 +245,39 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 
         // remove from the list
         conversations = conversations.filter(_c => _c.id !== conversationId);
+
+        // create a new conversation if there are no more
+        if (!conversations.length)
+          conversations.push(createDConversation(newConversationPersonaId));
+
         _set({
           conversations,
         });
 
         // return the next conversation Id in line, if valid
-        return conversations.length
-          ? conversations[(cIndex >= 0 && cIndex < conversations.length) ? cIndex : conversations.length - 1].id
-          : null;
+        return conversations[(cIndex >= 0 && cIndex < conversations.length) ? cIndex : conversations.length - 1].id;
       },
 
-      wipeAllConversations: (personaId: SystemPurposeId | undefined, folderId: string | null): DConversationId => {
+      wipeAllConversations: (onlyInFolderId: string | null, newConversationPersonaId?: SystemPurposeId): DConversationId => {
         let { conversations } = _get();
 
         // abort any pending requests on all conversations
         conversations.forEach(conversation => conversation.abortController?.abort());
 
         // If a folder is selected, only delete conversations in that folder
-        if (folderId) {
+        if (onlyInFolderId) {
           const { folders, removeConversationFromFolder } = useFolderStore.getState();
-          const folderConversations = folders.find(folder => folder.id === folderId)?.conversationIds || [];
+          const folderConversations = folders.find(folder => folder.id === onlyInFolderId)?.conversationIds || [];
           conversations = conversations.filter(conversation => !folderConversations.includes(conversation.id));
 
           // Update the folder to remove the deleted conversation IDs
-          folderConversations.forEach(conversationId => removeConversationFromFolder(folderId, conversationId));
-
+          folderConversations.forEach(conversationId => removeConversationFromFolder(onlyInFolderId, conversationId));
         }
 
-        const conversation = createDConversation(personaId);
+        const conversation = createDConversation(newConversationPersonaId);
 
         _set({
-          conversations: folderId ? conversations : [conversation],
+          conversations: onlyInFolderId ? conversations : [conversation],
         });
 
         return conversation.id;
@@ -556,6 +558,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   const conversation = conversationId ? conversations.find(_c => _c.id === conversationId) ?? null : null;
   const title = conversation ? conversationTitle(conversation) : null;
   const chatIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
+  const isNoChat = chatIdx === -1;
   const isChatEmpty = conversation ? !conversation.messages.length : true;
   const areChatsEmpty = isChatEmpty && conversations.length < 2;
   const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
@@ -564,6 +567,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   return {
     title,
     chatIdx,
+    isNoChat,
     isChatEmpty,
     areChatsEmpty,
     newConversationId,
