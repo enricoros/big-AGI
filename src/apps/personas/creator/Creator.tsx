@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
-import { RenderMarkdown } from '../../chat/components/message/blocks/RenderMarkdown';
+import { RenderMarkdownMemo } from '../../chat/components/message/blocks/RenderMarkdown';
 
 import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
 
@@ -79,7 +79,7 @@ export const PersonaPromptCard = (props: { content: string }) =>
       <Alert variant='soft' color='success' sx={{ mb: 1 }}>
         You may now copy the text below and use it as Custom prompt!
       </Alert>
-      <RenderMarkdown textBlock={{ type: 'text', content: props.content }} />
+      <RenderMarkdownMemo textBlock={{ type: 'text', content: props.content }} />
     </CardContent>
   </Card>;
 
