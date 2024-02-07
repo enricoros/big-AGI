@@ -13,6 +13,27 @@ export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
 
+export function areBlocksEqual(a: Block, b: Block): boolean {
+  if (a.type !== b.type)
+    return false;
+
+  switch (a.type) {
+    case 'code':
+      return a.blockTitle === (b as CodeBlock).blockTitle && a.blockCode === (b as CodeBlock).blockCode && a.complete === (b as CodeBlock).complete;
+    case 'diff':
+      return false; // diff blocks are never equal
+    case 'html':
+      return a.html === (b as HtmlBlock).html;
+    case 'image':
+      return a.url === (b as ImageBlock).url && a.alt === (b as ImageBlock).alt;
+    case 'latex':
+      return a.latex === (b as LatexBlock).latex;
+    case 'text':
+      return a.content === (b as TextBlock).content;
+  }
+}
+
+
 export function parseMessageBlocks(text: string, disableParsing: boolean, forceTextDiffs?: TextDiff[]): Block[] {
   if (disableParsing)
     return [{ type: 'text', content: text }];

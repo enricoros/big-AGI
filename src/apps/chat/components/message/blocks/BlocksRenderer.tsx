@@ -16,7 +16,7 @@ import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown } from './RenderMarkdown';
 import { RenderText } from './RenderText';
 import { RenderTextDiff } from './RenderTextDiff';
-import { parseMessageBlocks } from './blocks';
+import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 
 
 // How long is the user collapsed message
@@ -67,6 +67,7 @@ export function BlocksRenderer(props: {
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
+  const prevBlocksRef = React.useRef<Block[]>([]);
 
   // derived state
   const { text: _text, errorMessage, renderTextDiff, wasUserEdited = false } = props;
@@ -75,7 +76,12 @@ export function BlocksRenderer(props: {
   const fromUser = props.fromRole === 'user';
 
 
-  // Memo text, blocks and styles
+  const handleTextUncollapse = React.useCallback(() => {
+    setForceUserExpanded(true);
+  }, []);
+
+
+  // Memo text, which could be 'collapsed' to a few lines in case of user messages
 
   const { text, isTextCollapsed } = React.useMemo(() => {
     if (fromUser && !forceUserExpanded) {
@@ -86,15 +92,12 @@ export function BlocksRenderer(props: {
     return { text: _text, isTextCollapsed: false };
   }, [forceUserExpanded, fromUser, _text]);
 
-  const blocks = React.useMemo(() => {
-    const blocks = errorMessage ? [] : parseMessageBlocks(text, fromSystem, renderTextDiff);
-    return props.specialDiagramMode ? blocks.filter(block => block.type === 'code' || blocks.length === 1) : blocks;
-  }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
+  // Memo the code style, to minimize re-renders
 
   const codeSx: SxProps = React.useMemo(() => (
     {
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-      boxShadow: 'xs',
+      boxShadow: props.specialDiagramMode ? 'md' : 'xs',
       fontFamily: 'code',
       fontSize: '0.875rem',
       fontVariantLigatures: 'none',
@@ -104,9 +107,36 @@ export function BlocksRenderer(props: {
   ), [fromAssistant, props.specialDiagramMode]);
 
 
-  const handleTextUncollapse = React.useCallback(() => {
-    setForceUserExpanded(true);
-  }, []);
+  // Block splitter, with memoand special recycle of former blocks, to help React minimize render work
+
+  const blocks = React.useMemo(() => {
+    // split the complete input text into blocks
+    const newBlocks = errorMessage ? [] : parseMessageBlocks(text, fromSystem, renderTextDiff);
+
+    // recycle the previous blocks if they are the same, for stable references to React
+    const recycledBlocks: Block[] = [];
+    for (let i = 0; i < newBlocks.length; i++) {
+      const newBlock = newBlocks[i];
+      const prevBlock = prevBlocksRef.current[i];
+
+      // Check if the new block can be replaced by the previous block to maintain reference stability
+      if (prevBlock && areBlocksEqual(prevBlock, newBlock)) {
+        recycledBlocks.push(prevBlock);
+      } else {
+        // Once a block doesn't match, we use the new blocks from this point forward.
+        recycledBlocks.push(...newBlocks.slice(i));
+        break;
+      }
+    }
+
+    // Update prevBlocksRef with the current blocks for the next render
+    prevBlocksRef.current = recycledBlocks;
+
+    // Apply specialDiagramMode filter if applicable
+    return props.specialDiagramMode
+      ? recycledBlocks.filter(block => block.type === 'code' || recycledBlocks.length === 1)
+      : recycledBlocks;
+  }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
 
 
   return (
