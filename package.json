@@ -44,6 +44,7 @@
     "react-dom": "^18.2.0",
     "react-katex": "^3.0.1",
     "react-markdown": "^9.0.1",
+    "react-player": "^2.14.1",
     "react-resizable-panels": "^2.0.3",
     "react-timeago": "^7.2.0",
     "remark-gfm": "^4.0.0",
