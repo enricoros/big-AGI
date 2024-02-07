@@ -464,7 +464,7 @@ export function AppChat() {
               ...(isMultiPane ? {
                 borderRadius: '0.375rem',
                 border: `2px solid ${idx === focusedPaneIndex
-                  ? ((willMulticast || !isMultiConversationId) ? theme.palette.warning.solidBg : theme.palette.primary.solidBg)
+                  ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
                   : ((willMulticast || !isMultiConversationId) ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
                 filter: (!willMulticast && idx !== focusedPaneIndex)
                   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
