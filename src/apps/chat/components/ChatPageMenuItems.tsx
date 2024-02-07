@@ -120,12 +120,12 @@ export function ChatPageMenuItems(props: {
       )}
     </MenuItem>
 
-    <ListDivider />
-
     <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
       <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
       Branch
     </MenuItem>
+
+    <ListDivider />
 
     <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode}>
       <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
@@ -139,7 +139,7 @@ export function ChatPageMenuItems(props: {
       Compress ...
     </MenuItem>
 
-    <ListDivider inset='startContent' />
+    <ListDivider />
 
     <MenuItem disabled={props.disableItems} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
