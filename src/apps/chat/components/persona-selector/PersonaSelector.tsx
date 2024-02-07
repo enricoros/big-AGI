@@ -307,16 +307,19 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             gridTemplateRows: !showExamples ? '0fr' : '1fr',
             transition: 'grid-template-rows 0.2s cubic-bezier(.17,.84,.44,1)',
           }}>
-            <List sx={{
-              // animated collapsee
-              overflow: 'hidden',
-              padding: 0,
-              // items layout
-              display: 'grid',
-              gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
-              gap: 1,
-            }}>
-              {fourExamples?.map((example, idx) => (
+            <List
+              aria-label='Persona Conversation Starters' aria-expanded={showExamples}
+              sx={{
+                // animated collapsee
+                overflow: 'hidden',
+                padding: 0,
+                // example items 2-col layout
+                display: 'grid',
+                gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
+                gap: 1,
+              }}
+            >
+              {showExamples && fourExamples?.map((example, idx) => (
                 <ListItem
                   key={idx}
                   variant='soft'
