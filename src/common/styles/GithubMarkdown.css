@@ -240,7 +240,9 @@
   border-bottom: 1px solid var(--color-border-muted);
   height: .25em;
   padding: 0;
-  margin: 24px 0;
+  /* big-AGI: was 24px -> 1.5em */
+  margin: 1.5em 0;
+  /*margin: 24px 0;*/
   background-color: var(--color-border-default);
   border: 0;
 }
@@ -382,8 +384,11 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  /* big-AGI: changed this to be more flexible with changing Block font size */
+  margin-top: 1.2em;
+  margin-bottom: 0.8em;
+  /*margin-top: 24px;*/
+  /*margin-bottom: 16px;*/
   font-weight: 600;
   line-height: 1.25;
 }
@@ -539,7 +544,9 @@
 .markdown-body pre,
 .markdown-body details {
   margin-top: 0;
-  margin-bottom: 16px;
+  /* big-AGI: was 16px -> 1em*/
+  margin-bottom: 1em;
+  /*margin-bottom: 16px;*/
 }
 
 .markdown-body blockquote>:first-child {
