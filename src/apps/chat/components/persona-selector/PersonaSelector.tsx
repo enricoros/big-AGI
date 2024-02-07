@@ -298,46 +298,48 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         </Box>
 
         {/* [row -2] Example incipits */}
-        <Box sx={{
-          gridColumn: '1 / -1',
-          pt: 1,
-          // animated collapser
-          display: 'grid',
-          gridTemplateRows: !showExamples ? '0fr' : '1fr',
-          transition: 'grid-template-rows 0.2s cubic-bezier(.17,.84,.44,1)',
-        }}>
-          <List sx={{
-            // animated collapsee
-            overflow: 'hidden',
-            padding: 0,
-            // items layout
+        {systemPurposeId !== 'Custom' && (
+          <Box sx={{
+            gridColumn: '1 / -1',
+            pt: 1,
+            // animated collapser
             display: 'grid',
-            gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
-            gap: 1,
+            gridTemplateRows: !showExamples ? '0fr' : '1fr',
+            transition: 'grid-template-rows 0.2s cubic-bezier(.17,.84,.44,1)',
           }}>
-            {fourExamples?.map((example, idx) => (
-              <ListItem
-                key={idx}
-                variant='soft'
-                sx={{
-                  borderRadius: 'xs',
-                  boxShadow: 'xs',
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: 'background.surface',
-                  '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
-                  '&:hover svg': { opacity: 1 },
-                }}
-              >
-                <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
-                  <Typography level='body-sm'>
-                    {example}
-                  </Typography>
-                  <TelegramIcon color='primary' sx={{}} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Box>
+            <List sx={{
+              // animated collapsee
+              overflow: 'hidden',
+              padding: 0,
+              // items layout
+              display: 'grid',
+              gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
+              gap: 1,
+            }}>
+              {fourExamples?.map((example, idx) => (
+                <ListItem
+                  key={idx}
+                  variant='soft'
+                  sx={{
+                    borderRadius: 'xs',
+                    boxShadow: 'xs',
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: 'background.surface',
+                    '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
+                    '&:hover svg': { opacity: 1 },
+                  }}
+                >
+                  <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
+                    <Typography level='body-sm'>
+                      {example}
+                    </Typography>
+                    <TelegramIcon color='primary' sx={{}} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
 
         {/* [row -1] Custom Prompt box */}
         {systemPurposeId === 'Custom' && (
