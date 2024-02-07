@@ -9,7 +9,7 @@ export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 // export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
 
 // Dimensions
-export const formLabelStartWidth = 150;
+export const formLabelStartWidth = 140;
 
 
 // Theme & Fonts
