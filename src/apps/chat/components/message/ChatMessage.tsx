@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { cleanupEfficiency, Diff as TextDiff, makeDiff } from '@sanity/diff-match-patch';
 
 import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
@@ -32,6 +31,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { BlocksRenderer, editBlocksSx } from './blocks/BlocksRenderer';
 import { useChatShowTextDiff } from '../../store-app-chat';
+import { useSanityTextDiffs } from './blocks/RenderTextDiff';
 
 
 // Enable the menu on text selection
@@ -164,21 +164,6 @@ function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: str
   //  errorMessage = <>{text || 'Unknown error'}</>;
 
   return { errorMessage, isAssistantError };
-}
-
-function useSanityTextDiffs(text: string, diffText: string | undefined, enabled: boolean) {
-  const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
-  React.useEffect(() => {
-    if (!diffText || !enabled)
-      return setDiffs(null);
-    setDiffs(
-      cleanupEfficiency(makeDiff(diffText, text, {
-        timeout: 1,
-        checkLines: true,
-      }), 4),
-    );
-  }, [text, diffText, enabled]);
-  return diffs;
 }
 
 
@@ -473,7 +458,7 @@ function ChatMessage(props: {
           errorMessage={errorMessage}
           isBottom={props.isBottom}
           showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
-          textDiffs={textDiffs || undefined}
+          renderTextDiff={textDiffs || undefined}
           wasUserEdited={wasEdited}
           onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
           onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}

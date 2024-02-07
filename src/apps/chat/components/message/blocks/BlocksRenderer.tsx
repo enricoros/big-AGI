@@ -50,11 +50,11 @@ export function BlocksRenderer(props: {
   text: string;
   fromRole: DMessage['role'];
   renderTextAsMarkdown: boolean;
+  renderTextDiff?: TextDiff[];
 
   errorMessage?: React.ReactNode;
   isBottom?: boolean;
   showDate?: number;
-  textDiffs?: TextDiff[];
   wasUserEdited?: boolean;
 
   specialDiagramMode?: boolean;
@@ -69,7 +69,7 @@ export function BlocksRenderer(props: {
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
 
   // derived state
-  const { text: _text, textDiffs, errorMessage, wasUserEdited = false } = props;
+  const { text: _text, errorMessage, renderTextDiff, wasUserEdited = false } = props;
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
@@ -87,9 +87,9 @@ export function BlocksRenderer(props: {
   }, [forceUserExpanded, fromUser, _text]);
 
   const blocks = React.useMemo(() => {
-    const blocks = errorMessage ? [] : parseMessageBlocks(text, fromSystem, textDiffs || null);
+    const blocks = errorMessage ? [] : parseMessageBlocks(text, fromSystem, renderTextDiff);
     return props.specialDiagramMode ? blocks.filter(block => block.type === 'code' || blocks.length === 1) : blocks;
-  }, [errorMessage, fromSystem, props.specialDiagramMode, text, textDiffs]);
+  }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
 
   const codeSx: SxProps = React.useMemo(() => (
     {

@@ -148,17 +148,17 @@ export function ChatMessageList(props: {
   });
 
 
-  // text-diff functionality, find the messages to diff with
+  // text-diff functionality: only diff the last message and when it's complete (not typing), and they're similar in size
 
-  const { diffMessage, diffText } = React.useMemo(() => {
+  const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
     const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
     if (msgB?.text && msgA?.text && !msgB?.typing) {
       const textA = msgA.text, textB = msgB.text;
       const lenA = textA.length, lenB = textB.length;
       if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
-        return { diffMessage: msgB, diffText: textA };
+        return { diffTargetMessage: msgB, diffPrevText: textA };
     }
-    return { diffMessage: undefined, diffText: undefined };
+    return { diffTargetMessage: undefined, diffPrevText: undefined };
   }, [conversationMessages]);
 
 
@@ -219,7 +219,7 @@ export function ChatMessageList(props: {
           <ChatMessageMemo
             key={'msg-' + message.id}
             message={message}
-            diffPreviousText={message === diffMessage ? diffText : undefined}
+            diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
             isBottom={idx === count - 1}
             isImagining={isImagining} isSpeaking={isSpeaking}
             onConversationBranch={handleConversationBranch}
