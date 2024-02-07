@@ -103,6 +103,15 @@ export const appTheme = extendTheme({
       },
     },
 
+    // JoyModal: {
+    //   styleOverrides: {
+    //     backdrop: {
+    //       // backdropFilter: 'blur(2px)',
+    //       backdropFilter: 'none',
+    //     },
+    //   },
+    // },
+
     /**
      * Switch: increase the size of the thumb, to a default iconButton
      * NOTE: do not use anything else than 'md' size
