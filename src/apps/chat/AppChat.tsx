@@ -346,12 +346,12 @@ export function AppChat() {
       return setDeleteConversationId(conversationId);
 
     const nextConversationId = conversationId === SPECIAL_ID_WIPE_ALL
-      ? wipeAllConversations(activeFolderId /* restricted to this folder (or null for all) */, focusedSystemPurposeId ?? undefined)
-      : deleteConversation(conversationId, focusedSystemPurposeId ?? undefined);
+      ? wipeAllConversations(activeFolderId /* restricted to this folder (or null for all) */, /*focusedSystemPurposeId ??*/ undefined)
+      : deleteConversation(conversationId, /*focusedSystemPurposeId ??*/ undefined);
     setFocusedConversationId(nextConversationId);
 
     setDeleteConversationId(null);
-  }, [activeFolderId, deleteConversation, focusedSystemPurposeId, setFocusedConversationId, wipeAllConversations]);
+  }, [activeFolderId, deleteConversation, setFocusedConversationId, wipeAllConversations]);
 
   const handleConfirmedDeleteConversation = React.useCallback(() => {
     deleteConversationId && handleConversationDelete(deleteConversationId, true);
