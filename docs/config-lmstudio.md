@@ -6,7 +6,7 @@ Quickly set up LM Studio with big-AGI to run local and open LLMs on your compute
 
 For a visual step-by-step guide, watch our [YouTube tutorial](https://www.youtube.com/watch?v=MqXzxVokMDk).
 
-https://www.youtube.com/watch?v=MqXzxVokMDk
+[![Running big-AGI locally with LM Studio YouTube Tutorial](http://img.youtube.com/vi/MqXzxVokMDk/0.jpg)](http://www.youtube.com/watch?v=MqXzxVokMDk "Running big-AGI locally with LM Studio")
 
 
 ## Quick Setup Guide
