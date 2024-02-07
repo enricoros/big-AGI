@@ -6,6 +6,8 @@ import { persist } from 'zustand/middleware';
 
 // UI Preferences
 
+export type UIMessageTextSize = 'xs' | 'sm' | 'md';
+
 interface UIPreferencesStore {
 
   // UI Features
@@ -21,6 +23,9 @@ interface UIPreferencesStore {
 
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
+
+  messageTextSize: UIMessageTextSize;
+  setMessageTextSize: (messageTextSize: UIMessageTextSize) => void;
 
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
@@ -58,6 +63,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
+
+      messageTextSize: 'md',
+      setMessageTextSize: (messageTextSize: UIMessageTextSize) => set({ messageTextSize }),
 
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
