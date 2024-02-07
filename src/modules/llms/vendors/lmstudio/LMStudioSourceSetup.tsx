@@ -2,11 +2,14 @@ import * as React from 'react';
 import { z } from 'zod';
 
 import { Typography } from '@mui/joy';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { AccordionExpander } from '~/common/components/AccordionExpander';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { VideoPlayer } from '~/common/components/VideoPlayer';
 
 import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../useLlmUpdateModels';
@@ -34,6 +37,14 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
     useLlmUpdateModels(ModelVendorLMStudio, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
 
   return <>
+
+    <AccordionExpander
+      title={<Typography level='title-sm' sx={{ mr: 'auto' }}>Video Tutorial</Typography>}
+      icon={<YouTubeIcon sx={{ color: '#f00' }} />}
+      startCollapsed
+    >
+      <VideoPlayer width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
+    </AccordionExpander>
 
     <Typography level='body-sm'>
       You can use a running <Link href='https://lmstudio.ai/' target='_blank'>LM Studio</Link> instance as a source
