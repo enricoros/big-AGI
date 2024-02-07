@@ -17,7 +17,7 @@ import { PreferencesTab } from '~/common/layout/optima/useOptimaLayout';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
-import { AppChatSettingsUI } from './AppChatSettingsUI';
+import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
 
