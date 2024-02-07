@@ -188,9 +188,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         marginX: 'calc(-1 * var(--Card-padding))',
         minHeight: 96,
         p: { xs: 1, md: 2 },
-        '& > div > div > code': {
-          boxShadow: 'md',
-        },
       }}>
         <BlocksRenderer
           text={message.text}
