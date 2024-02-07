@@ -1,14 +1,13 @@
 import * as React from 'react';
-
 import { CSVLink } from 'react-csv';
 
 import { Box, Button, styled } from '@mui/joy';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import { lineHeightChatText } from '~/common/app.theme';
 
 import type { TextBlock } from './blocks';
 
-import DownloadIcon from '@mui/icons-material/Download';
 
 /*
  * For performance reasons, we style this component here and copy the equivalent of 'props.sx' (the lineHeight) locally.

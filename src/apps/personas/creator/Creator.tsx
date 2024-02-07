@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
-import { RenderMarkdown } from '../../chat/components/message/RenderMarkdown';
+import { RenderMarkdown } from '../../chat/components/message/blocks/RenderMarkdown';
 
 import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
 

@@ -9,7 +9,7 @@ interface CodeBlockProps {
   };
 }
 
-export function OpenInReplit({ codeBlock }: CodeBlockProps): React.JSX.Element {
+export function ButtonReplit({ codeBlock }: CodeBlockProps): React.JSX.Element {
   const { language } = codeBlock;
 
   const replitLanguageMap: Record<string, string> = {

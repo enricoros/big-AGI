@@ -6,8 +6,8 @@ import ReplayIcon from '@mui/icons-material/Replay';
 
 import { Link } from '~/common/components/Link';
 
-import { ImageBlock } from './blocks';
-import { overlayButtonsSx } from './RenderCode';
+import type { ImageBlock } from './blocks';
+import { overlayButtonsSx } from './code/RenderCode';
 
 
 const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;

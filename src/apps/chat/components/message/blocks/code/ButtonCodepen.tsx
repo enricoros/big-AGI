@@ -9,7 +9,7 @@ interface CodeBlockProps {
   };
 }
 
-export function OpenInCodepen({ codeBlock }: CodeBlockProps): React.JSX.Element {
+export function ButtonCodepen({ codeBlock }: CodeBlockProps): React.JSX.Element {
   const { code, language } = codeBlock;
   const hasCSS = language === 'css';
   const hasJS = ['javascript', 'json', 'typescript'].includes(language || '');

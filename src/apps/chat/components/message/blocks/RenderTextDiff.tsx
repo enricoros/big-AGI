@@ -4,7 +4,7 @@ import { Diff as TextDiff, DIFF_DELETE, DIFF_INSERT } from '@sanity/diff-match-p
 import { Box, Typography, useTheme } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { DiffBlock } from './blocks';
+import type { DiffBlock } from './blocks';
 
 
 export const RenderTextDiff = ({ diffBlock, sx }: { diffBlock: DiffBlock; sx?: SxProps; }) => {

@@ -8,9 +8,9 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
+import { BlocksRenderer } from '../../../apps/chat/components/message/blocks/BlocksRenderer';
 
-import { ChatMessage } from '../../../apps/chat/components/message/ChatMessage';
+import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
@@ -183,16 +183,23 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     </Box>}
 
     {!!message && (!abortController || showOptions) && (
-      <ChatMessage
-        message={message} hideAvatars noBottomBorder noMarkdown diagramMode
-        codeBackground='background.surface'
-        onMessageEdit={(text) => setMessage({ ...message, text })}
-        sx={{
-          backgroundColor: 'background.level2',
-          marginX: 'calc(-1 * var(--Card-padding))',
-          minHeight: 96,
-        }}
-      />
+      <Box sx={{
+        backgroundColor: 'background.level2',
+        marginX: 'calc(-1 * var(--Card-padding))',
+        minHeight: 96,
+        p: { xs: 1, md: 2 },
+        '& > div > div > code': {
+          boxShadow: 'md',
+        },
+      }}>
+        <BlocksRenderer
+          text={message.text}
+          fromRole='assistant'
+          renderTextAsMarkdown={false}
+          specialDiagramMode
+          // onMessageEdit={(text) => setMessage({ ...message, text })}
+        />
+      </Box>
     )}
 
     {!message && <Divider />}
