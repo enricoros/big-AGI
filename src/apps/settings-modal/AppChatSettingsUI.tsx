@@ -45,14 +45,14 @@ export function AppChatSettingsUI() {
     doubleClickToEdit, setDoubleClickToEdit,
     enterIsNewline, setEnterIsNewline,
     renderMarkdown, setRenderMarkdown,
-    showPurposeFinder, setShowPurposeFinder,
+    showPersonaFinder, setShowPersonaFinder,
     zenMode, setZenMode,
   } = useUIPreferencesStore(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    showPurposeFinder: state.showPurposeFinder, setShowPurposeFinder: state.setShowPurposeFinder,
+    showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
   }), shallow);
 
@@ -62,7 +62,7 @@ export function AppChatSettingsUI() {
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
-  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPurposeFinder(event.target.checked);
+  const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPersonaFinder(event.target.checked);
 
   return <>
 
@@ -98,9 +98,9 @@ export function AppChatSettingsUI() {
 
     {SHOW_PURPOSE_FINDER && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Purpose finder'
-                      description={showPurposeFinder ? 'Show search bar' : 'Hide search bar'} />
-      <Switch checked={showPurposeFinder} onChange={handleShowSearchBarChange}
-              endDecorator={showPurposeFinder ? 'On' : 'Off'}
+                      description={showPersonaFinder ? 'Show search bar' : 'Hide search bar'} />
+      <Switch checked={showPersonaFinder} onChange={handleShowSearchBarChange}
+              endDecorator={showPersonaFinder ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
 
