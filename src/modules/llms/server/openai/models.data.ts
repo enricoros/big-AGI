@@ -120,7 +120,6 @@ const _knownOpenAIChatModels: ManualMappings = [
 
   // 3.5-Turbo-16k's
   {
-    // NOTE: speculation from the https://openai.com/blog/new-embedding-models-and-api-updates post; hasn't been released yet
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (0125)',
     description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.',
