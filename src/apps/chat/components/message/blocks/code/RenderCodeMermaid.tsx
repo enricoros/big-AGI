@@ -107,10 +107,10 @@ function useMermaidLoader() {
 }
 
 
-export function RenderCodeMermaid(props: { mermaidCode: string }) {
+export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boolean }) {
 
   // state
-  const [svgCode, setSvgCode] = React.useState<string | null>(null);
+  const [_svgCode, setSvgCode] = React.useState<string | null>(null);
   const hasUnmounted = React.useRef(false);
   const mermaidContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -157,8 +157,12 @@ export function RenderCodeMermaid(props: { mermaidCode: string }) {
     <Box
       component='div'
       ref={mermaidContainerRef}
-      dangerouslySetInnerHTML={{ __html: svgCode || 'Loading Diagram...' }}
+      dangerouslySetInnerHTML={{ __html: patchSvgString(props.fitScreen, _svgCode) || 'Loading Diagram...' }}
     />
   );
 
+}
+
+export function patchSvgString(fitScreen: boolean, svgCode?: string | null): string | null {
+  return fitScreen ? svgCode?.replace('<svg ', `<svg style="width: 100%; height: 100%; object-fit: contain" `) || null : svgCode || null;
 }

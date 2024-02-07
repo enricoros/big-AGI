@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
@@ -13,8 +14,8 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import type { CodeBlock } from '../blocks';
 import { ButtonCodepen } from './ButtonCodepen';
 import { ButtonReplit } from './ButtonReplit';
-import { RenderCodeMermaid } from './RenderCodeMermaid';
 import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
+import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
 
 async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
@@ -52,7 +53,10 @@ export const overlayButtonsSx: SxProps = {
   position: 'absolute', top: 0, right: 0, zIndex: 10,
   display: 'flex', flexDirection: 'row', gap: 1,
   opacity: 0, transition: 'opacity 0.2s',
-  '& > button': { backdropFilter: 'blur(12px)' },
+  // '& > button': {
+  // backgroundColor: 'background.level2',
+  // backdropFilter: 'blur(12px)',
+  // },
 };
 
 function RenderCodeImpl(props: {
@@ -62,6 +66,7 @@ function RenderCodeImpl(props: {
 }) {
 
   // state
+  const [fitScreen, setFitScreen] = React.useState(false);
   const [showHTML, setShowHTML] = React.useState(false);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
@@ -107,6 +112,7 @@ function RenderCodeImpl(props: {
 
   const isSVG = blockCode.startsWith('<svg') && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
+  const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
 
   const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
@@ -153,14 +159,14 @@ function RenderCodeImpl(props: {
         {renderHTML
           ? <IFrameComponent htmlString={blockCode} />
           : renderMermaid
-            ? <RenderCodeMermaid mermaidCode={blockCode} />
+            ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
             : <Box component='div'
                    dangerouslySetInnerHTML={{
                      __html:
                        renderSVG
-                         ? blockCode
+                         ? (patchSvgString(fitScreen, blockCode) || 'No SVG code')
                          : renderPlantUML
-                           ? (plantUmlHtmlData || (plantUmlError as string) || 'No PlantUML rendering.')
+                           ? (patchSvgString(fitScreen, plantUmlHtmlData) || (plantUmlError as string) || 'No PlantUML rendering.')
                            : highlightedCode,
                    }}
                    sx={{
@@ -169,43 +175,52 @@ function RenderCodeImpl(props: {
                    }}
             />}
 
-        {/* Code Buttons */}
+        {/* Buttons */}
         <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 0.5 }}>
           {isHTML && (
-            <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
-              <IconButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+            <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'}>
+              <IconButton variant={renderHTML ? 'solid' : 'soft'} color='danger' onClick={() => setShowHTML(!showHTML)}>
                 <HtmlIcon />
               </IconButton>
             </Tooltip>
           )}
           {isMermaid && (
-            <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'} variant='solid'>
-              <IconButton variant={renderMermaid ? 'solid' : 'outlined'} onClick={() => setShowMermaid(!showMermaid)}>
+            <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'}>
+              <IconButton variant={renderMermaid ? 'solid' : 'soft'} onClick={() => setShowMermaid(!showMermaid)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isPlantUML && (
-            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'} variant='solid'>
-              <IconButton variant={renderPlantUML ? 'solid' : 'outlined'} onClick={() => setShowPlantUML(!showPlantUML)}>
+            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'}>
+              <IconButton variant={renderPlantUML ? 'solid' : 'soft'} onClick={() => setShowPlantUML(!showPlantUML)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isSVG && (
-            <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'} variant='solid'>
-              <IconButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
+            <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'}>
+              <IconButton variant={renderSVG ? 'solid' : 'soft'} onClick={() => setShowSVG(!showSVG)}>
                 <ShapeLineOutlinedIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML) || (isSVG && showSVG && canScaleSVG)) && (
+            <Tooltip title={fitScreen ? 'Original Size' : 'Fit Screen'}>
+              <IconButton variant={fitScreen ? 'solid' : 'soft'} onClick={() => setFitScreen(on => !on)}>
+                <FitScreenIcon />
               </IconButton>
             </Tooltip>
           )}
           {canCodepen && <ButtonCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {canReplit && <ButtonReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-          {props.noCopyButton !== true && <Tooltip title='Copy Code' variant='solid'>
-            <IconButton variant='outlined' onClick={handleCopyToClipboard}>
-              <ContentCopyIcon />
-            </IconButton>
-          </Tooltip>}
+          {props.noCopyButton !== true && (
+            <Tooltip title='Copy Code'>
+              <IconButton variant='soft' onClick={handleCopyToClipboard}>
+                <ContentCopyIcon />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
 
       </Box>
