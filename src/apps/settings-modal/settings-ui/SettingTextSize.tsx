@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, FormControl, IconButton, Step, Stepper } from '@mui/joy';
+import { FormControl, IconButton, Step, Stepper } from '@mui/joy';
 
 import type { UIMessageTextSize } from '~/common/state/store-ui';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -44,9 +44,7 @@ export function SettingTextSize({ textSize, onChangeTextSize }: {
                     borderColor: 'primary.solidBg',
                   }}
                 >
-                  <Box>
-                    {sizeKey}
-                  </Box>
+                  {'Aa' /* Nothing says 'font' more than this */ }
                 </IconButton>
               }
             />

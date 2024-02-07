@@ -14,14 +14,15 @@ const RenderLatexDynamic = React.lazy(async () => {
   };
 });
 
-export const RenderLatex = ({ latexBlock, sx }: { latexBlock: LatexBlock; sx?: SxProps; }) =>
+export const RenderLatex = (props: { latexBlock: LatexBlock; sx?: SxProps; }) =>
   <Box
     sx={{
       mx: 1.5,
+      my: '0.5em',
       textAlign: 'center',
-      ...(sx || {}),
+      ...props.sx,
     }}>
     <React.Suspense fallback={<div />}>
-      <RenderLatexDynamic latex={latexBlock.latex} />
+      <RenderLatexDynamic latex={props.latexBlock.latex} />
     </React.Suspense>
   </Box>;

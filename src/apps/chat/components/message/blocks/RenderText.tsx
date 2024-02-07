@@ -9,7 +9,9 @@ import type { TextBlock } from './blocks';
 
 
 export const RenderText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
+
   const elements = extractChatCommand(props.textBlock.content);
+
   return (
     <Typography
       sx={{
@@ -18,7 +20,7 @@ export const RenderText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
         alignItems: 'baseline',
         overflowWrap: 'anywhere',
         whiteSpace: 'break-spaces',
-        ...(props.sx || {}),
+        ...props.sx,
       }}
     >
       {elements.map((element, index) =>
