@@ -166,6 +166,13 @@ export function AppChat() {
             return await runReActUpdatingState(conversationId, chatCommand.params!, chatLLMId);
 
           case 'chat-alter':
+            if (chatCommand.command === '/clear') {
+              if (chatCommand.params === 'all')
+                return setMessages(conversationId, []);
+              const helpMessage = createDMessage('assistant', 'This command requires the \'all\' parameter to confirm the operation.');
+              helpMessage.originLLM = Brand.Title.Base;
+              return setMessages(conversationId, [...history, helpMessage]);
+            }
             Object.assign(lastMessage, {
               role: chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user',
               sender: 'Bot',

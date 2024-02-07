@@ -4,7 +4,7 @@ import type { ICommandsProvider } from './ICommandsProvider';
 
 export const CommandsBrowse: ICommandsProvider = {
   id: 'ass-browse',
-  rank: 25,
+  rank: 20,
 
   getCommands: () => [{
     primary: '/browse',

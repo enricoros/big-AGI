@@ -54,7 +54,7 @@ export function ActilePopup(props: {
               color={isActive ? 'primary' : undefined}
               onClick={() => props.onItemClick(item)}
             >
-              <ListItemButton>
+              <ListItemButton color='primary'>
                 {hasAnyIcon && (
                   <ListItemDecorator>
                     {item.Icon ? <item.Icon /> : null}
