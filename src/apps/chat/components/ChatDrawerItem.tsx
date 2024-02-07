@@ -259,68 +259,79 @@ function ChatDrawerItem(props: {
         </Box>
 
         {/* buttons row */}
-        <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
-          <ListItemDecorator />
+        {!isActive ? (
+          <Box sx={{ display: 'flex', gap: 1, minHeight: '2.125rem', alignItems: 'center' }}>
+            {/*<ListItemDecorator />*/}
 
-          {/* Current Folder color, and change initiator */}
-          {(folder !== undefined) && <>
-            <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
-              {folder ? (
-                <IconButton size='sm' onClick={handleFolderChangeBegin}>
-                  <FolderIcon style={{ color: folder.color || 'inherit' }} />
-                </IconButton>
-              ) : (
-                <FadeInButton size='sm' onClick={handleFolderChangeBegin}>
-                  <FolderOutlinedIcon />
-                </FadeInButton>
-              )}
-            </Tooltip>
+            {/* No actions for an 'Also Open' windo */}
+            <Typography level='body-xs' sx={{ mx: 'auto', color: 'neutral.solidBg' }}>
+              Opened in other view.
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
+            <ListItemDecorator />
 
-            <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
-          </>}
+            {/* Current Folder color, and change initiator */}
+            {(folder !== undefined) && <>
+              <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
+                {folder ? (
+                  <IconButton size='sm' onClick={handleFolderChangeBegin}>
+                    <FolderIcon style={{ color: folder.color || 'inherit' }} />
+                  </IconButton>
+                ) : (
+                  <FadeInButton size='sm' onClick={handleFolderChangeBegin}>
+                    <FolderOutlinedIcon />
+                  </FadeInButton>
+                )}
+              </Tooltip>
 
-          <Tooltip disableInteractive title='Rename'>
-            <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditBegin}>
-              <EditIcon />
-            </FadeInButton>
-          </Tooltip>
+              <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
+            </>}
 
-          {!isNew && <>
-            <Tooltip disableInteractive title='Auto-Title'>
-              <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
-                <AutoFixHighIcon />
+            <Tooltip disableInteractive title='Rename'>
+              <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditBegin}>
+                <EditIcon />
               </FadeInButton>
             </Tooltip>
 
-            <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
-
-            <Tooltip disableInteractive title='Export Chat'>
-              <FadeInButton size='sm' onClick={handleConversationExport}>
-                <FileDownloadOutlinedIcon />
-              </FadeInButton>
-            </Tooltip>
-          </>}
-
-          {/* --> */}
-          <Box sx={{ flex: 1 }} />
-
-          {/* Delete [armed, arming] buttons */}
-          {!searchFrequency && <>
-            {deleteArmed && (
-              <Tooltip disableInteractive title='Confirm Deletion'>
-                <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1 }}>
-                  <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+            {!isNew && <>
+              <Tooltip disableInteractive title='Auto-Title'>
+                <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
+                  <AutoFixHighIcon />
                 </FadeInButton>
               </Tooltip>
-            )}
 
-            <Tooltip disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
-              <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
-                {deleteArmed ? <CloseIcon /> : <DeleteOutlineIcon />}
-              </FadeInButton>
-            </Tooltip>
-          </>}
-        </Box>
+              <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
+
+              <Tooltip disableInteractive title='Export Chat'>
+                <FadeInButton size='sm' onClick={handleConversationExport}>
+                  <FileDownloadOutlinedIcon />
+                </FadeInButton>
+              </Tooltip>
+            </>}
+
+            {/* --> */}
+            <Box sx={{ flex: 1 }} />
+
+            {/* Delete [armed, arming] buttons */}
+            {!searchFrequency && <>
+              {deleteArmed && (
+                <Tooltip disableInteractive title='Confirm Deletion'>
+                  <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1 }}>
+                    <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+                  </FadeInButton>
+                </Tooltip>
+              )}
+
+              <Tooltip disableInteractive title={deleteArmed ? 'Cancel Delete' : 'Delete'}>
+                <FadeInButton key='btn-arm' size='sm' onClick={deleteArmed ? handleDeleteButtonHide : handleDeleteButtonShow} sx={deleteArmed ? { opacity: 1 } : {}}>
+                  {deleteArmed ? <CloseIcon /> : <DeleteOutlineIcon />}
+                </FadeInButton>
+              </Tooltip>
+            </>}
+          </Box>
+        )}
 
       </ListItem>
 
