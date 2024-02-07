@@ -189,8 +189,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [handleSearchClear]);
 
 
-  // safety check - shouldn't happen
-  if (!selectedPurpose || !setSystemPurposeId)
+  // safety check - shouldn't happen - this is set to null when the conversation is not found
+  if (!setSystemPurposeId)
     return null;
 
 
@@ -290,7 +290,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
           {/* Description*/}
           <Typography level='body-sm' sx={{ color: 'text.primary' }}>
-            {selectedPurpose?.description || 'No description available'}
+            {!selectedPurpose
+              ? 'Cannot find the former persona' + (systemPurposeId ? ` "${systemPurposeId}"` : '')
+              : selectedPurpose?.description || 'No description available'}
           </Typography>
           {/* Examples Toggle */}
           {fourExamples && (
