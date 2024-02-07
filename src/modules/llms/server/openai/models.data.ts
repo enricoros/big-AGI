@@ -40,7 +40,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4-turbo-preview',
-    label: '🔗 GPT-4 Turbo → 0125', // '4-Turbo → 🔗 0125',
+    label: 'GPT-4 Turbo',
     description: 'Currently points to gpt-4-0125-preview.',
     symLink: 'gpt-4-0125-preview',
     hidden: true,
@@ -69,7 +69,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4-32k',
-    label: '🔗 GPT-4 32k → 0613', // 'GPT-4-32k → 🔗 0613',
+    label: 'GPT-4 32k',
     description: 'Currently points to gpt-4-32k-0613.',
     symLink: 'gpt-4-32k-0613',
     // copied
@@ -97,7 +97,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-4',
-    label: '🔗 GPT-4 → 0613', // 'GPT-4 → 🔗 0613',
+    label: 'GPT-4',
     description: 'Currently points to gpt-4-0613.',
     symLink: 'gpt-4-0613',
     // copied
@@ -148,7 +148,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-3.5-turbo-16k',
-    label: '🔗 3.5-Turbo 16k → 0613', // '3.5-Turbo-16k → 🔗 0613',
+    label: '3.5-Turbo 16k',
     description: 'Currently points to gpt-3.5-turbo-16k-0613.',
     symLink: 'gpt-3.5-turbo-16k-0613',
     // copied
@@ -180,7 +180,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     // NOTE: will link to 0125 on Feb 16th 2024 - we are pre-ready for it on the dev branch
     idPrefix: 'gpt-3.5-turbo',
-    label: '🔗 3.5-Turbo → 0125', // '3.5-Turbo → 🔗 0125',
+    label: '3.5-Turbo',
     description: 'Currently points to gpt-3.5-turbo-0125.',
     symLink: 'gpt-3.5-turbo-0125',
     // copied
@@ -216,7 +216,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
-];
+] as const;
 
 export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
   // if the deployment name mataches an OpenAI model prefix, use that
@@ -432,9 +432,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
 // [Together AI]
 
-const _knownTogetherAIChatModels
-  :
-  ManualMappings = [
+const _knownTogetherAIChatModels: ManualMappings = [
   {
     idPrefix: 'NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO',
     label: 'Nous Hermes 2 - Mixtral 8x7B-DPO',
@@ -490,7 +488,7 @@ const _knownTogetherAIChatModels
     },
     interfaces: [LLM_IF_OAI_Chat],
   },
-];
+] as const;
 
 export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {
 
@@ -531,13 +529,18 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
   // find the closest known model, or fall back, or take the last
   const known = mappings.find(base => id.startsWith(base.idPrefix)) || fallback || mappings[mappings.length - 1];
 
+  // label for symlinks
+  let label = known.label;
+  if (known.symLink && id === known.idPrefix)
+    label = `🔗 ${known.label} → ${known.symLink}`;
+
   // check whether this is a partial map, which indicates an unknown/new variant
   const suffix = id.slice(known.idPrefix.length).trim();
 
   // return the model description sheet
   return {
     id,
-    label: known.label
+    label: label
       + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
       + (known.isLatest ? ' 🌟' : '')
       + (known.isLegacy ? /*' 💩'*/ ' [legacy]' : ''),
