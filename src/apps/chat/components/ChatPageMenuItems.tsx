@@ -24,8 +24,8 @@ import { usePaneDuplicateOrClose } from './panes/usePanesManager';
 export function ChatPageMenuItems(props: {
   isMobile: boolean,
   conversationId: DConversationId | null,
+  disableItems: boolean,
   hasConversations: boolean,
-  isConversationEmpty: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
@@ -37,9 +37,6 @@ export function ChatPageMenuItems(props: {
   const { closePageMenu } = useOptimaDrawers();
   const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
-
-  // derived state
-  const disabled = !props.conversationId || props.isConversationEmpty;
 
 
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
@@ -118,30 +115,30 @@ export function ChatPageMenuItems(props: {
 
     <ListDivider />
 
-    <MenuItem disabled={disabled} onClick={handleConversationBranch}>
+    <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
       <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
       Branch
     </MenuItem>
 
-    <MenuItem disabled={disabled} onClick={handleToggleMessageSelectionMode}>
+    <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode}>
       <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
       <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
         Cleanup ...
       </span>
     </MenuItem>
 
-    <MenuItem disabled={disabled} onClick={handleConversationFlatten}>
+    <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
       <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
       Compress ...
     </MenuItem>
 
     <ListDivider inset='startContent' />
 
-    <MenuItem disabled={disabled} onClick={handleConversationClear}>
+    <MenuItem disabled={props.disableItems} onClick={handleConversationClear}>
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Reset Chat
-        {!disabled && <KeyStroke combo='Ctrl + Alt + X' />}
+        {!props.disableItems && <KeyStroke combo='Ctrl + Alt + X' />}
       </Box>
     </MenuItem>
 

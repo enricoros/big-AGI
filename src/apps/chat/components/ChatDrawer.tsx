@@ -112,8 +112,7 @@ function ChatDrawer(props: {
   // derived state
   const selectConversationsCount = chatNavItems.length;
   const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
-  const singleChat = selectConversationsCount === 1;
-  const softMaxReached = selectConversationsCount >= 10;
+  const softMaxReached = selectConversationsCount >= 40;
 
 
   const handleButtonNew = React.useCallback(() => {
@@ -130,8 +129,8 @@ function ChatDrawer(props: {
 
 
   const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
-    !singleChat && conversationId && onConversationDelete(conversationId, true);
-  }, [onConversationDelete, singleChat]);
+    conversationId && onConversationDelete(conversationId, true);
+  }, [onConversationDelete]);
 
 
   // Folder change request
@@ -288,7 +287,6 @@ function ChatDrawer(props: {
           <ChatDrawerItemMemo
             key={'nav-' + item.conversationId}
             item={item}
-            isLonely={singleChat}
             showSymbols={showSymbols}
             bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
