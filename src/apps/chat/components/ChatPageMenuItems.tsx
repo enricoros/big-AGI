@@ -30,6 +30,7 @@ export function ChatPageMenuItems(props: {
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationClear: (conversationId: DConversationId) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
+  // onConversationNew: (forceNoRecycle: boolean) => void,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
 }) {
 
@@ -39,17 +40,23 @@ export function ChatPageMenuItems(props: {
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
 
+  const handleIncreaseMultiPane = React.useCallback((event?: React.MouseEvent) => {
+    event?.stopPropagation();
+
+    // create a new pane with the current conversation
+    duplicateFocusedPane();
+
+    // load a brand new conversation inside
+    // FIXME: still testing this
+    // props.onConversationNew(true);
+  }, [duplicateFocusedPane]);
+
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
     if (isMultiPane)
       removeOtherPanes();
     else
-      duplicateFocusedPane();
-  }, [duplicateFocusedPane, isMultiPane, removeOtherPanes]);
-
-  const handleIncreaseMultiPane = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    duplicateFocusedPane();
-  }, [duplicateFocusedPane]);
+      handleIncreaseMultiPane(undefined);
+  }, [handleIncreaseMultiPane, isMultiPane, removeOtherPanes]);
 
 
   const closeMenu = (event: React.MouseEvent) => {

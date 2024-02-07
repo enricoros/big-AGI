@@ -293,10 +293,10 @@ export function AppChat() {
 
   // Chat actions
 
-  const handleConversationNew = React.useCallback(() => {
+  const handleConversationNew = React.useCallback((forceNoRecycle?: boolean) => {
 
     // activate an existing new conversation if present, or create another
-    const conversationId = newConversationId
+    const conversationId = (newConversationId && !forceNoRecycle)
       ? newConversationId
       : prependNewConversation(focusedSystemPurposeId ?? undefined);
     setFocusedConversationId(conversationId);
@@ -420,9 +420,10 @@ export function AppChat() {
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
         onConversationFlatten={handleConversationFlatten}
+        // onConversationNew={handleConversationNew}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
+    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, /*handleConversationNew,*/ isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
   usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
