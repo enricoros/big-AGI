@@ -17,6 +17,7 @@ export function AccordionExpander(props: { title?: React.ReactNode, icon?: React
         onChange={(_event, expanded) => setExpanded(expanded)}
       >
         <AccordionSummary
+          variant='soft'
           indicator={<KeyboardArrowDownIcon />}
           slotProps={{
             indicator: {
