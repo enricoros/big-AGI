@@ -6,6 +6,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
 
 import type { DMessage } from '~/common/state/store-chats';
+import type { UIMessageTextSize } from '~/common/state/store-ui';
 import { InlineError } from '~/common/components/InlineError';
 import { lineHeightChatText } from '~/common/app.theme';
 
@@ -39,16 +40,13 @@ const renderBlocksSx: SxProps = {
   overflowX: 'auto',
 } as const;
 
-const typographySx: SxProps = {
-  lineHeight: lineHeightChatText,
-} as const;
-
 
 export function BlocksRenderer(props: {
 
   // required
   text: string;
   fromRole: DMessage['role'];
+  messageTextSize?: UIMessageTextSize;
   renderTextAsMarkdown: boolean;
   renderTextDiff?: TextDiff[];
 
@@ -94,17 +92,24 @@ export function BlocksRenderer(props: {
 
   // Memo the code style, to minimize re-renders
 
-  const codeSx: SxProps = React.useMemo(() => (
+  const scaledCodeSx: SxProps = React.useMemo(() => (
     {
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
       boxShadow: props.specialDiagramMode ? 'md' : 'xs',
       fontFamily: 'code',
-      fontSize: '0.875rem',
+      fontSize: props.messageTextSize === 'xs' ? '0.75rem' : props.messageTextSize === 'sm' ? '0.75rem' : '0.875rem',
       fontVariantLigatures: 'none',
       lineHeight: lineHeightChatText,
       borderRadius: 'var(--joy-radius-sm)',
     }
-  ), [fromAssistant, props.specialDiagramMode]);
+  ), [fromAssistant, props.messageTextSize, props.specialDiagramMode]);
+
+  const scaledTypographySx: SxProps = React.useMemo(() => (
+    {
+      lineHeight: lineHeightChatText,
+      fontSize: (!props.messageTextSize || props.messageTextSize === 'md') ? undefined : props.messageTextSize,
+    }
+  ), [props.messageTextSize]);
 
 
   // Block splitter, with memoand special recycle of former blocks, to help React minimize render work
@@ -169,18 +174,18 @@ export function BlocksRenderer(props: {
         blocks.map(
           (block, index) =>
             block.type === 'html'
-              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
+              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.specialDiagramMode} />
+                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} sx={scaledCodeSx} noCopyButton={props.specialDiagramMode} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} />
                   : block.type === 'latex'
-                    ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={typographySx} />
+                    ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
                     : block.type === 'diff'
-                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={typographySx} />
+                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={scaledTypographySx} />
                       : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                        ? <RenderMarkdownMemo key={'text-md-' + index} textBlock={block} />
-                        : <RenderText key={'text-' + index} textBlock={block} sx={typographySx} />)
+                        ? <RenderMarkdownMemo key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
+                        : <RenderText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />)
 
       )}
 

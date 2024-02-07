@@ -202,10 +202,11 @@ function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
-  const { cleanerLooks, renderMarkdown, doubleClickToEdit } = useUIPreferencesStore(state => ({
+  const { cleanerLooks, doubleClickToEdit, messageTextSize, renderMarkdown } = useUIPreferencesStore(state => ({
     cleanerLooks: state.zenMode === 'cleaner',
-    renderMarkdown: state.renderMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
+    messageTextSize: state.messageTextSize,
+    renderMarkdown: state.renderMarkdown,
   }), shallow);
   const [showDiff, setShowDiff] = useChatShowTextDiff();
   const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
@@ -455,6 +456,7 @@ function ChatMessage(props: {
           text={messageText}
           fromRole={messageRole}
           renderTextAsMarkdown={renderMarkdown}
+          messageTextSize={messageTextSize}
           errorMessage={errorMessage}
           isBottom={props.isBottom}
           showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { CSVLink } from 'react-csv';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, styled } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
 
@@ -115,9 +116,12 @@ const DynamicReactGFM = React.lazy(async () => {
   return { default: ReactMarkdownWithRemarkGfm };
 });
 
-function RenderMarkdown(props: { textBlock: TextBlock }) {
+function RenderMarkdown(props: { textBlock: TextBlock; sx?: SxProps; }) {
   return (
-    <RenderMarkdownBox className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */ >
+    <RenderMarkdownBox
+      className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
+      sx={props.sx}
+    >
       <React.Suspense fallback={<div>Loading...</div>}>
         <DynamicReactGFM>
           {props.textBlock.content}

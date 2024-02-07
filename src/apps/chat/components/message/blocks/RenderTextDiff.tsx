@@ -37,13 +37,13 @@ export function useSanityTextDiffs(_text: string, _diffText: string | undefined,
 }
 
 
-export const RenderTextDiff = ({ diffBlock, sx }: { diffBlock: DiffBlock; sx?: SxProps; }) => {
+export const RenderTextDiff = (props: { diffBlock: DiffBlock; sx?: SxProps; }) => {
 
   // external state
   const theme = useTheme();
 
   // derived state
-  const textDiffs: TextDiff[] = diffBlock.textDiffs;
+  const textDiffs: TextDiff[] = props.diffBlock.textDiffs;
 
   // text added
   const styleAdd = {
@@ -74,7 +74,7 @@ export const RenderTextDiff = ({ diffBlock, sx }: { diffBlock: DiffBlock; sx?: S
         whiteSpace: 'break-spaces',
         display: 'block',
         zIndex: 200,
-        ...(sx || {}),
+        ...props.sx,
       }}
     >
       {textDiffs.map(([op, text], index) =>
