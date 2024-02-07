@@ -169,8 +169,9 @@ function ChatDrawerItem(props: {
             }}
           />
         ) : (
-          <Typography>
-            {isNew ? '' : textSymbol}
+          <Typography sx={isNew ? { opacity: 0.4, filter: 'grayscale(0.75)' } : undefined}>
+            {/*{isNew ? '' : textSymbol}*/}
+            {textSymbol}
           </Typography>
         )}
     </ListItemDecorator>}
