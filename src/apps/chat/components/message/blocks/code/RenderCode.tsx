@@ -220,7 +220,12 @@ const RenderCodeDynamic = React.lazy(async () => {
   };
 });
 
-export const RenderCode = (props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) =>
-  <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...(props.sx || {}) }} />}>
-    <RenderCodeDynamic {...props} />
-  </React.Suspense>;
+function RenderCode(props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) {
+  return (
+    <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...(props.sx || {}) }} />}>
+      <RenderCodeDynamic {...props} />
+    </React.Suspense>
+  );
+}
+
+export const RenderCodeMemo = React.memo(RenderCode);

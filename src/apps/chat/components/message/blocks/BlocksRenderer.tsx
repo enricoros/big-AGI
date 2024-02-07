@@ -9,11 +9,11 @@ import type { DMessage } from '~/common/state/store-chats';
 import { InlineError } from '~/common/components/InlineError';
 import { lineHeightChatText } from '~/common/app.theme';
 
-import { RenderCode } from './code/RenderCode';
+import { RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderLatex } from './RenderLatex';
-import { RenderMarkdown } from './RenderMarkdown';
+import { RenderMarkdownMemo } from './RenderMarkdown';
 import { RenderText } from './RenderText';
 import { RenderTextDiff } from './RenderTextDiff';
 import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
@@ -171,7 +171,7 @@ export function BlocksRenderer(props: {
             block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={codeSx} />
               : block.type === 'code'
-                ? <RenderCode key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.specialDiagramMode} />
+                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} sx={codeSx} noCopyButton={props.specialDiagramMode} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} />
                   : block.type === 'latex'
@@ -179,7 +179,7 @@ export function BlocksRenderer(props: {
                     : block.type === 'diff'
                       ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={typographySx} />
                       : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                        ? <RenderMarkdown key={'text-md-' + index} textBlock={block} />
+                        ? <RenderMarkdownMemo key={'text-md-' + index} textBlock={block} />
                         : <RenderText key={'text-' + index} textBlock={block} sx={typographySx} />)
 
       )}

@@ -115,7 +115,7 @@ const DynamicReactGFM = React.lazy(async () => {
   return { default: ReactMarkdownWithRemarkGfm };
 });
 
-export const RenderMarkdown = (props: { textBlock: TextBlock }) => {
+function RenderMarkdown(props: { textBlock: TextBlock }) {
   return (
     <RenderMarkdownBox className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */ >
       <React.Suspense fallback={<div>Loading...</div>}>
@@ -125,4 +125,6 @@ export const RenderMarkdown = (props: { textBlock: TextBlock }) => {
       </React.Suspense>
     </RenderMarkdownBox>
   );
-};
+}
+
+export const RenderMarkdownMemo = React.memo(RenderMarkdown);
