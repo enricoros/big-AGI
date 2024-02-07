@@ -105,7 +105,7 @@ function ChatDrawer(props: {
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationImportDialog: () => void,
-  onConversationNew: () => void,
+  onConversationNew: (forceNoRecycle: boolean) => void,
   onConversationsDeleteAll: () => void,
   setActiveFolderId: (folderId: string | null) => void,
 }) {
@@ -128,10 +128,11 @@ function ChatDrawer(props: {
   const softMaxReached = selectConversationsCount >= 40;
 
 
+  const isMultiPane = props.chatPanesConversationIds.length >= 2;
   const handleButtonNew = React.useCallback(() => {
-    onConversationNew();
+    onConversationNew(isMultiPane);
     closeDrawerOnMobile();
-  }, [closeDrawerOnMobile, onConversationNew]);
+  }, [closeDrawerOnMobile, isMultiPane, onConversationNew]);
 
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
@@ -261,7 +262,7 @@ function ChatDrawer(props: {
       />
 
       <ListItem sx={{ '--ListItem-minHeight': '2.75rem' }}>
-        <ListItemButton disabled={props.disableNewButton} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
+        <ListItemButton disabled={props.disableNewButton && !isMultiPane} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
           <ListItemDecorator><AddIcon /></ListItemDecorator>
           <Box sx={{
             // style
