@@ -342,7 +342,9 @@ function ChatDrawerItem(props: {
   ) : (
 
     // Inactive Conversation - click to activate
-    <ListItem sx={{ '--ListItem-minHeight': '2.75rem' }}>
+    <ListItem
+      // sx={{ '--ListItem-minHeight': '2.75rem' }}
+    >
 
       <ListItemButton
         onClick={handleConversationActivate}

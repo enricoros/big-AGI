@@ -310,7 +310,7 @@ function ChatDrawer(props: {
           />)}
       </Box>
 
-      <ListDivider sx={{ mt: 0 }} />
+      <ListDivider sx={{ my: 0 }} />
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <ListItemButton onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
