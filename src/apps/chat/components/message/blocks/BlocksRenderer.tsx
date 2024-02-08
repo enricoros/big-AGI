@@ -6,7 +6,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
 
 import type { DMessage } from '~/common/state/store-chats';
-import { ContentScaling, lineHeightChatCode, lineHeightChatText, themeScalingMap } from '~/common/app.theme';
+import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
 
 import { RenderCodeMemo } from './code/RenderCode';
@@ -25,7 +25,8 @@ const USER_COLLAPSED_LINES: number = 8;
 
 const blocksSx: SxProps = {
   my: 'auto',
-  lineHeight: lineHeightChatText,
+  // note: this will be used for non-blocks mainly (errors and other strings ourside of RenderXYX)
+  lineHeight: lineHeightChatTextMd,
 } as const;
 
 export const editBlocksSx: SxProps = {
@@ -92,13 +93,6 @@ export function BlocksRenderer(props: {
 
   // Memo the styles, to minimize re-renders
 
-  const scaledTypographySx: SxProps = React.useMemo(() => (
-    {
-      lineHeight: lineHeightChatText,
-      fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    }
-  ), [props.contentScaling]);
-
   const scaledCodeSx: SxProps = React.useMemo(() => (
     {
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
@@ -106,10 +100,17 @@ export function BlocksRenderer(props: {
       fontFamily: 'code',
       fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
       fontVariantLigatures: 'none',
-      lineHeight: lineHeightChatCode,
+      lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
       borderRadius: 'var(--joy-radius-sm)',
     }
   ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
+
+  const scaledTypographySx: SxProps = React.useMemo(() => (
+    {
+      fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+      lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+    }
+  ), [props.contentScaling]);
 
 
   // Block splitter, with memoand special recycle of former blocks, to help React minimize render work
@@ -178,7 +179,7 @@ export function BlocksRenderer(props: {
               : block.type === 'code'
                 ? <RenderCodeMemo key={'code-' + index} codeBlock={block} isMobile={props.isMobile} noCopyButton={props.specialDiagramMode} sx={scaledCodeSx} />
                 : block.type === 'image'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} />
+                  ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} sx={scaledTypographySx} />
                   : block.type === 'latex'
                     ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
                     : block.type === 'diff'

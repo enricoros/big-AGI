@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, IconButton, Tooltip, Typography } from '@mui/joy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -65,7 +66,7 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 }
 
 
-export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, allowRunAgain: boolean, onRunAgain?: (e: React.MouseEvent) => void }) => {
+export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, allowRunAgain: boolean, onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps }) => {
   const { url, alt } = props.imageBlock;
   const imageUrls = url.split('\n');
 
@@ -86,6 +87,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
         '& picture': { display: 'flex' },
         '& img': { maxWidth: '100%', maxHeight: '100%' },
         '&:hover > .overlay-buttons': { opacity: 1 },
+        ...props.sx,
       }}
     >
 

@@ -6,7 +6,7 @@ import { SxProps } from '@mui/joy/styles/types';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
-import { lineHeightChatText } from '~/common/app.theme';
+import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
 const StateLine = styled(Typography)(({ theme }) => ({
@@ -16,7 +16,7 @@ const StateLine = styled(Typography)(({ theme }) => ({
   fontSize: theme.fontSize.xs,
   fontFamily: theme.fontFamily.code,
   marginLeft: theme.spacing(1),
-  lineHeight: lineHeightChatText,
+  lineHeight: lineHeightChatTextMd,
 }));
 
 function isPrimitive(value: any): boolean {
@@ -93,7 +93,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 
       {/* Left pane (console) */}
       <Grid xs={12} md={ephemeral.state ? 6 : 12}>
-        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatText }}>
+        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatTextMd }}>
           {ephemeral.text}
         </Typography>
       </Grid>
