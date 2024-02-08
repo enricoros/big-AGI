@@ -47,11 +47,11 @@ function extractTableData(children: React.JSX.Element) {
 }
 
 
-// Custom Components for altering the Markdown rendering
+// TableRenderer adds a CSV Download Link
 
 interface TableRendererProps {
+  node?: any; // an optional field we want to not pass to element
   children: React.JSX.Element;
-  node?: any; // an optional field we want to not pass to the <table/> element
 }
 
 function TableRenderer({ children, node, ...props }: TableRendererProps) {
@@ -80,7 +80,23 @@ function TableRenderer({ children, node, ...props }: TableRendererProps) {
   );
 }
 
+
+// LinkRenderer adds a target="_blank" to all links
+
+interface LinkRendererProps {
+  node?: any; // an optional field we want to not pass to the <table/> element
+  children: React.JSX.Element;
+}
+
+const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
+  <a {...props} target='_blank' rel='noopener'>
+    {children}
+  </a>
+);
+
+
 const reactMarkdownComponents = {
+  a: LinkRenderer, // override the link renderer to add target="_blank"
   table: TableRenderer, // override the table renderer to show the download CSV links
 };
 
