@@ -30,8 +30,8 @@ interface UIPreferencesStore {
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
-  showPersonaExamples: boolean;
-  setShowPersonaExamples: (showPersonaExamples: boolean) => void;
+  // showPersonaExamples: boolean;
+  // setShowPersonaExamples: (showPersonaExamples: boolean) => void;
 
   showPersonaFinder: boolean;
   setShowPersonaFinder: (showPersonaFinder: boolean) => void;
@@ -70,8 +70,8 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
-      showPersonaExamples: false,
-      setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),
+      // showPersonaExamples: false,
+      // setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),
 
       // Deprecated
       showPersonaFinder: false,
