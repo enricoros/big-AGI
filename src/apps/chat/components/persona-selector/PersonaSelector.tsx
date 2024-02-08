@@ -9,6 +9,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { useChatLLM } from '~/modules/llms/store-llms';
+
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { lineHeightTextarea } from '~/common/app.theme';
@@ -117,6 +120,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     };
   }, shallow);
   const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
+  const { chatLLM } = useChatLLM();
 
 
   // derived state
@@ -340,8 +344,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                   <Typography level='title-sm'>
                     System Prompt
                   </Typography>
-                  <Typography level='body-sm'>
-                    {selectedPurpose?.systemMessage || 'No system message available'}
+                  <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
+                    {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id)}
                   </Typography>
                 </CardContent>
               </Card>

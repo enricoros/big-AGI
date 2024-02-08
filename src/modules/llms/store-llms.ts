@@ -272,13 +272,16 @@ export function findSourceOrThrow<TSourceSetup>(sourceId: DModelSourceId) {
 
 
 const modelsKnowledgeMap: { contains: string[], cutoff: string }[] = [
-  { contains: ['1106', '0125'], cutoff: '2023-04' },
+  { contains: ['4-0125', '4-turbo', '4-1106', '4-vision'], cutoff: '2023-04' },
+  { contains: ['4-0613', '4-0314', '4-32k', '3.5-turbo'], cutoff: '2021-09' },
 ] as const;
-export function getKnowledgeMapCutoff(llmId: DLLMId): string {
-  for (const { contains, cutoff } of modelsKnowledgeMap)
-    if (contains.some(c => llmId.includes(c)))
-      return cutoff;
-  return '2021-09';
+
+export function getKnowledgeMapCutoff(llmId?: DLLMId): string | null {
+  if (llmId)
+    for (const { contains, cutoff } of modelsKnowledgeMap)
+      if (contains.some(c => llmId.includes(c)))
+        return cutoff;
+  return null;
 }
 
 const defaultChatSuffixPreference = ['gpt-4-0125-preview', 'gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
