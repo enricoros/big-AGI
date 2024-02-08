@@ -63,10 +63,11 @@ function RenderCodeImpl(props: {
   codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps,
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
+  isMobile?: boolean,
 }) {
 
   // state
-  const [fitScreen, setFitScreen] = React.useState(false);
+  const [fitScreen, setFitScreen] = React.useState(!!props.isMobile);
   const [showHTML, setShowHTML] = React.useState(false);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
@@ -235,12 +236,12 @@ const RenderCodeDynamic = React.lazy(async () => {
   const { highlightCode, inferCodeLanguage } = await import('./codePrism');
 
   return {
-    default: (props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) =>
+    default: (props: { codeBlock: CodeBlock, isMobile?: boolean, noCopyButton?: boolean, sx?: SxProps }) =>
       <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
   };
 });
 
-function RenderCode(props: { codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps }) {
+function RenderCode(props: { codeBlock: CodeBlock, isMobile?: boolean, noCopyButton?: boolean, sx?: SxProps }) {
   return (
     <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
       <RenderCodeDynamic {...props} />
