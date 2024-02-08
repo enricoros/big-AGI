@@ -109,7 +109,7 @@ export const NewsItems: NewsItem[] = [
   // still unannounced: phone calls, split windows, ...
   {
     versionCode: '1.13.0',
-    versionName: 'Multi Mind',
+    versionName: 'Multi + Mind',
     versionMoji: '🧠🔀',
     versionDate: new Date('2024-02-08T07:47:00Z'),
     versionCoverImage: coverV113,
