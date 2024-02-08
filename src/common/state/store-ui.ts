@@ -26,6 +26,8 @@ interface UIPreferencesStore {
 
   messageTextSize: UIMessageTextSize;
   setMessageTextSize: (messageTextSize: UIMessageTextSize) => void;
+  incrementMessageTextSize: () => void;
+  decrementMessageTextSize: () => void;
 
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
@@ -66,6 +68,14 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       messageTextSize: 'md',
       setMessageTextSize: (messageTextSize: UIMessageTextSize) => set({ messageTextSize }),
+      incrementMessageTextSize: () => set((state) => {
+        if (state.messageTextSize === 'md') return state;
+        return { messageTextSize: state.messageTextSize === 'xs' ? 'sm' : 'md' };
+      }),
+      decrementMessageTextSize: () => set((state) => {
+        if (state.messageTextSize === 'xs') return state;
+        return { messageTextSize: state.messageTextSize === 'md' ? 'sm' : 'xs' };
+      }),
 
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
