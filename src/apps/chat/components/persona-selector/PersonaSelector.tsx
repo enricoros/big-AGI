@@ -14,7 +14,7 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -373,7 +373,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               '&:focus-within': {
                 backgroundColor: 'background.popup',
               },
-              lineHeight: lineHeightTextarea,
+              lineHeight: lineHeightTextareaMd,
             }}
           />
         )}

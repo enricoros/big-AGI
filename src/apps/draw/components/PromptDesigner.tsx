@@ -14,7 +14,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
 import { animationStopEnter } from '../../chat/components/composer/Composer';
 
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
@@ -269,7 +269,7 @@ export function PromptDesigner(props: {
               flexGrow: 1,
               boxShadow: 'lg',
               '&:focus-within': { backgroundColor: 'background.popup' },
-              lineHeight: lineHeightTextarea,
+              lineHeight: lineHeightTextareaMd,
             }}
           />
 

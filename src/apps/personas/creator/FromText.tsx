@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, Textarea, Typography } from '@mui/joy';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 
 import type { SimplePersonaProvenance } from '../store-app-personas';
 
@@ -44,7 +44,7 @@ export function FromText(props: {
           '&:focus-within': {
             backgroundColor: 'background.popup',
           },
-          lineHeight: lineHeightTextarea,
+          lineHeight: lineHeightTextareaMd,
           mb: 1.5,
         }}
       />

@@ -29,7 +29,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
@@ -579,7 +579,7 @@ export function Composer(props: {
                   sx={{
                     backgroundColor: 'background.level1',
                     '&:focus-within': { backgroundColor: 'background.popup' },
-                    lineHeight: lineHeightTextarea,
+                    lineHeight: lineHeightTextareaMd,
                   }} />
 
                 {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (

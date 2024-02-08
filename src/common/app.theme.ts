@@ -134,9 +134,8 @@ export const themeBgApp = 'background.level1';
 export const themeBgAppDarker = 'background.level2';
 export const themeBgAppChatComposer = 'background.surface';
 
-export const lineHeightChatText = 1.75;
-export const lineHeightChatCode = 1.75;
-export const lineHeightTextarea = 1.75;
+export const lineHeightChatTextMd = 1.75;
+export const lineHeightTextareaMd = 1.75;
 
 export const themeZIndexPageBar = 25;
 export const themeZIndexDesktopDrawer = 26;
@@ -151,26 +150,30 @@ export type ContentScaling = 'xs' | 'sm' | 'md';
 
 interface ContentScalingOptions {
   // BlocksRenderer
-  blockFontSize: string;
   blockCodeFontSize: string;
+  blockFontSize: string;
+  blockLineHeight: string | number;
   // ChatMessage
   chatMessagePadding: number;
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   xs: {
-    blockFontSize: 'xs',
     blockCodeFontSize: '0.75rem',
-    chatMessagePadding: 1.5,
+    blockFontSize: 'xs',
+    blockLineHeight: 1.666667,
+    chatMessagePadding: 1.25,
   },
   sm: {
-    blockFontSize: 'sm',
     blockCodeFontSize: '0.75rem',
+    blockFontSize: 'sm',
+    blockLineHeight: 1.714286,
     chatMessagePadding: 1.5,
   },
   md: {
-    blockFontSize: 'md',
     blockCodeFontSize: '0.875rem',
+    blockFontSize: 'md',
+    blockLineHeight: 1.75,
     chatMessagePadding: 2,
   },
 };

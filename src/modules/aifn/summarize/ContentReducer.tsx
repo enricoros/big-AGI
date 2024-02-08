@@ -11,7 +11,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/util/token-counter';
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 
 import { summerizeToFitContextBudget } from './summerize';
 
@@ -142,7 +142,7 @@ export function ContentReducer(props: {
             minRows={4} maxRows={8}
             value={reducedText}
             sx={{
-              lineHeight: lineHeightTextarea,
+              lineHeight: lineHeightTextareaMd,
             }} />
 
           <TokenBadgeMemo direct={reducedTokens} limit={props.tokenLimit} absoluteBottomRight />

@@ -403,7 +403,7 @@ function ChatMessage(props: {
       sx={{
         display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
         gap: { xs: 0, md: 1 },
-        px: { xs: 1, md: 2 },
+        px: { xs: 1, md: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2 },
         py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
         backgroundColor,
         borderBottom: '1px solid',
@@ -421,7 +421,8 @@ function ChatMessage(props: {
           sx={{
             // flexBasis: 0, // this won't let the item grow
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            minWidth: { xs: 50, md: 64 }, maxWidth: 80,
+            minWidth: { xs: 50, md: 64 },
+            maxWidth: 80,
             textAlign: 'center',
           }}
         >

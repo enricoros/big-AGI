@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, styled } from '@mui/joy';
 
-import { lineHeightChatText } from '~/common/app.theme';
+import { lineHeightChatTextMd } from '~/common/app.theme';
 
 import type { TextBlock } from '../blocks';
 
@@ -14,7 +14,8 @@ import type { TextBlock } from '../blocks';
 const RenderMarkdownBox = styled(Box)({
   // same look as the other RenderComponents
   marginInline: '0.75rem !important',                             // margin: 1.5 like other blocks
-  lineHeight: lineHeightChatText,
+  // this is here for usage outside of the Blocks (which set it in `sx`)
+  lineHeight: lineHeightChatTextMd,
 
   // patch the CSS
   // fontFamily: `inherit !important`,                    // (not needed anymore, as CSS is under our control) use the default font family
