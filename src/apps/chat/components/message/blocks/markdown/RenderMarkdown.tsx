@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { CSVLink } from 'react-csv';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, styled } from '@mui/joy';
@@ -7,7 +6,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 
 import { lineHeightChatText } from '~/common/app.theme';
 
-import type { TextBlock } from './blocks';
+import type { TextBlock } from '../blocks';
 
 
 /*
@@ -27,9 +26,10 @@ const RenderMarkdownBox = styled(Box)({
 
 // Dynamically import ReactMarkdown using React.lazy
 const DynamicReactGFM = React.lazy(async () => {
-  const [markdownModule, remarkGfmModule] = await Promise.all([
+  const [markdownModule, remarkGfmModule, { CSVLink }] = await Promise.all([
     import('react-markdown'),
     import('remark-gfm'),
+    import('react-csv'),
   ]);
 
   // NOTE: extracted here instead of inline as a large performance optimization
