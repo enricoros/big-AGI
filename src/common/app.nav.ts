@@ -8,7 +8,6 @@ import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CallIcon from '@mui/icons-material/Call';
 import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import Diversity2OutlinedIcon from '@mui/icons-material/Diversity2Outlined';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
@@ -151,8 +150,8 @@ export const navItems: {
     },
     {
       name: 'Personas',
-      icon: Diversity2OutlinedIcon,
-      iconActive: Diversity2Icon,
+      icon: Diversity2Icon, // was: Outlined.. but they look the same
+      // iconActive: Diversity2Icon,
       type: 'app',
       route: '/personas',
       hideBar: true,
