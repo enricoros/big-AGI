@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Avatar, Box, Divider, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -277,7 +277,7 @@ function ChatDrawerItem(props: {
                 )}
               </Tooltip>
 
-              <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
+              {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
             </>}
 
             <Tooltip disableInteractive title='Rename'>
@@ -293,7 +293,7 @@ function ChatDrawerItem(props: {
                 </FadeInButton>
               </Tooltip>
 
-              <Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />
+              {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
 
               <Tooltip disableInteractive title='Export Chat'>
                 <FadeInButton size='sm' onClick={handleConversationExport}>
