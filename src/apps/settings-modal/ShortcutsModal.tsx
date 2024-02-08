@@ -26,7 +26,9 @@ const shortcutsMd = platformAwareKeystrokes(`
 | **Settings**        |                                                 |
 | Ctrl + Shift + P    | ⚙️ Preferences                                  |
 | Ctrl + Shift + M    | 🧠 Models                                       |
-| Ctrl + Shift + O    | Options (current Chat Model)                    |
+| Ctrl + Shift + O    | 💬 Options (current Chat Model)                 |
+| Ctrl + Shift + +    | Increase Text Size                              |
+| Ctrl + Shift + -    | Decrease Text Size                              |
 | Ctrl + Shift + ?    | Shortcuts                                       |
 
 `).trim();
