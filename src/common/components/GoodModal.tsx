@@ -22,7 +22,11 @@ export function GoodModal(props: {
 }) {
   const showBottomClose = !!props.onClose && props.hideBottomClose !== true;
   return (
-    <Modal open={props.open} onClose={props.onClose}>
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      // slotProps={{ backdrop: { sx: { backdropFilter: 'blur(6px)' } } }}
+    >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
           sx={{
