@@ -13,7 +13,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { SettingTextSize } from './SettingTextSize';
+import { SettingContentScaling } from './SettingContentScaling';
 
 
 // configuration
@@ -46,7 +46,6 @@ export function AppChatSettingsUI() {
     centerMode, setCenterMode,
     doubleClickToEdit, setDoubleClickToEdit,
     enterIsNewline, setEnterIsNewline,
-    messageTextSize, setMessageTextSize,
     renderMarkdown, setRenderMarkdown,
     showPersonaFinder, setShowPersonaFinder,
     zenMode, setZenMode,
@@ -54,7 +53,6 @@ export function AppChatSettingsUI() {
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
-    messageTextSize: state.messageTextSize, setMessageTextSize: state.setMessageTextSize,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
@@ -117,7 +115,7 @@ export function AppChatSettingsUI() {
       ]}
       value={zenMode} onChange={setZenMode} />
 
-    <SettingTextSize textSize={messageTextSize} onChangeTextSize={setMessageTextSize} />
+    <SettingContentScaling />
 
     {!isPwa() && !isMobile && (
       <FormRadioControl

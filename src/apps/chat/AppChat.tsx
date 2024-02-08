@@ -378,8 +378,8 @@ export function AppChat() {
     ['b', true, false, true, () => isFocusedChatEmpty || (focusedConversationId && handleConversationBranch(focusedConversationId, null))],
     ['x', true, false, true, () => isFocusedChatEmpty || (focusedConversationId && handleConversationClear(focusedConversationId))],
     ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
-    ['+', true, true, false, useUIPreferencesStore.getState().incrementMessageTextSize],
-    ['-', true, true, false, useUIPreferencesStore.getState().decrementMessageTextSize],
+    ['+', true, true, false, useUIPreferencesStore.getState().increaseContentScaling],
+    ['-', true, true, false, useUIPreferencesStore.getState().decreaseContentScaling],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
   ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);

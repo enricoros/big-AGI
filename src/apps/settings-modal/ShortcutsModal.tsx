@@ -37,7 +37,12 @@ const shortcutsMd = platformAwareKeystrokes(`
 export function ShortcutsModal(props: { onClose: () => void }) {
   return (
     <GoodModal open title='Desktop Shortcuts' onClose={props.onClose}>
-      <BlocksRenderer text={shortcutsMd} fromRole='assistant' renderTextAsMarkdown />
+      <BlocksRenderer
+        text={shortcutsMd}
+        fromRole='assistant'
+        contentScaling='sm'
+        renderTextAsMarkdown
+      />
     </GoodModal>
   );
 }

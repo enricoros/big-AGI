@@ -6,9 +6,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
 
 import type { DMessage } from '~/common/state/store-chats';
-import type { UIMessageTextSize } from '~/common/state/store-ui';
+import { ContentScaling, lineHeightChatCode, lineHeightChatText, themeScalingMap } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
-import { lineHeightChatCode, lineHeightChatText } from '~/common/app.theme';
 
 import { RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -46,7 +45,7 @@ export function BlocksRenderer(props: {
   // required
   text: string;
   fromRole: DMessage['role'];
-  messageTextSize?: UIMessageTextSize;
+  contentScaling: ContentScaling;
   renderTextAsMarkdown: boolean;
   renderTextDiff?: TextDiff[];
 
@@ -91,26 +90,26 @@ export function BlocksRenderer(props: {
     return { text: _text, isTextCollapsed: false };
   }, [forceUserExpanded, fromUser, _text]);
 
-  // Memo the code style, to minimize re-renders
+  // Memo the styles, to minimize re-renders
+
+  const scaledTypographySx: SxProps = React.useMemo(() => (
+    {
+      lineHeight: lineHeightChatText,
+      fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+    }
+  ), [props.contentScaling]);
 
   const scaledCodeSx: SxProps = React.useMemo(() => (
     {
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
       boxShadow: props.specialDiagramMode ? 'md' : 'xs',
       fontFamily: 'code',
-      fontSize: props.messageTextSize === 'xs' ? '0.75rem' : props.messageTextSize === 'sm' ? '0.75rem' : '0.875rem',
+      fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
       fontVariantLigatures: 'none',
       lineHeight: lineHeightChatCode,
       borderRadius: 'var(--joy-radius-sm)',
     }
-  ), [fromAssistant, props.messageTextSize, props.specialDiagramMode]);
-
-  const scaledTypographySx: SxProps = React.useMemo(() => (
-    {
-      lineHeight: lineHeightChatText,
-      fontSize: (!props.messageTextSize || props.messageTextSize === 'md') ? undefined : props.messageTextSize,
-    }
-  ), [props.messageTextSize]);
+  ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
 
 
   // Block splitter, with memoand special recycle of former blocks, to help React minimize render work

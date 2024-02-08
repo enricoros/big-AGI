@@ -145,6 +145,37 @@ export const themeZIndexOverMobileDrawer = 1301;
 
 export const themeBreakpoints = appTheme.breakpoints.values;
 
+
+// Dyanmic UI Sizing
+export type ContentScaling = 'xs' | 'sm' | 'md';
+
+interface ContentScalingOptions {
+  // BlocksRenderer
+  blockFontSize: string;
+  blockCodeFontSize: string;
+  // ChatMessage
+  chatMessagePadding: number;
+}
+
+export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
+  xs: {
+    blockFontSize: 'xs',
+    blockCodeFontSize: '0.75rem',
+    chatMessagePadding: 1.5,
+  },
+  sm: {
+    blockFontSize: 'sm',
+    blockCodeFontSize: '0.75rem',
+    chatMessagePadding: 1.5,
+  },
+  md: {
+    blockFontSize: 'md',
+    blockCodeFontSize: '0.875rem',
+    chatMessagePadding: 2,
+  },
+};
+
+
 export const cssRainbowColorKeyframes = keyframes`
     100%, 0% {
         color: rgb(255, 0, 0);
