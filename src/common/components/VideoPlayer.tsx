@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import type { ReactPlayerProps } from 'react-player';
+import type { YouTubePlayerProps } from 'react-player/youtube';
 
 
-type VideoPlayerProps = ReactPlayerProps & {
+type VideoPlayerProps = YouTubePlayerProps & {
   // make the player responsive
   responsive?: boolean;
   // set this to not set the full URL
@@ -13,10 +13,10 @@ type VideoPlayerProps = ReactPlayerProps & {
 const VideoPlayerDynamic = React.lazy(async () => {
 
   // dynamically import react-player (saves 7kb but still..)
-  const { default: ReactPlayer } = await import('react-player');
+  const { default: ReactPlayerYouTube } = await import('react-player/youtube');
 
   return {
-    default: (props: ReactPlayerProps) => {
+    default: (props: YouTubePlayerProps) => {
 
       const { responsive, youTubeVideoId, ...baseProps } = props;
 
@@ -31,7 +31,7 @@ const VideoPlayerDynamic = React.lazy(async () => {
         baseProps.url = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
       }
 
-      return <ReactPlayer {...baseProps} />;
+      return <ReactPlayerYouTube {...baseProps} />;
     },
   };
 });
