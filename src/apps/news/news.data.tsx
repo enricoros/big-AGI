@@ -111,7 +111,7 @@ export const NewsItems: NewsItem[] = [
     versionCode: '1.13.0',
     versionName: 'Multi Mind',
     versionMoji: '🧠🔀',
-    versionDate: new Date('2024-02-8T7:47:00Z'),
+    versionDate: new Date('2024-02-08T07:47:00Z'),
     versionCoverImage: coverV113,
     items: [
       { text: <>Side-by-Side <B issue={208}>split windows</B>: multitask with parallel conversations</>, issue: 208 },
