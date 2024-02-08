@@ -125,7 +125,7 @@ function ChatDrawer(props: {
   // derived state
   const selectConversationsCount = chatNavItems.length;
   const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
-  const softMaxReached = selectConversationsCount >= 40;
+  const softMaxReached = selectConversationsCount >= 40 && showSymbols;
 
 
   const isMultiPane = props.chatPanesConversationIds.length >= 2;
