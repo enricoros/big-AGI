@@ -14,7 +14,7 @@ import { RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderLatex } from './RenderLatex';
-import { RenderMarkdownMemo } from './RenderMarkdown';
+import { RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderText } from './RenderText';
 import { RenderTextDiff } from './RenderTextDiff';
 import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
