@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import { AccordionExpander } from '~/common/components/AccordionExpander';
+import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -38,13 +38,13 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
-    <AccordionExpander
+    <ExpanderAccordion
       title={<Typography level='title-sm' sx={{ mr: 'auto' }}>Video Tutorial</Typography>}
       icon={<YouTubeIcon sx={{ color: '#f00' }} />}
       startCollapsed
     >
       <VideoPlayer width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
-    </AccordionExpander>
+    </ExpanderAccordion>
 
     <Typography level='body-sm'>
       You can use a running <Link href='https://lmstudio.ai/' target='_blank'>LM Studio</Link> instance as a source

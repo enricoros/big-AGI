@@ -4,7 +4,7 @@ import { Accordion, AccordionDetails, AccordionGroup, AccordionSummary, accordio
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
-export function AccordionExpander(props: { title?: React.ReactNode, icon?: React.ReactNode, startCollapsed?: boolean, children?: React.JSX.Element }) {
+export function ExpanderAccordion(props: { title?: React.ReactNode, icon?: React.ReactNode, startCollapsed?: boolean, children?: React.JSX.Element }) {
 
   // state
   const [expanded, setExpanded] = React.useState(props.startCollapsed !== true);

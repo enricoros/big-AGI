@@ -2,17 +2,18 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Button, Checkbox, Chip, chipClasses, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { lineHeightTextarea } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
+import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -105,11 +106,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [editMode, setEditMode] = React.useState(false);
 
   // external state
-  const { showExamples, showFinder, setShowExamples } = useUIPreferencesStore(state => ({
-    showExamples: state.showPersonaExamples,
-    showFinder: state.showPersonaFinder,
-    setShowExamples: state.setShowPersonaExamples,
-  }), shallow);
+  const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
+  const [showExamples, showExamplescomponent] = useChipBoolean('Examples', false);
+  const [showPrompt, showPromptComponent] = useChipBoolean('Prompt', false);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -295,74 +294,59 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               : selectedPurpose?.description || 'No description available'}
           </Typography>
           {/* Examples Toggle */}
-          {fourExamples && (
-            <Chip
-              variant='outlined'
-              size='md'
-              onClick={() => setShowExamples(!showExamples)}
-              endDecorator={<KeyboardArrowDownIcon />}
-              className={showExamples ? 'agi-expanded' : undefined}
-              sx={{
-                px: 1.5,
-                [`& .${chipClasses.endDecorator}`]: {
-                  transition: 'transform 0.2s',
-                },
-                [`&.agi-expanded .${chipClasses.endDecorator}`]: {
-                  transform: 'rotate(-180deg)',
-                },
-              }}
-            >
-              {showExamples ? 'Examples' : 'Examples'}
-            </Chip>
-          )}
-
+          {fourExamples && showExamplescomponent}
+          {showPromptComponent}
         </Box>
 
-        {/* [row -2] Example incipits */}
+        {/* [row -3] Example incipits */}
         {systemPurposeId !== 'Custom' && (
-          <Box sx={{
-            gridColumn: '1 / -1',
-            pt: 1,
-            // animated collapser
-            display: 'grid',
-            gridTemplateRows: !showExamples ? '0fr' : '1fr',
-            transition: 'grid-template-rows 0.2s cubic-bezier(.17,.84,.44,1)',
-          }}>
-            <List
-              aria-label='Persona Conversation Starters' aria-expanded={showExamples}
-              sx={{
-                // animated collapsee
-                overflow: 'hidden',
-                padding: 0,
-                // example items 2-col layout
-                display: 'grid',
-                gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
-                gap: 1,
-              }}
-            >
-              {showExamples && fourExamples?.map((example, idx) => (
-                <ListItem
-                  key={idx}
-                  variant='soft'
-                  sx={{
-                    borderRadius: 'xs',
-                    boxShadow: 'xs',
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: 'background.surface',
-                    '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
-                    '&:hover svg': { opacity: 1 },
-                  }}
-                >
-                  <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
-                    <Typography level='body-sm'>
-                      {example}
-                    </Typography>
-                    <TelegramIcon color='primary' sx={{}} />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
+          <ExpanderControlledBox expanded={showExamples || showPrompt} sx={{ gridColumn: '1 / -1', pt: 1 }}>
+            {showExamples && (
+              <List
+                aria-label='Persona Conversation Starters'
+                sx={{
+                  // example items 2-col layout
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
+                  gap: 1,
+                }}
+              >
+                {fourExamples?.map((example, idx) => (
+                  <ListItem
+                    key={idx}
+                    variant='soft'
+                    sx={{
+                      borderRadius: 'md',
+                      // boxShadow: 'xs',
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: 'background.surface',
+                      '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
+                      '&:hover svg': { opacity: 1 },
+                    }}
+                  >
+                    <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
+                      <Typography level='body-sm'>
+                        {example}
+                      </Typography>
+                      <TelegramIcon color='primary' sx={{}} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+            {showPrompt && (
+              <Card>
+                <CardContent>
+                  <Typography level='title-sm'>
+                    System Prompt
+                  </Typography>
+                  <Typography level='body-sm'>
+                    {selectedPurpose?.systemMessage || 'No system message available'}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+          </ExpanderControlledBox>
         )}
 
         {/* [row -1] Custom Prompt box */}
