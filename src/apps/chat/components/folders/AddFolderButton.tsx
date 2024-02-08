@@ -33,7 +33,7 @@ export function AddFolderButton() {
   return isAddingFolder ? (
     <ListItem sx={{
       '--ListItem-paddingLeft': '0.75rem',
-      '--ListItem-minHeight': '3rem', // --Folder-ListItem-height
+      '--ListItem-minHeight': '2.75rem', // --Folder-ListItem-height
       display: 'flex', alignItems: 'center', gap: 1,
     }}>
       <ListItemDecorator>

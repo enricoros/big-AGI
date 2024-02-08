@@ -47,8 +47,8 @@ export function ChatFolderList(props: {
           },
           // copied from the former PageDrawerList as this was contained
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-          '--ListItemDecorator-size': '2.75rem',
-          '--ListItem-minHeight': '3rem', // --Folder-ListItem-height
+          // '--ListItemDecorator-size': '2.75rem',
+          '--ListItem-minHeight': '2.75rem', // --Folder-ListItem-height
 
           '--List-radius': '8px',
           '--List-gap': '1rem',
