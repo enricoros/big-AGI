@@ -17,6 +17,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
@@ -54,6 +55,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
 
   // external state
+  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator');
 
   // derived state
@@ -192,6 +194,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <BlocksRenderer
           text={message.text}
           fromRole='assistant'
+          contentScaling={contentScaling}
           renderTextAsMarkdown={false}
           specialDiagramMode
           // onMessageEdit={(text) => setMessage({ ...message, text })}

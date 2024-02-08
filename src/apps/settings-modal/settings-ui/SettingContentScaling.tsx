@@ -1,19 +1,22 @@
 import * as React from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { FormControl, IconButton, Step, Stepper } from '@mui/joy';
 
-import type { UIMessageTextSize } from '~/common/state/store-ui';
+import type { ContentScaling } from '~/common/app.theme';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function SettingTextSize({ textSize, onChangeTextSize }: {
-  textSize: UIMessageTextSize,
-  onChangeTextSize: (size: UIMessageTextSize) => void,
-}) {
+export function SettingContentScaling() {
+
+  // external state
+  const [contentScaling, setContentScaling] = useUIPreferencesStore(state => [state.contentScaling, state.setContentScaling], shallow);
+
   return (
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Text Size'
-                      description={textSize === 'xs' ? 'Extra Small' : textSize === 'sm' ? 'Small' : 'Default'} />
+                      description={contentScaling === 'xs' ? 'Extra Small' : contentScaling === 'sm' ? 'Small' : 'Default'} />
       <Stepper sx={{
         maxWidth: 160,
         width: '100%',
@@ -21,12 +24,12 @@ export function SettingTextSize({ textSize, onChangeTextSize }: {
         '--Step-connectorThickness': '2px',
         '--StepIndicator-size': '2rem',
       }}>
-        {(['xs', 'sm', 'md'] as UIMessageTextSize[]).map(sizeKey => {
-          const isActive = sizeKey === textSize;
+        {(['xs', 'sm', 'md'] as ContentScaling[]).map(sizeKey => {
+          const isActive = sizeKey === contentScaling;
           return (
             <Step
               key={sizeKey}
-              onClick={() => onChangeTextSize(sizeKey)}
+              onClick={() => setContentScaling(sizeKey)}
               indicator={
                 <IconButton
                   size='sm'
@@ -44,7 +47,7 @@ export function SettingTextSize({ textSize, onChangeTextSize }: {
                     borderColor: 'primary.solidBg',
                   }}
                 >
-                  {'Aa' /* Nothing says 'font' more than this */ }
+                  {'Aa' /* Nothing says 'font' more than this */}
                 </IconButton>
               }
             />

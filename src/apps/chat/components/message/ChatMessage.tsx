@@ -10,7 +10,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
-import GavelIcon from '@mui/icons-material/Gavel';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -27,7 +26,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { cssRainbowColorKeyframes, themeScalingMap } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -205,10 +204,10 @@ function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
-  const { cleanerLooks, doubleClickToEdit, messageTextSize, renderMarkdown } = useUIPreferencesStore(state => ({
+  const { cleanerLooks, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
     cleanerLooks: state.zenMode === 'cleaner',
+    contentScaling: state.contentScaling,
     doubleClickToEdit: state.doubleClickToEdit,
-    messageTextSize: state.messageTextSize,
     renderMarkdown: state.renderMarkdown,
   }), shallow);
   const [showDiff, setShowDiff] = useChatShowTextDiff();
@@ -405,7 +404,7 @@ function ChatMessage(props: {
         display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
         gap: { xs: 0, md: 1 },
         px: { xs: 1, md: 2 },
-        py: 2,
+        py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
         backgroundColor,
         borderBottom: '1px solid',
         borderBottomColor: 'divider',
@@ -464,13 +463,13 @@ function ChatMessage(props: {
         <BlocksRenderer
           text={messageText}
           fromRole={messageRole}
-          renderTextAsMarkdown={renderMarkdown}
-          messageTextSize={messageTextSize}
+          contentScaling={contentScaling}
           errorMessage={errorMessage}
           isBottom={props.isBottom}
           isMobile={props.isMobile}
-          showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
+          renderTextAsMarkdown={renderMarkdown}
           renderTextDiff={textDiffs || undefined}
+          showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
           wasUserEdited={wasEdited}
           onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
           onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
