@@ -8,15 +8,17 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function SettingContentScaling() {
+export function SettingContentScaling(props: { noLabel?: boolean }) {
 
   // external state
   const [contentScaling, setContentScaling] = useUIPreferencesStore(state => [state.contentScaling, state.setContentScaling], shallow);
 
   return (
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Text Size'
-                      description={contentScaling === 'xs' ? 'Extra Small' : contentScaling === 'sm' ? 'Small' : 'Default'} />
+    <FormControl orientation='horizontal' sx={{ justifyContent: props.noLabel ? 'center' : 'space-between' }}>
+      {!props.noLabel && (
+        <FormLabelStart title='Text Size'
+                        description={contentScaling === 'xs' ? 'Extra Small' : contentScaling === 'sm' ? 'Small' : 'Default'} />
+      )}
       <Stepper sx={{
         maxWidth: 160,
         width: '100%',

@@ -4,9 +4,12 @@ import { shallow } from 'zustand/shallow';
 import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+import { SettingContentScaling } from '../settings-modal/settings-ui/SettingContentScaling';
+
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 /**
@@ -20,6 +23,7 @@ export function LinkChatMenuItems(props: {
 }) {
 
   // external state
+  const isMobile = useIsMobile();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const {
     renderMarkdown, setRenderMarkdown,
@@ -47,6 +51,8 @@ export function LinkChatMenuItems(props: {
 
 
   return <>
+
+    <SettingContentScaling noLabel />
 
     <MenuItem onClick={() => setShowSystemMessages(!showSystemMessages)} sx={{ justifyContent: 'space-between' }}>
       <Typography>
@@ -81,15 +87,17 @@ export function LinkChatMenuItems(props: {
       />
     </MenuItem>
 
-    <MenuItem onClick={props.onToggleDeletionKeys} sx={{ justifyContent: 'space-between' }}>
-      <Typography>
-        Show Keys
-      </Typography>
-      <Switch
-        checked={props.showDeletionKeys}
-        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-      />
-    </MenuItem>
+    {!isMobile && (
+      <MenuItem onClick={props.onToggleDeletionKeys} sx={{ justifyContent: 'space-between' }}>
+        <Typography>
+          Show Deletion Keys
+        </Typography>
+        <Switch
+          checked={props.showDeletionKeys}
+          slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+        />
+      </MenuItem>
+    )}
 
     <ListDivider />
 

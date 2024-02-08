@@ -72,9 +72,9 @@ export function LinkChat(props: { conversation: DConversation, storedAt: Date, e
       flexGrow: 1,
       backgroundColor: themeBgAppDarker,
       display: 'flex', flexFlow: 'column nowrap', minHeight: 96, alignItems: 'center',
-      gap: { xs: 4, md: 5, xl: 6 },
+      gap: { xs: 3, md: 5, xl: 6 },
       px: { xs: 2 },
-      py: { xs: 4, md: 5, xl: 6 },
+      py: { xs: 3, md: 5, xl: 6 },
     }}>
 
       {/* Title Card */}
