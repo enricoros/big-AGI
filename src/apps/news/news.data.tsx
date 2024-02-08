@@ -12,11 +12,12 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 // Images
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
-import coverV112 from '../../../public/covers/release-cover-v1.12.0.png';
+import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
+import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 12.1;
+export const incrementalVersion: number = 13;
 
 
 const wowStyle: SxProps = {
@@ -106,7 +107,23 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   // still unannounced: phone calls, split windows, ...
-  {// 🆕
+  {
+    versionCode: '1.13.0',
+    versionName: 'Multi + Mind',
+    versionMoji: '🧠🔀',
+    versionDate: new Date('2024-02-08T07:47:00Z'),
+    versionCoverImage: coverV113,
+    items: [
+      { text: <>Side-by-Side <B issue={208}>split windows</B>: multitask with parallel conversations</>, issue: 208 },
+      { text: <><B issue={388} wow>Multi-Chat</B> mode: message all, all at once</>, issue: 388 },
+      { text: <>Adjustable <B>text size</B>: denser chats</>, issue: 399 },
+      { text: <>Export <B issue={392}>tables as CSV</B> files</>, issue: 392 },
+      { text: <><B>Dev2</B> persona technology preview</> },
+      { text: <>Better looking chats, spacing, fonts, menus</> },
+      { text: <>More: video player, LM Studio tutorial, speedups, MongoDB (docs)</> },
+    ],
+  },
+  {
     versionCode: '1.12.0',
     versionName: 'AGI Hotline',
     versionMoji: '✨🗣️',
