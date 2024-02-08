@@ -94,17 +94,14 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
         <Tooltip
           variant='outlined' color='neutral'
           title={
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
-                <Typography level='title-sm'>⚠️ Temporary Image</Typography>
-                <Typography level='body-sm'>
-                  This image will be deleted from the OpenAI servers in one hour. <b>Please save it to your device</b>.
-                </Typography>
+                <Typography level='title-sm'>⚠️ <b>Temporary Image</b> - This image will be deleted from the OpenAI servers in one hour. <b>Please save it to your device</b>.</Typography>
                 {/*<Typography level='body-xs'>*/}
                 {/*  The following is the re-written DALL·E prompt that generated this image.*/}
                 {/*</Typography>*/}
               </Alert>}
-              <Typography level='title-sm' sx={{ p: 2 }}>
+              <Typography level='title-sm' sx={{ p: 1 }}>
                 {alt}
               </Typography>
             </Box>
