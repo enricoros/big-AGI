@@ -38,7 +38,7 @@ function ButtonAttachScreenCapture(props: { isMobile?: boolean, onAttachScreenCa
     </IconButton>
   ) : (
     <Tooltip
-      disableInteractive variant='solid' placement='top-start'
+      arrow disableInteractive variant='solid' placement='top-start'
       title={
         <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
           <b>Attach screen capture</b><br />

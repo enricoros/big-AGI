@@ -8,7 +8,7 @@ import { Box, Button, Tooltip, Typography } from '@mui/joy';
 import type { DMessage } from '~/common/state/store-chats';
 import type { UIMessageTextSize } from '~/common/state/store-ui';
 import { InlineError } from '~/common/components/InlineError';
-import { lineHeightChatText } from '~/common/app.theme';
+import { lineHeightChatCode, lineHeightChatText } from '~/common/app.theme';
 
 import { RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
@@ -100,7 +100,7 @@ export function BlocksRenderer(props: {
       fontFamily: 'code',
       fontSize: props.messageTextSize === 'xs' ? '0.75rem' : props.messageTextSize === 'sm' ? '0.75rem' : '0.875rem',
       fontVariantLigatures: 'none',
-      lineHeight: lineHeightChatText,
+      lineHeight: lineHeightChatCode,
       borderRadius: 'var(--joy-radius-sm)',
     }
   ), [fromAssistant, props.messageTextSize, props.specialDiagramMode]);
