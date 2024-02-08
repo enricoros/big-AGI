@@ -21,7 +21,7 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
-## What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -33,7 +33,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
 
-## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
+### What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
 
@@ -56,15 +56,6 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 - Persona Creator history, deletion, custom creation, fix llm API timeouts
 - Enable adding up to five custom OpenAI-compatible endpoints
 - Developer enhancements: new 'Actiles' framework
-
-### What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI
-
-- **New UI**: for both desktop and mobile, sets the stage for future scale. [#201](https://github.com/enricoros/big-AGI/issues/201)
-- **Conversation Folders**: enhanced conversation organization. [#321](https://github.com/enricoros/big-AGI/issues/321)
-- **[LM Studio](https://lmstudio.ai/)** support and improved token management
-- Resizable panes in split-screen conversations.
-- Large performance optimizations
-- Developer enhancements: new UI framework, updated documentation for proxy settings on browserless/docker
 
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
