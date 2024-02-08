@@ -21,6 +21,18 @@ shows the current developments and future ideas.
 - Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 
+## What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+
+https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
+
+- **Side-by-Side Split Windows**: multitask with parallel conversations. [#208](https://github.com/enricoros/big-AGI/issues/208)
+- **Multi-Chat Mode**: message everyone, all at once. [#388](https://github.com/enricoros/big-AGI/issues/388)
+- **Export tables as CSV** - big thanks to @aj47. [#392](https://github.com/enricoros/big-AGI/pull/392)
+- **Adjustable Text Size**: enjoy denser chats. [#399](https://github.com/enricoros/big-AGI/issues/399)
+- Dev2 Persona Technology Preview
+- Better looking chats with improved spacing, fonts, and menus
+- More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
+
 ## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
