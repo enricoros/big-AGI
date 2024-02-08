@@ -1,43 +1,77 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
 
 import { Container, Sheet } from '@mui/joy';
 
-import { AppCallQueryParams } from '~/common/app.routes';
-import { InlineError } from '~/common/components/InlineError';
+import type { DConversationId } from '~/common/state/store-chats';
+import { useRouterQuery } from '~/common/app.routes';
 
-import { CallUI } from './CallUI';
 import { CallWizard } from './CallWizard';
+import { Contacts } from './Contacts';
+import { Telephone } from './Telephone';
+import { useAppCallStore } from './state/store-app-call';
+
+
+/**
+ * Used to define the intent of the call from other apps (via query params) or
+ * from the contacts list (via the 'call' button).
+ */
+export interface AppCallIntent {
+  conversationId: DConversationId | null;
+  personaId: string;
+  backTo: 'app-chat' | 'app-call-contacts';
+}
 
 
 export function AppCall() {
-  // external state
-  const { query } = useRouter();
 
-  // derived state
-  const { conversationId, personaId } = query as any as AppCallQueryParams;
-  const validInput = !!conversationId && !!personaId;
+  // state
+  const [callIntent, setCallIntent] = React.useState<AppCallIntent | null>(null);
+
+  // external state
+  const grayUI = useAppCallStore(state => state.grayUI);
+  const query = useRouterQuery<Partial<AppCallIntent>>();
+
+
+  // [effect] set intent from the query parameters
+  React.useEffect(() => {
+    if (query.personaId) {
+      setCallIntent({
+        conversationId: query.conversationId ?? null,
+        personaId: query.personaId,
+        backTo: query.backTo || 'app-chat',
+      });
+    }
+  }, [query.backTo, query.conversationId, query.personaId]);
+
+
+  const hasIntent = !!callIntent && !!callIntent.personaId;
 
   return (
-    <Sheet variant='solid' color='neutral' invertedColors sx={{
-      display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      flexGrow: 1,
-      overflowY: 'auto',
-      minHeight: 96,
-    }}>
+    <Sheet
+      variant={grayUI ? 'solid' : 'soft'}
+      invertedColors={grayUI ? true : undefined}
+      sx={{
+        // take the full V-area (we're inside PageWrapper) and scroll as needed
+        flexGrow: 1,
+        overflowY: 'auto',
 
-      <Container maxWidth='sm' sx={{
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center',
-        minHeight: '80dvh', justifyContent: 'space-evenly',
-        gap: { xs: 2, md: 4 },
+        // container will take the full v-area
+        display: 'grid',
       }}>
 
-        {!validInput && <InlineError error={`Something went wrong. ${JSON.stringify(query)}`} />}
+      <Container
+        maxWidth={hasIntent ? 'sm' : 'md'}
+        sx={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: hasIntent ? 'space-evenly' : undefined,
+          gap: hasIntent ? 1 : undefined,
+        }}>
 
-        {validInput && (
-          <CallWizard conversationId={conversationId}>
-            <CallUI conversationId={conversationId} personaId={personaId} />
+        {!hasIntent ? (
+          <Contacts setCallIntent={setCallIntent} />
+        ) : (
+          <CallWizard conversationId={callIntent.conversationId}>
+            <Telephone callIntent={callIntent} backToContacts={() => setCallIntent(null)} />
           </CallWizard>
         )}
 

@@ -1,6 +1,5 @@
-import type { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
-
 import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export type DiagramType = 'auto' | 'mind';
@@ -60,12 +59,15 @@ function plantumlDiagramPrompt(diagramType: DiagramType): { sys: string, usr: st
   }
 }
 
-export function bigDiagramPrompt(diagramType: DiagramType, diagramLanguage: DiagramLanguage, chatSystemPrompt: string, subject: string): VChatMessageIn[] {
+export function bigDiagramPrompt(diagramType: DiagramType, diagramLanguage: DiagramLanguage, chatSystemPrompt: string, subject: string, customInstruction: string): VChatMessageIn[] {
   const { sys, usr } = diagramLanguage === 'mermaid' ? mermaidDiagramPrompt(diagramType) : plantumlDiagramPrompt(diagramType);
+  if (customInstruction) {
+    customInstruction = 'Also consider the following instructions: ' + customInstruction;
+  }
   return [
     { role: 'system', content: sys },
     { role: 'system', content: chatSystemPrompt },
     { role: 'assistant', content: subject },
-    { role: 'user', content: usr },
+    { role: 'user', content: `${usr} ${customInstruction}` },
   ];
 }

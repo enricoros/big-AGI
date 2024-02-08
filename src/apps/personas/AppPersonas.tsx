@@ -1,39 +1,54 @@
 import * as React from 'react';
 
-import { Box, Container, ListDivider, Sheet, Typography } from '@mui/joy';
+import { Box, Container, ListDivider, Typography } from '@mui/joy';
+import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
-import { YTPersonaCreator } from './YTPersonaCreator';
-import ScienceIcon from '@mui/icons-material/Science';
+import { Creator } from './creator/Creator';
+import { CreatorDrawer } from './creator/CreatorDrawer';
+import { Viewer } from './creator/Viewer';
 
 
 export function AppPersonas() {
+
+  // state
+  const [selectedSimplePersonaId, setSelectedSimplePersonaId] = React.useState<string | null>(null);
+
+
+  // pluggable UI
+
+  const drawerContent = React.useMemo(() => {
+    return (
+      <CreatorDrawer
+        selectedSimplePersonaId={selectedSimplePersonaId}
+        setSelectedSimplePersonaId={setSelectedSimplePersonaId}
+      />
+    );
+  }, [selectedSimplePersonaId]);
+
+  usePluggableOptimaLayout(drawerContent, null, null, 'AppPersonas');
+
+
   return (
-    <Sheet sx={{
+    <Box sx={{
       flexGrow: 1,
       overflowY: 'auto',
-      backgroundColor: 'background.level1',
       p: { xs: 3, md: 6 },
     }}>
 
       <Container disableGutters maxWidth='md' sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
         <Typography level='title-lg' sx={{ textAlign: 'center' }}>
-          Advanced AI Personas
+          AI Personas Creator
         </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-          <Typography>
-            Experimental
-          </Typography>
-          <ScienceIcon color='primary' />
-        </Box>
 
         <ListDivider sx={{ my: 2 }} />
 
-        <YTPersonaCreator />
+        {!!selectedSimplePersonaId && <Viewer selectedSimplePersonaId={selectedSimplePersonaId} />}
+
+        <Creator display={!selectedSimplePersonaId} />
 
       </Container>
 
-    </Sheet>
+    </Box>
   );
 }

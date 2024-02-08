@@ -1,12 +1,11 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { MistralIcon } from '~/common/components/icons/MistralIcon';
+import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../transports/server/openai/openai.router';
-import type { VChatMessageIn, VChatMessageOut } from '../../transports/chatGenerate';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { LLMOptionsOpenAI, openAICallChatGenerate, SourceSetupOpenAI } from '../openai/openai.vendor';
+import { LLMOptionsOpenAI, ModelVendorOpenAI, SourceSetupOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { MistralSourceSetup } from './MistralSourceSetup';
@@ -48,10 +47,9 @@ export const ModelVendorMistral: IModelVendor<SourceSetupMistral, OpenAIAccessSc
     heliKey: '',
     moderationCheck: false,
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return openAICallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, null, null, maxTokens);
-  },
-  callChatGenerateWF() {
-    throw new Error('Mistral does not support "Functions" yet');
-  },
+
+  // OpenAI transport ('mistral' dialect in 'access')
+  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
+  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

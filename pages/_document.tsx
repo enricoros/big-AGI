@@ -5,7 +5,7 @@ import createEmotionServer from '@emotion/server/create-instance';
 import { getInitColorSchemeScript } from '@mui/joy/styles';
 
 import { Brand } from '~/common/app.config';
-import { bodyFontClassName, createEmotionCache } from '~/common/app.theme';
+import { createEmotionCache } from '~/common/app.theme';
 
 
 interface MyDocumentProps extends DocumentProps {
@@ -14,7 +14,7 @@ interface MyDocumentProps extends DocumentProps {
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
-    <Html lang='en' className={bodyFontClassName}>
+    <Html lang='en'>
       <Head>
         {/* Meta (missing Title, set by the App or Page) */}
         <meta name='description' content={Brand.Meta.Description} />
@@ -24,7 +24,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <link rel='shortcut icon' href='/favicon.ico' />
         <link rel='icon' type='image/png' sizes='32x32' href='/icons/favicon-32x32.png' />
         <link rel='icon' type='image/png' sizes='16x16' href='/icons/favicon-16x16.png' />
-        <link rel='apple-touch-icon' sizes='180x180' href='/icons/apple-touch-icon.png' />
+        <link rel='apple-touch-icon' sizes='180x180' href='/apple-touch-icon.png' />
         <link rel='manifest' href='/manifest.json' />
         <meta name='apple-mobile-web-app-capable' content='yes' />
         <meta name='apple-mobile-web-app-status-bar-style' content='black' />
@@ -51,9 +51,9 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {emotionStyleTags}
       </Head>
       <body>
-        {getInitColorSchemeScript()}
-        <Main />
-        <NextScript />
+      {getInitColorSchemeScript()}
+      <Main />
+      <NextScript />
       </body>
     </Html>
   );

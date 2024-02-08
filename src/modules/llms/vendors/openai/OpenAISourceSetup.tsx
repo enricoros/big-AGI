@@ -9,13 +9,13 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
-import type { ModelDescriptionSchema } from '../../transports/server/server.schemas';
-import { DLLM, DModelSource, DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
-import { isValidOpenAIApiKey, LLMOptionsOpenAI, ModelVendorOpenAI } from './openai.vendor';
+import { isValidOpenAIApiKey, ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -25,7 +25,7 @@ const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
-  const advanced = useToggleableBoolean();
+  const advanced = useToggleableBoolean(!!props.sourceId?.includes('-'));
 
   // external state
   const { source, sourceHasLLMs, access, updateSetup } =
@@ -40,15 +40,8 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: !sourceHasLLMs && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
-
+  const { isFetching, refetch, isError, error } =
+    useLlmUpdateModels(ModelVendorOpenAI, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
@@ -65,19 +58,20 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     {advanced.on && <FormTextField
+      title='API Endpoint'
+      tooltip={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nCould be used for Helicone, Cloudflare, or other OpenAI compatible cloud or local services.\n\nExamples:\n - ${HELICONE_OPENAI_HOST}\n - localhost:1234`}
+      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
+      placeholder={`e.g., ${HELICONE_OPENAI_HOST}, https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai, etc..`}
+      value={oaiHost}
+      onChange={text => updateSetup({ oaiHost: text })}
+    />}
+
+    {advanced.on && <FormTextField
       title='Organization ID'
       description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
       onChange={text => updateSetup({ oaiOrg: text })}
-    />}
-
-    {advanced.on && <FormTextField
-      title='API Host'
-      description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
-      placeholder={`e.g., ${HELICONE_OPENAI_HOST} or https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai`}
-      value={oaiHost}
-      onChange={text => updateSetup({ oaiHost: text })}
     />}
 
     {advanced.on && <FormTextField
@@ -104,36 +98,9 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       onChange={on => updateSetup({ moderationCheck: on })}
     />}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 
   </>;
-}
-
-
-export function modelDescriptionToDLLM<TSourceSetup>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, LLMOptionsOpenAI> {
-  const maxOutputTokens = model.maxCompletionTokens || Math.round((model.contextWindow || 4096) / 2);
-  const llmResponseTokens = Math.round(maxOutputTokens / (model.maxCompletionTokens ? 2 : 4));
-  return {
-    id: `${source.id}-${model.id}`,
-
-    label: model.label,
-    created: model.created || 0,
-    updated: model.updated || 0,
-    description: model.description,
-    tags: [], // ['stream', 'chat'],
-    contextTokens: model.contextWindow,
-    maxOutputTokens: maxOutputTokens,
-    hidden: !!model.hidden,
-
-    sId: source.id,
-    _source: source,
-
-    options: {
-      llmRef: model.id,
-      llmTemperature: 0.5,
-      llmResponseTokens: llmResponseTokens,
-    },
-  };
 }

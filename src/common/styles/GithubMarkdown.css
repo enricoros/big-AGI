@@ -2,7 +2,7 @@
  * enable programmatic switching between light and dark modes. The original file has a media query that
  * switches the theme based on the user's OS settings (but not the Joy UI theme). */
 
-.markdown-body-dark {
+[data-joy-color-scheme="dark"] .markdown-body {
   color-scheme: dark;
   --color-prettylights-syntax-comment: #8b949e;
   --color-prettylights-syntax-constant: #79c0ff;
@@ -34,25 +34,32 @@
   --color-prettylights-syntax-brackethighlighter-angle: #8b949e;
   --color-prettylights-syntax-sublimelinter-gutter-mark: #484f58;
   --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
-  --color-fg-default: #c9d1d9;
-  --color-fg-muted: #8b949e;
+  --color-fg-default: #e6edf3;
+  --color-fg-muted: #848d97;
   --color-fg-subtle: #6e7681;
   --color-canvas-default: #0d1117;
   --color-canvas-subtle: #161b22;
   --color-border-default: #30363d;
   --color-border-muted: #21262d;
   --color-neutral-muted: rgba(110,118,129,0.4);
-  --color-accent-fg: #58a6ff;
+  --color-accent-fg: #2f81f7;
   --color-accent-emphasis: #1f6feb;
+  --color-success-fg: #3fb950;
+  --color-success-emphasis: #238636;
+  --color-attention-fg: #d29922;
+  --color-attention-emphasis: #9e6a03;
   --color-attention-subtle: rgba(187,128,9,0.15);
   --color-danger-fg: #f85149;
+  --color-danger-emphasis: #da3633;
+  --color-done-fg: #a371f7;
+  --color-done-emphasis: #8957e5;
 }
 
-.markdown-body-light {
+[data-joy-color-scheme="light"] .markdown-body {
   color-scheme: light;
-  --color-prettylights-syntax-comment: #6e7781;
+  --color-prettylights-syntax-comment: #57606a;
   --color-prettylights-syntax-constant: #0550ae;
-  --color-prettylights-syntax-entity: #8250df;
+  --color-prettylights-syntax-entity: #6639ba;
   --color-prettylights-syntax-storage-modifier-import: #24292f;
   --color-prettylights-syntax-entity-tag: #116329;
   --color-prettylights-syntax-keyword: #cf222e;
@@ -80,8 +87,8 @@
   --color-prettylights-syntax-brackethighlighter-angle: #57606a;
   --color-prettylights-syntax-sublimelinter-gutter-mark: #8c959f;
   --color-prettylights-syntax-constant-other-reference-link: #0a3069;
-  --color-fg-default: #24292f;
-  --color-fg-muted: #57606a;
+  --color-fg-default: #1F2328;
+  --color-fg-muted: #656d76;
   --color-fg-subtle: #6e7781;
   --color-canvas-default: #ffffff;
   --color-canvas-subtle: #f6f8fa;
@@ -90,8 +97,15 @@
   --color-neutral-muted: rgba(175,184,193,0.2);
   --color-accent-fg: #0969da;
   --color-accent-emphasis: #0969da;
+  --color-success-fg: #1a7f37;
+  --color-success-emphasis: #1f883d;
+  --color-attention-fg: #9a6700;
+  --color-attention-emphasis: #9a6700;
   --color-attention-subtle: #fff8c5;
-  --color-danger-fg: #cf222e;
+  --color-danger-fg: #d1242f;
+  --color-danger-emphasis: #cf222e;
+  --color-done-fg: #8250df;
+  --color-done-emphasis: #8250df;
 }
 
 
@@ -100,11 +114,14 @@
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
-  color: var(--color-fg-default);
-  background-color: var(--color-canvas-default);
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-  font-size: 16px;
-  line-height: 1.5;
+  /* Big-AGI: Make sure a block is at least a rem tall */
+  min-height: 1em;
+  /* Big-AGI: Note: disabled because we have good CSS already */
+  /*color: var(--color-fg-default);*/
+  /*background-color: var(--color-canvas-default);*/
+  /*font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";*/
+  /*font-size: 16px;*/
+  /*line-height: 1.5;*/
   word-wrap: break-word;
 }
 
@@ -151,6 +168,7 @@
 
 .markdown-body abbr[title] {
   border-bottom: none;
+  -webkit-text-decoration: underline dotted;
   text-decoration: underline dotted;
 }
 
@@ -222,7 +240,9 @@
   border-bottom: 1px solid var(--color-border-muted);
   height: .25em;
   padding: 0;
-  margin: 24px 0;
+  /* big-AGI: was 24px -> 1.5em */
+  margin: 1.5em 0;
+  /*margin: 24px 0;*/
   background-color: var(--color-border-default);
   border: 0;
 }
@@ -364,8 +384,11 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  /* big-AGI: changed this to be more flexible with changing Block font size */
+  margin-top: 1.2em;
+  margin-bottom: 0.8em;
+  /*margin-top: 24px;*/
+  /*margin-bottom: 16px;*/
   font-weight: 600;
   line-height: 1.25;
 }
@@ -473,13 +496,24 @@
   content: "";
 }
 
-.markdown-body>*:first-child {
+/* big-AGI: NOTE: we are doing this only on the <p> tags because otherwise
+   this collapses the space between blocks */
+.markdown-body>p:first-child {
   margin-top: 0 !important;
 }
 
-.markdown-body>*:last-child {
+.markdown-body>p:last-child {
   margin-bottom: 0 !important;
 }
+
+/*.markdown-body>*:first-child {*/
+/*  margin-top: 0 !important;*/
+/*}*/
+
+/*.markdown-body>*:last-child {*/
+/*  margin-bottom: 0 !important;*/
+/*}*/
+
 
 .markdown-body a:not([href]) {
   color: inherit;
@@ -510,7 +544,9 @@
 .markdown-body pre,
 .markdown-body details {
   margin-top: 0;
-  margin-bottom: 16px;
+  /* big-AGI: was 16px -> 1em*/
+  margin-bottom: 1em;
+  /*margin-bottom: 16px;*/
 }
 
 .markdown-body blockquote>:first-child {
@@ -596,19 +632,19 @@
   list-style-type: none;
 }
 
-.markdown-body ol[type=a] {
+.markdown-body ol[type="a s"] {
   list-style-type: lower-alpha;
 }
 
-.markdown-body ol[type=A] {
+.markdown-body ol[type="A s"] {
   list-style-type: upper-alpha;
 }
 
-.markdown-body ol[type=i] {
+.markdown-body ol[type="i s"] {
   list-style-type: lower-roman;
 }
 
-.markdown-body ol[type=I] {
+.markdown-body ol[type="I s"] {
   list-style-type: upper-roman;
 }
 
@@ -661,6 +697,10 @@
 .markdown-body table td {
   padding: 6px 13px;
   border: 1px solid var(--color-border-default);
+}
+
+.markdown-body table td>:last-child {
+  margin-bottom: 0;
 }
 
 .markdown-body table tr {
@@ -829,6 +869,7 @@
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
+  color: var(--color-fg-default);
   background-color: var(--color-canvas-subtle);
   border-radius: 6px;
 }
@@ -1101,4 +1142,66 @@
 
 .markdown-body ::-webkit-calendar-picker-indicator {
   filter: invert(50%);
+}
+
+.markdown-body .markdown-alert {
+  /*padding: var(--base-size-8) var(--base-size-16);*/
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid var(--color-border-default);
+}
+
+.markdown-body .markdown-alert>:first-child {
+  margin-top: 0;
+}
+
+.markdown-body .markdown-alert>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body .markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1;
+}
+
+.markdown-body .markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-accent-emphasis);
+}
+
+.markdown-body .markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-accent-fg);
+}
+
+.markdown-body .markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-done-emphasis);
+}
+
+.markdown-body .markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-done-fg);
+}
+
+.markdown-body .markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-attention-emphasis);
+}
+
+.markdown-body .markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-attention-fg);
+}
+
+.markdown-body .markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-success-emphasis);
+}
+
+.markdown-body .markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-success-fg);
+}
+
+.markdown-body .markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-danger-emphasis);
+}
+
+.markdown-body .markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-danger-fg);
 }

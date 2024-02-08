@@ -11,6 +11,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { Section } from '~/common/components/Section';
 import { countModelTokens } from '~/common/util/token-counter';
+import { lineHeightTextarea } from '~/common/app.theme';
 
 import { summerizeToFitContextBudget } from './summerize';
 
@@ -47,7 +48,7 @@ export function ContentReducer(props: {
   const [processing, setProcessing] = React.useState(false);
 
   // derived state
-  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') : 0;
+  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') ?? 0 : 0;
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 
@@ -141,8 +142,7 @@ export function ContentReducer(props: {
             minRows={4} maxRows={8}
             value={reducedText}
             sx={{
-              fontSize: '14px',
-              lineHeight: 1.75,
+              lineHeight: lineHeightTextarea,
             }} />
 
           <TokenBadgeMemo direct={reducedTokens} limit={props.tokenLimit} absoluteBottomRight />

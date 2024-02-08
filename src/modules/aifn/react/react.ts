@@ -2,10 +2,11 @@
  * porting of implementation from here: https://til.simonwillison.net/llms/python-react-pattern
  */
 
-import { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/modules/llms/store-llms';
+import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
-import { callChatGenerate, VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629
@@ -19,7 +20,7 @@ You will use "Action: " to run one of the actions available to you - then return
 "Observation" will be presented to you as the result of previous "Action".
 If the "Observation" you received is not related to the question asked, or you cannot derive the answer from the observation, change the Action to be performed and try again.
 
-ALWAYS assume today as {{currentDate}} when dealing with questions regarding dates.
+ALWAYS assume today as {{Today}} when dealing with questions regarding dates.
 Never mention your knowledge cutoff date
 
 Your available "Actions" are:
@@ -58,9 +59,6 @@ Answer: The capital of France is Paris
 `;
 
 
-export const CmdRunReact: string[] = ['/react'];
-
-
 const actionRe = /^Action: (\w+): (.*)$/;
 
 
@@ -86,7 +84,7 @@ export class Agent {
               showState: (state: object) => void): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
-    const S: State = this.initialize(`Question: ${question}`, enableBrowse);
+    const S: State = this.initialize(`Question: ${question}`, llmId, enableBrowse, appendLog);
     showState(S);
     while (i < maxTurns && S.result === undefined) {
       i++;
@@ -103,13 +101,17 @@ export class Agent {
     return S.result || 'No result';
   }
 
-  initialize(question: string, enableBrowse: boolean): State {
-    return {
-      messages: [{ role: 'system', content: reActPrompt(enableBrowse).replaceAll('{{currentDate}}', new Date().toISOString().slice(0, 10)) }],
+  initialize(question: string, assistantLLMId: DLLMId, enableBrowse: boolean, log: (...data: any[]) => void = console.log): State {
+    const state: State = {
+      messages: [{ role: 'system', content: bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId) }],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
     };
+    log('## Prepare Buffer');
+    for (let i = 0; i < state.messages.length; i++)
+      log('→ ' + state.messages[i].role + ' [' + (i + 1) + ']: "' + state.messages[i].content.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
+    return state;
   }
 
   truncateStringAfterPause(input: string): string {
@@ -128,9 +130,9 @@ export class Agent {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await callChatGenerate(llmId, S.messages, 500)).content;
+      content = (await llmChatGenerateOrThrow(llmId, S.messages, null, null, 500)).content;
     } catch (error: any) {
-      content = `Error in callChat: ${error}`;
+      content = `Error in llmChatGenerateOrThrow: ${error}`;
     }
     // process response, strip out potential hallucinated response after PAUSE is detected
     content = this.truncateStringAfterPause(content);
@@ -139,9 +141,9 @@ export class Agent {
   }
 
   async step(S: State, llmId: DLLMId, log: (...data: any[]) => void = console.log) {
-    log('→ reAct [...' + (S.messages.length + 1) + ']: ' + S.nextPrompt);
+    log('→ ' + (S.lastObservation ? 'action' : 'user') + ' [' + (S.messages.length + 1) + ']: "' + S.nextPrompt + '"');
     const result = await this.chat(S, S.nextPrompt, llmId);
-    log(`← ${result}`);
+    log('← reAct [' + (S.messages.length) + ']: "' + result + '"');
     const actions = result
       .split('\n')
       .map((a: string) => actionRe.exec(a))
@@ -152,12 +154,14 @@ export class Agent {
       if (!(action in knownActions)) {
         throw new Error(`Unknown action: ${action}: ${actionInput}`);
       }
-      log(`⚡ ${action} "${actionInput}"`);
+      log(`⚡ __${action}__("${actionInput}") → Observation`);
       S.lastObservation = await knownActions[action](actionInput);
       S.nextPrompt = `Observation: ${S.lastObservation}`;
-      log(S.nextPrompt);
+      // will be displayed in the next step
+      // log('=>' + S.nextPrompt);
     } else {
       log('↙ done');
+      // already displayed (← react)
       // log(`Result: ${result}`);
       S.result = result;
     }

@@ -1,20 +1,21 @@
 import * as React from 'react';
 import { keyframes } from '@emotion/react';
+import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { Box, Button, Card, CardContent, Container, IconButton, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { Brand } from '~/common/app.config';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
-import { newsCallout, NewsItems } from './news.data';
+import { NewsItems, newsRoadmapCallout } from './news.data';
 
 // number of news items to show by default, before the expander
-const DEFAULT_NEWS_COUNT = 2;
+const DEFAULT_NEWS_COUNT = 3;
 
 export const cssColorKeyframes = keyframes`
     0%, 100% {
@@ -27,7 +28,7 @@ export const cssColorKeyframes = keyframes`
         color: #0B6BCB; /* Primary main color (500) */
     }
     75% {
-        color: #97C3F0; /* Primary lighter shade (300) */
+        color: #083e75; /* Primary lighter shade (300) */
     }`;
 
 
@@ -43,7 +44,6 @@ export function AppNews() {
 
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level1',
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },
@@ -52,73 +52,116 @@ export function AppNews() {
       <Box sx={{
         my: 'auto',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 4,
       }}>
 
-        <Typography level='h1' sx={{ fontSize: '3rem' }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite` }}>{firstNews?.versionCode}</Box>!
+        <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite`, zIndex: 1 }}>{firstNews?.versionCode}</Box>!
         </Typography>
 
-        <Typography>
+        <Typography sx={{ mb: 2 }} level='title-sm'>
           {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
         </Typography>
 
-        <Box>
+        <Box sx={{ mb: 5 }}>
           <Button
-            variant='solid' color='neutral' size='lg'
+            variant='solid' color='primary' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
             endDecorator='✨'
-            sx={{ minWidth: 200 }}
+            sx={{
+              boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
+              minWidth: 180,
+            }}
           >
-            Sweet
+            Continue
           </Button>
         </Box>
 
-        {!!newsCallout && <Container disableGutters maxWidth='sm'>{newsCallout}</Container>}
+        {/*<Typography level='title-sm' sx={{ mb: 1, placeSelf: 'start', ml: 1 }}>*/}
+        {/*  Here is what's new:*/}
+        {/*</Typography>*/}
 
-        {!!news && <Container disableGutters maxWidth='sm'>
+        <Container disableGutters maxWidth='sm'>
           {news?.map((ni, idx) => {
             // const firstCard = idx === 0;
             const hasCardAfter = news.length < NewsItems.length;
             const showExpander = hasCardAfter && (idx === news.length - 1);
             const addPadding = false; //!firstCard; // || showExpander;
-            return <Card key={'news-' + idx} sx={{ mb: 2, minHeight: 32 }}>
-              <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <GoodTooltip title={ni.versionName || null} placement='top-start'>
-                    <Typography level='title-sm' component='div' sx={{ flexGrow: 1 }}>
-                      {ni.text ? ni.text : ni.versionName ? `${ni.versionCode} · ${ni.versionName}` : `Version ${ni.versionCode}:`}
+            return <React.Fragment key={idx}>
+
+              {/* News Item */}
+              <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
+                <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography level='title-sm' component='div'>
+                      {ni.text ? ni.text : ni.versionName ? <><span style={{ fontWeight: 600 }}>{ni.versionCode}</span> · </> : `Version ${ni.versionCode}:`}
+                      <Box
+                        component='span'
+                        sx={idx ? {} : {
+                          animation: `${cssRainbowColorKeyframes} 5s infinite`,
+                          fontWeight: 600,
+                          zIndex: 1,
+                        }}
+                      >
+                        {ni.versionName}
+                      </Box>
                     </Typography>
-                  </GoodTooltip>
-                  {/*!firstCard &&*/ (
-                    <Typography level='body-sm'>
+                    <Typography level='body-sm' sx={{ ml: 'auto' }}>
                       {!!ni.versionDate && <TimeAgo date={ni.versionDate} />}
                     </Typography>
+                  </Box>
+
+                  {!!ni.items && (ni.items.length > 0) && (
+                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
+                      {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
+                        < Typography component='div' level='body-sm'>
+                          {item.text}
+                        </Typography>
+                      </li>)}
+                    </ul>
                   )}
-                </Box>
 
-                {!!ni.items && (ni.items.length > 0) && <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: 24 }}>
-                  {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                    <Typography component='div' level='body-sm'>
-                      {item.text}
-                    </Typography>
-                  </li>)}
-                </ul>}
+                  {showExpander && (
+                    <IconButton
+                      variant='solid'
+                      onClick={() => setLastNewsIdx(idx + 1)}
+                      sx={{
+                        position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1,
+                        // backgroundColor: 'background.surface',
+                        borderRadius: '50%',
+                      }}
+                    >
+                      <ExpandMoreIcon />
+                    </IconButton>
+                  )}
+                </CardContent>
 
-                {showExpander && (
-                  <IconButton
-                    variant='plain' size='sm'
-                    onClick={() => setLastNewsIdx(idx + 1)}
-                    sx={{ position: 'absolute', right: 0, bottom: 0, mr: -1, mb: -1 }}
-                  >
-                    <ExpandMoreIcon />
-                  </IconButton>
+                {!!ni.versionCoverImage && (
+                  <CardOverflow sx={{
+                    m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
+                  }}>
+                    <AspectRatio ratio='2'>
+                      <NextImage
+                        src={ni.versionCoverImage}
+                        alt={`Cover image for ${ni.versionCode}`}
+                        // commented: we scale the images to 600px wide (>300 px tall)
+                        // sizes='(max-width: 1200px) 100vw, 50vw'
+                        priority={idx === 0}
+                      />
+                    </AspectRatio>
+                  </CardOverflow>
                 )}
+              </Card>
 
-              </CardContent>
-            </Card>;
+              {/* Inject the roadmap item here*/}
+              {idx === 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {newsRoadmapCallout}
+                </Box>
+              )}
+
+            </React.Fragment>;
           })}
-        </Container>}
+        </Container>
 
         {/*<Typography sx={{ textAlign: 'center' }}>*/}
         {/*  Enjoy!*/}

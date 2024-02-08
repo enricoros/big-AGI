@@ -40,7 +40,7 @@ export async function runReActUpdatingState(conversationId: string, question: st
     const agent = new Agent();
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 2 * 1000);
+    setTimeout(() => deleteEphemeral(conversationId, ephemeral.id), 4 * 1000);
     updateAssistantMessage({ text: reactResult, typing: false });
 
   } catch (error: any) {

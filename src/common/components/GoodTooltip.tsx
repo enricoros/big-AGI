@@ -17,9 +17,14 @@ export const GoodTooltip = (props: {
   <Tooltip
     title={props.title}
     placement={props.placement}
+    disableInteractive
     variant={(props.isError || props.isWarning) ? 'soft' : undefined}
     color={props.isError ? 'danger' : props.isWarning ? 'warning' : undefined}
-    sx={{ maxWidth: { sm: '50vw', md: '25vw' }, ...props.sx }}
+    sx={{
+      maxWidth: { sm: '50vw', md: '25vw' },
+      whiteSpace: 'break-spaces',
+      ...props.sx,
+    }}
   >
     {props.children}
   </Tooltip>;

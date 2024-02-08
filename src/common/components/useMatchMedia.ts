@@ -4,8 +4,11 @@ import { themeBreakpoints } from '../app.theme';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 
+const isMobileQuery = () => `(max-width: ${themeBreakpoints.md - 1}px)`;
 
-export const useIsMobile = (): boolean => useMatchMedia(`(max-width: ${themeBreakpoints.md - 1}px)`, false);
+export const getIsMobile = () => isBrowser ? window.matchMedia(isMobileQuery()).matches : false;
+
+export const useIsMobile = (): boolean => useMatchMedia(isMobileQuery(), false);
 
 export function useMatchMedia(query: string, ssrValue: boolean): boolean {
   const [matches, setMatches] = React.useState(isBrowser ? window.matchMedia(query).matches : ssrValue);

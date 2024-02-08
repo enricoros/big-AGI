@@ -1,18 +1,15 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
 
-import { AppChatLink } from '../../../src/apps/link/AppChatLink';
+import { AppLinkChat } from '../../../src/apps/link/AppLinkChat';
 
-import { AppLayout } from '~/common/layout/AppLayout';
+import { useRouterQuery } from '~/common/app.routes';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 export default function ChatLinkPage() {
-  const { query } = useRouter();
-  const chatLinkId = query?.chatLinkId as string ?? '';
 
-  return (
-    <AppLayout suspendAutoModelsSetup>
-      <AppChatLink linkId={chatLinkId} />
-    </AppLayout>
-  );
+  // external state
+  const { chatLinkId } = useRouterQuery<{ chatLinkId: string | undefined }>();
+
+  return withLayout({ type: 'optima', suspendAutoModelsSetup: true }, <AppLinkChat chatLinkId={chatLinkId || null} />);
 }

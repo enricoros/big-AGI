@@ -1,8 +1,12 @@
+import * as React from 'react';
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 
 // UI Preferences
+
+export type UIMessageTextSize = 'xs' | 'sm' | 'md';
 
 interface UIPreferencesStore {
 
@@ -20,11 +24,19 @@ interface UIPreferencesStore {
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
 
+  messageTextSize: UIMessageTextSize;
+  setMessageTextSize: (messageTextSize: UIMessageTextSize) => void;
+  incrementMessageTextSize: () => void;
+  decrementMessageTextSize: () => void;
+
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
-  showPurposeFinder: boolean;
-  setShowPurposeFinder: (showPurposeFinder: boolean) => void;
+  // showPersonaExamples: boolean;
+  // setShowPersonaExamples: (showPersonaExamples: boolean) => void;
+
+  showPersonaFinder: boolean;
+  setShowPersonaFinder: (showPersonaFinder: boolean) => void;
 
   zenMode: 'clean' | 'cleaner';
   setZenMode: (zenMode: 'clean' | 'cleaner') => void;
@@ -54,12 +66,26 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
 
+      messageTextSize: 'md',
+      setMessageTextSize: (messageTextSize: UIMessageTextSize) => set({ messageTextSize }),
+      incrementMessageTextSize: () => set((state) => {
+        if (state.messageTextSize === 'md') return state;
+        return { messageTextSize: state.messageTextSize === 'xs' ? 'sm' : 'md' };
+      }),
+      decrementMessageTextSize: () => set((state) => {
+        if (state.messageTextSize === 'xs') return state;
+        return { messageTextSize: state.messageTextSize === 'md' ? 'sm' : 'xs' };
+      }),
+
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
+      // showPersonaExamples: false,
+      // setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),
+
       // Deprecated
-      showPurposeFinder: false,
-      setShowPurposeFinder: (showPurposeFinder: boolean) => set({ showPurposeFinder }),
+      showPersonaFinder: false,
+      setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
       zenMode: 'clean',
       setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
@@ -91,11 +117,18 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
   ),
 );
 
-export function useUICounter(key: 'export-share' | 'share-chat-link' | 'call-wizard') {
+// formerly:
+//  - export-share: badge on the 'share' button in the Chat Menu
+export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter') {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
+
+  const touch = React.useCallback(() =>
+      useUIPreferencesStore.getState().incrementActionCounter(key)
+    , [key]);
+
   return {
-    value,
+    // value,
     novel: !value,
-    touch: () => useUIPreferencesStore.getState().incrementActionCounter(key),
+    touch,
   };
 }

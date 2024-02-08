@@ -13,7 +13,7 @@ import { makeAvatar, messageBackground } from './ChatMessage';
 /**
  * Header bar for controlling the operations during the Selection mode
  */
-export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom: boolean, sumTokens: number, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
+export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens: number, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
   <Sheet color='warning' variant='solid' invertedColors sx={{
     display: 'flex', flexDirection: 'row', alignItems: 'center',
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 101,
@@ -28,7 +28,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
       Delete
     </Button>
 
-    <IconButton variant='plain' onClick={props.onClose}>
+    <IconButton onClick={props.onClose}>
       <ClearIcon />
     </IconButton>
   </Sheet>;
@@ -39,7 +39,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, isBottom:
  *
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
-export function CleanerMessage(props: { message: DMessage, isBottom: boolean, selected: boolean, remainingTokens?: number, onToggleSelected?: (messageId: string, selected: boolean) => void }) {
+export function CleanerMessage(props: { message: DMessage, selected: boolean, remainingTokens?: number, onToggleSelected?: (messageId: string, selected: boolean) => void }) {
 
   // derived state
   const {
@@ -77,7 +77,6 @@ export function CleanerMessage(props: { message: DMessage, isBottom: boolean, se
       borderBottom: '1px solid',
       borderBottomColor: 'divider',
       // position: 'relative',
-      ...(props.isBottom && { mb: 'auto' }),
       '&:hover > button': { opacity: 1 },
     }}>
 

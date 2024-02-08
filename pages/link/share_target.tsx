@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
 
 import { Alert, Box, Button, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -8,10 +7,10 @@ import { setComposerStartupText } from '../../src/apps/chat/components/composer/
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { AppLayout } from '~/common/layout/AppLayout';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
-import { navigateToIndex } from '~/common/app.routes';
+import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 /**
@@ -31,8 +30,10 @@ function AppShareTarget() {
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   // external state
-  const { query } = useRouter();
-
+  const { url: queryUrl, text: queryText } = useRouterQuery<{
+    url: string | string[] | undefined,
+    text: string | string[] | undefined,
+  }>();
 
   const queueComposerTextAndLaunchApp = React.useCallback((text: string) => {
     setComposerStartupText(text);
@@ -43,11 +44,11 @@ function AppShareTarget() {
   // Detect the share Intent from the query
   React.useEffect(() => {
     // skip when query is not parsed yet
-    if (!Object.keys(query).length)
+    let queryTextItem = queryUrl || queryText || null;
+    if (!queryTextItem)
       return;
 
     // single item from the query
-    let queryTextItem: string[] | string | null = query.url || query.text || null;
     if (Array.isArray(queryTextItem))
       queryTextItem = queryTextItem[0];
 
@@ -58,9 +59,9 @@ function AppShareTarget() {
     else if (queryTextItem)
       setIntentText(queryTextItem);
     else
-      setErrorMessage('No text or url. Received: ' + JSON.stringify(query));
+      setErrorMessage('No text or url. Received: ' + JSON.stringify({ queryText, queryUrl }));
 
-  }, [query.url, query.text, query]);
+  }, [queryText, queryUrl]);
 
 
   // Text -> Composer
@@ -90,7 +91,6 @@ function AppShareTarget() {
   return (
 
     <Box sx={{
-      backgroundColor: 'background.level2',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       flexGrow: 1,
     }}>
@@ -132,10 +132,6 @@ function AppShareTarget() {
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
  * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
-export default function LaunchPage() {
-  return (
-    <AppLayout>
-      <AppShareTarget />
-    </AppLayout>
-  );
+export default function ShareTargetPage() {
+  return withLayout({ type: 'plain' }, <AppShareTarget />);
 }

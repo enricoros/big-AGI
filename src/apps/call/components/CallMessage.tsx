@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Chip, ColorPaletteProp, VariantProp } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { VChatMessageIn } from '~/modules/llms/transports/chatGenerate';
+import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export function CallMessage(props: {
@@ -19,9 +19,9 @@ export function CallMessage(props: {
         alignSelf: props.role === 'user' ? 'end' : 'start',
         whiteSpace: 'break-spaces',
         borderRadius: 'lg',
-        mt: 'auto',
         // boxShadow: 'md',
         py: 1,
+        px: 1.5,
         ...(props.sx || {}),
       }}
     >

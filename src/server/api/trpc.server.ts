@@ -10,7 +10,6 @@ import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-
 /**
  * 1. CONTEXT
  *
@@ -18,7 +17,6 @@ import { ZodError } from 'zod';
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
-
 export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
@@ -36,7 +34,6 @@ export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request;
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-
 const t = initTRPC.context<typeof createTRPCFetchContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {

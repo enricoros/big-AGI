@@ -15,7 +15,7 @@ import { InlineError } from '~/common/components/InlineError';
 export function CallStatus(props: {
   callerName?: string,
   statusText: string,
-  regardingText?: string,
+  regardingText: string | null,
   micError: boolean, speakError: boolean,
   // llmComponent?: React.JSX.Element,
 }) {
@@ -28,19 +28,19 @@ export function CallStatus(props: {
 
       {/*{props.llmComponent}*/}
 
-      <Typography level='body-md' sx={{ textAlign: 'center' }}>
+      {!!props.statusText && <Typography level='body-md' sx={{ textAlign: 'center' }}>
         {props.statusText}
-      </Typography>
+      </Typography>}
 
-      {!!props.regardingText && <Typography level='body-md' sx={{ textAlign: 'center', mt: 0 }}>
-        re: {props.regardingText}
+      {!!props.regardingText && <Typography level='body-md' sx={{ textAlign: 'center', mt: 1 }}>
+        Re: <Box component='span' sx={{ color: 'text.primary' }}>{props.regardingText}</Box>
       </Typography>}
 
       {props.micError && <InlineError
-        severity='danger' error='But this browser does not support speech recognition... 🤦‍♀️ - Try Chrome on Windows?' />}
+        severity='danger' error='Looks like this Browser may not support speech recognition. You can try Chrome on Windows or Android instead.' />}
 
       {props.speakError && <InlineError
-        severity='danger' error='And text-to-speech is not configured... 🤦‍♀️ - Configure it in Settings?' />}
+        severity='danger' error='Text-to-speech does not appear to be configured. Please set it up in Preferences > Voice.' />}
 
     </Box>
   );

@@ -111,7 +111,7 @@ export function Attachments(props: {
 
       {/* Overall Menu button */}
       <IconButton
-        variant='plain' onClick={handleOverallMenuToggle}
+        onClick={handleOverallMenuToggle}
         sx={{
           // borderRadius: 'sm',
           borderRadius: 0,
@@ -141,9 +141,8 @@ export function Attachments(props: {
     {/* Overall Menu */}
     {!!overallMenuAnchor && (
       <CloseableMenu
-        placement='top-start'
+        dense placement='top-start'
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
-        noTopPadding noBottomPadding
       >
         <MenuItem onClick={handleAttachmentsInlineText} disabled={!isOutputTextInlineable}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>

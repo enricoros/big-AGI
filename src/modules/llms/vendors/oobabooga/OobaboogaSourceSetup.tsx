@@ -6,10 +6,10 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { apiQuery } from '~/common/util/trpc.client';
 
-import { DModelSourceId, useModelsStore, useSourceSetup } from '../../store-llms';
-import { modelDescriptionToDLLM } from '../openai/OpenAISourceSetup';
+import { DModelSourceId } from '../../store-llms';
+import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorOoobabooga } from './oobabooga.vendor';
 
@@ -24,14 +24,8 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
   const { oaiHost } = access;
 
   // fetch models
-  const { isFetching, refetch, isError, error } = apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-    enabled: false, // !hasModels && !!asValidURL(normSetup.oaiHost),
-    onSuccess: models => source && useModelsStore.getState().setLLMs(
-      models.models.map(model => modelDescriptionToDLLM(model, source)),
-      props.sourceId,
-    ),
-    staleTime: Infinity,
-  });
+  const { isFetching, refetch, isError, error } =
+    useLlmUpdateModels(ModelVendorOoobabooga, access, false /* !hasModels && !!asValidURL(normSetup.oaiHost) */, source);
 
   return <>
 
@@ -57,7 +51,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
       Concurrent model execution is also not supported.
     </Alert>}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!(oaiHost.length >= 7) || isFetching} error={isError} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!(oaiHost.length >= 7) || isFetching} loading={isFetching} error={isError} />
 
     {isError && <InlineError error={error} />}
 

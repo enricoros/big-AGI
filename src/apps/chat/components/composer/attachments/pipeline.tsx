@@ -11,6 +11,16 @@ import type { ComposerOutputMultiPart } from '../composer.types';
 // extensions to treat as plain text
 const PLAIN_TEXT_EXTENSIONS: string[] = ['.ts', '.tsx'];
 
+// mimetypes to treat as plain text
+const PLAIN_TEXT_MIMETYPES: string[] = [
+  'text/plain',
+  'text/html',
+  'text/markdown',
+  'text/csv',
+  'text/css',
+  'application/json',
+];
+
 /**
  * Creates a new Attachment object.
  */
@@ -141,7 +151,7 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
   switch (true) {
 
     // plain text types
-    case ['text/plain', 'text/html', 'text/markdown', 'text/csv', 'application/json'].includes(input.mimeType):
+    case PLAIN_TEXT_MIMETYPES.includes(input.mimeType):
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
@@ -245,7 +255,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       outputs.push({
         type: 'text-block',
         text: input.altData!,
-        title: ref,
+        title: ref || '\n<!DOCTYPE html>',
         collapsible: true,
       });
       break;

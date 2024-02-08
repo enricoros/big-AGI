@@ -1,5 +1,5 @@
-import { callChatGenerate } from '~/modules/llms/transports/chatGenerate';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { getFastLLMId } from '~/modules/llms/store-llms';
+import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -7,16 +7,21 @@ import { useChatStore } from '~/common/state/store-chats';
 /**
  * Creates the AI titles for conversations, by taking the last 5 first-lines and asking AI what's that about
  */
-export function autoTitle(conversationId: string) {
+export function conversationAutoTitle(conversationId: string, forceReplace: boolean) {
 
   // use valid fast model
-  const { fastLLMId } = useModelsStore.getState();
+  const fastLLMId = getFastLLMId();
   if (!fastLLMId) return;
 
   // only operate on valid conversations, without any title
-  const { conversations } = useChatStore.getState();
+  const { conversations, setAutoTitle, setUserTitle } = useChatStore.getState();
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
-  if (!conversation || conversation.autoTitle || conversation.userTitle) return;
+  if (!conversation || (!forceReplace && (conversation.autoTitle || conversation.userTitle))) return;
+
+  if (forceReplace) {
+    setUserTitle(conversationId, '');
+    setAutoTitle(conversationId, '✨...');
+  }
 
   // first line of the last 5 messages
   const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
@@ -27,7 +32,7 @@ export function autoTitle(conversationId: string) {
   });
 
   // LLM
-  void callChatGenerate(fastLLMId, [
+  llmChatGenerateOrThrow(fastLLMId, [
     { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
     {
       role: 'user', content:
@@ -39,17 +44,21 @@ export function autoTitle(conversationId: string) {
         historyLines.join('\n') +
         '```\n',
     },
-  ]).then(chatResponse => {
+  ], null, null)
+    .then(chatResponse => {
 
-    const title = chatResponse?.content
-      ?.trim()
-      ?.replaceAll('"', '')
-      ?.replace('Title: ', '')
-      ?.replace('title: ', '');
+      const title = chatResponse?.content
+        ?.trim()
+        ?.replaceAll('"', '')
+        ?.replace('Title: ', '')
+        ?.replace('title: ', '');
 
-    if (title)
-      useChatStore.getState().setAutoTitle(conversationId, title);
+      if (title)
+        setAutoTitle(conversationId, title);
 
-  });
+    })
+    .catch(err => {
+      console.error('Failed to generate auto title', err);
+    });
 
 }

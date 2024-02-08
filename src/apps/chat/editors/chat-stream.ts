@@ -1,9 +1,9 @@
 import { DLLMId } from '~/modules/llms/store-llms';
 import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { autoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { streamChat } from '~/modules/llms/transports/streamChat';
 
 import { DMessage, useChatStore } from '~/common/state/store-chats';
 
@@ -42,7 +42,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   startTyping(conversationId, null);
 
   if (autoTitleChat)
-    autoTitle(conversationId);
+    conversationAutoTitle(conversationId, false);
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
@@ -63,7 +63,7 @@ async function streamAssistantMessage(
   const messages = history.map(({ role, text }) => ({ role, content: text }));
 
   try {
-    await streamChat(llmId, messages, abortSignal,
+    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal,
       (updatedMessage: Partial<DMessage>) => {
         // update the message in the store (and thus schedule a re-render)
         editMessage(updatedMessage);

@@ -35,3 +35,14 @@ export function asValidURL(textString: string | null): string | null {
   const urlMatch = urlRegex.exec(trimmedTextString);
   return urlMatch ? urlMatch[1] : null;
 }
+
+/**
+ * Add https if missing, and remove trailing slash if present and the path starts with a slash.
+ */
+export function fixupHost(host: string, apiPath: string): string {
+  if (!host.startsWith('http'))
+    host = `https://${host}`;
+  if (host.endsWith('/') && apiPath.startsWith('/'))
+    host = host.slice(0, -1);
+  return host;
+}

@@ -21,8 +21,13 @@ export const useGlobalShortcut = (shortcutKey: string | false, useCtrl: boolean,
     if (!shortcutKey) return;
     const lcShortcut = shortcutKey.toLowerCase();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((useCtrl === event.ctrlKey) && (useShift === event.shiftKey) && (useAlt === event.altKey)
-        && event.key.toLowerCase() === lcShortcut) {
+      const isCtrlOrCmd = (event.ctrlKey && !event.metaKey) || (event.metaKey && !event.ctrlKey);
+      if (
+        (useCtrl === isCtrlOrCmd) &&
+        (useShift === event.shiftKey) &&
+        (useAlt === event.altKey) &&
+        event.key.toLowerCase() === lcShortcut
+      ) {
         event.preventDefault();
         event.stopPropagation();
         callback();
@@ -46,9 +51,10 @@ export const useGlobalShortcuts = (shortcuts: GlobalShortcutItem[]) => {
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       for (const [key, useCtrl, useShift, useAlt, action] of shortcuts) {
+        const isCtrlOrCmd = (event.ctrlKey && !event.metaKey) || (event.metaKey && !event.ctrlKey);
         if (
           key &&
-          (useCtrl === event.ctrlKey) &&
+          (useCtrl === isCtrlOrCmd) &&
           (useShift === event.shiftKey) &&
           (useAlt === event.altKey) &&
           event.key.toLowerCase() === key.toLowerCase()

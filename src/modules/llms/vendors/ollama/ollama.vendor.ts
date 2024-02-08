@@ -1,13 +1,14 @@
 import { backendCaps } from '~/modules/backend/state-backend';
 
-import { OllamaIcon } from '~/common/components/icons/OllamaIcon';
-import { apiAsync } from '~/common/util/trpc.client';
+import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
+import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../../transports/chatGenerate';
-import type { OllamaAccessSchema } from '../../transports/server/ollama/ollama.router';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
+import type { VChatMessageOut } from '../../llm.client';
+import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
-import { LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, LLMOptionsOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { OllamaSourceSetup } from './OllamaSourceSetup';
@@ -21,7 +22,7 @@ export interface SourceSetupOllama {
 export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
   id: 'ollama',
   name: 'Ollama',
-  rank: 22,
+  rank: 20,
   location: 'local',
   instanceLimit: 2,
   hasBackendCap: () => backendCaps().hasLlmOllama,
@@ -36,36 +37,41 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
     dialect: 'ollama',
     ollamaHost: partialSetup?.ollamaHost || '',
   }),
-  callChatGenerate(llm, messages: VChatMessageIn[], maxTokens?: number): Promise<VChatMessageOut> {
-    return ollamaCallChatGenerate(this.getTransportAccess(llm._source.setup), llm.options, messages, maxTokens);
+
+  // List Models
+  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
+    return apiQuery.llmOllama.listModels.useQuery({ access }, {
+      enabled: enabled,
+      onSuccess: onSuccess,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    });
   },
-  callChatGenerateWF(): Promise<VChatMessageOrFunctionCallOut> {
-    throw new Error('Ollama does not support "Functions" yet');
+
+  // Chat Generate (non-streaming) with Functions
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+    if (functions?.length || forceFunctionName)
+      throw new Error('Ollama does not support functions');
+
+    const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
+    try {
+      return await apiAsync.llmOllama.chatGenerate.mutate({
+        access,
+        model: {
+          id: llmRef,
+          temperature: llmTemperature ?? FALLBACK_LLM_TEMPERATURE,
+          maxTokens: maxTokens || llmResponseTokens || FALLBACK_LLM_RESPONSE_TOKENS,
+        },
+        history: messages,
+      }) as VChatMessageOut;
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.toString() || 'Ollama Chat Generate Error';
+      console.error(`ollama.rpcChatGenerateOrThrow: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
   },
+
+  // Chat Generate (streaming) with Functions
+  streamingChatGenerateOrThrow: unifiedStreamingClient,
+
 };
-
-
-/**
- * This function either returns the LLM message, or throws a descriptive error string
- */
-async function ollamaCallChatGenerate<TOut = VChatMessageOut>(
-  access: OllamaAccessSchema, llmOptions: Partial<LLMOptionsOpenAI>, messages: VChatMessageIn[],
-  maxTokens?: number,
-): Promise<TOut> {
-  const { llmRef, llmTemperature = 0.5, llmResponseTokens } = llmOptions;
-  try {
-    return await apiAsync.llmOllama.chatGenerate.mutate({
-      access,
-      model: {
-        id: llmRef!,
-        temperature: llmTemperature,
-        maxTokens: maxTokens || llmResponseTokens || 1024,
-      },
-      history: messages,
-    }) as TOut;
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.toString() || 'Ollama Chat Generate Error';
-    console.error(`ollamaCallChatGenerate: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}

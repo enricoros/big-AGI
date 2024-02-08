@@ -1,15 +1,13 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
 
 import { Box, Typography } from '@mui/joy';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { AppLayout } from '~/common/layout/AppLayout';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
-import { navigateToIndex } from '~/common/app.routes';
-import { openLayoutModelsSetup } from '~/common/layout/store-applayout';
+import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
+import { withLayout } from '~/common/layout/withLayout';
 
 
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
@@ -36,14 +34,13 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
     useModelsStore.getState().setOpenRoutersKey(openRouterKey);
 
     // 2. Navigate to the chat app
-    navigateToIndex(true).then(() => openLayoutModelsSetup());
+    void navigateToIndex(true); //.then(openModelsSetup);
 
   }, [isSuccess, openRouterKey]);
 
   return (
     <Box sx={{
       flexGrow: 1,
-      backgroundColor: 'background.level1',
       overflowY: 'auto',
       display: 'flex', justifyContent: 'center',
       p: { xs: 3, md: 6 },
@@ -84,15 +81,10 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
  * Docs: https://openrouter.ai/docs#oauth
  * Example URL: https://localhost:3000/link/callback_openrouter?code=SomeCode
  */
-export default function Page() {
+export default function CallbackPage() {
 
-  // get the 'code=...' from the URL
-  const { query } = useRouter();
-  const { code: openRouterCode } = query;
+  // external state - get the 'code=...' from the URL
+  const { code } = useRouterQuery<{ code: string | undefined }>();
 
-  return (
-    <AppLayout suspendAutoModelsSetup>
-      <CallbackOpenRouterPage openRouterCode={openRouterCode as (string | undefined)} />
-    </AppLayout>
-  );
+  return withLayout({ type: 'plain' }, <CallbackOpenRouterPage openRouterCode={code} />);
 }

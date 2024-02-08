@@ -7,7 +7,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { Brand } from '~/common/app.config';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { InlineError } from '~/common/components/InlineError';
-import { OpenAIIcon } from '~/common/components/icons/OpenAIIcon';
+import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
@@ -30,7 +30,7 @@ const chatGptMedia: FormRadioOption<'source' | 'link'>[] = [
  * Components and functionality to import conversations
  * Supports our own JSON files, and ChatGPT Share Links
  */
-export function ImportConversations(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
+export function ImportChats(props: { onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
 
   // state
   const [importMedia, importMediaControl] = useFormRadio('link', chatGptMedia);
@@ -146,23 +146,29 @@ export function ImportConversations(props: { onConversationActivate: (conversati
 
   return <>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 1 }}>
+    <Box sx={{ display: 'grid', gap: 1, mx: 'auto' }}>
+
       <Typography level='body-sm'>
-        Select where to import from
+        Select where to <strong>import from</strong>:
       </Typography>
 
-      <Button variant='soft' size='md' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-              onClick={handleImportFromFiles}>
-        Upload JSON
+      <Button
+        variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleImportFromFiles}
+      >
+        {Brand.Title.Base} · JSON
       </Button>
 
       {!chatGptEdit && (
-        <Button variant='soft' size='md' endDecorator={<OpenAIIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-                color={chatGptEdit ? 'neutral' : 'primary'}
-                onClick={handleChatGptToggleShown}>
-          ChatGPT shared link
+        <Button
+          variant='soft' endDecorator={<OpenAIIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+          color={chatGptEdit ? 'neutral' : 'primary'}
+          onClick={handleChatGptToggleShown}
+        >
+          ChatGPT · Shared Link
         </Button>
       )}
+
     </Box>
 
     {/* [chatgpt] data & controls */}
