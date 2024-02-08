@@ -135,6 +135,7 @@ export const themeBgAppDarker = 'background.level2';
 export const themeBgAppChatComposer = 'background.surface';
 
 export const lineHeightChatText = 1.75;
+export const lineHeightChatCode = 1.75;
 export const lineHeightTextarea = 1.75;
 
 export const themeZIndexPageBar = 25;
