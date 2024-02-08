@@ -136,7 +136,9 @@ export function AppNews() {
                 </CardContent>
 
                 {!!ni.versionCoverImage && (
-                  <CardOverflow>
+                  <CardOverflow sx={{
+                    m: '0 calc(var(--CardOverflow-offset) - 1px) calc(var(--CardOverflow-offset) - 1px)',
+                  }}>
                     <AspectRatio ratio='2'>
                       <NextImage
                         src={ni.versionCoverImage}
