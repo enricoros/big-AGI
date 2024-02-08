@@ -8,8 +8,10 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
 
   let mixed = _template;
 
-  // {{Today}}
-  mixed = mixed.replaceAll('{{Today}}', new Date().toISOString().split('T')[0]);
+  // {{Today}} - yyyy-mm--dd but in user's local time, not UTC
+  const today = new Date();
+  const varToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  mixed = mixed.replaceAll('{{Today}}', varToday);
 
   // {{Render...}}
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled');
@@ -25,7 +27,7 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   if (varCutoff)
     mixed = mixed.replaceAll('{{Cutoff}}', varCutoff);
   else
-    mixed = mixed.replace(/.*{{Cutoff}}.*\n?/g, '');
+    mixed = mixed.replaceAll(/.*{{Cutoff}}.*\n?/g, '');
 
   // at most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');
