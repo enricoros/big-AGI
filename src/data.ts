@@ -74,8 +74,8 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
   },
   DeveloperPreview: {
-    title: 'Dev2 Preview',
-    description: 'Helps you code',
+    title: 'Developer2',
+    description: 'Preview of a more extended Developer persona',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
 Knowledge cutoff: {{Cutoff}}
 Current date: {{Today}}
@@ -87,6 +87,7 @@ Current date: {{Today}}
 {{ToolBrowser0}}
 `,
     symbol: '👨‍💻',
+    imageUri: '/images/personas/dev_preview_icon_120x120.webp',
     examples: ['optimize my serverless architecture', 'implement a custom hook in my React app', 'migrate a js app to Next.js', 'optimize my AI model for energy efficiency'],
     call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
