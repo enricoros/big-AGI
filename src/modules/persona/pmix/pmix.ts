@@ -1,5 +1,36 @@
 import { DLLMId, getKnowledgeMapCutoff } from '~/modules/llms/store-llms';
 
+/*type Variables =
+  | '{{Today}}'
+  | '{{Cutoff}}'
+  | '{{RenderMermaid}}'
+  | '{{RenderPlantUML}}'
+  | '{{RenderSVG}}'
+  | '{{InputImage0}}'
+  | '{{ToolBrowser0}}';
+
+type VariableResolverContext = {
+  assistantLlmId: DLLMId;
+};
+
+const variableResolvers: { [key in Variables]: (context: VariableResolverContext) => string } = {
+  '{{Today}}': () => {
+    const today = new Date();
+    return today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  },
+  '{{Cutoff}}': (context) => {
+    return getKnowledgeMapCutoff(context.assistantLlmId) || '';
+  },
+
+  '{{RenderMermaid}}': () => 'Mermaid rendering: Enabled',
+  '{{RenderPlantUML}}': () => 'PlantUML rendering: Enabled',
+  '{{RenderSVG}}': () => 'SVG rendering: Enabled',
+
+  '{{InputImage0}}': () => 'Image input capabilities: Disabled',
+
+  '{{ToolBrowser0}}': () => 'Web browsing capabilities: Disabled',
+};*/
+
 
 /**
  * This will be made a module and fully reactive in the future.
