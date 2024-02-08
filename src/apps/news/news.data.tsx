@@ -106,7 +106,7 @@ interface NewsItem {
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
-  // still unannounced: phone calls, split windows, ...
+  // still unannounced: screen capture (when removed from labs)
   {
     versionCode: '1.13.0',
     versionName: 'Multi + Mind',
