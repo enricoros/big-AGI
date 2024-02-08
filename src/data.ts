@@ -26,6 +26,26 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
   },
+  DeveloperPreview: {
+    title: 'Developer2',
+    description: 'Preview of an extended capabilities Developer',
+    systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
+Knowledge cutoff: {{Cutoff}}
+Current date: {{Today}}
+
+{{RenderMermaid}}
+{{RenderPlantUML}}
+{{RenderSVG}}
+{{InputImage0}}
+{{ToolBrowser0}}
+`,
+    symbol: '👨‍💻',
+    imageUri: '/images/personas/dev_preview_icon_120x120.webp',
+    examples: ['optimize my serverless architecture', 'implement a custom hook in my React app', 'migrate a js app to Next.js', 'optimize my AI model for energy efficiency'],
+    call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
+    voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
+    highlighted: true,
+  },
   Scientist: {
     title: 'Scientist',
     description: 'Helps you write scientific papers',
@@ -72,26 +92,6 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
     call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
-  },
-  DeveloperPreview: {
-    title: 'Developer2',
-    description: 'Preview of an extended capabilities Developer',
-    systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
-Knowledge cutoff: {{Cutoff}}
-Current date: {{Today}}
-
-{{RenderMermaid}}
-{{RenderPlantUML}}
-{{RenderSVG}}
-{{InputImage0}}
-{{ToolBrowser0}}
-`,
-    symbol: '👨‍💻',
-    imageUri: '/images/personas/dev_preview_icon_120x120.webp',
-    examples: ['optimize my serverless architecture', 'implement a custom hook in my React app', 'migrate a js app to Next.js', 'optimize my AI model for energy efficiency'],
-    call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
-    voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
-    highlighted: true,
   },
   Custom: {
     title: 'Custom',
