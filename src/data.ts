@@ -75,7 +75,7 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   },
   DeveloperPreview: {
     title: 'Developer2',
-    description: 'Preview of a more extended Developer persona',
+    description: 'Preview of an extended capabilities Developer',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
 Knowledge cutoff: {{Cutoff}}
 Current date: {{Today}}
