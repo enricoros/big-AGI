@@ -181,6 +181,7 @@ function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
   isBottom?: boolean,
+  isMobile?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
@@ -459,6 +460,7 @@ function ChatMessage(props: {
           messageTextSize={messageTextSize}
           errorMessage={errorMessage}
           isBottom={props.isBottom}
+          isMobile={props.isMobile}
           showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
           renderTextDiff={textDiffs || undefined}
           wasUserEdited={wasEdited}

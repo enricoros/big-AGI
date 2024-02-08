@@ -489,6 +489,7 @@ export function AppChat() {
                 capabilityHasT2I={capabilityHasT2I}
                 chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                 isMessageSelectionMode={isMessageSelectionMode}
+                isMobile={isMobile}
                 setIsMessageSelectionMode={setIsMessageSelectionMode}
                 onConversationBranch={handleConversationBranch}
                 onConversationExecuteHistory={handleConversationExecuteHistory}

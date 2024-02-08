@@ -52,6 +52,7 @@ export function BlocksRenderer(props: {
 
   errorMessage?: React.ReactNode;
   isBottom?: boolean;
+  isMobile?: boolean;
   showDate?: number;
   wasUserEdited?: boolean;
 
@@ -176,7 +177,7 @@ export function BlocksRenderer(props: {
             block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} sx={scaledCodeSx} noCopyButton={props.specialDiagramMode} />
+                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} isMobile={props.isMobile} noCopyButton={props.specialDiagramMode} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} />
                   : block.type === 'latex'

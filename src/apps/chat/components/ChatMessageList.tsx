@@ -26,12 +26,14 @@ export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
-  isMessageSelectionMode: boolean, setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
+  isMessageSelectionMode: boolean,
+  isMobile: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
   onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
+  setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   sx?: SxProps,
 }) {
 
@@ -221,7 +223,9 @@ export function ChatMessageList(props: {
             message={message}
             diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
             isBottom={idx === count - 1}
-            isImagining={isImagining} isSpeaking={isSpeaking}
+            isImagining={isImagining}
+            isMobile={props.isMobile}
+            isSpeaking={isSpeaking}
             onConversationBranch={handleConversationBranch}
             onConversationRestartFrom={handleConversationRestartFrom}
             onConversationTruncate={handleConversationTruncate}
