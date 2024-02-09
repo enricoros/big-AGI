@@ -76,6 +76,7 @@ function ChatDrawerItem(props: {
 
   // state
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [isAutoEditingTitle, setIsAutoEditingTitle] = React.useState(false);
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // derived state
@@ -130,8 +131,10 @@ function ChatDrawerItem(props: {
     useChatStore.getState().setUserTitle(conversationId, text.trim());
   }, [conversationId]);
 
-  const handleTitleEditAuto = React.useCallback(() => {
-    conversationAutoTitle(conversationId, true);
+  const handleTitleEditAuto = React.useCallback(async () => {
+    setIsAutoEditingTitle(true);
+    await conversationAutoTitle(conversationId, true);
+    setIsAutoEditingTitle(false);
   }, [conversationId]);
 
 
@@ -283,14 +286,14 @@ function ChatDrawerItem(props: {
             </>}
 
             <Tooltip disableInteractive title='Rename'>
-              <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditBegin}>
+              <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditBegin}>
                 <EditIcon />
               </FadeInButton>
             </Tooltip>
 
             {!isNew && <>
               <Tooltip disableInteractive title='Auto-Title'>
-                <FadeInButton size='sm' disabled={isEditingTitle} onClick={handleTitleEditAuto}>
+                <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditAuto}>
                   <AutoFixHighIcon />
                 </FadeInButton>
               </Tooltip>
