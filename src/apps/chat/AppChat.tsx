@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import { Typography, useTheme } from '@mui/joy';
+import { useTheme } from '@mui/joy';
 
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
@@ -29,6 +29,7 @@ import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatDropdowns } from './components/ChatDropdowns';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
+import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
@@ -398,15 +399,11 @@ export function AppChat() {
 
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
-  const barContent = React.useMemo(() => (barAltTitle !== null) ? (
-      <Typography level='title-md'>
-        {barAltTitle?.trim() || CHAT_NOVEL_TITLE}
-      </Typography>
-    ) : (
-      <ChatDropdowns
-        conversationId={focusedConversationId}
-      />
-    ), [focusedConversationId, barAltTitle],
+  const barContent = React.useMemo(() =>
+      (barAltTitle === null)
+        ? <ChatDropdowns conversationId={focusedConversationId} />
+        : <ChatTitle conversationId={focusedConversationId} conversationTitle={barAltTitle} />
+    , [focusedConversationId, barAltTitle],
   );
 
   const drawerContent = React.useMemo(() =>
