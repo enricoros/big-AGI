@@ -13,7 +13,6 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { CodeBlock } from '../blocks';
 import { ButtonCodepen } from './ButtonCodepen';
-import { ButtonReplit } from './ButtonReplit';
 import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
@@ -119,8 +118,6 @@ function RenderCodeImpl(props: {
   const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
   const canCodepen = isSVG || (!!inferredCodeLanguage && languagesCodepen.includes(inferredCodeLanguage));
 
-  const languagesReplit = ['python', 'java', 'csharp'];
-  const canReplit = !!inferredCodeLanguage && languagesReplit.includes(inferredCodeLanguage);
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -214,7 +211,6 @@ function RenderCodeImpl(props: {
             </Tooltip>
           )}
           {canCodepen && <ButtonCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
-          {canReplit && <ButtonReplit codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
           {props.noCopyButton !== true && (
             <Tooltip title='Copy Code'>
               <IconButton variant='soft' onClick={handleCopyToClipboard}>
