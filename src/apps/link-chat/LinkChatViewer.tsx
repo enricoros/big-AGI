@@ -13,19 +13,21 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 /**
  * Renders a chat link view with conversation details and messages.
  */
-export function LinkChat(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
+export function LinkChatViewer(props: { conversation: DConversation, storedAt: Date, expiresAt: Date | null }) {
 
   // state
   const [cloning, setCloning] = React.useState<boolean>(false);
   const listBottomRef = React.useRef<HTMLDivElement>(null);
 
   // external state
+  const isMobile = useIsMobile();
   const [showSystemMessages] = useChatShowSystemMessages();
   const hasExistingChat = useChatStore(state => state.conversations.some(c => c.id === props.conversation.id));
 
@@ -139,6 +141,7 @@ export function LinkChat(props: { conversation: DConversation, storedAt: Date, e
               <ChatMessageMemo
                 key={'msg-' + message.id}
                 message={message}
+                isMobile={isMobile}
                 blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
                 onMessageEdit={(_messageId, text: string) => message.text = text}
               />,

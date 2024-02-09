@@ -182,7 +182,7 @@ function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
   isBottom?: boolean,
-  isMobile?: boolean,
+  isMobile: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
