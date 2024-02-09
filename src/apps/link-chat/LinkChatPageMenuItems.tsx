@@ -15,7 +15,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 /**
  * Menu Items are the settings for the chat.
  */
-export function LinkChatMenuItems(props: {
+export function LinkChatPageMenuItems(props: {
   activeLinkId: string | null,
   showDeletionKeys: boolean,
   onDeleteLink: (linkId: string) => void,
