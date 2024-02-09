@@ -1,7 +1,7 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
-import { Box, ListDivider, ListItem, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
+import { Box, ListDivider, ListItem, ListItemButton, ListItemDecorator, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import type { SharedChatLinkItem } from '~/modules/trade/link/store-link';
@@ -20,9 +20,12 @@ import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 export function LinkChatDrawer(props: {
   activeLinkId: string | null,
   sharedChatLinkItems: SharedChatLinkItem[]
-  showDeletionKeys: boolean,
   onDeleteLink: (linkId: string) => void,
 }) {
+
+  // state
+  const [showDeletionKeys, setShowDeletionKeys] = React.useState<boolean>(false);
+
 
   // external state
   const { closeDrawer } = useOptimaDrawers();
@@ -37,6 +40,10 @@ export function LinkChatDrawer(props: {
     activeLinkId && onDeleteLink(activeLinkId);
   }, [activeLinkId, onDeleteLink]);
 
+  const handleToggleDeletionKeys = React.useCallback(() => {
+    setShowDeletionKeys(on => !on);
+  }, []);
+
 
   return <>
 
@@ -46,7 +53,6 @@ export function LinkChatDrawer(props: {
     />
 
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
-
 
       <ListItem>
         <Typography level='body-sm'>
@@ -71,7 +77,7 @@ export function LinkChatDrawer(props: {
                 <Typography level='title-sm'>
                   {item.chatTitle || 'Untitled Chat'}
                 </Typography>
-                {props.showDeletionKeys && <Typography level='body-xs'>
+                {showDeletionKeys && <Typography level='body-xs'>
                   Deletion Key: {item.deletionKey}
                 </Typography>}
                 <Typography level='body-xs'>
@@ -84,13 +90,19 @@ export function LinkChatDrawer(props: {
 
       </Box>
 
-      <ListDivider sx={{ mt: 0 }} />
+      <ListDivider sx={{ my: 0 }} />
 
       <ListItemButton disabled={!hasLinks || !activeLinkId} onClick={handleDeleteLink}>
         <ListItemDecorator>
           <DeleteOutlineIcon />
         </ListItemDecorator>
         Delete
+      </ListItemButton>
+
+      <ListItemButton onClick={handleToggleDeletionKeys}>
+        <ListItemDecorator />
+        Show Deletion Keys
+        <Switch checked={showDeletionKeys} sx={{ ml: 'auto' }} />
       </ListItemButton>
 
     </PageDrawerList>
