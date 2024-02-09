@@ -164,7 +164,7 @@ For Developers:
 - **[Install Mobile APP](../docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
 - **[UI language](../docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
 - **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
-- **Code Execution: [Codepen](https://codepen.io/)/[Replit](https://replit.com/)** 💻 (@harlanlewis)
+- **Code Execution: [Codepen](https://codepen.io/)** 💻 (@harlanlewis)
 - **[SVG Drawing](../docs/pixels/feature_svg_drawing.png)** - draw with AI 🎨
 - Chats: multiple chats, AI titles, Import/Export, Selection mode
 - Rendering: Markdown, SVG, improved Code blocks
