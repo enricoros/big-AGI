@@ -540,9 +540,10 @@ export function Composer(props: {
 
           {/* [ Textarea + Overlays + Mic | Attachments ] */}
           <Box sx={{
-            minWidth: 200, // enable X-scrolling (resetting any possible minWidth due to the attachments)
             flexGrow: 1,
-            display: 'grid', gap: 1,
+            // layout
+            display: 'flex', flexDirection: 'column', gap: 1,
+            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachments)
           }}>
 
             {/* Textarea + Mic buttons + Mic/Drag overlay */}
