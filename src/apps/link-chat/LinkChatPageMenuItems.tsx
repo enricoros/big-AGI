@@ -9,7 +9,6 @@ import { SettingContentScaling } from '../settings-modal/settings-ui/SettingCont
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
-import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 /**
@@ -17,13 +16,10 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
  */
 export function LinkChatPageMenuItems(props: {
   activeLinkId: string | null,
-  showDeletionKeys: boolean,
   onDeleteLink: (linkId: string) => void,
-  onToggleDeletionKeys: () => void,
 }) {
 
   // external state
-  const isMobile = useIsMobile();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const {
     renderMarkdown, setRenderMarkdown,
@@ -51,8 +47,6 @@ export function LinkChatPageMenuItems(props: {
 
 
   return <>
-
-    <SettingContentScaling noLabel />
 
     <MenuItem onClick={() => setShowSystemMessages(!showSystemMessages)} sx={{ justifyContent: 'space-between' }}>
       <Typography>
@@ -87,17 +81,7 @@ export function LinkChatPageMenuItems(props: {
       />
     </MenuItem>
 
-    {!isMobile && (
-      <MenuItem onClick={props.onToggleDeletionKeys} sx={{ justifyContent: 'space-between' }}>
-        <Typography>
-          Show Deletion Keys
-        </Typography>
-        <Switch
-          checked={props.showDeletionKeys}
-          slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-        />
-      </MenuItem>
-    )}
+    <SettingContentScaling noLabel />
 
     <ListDivider />
 
