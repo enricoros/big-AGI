@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
+import TitleIcon from '@mui/icons-material/Title';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -18,9 +19,15 @@ export function UxLabsSettings() {
   const {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
+    labsChatBarAlt, setLabsChatBarAlt,
   } = useUXLabsStore();
 
   return <>
+
+    <FormSwitchControl
+      title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Options')}
+      checked={labsChatBarAlt === 'title'} onChange={(on) => setLabsChatBarAlt(on ? 'title' : false)}
+    />
 
     {!isMobile && <FormSwitchControl
       title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screen Capture</>} description={'v1.13 · ' + (labsAttachScreenCapture ? 'Enabled' : 'Disabled')}

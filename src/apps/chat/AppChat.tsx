@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import { useTheme } from '@mui/joy';
+import { Typography, useTheme } from '@mui/joy';
 
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
@@ -22,12 +22,13 @@ import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatDropdowns } from './components/ChatDropdowns';
-import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatMessageList } from './components/ChatMessageList';
+import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
@@ -39,6 +40,11 @@ import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
+
+
+// what to say when a chat is new and has no title
+export const CHAT_NOVEL_TITLE = 'Chat';
+
 
 /**
  * Mode: how to treat the input from the Composer
@@ -71,6 +77,8 @@ export function AppChat() {
   const theme = useTheme();
 
   const isMobile = useIsMobile();
+
+  const showAltTitleBar = useUXLabsStore(state => state.labsChatBarAlt === 'title');
 
   const { openLlmOptions } = useOptimaLayout();
 
@@ -113,6 +121,7 @@ export function AppChat() {
       activeFolderConversationsCount: activeFolder ? activeFolder.conversationIds.length : conversationsLength,
     };
   });
+
 
   // Window actions
 
@@ -387,11 +396,17 @@ export function AppChat() {
 
   // Pluggable ApplicationBar components
 
-  const centerItems = React.useMemo(() =>
+  const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
+
+  const barContent = React.useMemo(() => (barAltTitle !== null) ? (
+      <Typography level='title-md'>
+        {barAltTitle?.trim() || CHAT_NOVEL_TITLE}
+      </Typography>
+    ) : (
       <ChatDropdowns
         conversationId={focusedConversationId}
-      />,
-    [focusedConversationId],
+      />
+    ), [focusedConversationId, barAltTitle],
   );
 
   const drawerContent = React.useMemo(() =>
@@ -427,7 +442,7 @@ export function AppChat() {
     [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, /*handleConversationNew,*/ isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  usePluggableOptimaLayout(drawerContent, centerItems, menuItems, 'AppChat');
+  usePluggableOptimaLayout(drawerContent, barContent, menuItems, 'AppChat');
 
   return <>
 
