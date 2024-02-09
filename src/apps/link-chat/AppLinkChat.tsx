@@ -21,7 +21,7 @@ import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout
 
 import { LinkChat } from './LinkChat';
 import { LinkChatDrawer } from './LinkChatDrawer';
-import { LinkChatMenuItems } from './LinkChatMenuItems';
+import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { navigateToChatLinkList } from '~/common/app.routes';
 
@@ -194,14 +194,14 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId, sharedChatLinkItems, showDeletionKeys]);
 
-  const menuItems = React.useMemo(() => <LinkChatMenuItems
+  const pageMenuItems = React.useMemo(() => <LinkChatPageMenuItems
     activeLinkId={linkId}
     showDeletionKeys={showDeletionKeys}
     onDeleteLink={handleConfirmDeletion}
     onToggleDeletionKeys={() => setShowDeletionKeys(on => !on)}
   />, [handleConfirmDeletion, linkId, showDeletionKeys]);
 
-  usePluggableOptimaLayout(drawerContent, null, menuItems, 'AppChatLink');
+  usePluggableOptimaLayout(drawerContent, null, pageMenuItems, 'AppChatLink');
 
 
   return <>
