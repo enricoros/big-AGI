@@ -8,6 +8,7 @@ export type SystemPurposeData = {
   title: string;
   description: string | React.JSX.Element;
   systemMessage: string;
+  systemMessageNotes?: string;
   symbol: string;
   imageUri?: string;
   examples?: string[];
@@ -29,8 +30,9 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   DeveloperPreview: {
     title: 'Developer2',
     description: 'Preview of an extended capabilities Developer',
+    systemMessageNotes: 'Knowledge cutoff is set to "Current" instead of "{{Cutoff}}" to lower push backs',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
-Knowledge cutoff: {{Cutoff}}
+Knowledge cutoff: Current
 Current date: {{Today}}
 
 {{RenderMermaid}}
