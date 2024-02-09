@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
@@ -12,7 +12,9 @@ import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { CodeBlock } from '../blocks';
-import { ButtonCodepen } from './ButtonCodepen';
+import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
+import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
+import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
@@ -59,10 +61,12 @@ export const overlayButtonsSx: SxProps = {
 };
 
 function RenderCodeImpl(props: {
-  codeBlock: CodeBlock, noCopyButton?: boolean, sx?: SxProps,
+  codeBlock: CodeBlock,
+  noCopyButton?: boolean,
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
   isMobile?: boolean,
+  sx?: SxProps,
 }) {
 
   // state
@@ -115,8 +119,9 @@ function RenderCodeImpl(props: {
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
 
-  const languagesCodepen = ['html', 'css', 'javascript', 'json', 'typescript'];
-  const canCodepen = isSVG || (!!inferredCodeLanguage && languagesCodepen.includes(inferredCodeLanguage));
+  const canCodePen = isCodePenSupported(inferredCodeLanguage, isSVG);
+  const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, blockCode);
+  const canStackBlitz = isStackBlitzSupported(inferredCodeLanguage);
 
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
@@ -210,7 +215,13 @@ function RenderCodeImpl(props: {
               </IconButton>
             </Tooltip>
           )}
-          {canCodepen && <ButtonCodepen codeBlock={{ code: blockCode, language: inferredCodeLanguage || undefined }} />}
+          {(canJSFiddle || canCodePen || canStackBlitz) && (
+            <ButtonGroup aria-label='Open code in external editors' sx={{ cornerRadius: 'md' }}>
+              {canJSFiddle && <ButtonJsFiddle code={blockCode} language={inferredCodeLanguage!} />}
+              {canCodePen && <ButtonCodePen code={blockCode} language={inferredCodeLanguage!} />}
+              {canStackBlitz && <ButtonStackBlitz code={blockCode} title={blockTitle} language={inferredCodeLanguage!} />}
+            </ButtonGroup>
+          )}
           {props.noCopyButton !== true && (
             <Tooltip title='Copy Code'>
               <IconButton variant='soft' onClick={handleCopyToClipboard}>
