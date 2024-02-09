@@ -19,9 +19,9 @@ import { conversationTitle } from '~/common/state/store-chats';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
-import { LinkChat } from './LinkChat';
 import { LinkChatDrawer } from './LinkChatDrawer';
 import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
+import { LinkChatViewer } from './LinkChatViewer';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { navigateToChatLinkList } from '~/common/app.routes';
 
@@ -213,7 +213,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
         : isError
           ? <ShowError error={error} />
           : !!data?.conversation
-            ? <LinkChat conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+            ? <LinkChatViewer conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
             : <Centerer backgroundColor={themeBgAppDarker} />}
 
 
