@@ -41,8 +41,10 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // clear to send, again
   startTyping(conversationId, null);
 
-  if (autoTitleChat)
-    conversationAutoTitle(conversationId, false);
+  if (autoTitleChat) {
+    // fire/forget, this will only set the title if it's not already set
+    void conversationAutoTitle(conversationId, false);
+  }
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
