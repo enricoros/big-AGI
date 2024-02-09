@@ -119,9 +119,9 @@ function RenderCodeImpl(props: {
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
 
-  const canCodePen = isCodePenSupported(inferredCodeLanguage, isSVG);
-  const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, blockCode);
-  const canStackBlitz = isStackBlitzSupported(inferredCodeLanguage);
+  const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVG);
+  const canJSFiddle = blockComplete && isJSFiddleSupported(inferredCodeLanguage, blockCode);
+  const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
 
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
