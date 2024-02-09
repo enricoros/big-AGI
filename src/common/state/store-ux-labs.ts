@@ -18,6 +18,9 @@ interface UXLabsStore {
   labsCameraDesktop: boolean;
   setLabsCameraDesktop: (labsCameraDesktop: boolean) => void;
 
+  labsChatBarAlt: false | 'title',
+  setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -29,6 +32,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsCameraDesktop: false,
       setLabsCameraDesktop: (labsCameraDesktop: boolean) => set({ labsCameraDesktop }),
+
+      labsChatBarAlt: false,
+      setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
 
     }),
     {

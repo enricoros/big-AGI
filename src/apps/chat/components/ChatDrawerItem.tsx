@@ -19,6 +19,8 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
 
+import { CHAT_NOVEL_TITLE } from '../AppChat';
+
 
 // set to true to display the conversation IDs
 // const DEBUG_CONVERSATION_IDS = false;
@@ -187,7 +189,7 @@ function ChatDrawerItem(props: {
         }}
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
-        {title.trim() ? title : 'Chat'}{assistantTyping && '...'}
+        {title.trim() ? title : CHAT_NOVEL_TITLE}{assistantTyping && '...'}
       </Typography>
     ) : (
       <InlineTextarea
