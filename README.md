@@ -155,6 +155,7 @@ Create your GitHub fork, create a Vercel project over that fork, and deploy it. 
 * [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
 * [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
 * [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
+* External code execution: export to [CodePen](https://codepen.io/pen/), [StackBlitz](https://stackblitz.com/), [JSFiddle](https://jsfiddle.net/)
 
 <br/>
 
