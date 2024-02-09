@@ -2,10 +2,11 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -152,6 +153,13 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     //       maybe we shall have a "save" button just save on a state to persist between sessions
     SystemPurposes['Custom'].systemMessage = v.target.value;
   }, []);
+
+  const handleSwitchToCustom = React.useCallback((customText: string) => {
+    if (setSystemPurposeId) {
+      SystemPurposes['Custom'].systemMessage = customText;
+      setSystemPurposeId(props.conversationId, 'Custom');
+    }
+  }, [props.conversationId, setSystemPurposeId]);
 
   const toggleEditMode = React.useCallback(() => setEditMode(on => !on), []);
 
@@ -341,12 +349,29 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             {showPrompt && (
               <Card>
                 <CardContent>
-                  <Typography level='title-sm'>
-                    System Prompt
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography level='title-sm'>
+                      System Prompt
+                    </Typography>
+                    <Button
+                      variant='plain' color='neutral' size='sm'
+                      endDecorator={<EditNoteIcon />}
+                      onClick={() => handleSwitchToCustom(bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id))}
+                      sx={{ ml: 'auto', my: '-0.25rem' /* absorb the button padding */ }}
+                    >
+                      Custom
+                    </Button>
+                  </Box>
                   <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
                     {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id)}
                   </Typography>
+                  {!!selectedPurpose?.systemMessageNotes && (
+                    <Alert sx={{ m: -1, mt: 1, p: 1 }}>
+                      <Typography level='body-xs'>
+                        Prompt notes: {selectedPurpose.systemMessageNotes}
+                      </Typography>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -363,9 +388,11 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             defaultValue={SystemPurposes['Custom']?.systemMessage}
             onChange={handleCustomSystemMessageChange}
             endDecorator={
-              <Typography level='body-sm' sx={{ px: 0.75 }}>
-                Just start chatting when done.
-              </Typography>
+              <Alert sx={{ flex: 1, p: 1 }}>
+                <Typography level='body-xs'>
+                  Just start chatting when done.
+                </Typography>
+              </Alert>
             }
             sx={{
               gridColumn: '1 / -1',
