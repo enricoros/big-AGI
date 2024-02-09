@@ -17,8 +17,8 @@ const _languages = [
 const languageToTemplateMapping: { [language: string]: string } = {
   typescript: 'typescript',
   javascript: 'javascript', json: 'javascript',
-  html: 'html', css: 'css',
-  // python: 'secret-python',
+  html: 'html', css: 'html',
+  // python: 'secret-python', // webcontainers? secret-python? python?
 };
 
 // Mapping of languages to their primary file names in StackBlitz
