@@ -79,7 +79,11 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
     const { value, done } = await responseReader.read();
 
     // normal exit condition
-    if (done) break;
+    if (done) {
+      if (value?.length)
+        console.log('unifiedStreamingClient: unexpected value in the last packet:', value?.length);
+      break;
+    }
 
     incrementalText += textDecoder.decode(value, { stream: true });
 
@@ -97,7 +101,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
         onUpdate({ originLLM: parsed.model }, false);
       } catch (e) {
         // error parsing JSON, ignore
-        console.log('vendorStreamChat: error parsing JSON:', e);
+        console.log('unifiedStreamingClient: error parsing JSON:', e);
       }
     }
 
