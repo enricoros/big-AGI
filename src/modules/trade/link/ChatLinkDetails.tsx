@@ -51,7 +51,7 @@ export function ChatLinkDetails(props: {
   }
 
   // success
-  const { objectId, deletionKey, expiresAt } = props.storageItem;
+  const { objectId, deletionKey, expiresAt, dataTitle } = props.storageItem;
   const relativeUrl = getChatLinkRelativePath(objectId);
   const fullUrl = getOriginUrl() + relativeUrl;
 
@@ -83,7 +83,12 @@ export function ChatLinkDetails(props: {
     setCopied(true);
   };
 
-  const onNativeShare = () => webShare(Brand.Title.Base, 'Check out this chat!', fullUrl, () => setNative(true));
+  const onNativeShare = () => webShare(
+    Brand.Title.Base + dataTitle ? ` - ${dataTitle}` : ' - Shared Chat',
+    'Check this out!',
+    fullUrl,
+    () => setNative(true),
+  );
 
   const onDeleteNow = () => setConfirmDeletion(true);
 

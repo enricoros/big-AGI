@@ -33,6 +33,7 @@ export const storagePutOutputSchema = z.union([
     createdAt: z.date(),
     expiresAt: z.date().nullable(),
     deletionKey: z.string(),
+    dataTitle: z.string().nullable(),
   }),
   z.object({
     type: z.literal('error'),
@@ -128,6 +129,7 @@ export const storagePutProcedure =
       return {
         type: 'success',
         objectId,
+        dataTitle: dataTitle || null,
         ...rest,
       };
 
