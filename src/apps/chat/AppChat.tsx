@@ -34,7 +34,7 @@ import { Composer } from './components/composer/Composer';
 import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
-import { usePanesManager } from './components/panes/usePanesManager';
+import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
 
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
@@ -207,7 +207,7 @@ export function AppChat() {
     if (chatLLMId && focusedSystemPurposeId) {
       switch (chatModeId) {
         case 'generate-text':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId);
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getInstantAppChatPanesCount());
 
         case 'append-user':
           return setMessages(conversationId, history);

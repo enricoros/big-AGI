@@ -14,7 +14,7 @@ import { createAssistantTypingMessage, updatePurposeInHistory } from './editors'
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, parallelViewCount: number) {
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
@@ -32,7 +32,9 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   // stream the assistant's messages
   await streamAssistantMessage(
-    assistantLlmId, history,
+    assistantLlmId,
+    history,
+    parallelViewCount,
     autoSpeak,
     (updatedMessage) => editMessage(conversationId, assistantMessageId, updatedMessage, false),
     controller.signal,
@@ -52,7 +54,9 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
 
 async function streamAssistantMessage(
-  llmId: DLLMId, history: DMessage[],
+  llmId: DLLMId,
+  history: DMessage[],
+  hintParallelThrottle: number, // 1: default throttle, 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
   editMessage: (updatedMessage: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
@@ -65,6 +69,24 @@ async function streamAssistantMessage(
 
   const incrementalAnswer: Partial<DMessage> = { text: '' };
 
+  // Throttling setup
+  let lastCallTime = 0;
+  let throttledUpdatePending = false;
+  let throttleDelay = 1000 / 12; // 12 messages per second (single chat, and 24 in 4 chats)
+  if (hintParallelThrottle > 1)
+    throttleDelay = Math.round(throttleDelay * Math.sqrt(hintParallelThrottle));
+
+  function throttledEditMessage(updatedMessage: Partial<DMessage>) {
+    const now = Date.now();
+    if (now - lastCallTime < throttleDelay) {
+      throttledUpdatePending = true;
+    } else {
+      editMessage(updatedMessage);
+      lastCallTime = now;
+      throttledUpdatePending = false;
+    }
+  }
+
   try {
     await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal,
       ({ originLLM, textSoFar, typing }) => {
@@ -74,9 +96,8 @@ async function streamAssistantMessage(
         if (textSoFar) incrementalAnswer.text = textSoFar;
         if (typing !== undefined) incrementalAnswer.typing = typing;
 
-        // update the message in the store (and thus schedule a re-render)
-        // FIXME: this needs to be throttled
-        editMessage(incrementalAnswer);
+        // Update the message in the store with throttling
+        throttledEditMessage(incrementalAnswer);
 
         // 📢 TTS: first-line
         if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
@@ -99,10 +120,12 @@ async function streamAssistantMessage(
     }
   }
 
+  // Optimized:
+  // 1 - stop the typing animation
+  // 2 - ensure the last content is flushed out
+  editMessage({ ...incrementalAnswer, typing: false });
+
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
     void speakText(incrementalAnswer.text);
-
-  // finally, stop the typing animation
-  editMessage({ typing: false });
 }
