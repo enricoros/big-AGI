@@ -50,9 +50,9 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
     // const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     // Format the current date and time according to the user's locale and timezone
     const formatter = new Intl.DateTimeFormat(userLocale, {
-      weekday: 'long', // Full name of the day of the week
+      weekday: 'short', // Full name of the day of the week
       year: 'numeric', // Numeric year
-      month: 'long', // Full name of the month
+      month: 'short', // Full name of the month
       day: 'numeric', // Numeric day of the month
       hour: '2-digit', // 2-digit hour
       minute: '2-digit', // 2-digit minute
