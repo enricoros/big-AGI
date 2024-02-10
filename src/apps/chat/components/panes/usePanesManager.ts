@@ -288,6 +288,9 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
   },
 ));
 
+export function getInstantAppChatPanesCount() {
+  return useAppChatPanesStore.getState().chatPanes.length;
+}
 
 export function usePanesManager() {
   // use Panes
