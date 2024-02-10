@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
+import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -10,6 +11,10 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+
+
+// uncomment for more settings
+// const DEV_MODE_SETTINGS = false;
 
 
 export function UxLabsSettings() {
@@ -20,9 +25,15 @@ export function UxLabsSettings() {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
+    labsHighPerformance, setLabsHighPerformance,
   } = useUXLabsStore();
 
   return <>
+
+    <FormSwitchControl
+      title={<><SpeedIcon color={labsHighPerformance ? 'primary' : undefined} sx={{ mr: 0.25 }} />Performance</>} description={'v1.14 · ' + (labsHighPerformance ? 'Unlocked' : 'Default')}
+      checked={labsHighPerformance} onChange={setLabsHighPerformance}
+    />
 
     <FormSwitchControl
       title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Options')}

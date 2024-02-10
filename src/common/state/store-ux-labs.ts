@@ -21,6 +21,9 @@ interface UXLabsStore {
   labsChatBarAlt: false | 'title',
   setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
 
+  labsHighPerformance: boolean;
+  setLabsHighPerformance: (labsHighPerformance: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -36,9 +39,16 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsChatBarAlt: false,
       setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
 
+      labsHighPerformance: false,
+      setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
+
     }),
     {
       name: 'app-ux-labs',
     },
   ),
 );
+
+export function getUXLabsHighPerformance() {
+  return useUXLabsStore.getState().labsHighPerformance;
+}

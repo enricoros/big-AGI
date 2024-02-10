@@ -17,12 +17,12 @@ import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/commo
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
+import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatDrawerMemo } from './components/ChatDrawer';
@@ -207,7 +207,7 @@ export function AppChat() {
     if (chatLLMId && focusedSystemPurposeId) {
       switch (chatModeId) {
         case 'generate-text':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getInstantAppChatPanesCount());
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'append-user':
           return setMessages(conversationId, history);

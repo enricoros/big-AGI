@@ -56,7 +56,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 async function streamAssistantMessage(
   llmId: DLLMId,
   history: DMessage[],
-  hintParallelThrottle: number, // 1: default throttle, 2+ reduce the message frequency with the square root
+  throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
   editMessage: (updatedMessage: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
@@ -71,19 +71,15 @@ async function streamAssistantMessage(
 
   // Throttling setup
   let lastCallTime = 0;
-  let throttledUpdatePending = false;
-  let throttleDelay = 1000 / 12; // 12 messages per second (single chat, and 24 in 4 chats)
-  if (hintParallelThrottle > 1)
-    throttleDelay = Math.round(throttleDelay * Math.sqrt(hintParallelThrottle));
+  let throttleDelay = 1000 / 12; // 12 messages per second works well for 60Hz displays (single chat, and 24 in 4 chats, see the square root below)
+  if (throttleUnits > 1)
+    throttleDelay = Math.round(throttleDelay * Math.sqrt(throttleUnits));
 
   function throttledEditMessage(updatedMessage: Partial<DMessage>) {
     const now = Date.now();
-    if (now - lastCallTime < throttleDelay) {
-      throttledUpdatePending = true;
-    } else {
+    if (throttleUnits === 0 || now - lastCallTime >= throttleDelay) {
       editMessage(updatedMessage);
       lastCallTime = now;
-      throttledUpdatePending = false;
     }
   }
 
@@ -96,7 +92,8 @@ async function streamAssistantMessage(
         if (textSoFar) incrementalAnswer.text = textSoFar;
         if (typing !== undefined) incrementalAnswer.typing = typing;
 
-        // Update the message in the store with throttling
+        // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
+        // This can be toggled from the settings
         throttledEditMessage(incrementalAnswer);
 
         // 📢 TTS: first-line
