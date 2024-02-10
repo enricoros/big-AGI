@@ -24,9 +24,9 @@ export function useStreamChatText() {
 
     try {
       let lastText = '';
-      await llmStreamingChatGenerate(llmId, prompt, null, null, abortControllerRef.current.signal, (update) => {
-        if (update.text) {
-          lastText = update.text;
+      await llmStreamingChatGenerate(llmId, prompt, null, null, abortControllerRef.current.signal, ({ textSoFar }) => {
+        if (textSoFar) {
+          lastText = textSoFar;
           setPartialText(lastText);
         }
       });

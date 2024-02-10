@@ -8,6 +8,12 @@ import type { OpenAIAccessSchema } from '../server/openai/openai.router';
 import type { OpenAIWire } from '../server/openai/openai.wiretypes';
 
 
+export type StreamingClientUpdate = Partial<{
+  textSoFar: string;
+  typing: boolean;
+  originLLM: string;
+}>;
+
 /**
  * Client side chat generation, with streaming. This decodes the (text) streaming response from
  * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
@@ -24,20 +30,20 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
   messages: VChatMessageIn[],
   functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
   abortSignal: AbortSignal,
-  onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
-) {
-
-  // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
-  if (access.dialect === 'openai' && access.moderationCheck) {
-    const moderationUpdate = await _openAIModerationCheck(access, messages.at(-1) ?? null);
-    if (moderationUpdate)
-      return onUpdate(moderationUpdate, true);
-  }
+  onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
+): Promise<void> {
 
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llmOptions as any) || {};
   if (!llmRef || llmTemperature === undefined)
     throw new Error(`Error in configuration for model ${llmId}: ${JSON.stringify(llmOptions)}`);
+
+  // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
+  if (access.dialect === 'openai' && access.moderationCheck) {
+    const moderationUpdate = await _openAIModerationCheck(access, messages.at(-1) ?? null);
+    if (moderationUpdate)
+      return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
+  }
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate
   const input: ChatStreamingInputSchema = {
@@ -60,7 +66,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 
   if (!response.ok || !response.body) {
     const errorMessage = response.body ? await response.text() : 'No response from server';
-    return onUpdate({ text: errorMessage, typing: false }, true);
+    return onUpdate({ textSoFar: errorMessage, typing: false }, true);
   }
 
   const responseReader = response.body.getReader();
@@ -96,7 +102,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
     }
 
     if (incrementalText)
-      onUpdate({ text: incrementalText }, false);
+      onUpdate({ textSoFar: incrementalText }, false);
   }
 }
 
@@ -104,8 +110,10 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 /**
  * OpenAI-specific moderation check. This is a separate function, as it's not part of the
  * streaming chat generation, but it's a pre-check before we even start the streaming.
+ *
+ * @returns null if the message is safe, or a string with the user message if it's not safe
  */
-async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: VChatMessageIn | null): Promise<{ text: string, typing: boolean } | null> {
+async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: VChatMessageIn | null): Promise<string | null> {
   if (!lastMessage || lastMessage.role !== 'user')
     return null;
 
@@ -127,17 +135,11 @@ async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: V
     if (issues.size) {
       const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
       // do not proceed with the streaming request
-      return {
-        text: `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`,
-        typing: false,
-      };
+      return `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`;
     }
   } catch (error: any) {
     // as the moderation check was requested, we cannot proceed in case of error
-    return {
-      text: `[Issue] There was an error while checking for harmful content. ${error?.toString()}`,
-      typing: false,
-    };
+    return '[Issue] There was an error while checking for harmful content. ' + error?.toString();
   }
 
   // moderation check was successful

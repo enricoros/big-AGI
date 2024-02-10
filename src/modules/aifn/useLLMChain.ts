@@ -115,8 +115,8 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
 
     // LLM call (streaming, cancelable)
     llmStreamingChatGenerate(llmId, llmChatInput, null, null, stepAbortController.signal,
-      (update) => {
-        update.text && setChainStepInterimText(interimText = update.text);
+      ({textSoFar}) => {
+        textSoFar && setChainStepInterimText(interimText = textSoFar);
       })
       .then(() => {
         if (stepAbortController.signal.aborted)
