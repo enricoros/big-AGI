@@ -59,31 +59,35 @@ async function streamAssistantMessage(
 ) {
 
   // speak once
-  let spokenText = '';
   let spokenLine = false;
 
   const messages = history.map(({ role, text }) => ({ role, content: text }));
 
+  const incrementalAnswer: Partial<DMessage> = { text: '' };
+
   try {
     await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal,
-      (updatedMessage: Partial<DMessage>) => {
+      ({ originLLM, textSoFar, typing }) => {
+
+        // grow the incremental message
+        if (originLLM) incrementalAnswer.originLLM = originLLM;
+        if (textSoFar) incrementalAnswer.text = textSoFar;
+        if (typing !== undefined) incrementalAnswer.typing = typing;
+
         // update the message in the store (and thus schedule a re-render)
-        editMessage(updatedMessage);
+        // FIXME: this needs to be throttled
+        editMessage(incrementalAnswer);
 
         // 📢 TTS: first-line
-        if (updatedMessage?.text) {
-          spokenText = updatedMessage.text;
-          if (autoSpeak === 'firstLine' && !spokenLine) {
-            let cutPoint = spokenText.lastIndexOf('\n');
-            if (cutPoint < 0)
-              cutPoint = spokenText.lastIndexOf('. ');
-            if (cutPoint > 100 && cutPoint < 400) {
-              spokenLine = true;
-              const firstParagraph = spokenText.substring(0, cutPoint);
-
-              // fire/forget: we don't want to stall this loop
-              void speakText(firstParagraph);
-            }
+        if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
+          let cutPoint = textSoFar.lastIndexOf('\n');
+          if (cutPoint < 0)
+            cutPoint = textSoFar.lastIndexOf('. ');
+          if (cutPoint > 100 && cutPoint < 400) {
+            spokenLine = true;
+            const firstParagraph = textSoFar.substring(0, cutPoint);
+            // fire/forget: we don't want to stall this loop
+            void speakText(firstParagraph);
           }
         }
       },
@@ -96,8 +100,8 @@ async function streamAssistantMessage(
   }
 
   // 📢 TTS: all
-  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && spokenText && !spokenLine && !abortSignal.aborted)
-    void speakText(spokenText);
+  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
+    void speakText(incrementalAnswer.text);
 
   // finally, stop the typing animation
   editMessage({ typing: false });

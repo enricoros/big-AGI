@@ -4,6 +4,7 @@ import type { TRPCClientErrorBase } from '@trpc/client';
 import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
+import type { StreamingClientUpdate } from './unifiedStreamingClient';
 import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
 
@@ -52,7 +53,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     messages: VChatMessageIn[],
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     abortSignal: AbortSignal,
-    onUpdate: (update: Partial<{ text: string, typing: boolean, originLLM: string }>, done: boolean) => void,
+    onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
   ) => Promise<void>;
 
 }
