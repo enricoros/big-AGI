@@ -102,6 +102,7 @@ function ChatDrawer(props: {
   chatPanesConversationIds: DConversationId[],
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
   onConversationExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationImportDialog: () => void,
@@ -110,7 +111,7 @@ function ChatDrawer(props: {
   setActiveFolderId: (folderId: string | null) => void,
 }) {
 
-  const { onConversationActivate, onConversationDelete, onConversationExportDialog, onConversationNew } = props;
+  const { onConversationActivate, onConversationBranch, onConversationDelete, onConversationExportDialog, onConversationNew } = props;
 
   // local state
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
@@ -304,6 +305,7 @@ function ChatDrawer(props: {
             showSymbols={showSymbols}
             bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
             onConversationActivate={handleConversationActivate}
+            onConversationBranch={onConversationBranch}
             onConversationDelete={handleConversationDelete}
             onConversationExport={onConversationExportDialog}
             onConversationFolderChange={handleConversationFolderChange}

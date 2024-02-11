@@ -9,6 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import { SystemPurposeId, SystemPurposes } from '../../../data';
 
@@ -39,6 +40,7 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
   prev.showSymbols === next.showSymbols &&
   prev.bottomBarBasis === next.bottomBarBasis &&
   prev.onConversationActivate === next.onConversationActivate &&
+  prev.onConversationBranch === next.onConversationBranch &&
   prev.onConversationDelete === next.onConversationDelete &&
   prev.onConversationExport === next.onConversationExport &&
   prev.onConversationFolderChange === next.onConversationFolderChange,
@@ -69,6 +71,7 @@ function ChatDrawerItem(props: {
   showSymbols: boolean,
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
   onConversationDelete: (conversationId: DConversationId) => void,
   onConversationExport: (conversationId: DConversationId, exportAll: boolean) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
@@ -80,7 +83,7 @@ function ChatDrawerItem(props: {
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // derived state
-  const { onConversationExport, onConversationFolderChange } = props;
+  const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
   const { conversationId, isActive, isAlsoOpen, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
@@ -96,6 +99,14 @@ function ChatDrawerItem(props: {
   // Activate
 
   const handleConversationActivate = () => props.onConversationActivate(conversationId, true);
+
+
+  // branch
+
+  const handleConversationBranch = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    conversationId && onConversationBranch(conversationId, null);
+  }, [conversationId, onConversationBranch]);
 
 
   // export
@@ -298,13 +309,19 @@ function ChatDrawerItem(props: {
                 </FadeInButton>
               </Tooltip>
 
-              {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
+                <Tooltip disableInteractive title='Export Chat'>
+                  <FadeInButton size='sm' onClick={handleConversationExport}>
+                    <FileDownloadOutlinedIcon />
+                  </FadeInButton>
+                </Tooltip>
 
-              <Tooltip disableInteractive title='Export Chat'>
-                <FadeInButton size='sm' onClick={handleConversationExport}>
-                  <FileDownloadOutlinedIcon />
-                </FadeInButton>
-              </Tooltip>
+                <Tooltip disableInteractive title='Branch'>
+                  <FadeInButton size='sm' onClick={handleConversationBranch}>
+                    <ForkRightIcon />
+                  </FadeInButton>
+                </Tooltip>
+              </>}
+
             </>}
 
             {/* --> */}
