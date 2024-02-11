@@ -10,14 +10,25 @@ const callConversationLegend =
     Quick call regarding this chat
   </Box>;
 
-export function ButtonCall(props: { isMobile?: boolean, disabled?: boolean, onClick: () => void, sx?: SxProps }) {
+const mobileSx: SxProps = {
+  mr: { xs: 1, md: 2 },
+} as const;
+
+const desktopSx: SxProps = {
+  '--Button-gap': '1rem',
+} as const;
+
+
+export const ButtonCallMemo = React.memo(ButtonCall);
+
+export function ButtonCall(props: { isMobile?: boolean, disabled?: boolean, onClick: () => void }) {
   return props.isMobile ? (
-    <IconButton variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} sx={props.sx}>
+    <IconButton variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} sx={mobileSx}>
       <CallIcon />
     </IconButton>
   ) : (
     <Tooltip disableInteractive variant='solid' arrow placement='right' title={callConversationLegend}>
-      <Button variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} endDecorator={<CallIcon />} sx={props.sx}>
+      <Button variant='soft' color='primary' disabled={props.disabled} onClick={props.onClick} endDecorator={<CallIcon />} sx={desktopSx}>
         Call
       </Button>
     </Tooltip>
