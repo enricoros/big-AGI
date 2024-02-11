@@ -186,7 +186,7 @@ export function BlocksRenderer(props: {
               : block.type === 'code'
                 ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} isMobile={props.isMobile} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} sx={scaledTypographySx} />
+                  ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledTypographySx} />
                   : block.type === 'latex'
                     ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
                     : block.type === 'diff'
