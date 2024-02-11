@@ -178,7 +178,7 @@ export const ChatMessageMemo = React.memo(ChatMessage);
  * or collapsing long user messages.
  *
  */
-function ChatMessage(props: {
+export function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
   isBottom?: boolean,
@@ -437,7 +437,7 @@ function ChatMessage(props: {
 
           {/* Assistant model name */}
           {fromAssistant && (
-            <Tooltip title={messageOriginLLM || 'unk-model'} variant='solid'>
+            <Tooltip title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
               <Typography level='body-xs' sx={{
                 overflowWrap: 'anywhere',
                 ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
@@ -481,7 +481,7 @@ function ChatMessage(props: {
 
       {/* Overlay copy icon */}
       {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
-        <Tooltip title={fromAssistant ? 'Copy message' : 'Copy input'} variant='solid'>
+        <Tooltip title={messageTyping ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
           <IconButton
             variant='outlined' onClick={handleOpsCopy}
             sx={{
@@ -582,7 +582,7 @@ function ChatMessage(props: {
                     Retry
                     <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>}
-              <Tooltip title='Best-Of'>
+              <Tooltip title={messageTyping ? null : 'Best-Of'}>
                 <IconButton
                   size='sm'
                   variant='outlined' color='primary'
