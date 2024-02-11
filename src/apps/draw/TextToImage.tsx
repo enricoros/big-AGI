@@ -4,14 +4,19 @@ import { useQuery } from '@tanstack/react-query';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
+import { ImageBlock } from '../chat/components/message/blocks/blocks';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
 import { heuristicMarkdownImageReferenceBlocks, RenderImage } from '../chat/components/message/blocks/RenderImage';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { InlineError } from '~/common/components/InlineError';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 
 import { DesignerPrompt, PromptDesigner } from './components/PromptDesigner';
 import { ProviderConfigure } from './components/ProviderConfigure';
+
+
+const STILL_LAYOUTING = false;
 
 
 /**
@@ -41,9 +46,9 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
   const { prompt: dp } = props;
 
   // external state
-  const { data: imageBlocks, isError, error, isLoading } = useQuery({
+  const { data: imageBlocks, error, isLoading } = useQuery<ImageBlock[], Error>({
     enabled: !!dp.prompt,
-    queryKey: ['image-gen', dp.uuid],
+    queryKey: ['draw-uuid', dp.uuid],
     queryFn: () => queryActiveGenerateImageVector(dp.prompt, _fakeReqCount),
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
@@ -52,18 +57,19 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
   });
 
   return (
-    <Box sx={props.sx}>
+    <Box sx={{ ...props.sx, whiteSpace: 'break-spaces' }}>
+
+      {error && <InlineError error={error} />}
 
       {Array.from({ length: _fakeReqCount }).map((_, index) => {
         const imgUid = `gen-img-${index}`;
         const imageBlock = imageBlocks?.[index] || null;
         return imageBlock
-          ? <RenderImage key={imgUid} imageBlock={imageBlock} />
-          : <Card>
-            <Skeleton key={imgUid} variant='rectangular' sx={{ width: 200, height: 200 }} />
+          ? <RenderImage key={imgUid} imageBlock={imageBlock} noTooltip />
+          : <Card key={imgUid}>
+            <Skeleton animation='wave' variant='rectangular' sx={{ minWidth: 128, width: '100%', aspectRatio: 1 }} />
           </Card>;
       })}
-
     </Box>
   );
 };
@@ -101,22 +107,33 @@ export function TextToImage(props: {
     />
 
 
+    {/* TMP Body */}
     <Box sx={{
       flexGrow: 1,
       overflowY: 'auto',
 
       // style
       backgroundColor: 'background.level2',
-      border: '1px solid blue',
+      border: STILL_LAYOUTING ? '1px solid blue' : undefined,
       p: { xs: 1, md: 2 },
     }}>
       <Box sx={{
         my: 'auto',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        border: '1px solid purple',
+        border: STILL_LAYOUTING ? '1px solid purple' : undefined,
         minHeight: '300px',
       }}>
-        {prompts.map((prompt, index) => <TempPromptImageGen key={prompt.uuid} prompt={prompt} sx={{ border: '1px solid green' }} />)}
+        {prompts.map((prompt, index) => {
+          return (
+            <TempPromptImageGen
+              key={prompt.uuid}
+              prompt={prompt}
+              sx={{
+                border: STILL_LAYOUTING ? '1px solid green' : undefined,
+              }}
+            />
+          );
+        })}
       </Box>
     </Box>
 
