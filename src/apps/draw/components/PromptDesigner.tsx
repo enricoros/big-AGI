@@ -19,7 +19,7 @@ import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
-import { ButtonPromptFromPlaceholder } from './ButtonPromptFromPlaceholder';
+import { ButtonPromptFromX } from './ButtonPromptFromX';
 import { useDrawIdeas } from '../state/useDrawIdeas';
 
 
@@ -229,7 +229,7 @@ export function PromptDesigner(props: {
                     <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
                   </MenuItem>
                   <MenuItem>
-                    <ButtonPromptFromPlaceholder name='Image' disabled />
+                    <ButtonPromptFromX name='Image' disabled />
                   </MenuItem>
                   {/*<MenuItem>*/}
                   {/*  <ButtonPromptFromPlaceholder name='Chat' disabled />*/}
@@ -243,7 +243,7 @@ export function PromptDesigner(props: {
 
               <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
 
-              <ButtonPromptFromPlaceholder name='Image' disabled />
+              <ButtonPromptFromX name='Image' disabled />
 
               {/*<ButtonPromptFromPlaceholder name='Chats' disabled />*/}
 

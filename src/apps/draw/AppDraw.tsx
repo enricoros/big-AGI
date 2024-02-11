@@ -6,7 +6,6 @@ import { useRouterQuery } from '~/common/app.routes';
 
 import { DrawHeading } from './components/DrawHeading';
 import { DrawUnconfigured } from './components/DrawUnconfigured';
-import { Gallery } from './Gallery';
 import { TextToImage } from './TextToImage';
 
 

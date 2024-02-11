@@ -68,6 +68,7 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 
 export const RenderImage = (props: {
   imageBlock: ImageBlock,
+  noTooltip?: boolean,
   onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps,
 }) => {
   const { url, alt } = props.imageBlock;
@@ -99,7 +100,7 @@ export const RenderImage = (props: {
         <Tooltip
           variant='outlined' color='neutral'
           placement='top'
-          title={
+          title={props.noTooltip ? null :
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
                 <Typography level='title-sm'>⚠️ <b>Temporary Image</b> - This image will be deleted from the OpenAI servers in one hour. <b>Please save it to your device</b>.</Typography>

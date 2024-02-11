@@ -4,7 +4,7 @@ import { Button } from '@mui/joy';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 
-export function ButtonPromptFromPlaceholder(props: { isMobile?: boolean, name: string, disabled?: boolean }) {
+export function ButtonPromptFromX(props: { isMobile?: boolean, name: string, disabled?: boolean }) {
   return props.isMobile ? null : (
     <Button
       disabled={props.disabled}
