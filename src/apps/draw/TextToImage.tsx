@@ -40,7 +40,6 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
 function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
 
   // NOTE: we shall consider a multidimensional shape-based design
-  const _fakeReqCount = 1;
 
   // derived state
   const { prompt: dp } = props;
@@ -49,19 +48,19 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
   const { data: imageBlocks, error, isLoading } = useQuery<ImageBlock[], Error>({
     enabled: !!dp.prompt,
     queryKey: ['draw-uuid', dp.uuid],
-    queryFn: () => queryActiveGenerateImageVector(dp.prompt, _fakeReqCount),
+    queryFn: () => queryActiveGenerateImageVector(dp.prompt, dp._repeatCount),
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     staleTime: Infinity,
   });
-
+console.log('imageBlocks', dp);
   return (
     <Box sx={{ ...props.sx, whiteSpace: 'break-spaces' }}>
 
       {error && <InlineError error={error} />}
 
-      {Array.from({ length: _fakeReqCount }).map((_, index) => {
+      {Array.from({ length: dp._repeatCount }).map((_, index) => {
         const imgUid = `gen-img-${index}`;
         const imageBlock = imageBlocks?.[index] || null;
         return imageBlock
@@ -122,6 +121,9 @@ export function TextToImage(props: {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         border: STILL_LAYOUTING ? '1px solid purple' : undefined,
         minHeight: '300px',
+        // display: 'grid',
+        // gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        // gap: {xs: 1, md: 2},
       }}>
         {prompts.map((prompt, index) => {
           return (
