@@ -60,14 +60,21 @@ export const overlayButtonsSx: SxProps = {
   // },
 };
 
-function RenderCodeImpl(props: {
+
+interface RenderCodeBaseProps {
   codeBlock: CodeBlock,
+  isMobile?: boolean,
   noCopyButton?: boolean,
+  optimizeLightweight?: boolean,
+  sx?: SxProps,
+}
+
+interface RenderCodeImplProps extends RenderCodeBaseProps {
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
-  isMobile?: boolean,
-  sx?: SxProps,
-}) {
+}
+
+function RenderCodeImpl(props: RenderCodeImplProps) {
 
   // state
   const [fitScreen, setFitScreen] = React.useState(!!props.isMobile);
@@ -80,6 +87,7 @@ function RenderCodeImpl(props: {
   const {
     codeBlock: { blockTitle, blockCode, complete: blockComplete },
     highlightCode, inferCodeLanguage,
+    optimizeLightweight,
   } = props;
 
   // heuristic for language, and syntax highlight
@@ -181,35 +189,35 @@ function RenderCodeImpl(props: {
         {/* Buttons */}
         <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 0.5 }}>
           {isHTML && (
-            <Tooltip title={renderHTML ? 'Hide' : 'Show Web Page'}>
+            <Tooltip title={optimizeLightweight ? null : renderHTML ? 'Hide' : 'Show Web Page'}>
               <IconButton variant={renderHTML ? 'solid' : 'soft'} color='danger' onClick={() => setShowHTML(!showHTML)}>
                 <HtmlIcon />
               </IconButton>
             </Tooltip>
           )}
           {isMermaid && (
-            <Tooltip title={renderMermaid ? 'Show Code' : 'Render Mermaid'}>
+            <Tooltip title={optimizeLightweight ? null : renderMermaid ? 'Show Code' : 'Render Mermaid'}>
               <IconButton variant={renderMermaid ? 'solid' : 'soft'} onClick={() => setShowMermaid(!showMermaid)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isPlantUML && (
-            <Tooltip title={renderPlantUML ? 'Show Code' : 'Render PlantUML'}>
+            <Tooltip title={optimizeLightweight ? null : renderPlantUML ? 'Show Code' : 'Render PlantUML'}>
               <IconButton variant={renderPlantUML ? 'solid' : 'soft'} onClick={() => setShowPlantUML(!showPlantUML)}>
                 <SchemaIcon />
               </IconButton>
             </Tooltip>
           )}
           {isSVG && (
-            <Tooltip title={renderSVG ? 'Show Code' : 'Render SVG'}>
+            <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
               <IconButton variant={renderSVG ? 'solid' : 'soft'} onClick={() => setShowSVG(!showSVG)}>
                 <ShapeLineOutlinedIcon />
               </IconButton>
             </Tooltip>
           )}
           {((isMermaid && showMermaid) || (isPlantUML && showPlantUML) || (isSVG && showSVG && canScaleSVG)) && (
-            <Tooltip title={fitScreen ? 'Original Size' : 'Fit Screen'}>
+            <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
               <IconButton variant={fitScreen ? 'solid' : 'soft'} onClick={() => setFitScreen(on => !on)}>
                 <FitScreenIcon />
               </IconButton>
@@ -223,7 +231,7 @@ function RenderCodeImpl(props: {
             </ButtonGroup>
           )}
           {props.noCopyButton !== true && (
-            <Tooltip title='Copy Code'>
+            <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
               <IconButton variant='soft' onClick={handleCopyToClipboard}>
                 <ContentCopyIcon />
               </IconButton>
@@ -243,12 +251,12 @@ const RenderCodeDynamic = React.lazy(async () => {
   const { highlightCode, inferCodeLanguage } = await import('./codePrism');
 
   return {
-    default: (props: { codeBlock: CodeBlock, isMobile?: boolean, noCopyButton?: boolean, sx?: SxProps }) =>
+    default: (props: RenderCodeBaseProps) =>
       <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
   };
 });
 
-function RenderCode(props: { codeBlock: CodeBlock, isMobile?: boolean, noCopyButton?: boolean, sx?: SxProps }) {
+export function RenderCode(props: RenderCodeBaseProps) {
   return (
     <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
       <RenderCodeDynamic {...props} />

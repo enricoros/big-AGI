@@ -12,7 +12,7 @@ import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGloba
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 
-import { ChatMessageMemo } from './message/ChatMessage';
+import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
@@ -206,37 +206,42 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {filteredMessages.map((message, idx, { length: count }) =>
-        props.isMessageSelectionMode ? (
+      {filteredMessages.map((message, idx, { length: count }) => {
 
-          <CleanerMessage
-            key={'sel-' + message.id}
-            message={message}
-            remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
-            selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
-          />
+          // Optimization: if the component is going to change (e.g. the message is typing), we don't want to memoize it to not throw garbage in memory
+          const ChatMessageMemoOrNot = message.typing ? ChatMessage : ChatMessageMemo;
 
-        ) : (
+          return props.isMessageSelectionMode ? (
 
-          <ChatMessageMemo
-            key={'msg-' + message.id}
-            message={message}
-            diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
-            isBottom={idx === count - 1}
-            isImagining={isImagining}
-            isMobile={props.isMobile}
-            isSpeaking={isSpeaking}
-            onConversationBranch={handleConversationBranch}
-            onConversationRestartFrom={handleConversationRestartFrom}
-            onConversationTruncate={handleConversationTruncate}
-            onMessageDelete={handleMessageDelete}
-            onMessageEdit={handleMessageEdit}
-            onTextDiagram={handleTextDiagram}
-            onTextImagine={handleTextImagine}
-            onTextSpeak={handleTextSpeak}
-          />
+            <CleanerMessage
+              key={'sel-' + message.id}
+              message={message}
+              remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
+              selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
+            />
 
-        ),
+          ) : (
+
+            <ChatMessageMemoOrNot
+              key={'msg-' + message.id}
+              message={message}
+              diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
+              isBottom={idx === count - 1}
+              isImagining={isImagining}
+              isMobile={props.isMobile}
+              isSpeaking={isSpeaking}
+              onConversationBranch={handleConversationBranch}
+              onConversationRestartFrom={handleConversationRestartFrom}
+              onConversationTruncate={handleConversationTruncate}
+              onMessageDelete={handleMessageDelete}
+              onMessageEdit={handleMessageEdit}
+              onTextDiagram={handleTextDiagram}
+              onTextImagine={handleTextImagine}
+              onTextSpeak={handleTextSpeak}
+            />
+
+          );
+        },
       )}
 
     </List>
