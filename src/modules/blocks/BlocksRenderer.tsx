@@ -14,7 +14,7 @@ import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
-import { RenderText } from './RenderText';
+import { RenderChatText } from './RenderChatText';
 import { RenderTextDiff } from './RenderTextDiff';
 import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 
@@ -193,7 +193,7 @@ export function BlocksRenderer(props: {
                       ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={scaledTypographySx} />
                       : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
                         ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                        : <RenderText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+                        : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
           })
 
       )}

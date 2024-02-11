@@ -3,12 +3,12 @@ import * as React from 'react';
 import { Chip, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import { extractChatCommand } from '../../../commands/commands.registry';
+import { extractChatCommand } from '../../apps/chat/commands/commands.registry';
 
 import type { TextBlock } from './blocks';
 
 
-export const RenderText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
+export const RenderChatText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
 
   const elements = extractChatCommand(props.textBlock.content);
 
