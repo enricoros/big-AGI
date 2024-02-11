@@ -29,6 +29,7 @@ const promptButtonClass = 'PromptDesigner-button';
 export interface DesignerPrompt {
   uuid: string,
   prompt: string,
+  _repeatCount: number,
   // tags: string[],
   // effects: string[],
   // style: string[],
@@ -48,7 +49,8 @@ export function PromptDesigner(props: {
 
   // state
   const [nextPrompt, setNextPrompt] = React.useState<string>('');
-  const [tempCount, setTempCount] = React.useState<number>(2);
+  const [tempCount, setTempCount] = React.useState<number>(1);
+  const [tempRepeat, setTempRepeat] = React.useState<number>(1);
 
   // external state
   const { currentIdea, nextRandomIdea } = useDrawIdeas();
@@ -75,8 +77,9 @@ export function PromptDesigner(props: {
     onPromptEnqueue([{
       uuid: uuidv4(),
       prompt: nonEmptyPrompt,
+      _repeatCount: tempRepeat,
     }]);
-  }, [nonEmptyPrompt, onPromptEnqueue]);
+  }, [nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
 
 
   // Typing
@@ -282,7 +285,7 @@ export function PromptDesigner(props: {
         <Grid xs={12} md={3} spacing={1}>
           <Box sx={{ display: 'grid', gap: 1 }}>
 
-            {/* Draw */}
+            {/*  / Stop */}
             {!qBusy ? (
               <Button
                 key='draw-queue'
@@ -298,6 +301,7 @@ export function PromptDesigner(props: {
                 Draw {tempCount > 1 ? `(${tempCount})` : ''}
               </Button>
             ) : <>
+              {/* Stop + */}
               <Button
                 key='draw-terminate'
                 variant='soft' color='warning'
@@ -309,10 +313,11 @@ export function PromptDesigner(props: {
                   justifyContent: 'space-between',
                 }}
               >
-                Stop
+                Stop / CLEAR (wip)
               </Button>
+              {/* + Enqueue */}
               <Button
-                key='draw-queueup'
+                key='draw-queuemore'
                 variant='soft'
                 color='primary'
                 endDecorator={<MoreTimeIcon sx={{ fontSize: 18 }} />}
@@ -327,20 +332,19 @@ export function PromptDesigner(props: {
               </Button>
             </>}
 
-            <ButtonGroup size='sm' variant='soft' sx={{ flex: 1, display: 'flex' }}>
-              <Button sx={{ flex: 1 }}>
-                1
-              </Button>
-              <Button sx={{ flex: 1 }}>
-                x2
-              </Button>
-              <Button color='primary'  sx={{ flex: 1 }}>
-                x4
-              </Button>
-              <Button sx={{ flex: 1 }}>
-                xN
-              </Button>
-            </ButtonGroup>
+            {/* Repeat */}
+            <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
+              {[1, 2, 3, 4].map((n) => (
+                <Button
+                  key={n}
+                  variant={tempRepeat === n ? 'soft' : 'plain'} color='neutral'
+                  onClick={() => setTempRepeat(n)}
+                  sx={{ fontWeight: tempRepeat === n ? 'xl' : 'sm' }}
+                >
+                  {`x${n}`}
+                </Button>
+              ))}
+            </Box>
 
           </Box>
         </Grid>
