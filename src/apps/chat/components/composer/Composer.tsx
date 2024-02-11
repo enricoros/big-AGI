@@ -52,10 +52,10 @@ import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonA
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
-import { ButtonCall } from './buttons/ButtonCall';
+import { ButtonCallMemo } from './buttons/ButtonCall';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
-import { ButtonMultiChat } from './buttons/ButtonMultiChat';
+import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
 import { TokenBadgeMemo } from './TokenBadge';
@@ -73,6 +73,21 @@ export const animationStopEnter = keyframes`
         transform: translateY(0)
     }
 `;
+
+const dropperCardSx: SxProps = {
+  display: 'none',
+  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+  alignItems: 'center', justifyContent: 'center', gap: 2,
+  border: '2px dashed',
+  borderRadius: 'xs',
+  boxShadow: 'none',
+  zIndex: 10,
+} as const;
+
+const dropppedCardDraggingSx: SxProps = {
+  ...dropperCardSx,
+  display: 'flex',
+} as const;
 
 
 /**
@@ -181,36 +196,47 @@ export function Composer(props: {
     return enqueued;
   }, [clearAttachments, conversationId, llmAttachments, onAction, setComposeText]);
 
-  const handleSendClicked = () => handleSendAction(chatModeId, composeText);
+  const handleSendClicked = React.useCallback(() => {
+    handleSendAction(chatModeId, composeText);
+  }, [chatModeId, composeText, handleSendAction]);
 
-  const handleStopClicked = () => props.conversationId && stopTyping(props.conversationId);
+  const handleStopClicked = React.useCallback(() => {
+    !!props.conversationId && stopTyping(props.conversationId);
+  }, [props.conversationId, stopTyping]);
 
 
   // Secondary buttons
 
-  const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
+  const handleCallClicked = React.useCallback(() => {
+    props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
+  }, [props.conversationId, systemPurposeId]);
 
-  const handleDrawOptionsClicked = () => openPreferencesTab(PreferencesTab.Draw);
+  const handleDrawOptionsClicked = React.useCallback(() => {
+    openPreferencesTab(PreferencesTab.Draw);
+  }, [openPreferencesTab]);
 
-  const handleTextImagineClicked = () => {
+  const handleTextImagineClicked = React.useCallback(() => {
     if (!composeText || !props.conversationId)
       return;
     props.onTextImagine(props.conversationId, composeText);
     setComposeText('');
-  };
+  }, [composeText, props, setComposeText]);
 
 
   // Mode menu
 
-  const handleModeSelectorHide = () => setChatModeMenuAnchor(null);
+  const handleModeSelectorHide = React.useCallback(() => {
+    setChatModeMenuAnchor(null);
+  }, []);
 
-  const handleModeSelectorShow = (event: React.MouseEvent<HTMLAnchorElement>) =>
+  const handleModeSelectorShow = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
 
-  const handleModeChange = (_chatModeId: ChatModeId) => {
+  const handleModeChange = React.useCallback((_chatModeId: ChatModeId) => {
     handleModeSelectorHide();
     setChatModeId(_chatModeId);
-  };
+  }, [handleModeSelectorHide]);
 
 
   // Actiles
@@ -332,7 +358,9 @@ export function Composer(props: {
     toggleRecording();
   }, [micContinuation, micIsRunning, toggleRecording]);
 
-  const handleToggleMicContinuation = () => setMicContinuation(continued => !continued);
+  const handleToggleMicContinuation = React.useCallback(() => {
+    setMicContinuation(continued => !continued);
+  }, []);
 
   React.useEffect(() => {
     // autostart the microphone if the assistant stopped typing
@@ -515,7 +543,7 @@ export function Composer(props: {
               </Dropdown>
 
               {/* [Mobile] MultiChat button */}
-              {props.isMulticast !== null && <ButtonMultiChat isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+              {props.isMulticast !== null && <ButtonMultiChatMemo isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
             </> : <>
 
@@ -637,16 +665,8 @@ export function Composer(props: {
               {/* overlay: Drag & Drop*/}
               {!isMobile && (
                 <Card
-                  color='success' variant='soft' invertedColors
-                  sx={{
-                    display: isDragging ? 'flex' : 'none',
-                    position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                    alignItems: 'center', justifyContent: 'center', gap: 2,
-                    border: '2px dashed',
-                    borderRadius: 'xs',
-                    boxShadow: 'none',
-                    zIndex: 10,
-                  }}
+                  color={isDragging ? 'success' : undefined} variant={isDragging ? 'soft' : undefined} invertedColors={isDragging}
+                  sx={isDragging ? dropppedCardDraggingSx : dropperCardSx}
                   onDragLeave={handleOverlayDragLeave}
                   onDragOver={handleOverlayDragOver}
                   onDrop={handleOverlayDrop}
@@ -674,14 +694,14 @@ export function Composer(props: {
 
 
         <Grid xs={12} md={3}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' } as const}>
 
             {/* This row is here only for the [mobile] bottom-start corner item */}
             <Box sx={{ display: 'flex' }}>
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (showCall
-                  ? <ButtonCall isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                  ? <ButtonCallMemo isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
@@ -738,13 +758,13 @@ export function Composer(props: {
             </Box>
 
             {/* [desktop] Multicast switch (under the Chat button) */}
-            {isDesktop && props.isMulticast !== null && <ButtonMultiChat multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+            {isDesktop && props.isMulticast !== null && <ButtonMultiChatMemo multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
             {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
-              {showCall && <ButtonCall disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} sx={{ '--Button-gap': '1rem' }} />}
+              {showCall && <ButtonCallMemo disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
