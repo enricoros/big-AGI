@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
-import { ImageBlock } from '../chat/components/message/blocks/blocks';
+import type { ImageBlock } from '~/modules/blocks/blocks';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
-import { heuristicMarkdownImageReferenceBlocks } from '../chat/components/message/blocks/RenderImage';
+import { heuristicMarkdownImageReferenceBlocks } from '~/modules/blocks/RenderImage';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { InlineError } from '~/common/components/InlineError';

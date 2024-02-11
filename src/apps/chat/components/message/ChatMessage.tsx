@@ -18,21 +18,23 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
+
+import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
+import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
+
 import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { cssRainbowColorKeyframes, themeScalingMap } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { BlocksRenderer, editBlocksSx } from './blocks/BlocksRenderer';
 import { useChatShowTextDiff } from '../../store-app-chat';
-import { useSanityTextDiffs } from './blocks/RenderTextDiff';
 
 
 // Enable the menu on text selection

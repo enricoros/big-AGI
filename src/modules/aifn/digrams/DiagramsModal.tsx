@@ -8,8 +8,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { BlocksRenderer } from '../../../apps/chat/components/message/blocks/BlocksRenderer';
-
+import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
 import { GoodModal } from '~/common/components/GoodModal';

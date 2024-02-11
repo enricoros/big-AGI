@@ -5,9 +5,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
-import { RenderMarkdownMemo } from '../../chat/components/message/blocks/markdown/RenderMarkdown';
-
 import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
+import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';

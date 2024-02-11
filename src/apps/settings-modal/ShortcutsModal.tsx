@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { BlocksRenderer } from '../chat/components/message/blocks/BlocksRenderer';
+import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
