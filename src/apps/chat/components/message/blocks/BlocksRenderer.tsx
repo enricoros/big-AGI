@@ -9,11 +9,11 @@ import type { DMessage } from '~/common/state/store-chats';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
 
-import { RenderCodeMemo } from './code/RenderCode';
+import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
 import { RenderLatex } from './RenderLatex';
-import { RenderMarkdownMemo } from './markdown/RenderMarkdown';
+import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderText } from './RenderText';
 import { RenderTextDiff } from './RenderTextDiff';
 import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
@@ -61,6 +61,9 @@ export function BlocksRenderer(props: {
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
   onImageRegenerate?: () => void;
+
+  // optimization: allow memo
+  optiAllowMemo?: boolean;
 
 }) {
 
@@ -173,11 +176,15 @@ export function BlocksRenderer(props: {
 
         // sequence of render components, for each Block
         blocks.map(
-          (block, index) =>
-            block.type === 'html'
+          (block, index) => {
+            // Optimization: only memo the non-currently-rendered components, if the message is still in flux
+            const optimizeWithMemo = props.optiAllowMemo && index !== blocks.length - 1;
+            const RenderCodeMemoOrNot = optimizeWithMemo ? RenderCodeMemo : RenderCode;
+            const RenderMarkdownMemoOrNot = optimizeWithMemo ? RenderMarkdownMemo : RenderMarkdown;
+            return block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemo key={'code-' + index} codeBlock={block} isMobile={props.isMobile} noCopyButton={props.specialDiagramMode} sx={scaledCodeSx} />
+                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} isMobile={props.isMobile} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} isFirst={!index} allowRunAgain={props.isBottom === true} onRunAgain={props.onImageRegenerate} sx={scaledTypographySx} />
                   : block.type === 'latex'
@@ -185,8 +192,9 @@ export function BlocksRenderer(props: {
                     : block.type === 'diff'
                       ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={scaledTypographySx} />
                       : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                        ? <RenderMarkdownMemo key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                        : <RenderText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />)
+                        ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
+                        : <RenderText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+          })
 
       )}
 

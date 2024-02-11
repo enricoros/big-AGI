@@ -25,7 +25,7 @@ const RenderMarkdownBox = styled(Box)({
 
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-function RenderMarkdown(props: { textBlock: TextBlock; sx?: SxProps; }) {
+export function RenderMarkdown(props: { textBlock: TextBlock; sx?: SxProps; }) {
   return (
     <RenderMarkdownBox
       className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
