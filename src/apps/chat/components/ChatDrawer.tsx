@@ -8,12 +8,12 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
-import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
-import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import DebounceInput from '~/common/components/DebounceInput';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
+import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
@@ -225,7 +225,7 @@ function ChatDrawer(props: {
     <PageDrawerHeader title='Chats' onClose={closeDrawer}>
       <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
         <IconButton onClick={toggleEnableFolders}>
-          {enableFolders ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}
+          {enableFolders ? <FoldersToggleOn /> : <FoldersToggleOff />}
         </IconButton>
       </Tooltip>
     </PageDrawerHeader>
