@@ -123,7 +123,10 @@ export function ChatFolderList(props: {
                       )}
                     </Draggable>
                   ))}
+
                   {provided.placeholder}
+
+                  <AddFolderButton />
                 </List>
               )}
             </StrictModeDroppable>
@@ -131,7 +134,6 @@ export function ChatFolderList(props: {
         </ListItem>
       </List>
 
-      <AddFolderButton />
     </Sheet>
   );
 }

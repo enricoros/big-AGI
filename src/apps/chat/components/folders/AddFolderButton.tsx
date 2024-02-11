@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, ListItem, ListItemDecorator } from '@mui/joy';
+import { ListItem, ListItemButton, ListItemDecorator } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import FolderIcon from '@mui/icons-material/Folder';
 
@@ -31,41 +31,37 @@ export function AddFolderButton() {
   };
 
   return isAddingFolder ? (
-    <ListItem sx={{
-      '--ListItem-paddingLeft': '0.75rem',
-      '--ListItem-minHeight': '2.75rem', // --Folder-ListItem-height
-      display: 'flex', alignItems: 'center', gap: 1,
-    }}>
+    <ListItem>
       <ListItemDecorator>
         <FolderIcon style={{ color: newFolderColor || 'inherit' }} />
       </ListItemDecorator>
       <InlineTextarea
-        initialText='' placeholder='Folder Name'
+        initialText=''
+        placeholder='Folder Name'
         onEdit={handleCreateFolder}
         onCancel={handleCancelAddFolder}
-        sx={{
-          flexGrow: 1,
-        }} />
+        sx={{ ml: -1.5, mr: -0.5, flexGrow: 1, minWidth: 100 }}
+      />
       {/*<IconButton color='danger' onClick={handleCancelAddFolder}>*/}
       {/*  <CloseIcon />*/}
       {/*</IconButton>*/}
     </ListItem>
   ) : (
-    <Button
-      color='neutral'
-      variant='plain'
-      startDecorator={<AddIcon />}
-      onClick={handleAddFolder}
-      sx={{
-        // display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-        // minHeight: '3rem', // --Folder-ListItem-height
-        // match the forder elements
-        paddingInline: '1.2rem',
-        gap: '0.75rem',
-        // fontWeight: 400,
-      }}
-    >
-      New folder
-    </Button>
+    <ListItem>
+      <ListItemButton
+        onClick={handleAddFolder}
+        sx={{
+          // smaller than the folder icons (sty by parent)
+          '--Icon-fontSize': 'var(--joy-fontSize-xl)',
+          fontSize: 'sm',
+          fontWeight: 'lg',
+        }}
+      >
+        <ListItemDecorator>
+          <AddIcon sx={{ pl: '0.125rem' }} />
+        </ListItemDecorator>
+        New folder
+      </ListItemButton>
+    </ListItem>
   );
 }
