@@ -276,38 +276,39 @@ function ChatDrawerItem(props: {
 
         {/* buttons row */}
         {isActive && (
-          <Box sx={{ display: 'flex', gap: 1, minHeight: '2.25rem', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
             <ListItemDecorator />
 
             {/* Current Folder color, and change initiator */}
-            {(folder !== undefined) && <>
-              <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
-                {folder ? (
-                  <IconButton size='sm' onClick={handleFolderChangeBegin}>
-                    <FolderIcon style={{ color: folder.color || 'inherit' }} />
-                  </IconButton>
-                ) : (
-                  <FadeInButton size='sm' onClick={handleFolderChangeBegin}>
-                    <FolderOutlinedIcon />
-                  </FadeInButton>
-                )}
-              </Tooltip>
+            {!deleteArmed && <>
+              {(folder !== undefined) && <>
+                <Tooltip disableInteractive title={folder ? `Change Folder (${folder.title})` : 'Add to Folder'}>
+                  {folder ? (
+                    <IconButton size='sm' onClick={handleFolderChangeBegin}>
+                      <FolderIcon style={{ color: folder.color || 'inherit' }} />
+                    </IconButton>
+                  ) : (
+                    <FadeInButton size='sm' onClick={handleFolderChangeBegin}>
+                      <FolderOutlinedIcon />
+                    </FadeInButton>
+                  )}
+                </Tooltip>
 
-              {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
-            </>}
+                {/*<Divider orientation='vertical' sx={{ my: 1, opacity: 0.5 }} />*/}
+              </>}
 
-            <Tooltip disableInteractive title='Rename'>
-              <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditBegin}>
-                <EditIcon />
-              </FadeInButton>
-            </Tooltip>
-
-            {!isNew && <>
-              <Tooltip disableInteractive title='Auto-Title'>
-                <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditAuto}>
-                  <AutoFixHighIcon />
+              <Tooltip disableInteractive title='Rename'>
+                <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditBegin}>
+                  <EditIcon />
                 </FadeInButton>
               </Tooltip>
+
+              {!isNew && <>
+                <Tooltip disableInteractive title='Auto-Title'>
+                  <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditAuto}>
+                    <AutoFixHighIcon />
+                  </FadeInButton>
+                </Tooltip>
 
                 <Tooltip disableInteractive title='Export Chat'>
                   <FadeInButton size='sm' onClick={handleConversationExport}>
@@ -331,7 +332,7 @@ function ChatDrawerItem(props: {
             {!searchFrequency && <>
               {deleteArmed && (
                 <Tooltip disableInteractive title='Confirm Deletion'>
-                  <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1 }}>
+                  <FadeInButton key='btn-del' variant='solid' color='success' size='sm' onClick={handleConversationDelete} sx={{ opacity: 1, mr: 0.5 }}>
                     <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
                   </FadeInButton>
                 </Tooltip>
