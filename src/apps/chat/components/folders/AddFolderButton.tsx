@@ -50,15 +50,10 @@ export function AddFolderButton() {
     <ListItem>
       <ListItemButton
         onClick={handleAddFolder}
-        sx={{
-          // smaller than the folder icons (sty by parent)
-          '--Icon-fontSize': 'var(--joy-fontSize-xl)',
-          fontSize: 'sm',
-          fontWeight: 'lg',
-        }}
+        sx={{ fontSize: 'sm', fontWeight: 'lg' }}
       >
         <ListItemDecorator>
-          <AddIcon sx={{ pl: '0.125rem' }} />
+          <AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} />
         </ListItemDecorator>
         New folder
       </ListItemButton>
