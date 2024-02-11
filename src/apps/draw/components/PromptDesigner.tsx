@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
@@ -26,6 +27,7 @@ const promptButtonClass = 'PromptDesigner-button';
 
 
 export interface DesignerPrompt {
+  uuid: string,
   prompt: string,
   // tags: string[],
   // effects: string[],
@@ -40,7 +42,7 @@ export function PromptDesigner(props: {
   isMobile: boolean,
   queueLength: number,
   onDrawingStop: () => void,
-  onPromptEnqueue: (prompt: DesignerPrompt) => void,
+  onPromptEnqueue: (prompt: DesignerPrompt[]) => void,
   sx?: SxProps,
 }) {
 
@@ -70,9 +72,10 @@ export function PromptDesigner(props: {
 
   const handlePromptEnqueue = React.useCallback(() => {
     setNextPrompt('');
-    onPromptEnqueue({
+    onPromptEnqueue([{
+      uuid: uuidv4(),
       prompt: nonEmptyPrompt,
-    });
+    }]);
   }, [nonEmptyPrompt, onPromptEnqueue]);
 
 
