@@ -408,6 +408,7 @@ export function AppChat() {
 
   const drawerContent = React.useMemo(() =>
       <ChatDrawerMemo
+        isMobile={isMobile}
         activeConversationId={focusedConversationId}
         activeFolderId={activeFolderId}
         chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
@@ -421,7 +422,7 @@ export function AppChat() {
         onConversationsDeleteAll={handleConversationsDeleteAll}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isNoChat, setFocusedConversationId],
+    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isMobile, isNoChat, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>

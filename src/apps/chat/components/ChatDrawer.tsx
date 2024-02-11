@@ -15,7 +15,7 @@ import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
-import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
+import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
@@ -97,6 +97,7 @@ export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFold
 export const ChatDrawerMemo = React.memo(ChatDrawer);
 
 function ChatDrawer(props: {
+  isMobile: boolean,
   activeConversationId: DConversationId | null,
   activeFolderId: string | null,
   chatPanesConversationIds: DConversationId[],
@@ -266,27 +267,36 @@ function ChatDrawer(props: {
         sx={{ m: 2 }}
       />
 
-      <ListItem sx={{ '--ListItem-minHeight': '2.75rem' }}>
-        <ListItemButton disabled={props.disableNewButton && !isMultiPane} onClick={handleButtonNew} sx={PageDrawerTallItemSx}>
-          <ListItemDecorator><AddIcon /></ListItemDecorator>
-          <Box sx={{
-            // style
+      {/* New Chat Button */}
+      <ListItem sx={{ mx: '0.25rem', mb: 0.5 }}>
+        <ListItemButton
+          // variant='outlined'
+          variant={props.disableNewButton ? undefined : 'outlined'}
+          disabled={props.disableNewButton && !isMultiPane}
+          onClick={handleButtonNew}
+          sx={{
+            // ...PageDrawerTallItemSx,
+            px: 'calc(var(--ListItem-paddingX) - 0.25rem)',
+
+            // text size
             fontSize: 'sm',
             fontWeight: 'lg',
-            // content
-            flexGrow: 1,
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 1,
-          }}>
-            New chat
-            {/*<KeyStroke combo='Ctrl + Alt + N' sx={props.disableNewButton ? { opacity: 0.5 } : undefined} />*/}
-          </Box>
+
+            // style
+            borderRadius: 'md',
+            boxShadow: (props.disableNewButton || props.isMobile) ? 'none' : 'sm',
+            backgroundColor: 'background.popup',
+            transition: 'box-shadow 0.2s',
+          }}
+        >
+          <ListItemDecorator><AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} /></ListItemDecorator>
+          New chat
         </ListItemButton>
       </ListItem>
 
       {/*<ListDivider sx={{ mt: 0 }} />*/}
 
+      {/* List of Chat Titles (and actions) */}
       <Box sx={{ flex: 1, overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
         {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
         {/*  <Typography level='body-sm'>*/}
