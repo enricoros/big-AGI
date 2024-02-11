@@ -421,7 +421,7 @@ export function AppChat() {
         onConversationsDeleteAll={handleConversationsDeleteAll}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, focusedConversationId, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isNoChat, setFocusedConversationId],
+    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isNoChat, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
