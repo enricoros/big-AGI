@@ -66,7 +66,7 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
       .filter(message => !!message)
       .join(', ');
 
-    throw new Error(`Image generation request failed: ${errorMessages}`);
+    throw new Error(`OpenAI image generation: ${errorMessages}`);
   }
 
   // take successful results and return as string[]
