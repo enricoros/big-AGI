@@ -57,7 +57,7 @@ export function AppDraw() {
 
     {!mayWork && <DrawUnconfigured />}
 
-    {mayWork && <Gallery />}
+    {/*{mayWork && <Gallery />}*/}
 
     {mayWork && (
       <TextToImage

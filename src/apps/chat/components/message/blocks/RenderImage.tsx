@@ -98,7 +98,7 @@ export const RenderImage = (props: {
       {alt ? (
         <Tooltip
           variant='outlined' color='neutral'
-          // placement='top-start' // auto
+          placement='top'
           title={
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
