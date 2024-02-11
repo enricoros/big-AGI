@@ -50,7 +50,11 @@ export function AddFolderButton() {
     <ListItem>
       <ListItemButton
         onClick={handleAddFolder}
-        sx={{ fontSize: 'sm', fontWeight: 'lg' }}
+        sx={{
+          fontSize: 'sm', fontWeight: 'lg',
+          // uniformize with the 'new chat' button
+          color: 'neutral.outlinedColor',
+        }}
       >
         <ListItemDecorator>
           <AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} />
