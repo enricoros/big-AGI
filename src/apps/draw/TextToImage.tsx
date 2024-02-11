@@ -6,7 +6,7 @@ import { Box, Card, Skeleton } from '@mui/joy';
 
 import { ImageBlock } from '../chat/components/message/blocks/blocks';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
-import { heuristicMarkdownImageReferenceBlocks, RenderImage } from '../chat/components/message/blocks/RenderImage';
+import { heuristicMarkdownImageReferenceBlocks } from '../chat/components/message/blocks/RenderImage';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { InlineError } from '~/common/components/InlineError';
@@ -54,23 +54,36 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
     refetchOnMount: false,
     staleTime: Infinity,
   });
-console.log('imageBlocks', dp);
-  return (
-    <Box sx={{ ...props.sx, whiteSpace: 'break-spaces' }}>
 
-      {error && <InlineError error={error} />}
+  return <>
 
-      {Array.from({ length: dp._repeatCount }).map((_, index) => {
-        const imgUid = `gen-img-${index}`;
-        const imageBlock = imageBlocks?.[index] || null;
-        return imageBlock
-          ? <RenderImage key={imgUid} imageBlock={imageBlock} noTooltip />
-          : <Card key={imgUid}>
-            <Skeleton animation='wave' variant='rectangular' sx={{ minWidth: 128, width: '100%', aspectRatio: 1 }} />
-          </Card>;
-      })}
-    </Box>
-  );
+    {error && <InlineError error={error} />}
+
+    {Array.from({ length: dp._repeatCount }).map((_, index) => {
+      const imgUid = `gen-img-${index}`;
+      const imageBlock = imageBlocks?.[index] || null;
+      return imageBlock
+        // ? <RenderImage key={imgUid} imageBlock={imageBlock} noTooltip />
+        ? <Box sx={{
+
+
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
+          mx: 'auto', my: 'auto', // mt: (index > 0 || !props.isFirst) ? 1.5 : 0,
+          boxShadow: 'lg',
+          backgroundColor: 'neutral.solidBg',
+
+          '& picture': { display: 'flex' },
+          '& img': { maxWidth: '100%', maxHeight: '100%' },
+
+        }}>
+          <picture><img src={imageBlock.url} alt={imageBlock.alt} /></picture>
+        </Box>
+        : <Card key={imgUid} sx={{ mb: 'auto' }}>
+          <Skeleton animation='wave' variant='rectangular' sx={{ minWidth: 128, width: '100%', aspectRatio: 1 }} />
+        </Card>;
+    })}
+
+  </>;
 };
 
 
@@ -90,7 +103,7 @@ export function TextToImage(props: {
   }, []);
 
   const handlePromptEnqueue = React.useCallback((prompts: DesignerPrompt[]) => {
-    setPrompts((prevPrompts) => [...prevPrompts, ...prompts]);
+    setPrompts((prevPrompts) => [...prompts, ...prevPrompts]);
   }, []);
 
 
@@ -117,13 +130,15 @@ export function TextToImage(props: {
       p: { xs: 1, md: 2 },
     }}>
       <Box sx={{
-        my: 'auto',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        // my: 'auto',
+        // display: 'flex', flexDirection: 'column', alignItems: 'center',
         border: STILL_LAYOUTING ? '1px solid purple' : undefined,
         minHeight: '300px',
-        // display: 'grid',
-        // gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-        // gap: {xs: 1, md: 2},
+
+        // layout
+        display: 'grid',
+        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: { xs: 2, md: 2 },
       }}>
         {prompts.map((prompt, index) => {
           return (
