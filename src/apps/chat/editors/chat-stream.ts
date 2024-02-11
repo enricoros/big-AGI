@@ -113,8 +113,6 @@ async function streamAssistantMessage(
   } catch (error: any) {
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
-      // TODO: show an error to the UI?
-    } else {
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
       incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
     }
