@@ -66,7 +66,10 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 }
 
 
-export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, allowRunAgain: boolean, onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps }) => {
+export const RenderImage = (props: {
+  imageBlock: ImageBlock,
+  onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps,
+}) => {
   const { url, alt } = props.imageBlock;
   const imageUrls = url.split('\n');
 
@@ -95,6 +98,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
       {alt ? (
         <Tooltip
           variant='outlined' color='neutral'
+          // placement='top-start' // auto
           title={
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
@@ -108,7 +112,6 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
               </Typography>
             </Box>
           }
-          placement='top-start'
           sx={{
             maxWidth: { sm: '90vw', md: '70vw' },
             boxShadow: 'md',
@@ -122,7 +125,7 @@ export const RenderImage = (props: { imageBlock: ImageBlock, isFirst: boolean, a
 
       {/* Image Buttons */}
       <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
-        {props.allowRunAgain && !!props.onRunAgain && (
+        {!!props.onRunAgain && (
           <Tooltip title='Draw again' variant='solid'>
             <IconButton variant='solid' onClick={props.onRunAgain}>
               <ReplayIcon />
