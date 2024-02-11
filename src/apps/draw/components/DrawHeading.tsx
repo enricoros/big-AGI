@@ -11,12 +11,13 @@ export function DrawHeading(props: {
   section: number,
   setSection: (section: number) => void,
   showSections?: boolean,
+  onRemoveHeading?: () => void,
   sx?: SxProps,
 }) {
 
   return (
 
-    <Box sx={{
+    <Box onClick={props.onRemoveHeading} sx={{
       display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3,
       ...props.sx,
     }}>
