@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
-import { List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Sheet, Typography } from '@mui/joy';
+import { List, ListItem, ListItemButton, ListItemDecorator, Sheet } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 
+import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 
 import { AddFolderButton } from './AddFolderButton';
@@ -13,6 +14,7 @@ import { StrictModeDroppable } from './StrictModeDroppable';
 
 export function ChatFolderList(props: {
   folders: DFolder[];
+  contentScaling: ContentScaling;
   activeFolderId: string | null;
   onFolderSelect: (folderId: string | null) => void;
 }) {
@@ -47,8 +49,11 @@ export function ChatFolderList(props: {
           },
           // copied from the former PageDrawerList as this was contained
           '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+
+          // dynamic sizing
+          ...themeScalingMap[props.contentScaling].chatDrawerItemFolderSx,
           // '--ListItemDecorator-size': '2.75rem',
-          '--ListItem-minHeight': '2.75rem', // --Folder-ListItem-height
+          // '--ListItem-minHeight': '2.75rem',
 
           '--List-radius': '8px',
           '--List-gap': '1rem',
@@ -64,6 +69,7 @@ export function ChatFolderList(props: {
             '--joy-palette-neutral-plainHoverBg': 'rgba(255 255 255 / 0.1)',
             '--joy-palette-neutral-plainActiveBg': 'rgba(255 255 255 / 0.16)',
           },
+          boxShadow: 'sm',
         })}
       >
         <ListItem nested>
@@ -92,21 +98,12 @@ export function ChatFolderList(props: {
                         onFolderSelect(null);
                       }}
                       selected={!activeFolderId}
-                      sx={{
-                        border: 0,
-                        justifyContent: 'space-between',
-                        '&:hover .menu-icon': {
-                          visibility: 'visible', // Hide delete icon for default folder
-                        },
-                      }}
+                      sx={{ border: 0 }}
                     >
                       <ListItemDecorator>
                         <FolderIcon />
                       </ListItemDecorator>
-
-                      <ListItemContent>
-                        <Typography>All</Typography>
-                      </ListItemContent>
+                      All
                     </ListItemButton>
                   </ListItem>
 

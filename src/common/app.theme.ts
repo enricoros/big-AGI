@@ -158,6 +158,7 @@ interface ContentScalingOptions {
   chatMessagePadding: number;
   // ChatDrawer
   chatDrawerItemSx: { '--ListItem-minHeight': string, fontSize: string };
+  chatDrawerItemFolderSx: { '--ListItem-minHeight': string, fontSize: string };
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
@@ -166,7 +167,8 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockFontSize: 'xs',
     blockLineHeight: 1.666667,
     chatMessagePadding: 1.25,
-    chatDrawerItemSx: { '--ListItem-minHeight': '2rem', fontSize: 'sm' },
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },     // 40px
   },
   sm: {
     blockCodeFontSize: '0.75rem',
@@ -174,14 +176,19 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockLineHeight: 1.714286,
     chatMessagePadding: 1.5,
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },
   },
   md: {
     blockCodeFontSize: '0.875rem',
     blockFontSize: 'md',
     blockLineHeight: 1.75,
     chatMessagePadding: 2,
-    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },           // 40px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.75rem', fontSize: 'md' },    // 44px
   },
+  // lg: {
+  //   chatDrawerFoldersLineHeight: '3rem',
+  // },
 };
 
 

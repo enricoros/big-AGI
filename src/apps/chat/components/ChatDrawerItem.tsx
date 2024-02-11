@@ -194,8 +194,8 @@ function ChatDrawerItem(props: {
 
     {/* Title */}
     {!isEditingTitle ? (
-      <Typography
-        // level={isActive ? 'title-md' : 'body-md'}
+      // using Box to not reset the parent font scaling
+      <Box
         onDoubleClick={handleTitleEditBegin}
         sx={{
           color: isActive ? 'text.primary' : 'text.secondary',
@@ -204,7 +204,7 @@ function ChatDrawerItem(props: {
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
         {title.trim() ? title : CHAT_NOVEL_TITLE}{assistantTyping && '...'}
-      </Typography>
+      </Box>
     ) : (
       <InlineTextarea
         invertedColors
