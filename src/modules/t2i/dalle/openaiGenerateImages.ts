@@ -5,7 +5,6 @@ import { findAccessForSourceOrThrow } from '../../llms/vendors/vendors.registry'
 
 import { useDalleStore } from './store-module-dalle';
 
-
 /**
  * Client function to call the OpenAI image generation API.
  */
@@ -54,13 +53,16 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
   }
 
   // run all image generation requests
-  const imageRefsBatchesResults: PromiseSettledResult<string[]>[] = await Promise.allSettled(imagePromises);
+  const imageRefsBatchesResults = await Promise.allSettled(imagePromises);
 
   // throw if ALL promises were rejected
   const allRejected = imageRefsBatchesResults.every(result => result.status === 'rejected');
   if (allRejected) {
     const errorMessages = imageRefsBatchesResults
-      .map(result => (result as PromiseRejectedResult).reason || '')
+      .map(result => {
+        const reason = (result as PromiseRejectedResult).reason as any; // TRPCClientError<TRPCErrorShape>;
+        return reason?.shape?.message || reason?.message || '';
+      })
       .filter(message => !!message)
       .join(', ');
 
