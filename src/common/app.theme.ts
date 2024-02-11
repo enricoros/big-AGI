@@ -1,4 +1,5 @@
 import createCache from '@emotion/cache';
+
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 import { keyframes } from '@emotion/react';
@@ -155,6 +156,8 @@ interface ContentScalingOptions {
   blockLineHeight: string | number;
   // ChatMessage
   chatMessagePadding: number;
+  // ChatDrawer
+  chatDrawerItemSx: { '--ListItem-minHeight': string, fontSize: string };
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
@@ -163,18 +166,21 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockFontSize: 'xs',
     blockLineHeight: 1.666667,
     chatMessagePadding: 1.25,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2rem', fontSize: 'sm' },
   },
   sm: {
     blockCodeFontSize: '0.75rem',
     blockFontSize: 'sm',
     blockLineHeight: 1.714286,
     chatMessagePadding: 1.5,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },
   },
   md: {
     blockCodeFontSize: '0.875rem',
     blockFontSize: 'md',
     blockLineHeight: 1.75,
     chatMessagePadding: 2,
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },
   },
 };
 
