@@ -17,6 +17,7 @@ export interface AppDrawIntent {
 export function AppDraw() {
 
   // state
+  const [showHeading, setShowHeading] = React.useState<boolean>(true);
   const [_drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
   const [section, setSection] = React.useState<number>(0);
 
@@ -44,15 +45,16 @@ export function AppDraw() {
 
     {/* The container is a 100dvh, flex column with App bg (see `pageCoreSx`) */}
 
-    <DrawHeading
+    {showHeading && <DrawHeading
       section={section}
       setSection={setSection}
       showSections
+      onRemoveHeading={() => setShowHeading(false)}
       sx={{
         px: { xs: 1, md: 2 },
         py: { xs: 1, md: 6 },
       }}
-    />
+    />}
 
     {!mayWork && <DrawUnconfigured />}
 
