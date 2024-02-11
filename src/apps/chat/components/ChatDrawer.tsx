@@ -244,6 +244,7 @@ function ChatDrawer(props: {
     {enableFolders && (
       <ChatFolderList
         folders={allFolders}
+        contentScaling={contentScaling}
         activeFolderId={props.activeFolderId}
         onFolderSelect={props.setActiveFolderId}
       />

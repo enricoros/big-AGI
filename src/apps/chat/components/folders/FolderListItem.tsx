@@ -182,7 +182,7 @@ export function FolderListItem(props: {
               userSelect: 'none',
             }}
           >
-            <Typography>{folder.title}</Typography>
+            {folder.title}
           </ListItemContent>
         )}
 
@@ -193,6 +193,7 @@ export function FolderListItem(props: {
           onClick={handleMenuOpen}
           sx={{
             visibility: 'hidden',
+            my: '-0.25rem' /* absorb the button padding */
           }}
         >
           <MoreVertIcon />
