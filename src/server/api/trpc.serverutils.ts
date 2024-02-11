@@ -39,7 +39,10 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       });
     }
 
-    // Check for non-200
+    /* Check for non-200s
+     * These are the MOST FREQUENT errors, application level response. Such as:
+     * - 400 when requesting an invalid size to Dall-E3, etc..
+     */
     if (!response.ok) {
       let payload: any | null = await response.json().catch(() => null);
       if (payload === null)
@@ -47,7 +50,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`${moduleName} error (upstream):`, response.status, response.statusText, payload);
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[Issue] ${moduleName}: ${response.statusText} (${response.status})`
+        message: `[Issue] ${moduleName}: ${response.statusText}` // (${response.status})`
           + (payload ? ` - ${safeErrorString(payload)}` : '')
           + (response.status === 403 ? ` - is ${url} accessible by the server?` : '')
           + (response.status === 502 ? ` - is ${url} down?` : ''),
@@ -61,7 +64,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`${moduleName} error (parse):`, error);
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: `[Issue] ${moduleName}: (parsing) ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
+        message: `[Issuec] ${moduleName}: (parsing) ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
       });
     }
   };
