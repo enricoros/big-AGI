@@ -413,6 +413,7 @@ export function AppChat() {
         chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
         disableNewButton={isFocusedChatEmpty && !isNoChat}
         onConversationActivate={setFocusedConversationId}
+        onConversationBranch={handleConversationBranch}
         onConversationDelete={handleConversationDelete}
         onConversationExportDialog={handleConversationExport}
         onConversationImportDialog={handleConversationImportDialog}
