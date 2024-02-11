@@ -17,7 +17,7 @@ import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList, PageDrawerTallItemSx } from '~/common/layout/optima/components/PageDrawerList';
 import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
-import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -121,7 +121,10 @@ function ChatDrawer(props: {
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const chatNavItems = useChatNavigationItemsData(activeFolder, allFolders, props.activeConversationId, props.chatPanesConversationIds);
-  const showSymbols = useUIPreferencesStore(state => state.zenMode !== 'cleaner');
+  const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
+    contentScaling: state.contentScaling,
+    showSymbols: state.zenMode !== 'cleaner',
+  }), shallow);
 
   // derived state
   const selectConversationsCount = chatNavItems.length;
@@ -283,7 +286,7 @@ function ChatDrawer(props: {
 
       {/*<ListDivider sx={{ mt: 0 }} />*/}
 
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
         {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
         {/*  <Typography level='body-sm'>*/}
         {/*    Conversations*/}
