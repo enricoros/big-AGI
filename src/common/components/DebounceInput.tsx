@@ -1,5 +1,7 @@
 import * as React from 'react';
-import Input, { InputProps } from '@mui/joy/Input';
+
+import type { InputProps } from '@mui/joy/Input';
+import { IconButton, Input } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -55,17 +57,10 @@ const DebounceInput: React.FC<DebounceInputProps> = ({
       aria-label={rest['aria-label'] || 'Search'}
       startDecorator={<SearchIcon />}
       endDecorator={
-        inputValue && (
-          <ClearIcon
-            onClick={handleClear}
-            tabIndex={0}
-            onKeyPress={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                handleClear();
-              }
-            }}
-            aria-label="Clear search"
-          />
+        !inputValue ? rest.endDecorator : (
+          <IconButton aria-label='Clear search' onClick={handleClear}>
+            <ClearIcon  sx={{ fontSize: 'xl' }} />
+          </IconButton>
         )
       }
     />

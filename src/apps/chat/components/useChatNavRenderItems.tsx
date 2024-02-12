@@ -11,6 +11,8 @@ const AUTO_UNDERLINE_COUNT = 40;
 const SEARCH_MIN_CHARS = 3;
 
 
+export type ChatNavGrouping = false | 'date' | 'persona';
+
 export interface ChatNavigationGroupData {
   type: 'nav-item-group',
   title: string,
@@ -71,7 +73,7 @@ export function useChatNavRenderItems(
   filterByQuery: string,
   activeFolder: DFolder | null,
   allFolders: DFolder[],
-  grouping: 'none' | 'date' | 'persona',
+  grouping: ChatNavGrouping,
 ): {
   renderNavItems: ChatRenderItemData[],
   filteredChatIDs: DConversationId[],
@@ -131,7 +133,7 @@ export function useChatNavRenderItems(
       let renderNavItems: ChatRenderItemData[] = chatNavItems;
 
       // [grouping] group by date or persona
-      if (!isSearching && grouping !== 'none') {
+      if (!isSearching && grouping) {
 
         // [grouping/date]: sort by update time
         const midnightTime = getNextMidnightTime();

@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip, Typography } from '@mui/joy';
+import { Box, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import type { DConversationId } from '~/common/state/store-chats';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -23,8 +25,8 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
+import { ChatNavGrouping, useChatNavRenderItems } from './useChatNavRenderItems';
 import { ClearFolderText } from './folders/useFolderDropdown';
-import { useChatNavRenderItems } from './useChatNavRenderItems';
 
 
 // this is here to make shallow comparisons work on the next hook
@@ -69,6 +71,7 @@ function ChatDrawer(props: {
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
 
   // local state
+  const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
@@ -76,7 +79,7 @@ function ChatDrawer(props: {
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filterefChatsBarBasis, renderNavItems } = useChatNavRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, 'none',
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, navGrouping,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
     contentScaling: state.contentScaling,
@@ -131,6 +134,28 @@ function ChatDrawer(props: {
   }, []);
 
 
+  // memoize the group dropdown
+  const groupingComponent = React.useMemo(() => (
+    <Dropdown>
+      <MenuButton
+        aria-label='Group by'
+        slots={{ root: IconButton }}
+        slotProps={{ root: { size: 'sm' } }}
+      >
+        <MoreVertIcon sx={{ fontSize: 'xl' }} />
+      </MenuButton>
+      <Menu placement='bottom-start'>
+        {(['date', 'persona'] as const).map(_gName => (
+          <MenuItem key={'group-' + _gName} selected={navGrouping === _gName} onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}>
+            <ListItemDecorator>{navGrouping === _gName && <CheckIcon />}</ListItemDecorator>
+            Group by {_gName}
+          </MenuItem>
+        ))}
+      </Menu>
+    </Dropdown>
+  ), [navGrouping]);
+
+
   return <>
 
     {/* Drawer Header */}
@@ -175,6 +200,7 @@ function ChatDrawer(props: {
         debounceTimeout={300}
         placeholder='Search...'
         aria-label='Search'
+        endDecorator={groupingComponent}
         sx={{ m: 2 }}
       />
 
