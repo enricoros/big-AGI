@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Avatar, Badge, Box, Button, Chip, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -30,7 +30,7 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
       icon = <vendor.Icon />;
   }
   return (greenMark && icon)
-    ? <Badge color='success' size='sm' badgeContent=''>{icon}</Badge>
+    ? <Badge size='sm' badgeContent='' slotProps={{ badge: { sx: { backgroundColor: 'lime', boxShadow: 'none', border: '1px solid gray', p: 0 } } }}>{icon}</Badge>
     : icon;
 }
 
@@ -81,6 +81,7 @@ export function ModelsSourceSelector(props: {
   // vendor list items
   const vendorItems = React.useMemo(() => findAllVendors()
     .filter(v => !!v.instanceLimit)
+    .sort((a, b) => a.name.localeCompare(b.name))
     .map(vendor => {
         const sourceInstanceCount = modelSources.filter(source => source.vId === vendor.id).length;
         const enabled = vendor.instanceLimit > sourceInstanceCount;
@@ -108,11 +109,11 @@ export function ModelsSourceSelector(props: {
               )}
 
               {/* Local chip */}
-              {vendor.location === 'local' && (
-                <Chip variant='outlined' size='sm'>
-                  local
-                </Chip>
-              )}
+              {/*{vendor.location === 'local' && (*/}
+              {/*  <Chip variant='solid' size='sm'>*/}
+              {/*    local*/}
+              {/*  </Chip>*/}
+              {/*)}*/}
             </MenuItem>
           ),
         };
@@ -121,13 +122,22 @@ export function ModelsSourceSelector(props: {
 
 
   // source items
-  const sourceItems = React.useMemo(() => modelSources.map(source => {
-    return {
-      source,
-      icon: vendorIcon(findVendorById(source.vId), false),
-      component: <Option key={source.id} value={source.id}>{source.label}</Option>,
-    };
-  }), [modelSources]);
+  const sourceItems = React.useMemo(() => modelSources
+      .map(source => {
+        const icon = vendorIcon(findVendorById(source.vId), false);
+        return {
+          source,
+          icon,
+          component: (
+            <Option key={source.id} value={source.id}>
+              {/*<ListItemDecorator>{icon}</ListItemDecorator>*/}
+              {source.label}
+            </Option>
+          ),
+        };
+      })
+      .sort((a, b) => a.source.label.localeCompare(b.source.label))
+    , [modelSources]);
 
   const selectedSourceItem = sourceItems.find(item => item.source.id === props.selectedSourceId);
   const noSources = !sourceItems.length;
@@ -176,7 +186,7 @@ export function ModelsSourceSelector(props: {
       <CloseableMenu
         placement='bottom-start' zIndex={themeZIndexOverMobileDrawer}
         open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
-        sx={{ minWidth: 280 }}
+        sx={{ minWidth: 220 }}
       >
         {vendorItems.map(item => item.component)}
       </CloseableMenu>
