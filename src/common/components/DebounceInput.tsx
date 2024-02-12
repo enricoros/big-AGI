@@ -72,4 +72,4 @@ const DebounceInput: React.FC<DebounceInputProps> = ({
   );
 };
 
-export default React.memo(DebounceInput);
+export const DebounceInputMemo = React.memo(DebounceInput);

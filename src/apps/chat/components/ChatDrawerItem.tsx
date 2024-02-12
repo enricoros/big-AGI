@@ -28,7 +28,7 @@ import { CHAT_NOVEL_TITLE } from '../AppChat';
 
 
 export const FadeInButton = styled(IconButton)({
-  opacity: 0.667,
+  opacity: 0.5,
   transition: 'opacity 0.2s',
   '&:hover': { opacity: 1 },
 });
@@ -47,16 +47,18 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
 );
 
 export interface ChatNavigationItemData {
+  type: 'nav-item-chat-data',
   conversationId: DConversationId;
   isActive: boolean;
   isAlsoOpen: string | false;
   isEmpty: boolean;
   title: string;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
+  updatedAt: number;
   messageCount: number;
   assistantTyping: boolean;
   systemPurposeId: SystemPurposeId;
-  searchFrequency?: number;
+  searchFrequency: number;
 }
 
 export interface FolderChangeRequest {
@@ -219,7 +221,7 @@ function ChatDrawerItem(props: {
     )}
 
     {/* Display search frequency if it exists and is greater than 0 */}
-    {searchFrequency && searchFrequency > 0 && (
+    {searchFrequency > 0 && (
       <Box sx={{ ml: 1 }}>
         <Typography level='body-sm'>
           {searchFrequency}
