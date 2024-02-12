@@ -58,8 +58,6 @@ export type ChatModeId =
   | 'generate-react';
 
 
-const SPECIAL_ID_WIPE_ALL: DConversationId = 'wipe-chats';
-
 export function AppChat() {
 
   // state
@@ -68,7 +66,7 @@ export function AppChat() {
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
-  const [deleteConversationId, setDeleteConversationId] = React.useState<DConversationId | null>(null);
+  const [deleteConversationIds, setDeleteConversationIds] = React.useState<DConversationId[] | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitleChange = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -103,23 +101,20 @@ export function AppChat() {
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
     newConversationId,
-    conversationsLength,
     _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation,
     branchConversation,
-    deleteConversation,
-    wipeAllConversations,
+    deleteConversations,
     setMessages,
   } = useConversation(focusedConversationId);
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const { activeFolderId, activeFolderConversationsCount } = useFolderStore(({ enableFolders, folders }) => {
+  const { activeFolderId } = useFolderStore(({ enableFolders, folders }) => {
     const activeFolderId = enableFolders ? _activeFolderId : null;
     const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
     return {
       activeFolderId: activeFolder?.id ?? null,
-      activeFolderConversationsCount: activeFolder ? activeFolder.conversationIds.length : conversationsLength,
     };
   });
 
@@ -354,24 +349,21 @@ export function AppChat() {
 
   const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
 
-  const handleConversationsDeleteAll = React.useCallback(() => setDeleteConversationId(SPECIAL_ID_WIPE_ALL), []);
-
-  const handleConversationDelete = React.useCallback((conversationId: DConversationId, bypassConfirmation: boolean) => {
-    // show dialog if not bypassed
+  const handleDeleteConversations = React.useCallback((conversationIds: DConversationId[], bypassConfirmation: boolean) => {
     if (!bypassConfirmation)
-      return setDeleteConversationId(conversationId);
+      return setDeleteConversationIds(conversationIds);
 
-    const nextConversationId = conversationId === SPECIAL_ID_WIPE_ALL
-      ? wipeAllConversations(activeFolderId /* restricted to this folder (or null for all) */, /*focusedSystemPurposeId ??*/ undefined)
-      : deleteConversation(conversationId, /*focusedSystemPurposeId ??*/ undefined);
+    // perform deletion
+    const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
+
     setFocusedConversationId(nextConversationId);
 
-    setDeleteConversationId(null);
-  }, [activeFolderId, deleteConversation, setFocusedConversationId, wipeAllConversations]);
+    setDeleteConversationIds(null);
+  }, [deleteConversations, setFocusedConversationId]);
 
-  const handleConfirmedDeleteConversation = React.useCallback(() => {
-    deleteConversationId && handleConversationDelete(deleteConversationId, true);
-  }, [deleteConversationId, handleConversationDelete]);
+  const handleConfirmedDeleteConversations = React.useCallback(() => {
+    !!deleteConversationIds?.length && handleDeleteConversations(deleteConversationIds, true);
+  }, [deleteConversationIds, handleDeleteConversations]);
 
   // Shortcuts
 
@@ -387,12 +379,12 @@ export function AppChat() {
     ['n', true, false, true, handleConversationNew],
     ['b', true, false, true, () => isFocusedChatEmpty || (focusedConversationId && handleConversationBranch(focusedConversationId, null))],
     ['x', true, false, true, () => isFocusedChatEmpty || (focusedConversationId && handleConversationClear(focusedConversationId))],
-    ['d', true, false, true, () => focusedConversationId && handleConversationDelete(focusedConversationId, false)],
+    ['d', true, false, true, () => focusedConversationId && handleDeleteConversations([focusedConversationId], false)],
     ['+', true, true, false, useUIPreferencesStore.getState().increaseContentScaling],
     ['-', true, true, false, useUIPreferencesStore.getState().decreaseContentScaling],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistory('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistory('forward')],
-  ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationDelete, handleConversationNew, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
+  ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationNew, handleDeleteConversations, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
   // Pluggable ApplicationBar components
@@ -415,14 +407,13 @@ export function AppChat() {
         disableNewButton={isFocusedChatEmpty && !isNoChat}
         onConversationActivate={setFocusedConversationId}
         onConversationBranch={handleConversationBranch}
-        onConversationDelete={handleConversationDelete}
-        onConversationExportDialog={handleConversationExport}
-        onConversationImportDialog={handleConversationImportDialog}
         onConversationNew={handleConversationNew}
-        onConversationsDeleteAll={handleConversationsDeleteAll}
+        onConversationsDelete={handleDeleteConversations}
+        onConversationsExportDialog={handleConversationExport}
+        onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationDelete, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleConversationsDeleteAll, isFocusedChatEmpty, isMobile, isNoChat, setFocusedConversationId],
+    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleDeleteConversations, isFocusedChatEmpty, isMobile, isNoChat, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
@@ -588,23 +579,20 @@ export function AppChat() {
     {/* [confirmation] Reset Conversation */}
     {!!clearConversationId && (
       <ConfirmationModal
-        open
-        onClose={() => setClearConversationId(null)}
-        onPositive={handleConfirmedClearConversation}
+        open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
         confirmationText='Are you sure you want to discard all messages?'
         positiveActionText='Clear conversation'
       />
     )}
 
     {/* [confirmation] Delete All */}
-    {!!deleteConversationId && <ConfirmationModal
-      open onClose={() => setDeleteConversationId(null)} onPositive={handleConfirmedDeleteConversation}
-      confirmationText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Are you absolutely sure you want to delete ${activeFolderId ? 'ALL conversations in this folder' : 'ALL conversations'}? This action cannot be undone.`
-        : 'Are you sure you want to delete this conversation?'}
-      positiveActionText={deleteConversationId === SPECIAL_ID_WIPE_ALL
-        ? `Yes, delete all ${activeFolderConversationsCount} conversations`
-        : 'Delete conversation'}
-    />}
+    {!!deleteConversationIds?.length && (
+      <ConfirmationModal
+        open onClose={() => setDeleteConversationIds(null)} onPositive={handleConfirmedDeleteConversations}
+        confirmationText={`Are you absolutely sure you want to delete ${deleteConversationIds.length === 1 ? 'this conversation' : 'these conversations'}? This action cannot be undone.`}
+        positiveActionText={deleteConversationIds.length === 1 ? 'Delete conversation' : `Yes, delete all ${deleteConversationIds.length} conversations`}
+      />
+    )}
+
   </>;
 }
