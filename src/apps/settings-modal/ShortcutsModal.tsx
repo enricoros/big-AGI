@@ -4,6 +4,7 @@ import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 const shortcutsMd = platformAwareKeystrokes(`
@@ -35,12 +36,18 @@ const shortcutsMd = platformAwareKeystrokes(`
 
 
 export function ShortcutsModal(props: { onClose: () => void }) {
+
+  // external state
+  const isMobile
+    = useIsMobile();
+
   return (
     <GoodModal open title='Desktop Shortcuts' onClose={props.onClose}>
       <BlocksRenderer
         text={shortcutsMd}
         fromRole='assistant'
         contentScaling='sm'
+        isMobile={isMobile}
         renderTextAsMarkdown
       />
     </GoodModal>
