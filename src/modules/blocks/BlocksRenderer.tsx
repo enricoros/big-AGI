@@ -52,7 +52,7 @@ export function BlocksRenderer(props: {
 
   errorMessage?: React.ReactNode;
   isBottom?: boolean;
-  isMobile?: boolean;
+  isMobile: boolean;
   showDate?: number;
   wasUserEdited?: boolean;
 
