@@ -144,7 +144,7 @@ function ChatDrawer(props: {
       >
         <MoreVertIcon sx={{ fontSize: 'xl' }} />
       </MenuButton>
-      <Menu placement='bottom-start'>
+      <Menu placement='bottom-start' sx={{ zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
         {(['date', 'persona'] as const).map(_gName => (
           <MenuItem key={'group-' + _gName} selected={navGrouping === _gName} onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}>
             <ListItemDecorator>{navGrouping === _gName && <CheckIcon />}</ListItemDecorator>
