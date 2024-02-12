@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -9,21 +9,22 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 
-import DebounceInput from '~/common/components/DebounceInput';
+import type { DConversationId } from '~/common/state/store-chats';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DebounceInputMemo } from '~/common/components/DebounceInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
-import { conversationTitle, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatDrawerItemMemo, ChatNavigationItemData, FolderChangeRequest } from './ChatDrawerItem';
+import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ClearFolderText } from './folders/useFolderDropdown';
+import { useChatNavRenderItems } from './useChatNavRenderItems';
 
 
 // this is here to make shallow comparisons work on the next hook
@@ -48,52 +49,6 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
 }, shallow);
 
 
-/*
- * Returns a string with the pane indices where the conversation is also open, or false if it's not
- */
-function findOpenInViewNumbers(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
-  if (chatPanesConversationIds.length <= 1) return false;
-  return chatPanesConversationIds.reduce((acc: string[], id, idx) => {
-    if (id === ourId)
-      acc.push((idx + 1).toString());
-    return acc;
-  }, []).join(', ') || false;
-}
-
-
-/*
- * Optimization: return a reduced version of the DConversation object for 'Drawer Items' purposes,
- * to avoid unnecessary re-renders on each new character typed by the assistant
- */
-export const useChatNavigationItemsData = (activeFolder: DFolder | null, allFolders: DFolder[], activeConversationId: DConversationId | null, chatPanesConversationIds: DConversationId[]): ChatNavigationItemData[] =>
-  useChatStore(({ conversations }) => {
-
-    const activeConversations = activeFolder
-      ? conversations.filter(_c => activeFolder.conversationIds.includes(_c.id))
-      : conversations;
-
-    return activeConversations.map((_c): ChatNavigationItemData => ({
-      conversationId: _c.id,
-      isActive: _c.id === activeConversationId,
-      isAlsoOpen: findOpenInViewNumbers(chatPanesConversationIds, _c.id),
-      isEmpty: !_c.messages.length && !_c.userTitle,
-      title: conversationTitle(_c),
-      folder: !allFolders.length
-        ? undefined                             // don't show folder select if folders are disabled
-        : _c.id === activeConversationId        // only show the folder for active conversation(s)
-          ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
-          : null,
-      messageCount: _c.messages.length,
-      assistantTyping: !!_c.abortController,
-      systemPurposeId: _c.systemPurposeId,
-    }));
-
-  }, (a, b) => {
-    // custom equality function to avoid unnecessary re-renders
-    return a.length === b.length && a.every((_a, i) => shallow(_a, b[i]));
-  });
-
-
 export const ChatDrawerMemo = React.memo(ChatDrawer);
 
 function ChatDrawer(props: {
@@ -104,15 +59,14 @@ function ChatDrawer(props: {
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
-  onConversationDelete: (conversationId: DConversationId, bypassConfirmation: boolean) => void,
-  onConversationExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
-  onConversationImportDialog: () => void,
   onConversationNew: (forceNoRecycle: boolean) => void,
-  onConversationsDeleteAll: () => void,
+  onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
+  onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
+  onConversationsImportDialog: () => void,
   setActiveFolderId: (folderId: string | null) => void,
 }) {
 
-  const { onConversationActivate, onConversationBranch, onConversationDelete, onConversationExportDialog, onConversationNew } = props;
+  const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
 
   // local state
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
@@ -121,24 +75,23 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
-  const chatNavItems = useChatNavigationItemsData(activeFolder, allFolders, props.activeConversationId, props.chatPanesConversationIds);
+  const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filterefChatsBarBasis, renderNavItems } = useChatNavRenderItems(
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, 'none',
+  );
   const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
     contentScaling: state.contentScaling,
     showSymbols: state.zenMode !== 'cleaner',
   }), shallow);
 
-  // derived state
-  const selectConversationsCount = chatNavItems.length;
-  const nonEmptyChats = selectConversationsCount > 1 || (selectConversationsCount === 1 && !chatNavItems[0].isEmpty);
-  const softMaxReached = selectConversationsCount >= 40 && showSymbols;
 
+  // New/Activate/Delete Conversation
 
   const isMultiPane = props.chatPanesConversationIds.length >= 2;
+
   const handleButtonNew = React.useCallback(() => {
     onConversationNew(isMultiPane);
     closeDrawerOnMobile();
   }, [closeDrawerOnMobile, isMultiPane, onConversationNew]);
-
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
@@ -146,10 +99,17 @@ function ChatDrawer(props: {
       closeDrawerOnMobile();
   }, [closeDrawerOnMobile, onConversationActivate]);
 
+  const handleConversationsDeleteFiltered = React.useCallback(() => {
+    !!filteredChatIDs?.length && onConversationsDelete(filteredChatIDs, false);
+  }, [filteredChatIDs, onConversationsDelete]);
 
-  const handleConversationDelete = React.useCallback((conversationId: DConversationId) => {
-    conversationId && onConversationDelete(conversationId, true);
-  }, [onConversationDelete]);
+  const handleConversationDeleteNoConfirmation = React.useCallback((conversationId: DConversationId) => {
+    conversationId && onConversationsDelete([conversationId], true);
+  }, [onConversationsDelete]);
+
+  const handleConversationsExport = React.useCallback(() => {
+    props.activeConversationId && onConversationsExportDialog(props.activeConversationId, true);
+  }, [onConversationsExportDialog, props.activeConversationId]);
 
 
   // Folder change request
@@ -170,55 +130,6 @@ function ChatDrawer(props: {
     setFolderChangeRequest(null);
   }, []);
 
-
-  // Filter chatNavItems based on the search query and rank them by search frequency
-  const filteredChatNavItems = React.useMemo(() => {
-    if (!debouncedSearchQuery) return chatNavItems;
-    return chatNavItems
-      .map(item => {
-        // Get the conversation by ID
-        const conversation = useChatStore.getState().conversations.find(c => c.id === item.conversationId);
-        // Calculate the frequency of the search term in the title and messages
-        const titleFrequency = (item.title.toLowerCase().match(new RegExp(debouncedSearchQuery.toLowerCase(), 'g')) || []).length;
-        const messageFrequency = conversation?.messages.reduce((count, message) => {
-          return count + (message.text.toLowerCase().match(new RegExp(debouncedSearchQuery.toLowerCase(), 'g')) || []).length;
-        }, 0) || 0;
-        // Return the item with the searchFrequency property
-        return {
-          ...item,
-          searchFrequency: titleFrequency + messageFrequency,
-        };
-      })
-      // Exclude items with a searchFrequency of 0
-      .filter(item => item.searchFrequency > 0)
-      // Sort the items by searchFrequency in descending order
-      .sort((a, b) => b.searchFrequency! - a.searchFrequency!);
-  }, [chatNavItems, debouncedSearchQuery]);
-
-
-  // basis for the underline bar
-  const bottomBarBasis = filteredChatNavItems.reduce((longest, _c) => Math.max(longest, _c.searchFrequency ?? _c.messageCount), 1);
-
-
-  // grouping
-  /*let sortedIds = conversationIDs;
-  if (grouping === 'persona') {
-    const conversations = useChatStore.getState().conversations;
-
-    // group conversations by persona
-    const groupedConversations: { [personaId: string]: string[] } = {};
-    conversations.forEach(conversation => {
-      const persona = conversation.systemPurposeId;
-      if (persona) {
-        if (!groupedConversations[persona])
-          groupedConversations[persona] = [];
-        groupedConversations[persona].push(conversation.id);
-      }
-    });
-
-    // flatten grouped conversations
-    sortedIds = Object.values(groupedConversations).flat();
-  }*/
 
   return <>
 
@@ -258,7 +169,7 @@ function ChatDrawer(props: {
       {enableFolders && <ListDivider sx={{ mb: 0 }} />}
 
       {/* Search Input Field */}
-      <DebounceInput
+      <DebounceInputMemo
         minChars={2}
         onDebounce={setDebouncedSearchQuery}
         debounceTimeout={300}
@@ -312,24 +223,30 @@ function ChatDrawer(props: {
         {/*  </ToggleButtonGroup>*/}
         {/*</ListItem>*/}
 
-        {filteredChatNavItems.map(item =>
-          <ChatDrawerItemMemo
-            key={'nav-' + item.conversationId}
-            item={item}
-            showSymbols={showSymbols}
-            bottomBarBasis={(softMaxReached || debouncedSearchQuery) ? bottomBarBasis : 0}
-            onConversationActivate={handleConversationActivate}
-            onConversationBranch={onConversationBranch}
-            onConversationDelete={handleConversationDelete}
-            onConversationExport={onConversationExportDialog}
-            onConversationFolderChange={handleConversationFolderChange}
-          />)}
+        {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
+            <ChatDrawerItemMemo
+              key={'nav-chat-' + item.conversationId}
+              item={item}
+              showSymbols={showSymbols}
+              bottomBarBasis={showSymbols ? filterefChatsBarBasis : 0}
+              onConversationActivate={handleConversationActivate}
+              onConversationBranch={onConversationBranch}
+              onConversationDelete={handleConversationDeleteNoConfirmation}
+              onConversationExport={onConversationsExportDialog}
+              onConversationFolderChange={handleConversationFolderChange}
+            />
+          ) : item.type === 'nav-item-group' ? (
+            <Typography key={'nav-divider-' + idx} level='body-xs' sx={{ textAlign: 'center', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
+              {item.title}
+            </Typography>
+          ) : null,
+        )}
       </Box>
 
       <ListDivider sx={{ my: 0 }} />
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <ListItemButton onClick={props.onConversationImportDialog} sx={{ flex: 1 }}>
+        <ListItemButton onClick={props.onConversationsImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadOutlinedIcon />
           </ListItemDecorator>
@@ -337,7 +254,7 @@ function ChatDrawer(props: {
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        <ListItemButton disabled={!nonEmptyChats} onClick={() => props.onConversationExportDialog(props.activeConversationId, true)} sx={{ flex: 1 }}>
+        <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsExport} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileDownloadOutlinedIcon />
           </ListItemDecorator>
@@ -345,11 +262,11 @@ function ChatDrawer(props: {
         </ListItemButton>
       </Box>
 
-      <ListItemButton disabled={!nonEmptyChats} onClick={props.onConversationsDeleteAll}>
+      <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsDeleteFiltered}>
         <ListItemDecorator>
           <DeleteOutlineIcon />
         </ListItemDecorator>
-        Delete {selectConversationsCount >= 2 ? `all ${selectConversationsCount} chats` : 'chat'}
+        Delete {filteredChatsCount >= 2 ? `all ${filteredChatsCount} chats` : 'chat'}
       </ListItemButton>
 
     </PageDrawerList>
