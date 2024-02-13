@@ -78,7 +78,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
         <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)}>
-          LocalAI Admin
+          Gallery Admin
         </Button>
       }
     />
