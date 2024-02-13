@@ -41,6 +41,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
     <ExpanderAccordion
       title={<Typography level='title-sm' sx={{ mr: 'auto' }}>Video Tutorial</Typography>}
       icon={<YouTubeIcon sx={{ color: '#f00' }} />}
+      expandedVariant='solid'
       startCollapsed
     >
       <VideoPlayer width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
