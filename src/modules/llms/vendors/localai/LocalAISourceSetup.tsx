@@ -2,7 +2,8 @@ import * as React from 'react';
 import { z } from 'zod';
 
 import { Typography } from '@mui/joy';
-
+import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
+import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -35,9 +36,29 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
+    {/* from: https://raw.githubusercontent.com/mudler/LocalAI/master/docs/content/docs/overview.md */}
+    <ExpanderAccordion
+      title={<Typography level='title-sm' sx={{ mr: 'auto' }}>LocalAI integration</Typography>}
+      icon={<CheckBoxOutlinedIcon />}
+      expandedVariant='soft'
+      startCollapsed
+    >
+      <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces', mt: 0.5, ml: 0.1 }}>
+        ✅{'  '}<Link href='https://localai.io/features/text-generation/' target='_blank'>Text generation</Link> with GPTs<br />
+        ✅{'  '}<Link href='https://localai.io/features/openai-functions/' target='_blank'>Function calling</Link> by GPTs 🆕<br />
+        ❌{'  '}<Link href='https://localai.io/features/gpt-vision/' target='_blank'>Vision API</Link> for image chats<br />
+        ❌{'  '}<Link href='https://localai.io/features/image-generation' target='_blank'>Image generation</Link> with stable diffusion<br />
+        ❌{'  '}<Link href='https://localai.io/features/audio-to-text/' target='_blank'>Audio to Text</Link><br />
+        ❌{'  '}<Link href='https://localai.io/features/text-to-audio/' target='_blank'>Text to Audio</Link><br />
+        ❌{'  '}<Link href='https://localai.io/features/embeddings/' target='_blank'>Embeddings generation</Link><br />
+        ❌{'  '}<Link href='https://localai.io/features/constrained_grammars/' target='_blank'>Constrained grammars</Link> (JSON output)
+      </Typography>
+    </ExpanderAccordion>
+
     <Typography level='body-sm'>
-      You can use a running <Link href='https://localai.io' target='_blank'>LocalAI</Link> instance as a source for local models.
-      Please refer to the LocalAI website for how to get it setup and running with models, and then enter the URL below.
+      Please ensure your <Link href='https://localai.io' target='_blank'>LocalAI.io</Link> instance is correctly configured.
+      Visit the <Link href='https://localai.io/basics/getting_started/' target='_blank'>LocalAI website</Link> for detailed setup instructions,
+      and then input the address below.
     </Typography>
 
     <FormInputKey
