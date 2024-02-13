@@ -18,7 +18,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   name: 'LocalAI',
   rank: 22,
   location: 'local',
-  instanceLimit: 1,
+  instanceLimit: 4,
 
   // components
   Icon: LocalAIIcon,
