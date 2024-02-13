@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { z } from 'zod';
 
-import { Typography } from '@mui/joy';
+import { Button, Typography } from '@mui/joy';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
+
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
@@ -13,10 +14,14 @@ import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../useLlmUpdateModels';
 import { useSourceSetup } from '../useSourceSetup';
 
+import { LocalAIAdmin } from './LocalAIAdmin';
 import { ModelVendorLocalAI } from './localai.vendor';
 
 
 export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
+
+  // state
+  const [adminOpen, setAdminOpen] = React.useState(false);
 
   // external state
   const { source, access, updateSetup } =
@@ -69,9 +74,18 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+    <SetupFormRefetchButton
+      refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
+      leftButton={
+        <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)}>
+          LocalAI Admin
+        </Button>
+      }
+    />
 
     {isError && <InlineError error={error} />}
+
+    {adminOpen && <LocalAIAdmin access={access} onClose={() => setAdminOpen(false)} />}
 
   </>;
 }
