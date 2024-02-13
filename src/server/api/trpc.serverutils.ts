@@ -52,8 +52,8 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
         code: 'BAD_REQUEST',
         message: `[Issue] ${moduleName}: ${response.statusText}` // (${response.status})`
           + (payload ? ` - ${safeErrorString(payload)}` : '')
-          + (response.status === 403 ? ` - is ${url} accessible by the server?` : '')
-          + (response.status === 502 ? ` - is ${url} down?` : ''),
+          + (response.status === 403 ? ` - is "${url}" accessible by the server?` : '')
+          + (response.status === 502 ? ` - is "${url}" not available?` : ''),
       });
     }
 
