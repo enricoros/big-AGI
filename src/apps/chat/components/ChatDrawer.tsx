@@ -71,7 +71,7 @@ function ChatDrawer(props: {
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
 
   // local state
-  const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>(false);
+  const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
