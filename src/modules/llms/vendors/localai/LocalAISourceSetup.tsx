@@ -56,7 +56,8 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
         ❌{'  '}<Link href='https://localai.io/features/audio-to-text/' target='_blank'>Audio to Text</Link><br />
         ❌{'  '}<Link href='https://localai.io/features/text-to-audio/' target='_blank'>Text to Audio</Link><br />
         ❌{'  '}<Link href='https://localai.io/features/embeddings/' target='_blank'>Embeddings generation</Link><br />
-        ❌{'  '}<Link href='https://localai.io/features/constrained_grammars/' target='_blank'>Constrained grammars</Link> (JSON output)
+        ❌{'  '}<Link href='https://localai.io/features/constrained_grammars/' target='_blank'>Constrained grammars</Link> (JSON output)<br />
+        ❌{'  '}Voice cloning 🆕
       </Typography>
     </ExpanderAccordion>
 
