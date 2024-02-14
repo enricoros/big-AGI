@@ -15,12 +15,6 @@ Or fork & run on Vercel
 
 ## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2)
 
-big-AGI is an open book; our **[public roadmap](https://github.com/users/enricoros/projects/4/views/2)**
-shows the current developments and future ideas.
-
-- Got a suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
-- Want to contribute? [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
-
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
@@ -46,49 +40,63 @@ https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317be
 - Paste tables from Excel [#286](https://github.com/enricoros/big-AGI/issues/286)
 - Ollama model updates and context window detection fixes [#309](https://github.com/enricoros/big-AGI/issues/309)
 
-### What's New in 1.11.0 · Jan 16, 2024 · Singularity
-
-https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cfcb110c68
-
-- **Find chats**: search in titles and content, with frequency ranking. [#329](https://github.com/enricoros/big-AGI/issues/329)
-- **Commands**: command auto-completion (type '/'). [#327](https://github.com/enricoros/big-AGI/issues/327)
-- **[Together AI](https://www.together.ai/products#inference)** inference platform support (good speed and newer models). [#346](https://github.com/enricoros/big-AGI/issues/346)
-- Persona Creator history, deletion, custom creation, fix llm API timeouts
-- Enable adding up to five custom OpenAI-compatible endpoints
-- Developer enhancements: new 'Actiles' framework
-
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
 ## ✨ Key Features 👊
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
-- **AI Personas**: Tailor your AI interactions with customizable personas
-- **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface
-- **Efficient Interaction**: Voice commands, OCR, and drag-and-drop file uploads
-- **Multiple AI Models**: Choose from a variety of leading AI providers
-- **Privacy First**: Self-host and use your own API keys for full control
-- **Advanced Tools**: Execute code, import PDFs, and summarize documents
-- **Seamless Integrations**: Enhance functionality with various third-party services
-- **Open Roadmap**: Contribute to the progress of big-AGI
+| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-007ACC?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-007ACC?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-007ACC?style=for-the-badge&logo=tools&logoColor=white) |  
+|---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
+| **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Mode<br/>Screen capture<br/>OCR + more                                                         |
 
-## 💖 Support
+#### The following are the supported AI models and integrations:
+
+| **AI models**       | _supported vendors_                                                                                                                                                            | | **More**     | _integrations_                                                                                                 |
+|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-|:-------------|:---------------------------------------------------------------------------------------------------------------| 
+| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                  | | Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                              | | Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview) | | Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
+| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Together AI](https://www.together.ai/)                           | | Sharing      | [Paste.gg](https://paste.gg/) (Paste chats)                                                                    | 
+| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                           | | Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                | |              |                                                                                                                | 
+
+[//]: # (- [x] **Flow-state UX** for uncompromised productivity)
+
+[//]: # (- [x] **AI Personas**: Tailor your AI interactions with customizable personas)
+
+[//]: # (- [x] **Sleek UI/UX**: A smooth, intuitive, and mobile-responsive interface)
+
+[//]: # (- [x] **Efficient Interaction**: Voice commands, OCR, and drag-and-drop file uploads)
+
+[//]: # (- [x] **Privacy First**: Self-host and use your own API keys for full control)
+
+[//]: # (- [x] **Advanced Tools**: Execute code, import PDFs, and summarize documents)
+
+[//]: # (- [x] **Seamless Integrations**: Enhance functionality with various third-party services)
+
+[//]: # (- [x] **Open Roadmap**: Contribute to the progress of big-AGI)
+
+# 🌟 Get Involved!
 
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
 [![Official Discord](https://discordapp.com/api/guilds/1098796266906980422/widget.png?style=banner2)](https://discord.gg/MkH4qj2Jp9)
 
-* Enjoy the hosted open-source app on [big-AGI.com](https://big-agi.com)
-* [Chat with us](https://discord.gg/MkH4qj2Jp9)
-* Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family
-* send PRs! ...
-  🎭[Editing Personas](https://github.com/enricoros/big-agi/issues/35),
-  🧩[Reasoning Systems](https://github.com/enricoros/big-agi/issues/36),
-  🌐[Community Templates](https://github.com/enricoros/big-agi/issues/35),
-  and [your big-IDEAs](https://github.com/enricoros/big-agi/issues/new?labels=RFC&body=Describe+the+idea)
+- [ ] 📢️ [**Chat with us** on Discord](https://discord.gg/MkH4qj2Jp9)
+- [ ] ⭐ **Give us a star** on GitHub 👆
+- [ ] 🧠 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)**
+  - [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
+  - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
+- [ ] Check out some of the big-AGI [**community projects**](docs/customizations.md)
 
-<br/>
+  | Project | Features                                           | GitHub                                                                              |
+  |---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
+  | CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
+  | HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
 
-## 🧩 Develop
+- [ ] ✨ Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family, or [at work](docs/customizations.md)
+
+# 🧩 Develop
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black)
@@ -107,7 +115,7 @@ npm run dev
 The development app will be running on `http://localhost:3000`. Development builds have the advantage of not requiring
 a build step, but can be slower than production builds. Also, development builds won't have timeout on edge functions.
 
-## 🌐 Deploy manually
+## 🛠️ Deploy from source
 
 The _production_ build of the application is optimized for performance and is performed by the `npm run build` command,
 after installing the required dependencies.
@@ -148,24 +156,15 @@ Create your GitHub fork, create a Vercel project over that fork, and deploy it. 
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-## Integrations:
 
-* Local models: Ollama, Oobabooga, LocalAi, etc.
-* [ElevenLabs](https://elevenlabs.io/) Voice Synthesis (bring your own voice too) - Settings > Text To Speech
-* [Helicone](https://www.helicone.ai/) LLM Observability Platform - Models > OpenAI > Advanced > API Host: 'oai.hconeai.com'
-* [Paste.gg](https://paste.gg/) Paste Sharing - Chat Menu > Share via paste.gg
-* [Prodia](https://prodia.com/) Image Generation - Settings > Image Generation > Api Key & Model
-* External code execution: export to [CodePen](https://codepen.io/pen/), [StackBlitz](https://stackblitz.com/), [JSFiddle](https://jsfiddle.net/)
+[//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/stargazers&#41;)
 
-<br/>
+[//]: # ([![GitHub forks]&#40;https://img.shields.io/github/forks/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/network&#41;)
 
-This project is licensed under the MIT License.
+[//]: # ([![GitHub pull requests]&#40;https://img.shields.io/github/issues-pr/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/pulls&#41;)
 
-[![GitHub stars](https://img.shields.io/github/stars/enricoros/big-agi)](https://github.com/enricoros/big-agi/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/enricoros/big-agi)](https://github.com/enricoros/big-agi/network)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/enricoros/big-agi)](https://github.com/enricoros/big-agi/pulls)
-[![License](https://img.shields.io/github/license/enricoros/big-agi)](https://github.com/enricoros/big-agi/LICENSE)
+[//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
 
-[//]: # ([![GitHub issues]&#40;https://img.shields.io/github/issues/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/issues&#41;)
+---
 
-Made with 💙
+2023-2024 · Enrico Ros x [big-AGI](https://big-agi.com) · License: [MIT](LICENSE) · Made with 💙
