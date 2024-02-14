@@ -59,6 +59,18 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 </details>
 
+<details>
+<summary>What's New in 1.10.0 · Jan 6, 2024 · The Year of AGI</summary>
+
+- **New UI**: for both desktop and mobile, sets the stage for future scale. [#201](https://github.com/enricoros/big-AGI/issues/201)
+- **Conversation Folders**: enhanced conversation organization. [#321](https://github.com/enricoros/big-AGI/issues/321)
+- **[LM Studio](https://lmstudio.ai/)** support and improved token management
+- Resizable panes in split-screen conversations.
+- Large performance optimizations
+- Developer enhancements: new UI framework, updated documentation for proxy settings on browserless/docker
+
+</details>
+
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
 ## ✨ Key Features 👊
