@@ -15,6 +15,8 @@ Or fork & run on Vercel
 
 ## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2)
 
+big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
+
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
@@ -44,22 +46,32 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 ## ✨ Key Features 👊
 
-![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
-
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-007ACC?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-007ACC?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-007ACC?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Mode<br/>Screen capture<br/>OCR + more                                                         |
 
-#### The following are the supported AI models and integrations:
+![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
-| **AI models**       | _supported vendors_                                                                                                                                                            | | **More**     | _integrations_                                                                                                 |
-|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-|:-------------|:---------------------------------------------------------------------------------------------------------------| 
-| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                  | | Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                              | | Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview) | | Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
-| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Together AI](https://www.together.ai/)                           | | Sharing      | [Paste.gg](https://paste.gg/) (Paste chats)                                                                    | 
-| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                           | | Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                | |              |                                                                                                                | 
+You can easily configure 100s of AI models in big-AGI:
+
+| **AI models**       | _supported vendors_                                                                                                                                                            |
+|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                  |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                              |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview) |
+| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Together AI](https://www.together.ai/)                           | 
+| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                           | 
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                | 
+
+The following services provide additional functionality:
+
+| **More**     | _integrations_                                                                                                 |
+|:-------------|:---------------------------------------------------------------------------------------------------------------| 
+| Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
+| Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
+| Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
+| Sharing      | [Paste.gg](https://paste.gg/) (Paste chats)                                                                    | 
+| Tracking     | [Helicone](https://www.helicone.ai) (LLM Observability)                                                        | 
 
 [//]: # (- [x] **Flow-state UX** for uncompromised productivity)
 
@@ -84,13 +96,12 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 - [ ] 📢️ [**Chat with us** on Discord](https://discord.gg/MkH4qj2Jp9)
 - [ ] ⭐ **Give us a star** on GitHub 👆
-- [ ] 🧠 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)**
-  - [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
-  - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
+- [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
+- [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
 - [ ] Check out some of the big-AGI [**community projects**](docs/customizations.md)
 
   | Project | Features                                           | GitHub                                                                              |
-  |---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
+              |---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
   | CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
   | HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
 
