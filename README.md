@@ -17,7 +17,7 @@ Or fork & run on Vercel
 
 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
 
-### 1.13.0 · Feb 8, 2024 · Multi + Mind
+### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -29,7 +29,8 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
 
-### 1.12.0 · Jan 26, 2024 · AGI Hotline
+<details>
+<summary>What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline</summary>
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
 
@@ -41,6 +42,22 @@ https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317be
 - Export chats to Markdown [#337](https://github.com/enricoros/big-AGI/issues/337)
 - Paste tables from Excel [#286](https://github.com/enricoros/big-AGI/issues/286)
 - Ollama model updates and context window detection fixes [#309](https://github.com/enricoros/big-AGI/issues/309)
+
+</details>
+
+<details>
+<summary>What's New in 1.11.0 · Jan 16, 2024 · Singularity</summary>
+
+https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cfcb110c68
+
+- **Find chats**: search in titles and content, with frequency ranking. [#329](https://github.com/enricoros/big-AGI/issues/329)
+- **Commands**: command auto-completion (type '/'). [#327](https://github.com/enricoros/big-AGI/issues/327)
+- **[Together AI](https://www.together.ai/products#inference)** inference platform support (good speed and newer models). [#346](https://github.com/enricoros/big-AGI/issues/346)
+- Persona Creator history, deletion, custom creation, fix llm API timeouts
+- Enable adding up to five custom OpenAI-compatible endpoints
+- Developer enhancements: new 'Actiles' framework
+
+</details>
 
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
@@ -91,6 +108,8 @@ Add extra functionality with these integrations:
 
 [//]: # (- [x] **Open Roadmap**: Contribute to the progress of big-AGI)
 
+<br/>
+
 # 🌟 Get Involved!
 
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
@@ -107,6 +126,8 @@ Add extra functionality with these integrations:
 |---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
 | CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
 | HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
+
+<br/>
 
 # 🧩 Develop
 
