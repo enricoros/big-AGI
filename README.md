@@ -17,7 +17,7 @@ Or fork & run on Vercel
 
 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
 
-### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+### 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -29,7 +29,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
 
-### What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
+### 1.12.0 · Jan 26, 2024 · AGI Hotline
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
 
@@ -46,11 +46,13 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 ## ✨ Key Features 👊
 
-| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-007ACC?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-007ACC?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-007ACC?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-007ACC?style=for-the-badge&logo=tools&logoColor=white) |  
+![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
+
+| ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-f22a85?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-f22a85?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-f22a85?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-f22a85?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
 | **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Mode<br/>Screen capture<br/>OCR + more                                                         |
 
-![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
+<br/>
 
 You can easily configure 100s of AI models in big-AGI:
 
@@ -63,7 +65,7 @@ You can easily configure 100s of AI models in big-AGI:
 | Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                           | 
 | Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                | 
 
-The following services provide additional functionality:
+Add extra functionality with these integrations:
 
 | **More**     | _integrations_                                                                                                 |
 |:-------------|:---------------------------------------------------------------------------------------------------------------| 
@@ -98,14 +100,13 @@ The following services provide additional functionality:
 - [ ] ⭐ **Give us a star** on GitHub 👆
 - [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
+- [ ] ✨ Deploy your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
 - [ ] Check out some of the big-AGI [**community projects**](docs/customizations.md)
 
-  | Project | Features                                           | GitHub                                                                              |
-              |---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
-  | CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
-  | HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
-
-- [ ] ✨ Deploy your [fork](https://github.com/enricoros/big-agi/fork) for your friends and family, or [at work](docs/customizations.md)
+| Project | Features                                           | GitHub                                                                              |
+|---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
+| CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
+| HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
 
 # 🧩 Develop
 
