@@ -1,28 +1,24 @@
 # Customizing and Creating Derivative Applications
 
-This document outlines how to develop applications derived from big-AGI, allowing for extension of its functionalities, adaptation to specific needs, or targeting new user groups.
+This document outlines how to develop applications derived from big-AGI.
 
 ## Manual Customization
 
-Application customization requires manual code modifications or the use of environment variables. Currently, there is no graphical interface for customization. Changes include editing source code for persona modifications, feature additions, or API integrations.
+Application customization _requires manual code modifications or the use of environment variables_. Currently, **there is no admin panel to "managed" deployment customization** for enterprise use cases.
 
 | Required Code Alteration                                                              | Not Required                                                                                                              |
 |---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | - Persona changes<br>- UI theme customization<br>- Feature additions or modifications | - Setting API keys in [environment variables](environment-variables.md)<br>- Toggling features with environment variables |
-
-How:
-
-- **Code alterations**: Apply these to the source code before building the application.
-- **Environment variables**: Set these post-build on local machines or cloud deployment, before application launch.
+| Apply these to the source code before building the application                        | Set these post-build on local machines or cloud deployment, before application launch                                     |
 
 <br/>
 
-## Code changes
+## Code Alterations
 
 Start by creating a fork of the [big-AGI repository](https://github.com/enricoros/big-AGI) on GitHub for a personal development space.
 Understand the Architecture: big-AGI uses Next.js, React for the front end, and Node.js (Next.js edge functions) for the back end.
 
-### Add authentication
+### Add Authentication
 
 This necessitates a code change (file renaming) before build initiation, detailed in [deploy-authentication.md](deploy-authentication.md).
 
@@ -30,27 +26,22 @@ This necessitates a code change (file renaming) before build initiation, detaile
 
 Edit the `src/data.ts` file to customize personas. This file houses the default personas. You can add, remove, or modify these to meet your project's needs.
 
-- [ ] Modify `src/data.ts` to alter default personas.
+- [ ] Modify `src/data.ts` to alter default personas
 
 ### Change the UI
 
 Adapt the UI to match your project's aesthetic, incorporate new features, or exclude unnecessary ones.
 
-- [ ] Adjust `src/common/app.theme.ts` for theme changes: colors, spacing, button appearance, animations, etc.
-- [ ] Modify `src/common/app.config.tsx` to alter the application's name.
-- [ ] Update `src/common/app.nav.tsx` to revise the navigation bar.
-
-## Other: Add or Modify Features
-
-- **Integrate New APIs**: Add new endpoints in the `pages/api` directory for additional API integrations.
-- **Enhance Functionality**: Edit React components and backend logic to modify existing features or introduce new ones.
+- [ ] Adjust `src/common/app.theme.ts` for theme changes: colors, spacing, button appearance, animations, etc
+- [ ] Modify `src/common/app.config.tsx` to alter the application's name
+- [ ] Update `src/common/app.nav.tsx` to revise the navigation bar
 
 ## Testing & Deployment
 
 Test your application thoroughly using local development (refer to README.md for local build instructions). Deploy using your preferred hosting service. big-AGI supports deployment on platforms like Vercel, Docker, or any Node.js-compatible service, especially those supporting NextJS's "Edge Runtime."
 
-- Refer to [deploy-cloudflare.md](deploy-cloudflare.md) for Cloudflare Workers deployment.
-- See [deploy-docker.md](deploy-docker.md) for Docker deployment instructions and examples.
+- [deploy-cloudflare.md](deploy-cloudflare.md): for Cloudflare Workers deployment
+- [deploy-docker.md](deploy-docker.md): for Docker deployment instructions and examples
 
 <br/> 
 
