@@ -141,8 +141,16 @@ export function useChatNavRenderItems(
       // Render List
       let renderNavItems: ChatRenderItemData[] = chatNavItems;
 
+      // [search] add a header if searching
+      if (isSearching) {
+
+        // only prepend a 'Results' group if there are results
+        if (chatNavItems.length)
+          renderNavItems = [{ type: 'nav-item-group', title: 'Search results' }, ...chatNavItems];
+
+      }
       // [grouping] group by date or persona
-      if (!isSearching && grouping) {
+      else if (grouping) {
 
         // [grouping/date]: sort by update time
         const midnightTime = getNextMidnightTime();
