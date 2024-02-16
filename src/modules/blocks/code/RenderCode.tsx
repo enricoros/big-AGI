@@ -27,9 +27,15 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
     // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
     const { encode: plantUmlEncode } = await import('plantuml-encoder');
 
+    // Get the PlantUML server from inline env var
+    let plantUmlServerUrl = process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL;
+    if (!plantUmlServerUrl) {
+      plantUmlServerUrl = 'https://www.plantuml.com/plantuml/svg/';
+    }
+
     // retrieve and manually adapt the SVG, to remove the background
     const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
-    const response = await frontendSideFetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
+    const response = await frontendSideFetch(`${plantUmlServerUrl}${encodedPlantUML}`);
     text = await response.text();
   } catch (e) {
     return null;
