@@ -58,7 +58,7 @@ export function parseMessageBlocks(text: string, disableParsing: boolean, forceT
   const regexPatterns = {
     codeBlock: /`{3,}([\w\x20\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     latexBlock: /\$\$([\s\S]*?)\$\$\n?/g,
-    latexBlock2: /\\\[\n([\s\S]*?)\n\\]\n/g,
+    latexBlock2: /\\\[\n([\s\S]*?)\n\s*\\]\n/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
 
