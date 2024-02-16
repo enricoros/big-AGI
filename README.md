@@ -1,7 +1,7 @@
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 11 vendors and
+simplicity, and speed. Powered by the latest models from 12 vendors and
 open-source model servers, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
 visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
 
@@ -83,14 +83,14 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 You can easily configure 100s of AI models in big-AGI:
 
-| **AI models**       | _supported vendors_                                                                                                                                                            |
-|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                  |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                              |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview) |
-| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Together AI](https://www.together.ai/)                           | 
-| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                           | 
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                | 
+| **AI models**       | _supported vendors_                                                                                                                                                                             |
+|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                   |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                               |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                  |
+| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
+| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                                            | 
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                 | 
 
 Add extra functionality with these integrations:
 

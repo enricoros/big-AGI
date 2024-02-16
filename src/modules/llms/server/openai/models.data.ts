@@ -519,6 +519,94 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
 }
 
 
+// Perplexity
+
+const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
+  {
+    id: 'codellama-34b-instruct',
+    label: 'Codellama 34B Instruct',
+    description: 'Code Llama is a collection of pretrained and fine-tuned generative text models. This model is designed for general code synthesis and understanding.',
+    contextWindow: 16384,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'codellama-70b-instruct',
+    label: 'Codellama 70B Instruct',
+    description: 'Code Llama is a collection of pretrained and fine-tuned generative text models. This model is designed for general code synthesis and understanding.',
+    contextWindow: 16384,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'llama-2-70b-chat',
+    label: 'Llama 2 70B Chat',
+    description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'mistral-7b-instruct',
+    label: 'Mistral 7B Instruct',
+    description: 'The Mistral-7B-Instruct-v0.1 Large Language Model (LLM) is a instruct fine-tuned version of the Mistral-7B-v0.1 generative text model using a variety of publicly available conversation datasets.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'mixtral-8x7b-instruct',
+    label: 'Mixtral 8x7B Instruct',
+    description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-7b-online',
+    label: 'Perplexity 7B Online',
+    description: 'Perplexity 7B Online',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-70b-online',
+    label: 'Perplexity 70B Online',
+    description: 'Perplexity 70B Online',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-8x7b-online',
+    label: 'Perplexity 8x7B Online',
+    description: 'Perplexity 8x7B Online',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-7b-chat',
+    label: 'Perplexity 7B Chat',
+    description: 'Perplexity 7B Chat',
+    contextWindow: 8192,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-70b-chat',
+    label: 'Perplexity 70B Chat',
+    description: 'Perplexity 70B Chat',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'pplx-8x7b-chat',
+    label: 'Perplexity 8x7B Chat',
+    description: 'Perplexity 8x7B Chat',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+];
+
+export function perplexityAIModelDescriptions() {
+  // change this implementation once upstream implements some form of models listing
+  return _knownPerplexityChatModels;
+}
+
+
 // Helpers
 
 type ManualMapping = ({ idPrefix: string, isLatest?: boolean, isLegacy?: boolean, symLink?: string } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);

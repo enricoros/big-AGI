@@ -11,13 +11,13 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
 const openAIDialects = z.enum([
-  'azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'togetherai',
+  'azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
 
 export const openAIAccessSchema = z.object({
@@ -132,6 +132,10 @@ export const llmOpenAIRouter = createTRPCRouter({
           });
         return { models };
       }
+
+      // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
+      if (access.dialect === 'perplexity')
+        return { models: perplexityAIModelDescriptions() };
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
@@ -369,6 +373,7 @@ const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
+const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
@@ -483,6 +488,25 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         },
         url: orHost + apiPath,
       };
+
+    case 'perplexity':
+      const perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
+      const perplexityHost = fixupHost(access.oaiHost || DEFAULT_PERPLEXITY_HOST, apiPath);
+      if (!perplexityKey || !perplexityHost)
+        throw new Error('Missing Perplexity API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      if (apiPath.startsWith('/v1'))
+        apiPath = apiPath.replace('/v1', '');
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${perplexityKey}`,
+        },
+        url: perplexityHost + apiPath,
+      };
+
 
     case 'togetherai':
       const togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
