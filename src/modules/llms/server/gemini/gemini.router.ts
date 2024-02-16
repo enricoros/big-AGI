@@ -151,6 +151,7 @@ export const llmGeminiRouter = createTRPCRouter({
           const { description, displayName, inputTokenLimit, name, outputTokenLimit, supportedGenerationMethods } = geminiModel;
 
           const isSymlink = ['models/gemini-pro', 'models/gemini-pro-vision'].includes(name);
+          const symlinked = isSymlink ? detailedModels.find(m => m.displayName === displayName && m.name !== name) : null;
 
           const contextWindow = inputTokenLimit + outputTokenLimit;
           const hidden = !supportedGenerationMethods.includes('generateContent') || isSymlink;
@@ -170,7 +171,7 @@ export const llmGeminiRouter = createTRPCRouter({
 
           return {
             id: name,
-            label: isSymlink ? `🔗 ${displayName.replace('1.0', '')} → ${version}` : displayName,
+            label: isSymlink ? `🔗 ${displayName.replace('1.0', '')} → ${symlinked ? symlinked.name : '?'}` : displayName,
             // created: ...
             // updated: ...
             description: descriptionLong,
