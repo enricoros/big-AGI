@@ -1,7 +1,17 @@
 import * as React from 'react';
+// import { keyframes } from '@emotion/react';
 
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
+
+// // noinspection CssUnresolvedCustomProperty
+// const cssBackgroundFadeIn = keyframes`
+//     0% {
+//         background-color: transparent
+//     }
+//     100% {
+//         background-color: var(--joy-palette-background-backdrop)
+//     }`;
 
 
 /**
@@ -25,7 +35,14 @@ export function GoodModal(props: {
     <Modal
       open={props.open}
       onClose={props.onClose}
-      // slotProps={{ backdrop: { sx: { backdropFilter: 'blur(6px)' } } }}
+      // slotProps={{
+      //   backdrop: {
+      //     sx: {
+      //       animation: `${cssBackgroundFadeIn} 0.2s ease-in-out`,
+      //       backdropFilter: 'blur(6px)',
+      //     },
+      //   },
+      // }}
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
