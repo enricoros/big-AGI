@@ -78,7 +78,7 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
-  const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filterefChatsBarBasis, renderNavItems } = useChatNavRenderItems(
+  const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatNavRenderItems(
     props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, navGrouping,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
@@ -90,11 +90,13 @@ function ChatDrawer(props: {
   // New/Activate/Delete Conversation
 
   const isMultiPane = props.chatPanesConversationIds.length >= 2;
+  const disableNewButton = props.disableNewButton && filteredChatsIncludeActive;
+  const newButtonDontRecycle = isMultiPane || !filteredChatsIncludeActive;
 
   const handleButtonNew = React.useCallback(() => {
-    onConversationNew(isMultiPane);
+    onConversationNew(newButtonDontRecycle);
     closeDrawerOnMobile();
-  }, [closeDrawerOnMobile, isMultiPane, onConversationNew]);
+  }, [closeDrawerOnMobile, newButtonDontRecycle, onConversationNew]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
@@ -208,8 +210,8 @@ function ChatDrawer(props: {
       <ListItem sx={{ mx: '0.25rem', mb: 0.5 }}>
         <ListItemButton
           // variant='outlined'
-          variant={props.disableNewButton ? undefined : 'outlined'}
-          disabled={props.disableNewButton}
+          variant={disableNewButton ? undefined : 'outlined'}
+          disabled={disableNewButton}
           onClick={handleButtonNew}
           sx={{
             // ...PageDrawerTallItemSx,
@@ -221,7 +223,7 @@ function ChatDrawer(props: {
 
             // style
             borderRadius: 'md',
-            boxShadow: (props.disableNewButton || props.isMobile) ? 'none' : 'sm',
+            boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'sm',
             backgroundColor: 'background.popup',
             transition: 'box-shadow 0.2s',
           }}
@@ -254,7 +256,7 @@ function ChatDrawer(props: {
               key={'nav-chat-' + item.conversationId}
               item={item}
               showSymbols={showSymbols}
-              bottomBarBasis={showSymbols ? filterefChatsBarBasis : 0}
+              bottomBarBasis={showSymbols ? filteredChatsBarBasis : 0}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
               onConversationDelete={handleConversationDeleteNoConfirmation}
@@ -264,6 +266,10 @@ function ChatDrawer(props: {
           ) : item.type === 'nav-item-group' ? (
             <Typography key={'nav-divider-' + idx} level='body-xs' sx={{ textAlign: 'center', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
               {item.title}
+            </Typography>
+          ) : item.type === 'nav-item-info-message' ? (
+            <Typography key={'nav-info-' + idx} level='body-xs' sx={{ textAlign: 'center', my: 'calc(var(--ListItem-minHeight) / 2)' }}>
+              {item.message}
             </Typography>
           ) : null,
         )}
