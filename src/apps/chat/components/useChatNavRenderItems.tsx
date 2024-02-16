@@ -13,12 +13,17 @@ const SEARCH_MIN_CHARS = 3;
 
 export type ChatNavGrouping = false | 'date' | 'persona';
 
-export interface ChatNavigationGroupData {
+interface ChatNavigationGroupData {
   type: 'nav-item-group',
   title: string,
 }
 
-type ChatRenderItemData = ChatNavigationItemData | ChatNavigationGroupData;
+interface ChatNavigationInfoMessage {
+  type: 'nav-item-info-message',
+  message: string,
+}
+
+type ChatRenderItemData = ChatNavigationItemData | ChatNavigationGroupData | ChatNavigationInfoMessage;
 
 
 // Returns a string with the pane indices where the conversation is also open, or false if it's not
@@ -79,7 +84,8 @@ export function useChatNavRenderItems(
   filteredChatIDs: DConversationId[],
   filteredChatsCount: number,
   filteredChatsAreEmpty: boolean,
-  filterefChatsBarBasis: number,
+  filteredChatsBarBasis: number,
+  filteredChatsIncludeActive: boolean,
 } {
   return useChatStore(({ conversations }) => {
 
@@ -125,6 +131,9 @@ export function useChatNavRenderItems(
         };
       }).filter(item => !isSearching || item.searchFrequency > 0);
 
+      // check if the active conversation has an item in the list
+      const filteredChatsIncludeActive = chatNavItems.some(_c => _c.conversationId === activeConversationId);
+
 
       // [sort by frequency, don't group] if there's a search query
       chatNavItems.sort((a, b) => b.searchFrequency - a.searchFrequency);
@@ -160,11 +169,15 @@ export function useChatNavRenderItems(
         ]);
       }
 
+      // [empty message] if there are no items
+      if (!renderNavItems.length)
+        renderNavItems.push({ type: 'nav-item-info-message', message: isSearching ? 'No results found' : 'No conversations in folder' });
+
       // other derived state
       const filteredChatIDs = chatNavItems.map(_c => _c.conversationId);
       const filteredChatsCount = chatNavItems.length;
       const filteredChatsAreEmpty = !filteredChatsCount || (filteredChatsCount === 1 && chatNavItems[0].isEmpty);
-      const filterefChatsBarBasis = (filteredChatsCount >= AUTO_UNDERLINE_COUNT || isSearching)
+      const filteredChatsBarBasis = (filteredChatsCount >= AUTO_UNDERLINE_COUNT || isSearching)
         ? chatNavItems.reduce((longest, _c) => Math.max(longest, isSearching ? _c.searchFrequency : _c.messageCount), 1)
         : 0;
 
@@ -173,7 +186,8 @@ export function useChatNavRenderItems(
         filteredChatIDs,
         filteredChatsCount,
         filteredChatsAreEmpty,
-        filterefChatsBarBasis,
+        filteredChatsBarBasis,
+        filteredChatsIncludeActive,
       };
     },
     (a, b) => {
