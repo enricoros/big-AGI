@@ -35,6 +35,9 @@ export const env = createEnv({
     // LLM: OpenRouter
     OPENROUTER_API_KEY: z.string().optional(),
 
+    // LLM: Perplexity
+    PERPLEXITY_API_KEY: z.string().optional(),
+
     // LLM: Toghether AI
     TOGETHERAI_API_KEY: z.string().optional(),
 
