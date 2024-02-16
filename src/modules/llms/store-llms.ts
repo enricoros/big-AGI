@@ -80,7 +80,7 @@ interface ModelsData {
 }
 
 interface ModelsActions {
-  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) => void;
+  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
@@ -119,12 +119,25 @@ export const useModelsStore = create<LlmsStore>()(
         set(state => updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, id)),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
-      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) =>
+      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) =>
         set(state => {
 
-          const otherLlms = preserveExpired === true
-            ? state.llms
-            : state.llms.filter(llm => llm.sId !== sourceId);
+          // keep existing model customizations
+          if (keepUserEdits) {
+            llms = llms.map(llm => {
+              const existing = state.llms.find(m => m.id === llm.id);
+              return !existing ? llm : {
+                ...llm,
+                label: existing.label, // keep label
+                hidden: existing.hidden, // keep hidden
+                options: { ...existing.options, ...llm.options }, // keep custom configurations, but overwrite as the new could have massively improved params
+              };
+            });
+          }
+
+          const otherLlms = deleteExpiredVendorLlms
+            ? state.llms.filter(llm => llm.sId !== sourceId)
+            : state.llms;
 
           // replace existing llms with the same id
           const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
