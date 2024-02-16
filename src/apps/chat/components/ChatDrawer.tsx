@@ -209,7 +209,7 @@ function ChatDrawer(props: {
         <ListItemButton
           // variant='outlined'
           variant={props.disableNewButton ? undefined : 'outlined'}
-          disabled={props.disableNewButton && !isMultiPane}
+          disabled={props.disableNewButton}
           onClick={handleButtonNew}
           sx={{
             // ...PageDrawerTallItemSx,
