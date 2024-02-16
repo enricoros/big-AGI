@@ -5,12 +5,15 @@ import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../d
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
+import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle, DConversation, DMessage, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 
 import { ImportedOutcome } from './ImportOutcomeModal';
 
+
+/// IMPORT ///
 
 /**
  * Restores all conversations in a JSON
@@ -23,9 +26,14 @@ export function loadAllConversationsFromJson(fileName: string, obj: any, outcome
 
   // parse ExportedAllJsonV1
   if (hasConversations && !hasMessages) {
-    const payload = obj as ExportedAllJsonV1;
-    for (const conversation of payload.conversations)
+    const { conversations, folders } = obj as ExportedAllJsonV1b;
+    for (const conversation of conversations)
       pushOutcomeFromJsonV1(fileName, conversation, outcome);
+    // in ExportedAllJsonV1b+, folders weren't there before
+    if (folders?.folders) {
+      const dFolders = folders.folders.map(createFolderFromJsonV1).filter(Boolean) as DFolder[];
+      useFolderStore.getState().importFoldersAppend(dFolders, folders.enableFolders);
+    }
   }
   // parse ExportedConversationJsonV1
   else if (hasMessages && !hasConversations) {
@@ -37,19 +45,12 @@ export function loadAllConversationsFromJson(fileName: string, obj: any, outcome
   }
 }
 
-function pushOutcomeFromJsonV1(fileName: string, part: ExportedConversationJsonV1, outcome: ImportedOutcome) {
-  const restored = createConversationFromJsonV1(part);
-  if (!restored)
-    outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
-  else
-    outcome.conversations.push({ success: true, fileName, conversation: restored });
-}
-
-
 // NOTE: the tokenCount was removed while still in the JsonV1 format, so here we add it back, for backwards compat
 export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & { tokenCount?: number }) {
-  if (!part || !part.id || !part.messages)
+  if (!part || !part.id || !part.messages) {
+    console.warn('createConversationFromJsonV1: invalid conversation json', part);
     return null;
+  }
   const restored: DConversation = {
     id: part.id,
     messages: part.messages,
@@ -66,6 +67,30 @@ export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & 
   return restored;
 }
 
+function createFolderFromJsonV1(part: ExportedFolderJsonV1) {
+  if (!part || !part.id || !part.title || !part.conversationIds) {
+    console.warn('createFolderFromJsonV1: invalid folder json', part);
+    return null;
+  }
+  const restored: DFolder = {
+    id: part.id,
+    title: part.title,
+    conversationIds: part.conversationIds,
+    color: part.color,
+  };
+  return restored;
+}
+
+function pushOutcomeFromJsonV1(fileName: string, part: ExportedConversationJsonV1, outcome: ImportedOutcome) {
+  const restored = createConversationFromJsonV1(part);
+  if (!restored)
+    outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
+  else
+    outcome.conversations.push({ success: true, fileName, conversation: restored });
+}
+
+
+/// EXPORT ///
 
 /**
  * Download all conversations as a JSON file, for backup and future restore
@@ -73,8 +98,10 @@ export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & 
  */
 export async function downloadAllConversationsJson() {
   // conversations and
-  const payload: ExportedAllJsonV1 = {
+  const { folders, enableFolders } = useFolderStore.getState();
+  const payload: ExportedAllJsonV1b = {
     conversations: useChatStore.getState().conversations.map(conversationToJsonV1),
+    folders: { folders, enableFolders },
     models: { sources: useModelsStore.getState().sources },
   };
   const json = JSON.stringify(payload);
@@ -84,7 +111,6 @@ export async function downloadAllConversationsJson() {
   const isoDate = new Date().toISOString().replace(/:/g, '-');
   await fileSave(blob, { fileName: `conversations-${isoDate}.json`, extensions: ['.json'] });
 }
-
 
 /**
  * Download a conversation as a JSON file, for backup and future restore
@@ -110,18 +136,11 @@ export async function downloadConversation(conversation: DConversation, format: 
   }
 
   // bonify title for saving to file (spaces to dashes, etc)
-  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'untitled';
 
   // link to begin the download
   await fileSave(blob, { fileName: `conversation-${fileTitle ? fileTitle + '-' : ''}${conversation.id}${extension}`, extensions: [extension] });
 }
-
-export function conversationToJsonV1(_conversation: DConversation): ExportedConversationJsonV1 {
-  // remove fields from the export
-  const { abortController, ephemerals, tokenCount, ...conversation } = _conversation;
-  return conversation;
-}
-
 
 /**
  * Primitive rendering of a Conversation to Markdown
@@ -153,7 +172,14 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
 
 }
 
+export function conversationToJsonV1(_conversation: DConversation): ExportedConversationJsonV1 {
+  // remove fields from the export
+  const { abortController, ephemerals, tokenCount, ...conversation } = _conversation;
+  return conversation;
+}
 
+
+/// STORED TYPES definitions ///
 /// do not change these - consider people's backups
 
 type ExportedConversationJsonV1 = {
@@ -166,7 +192,15 @@ type ExportedConversationJsonV1 = {
   updated: number | null;
 }
 
-type ExportedAllJsonV1 = {
+type ExportedFolderJsonV1 = { // this is here to 'freeze' in time and cause typescript errors when we alter the real def
+  id: string;
+  title: string;
+  conversationIds: DConversationId[];
+  color?: string; // Optional color property
+}
+
+type ExportedAllJsonV1b = {
   conversations: ExportedConversationJsonV1[];
   models: { sources: DModelSource[] };
+  folders?: { folders: ExportedFolderJsonV1[]; enableFolders: boolean };
 }
