@@ -530,19 +530,17 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
 
   // this object will change if any sub-prop changes as well
   const conversation = conversationId ? conversations.find(_c => _c.id === conversationId) ?? null : null;
+  const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
   const title = conversation ? conversationTitle(conversation) : null;
-  const chatIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
-  const isNoChat = chatIdx === -1;
   const isChatEmpty = conversation ? !conversation.messages.length : true;
   const areChatsEmpty = isChatEmpty && conversations.length < 2;
   const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
 
   return {
     title,
-    chatIdx,
-    isNoChat,
     isChatEmpty,
     areChatsEmpty,
+    conversationIdx,
     newConversationId,
     _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
     prependNewConversation: state.prependNewConversation,

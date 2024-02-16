@@ -96,10 +96,9 @@ export function AppChat() {
 
   const {
     title: focusedChatTitle,
-    chatIdx: focusedChatNumber,
-    isNoChat: isNoChat,
     isChatEmpty: isFocusedChatEmpty,
     areChatsEmpty,
+    conversationIdx: focusedChatNumber,
     newConversationId,
     _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation,
@@ -125,6 +124,7 @@ export function AppChat() {
   const isMultiAddable = chatPanes.length < 4;
   const isMultiConversationId = isMultiPane && new Set(chatPanes.map((pane) => pane.conversationId)).size >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
+  const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -404,7 +404,7 @@ export function AppChat() {
         activeConversationId={focusedConversationId}
         activeFolderId={activeFolderId}
         chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
-        disableNewButton={isFocusedChatEmpty && !isNoChat}
+        disableNewButton={disableNewButton}
         onConversationActivate={setFocusedConversationId}
         onConversationBranch={handleConversationBranch}
         onConversationNew={handleConversationNew}
@@ -413,7 +413,7 @@ export function AppChat() {
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, focusedConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleDeleteConversations, isFocusedChatEmpty, isMobile, isNoChat, setFocusedConversationId],
+    [activeFolderId, chatPanes, disableNewButton, focusedConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNew, handleDeleteConversations, isMobile, setFocusedConversationId],
   );
 
   const menuItems = React.useMemo(() =>
