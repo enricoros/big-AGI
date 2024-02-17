@@ -2,6 +2,7 @@ import { backendCaps } from '~/modules/backend/state-backend';
 
 import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
+import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -35,7 +36,7 @@ export async function speakText(text: string, voiceId?: string) {
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
   try {
-    const edgeResponse = await fetchApiElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, false);
+    const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, false);
     const audioBuffer = await edgeResponse.arrayBuffer();
     await playSoundBuffer(audioBuffer);
   } catch (error) {
@@ -55,7 +56,7 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
   try {
-    const edgeResponse = await fetchApiElevenlabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
+    const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
 
     // if (!liveAudioPlayer)
     const liveAudioPlayer = new AudioLivePlayer();
@@ -72,7 +73,7 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
 /**
  * Note: we have to use this client-side API instead of TRPC because of ArrayBuffers..
  */
-async function fetchApiElevenlabsSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string, nonEnglish: boolean, streaming: boolean): Promise<Response> {
+async function frontendFetchAPIElevenLabsSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string, nonEnglish: boolean, streaming: boolean): Promise<Response> {
   // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
   const speechInput: SpeechInputSchema = {
     elevenKey: elevenLabsApiKey,
@@ -82,7 +83,7 @@ async function fetchApiElevenlabsSpeech(text: string, elevenLabsApiKey: string, 
     ...(streaming && { streaming: true, streamOptimization: 4 }),
   };
 
-  const response = await fetch('/api/elevenlabs/speech', {
+  const response = await frontendSideFetch('/api/elevenlabs/speech', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(speechInput),
