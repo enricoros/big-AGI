@@ -5,7 +5,7 @@ export const SERVER_DEBUG_WIRE = false;
 /**
  * Fetches a URL, but throws an Error if the response is not ok.
  */
-export async function serverFetchOrThrow(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: object | undefined): Promise<Response> {
+export async function nonTrpcServerFetchOrThrow(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: object | undefined): Promise<Response> {
   const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 
   // Throws an error if the response is not ok
