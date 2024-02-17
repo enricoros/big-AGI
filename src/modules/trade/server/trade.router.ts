@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
