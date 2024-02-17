@@ -4,7 +4,7 @@ import type { BackendCapabilities } from '~/modules/backend/state-backend';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { analyticsListCapabilities } from './backend.analytics';
 

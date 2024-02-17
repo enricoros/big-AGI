@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 

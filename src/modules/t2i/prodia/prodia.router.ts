@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { t2iCreateImagesOutputSchema } from '../t2i.server.types';
 

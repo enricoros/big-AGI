@@ -6,7 +6,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 
 const inputSchema = z.object({
