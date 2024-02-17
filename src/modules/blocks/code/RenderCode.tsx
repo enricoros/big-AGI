@@ -10,6 +10,7 @@ import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 import type { CodeBlock } from '../blocks';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
@@ -28,7 +29,7 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 
     // retrieve and manually adapt the SVG, to remove the background
     const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
-    const response = await fetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
+    const response = await frontendSideFetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
     text = await response.text();
   } catch (e) {
     return null;
