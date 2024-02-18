@@ -1,0 +1,23 @@
+{
+  "name": "big-agi-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Enrico Ros <enrico.ros@gmail.com>",
+  "main": "./dist/main.js",
+  "scripts": {
+    "start": "tsc && electron .",
+    "dev": "concurrently -n \"NEXT,ELECTRON\" -c \"yellow,blue\" --kill-others \"next dev\" \"electron .\"",
+    "build": "next build && electron-builder"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.2.3",
+    "electron-serve": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.6.10",
+    "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2",
+    "typescript": "^5.3.3"
+  }
+}
