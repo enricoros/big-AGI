@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+
+    /* Base Options: */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ES6",
+    "allowJs": true,
+    "resolveJsonModule": true,
+
+    /* Strictness */
+    "noImplicitAny": true,
+
+    /* Bundled projects */
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
