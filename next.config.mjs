@@ -11,7 +11,7 @@ let nextConfig = {
   ...BuildOptions.exportFrontend && {
     // Export the frontend to ./dist
     output: 'export',
-    distDir: 'out',
+    distDir: 'dist',
 
     // Disable Image optimization
     images: { unoptimized: true },
