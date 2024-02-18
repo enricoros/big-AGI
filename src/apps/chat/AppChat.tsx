@@ -475,7 +475,14 @@ export function AppChat() {
                 filter: (!willMulticast && idx !== focusedPaneIndex)
                   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
                   : undefined,
-              } : {}),
+              } : {
+                // NOTE: this is a workaround for the 'stuck-after-collapse-close' issue. We will collapse the 'other' pane, which
+                // will get it removed (onCollapse), and somehow this pane will be stuck with a pointerEvents: 'none' style, which de-facto
+                // disables further interaction with the chat. This is a workaround to re-enable the pointer events.
+                // The root cause seems to be a Dragstate not being reset properly, however the pointerEvents has been set since 0.0.56 while
+                // it was optional before: https://github.com/bvaughn/react-resizable-panels/issues/241
+                pointerEvents: 'auto',
+              }),
             }}
           >
 
