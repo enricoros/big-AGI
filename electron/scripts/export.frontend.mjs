@@ -12,7 +12,7 @@ const buildOnlyFrontend = process.argv.includes('--hide') ? true
 function getApiDirName() {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = pathDirName(__filename);
-  return pathJoin(__dirname, '../app/api');
+  return pathJoin(__dirname, '../../app/api');
 }
 
 function findAllFiles(startDir) {

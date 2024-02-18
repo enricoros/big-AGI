@@ -2,6 +2,8 @@
   "name": "big-agi",
   "version": "1.13.0",
   "private": true,
+  "author": "Enrico Ros <enrico.ros@gmail.com>",
+  "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,8 +14,8 @@
     "db:studio": "prisma studio",
     "vercel:env:pull": "npx vercel env pull .env.development.local",
     "export:frontend": "cross-env EXPORT_FRONTEND=true next build",
-    "postexport:frontend": "node scripts/export.frontend.mjs --restore",
-    "preexport:frontend": "node scripts/export.frontend.mjs --hide"
+    "postexport:frontend": "node electron/scripts/export.frontend.mjs --restore",
+    "preexport:frontend": "node electron/scripts/export.frontend.mjs --hide"
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
