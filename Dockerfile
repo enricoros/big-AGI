@@ -8,7 +8,6 @@ WORKDIR /app
 
 # Dependency files
 COPY package*.json ./
-COPY prisma ./prisma
 
 # Install dependencies, including dev (release builds should use npm ci)
 ENV NODE_ENV development

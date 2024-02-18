@@ -9,31 +9,33 @@ This guide outlines the database options and setup steps for enabling features l
 - Available on Vercel, Neon, and other platforms.
 - Less feature-rich but a suitable option depending on your needs.
 - **Connection String:** Replace placeholders with your Postgres credentials.
-    - `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15`
+  - `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15`
 
 **2. MongoDB Atlas (alternative):**
 
-- **Highly Recommended:** More than a database, it's a data platform. MongoDB Atlas is a robust cloud-based platform that offers scalability, security, and a suite of developer tools. No need for a separate vector database, you can query your vector embeddings right within your operational database! 
-- **Additional Features:** MongoDB Atlas is packed with unique features designed to streamline the development process such as: Atlas App Services, Atlas search (with vector search), Atlas charts, Data Federation, and more. 
+- **Highly Recommended:** More than a database, it's a data platform. MongoDB Atlas is a robust cloud-based platform that offers scalability, security, and a suite of developer tools. No need for a separate vector database, you can query your vector embeddings right within your operational database!
+- **Additional Features:** MongoDB Atlas is packed with unique features designed to streamline the development process such as: Atlas App Services, Atlas search (with vector search), Atlas charts, Data Federation, and more.
 - **Connection String:** Replace placeholders with your Atlas credentials.
-    - `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority`
+  - `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority`
 
 ### Environment Variables:
 
 #### Postgres:
-| Variable           |                                                                                                                                                                              |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `POSTGRES_PRISMA_URL`  | `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15`                                                                                                  |
-| `POSTGRES_URL_NON_POOLING` (optional) | URL for the Postgres database without pooling (specific use cases)                                                                                                               |
 
+| Variable                              |                                                                                                      |
+|---------------------------------------|------------------------------------------------------------------------------------------------------|
+| `POSTGRES_PRISMA_URL`                 | `postgres://USER:PASS@SOMEHOST.postgres.vercel-storage.com/SOMEDB?pgbouncer=true&connect_timeout=15` |
+| `POSTGRES_URL_NON_POOLING` (optional) | URL for the Postgres database without pooling (specific use cases)                                   |
 
 #### MongoDB:
-| Variable           |                                                                                                                                                                              |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MDB_URI`  | `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority`                                                                                                                |
+
+| Variable  |                                                                                          |
+|-----------|------------------------------------------------------------------------------------------|
+| `MDB_URI` | `mongodb://USER:PASS@CLUSTER-NAME.mongodb.net/DATABASE-NAME?retryWrites=true&w=majority` |
 
 ### MongoDB Atlas + Prisma
-When using MongoDB Atlas, you'll need to make the below changes to the file `prisma.schema`
+
+When using MongoDB Atlas, you'll need to make the below changes to the file [`src/server/prisma/schema.prisma`](../src/server/prisma/schema.prisma).
 
 ```
 ...
@@ -53,8 +55,7 @@ model LinkStorage {
 
 ### Initial Setup Steps:
 
-1. **Run `npx prisma db:push`:** Create or update the database schema (run once after connecting).
-
+1. **Run `npx prisma db push`:** Create or update the database schema (run once after connecting).
 
 ### Additional Resources:
 
