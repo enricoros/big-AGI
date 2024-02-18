@@ -4,7 +4,9 @@ import { fileURLToPath } from 'url';
 
 
 // build-time configuration
-const buildOnlyFrontend = !!process.env.EXPORT_FRONTEND;
+const buildOnlyFrontend = process.argv.includes('--hide') ? true
+  : process.argv.includes('--restore') ? false
+    : !!process.env.EXPORT_FRONTEND;
 
 
 function getApiDirName() {
@@ -27,7 +29,7 @@ function findAllFiles(startDir) {
  * Hide/show API routes depending on the build type
  * Due to an upstream bug, NextJS will not ignore the nodejs API routes and choose to abort instead.
  */
-function prebuildFrontendHotFixes(hideFiles) {
+function frontendHotFixAPIVisibility(hideFiles) {
   const apiDirName = getApiDirName();
   const apiRoutesPaths = findAllFiles(apiDirName)
     .filter((path) => path.endsWith('.ts') || path.endsWith('.ts.backup'));
@@ -44,4 +46,4 @@ function prebuildFrontendHotFixes(hideFiles) {
   });
 }
 
-prebuildFrontendHotFixes(buildOnlyFrontend);
+frontendHotFixAPIVisibility(buildOnlyFrontend);
