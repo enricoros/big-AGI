@@ -10,6 +10,9 @@ export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K/.test(safeUA);
 export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('Mobile') === -1;
 export const isFirefox = safeUA.indexOf('Firefox') > -1;
 
+// deployment environment
+export const isVercelBackend = !!process.env.VERCEL_ENV;
+export const isVercelFrontend = !!process.env.NEXT_PUBLIC_VERCEL_URL;
 
 /**
  * Returns 'true' if the application is been executed as a 'pwa' (e.g. installed, stand-alone)
