@@ -13,6 +13,9 @@
     "db:studio": "prisma studio",
     "vercel:env:pull": "npx vercel env pull .env.development.local"
   },
+  "prisma": {
+    "schema": "src/server/prisma/schema.prisma"
+  },
   "dependencies": {
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.3",
