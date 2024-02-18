@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Frontend Build: ignore API files disabled for this build
+/app/**/*.backup
+
 # dependencies
 /node_modules
 /.pnp

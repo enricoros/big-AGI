@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
+    "prebuild": "node scripts/prebuild.mjs",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "vercel:env:pull": "npx vercel env pull .env.development.local"

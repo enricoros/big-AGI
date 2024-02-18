@@ -1,6 +1,6 @@
 const BuildOptions = {
   // Future: Electron/Frontend-only builds
-  exportFrontend: false,
+  exportFrontend: !!process.env.EXPORT_FRONTEND,
 };
 
 /** @type {import('next').NextConfig} */
@@ -11,7 +11,7 @@ let nextConfig = {
   ...BuildOptions.exportFrontend && {
     // Export the frontend to ./dist
     output: 'export',
-    distDir: 'dist',
+    distDir: 'out',
 
     // Disable Image optimization
     images: { unoptimized: true },
