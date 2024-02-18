@@ -1,4 +1,4 @@
-# BIG-AGI 🧠✨
+  # Hi-Zayka 🧠✨
 
 Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 12 vendors and
