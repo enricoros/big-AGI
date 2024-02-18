@@ -153,6 +153,9 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
         display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
         my: 'auto',
         gap: props.isMobile ? 0 : 1,
+        // [electron] make the blank part of the bar draggable (and not the contents)
+        '-webkit-app-region': 'drag',
+        '& > *': { '-webkit-app-region': 'no-drag' },
       }}>
         {appBarItems
           ? appBarItems
