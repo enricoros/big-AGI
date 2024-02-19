@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+// import { exposeElectronTRPC } from 'electron-trpc/main';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   on: (channel: string, callback: (event: any, ...args: any[]) => void) => {
@@ -10,3 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send(channel, args);
   },
 });
+//
+// process.once('loaded', async () => {
+//   exposeElectronTRPC();
+// });

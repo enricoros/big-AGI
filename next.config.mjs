@@ -1,6 +1,5 @@
 const BuildOptions = {
-  // Future: Electron/Frontend-only builds
-  exportFrontend: !!process.env.EXPORT_FRONTEND,
+  standalone: !!process.env.BUILD_STANDALONE,
 };
 
 /** @type {import('next').NextConfig} */
@@ -8,9 +7,9 @@ let nextConfig = {
   reactStrictMode: true,
 
   // [exporting] https://nextjs.org/docs/advanced-features/static-html-export
-  ...BuildOptions.exportFrontend && {
+  ...BuildOptions.standalone && {
     // Export the frontend to ./dist
-    output: 'export',
+    output: 'standalone',
     distDir: 'dist',
 
     // Disable Image optimization
@@ -36,8 +35,7 @@ let nextConfig = {
     };
 
     // [exporting] prevent too many small files (50kb)
-    if (BuildOptions.exportFrontend)
-      config.optimization.splitChunks.minSize = 50 * 1024;
+    BuildOptions.standalone && (config.optimization.splitChunks.minSize = 50 * 1024);
 
     return config;
   },

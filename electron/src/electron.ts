@@ -1,6 +1,12 @@
 import electronServe from 'electron-serve';
 import { app, BrowserWindow } from 'electron';
 import { join as pathJoin } from 'path';
+// import { createIPCHandler } from 'electron-trpc/main';
+// import { router } from './api.server';
+// import { createTRPCRouter } from '../../src/server/api/trpc.server';
+// import { createTRPCRouter } from '~/server/api/trpc.server';
+// export const appRouterEdge = createTRPCRouter({
+// });
 
 // Simulate app.isPackaged if FORCE_PACKAGED environment variable is set
 const isPackaged = true; // process.env.FORCE_PACKAGED ? true : app.isPackaged;
@@ -27,19 +33,21 @@ const createWindow = () => {
     },
   });
 
+  // createIPCHandler({ router: router, windows: [mainWindow] });
+
   mainWindow.setMenu(null);
   // win.setIcon(null);
 
-  if (isPackaged) {
+  if (appServe) {
     appServe(mainWindow).then(() => {
-      mainWindow.webContents.openDevTools();
-      void mainWindow.loadURL('app://-');
+      mainWindow?.webContents.openDevTools();
+      void mainWindow?.loadURL('app://-');
     });
   } else {
     void mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
     mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
-      mainWindow.webContents.reloadIgnoringCache();
+      mainWindow?.webContents.reloadIgnoringCache();
     });
   }
 };
