@@ -8,20 +8,40 @@
     "target": "ES6",
     "allowJs": true,
     "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+
+//    added?
+    /* Strictness */
+//    "strict": false,
+//    "noUncheckedIndexedAccess": false,
+//    "checkJs": true,
 
     /* Strictness */
-    "noImplicitAny": true,
+//    "strict": true,
+//    "noUncheckedIndexedAccess": false,
+//    "checkJs": true,
+//    "noImplicitAny": true,
 
     /* Bundled projects */
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "lib": ["dom", "dom.iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "sourceMap": true,
+//    "jsx": "preserve",
+//    "plugins": [{"name": "next"}],
+
+    /* Custom options */
+//    "forceConsistentCasingInFileNames": true,
+//    "jsxImportSource": "@emotion/react",
 
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*"]
+//      "~/common/*": ["../src/common/*"],
+//      "~/modules/*": ["../src/modules/*"],
+//      "~/server/*": ["../src/server/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
 }

@@ -12,10 +12,7 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "vercel:env:pull": "npx vercel env pull .env.development.local",
-    "export:frontend": "cross-env EXPORT_FRONTEND=true next build",
-    "postexport:frontend": "node electron/scripts/export.frontend.mjs --restore",
-    "preexport:frontend": "node electron/scripts/export.frontend.mjs --hide"
+    "vercel:env:pull": "npx vercel env pull .env.development.local"
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
@@ -77,7 +74,6 @@
     "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.7",
     "@types/uuid": "^9.0.8",
-    "cross-env": "^7.0.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "^3.2.5",
