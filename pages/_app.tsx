@@ -46,7 +46,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     </ProviderTheming>
 
     {isVercelFrontend && <VercelAnalytics debug={false} />}
-    {isVercelFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 10} />}
+    {isVercelFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
 
   </>;
 
