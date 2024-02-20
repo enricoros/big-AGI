@@ -13,9 +13,9 @@ Detailed guides to configure your big-AGI interface and models.
 👉 The following applies to the users of big-AGI.com, as the public instance is empty and to be configured by the user.
 
 - **Cloud Model Services**:
-  - straightforward: **Anthropic**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **Perplexity**, **TogetherAI**
   - **[Azure OpenAI](config-azure-openai.md)**
   - **[OpenRouter](config-openrouter.md)**
+  - easy API key: **Anthropic**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **Perplexity**, **TogetherAI**
 
 
 - **Local Model Servers**:
