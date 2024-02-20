@@ -13,7 +13,7 @@ Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2)
+## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
 
 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
 
@@ -27,7 +27,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Adjustable text size: customize density. [#399](https://github.com/enricoros/big-AGI/issues/399)
 - Dev2 Persona Technology Preview
 - Better looking chats with improved spacing, fonts, and menus
-- More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
+- More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-local-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/deploy-database.md) (thanks @ranfysvalle02), and speedups
 
 <details>
 <summary>What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline</summary>
@@ -83,14 +83,14 @@ For full details and former releases, check out the [changelog](docs/changelog.m
 
 You can easily configure 100s of AI models in big-AGI:
 
-| **AI models**       | _supported vendors_                                                                                                                                                                             |
-|:--------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                   |
-| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                               |
-| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                  |
-| Language services   | [Anthropic](https://anthropic.com) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
-| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                                            | 
-| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                 | 
+| **AI models**       | _supported vendors_                                                                                                                                                                                                             |
+|:--------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                                                   |
+| Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                               |
+| Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                  |
+| Language services   | [Anthropic](https://anthropic.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
+| Image services      | [Prodia](https://prodia.com/) (SDXL)                                                                                                                                                                                            | 
+| Speech services     | [ElevenLabs](https://elevenlabs.io) (Voice synthesis / cloning)                                                                                                                                                                 | 
 
 Add extra functionality with these integrations:
 
@@ -141,11 +141,14 @@ Add extra functionality with these integrations:
 
 # 🧩 Develop
 
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black)
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=&logo=vercel&logoColor=white)
+[//]: # (![TypeScript]&#40;https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white&#41;)
 
-Clone this repo, install the dependencies (all locally), and run the development server (which auto-watches the
+[//]: # (![React]&#40;https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black&#41;)
+
+[//]: # (![Next.js]&#40;https://img.shields.io/badge/Next.js-000000?style=&logo=vercel&logoColor=white&#41;)
+
+To download and run this Typescript/React/Next.js project locally, the only prerequisite is Node.js with the `npm` package manager.
+Clone this repo, install the dependencies (all local), and run the development server (which auto-watches the
 files for changes):
 
 ```bash
@@ -153,6 +156,12 @@ git clone https://github.com/enricoros/big-agi.git
 cd big-agi
 npm install
 npm run dev
+
+# You will see something like:
+#
+#  ▲ Next.js 14.1.0
+#  - Local: http://localhost:3000
+#  ✓ Ready in 2.6s
 ```
 
 The development app will be running on `http://localhost:3000`. Development builds have the advantage of not requiring

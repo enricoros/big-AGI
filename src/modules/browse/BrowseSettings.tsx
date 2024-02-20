@@ -26,7 +26,7 @@ export function BrowseSettings() {
 
     <FormHelperText sx={{ display: 'block' }}>
       Configure a browsing service to enable loading links and pages. See the <Link
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md' target='_blank' noLinkStyle>
+      href='https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md' target='_blank' noLinkStyle>
       browse configuration guide</Link> for more information.
     </FormHelperText>
 
