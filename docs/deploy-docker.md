@@ -50,7 +50,7 @@ docker-compose up -d
 ### Make Local Services Visible to Docker 🌐
 
 To make local services running on your host machine accessible to a Docker container, such as a
-[Browseless](./config-browse.md) service or a local API, you can follow this simplified guide:
+[Browseless](./config-feature-browse.md) service or a local API, you can follow this simplified guide:
 
 | Operating System  | Steps to Make Local Services Visible to Docker                                                                                                                                                                                                                                                                                                                                               |
 |:------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

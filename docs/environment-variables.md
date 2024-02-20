@@ -61,7 +61,7 @@ HTTP_BASIC_AUTH_PASSWORD=
 
 ### Database
 
-For Database configuration see [config-database.md](config-database.md).
+For Database configuration see [deploy-database.md](deploy-database.md).
 
 To enable features such as Chat Link Sharing, you need to connect the backend to a database. We currently support Postgres and MongoDB.
 
@@ -81,7 +81,7 @@ requiring the user to enter an API key
 | `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as [config-aws-bedrock.md](config-aws-bedrock.md) | Optional                                                          |
 | `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                                            | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                                       | Optional                                                          |
-| `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-ollama.md](config-ollama.md)                                      |                                                                   |
+| `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama)                             |                                                                   |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                                    | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                                    | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                                   | Optional                                                          |

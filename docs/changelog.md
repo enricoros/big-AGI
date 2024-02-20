@@ -20,7 +20,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Adjustable text size: customize density. [#399](https://github.com/enricoros/big-AGI/issues/399)
 - Dev2 Persona Technology Preview
 - Better looking chats with improved spacing, fonts, and menus
-- More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/config-database.md) (thanks @ranfysvalle02), and speedups
+- More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-local-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/deploy-database.md) (thanks @ranfysvalle02), and speedups
 
 ## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
@@ -81,7 +81,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 - **Attachments System Overhaul**: Drag, paste, link, snap, text, images, PDFs and more. [#251](https://github.com/enricoros/big-agi/issues/251)
 - **Desktop Webcam Capture**: Image capture now available as Labs feature. [#253](https://github.com/enricoros/big-agi/issues/253)
-- **Independent Browsing**: Full browsing support with Browserless. [Learn More](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Independent Browsing**: Full browsing support with Browserless. [Learn More](https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md)
 - **Overheat LLMs**: Push the creativity with higher LLM temperatures. [#256](https://github.com/enricoros/big-agi/issues/256)
 - **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
 - Optimized Voice Input and Performance
@@ -90,7 +90,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 ### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
 
-- **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md)
+- **Web Browsing**: Download web pages within chats - [browsing guide](https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md)
 - **Branching Discussions**: Create new conversations from any message
 - **Keyboard Navigation**: Swift chat navigation with new shortcuts (e.g. ctrl+alt+left/right)
 - **Performance Boost**: Faster rendering for a smoother experience

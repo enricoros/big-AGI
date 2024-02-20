@@ -40,7 +40,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
     <FormTextField
       title='Ollama Host'
-      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-ollama.md' target='_blank'>information</Link>}
+      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-ollama.md' target='_blank'>information</Link>}
       placeholder='http://127.0.0.1:11434'
       isError={hostError}
       value={ollamaHost || ''}
