@@ -34,9 +34,11 @@ let nextConfig = {
       layers: true,
     };
 
-    // [exporting] prevent too many small files (50kb)
-    // if (BuildOptions.standalone)
-    config.optimization.splitChunks.minSize = 50 * 1024;
+    // prevent too many small files (40kb)
+    // NOTE: only operate on the 'client' builds (not server or edge-server),
+    // NOTE2: formerly, when exporting only: if (BuildOptions.standalone)
+    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
+      config.optimization.splitChunks.minSize = 40 * 1024;
 
     return config;
   },
