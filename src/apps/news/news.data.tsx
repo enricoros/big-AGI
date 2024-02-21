@@ -16,10 +16,6 @@ import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
 
 
-// update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 13;
-
-
 const wowStyle: SxProps = {
   textDecoration: 'underline',
   textDecorationThickness: '0.4em',
