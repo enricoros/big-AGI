@@ -11,8 +11,8 @@ export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('
 export const isFirefox = safeUA.indexOf('Firefox') > -1;
 
 // deployment environment
-export const isVercelBackend = !!process.env.VERCEL_ENV;
-export const isVercelFrontend = !!process.env.NEXT_PUBLIC_VERCEL_URL;
+export const isVercelFromBackend = !!process.env.VERCEL_ENV;
+export const isVercelFromFrontend = !!process.env.NEXT_PUBLIC_VERCEL_URL;
 
 /**
  * Returns 'true' if the application is been executed as a 'pwa' (e.g. installed, stand-alone)
@@ -32,7 +32,7 @@ export function webShare(title: string, text: string, url: string, onShared?: ()
       .catch((error) => console.log('Error sharing', error));
 }
 
-function clientHostName(): string {
+export function clientHostName(): string {
   return isBrowser ? window.location.host : '';
 }
 
