@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Head from 'next/head';
 import { MyAppProps } from 'next/app';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
 
 
