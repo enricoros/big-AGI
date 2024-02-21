@@ -35,7 +35,8 @@ let nextConfig = {
     };
 
     // [exporting] prevent too many small files (50kb)
-    BuildOptions.standalone && (config.optimization.splitChunks.minSize = 50 * 1024);
+    // if (BuildOptions.standalone)
+    config.optimization.splitChunks.minSize = 50 * 1024;
 
     return config;
   },
