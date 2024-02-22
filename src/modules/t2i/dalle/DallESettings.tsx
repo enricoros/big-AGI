@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { FormControl, Option, Select, Switch, Typography } from '@mui/joy';
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
@@ -75,7 +75,7 @@ export function DallESettings() {
       <Select
         variant='outlined'
         value={dalleSize} onChange={handleResolutionChange}
-        startDecorator={hasResolution ? undefined : <WarningIcon color='warning' />}
+        startDecorator={hasResolution ? undefined : <WarningRoundedIcon color='warning' />}
         slotProps={{
           root: { sx: { minWidth: '140px' } },
           indicator: { sx: { opacity: 0.5 } },

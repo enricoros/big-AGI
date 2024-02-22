@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Alert, Box, Button, Card, CircularProgress, IconButton, LinearProgress, List, ListItem, Switch, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { GoodModal } from '~/common/components/GoodModal';
@@ -102,7 +102,7 @@ function ModelInstallPanel(props: { access: OpenAIAccessSchema, modelName: strin
           Installing <strong>{props.modelName}</strong> from the <strong>{props.galleryName}</strong>
         </Typography>
         <IconButton size='sm' onClick={() => setHideSelf(true)} sx={{ ml: 'auto' }}>
-          <CloseIcon />
+          <CloseRoundedIcon />
         </IconButton>
       </Box>
 

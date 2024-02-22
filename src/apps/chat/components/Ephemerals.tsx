@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
 import { lineHeightChatTextMd } from '~/common/app.theme';
@@ -117,7 +117,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
         position: 'absolute', top: 8, right: 8,
         opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s',
       }}>
-      <CloseIcon />
+      <CloseRoundedIcon />
     </IconButton>
 
   </Box>;

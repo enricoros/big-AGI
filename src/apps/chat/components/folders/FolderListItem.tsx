@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
 
 import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
@@ -230,7 +230,7 @@ export function FolderListItem(props: {
               <>
                 <MenuItem onClick={handleDeleteCanceled}>
                   <ListItemDecorator>
-                    <CloseIcon />
+                    <CloseRoundedIcon />
                   </ListItemDecorator>
                   Cancel
                 </MenuItem>
