@@ -129,6 +129,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // derived state
 
+  const isCustomPurpose = systemPurposeId === 'Custom';
+
   const { selectedPurpose, fourExamples } = React.useMemo(() => {
     const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
     // const selectedExample = selectedPurpose?.examples?.length
@@ -310,12 +312,12 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           </Typography>
           {/* Examples Toggle */}
           {fourExamples && showExamplescomponent}
-          {showPromptComponent}
+          {!isCustomPurpose && showPromptComponent}
         </Box>
 
         {/* [row -3] Example incipits */}
         {systemPurposeId !== 'Custom' && (
-          <ExpanderControlledBox expanded={showExamples || showPrompt} sx={{ gridColumn: '1 / -1', pt: 1 }}>
+          <ExpanderControlledBox expanded={showExamples || (!isCustomPurpose && showPrompt)} sx={{ gridColumn: '1 / -1', pt: 1 }}>
             {showExamples && (
               <List
                 aria-label='Persona Conversation Starters'
@@ -349,7 +351,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 ))}
               </List>
             )}
-            {showPrompt && (
+            {(!isCustomPurpose && showPrompt) && (
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
