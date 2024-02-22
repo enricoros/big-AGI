@@ -153,6 +153,7 @@ interface ContentScalingOptions {
   // BlocksRenderer
   blockCodeFontSize: string;
   blockFontSize: string;
+  blockImageGap: number;
   blockLineHeight: string | number;
   // ChatMessage
   chatMessagePadding: number;
@@ -165,6 +166,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   xs: {
     blockCodeFontSize: '0.75rem',
     blockFontSize: 'xs',
+    blockImageGap: 1,
     blockLineHeight: 1.666667,
     chatMessagePadding: 1.25,
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
@@ -173,6 +175,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   sm: {
     blockCodeFontSize: '0.75rem',
     blockFontSize: 'sm',
+    blockImageGap: 1.5,
     blockLineHeight: 1.714286,
     chatMessagePadding: 1.5,
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },
@@ -181,6 +184,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   md: {
     blockCodeFontSize: '0.875rem',
     blockFontSize: 'md',
+    blockImageGap: 2,
     blockLineHeight: 1.75,
     chatMessagePadding: 2,
     chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },           // 40px
