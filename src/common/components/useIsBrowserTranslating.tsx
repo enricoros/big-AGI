@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Alert, IconButton } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { useUICounter } from '~/common/state/store-ui';
 
 
@@ -51,7 +51,7 @@ export function useBrowserTranslationWarning() {
   return React.useMemo(() => showWarning ? (
     <Alert
       variant='outlined' color='warning'
-      startDecorator={<WarningIcon />}
+      startDecorator={<WarningRoundedIcon />}
       endDecorator={
         <IconButton color='warning'>
           <CloseRoundedIcon onClick={() => {

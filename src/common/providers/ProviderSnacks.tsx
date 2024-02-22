@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { IconButton, Snackbar, SnackbarTypeMap } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { SNACKBAR_ANIMATION_DURATION, SnackbarMessage, useSnackbarsStore } from '../components/useSnackbarsStore';
 
@@ -80,7 +80,7 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
             size='sm'
             sx={{ my: '-0.4rem' }}
           >
-            <CloseIcon />
+            <CloseRoundedIcon />
           </IconButton>
         )}
         sx={theme => ({
