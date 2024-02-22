@@ -22,6 +22,7 @@ export const geminiModelsListOutputSchema = z.object({
       'countMessageTokens',
       'countTextTokens',
       'countTokens',
+      'createTunedModel',
       'createTunedTextModel',
       'embedContent',
       'embedText',
