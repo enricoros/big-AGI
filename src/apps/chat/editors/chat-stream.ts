@@ -1,4 +1,5 @@
-import { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/modules/llms/store-llms';
+import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
@@ -67,7 +68,6 @@ async function streamAssistantMessage(
 
   const messages = history.map(({ role, text }) => ({ role, content: text }));
 
-  const incrementalAnswer: Partial<DMessage> = { text: '' };
 
   // Throttling setup
   let lastCallTime = 0;
@@ -83,33 +83,34 @@ async function streamAssistantMessage(
     }
   }
 
+  const incrementalAnswer: Partial<DMessage> = { text: '' };
+
   try {
-    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal,
-      ({ originLLM, textSoFar, typing }) => {
+    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal, (update: StreamingClientUpdate) => {
+      const textSoFar = update.textSoFar;
 
-        // grow the incremental message
-        if (originLLM) incrementalAnswer.originLLM = originLLM;
-        if (textSoFar) incrementalAnswer.text = textSoFar;
-        if (typing !== undefined) incrementalAnswer.typing = typing;
+      // grow the incremental message
+      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
+      if (textSoFar) incrementalAnswer.text = textSoFar;
+      if (update.typing !== undefined) incrementalAnswer.typing = update.typing;
 
-        // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
-        // This can be toggled from the settings
-        throttledEditMessage(incrementalAnswer);
+      // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
+      // This can be toggled from the settings
+      throttledEditMessage(incrementalAnswer);
 
-        // 📢 TTS: first-line
-        if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
-          let cutPoint = textSoFar.lastIndexOf('\n');
-          if (cutPoint < 0)
-            cutPoint = textSoFar.lastIndexOf('. ');
-          if (cutPoint > 100 && cutPoint < 400) {
-            spokenLine = true;
-            const firstParagraph = textSoFar.substring(0, cutPoint);
-            // fire/forget: we don't want to stall this loop
-            void speakText(firstParagraph);
-          }
+      // 📢 TTS: first-line
+      if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
+        let cutPoint = textSoFar.lastIndexOf('\n');
+        if (cutPoint < 0)
+          cutPoint = textSoFar.lastIndexOf('. ');
+        if (cutPoint > 100 && cutPoint < 400) {
+          spokenLine = true;
+          const firstParagraph = textSoFar.substring(0, cutPoint);
+          // fire/forget: we don't want to stall this loop
+          void speakText(firstParagraph);
         }
-      },
-    );
+      }
+    });
   } catch (error: any) {
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);

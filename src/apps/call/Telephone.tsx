@@ -224,8 +224,9 @@ export function Telephone(props: {
     responseAbortController.current = new AbortController();
     let finalText = '';
     let error: any | null = null;
-    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
-      const text = updatedMessage.text?.trim();
+    setPersonaTextInterim('💭...');
+    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
+      const text = textSoFar?.trim();
       if (text) {
         finalText = text;
         setPersonaTextInterim(text);
@@ -354,7 +355,8 @@ export function Telephone(props: {
                 text={message.text}
                 variant={message.role === 'assistant' ? 'solid' : 'soft'}
                 color={message.role === 'assistant' ? 'neutral' : 'primary'}
-                role={message.role} />,
+                role={message.role}
+              />,
             )}
 
             {/* Persona streaming text... */}
