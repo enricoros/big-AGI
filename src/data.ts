@@ -20,15 +20,16 @@ export type SystemPurposeData = {
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   DeveloperPreview: {
     title: 'Developer',
-    description: 'Preview of an extended capabilities Developer',
-    systemMessageNotes: 'Knowledge cutoff is set to "Current" instead of "{{Cutoff}}" to lower push backs',
+    description: 'Extended-capabilities Developer',
+    // systemMessageNotes: 'Knowledge cutoff is set to "Current" instead of "{{Cutoff}}" to lower push backs',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
-Knowledge cutoff: Current
+Knowledge cutoff: {{Cutoff}}
 Current date: {{LocaleNow}}
 
 {{RenderMermaid}}
 {{RenderPlantUML}}
 {{RenderSVG}}
+{{PreferTables}}
 {{InputImage0}}
 {{ToolBrowser0}}
 `,

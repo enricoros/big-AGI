@@ -311,8 +311,10 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               : selectedPurpose?.description || 'No description available'}
           </Typography>
           {/* Examples Toggle */}
+          {/*<Box sx={{ display: 'flex', flexFlow: 'row wrap', flexShrink: 1 }}>*/}
           {fourExamples && showExamplescomponent}
           {!isCustomPurpose && showPromptComponent}
+          {/*</Box>*/}
         </Box>
 
         {/* [row -3] Example incipits */}
