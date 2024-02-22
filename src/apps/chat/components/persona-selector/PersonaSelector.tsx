@@ -59,6 +59,9 @@ function Tile(props: {
             backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
             backgroundPosition: 'center',
             backgroundSize: 'cover',
+            '&:hover': {
+              backgroundImage: 'none',
+            },
           }),
         } : {}),
         flexDirection: 'column', gap: 1,
