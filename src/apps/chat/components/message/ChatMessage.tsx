@@ -183,8 +183,8 @@ export const ChatMessageMemo = React.memo(ChatMessage);
 export function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
+  fitScreen: boolean,
   isBottom?: boolean,
-  isMobile: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
@@ -468,8 +468,8 @@ export function ChatMessage(props: {
           fromRole={messageRole}
           contentScaling={contentScaling}
           errorMessage={errorMessage}
+          fitScreen={props.fitScreen}
           isBottom={props.isBottom}
-          isMobile={props.isMobile}
           renderTextAsMarkdown={renderMarkdown}
           renderTextDiff={textDiffs || undefined}
           showDate={props.blocksShowDate === true ? messageUpdated || messageCreated || undefined : undefined}
