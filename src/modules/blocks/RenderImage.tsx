@@ -1,10 +1,14 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, IconButton, Tooltip, Typography } from '@mui/joy';
+import { Alert, Box, IconButton, Sheet } from '@mui/joy';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReplayIcon from '@mui/icons-material/Replay';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 import type { ImageBlock } from './blocks';
@@ -71,74 +75,102 @@ export const RenderImage = (props: {
   noTooltip?: boolean,
   onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps,
 }) => {
+
+  // state
+  const [infoOpen, setInfoOpen] = React.useState(false);
+  const [showAlert, setShowAlert] = React.useState(true);
+
+
+  // derived state
   const { url, alt } = props.imageBlock;
-  const imageUrls = url.split('\n');
+  const isTempDalleUrl = url.startsWith('https://oaidalle');
 
-  return imageUrls.map((url, index) => {
 
-    // display a notice for temporary images DallE
-    const isTempDalleUrl = url.startsWith('https://oaidalle');
+  return (
+    <Box sx={{}}>
 
-    return <Box
-      key={'gen-img-' + index}
-      sx={{
-        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative',
-        mx: 1.5, mb: 1.5, // mt: (index > 0 || !props.isFirst) ? 1.5 : 0,
-        // p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1,
-        minWidth: 128, minHeight: 128,
-        boxShadow: 'md',
-        backgroundColor: 'neutral.solidBg',
-        '& picture': { display: 'flex' },
-        '& img': { maxWidth: '100%', maxHeight: '100%' },
-        '&:hover > .overlay-buttons': { opacity: 1 },
-        ...props.sx,
-      }}
-    >
+      <Sheet
+        variant='solid'
+        sx={{
+          // style
+          mx: 1.5,
+          minWidth: 256,
+          minHeight: 128,
+          boxShadow: 'md',
 
-      {/* External Image */}
-      {alt ? (
-        <Tooltip
-          variant='outlined' color='neutral'
-          placement='top'
-          title={props.noTooltip ? null :
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {isTempDalleUrl && <Alert variant='soft' color='warning' sx={{ flexDirection: 'column', alignItems: 'start' }}>
-                <Typography level='title-sm'>⚠️ <b>Temporary Image</b> - This image will be deleted from the OpenAI servers in one hour. <b>Please save it to your device</b>.</Typography>
-                {/*<Typography level='body-xs'>*/}
-                {/*  The following is the re-written DALL·E prompt that generated this image.*/}
-                {/*</Typography>*/}
-              </Alert>}
-              <Typography level='title-sm' sx={{ p: 1 }}>
-                {alt}
-              </Typography>
-            </Box>
+          // layout
+          position: 'relative',
+          display: 'grid',
+          justifyContent: 'center',
+          alignItems: 'center',
+
+          '& picture': { display: 'flex' },
+          '& img': { maxWidth: '100%', maxHeight: '100%' },
+          '&:hover > .overlay-buttons': { opacity: 1 },
+
+          ...props.sx,
+        }}
+      >
+
+        {/* External Image */}
+        <picture>
+          <img src={url} alt={alt ? `Generated Image: ${alt}` : 'Generated Image'} />
+        </picture>
+
+        {/* Information */}
+        {!!alt && infoOpen && (
+          <Box sx={{ p: { xs: 1, md: 3 } }}>
+            {alt}
+          </Box>
+        )}
+
+        {/* (overlay) Image Buttons */}
+        <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
+          {!!props.onRunAgain && (
+            <GoodTooltip title='Draw again'>
+              <IconButton variant='outlined' onClick={props.onRunAgain}>
+                <ReplayIcon />
+              </IconButton>
+            </GoodTooltip>
+          )}
+
+          {!!alt && (
+            <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
+              <IconButton variant={infoOpen ? 'solid' : 'soft'} onClick={() => setInfoOpen(open => !open)}>
+                <InfoOutlinedIcon />
+              </IconButton>
+            </GoodTooltip>
+          )}
+
+          <GoodTooltip title='Open in new tab'>
+            <IconButton variant='soft' component={Link} href={url} download={alt || 'image'} target='_blank'>
+              <OpenInNewIcon />
+            </IconButton>
+          </GoodTooltip>
+        </Box>
+      </Sheet>
+
+      {/* Dalle Warning notice */}
+      {isTempDalleUrl && showAlert && (
+        <Alert
+          variant='soft' color='neutral'
+          startDecorator={<WarningRoundedIcon />}
+          endDecorator={
+            <IconButton variant='soft' aria-label='Close Alert' onClick={() => setShowAlert(on => !on)} sx={{ my: -0.5 }}>
+              <CloseRoundedIcon />
+            </IconButton>
           }
           sx={{
-            maxWidth: { sm: '90vw', md: '70vw' },
-            boxShadow: 'md',
+            mx: 0.5,
+            ...props.sx,
           }}
         >
-          <picture><img src={url} alt={`Generated Image: ${alt}`} /></picture>
-        </Tooltip>
-      ) : (
-        <picture><img src={url} alt='Generated Image' /></picture>
+          <div>
+            <strong>Please Save Locally</strong> · OpenAI will delete this image link from their servers one hour after creation.
+          </div>
+        </Alert>
       )}
 
-      {/* Image Buttons */}
-      <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
-        {!!props.onRunAgain && (
-          <Tooltip title='Draw again' variant='solid'>
-            <IconButton variant='solid' onClick={props.onRunAgain}>
-              <ReplayIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title='Open in new tab'>
-          <IconButton component={Link} href={url} download={alt || 'image'} target='_blank' variant='solid'>
-            <OpenInNewIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Box>;
-  });
+    </Box>
+  );
 };

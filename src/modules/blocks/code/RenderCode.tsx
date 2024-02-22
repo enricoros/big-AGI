@@ -54,7 +54,7 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 export const overlayButtonsSx: SxProps = {
   position: 'absolute', top: 0, right: 0, zIndex: 10,
   display: 'flex', flexDirection: 'row', gap: 1,
-  opacity: 0, transition: 'opacity 0.2s',
+  opacity: 0, transition: 'opacity 0.15s',
   // '& > button': {
   // backgroundColor: 'background.level2',
   // backdropFilter: 'blur(12px)',

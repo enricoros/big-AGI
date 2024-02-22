@@ -108,6 +108,14 @@ export function BlocksRenderer(props: {
     }
   ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
 
+  const scaledImageSx: SxProps = React.useMemo(() => (
+    {
+      fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+      lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+      marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
+    }
+  ), [props.contentScaling]);
+
   const scaledTypographySx: SxProps = React.useMemo(() => (
     {
       fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
@@ -186,7 +194,7 @@ export function BlocksRenderer(props: {
               : block.type === 'code'
                 ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledTypographySx} />
+                  ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
                   : block.type === 'latex'
                     ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
                     : block.type === 'diff'
