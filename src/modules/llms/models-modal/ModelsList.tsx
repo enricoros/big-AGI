@@ -3,8 +3,10 @@ import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
+import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 
@@ -30,6 +32,11 @@ function ModelItem(props: {
     event.stopPropagation();
     onModelClicked(llm.id);
   }, [llm.id, onModelClicked]);
+
+  const handleHide = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    onModelSetHidden(llm.id, true);
+  }, [llm.id, onModelSetHidden]);
 
   const handleUnhide = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
@@ -78,15 +85,17 @@ function ModelItem(props: {
 
         {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
 
-        {llm.hidden && (
-          <IconButton aria-label='Unhide' size='sm' onClick={handleUnhide}>
-            <VisibilityOffOutlinedIcon />
+        <GoodTooltip title={llm.hidden ? 'Show in Chat' : null}>
+          <IconButton aria-label={llm.hidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={llm.hidden ? handleUnhide : handleHide}>
+            {llm.hidden ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5 }} /> : <MessageOutlinedIcon />}
           </IconButton>
-        )}
+        </GoodTooltip>
 
-        <IconButton aria-label='Configure LLM' size='sm' onClick={handleClick}>
-          <SettingsOutlinedIcon />
-        </IconButton>
+        <GoodTooltip title='Options'>
+          <IconButton aria-label='Configure LLM' size='sm' onClick={handleClick}>
+            <SettingsOutlinedIcon />
+          </IconButton>
+        </GoodTooltip>
 
       </ListItemButton>
     </ListItem>
