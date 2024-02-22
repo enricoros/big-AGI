@@ -84,7 +84,7 @@ export function ChatLinkDetails(props: {
   };
 
   const onNativeShare = () => webShare(
-    Brand.Title.Base + dataTitle ? ` - ${dataTitle}` : ' - Shared Chat',
+    Brand.Title.Base + (dataTitle ? ` - ${dataTitle}` : ' - Shared Chat'),
     'Check this out!',
     fullUrl,
     () => setNative(true),
