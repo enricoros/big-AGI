@@ -64,7 +64,7 @@ export const overlayButtonsSx: SxProps = {
 
 interface RenderCodeBaseProps {
   codeBlock: CodeBlock,
-  isMobile?: boolean,
+  fitScreen?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
   sx?: SxProps,
@@ -78,7 +78,7 @@ interface RenderCodeImplProps extends RenderCodeBaseProps {
 function RenderCodeImpl(props: RenderCodeImplProps) {
 
   // state
-  const [fitScreen, setFitScreen] = React.useState(!!props.isMobile);
+  const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
   const [showHTML, setShowHTML] = React.useState(false);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);

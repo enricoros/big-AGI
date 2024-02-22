@@ -27,8 +27,8 @@ export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
+  fitScreen: boolean,
   isMessageSelectionMode: boolean,
-  isMobile: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
   onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBestOf: boolean) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
@@ -230,9 +230,9 @@ export function ChatMessageList(props: {
               key={'msg-' + message.id}
               message={message}
               diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
+              fitScreen={props.fitScreen}
               isBottom={idx === count - 1}
               isImagining={isImagining}
-              isMobile={props.isMobile}
               isSpeaking={isSpeaking}
               onConversationBranch={handleConversationBranch}
               onConversationRestartFrom={handleConversationRestartFrom}

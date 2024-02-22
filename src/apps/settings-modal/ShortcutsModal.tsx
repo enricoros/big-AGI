@@ -47,7 +47,7 @@ export function ShortcutsModal(props: { onClose: () => void }) {
         text={shortcutsMd}
         fromRole='assistant'
         contentScaling='sm'
-        isMobile={isMobile}
+        fitScreen={isMobile}
         renderTextAsMarkdown
       />
     </GoodModal>

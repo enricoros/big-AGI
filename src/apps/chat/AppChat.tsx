@@ -501,8 +501,8 @@ export function AppChat() {
                 conversationId={_paneConversationId}
                 capabilityHasT2I={capabilityHasT2I}
                 chatLLMContextTokens={chatLLM?.contextTokens ?? null}
+                fitScreen={isMobile || isMultiPane}
                 isMessageSelectionMode={isMessageSelectionMode}
-                isMobile={isMobile}
                 setIsMessageSelectionMode={setIsMessageSelectionMode}
                 onConversationBranch={handleConversationBranch}
                 onConversationExecuteHistory={handleConversationExecuteHistory}
