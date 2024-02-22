@@ -16,8 +16,10 @@ export function SettingContentScaling(props: { noLabel?: boolean }) {
   return (
     <FormControl orientation='horizontal' sx={{ justifyContent: props.noLabel ? 'center' : 'space-between' }}>
       {!props.noLabel && (
-        <FormLabelStart title='Text Size'
-                        description={contentScaling === 'xs' ? 'Extra Small' : contentScaling === 'sm' ? 'Small' : 'Default'} />
+        <FormLabelStart
+          title='Text Size'
+          description={contentScaling === 'xs' ? 'Dense' : contentScaling === 'sm' ? 'Default' : 'Comfy'}
+        />
       )}
       <Stepper sx={{
         maxWidth: 160,
