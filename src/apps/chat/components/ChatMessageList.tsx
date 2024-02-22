@@ -10,6 +10,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
+import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
@@ -46,6 +47,7 @@ export function ChatMessageList(props: {
   const { notifyBooting } = useScrollToBottom();
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
+  const optionalTranslationWarning = useBrowserTranslationWarning();
   const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -195,6 +197,8 @@ export function ChatMessageList(props: {
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
       // marginBottom: '-1px',
     }}>
+
+      {optionalTranslationWarning}
 
       {props.isMessageSelectionMode && (
         <MessagesSelectionHeader
