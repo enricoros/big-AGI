@@ -112,7 +112,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
 // formerly:
 //  - export-share: badge on the 'share' button in the Chat Menu
-export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter') {
+export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter' | 'acknowledge-translation-warning', novelty: number = 1) {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
 
   const touch = React.useCallback(() =>
@@ -121,7 +121,7 @@ export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-
 
   return {
     // value,
-    novel: !value,
+    novel: value < novelty,
     touch,
   };
 }

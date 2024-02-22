@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware';
 interface AppStateData {
   usageCount: number;
   lastSeenNewsVersion: number;
-  suppressedItems: Record<string, boolean>;
+  // suppressedItems: Record<string, boolean>;
 }
 
 interface AppStateActions {
@@ -21,7 +21,7 @@ export const useAppStateStore = create<AppStateData & AppStateActions>()(
 
       usageCount: 0,
       lastSeenNewsVersion: 0,
-      suppressedItems: {},
+      // suppressedItems: {},
 
       setLastSeenNewsVersion: (version: number) => set({ lastSeenNewsVersion: version }),
 
