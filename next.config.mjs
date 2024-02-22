@@ -4,7 +4,7 @@ const buildType =
     : process.env.BIG_AGI_BUILD === 'static' ? 'export'
       : undefined;
 
-buildType && console.log(`big-AGI: building for ${buildType}...\n`);
+buildType && console.log(`   🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
