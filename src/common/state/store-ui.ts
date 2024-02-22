@@ -59,7 +59,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
-      contentScaling: 'sm',
+      contentScaling: 'md',
       setContentScaling: (contentScaling: ContentScaling) => set({ contentScaling: contentScaling }),
       increaseContentScaling: () => set((state) => state.contentScaling === 'md' ? state : { contentScaling: state.contentScaling === 'xs' ? 'sm' : 'md' }),
       decreaseContentScaling: () => set((state) => state.contentScaling === 'xs' ? state : { contentScaling: state.contentScaling === 'md' ? 'sm' : 'xs' }),
