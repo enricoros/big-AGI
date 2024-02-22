@@ -29,7 +29,7 @@ import { useFolderStore } from '~/common/state/store-folders';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 // utils access
-import { clientHostName, isChromeDesktop, isFirefox, isIPhoneUser, isMacUser, isPwa, isVercelFromBackend, isVercelFromFrontend } from '~/common/util/pwaUtils';
+import { clientHostName, isChromeDesktop, isFirefox, isIPhoneUser, isMacUser, isPwa, isVercelFromFrontend } from '~/common/util/pwaUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 
@@ -114,7 +114,6 @@ function AppDebug() {
     deployment: {
       home: Brand.URIs.Home,
       hostName: clientHostName(),
-      isVercelFromBackend,
       isVercelFromFrontend,
       routeIndex: ROUTE_INDEX,
       routeChat: ROUTE_APP_CHAT,

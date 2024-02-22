@@ -11,7 +11,7 @@ export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('
 export const isFirefox = safeUA.indexOf('Firefox') > -1;
 
 // deployment environment
-export const isVercelFromBackend = !!process.env.VERCEL_ENV;
+export const isVercelFromBackendOrSSR = !!process.env.VERCEL_ENV;
 export const isVercelFromFrontend = !!process.env.NEXT_PUBLIC_VERCEL_URL;
 
 /**
