@@ -370,6 +370,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
@@ -405,7 +406,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'lmstudio':
-    case 'localai':
     case 'oobabooga':
     case 'openai':
       const oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
@@ -456,6 +456,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
         },
         url: oaiHost + apiPath,
+      };
+
+
+    case 'localai':
+      const localAIKey = access.oaiKey || env.LOCALAI_API_KEY || '';
+      let localAIHost = fixupHost(access.oaiHost || env.LOCALAI_API_HOST || DEFAULT_LOCALAI_HOST, apiPath);
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localAIKey && { Authorization: `Bearer ${localAIKey}` }),
+        },
+        url: localAIHost + apiPath,
       };
 
 
