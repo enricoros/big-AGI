@@ -16,7 +16,7 @@ export const formLabelStartWidth = 140;
 // Theme & Fonts
 
 const inter = Inter({
-  weight: ['400', '500', '600', '700'],
+  weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
   subsets: ['latin'],
   display: 'swap',
   fallback: ['Helvetica', 'Arial', 'sans-serif'],
