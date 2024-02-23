@@ -71,6 +71,18 @@ export const env = createEnv({
 
   },
 
+  /*
+   * Environment variables available on the client (and server).
+   *
+   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   */
+  client: {
+
+    // Frontend: server to use for PlantUML rendering
+    NEXT_PUBLIC_PLANTUML_SERVER_URL: z.string().url().optional(),
+
+  },
+
   onValidationError: error => {
     console.error('❌ Invalid environment variables:', error.issues);
     throw new Error('Invalid environment variable');
