@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { Button, Typography } from '@mui/joy';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 
+import { backendCaps } from '~/modules/backend/state-backend';
+
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
@@ -18,22 +20,27 @@ import { LocalAIAdmin } from './LocalAIAdmin';
 import { ModelVendorLocalAI } from './localai.vendor';
 
 
+const localAIHostSchema = z.string().url().startsWith('http');
+
+
 export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // state
   const [adminOpen, setAdminOpen] = React.useState(false);
 
   // external state
+  const { hasLlmLocalAIHost: backendHasHost, hasLlmLocalAIKey: backendHasKey } = backendCaps();
   const { source, access, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorLocalAI);
 
   // derived state
-  const { oaiHost } = access;
+  const { oaiHost: localAIHost, oaiKey: localAIKey } = access;
 
-  // validate if url is a well formed proper url with zod
-  const urlSchema = z.string().url().startsWith('http');
-  const { success: isValidHost } = urlSchema.safeParse(oaiHost);
-  const shallFetchSucceed = isValidHost;
+  // host validation
+  const userHostRequired = !backendHasHost;
+  const userHostValid = localAIHost.length >= 6 && localAIHostSchema.safeParse(localAIHost).success;
+  const userHostError = !!localAIHost && !userHostValid;
+  const shallFetchSucceed = localAIHost ? userHostValid : backendHasHost;
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
@@ -69,11 +76,21 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <FormInputKey
-      id='localai-key' label='LocalAI URL'
-      required noKey
-      rightLabel={<Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      id='localai-host' label='LocalAI URL'
       placeholder='e.g., http://127.0.0.1:8080'
-      value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
+      noKey
+      required={userHostRequired}
+      isError={userHostError}
+      rightLabel={backendHasHost ? '✔️ already set in server' : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      value={localAIHost} onChange={value => updateSetup({ localAIHost: value })}
+    />
+
+    <FormInputKey
+      id='localai-host' label='(optional) API Key'
+      placeholder='...'
+      required={false}
+      rightLabel={backendHasKey ? '✔️ already set in server' : undefined}
+      value={localAIKey} onChange={value => updateSetup({ localAIKey: value })}
     />
 
     <SetupFormRefetchButton

@@ -13,7 +13,8 @@ export interface BackendCapabilities {
   hasLlmAnthropic: boolean;
   hasLlmAzureOpenAI: boolean;
   hasLlmGemini: boolean;
-  hasLlmLocalAI: boolean;
+  hasLlmLocalAIHost: boolean;
+  hasLlmLocalAIKey: boolean;
   hasLlmMistral: boolean;
   hasLlmOllama: boolean;
   hasLlmOpenAI: boolean;
@@ -39,7 +40,8 @@ const useBackendStore = create<BackendStore>()(
     hasLlmAnthropic: false,
     hasLlmAzureOpenAI: false,
     hasLlmGemini: false,
-    hasLlmLocalAI: false,
+    hasLlmLocalAIHost: false,
+    hasLlmLocalAIKey: false,
     hasLlmMistral: false,
     hasLlmOllama: false,
     hasLlmOpenAI: false,

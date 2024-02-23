@@ -27,7 +27,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey: perplexityKey } = access;
 
-  // validate if url is a well formed proper url with zod
+  // key validation
   const needsUserKey = !ModelVendorPerplexity.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && sourceSetupValid);
   const showKeyError = !!perplexityKey && !sourceSetupValid;
