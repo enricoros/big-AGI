@@ -2,6 +2,11 @@ import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
 export const env = createEnv({
+
+  /*
+   * Serverside Environment variables, not available on the client.
+   * Will throw if you access these variables on the client.
+   */
   server: {
 
     // Backend Postgres, for optional storage via Prisma
@@ -73,8 +78,7 @@ export const env = createEnv({
 
   /*
    * Environment variables available on the client (and server).
-   *
-   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   * You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
    */
   client: {
 
