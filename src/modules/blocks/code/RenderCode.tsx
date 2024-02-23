@@ -157,7 +157,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          fontWeight: 500, whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
+          whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',

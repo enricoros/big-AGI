@@ -184,7 +184,6 @@ export function AttachmentItem(props: {
               border: variant === 'soft' ? '1px solid' : undefined,
               borderColor: variant === 'soft' ? `${color}.solidBg` : undefined,
               borderRadius: 'sm',
-              fontWeight: 'normal',
               ...ATTACHMENT_MIN_STYLE,
               px: 1, py: 0.5,
               display: 'flex', flexDirection: 'row', gap: 1,

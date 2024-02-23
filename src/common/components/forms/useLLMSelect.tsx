@@ -60,7 +60,7 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
           {addSeparator && <ListDivider />}
           <Option
             value={llm.id}
-            sx={llm.id === chatLLMId ? { fontWeight: 500 } : undefined}
+            sx={llm.id === chatLLMId ? { fontWeight: 'md' } : undefined}
           >
             {!!vendor?.Icon && (
               <ListItemDecorator>

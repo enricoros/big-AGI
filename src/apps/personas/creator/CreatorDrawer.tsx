@@ -143,7 +143,7 @@ export function CreatorDrawer(props: {
           <ListItemDecorator>
             <Diversity2Icon />
           </ListItemDecorator>
-          <Typography level='title-sm' sx={!props.selectedSimplePersonaId ? { fontWeight: 600 } : undefined}>
+          <Typography level='title-sm' sx={!props.selectedSimplePersonaId ? { fontWeight: 'lg' } : undefined}>
             Create
           </Typography>
         </ListItemButton>

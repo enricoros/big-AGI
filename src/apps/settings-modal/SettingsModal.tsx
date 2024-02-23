@@ -128,22 +128,22 @@ export function SettingsModal(props: {
 
       <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
         <TabList
-          variant='soft'
           disableUnderline
           sx={{
-            '--ListItem-minHeight': '2.4rem',
             bgcolor: 'primary.softHoverBg',
             mb: 2,
             p: 0.5,
             borderRadius: 'md',
             fontSize: 'md',
+            fontWeight: 'md',
             gap: 1,
             overflow: 'hidden',
             [`& .${tabClasses.root}[aria-selected="true"]`]: {
-              color: 'primary.plainColor',
-              bgcolor: 'background.surface',
-              boxShadow: 'lg',
-              fontWeight: 'md',
+              // color: 'primary.plainColor',
+              borderRadius: 'sm',
+              bgcolor: 'background.popup',
+              boxShadow: 'sm',
+              fontWeight: 'lg',
             },
           }}
         >

@@ -122,7 +122,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     <Box sx={{ flexGrow: 0.5 }} />
 
-    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 200, textAlign: 'center' }}>
+    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 'sm', textAlign: 'center' }}>
       Welcome to<br />
       <Box component='span' sx={{ animation: `${cssRainbowColorKeyframes} 15s linear infinite` }}>
         your first call

@@ -220,7 +220,7 @@ export function Creator(props: { display: boolean }) {
         </Typography>
       </Box>
       <Box>
-        <Typography color='success' level='title-sm' sx={{ fontWeight: 600 }}>
+        <Typography color='success' level='title-sm' sx={{ fontWeight: 'lg' }}>
           {chainStepName}
         </Typography>
         <LinearProgress color='success' determinate value={Math.max(10, 100 * chainProgress)} sx={{ mt: 1.5 }} />
