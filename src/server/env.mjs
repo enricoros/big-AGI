@@ -92,5 +92,7 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
 
   // with Noext.JS >= 13.4.4 we'd only need to destructure client variables
-  experimental__runtimeEnv: {},
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_PLANTUML_SERVER_URL: process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL,
+  },
 });
