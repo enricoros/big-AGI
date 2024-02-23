@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
 
-import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet, Typography } from '@mui/joy';
+import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
@@ -193,7 +193,7 @@ export function FolderListItem(props: {
           onClick={handleMenuOpen}
           sx={{
             visibility: 'hidden',
-            my: '-0.25rem' /* absorb the button padding */
+            my: '-0.25rem', /* absorb the button padding */
           }}
         >
           <MoreVertIcon />
@@ -257,7 +257,7 @@ export function FolderListItem(props: {
                 sx={{
                   mb: 1.5,
                   fontSize: 'xs',
-                  fontWeight: 'xl',
+                  fontWeight: 'xl', /* 700: this COLOR labels stands out positively */
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
                 }}

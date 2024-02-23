@@ -51,8 +51,9 @@ export function AddFolderButton() {
       <ListItemButton
         onClick={handleAddFolder}
         sx={{
-          fontSize: 'sm', fontWeight: 'lg',
-          // uniformize with the 'new chat' button
+          // equal to the 'new chat' button
+          fontSize: 'sm',
+          fontWeight: 'lg',
           color: 'neutral.outlinedColor',
         }}
       >

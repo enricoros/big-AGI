@@ -102,6 +102,7 @@ export function BlocksRenderer(props: {
       boxShadow: props.specialDiagramMode ? 'md' : 'xs',
       fontFamily: 'code',
       fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
+      fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
       fontVariantLigatures: 'none',
       lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
       borderRadius: 'var(--joy-radius-sm)',

@@ -39,7 +39,7 @@ function B(props: {
       : props.code ? `${Brand.URIs.OpenRepo}/blob/main/${props.code}`
         : props.href;
   const boldText = (
-    <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>
+    <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 'lg' }}>
       {props.children}
     </Typography>
   );

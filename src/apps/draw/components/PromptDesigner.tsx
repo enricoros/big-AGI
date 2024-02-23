@@ -184,8 +184,6 @@ export function PromptDesigner(props: {
                 px: 0,
                 minWidth: '3rem',
                 pointerEvents: 'none',
-                fontSize: 'xs',
-                fontWeight: 600,
               }}>
               <Typography level='body-xs' color='danger' sx={{ fontWeight: 'lg' }}>
                 {tempCount > 1 ? `1 / ${tempCount}` : '1'}
@@ -339,7 +337,7 @@ export function PromptDesigner(props: {
                   key={n}
                   variant={tempRepeat === n ? 'soft' : 'plain'} color='neutral'
                   onClick={() => setTempRepeat(n)}
-                  sx={{ fontWeight: tempRepeat === n ? 'xl' : 'sm' }}
+                  sx={{ fontWeight: tempRepeat === n ? 'xl' : 400 /* reset, from 600 */ }}
                 >
                   {`x${n}`}
                 </Button>

@@ -93,12 +93,12 @@ export function AppNews() {
                 <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography level='title-sm' component='div'>
-                      {ni.text ? ni.text : ni.versionName ? <><span style={{ fontWeight: 600 }}>{ni.versionCode}</span> · </> : `Version ${ni.versionCode}:`}
+                      {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
                       <Box
                         component='span'
                         sx={idx ? {} : {
                           animation: `${cssRainbowColorKeyframes} 5s infinite`,
-                          fontWeight: 600,
+                          fontWeight: 'lg',
                           zIndex: 1,
                         }}
                       >

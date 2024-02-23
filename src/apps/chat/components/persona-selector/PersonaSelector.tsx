@@ -51,7 +51,7 @@ function Tile(props: {
       sx={{
         aspectRatio: 1,
         height: `${tileSize}rem`,
-        fontWeight: 500,
+        fontWeight: 'md',
         ...((props.isEditMode || !props.isActive) ? {
           boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
           backgroundColor: props.isHighlighted ? undefined : 'background.surface',
