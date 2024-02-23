@@ -226,7 +226,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
               </IconButton>
             </Tooltip>
           )}
-          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML) || (isSVG && showSVG && canScaleSVG)) && (
+          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML && !plantUmlError) || (isSVG && showSVG && canScaleSVG)) && (
             <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
               <IconButton variant={fitScreen ? 'solid' : 'soft'} onClick={() => setFitScreen(on => !on)}>
                 <FitScreenIcon />
