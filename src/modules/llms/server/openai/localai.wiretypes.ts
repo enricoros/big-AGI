@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const wireLocalAIModelsAvailableOutputSchema = z.array(z.object({
   name: z.string(),       // (e.g.) tinydream
   url: z.string(),        // (e.g.) github:go-skynet/model-gallery/tinydream.yaml
-  license: z.string(),    // (e.g.) other
+  license: z.string().optional(),    // (e.g.) other
   gallery: z.object({
     url: z.string(),      // (e.g.) github:go-skynet/model-gallery/index.yaml
     name: z.string(),     // (e.g.) model-gallery
