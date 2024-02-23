@@ -21,37 +21,40 @@ import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
 
 async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
+  // Get the PlantUML server from inline env var
+  let plantUmlServerUrl = process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL || 'https://www.plantuml.com/plantuml/svg/';
+  if (!plantUmlServerUrl.endsWith('/'))
+    plantUmlServerUrl += '/';
+
   // fetch the PlantUML SVG
   let text: string = '';
   try {
     // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
     const { encode: plantUmlEncode } = await import('plantuml-encoder');
 
-    // Get the PlantUML server from inline env var
-    let plantUmlServerUrl = process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL;
-    if (!plantUmlServerUrl) {
-      plantUmlServerUrl = 'https://www.plantuml.com/plantuml/svg/';
-    }
-
     // retrieve and manually adapt the SVG, to remove the background
     const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
     const response = await frontendSideFetch(`${plantUmlServerUrl}${encodedPlantUML}`);
     text = await response.text();
-  } catch (e) {
+  } catch (error) {
+    console.error('Error rendering PlantUML on server:', plantUmlServerUrl, error);
     return null;
   }
+
   // validate/extract the SVG
   const start = text.indexOf('<svg ');
   const end = text.indexOf('</svg>');
   if (start < 0 || end <= start)
     throw new Error('Could not render PlantUML');
+
+  // remove the background color
   const svg = text
     .slice(start, end + 6) // <svg ... </svg>
-    .replace('background:#FFFFFF;', ''); // transparent background
+    .replace('background:#FFFFFF;', '');
 
   // check for syntax errors
   if (svg.includes('>Syntax Error?</text>'))
-    throw new Error('syntax issue (it happens!). Please regenerate or change generator model.');
+    throw new Error('llm syntax issue (it happens!). Please regenerate or change the language model.');
 
   return svg;
 }
