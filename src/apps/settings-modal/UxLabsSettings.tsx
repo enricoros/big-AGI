@@ -15,7 +15,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 // uncomment for more settings
-// const DEV_MODE_SETTINGS = false;
+const DEV_MODE_SETTINGS = false;
 
 
 export function UxLabsSettings() {
@@ -32,10 +32,10 @@ export function UxLabsSettings() {
 
   return <>
 
-    <FormSwitchControl
+    {DEV_MODE_SETTINGS && <FormSwitchControl
       title={<><ChatBeamIcon color={labsChatBeam ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Beam</>} description={'v1.14 · ' + (labsChatBeam ? 'Active' : 'Off')}
       checked={labsChatBeam} onChange={setLabsChatBeam}
-    />
+    />}
 
     <FormSwitchControl
       title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Options')}
