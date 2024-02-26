@@ -166,6 +166,9 @@ export function AppChat() {
       const chatCommand = extractChatCommand(lastMessage.text)[0];
       if (chatCommand && chatCommand.type === 'cmd') {
         switch (chatCommand.providerId) {
+          case 'ass-beam':
+            return ConversationManager.getHandler(conversationId).beamStore.create(history);
+
           case 'ass-browse':
             setMessages(conversationId, history);
             return await runBrowseGetPageUpdatingState(conversationId, chatCommand.params!);
@@ -200,6 +203,9 @@ export function AppChat() {
             const helpMessage = createDMessage('assistant', 'Available Chat Commands:\n' + chatCommandsText);
             helpMessage.originLLM = Brand.Title.Base;
             return setMessages(conversationId, [...history, helpMessage]);
+
+          default:
+            return setMessages(conversationId, [...history, createDMessage('assistant', 'This command is not supported.')]);
         }
       }
     }
@@ -211,10 +217,7 @@ export function AppChat() {
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
-          if (!lastMessage?.text)
-            break;
-          ConversationManager.getHandler(conversationId).beamStore.create(history);
-          return;
+          return ConversationManager.getHandler(conversationId).beamStore.create(history);
 
         case 'append-user':
           return setMessages(conversationId, history);
