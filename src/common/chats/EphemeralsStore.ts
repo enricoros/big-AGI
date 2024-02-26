@@ -60,7 +60,7 @@ export class EphemeralsStore extends EventTarget {
   }
 }
 
-export class EphemeralController {
+export class EphemeralHandler {
   private readonly ephemeralId: string;
 
   constructor(title: string, initialText: string, readonly ephemeralsStore: EphemeralsStore) {

@@ -4,9 +4,9 @@ import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-import { ConversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 import { DConversationId } from '~/common/state/store-chats';
-import { DEphemeral } from '~/common/chats/ConversationEphemerals';
+import { DEphemeral } from '~/common/chats/EphemeralsStore';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 

@@ -2,7 +2,7 @@ import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import { ConversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 

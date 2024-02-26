@@ -7,7 +7,7 @@ import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DMessage } from '~/common/state/store-chats';
-import { ConversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
