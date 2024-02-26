@@ -71,7 +71,7 @@ export function getActiveTextToImageProviderOrThrow() {
   // find the active provider
   const activeProvider = providers.find(p => p.id === activeProviderId);
   if (!activeProvider)
-    throw new Error('No TextToImage Provider found');
+    throw new Error('Text-to-image is not configured correctly');
 
   return activeProvider;
 }
