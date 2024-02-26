@@ -647,6 +647,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Codellama 70B Instruct as a replacement.',
     contextWindow: 16384,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'codellama-70b-instruct',
@@ -661,6 +662,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try mixtral-8x7b-instruct as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'mistral-7b-instruct',
@@ -682,6 +684,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Small Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-70b-online',
@@ -689,6 +692,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-8x7b-online',
@@ -696,6 +700,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-7b-chat',
@@ -703,6 +708,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Small Chat as a replacement.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-70b-chat',
@@ -710,6 +716,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-8x7b-chat',
@@ -717,6 +724,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'sonar-small-chat',
@@ -745,12 +753,27 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     description: 'Sonar Medium Online',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
-  }
+  },
+];
+
+const perplexityAIModelFamilyOrder = [
+  'sonar-medium', 'sonar-small', 'mixtral', 'mistral', 'codellama', 'llama-2', '',
 ];
 
 export function perplexityAIModelDescriptions() {
   // change this implementation once upstream implements some form of models listing
   return _knownPerplexityChatModels;
+}
+
+export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  const aPrefixIndex = perplexityAIModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
+  const bPrefixIndex = perplexityAIModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
+  // sort by family
+  if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
+    if (aPrefixIndex !== bPrefixIndex)
+      return aPrefixIndex - bPrefixIndex;
+  // then by reverse label
+  return b.label.localeCompare(a.label);
 }
 
 
