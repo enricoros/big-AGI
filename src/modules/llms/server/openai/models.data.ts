@@ -742,14 +742,14 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
   },
   {
     id: 'sonar-small-online',
-    label: 'Sonar Small Online',
+    label: 'Sonar Small Online 🌐',
     description: 'Sonar Small Online',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'sonar-medium-online',
-    label: 'Sonar Medium Online',
+    label: 'Sonar Medium Online 🌐',
     description: 'Sonar Medium Online',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
