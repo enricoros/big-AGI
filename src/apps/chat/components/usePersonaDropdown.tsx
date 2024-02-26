@@ -30,7 +30,7 @@ function PersonaDropdown(props: {
         obj[key as SystemPurposeId] = SystemPurposes[key as SystemPurposeId];
         return obj;
       }, {} as typeof SystemPurposes);
-  }, [hiddenPurposeIDs]);
+  }, [hiddenPurposeIDs, props.systemPurposeId]);
 
 
   const { setSystemPurposeId } = props;
