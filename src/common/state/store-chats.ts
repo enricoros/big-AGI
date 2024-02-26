@@ -458,6 +458,9 @@ function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom
 export const getConversation = (conversationId: DConversationId | null): DConversation | null =>
   conversationId ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null : null;
 
+export const getConversationSystemPurposeId = (conversationId: DConversationId | null): SystemPurposeId | null =>
+  getConversation(conversationId)?.systemPurposeId || null;
+
 export const useConversation = (conversationId: DConversationId | null) => useChatStore(state => {
   const { conversations } = state;
 
@@ -466,16 +469,17 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
   const title = conversation ? conversationTitle(conversation) : null;
   const isChatEmpty = conversation ? !conversation.messages.length : true;
+  const isDeveloper = conversation?.systemPurposeId === 'Developer';
   const areChatsEmpty = isChatEmpty && conversations.length < 2;
   const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
 
   return {
     title,
     isChatEmpty,
+    isDeveloper,
     areChatsEmpty,
     conversationIdx,
     newConversationId,
-    _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
     deleteConversations: state.deleteConversations,

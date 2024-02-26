@@ -17,7 +17,7 @@ import { ConversationManager } from '~/common/chats/ConversationHandler';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -98,10 +98,10 @@ export function AppChat() {
   const {
     title: focusedChatTitle,
     isChatEmpty: isFocusedChatEmpty,
+    isDeveloper: isFocusedChatDeveloper,
     areChatsEmpty,
     conversationIdx: focusedChatNumber,
     newConversationId,
-    _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation,
     branchConversation,
     deleteConversations,
@@ -210,11 +210,16 @@ export function AppChat() {
       }
     }
 
+    // get the focused system purpose (note: we don't react to it, or it would invalidate half UI components..)
+    const conversationSystemPurposeId = getConversationSystemPurposeId(conversationId);
+    if (!conversationSystemPurposeId)
+      return setMessages(conversationId, [...history, createDMessage('assistant', 'No persona selected.')]);
+
     // synchronous long-duration tasks, which update the state as they go
-    if (chatLLMId && focusedSystemPurposeId) {
+    if (chatLLMId) {
       switch (chatModeId) {
         case 'generate-text':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, conversationSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
           return ConversationManager.getHandler(conversationId).beamStore.create(history);
@@ -243,7 +248,7 @@ export function AppChat() {
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
     console.log('handleExecuteConversation: issue running', chatModeId, conversationId, lastMessage);
     setMessages(conversationId, history);
-  }, [focusedSystemPurposeId, setMessages]);
+  }, [setMessages]);
 
   const handleComposerAction = React.useCallback((chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart): boolean => {
     // validate inputs
@@ -318,7 +323,7 @@ export function AppChat() {
     // activate an existing new conversation if present, or create another
     const conversationId = (newConversationId && !forceNoRecycle)
       ? newConversationId
-      : prependNewConversation(focusedSystemPurposeId ?? undefined);
+      : prependNewConversation(getConversationSystemPurposeId(focusedConversationId) ?? undefined);
     setFocusedConversationId(conversationId);
 
     // if a folder is active, add the new conversation to the folder
@@ -328,7 +333,7 @@ export function AppChat() {
     // focus the composer
     composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
+  }, [activeFolderId, focusedConversationId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -584,7 +589,7 @@ export function AppChat() {
       conversationId={focusedConversationId}
       capabilityHasT2I={capabilityHasT2I}
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
-      isDeveloperMode={focusedSystemPurposeId === 'Developer'}
+      isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
