@@ -2,7 +2,7 @@ import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import { conversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationManager';
 
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
@@ -11,7 +11,7 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
 export async function runReActUpdatingState(conversationId: string, question: string, assistantLlmId: DLLMId) {
-  const cHandler = conversationManager().getHandler(conversationId, 'runReActUpdatingState');
+  const cHandler = ConversationManager.getHandler(conversationId);
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId.slice(4, 7); // HACK: this is used to change the Avatar animation
@@ -42,6 +42,4 @@ export async function runReActUpdatingState(conversationId: string, question: st
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
     cHandler.messageEdit(assistantMessageId, { text: 'Issue: ReAct did not produce an answer.', typing: false }, false);
   }
-
-  conversationManager().releaseHandler(cHandler, 'runReActUpdatingState');
 }

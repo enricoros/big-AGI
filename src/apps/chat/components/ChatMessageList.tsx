@@ -6,12 +6,14 @@ import { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
+import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useEphemerals } from '~/common/chats/ConversationEphemerals';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
@@ -26,6 +28,7 @@ import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
  */
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
+  conversationHandler: ConversationHandler | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
   fitScreen: boolean,
@@ -49,17 +52,17 @@ export function ChatMessageList(props: {
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, ephemerals, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
+  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
-      ephemerals: conversation ? conversation.ephemerals : [],
       historyTokenCount: conversation ? conversation.tokenCount : 0,
       deleteMessage: state.deleteMessage,
       editMessage: state.editMessage,
       setMessages: state.setMessages,
     };
   }, shallow);
+  const ephemerals = useEphemerals(props.conversationHandler);
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
@@ -250,7 +253,7 @@ export function ChatMessageList(props: {
         },
       )}
 
-      {!!ephemerals?.length && (
+      {!!ephemerals.length && (
         <Ephemerals
           ephemerals={ephemerals}
           conversationId={props.conversationId}

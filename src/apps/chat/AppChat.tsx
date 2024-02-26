@@ -31,6 +31,7 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
+import { ConversationManager } from '~/common/chats/ConversationManager';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
@@ -125,6 +126,10 @@ export function AppChat() {
   const willMulticast = isComposerMulticast && isMultiConversationId;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
+  const chatHandlers = React.useMemo(() => chatPanes.map(pane => {
+    return pane.conversationId ? ConversationManager.getHandler(pane.conversationId) : null;
+  }), [chatPanes]);
+
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
   }, [openConversationInFocusedPane]);
@@ -146,6 +151,7 @@ export function AppChat() {
       return () => removeSnackbar(id);
     }
   }, [focusedChatNumber, focusedChatTitle]);
+
 
   // Execution
 
@@ -294,6 +300,7 @@ export function AppChat() {
     await speakText(text);
   }, []);
 
+
   // Chat actions
 
   const handleConversationNew = React.useCallback((forceNoRecycle?: boolean) => {
@@ -364,6 +371,7 @@ export function AppChat() {
     !!deleteConversationIds?.length && handleDeleteConversations(deleteConversationIds, true);
   }, [deleteConversationIds, handleDeleteConversations]);
 
+
   // Shortcuts
 
   const handleOpenChatLlmOptions = React.useCallback(() => {
@@ -386,7 +394,8 @@ export function AppChat() {
   ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationNew, handleDeleteConversations, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
-  // Pluggable ApplicationBar components
+
+  // Pluggable Optima components
 
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
@@ -442,6 +451,7 @@ export function AppChat() {
 
       {chatPanes.map((pane, idx) => {
         const _paneConversationId = pane.conversationId;
+        const _paneChatHandler = chatHandlers[idx] ?? null;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${idx}-${_paneConversationId}`;
         const _sepId = `sep-pane-${idx}-${_paneConversationId}`;
@@ -498,6 +508,7 @@ export function AppChat() {
 
               <ChatMessageList
                 conversationId={_paneConversationId}
+                conversationHandler={_paneChatHandler}
                 capabilityHasT2I={capabilityHasT2I}
                 chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                 fitScreen={isMobile || isMultiPane}

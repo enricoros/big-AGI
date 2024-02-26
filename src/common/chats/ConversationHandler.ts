@@ -5,14 +5,18 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
 
-import { EphemeralHandler } from './EphemeralHandler';
+import { EphemeralController, EphemeralsStore } from './ConversationEphemerals';
 
 
 export class ConversationHandler {
   private readonly chatActions: ChatActions;
+  private readonly conversationId: DConversationId;
+  readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
-  constructor(readonly conversationId: DConversationId) {
+
+  constructor(conversationId: DConversationId) {
     this.chatActions = useChatStore.getState();
+    this.conversationId = conversationId;
   }
 
 
@@ -57,9 +61,8 @@ export class ConversationHandler {
 
   // Ephemerality Management
 
-  createEphemeral(title: string, initialText: string): EphemeralHandler {
-    return new EphemeralHandler(title, initialText, this.conversationId, this.chatActions);
+  createEphemeral(title: string, initialText: string): EphemeralController {
+    return new EphemeralController(title, initialText, this.ephemeralsStore);
   }
 
 }
-

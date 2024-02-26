@@ -1,10 +1,10 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { conversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationManager';
 
 
 export const runBrowseGetPageUpdatingState = async (conversationId: string, url: string) => {
-  const cHandler = conversationManager().getHandler(conversationId, 'runBrowseUpdatingState');
+  const cHandler = ConversationManager.getHandler(conversationId);
 
   // noinspection HttpUrlsUsage
   const shortUrl = url.replace('https://www.', '').replace('https://', '').replace('http://', '').replace('www.', '');
@@ -17,6 +17,4 @@ export const runBrowseGetPageUpdatingState = async (conversationId: string, url:
     console.error(error);
     cHandler.messageEdit(assistantMessageId, { text: 'Issue: browse did not produce an answer (error: ' + (error?.message || error?.toString() || 'unknown') + ').', typing: false }, true);
   }
-
-  conversationManager().releaseHandler(cHandler, 'runBrowseUpdatingState');
 };

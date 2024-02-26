@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
+import { ConversationManager } from '~/common/chats/ConversationManager';
+import { DConversationId } from '~/common/state/store-chats';
+import { DEphemeral } from '~/common/chats/ConversationEphemerals';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
@@ -75,6 +76,11 @@ function StateRenderer(props: { state: object }) {
 
 
 function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
+
+  const handleDelete = React.useCallback(() => {
+    ConversationManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
+  }, [conversationId, ephemeral.id]);
+
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
@@ -112,7 +118,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     {/* Close button (right of title) */}
     <IconButton
       size='sm'
-      onClick={() => useChatStore.getState().deleteEphemeral(conversationId, ephemeral.id)}
+      onClick={handleDelete}
       sx={{
         position: 'absolute', top: 8, right: 8,
         opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s',
