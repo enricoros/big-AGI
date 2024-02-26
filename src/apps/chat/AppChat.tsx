@@ -53,9 +53,9 @@ export const CHAT_NOVEL_TITLE = 'Chat';
  */
 export type ChatModeId =
   | 'generate-text'
+  | 'generate-text-beam'
   | 'append-user'
   | 'generate-image'
-  | 'generate-best-of'
   | 'generate-react';
 
 
@@ -210,6 +210,12 @@ export function AppChat() {
         case 'generate-text':
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
+        case 'generate-text-beam':
+          if (!lastMessage?.text)
+            break;
+          ConversationManager.getHandler(conversationId).beamStore.create(history);
+          return;
+
         case 'append-user':
           return setMessages(conversationId, history);
 
@@ -222,12 +228,6 @@ export function AppChat() {
             text: `/draw ${lastMessage.text}`,
           }));
           return await runImageGenerationUpdatingState(conversationId, lastMessage.text);
-
-        case 'generate-best-of':
-          if (!lastMessage?.text)
-            break;
-          ConversationManager.getHandler(conversationId).beamStore.create(history);
-          return;
 
         case 'generate-react':
           if (!lastMessage?.text)
@@ -275,8 +275,8 @@ export function AppChat() {
     return enqueued;
   }, [chatPanes, willMulticast, _handleExecute]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], effectBestOf: boolean): Promise<void> => {
-    await _handleExecute(effectBestOf ? 'generate-best-of' : 'generate-text', conversationId, history);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], chatEffectBeam: boolean): Promise<void> => {
+    await _handleExecute(!chatEffectBeam ? 'generate-text' : 'generate-text-beam', conversationId, history);
   }, [_handleExecute]);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {

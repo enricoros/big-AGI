@@ -1,13 +1,14 @@
 import { ChatCommand, ICommandsProvider } from './ICommandsProvider';
 
 import { CommandsAlter } from './CommandsAlter';
+import { CommandsBeam } from './CommandsBeam';
 import { CommandsBrowse } from './CommandsBrowse';
 import { CommandsDraw } from './CommandsDraw';
 import { CommandsHelp } from './CommandsHelp';
 import { CommandsReact } from './CommandsReact';
 
 
-export type CommandsProviderId = 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help';
+export type CommandsProviderId = 'ass-beam' | 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help';
 
 type TextCommandPiece =
   | { type: 'text'; value: string; }
@@ -15,6 +16,7 @@ type TextCommandPiece =
 
 
 const ChatCommandsProviders: Record<CommandsProviderId, ICommandsProvider> = {
+  'ass-beam': CommandsBeam,
   'ass-browse': CommandsBrowse,
   'ass-react': CommandsReact,
   'ass-t2i': CommandsDraw,
