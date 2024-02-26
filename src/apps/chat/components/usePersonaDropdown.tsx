@@ -22,10 +22,10 @@ function PersonaDropdown(props: {
   }), shallow);
 
 
-  // filter by key in the object - must be missing the system purpose ids hidden by the user
+  // filter by key in the object - must be missing the system purpose ids hidden by the user, or be the currently active one
   const visibleSystemPurposes = React.useMemo(() => {
     return Object.keys(SystemPurposes)
-      .filter(key => !hiddenPurposeIDs.includes(key as SystemPurposeId))
+      .filter(key => !hiddenPurposeIDs.includes(key as SystemPurposeId) || key === props.systemPurposeId)
       .reduce((obj, key) => {
         obj[key as SystemPurposeId] = SystemPurposes[key as SystemPurposeId];
         return obj;
