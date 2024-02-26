@@ -26,6 +26,7 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
+import { Beam } from './components/beam/Beam';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatDropdowns } from './components/ChatDropdowns';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -221,6 +222,12 @@ export function AppChat() {
             text: `/draw ${lastMessage.text}`,
           }));
           return await runImageGenerationUpdatingState(conversationId, lastMessage.text);
+
+        case 'generate-best-of':
+          if (!lastMessage?.text)
+            break;
+          ConversationManager.getHandler(conversationId).beamStore.create(history);
+          return;
 
         case 'generate-react':
           if (!lastMessage?.text)
@@ -539,6 +546,20 @@ export function AppChat() {
               <ScrollToBottomButton />
 
             </ScrollToBottom>
+
+            {/* Best-Of Mode */}
+            <Beam
+              conversationHandler={_paneChatHandler}
+              isMobile={isMobile}
+              sx={{
+                overflowY: 'auto',
+                backgroundColor: 'background.level2',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1, // stay on top of Chips :shrug:
+              }}
+            />
+
           </Panel>
 
           {/* Panel Separators & Resizers */}

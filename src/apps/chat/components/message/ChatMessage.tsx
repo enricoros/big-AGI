@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -196,6 +197,7 @@ export function ChatMessage(props: {
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
+  sx?: SxProps,
 }) {
 
   // state
@@ -412,6 +414,7 @@ export function ChatMessage(props: {
         borderBottomColor: 'divider',
         ...(ENABLE_COPY_MESSAGE_OVERLAY && { position: 'relative' }),
         '&:hover > button': { opacity: 1 },
+        ...props.sx,
       }}
     >
 
