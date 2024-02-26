@@ -15,6 +15,7 @@ import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
+import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
 import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
@@ -48,10 +49,11 @@ export function ChatMessageList(props: {
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
+  const { conversationMessages, ephemerals, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
+      ephemerals: conversation ? conversation.ephemerals : [],
       historyTokenCount: conversation ? conversation.tokenCount : 0,
       deleteMessage: state.deleteMessage,
       editMessage: state.editMessage,
@@ -246,6 +248,18 @@ export function ChatMessageList(props: {
 
           );
         },
+      )}
+
+      {!!ephemerals?.length && (
+        <Ephemerals
+          ephemerals={ephemerals}
+          conversationId={props.conversationId}
+          sx={{
+            mt: 'auto',
+            overflowY: 'auto',
+            minHeight: 64,
+          }}
+        />
       )}
 
     </List>

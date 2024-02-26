@@ -31,7 +31,6 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
-import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
@@ -514,19 +513,20 @@ export function AppChat() {
                 }}
               />
 
-              <Ephemerals
-                conversationId={_paneConversationId}
-                sx={{
-                  // TODO: Fixme post panels?
-                  // flexGrow: 0.1,
-                  flexShrink: 0.5,
-                  overflowY: 'auto',
-                  minHeight: 64,
-                }}
-              />
+              {/*<Ephemerals*/}
+              {/*  conversationId={_paneConversationId}*/}
+              {/*  sx={{*/}
+              {/*    // TODO: Fixme post panels?*/}
+              {/*    // flexGrow: 0.1,*/}
+              {/*    flexShrink: 0.5,*/}
+              {/*    overflowY: 'auto',*/}
+              {/*    minHeight: 64,*/}
+              {/*  }}*/}
+              {/*/>*/}
 
               {/* Visibility and actions are handled via Context */}
               <ScrollToBottomButton />
+
             </ScrollToBottom>
           </Panel>
 

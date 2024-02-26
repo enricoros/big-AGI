@@ -130,19 +130,22 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 // `);
 
 
-export function Ephemerals(props: { conversationId: DConversationId | null, sx?: SxProps }) {
+export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId | null, sx?: SxProps }) {
   // global state
-  const ephemerals = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    return conversation ? conversation.ephemerals : [];
-  }, shallow);
+  // const ephemerals = useChatStore(state => {
+  //   const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+  //   return conversation ? conversation.ephemerals : [];
+  // }, shallow);
 
-  if (!ephemerals?.length) return null;
+  const ephemerals = props.ephemerals;
+  // if (!ephemerals?.length) return null;
 
   return (
     <Sheet
       variant='soft' color='success' invertedColors
       sx={{
+        borderTop: '1px solid',
+        borderTopColor: 'divider',
         // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
         // backgroundSize: '100% 100%',
         // backgroundRepeat: 'no-repeat',
