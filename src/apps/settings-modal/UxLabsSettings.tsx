@@ -6,6 +6,7 @@ import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
 
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
@@ -25,19 +26,25 @@ export function UxLabsSettings() {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
+    labsChatBeam, setLabsChatBeam,
     labsHighPerformance, setLabsHighPerformance,
   } = useUXLabsStore();
 
   return <>
 
     <FormSwitchControl
-      title={<><SpeedIcon color={labsHighPerformance ? 'primary' : undefined} sx={{ mr: 0.25 }} />Performance</>} description={'v1.14 · ' + (labsHighPerformance ? 'Unlocked' : 'Default')}
-      checked={labsHighPerformance} onChange={setLabsHighPerformance}
+      title={<><ChatBeamIcon color={labsChatBeam ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Beam</>} description={'v1.14 · ' + (labsChatBeam ? 'Active' : 'Off')}
+      checked={labsChatBeam} onChange={setLabsChatBeam}
     />
 
     <FormSwitchControl
       title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Options')}
       checked={labsChatBarAlt === 'title'} onChange={(on) => setLabsChatBarAlt(on ? 'title' : false)}
+    />
+
+    <FormSwitchControl
+      title={<><SpeedIcon color={labsHighPerformance ? 'primary' : undefined} sx={{ mr: 0.25 }} />Performance</>} description={'v1.14 · ' + (labsHighPerformance ? 'Unlocked' : 'Default')}
+      checked={labsHighPerformance} onChange={setLabsHighPerformance}
     />
 
     {!isMobile && <FormSwitchControl

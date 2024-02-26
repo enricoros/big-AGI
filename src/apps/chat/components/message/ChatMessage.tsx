@@ -34,6 +34,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { cssRainbowColorKeyframes, themeScalingMap } from '~/common/app.theme';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -208,6 +209,7 @@ export function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
+  const labsChatBeam = useUXLabsStore(state => state.labsChatBeam);
   const { cleanerLooks, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
     cleanerLooks: state.zenMode === 'cleaner',
     contentScaling: state.contentScaling,
@@ -285,7 +287,7 @@ export function ChatMessage(props: {
   const handleOpsConversationRestartFromBeam = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
+    props.onConversationRestartFrom && labsChatBeam && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -588,16 +590,18 @@ export function ChatMessage(props: {
                     Retry
                     <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>}
-              <Tooltip title={messageTyping ? null : 'Best-Of'}>
-                <IconButton
-                  size='sm'
-                  variant='outlined' color='primary'
-                  onClick={handleOpsConversationRestartFromBeam}
-                  sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
-                >
-                  <ChatBeamIcon /> {/*<GavelIcon />*/}
-                </IconButton>
-              </Tooltip>
+              {labsChatBeam && (
+                <Tooltip title={messageTyping ? null : 'Best-Of'}>
+                  <IconButton
+                    size='sm'
+                    variant='outlined' color='primary'
+                    onClick={handleOpsConversationRestartFromBeam}
+                    sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
+                  >
+                    <ChatBeamIcon /> {/*<GavelIcon />*/}
+                  </IconButton>
+                </Tooltip>
+              )}
             </MenuItem>
           )}
         </CloseableMenu>
