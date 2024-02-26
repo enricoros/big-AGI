@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -135,7 +135,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
       if (access.dialect === 'perplexity')
-        return { models: perplexityAIModelDescriptions() };
+        return { models: perplexityAIModelDescriptions().sort(perplexityAIModelSort) };
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
