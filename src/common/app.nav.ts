@@ -113,7 +113,7 @@ export const navItems: {
       route: '/draw',
       // hideOnMobile: true,
       hideDrawer: true,
-      // _delete: true,
+      _delete: true,
     },
     {
       name: 'Cortex',
@@ -139,7 +139,7 @@ export const navItems: {
       route: '/workspace',
       hideDrawer: true,
       hideOnMobile: true,
-      // _delete: true,
+      _delete: true,
     },
     // <-- divider here -->
     {
