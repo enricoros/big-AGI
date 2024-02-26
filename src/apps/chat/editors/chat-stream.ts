@@ -7,7 +7,7 @@ import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DMessage } from '~/common/state/store-chats';
-import { conversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationManager';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
@@ -16,7 +16,7 @@ import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
 export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, parallelViewCount: number) {
-  const cHandler = conversationManager().getHandler(conversationId, 'runAssistantUpdatingState');
+  const cHandler = ConversationManager.getHandler(conversationId);
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
@@ -51,8 +51,6 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
-
-  conversationManager().releaseHandler(cHandler, 'runAssistantUpdatingState');
 }
 
 

@@ -1,14 +1,14 @@
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
 
+import { ConversationManager } from '~/common/chats/ConversationManager';
 import { TextToImageProvider } from '~/common/components/useCapabilities';
-import { conversationManager } from '~/common/chats/ConversationManager';
 
 
 /**
  * Text to image, appended as an 'assistant' message
  */
 export async function runImageGenerationUpdatingState(conversationId: string, imageText: string) {
-  const handler = conversationManager().getHandler(conversationId, 'runImageGenerationUpdatingState');
+  const handler = ConversationManager.getHandler(conversationId);
 
   // Acquire the active TextToImageProvider
   let t2iProvider: TextToImageProvider | undefined = undefined;
@@ -17,7 +17,6 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
   } catch (error: any) {
     const assistantErrorMessageId = handler.messageAppendAssistant(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue', undefined);
     handler.messageEdit(assistantErrorMessageId, { typing: false }, true);
-    conversationManager().releaseHandler(handler, 'runImageGenerationUpdatingState');
     return;
   }
 
@@ -40,6 +39,4 @@ export async function runImageGenerationUpdatingState(conversationId: string, im
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
     handler.messageEdit(assistantMessageId, { text: `[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`, typing: false }, false);
   }
-
-  conversationManager().releaseHandler(handler, 'runImageGenerationUpdatingState');
 }

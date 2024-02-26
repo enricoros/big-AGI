@@ -62,7 +62,6 @@ export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & 
     updated: part.updated || Date.now(),
     // add these back - these fields are not exported
     abortController: null,
-    ephemerals: [],
   };
   return restored;
 }
@@ -122,7 +121,7 @@ export async function downloadConversation(conversation: DConversation, format: 
   let extension: string;
 
   if (format == 'json') {
-    // remove fields (ephemerals, abortController, etc.) from the export
+    // remove fields (abortController, etc.) from the export
     const exportableConversation: ExportedConversationJsonV1 = conversationToJsonV1(conversation);
     const json = JSON.stringify(exportableConversation, null, 2);
     blob = new Blob([json], { type: 'application/json' });
@@ -174,7 +173,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
 
 export function conversationToJsonV1(_conversation: DConversation): ExportedConversationJsonV1 {
   // remove fields from the export
-  const { abortController, ephemerals, tokenCount, ...conversation } = _conversation;
+  const { abortController, tokenCount, ...conversation } = _conversation;
   return conversation;
 }
 
