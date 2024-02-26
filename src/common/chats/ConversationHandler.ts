@@ -5,12 +5,15 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
 
+import { BeamStore } from './BeamStore';
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
 
 export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;
+
+  readonly beamStore: BeamStore = new BeamStore();
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 
@@ -59,7 +62,7 @@ export class ConversationHandler {
   }
 
 
-  // Ephemerality Management
+  // Ephemerals
 
   createEphemeral(title: string, initialText: string): EphemeralHandler {
     return new EphemeralHandler(title, initialText, this.ephemeralsStore);
