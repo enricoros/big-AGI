@@ -4,7 +4,7 @@ import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { conversationManager } from '~/common/chats/ConversationManager';
 
-const EPHEMERAL_DELETION_DELAY = 4 * 1000; // 4 seconds
+const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
 
 /**
