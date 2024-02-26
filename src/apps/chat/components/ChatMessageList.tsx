@@ -13,7 +13,7 @@ import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGloba
 import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useEphemerals } from '~/common/chats/ConversationEphemerals';
+import { useEphemerals } from '~/common/chats/EphemeralsStore';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';

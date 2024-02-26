@@ -1,6 +1,6 @@
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
 
-import { ConversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 import { TextToImageProvider } from '~/common/components/useCapabilities';
 
 

@@ -13,6 +13,7 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
@@ -31,7 +32,6 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
-import { ConversationManager } from '~/common/chats/ConversationManager';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';

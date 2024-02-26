@@ -1,6 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { ConversationManager } from '~/common/chats/ConversationManager';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 
 
 export const runBrowseGetPageUpdatingState = async (conversationId: string, url: string) => {
