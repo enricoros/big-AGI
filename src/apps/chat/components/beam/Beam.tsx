@@ -8,8 +8,6 @@ import { useBeam } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 
-// used by the callers to configure the best-of session
-
 export function Beam(props: {
   conversationHandler: ConversationHandler | null,
   isMobile: boolean,

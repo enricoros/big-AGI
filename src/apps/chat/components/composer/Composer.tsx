@@ -23,7 +23,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -464,8 +464,8 @@ export function Composer(props: {
 
 
   const isText = chatModeId === 'generate-text';
+  const isTextBeam = chatModeId === 'generate-text-beam';
   const isAppend = chatModeId === 'append-user';
-  const isBestOf = chatModeId === 'generate-best-of';
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
 
@@ -474,14 +474,14 @@ export function Composer(props: {
   const buttonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
       : isReAct ? 'success'
-        : isBestOf ? 'success'
+        : isTextBeam ? 'success'
           : isDraw ? 'warning'
             : 'primary';
 
   const buttonText =
     isAppend ? 'Write'
       : isReAct ? 'ReAct'
-        : isBestOf ? 'Best-Of'
+        : isTextBeam ? 'Best-Of'
           : isDraw ? 'Draw'
             : 'Chat';
 
@@ -489,14 +489,14 @@ export function Composer(props: {
     micContinuation ? <AutoModeIcon />
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
-          : isBestOf ? <ChatBestOfIcon /> /* <GavelIcon /> */
+          : isTextBeam ? <ChatBeamIcon /> /* <GavelIcon /> */
             : isDraw ? <FormatPaintIcon />
               : <TelegramIcon />;
 
   let textPlaceholder: string =
     isDraw ? 'Describe an idea or a drawing...'
       : isReAct ? 'Multi-step reasoning question...'
-        : isBestOf ? 'Multi-chat with this persona...'
+        : isTextBeam ? 'Multi-chat with this persona...'
           : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
             : props.capabilityHasT2I ? 'Chat · /react · /draw · drop files...'
               : 'Chat · /react · drop files...';

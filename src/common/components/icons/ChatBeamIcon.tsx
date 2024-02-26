@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { SvgIcon } from '@mui/joy';
 
 
-export function ChatBestOfIcon(props: { sx?: SxProps }) {
+export function ChatBeamIcon(props: { sx?: SxProps }) {
   return (
     <SvgIcon viewBox='0 0 24 24' width='24' height='24' stroke='currentColor' fill='currentColor' strokeLinejoin='round'  {...props}>
       <path d='M 4,12 14,9' />

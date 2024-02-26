@@ -34,7 +34,7 @@ export function ChatMessageList(props: {
   fitScreen: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBestOf: boolean) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBeam: boolean) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -82,11 +82,11 @@ export function ChatMessageList(props: {
     conversationId && onConversationBranch(conversationId, messageId);
   }, [conversationId, onConversationBranch]);
 
-  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number, chatEffectBestOf: boolean) => {
+  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number, chatEffectBeam: boolean) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory, chatEffectBestOf);
+      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory, chatEffectBeam);
     }
   }, [conversationId, onConversationExecuteHistory]);
 

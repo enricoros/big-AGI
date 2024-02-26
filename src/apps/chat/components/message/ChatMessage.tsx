@@ -24,7 +24,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
 import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
 
-import { ChatBestOfIcon } from '~/common/components/icons/ChatBestOfIcon';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
@@ -190,7 +190,7 @@ export function ChatMessage(props: {
   isSpeaking?: boolean,
   blocksShowDate?: boolean,
   onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBestOf: boolean) => Promise<void>,
+  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBeam: boolean) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
@@ -282,7 +282,7 @@ export function ChatMessage(props: {
     props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
   };
 
-  const handleOpsConversationRestartBestOf = async (e: React.MouseEvent) => {
+  const handleOpsConversationRestartFromBeam = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
     props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
@@ -592,10 +592,10 @@ export function ChatMessage(props: {
                 <IconButton
                   size='sm'
                   variant='outlined' color='primary'
-                  onClick={handleOpsConversationRestartBestOf}
+                  onClick={handleOpsConversationRestartFromBeam}
                   sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
                 >
-                  <ChatBestOfIcon /> {/*<GavelIcon />*/}
+                  <ChatBeamIcon /> {/*<GavelIcon />*/}
                 </IconButton>
               </Tooltip>
             </MenuItem>
