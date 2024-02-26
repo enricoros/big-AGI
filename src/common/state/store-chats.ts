@@ -113,7 +113,7 @@ interface ChatState {
   conversations: DConversation[];
 }
 
-interface ChatActions {
+export interface ChatActions {
   // store setters
   prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
@@ -121,7 +121,7 @@ interface ChatActions {
   deleteConversations: (conversationIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
-  startTyping: (conversationId: string, abortController: AbortController | null) => void;
+  setAbortController: (conversationId: string, abortController: AbortController | null) => void;
   stopTyping: (conversationId: string) => void;
   setMessages: (conversationId: string, messages: DMessage[]) => void;
   appendMessage: (conversationId: string, message: DMessage) => void;
@@ -271,7 +271,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               : conversation),
         })),
 
-      startTyping: (conversationId: string, abortController: AbortController | null) =>
+      setAbortController: (conversationId: string, abortController: AbortController | null) =>
         _get()._editConversation(conversationId, () =>
           ({
             abortController: abortController,

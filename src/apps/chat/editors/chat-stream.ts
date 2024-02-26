@@ -6,30 +6,30 @@ import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
-import { DMessage, useChatStore } from '~/common/state/store-chats';
+import type { DMessage } from '~/common/state/store-chats';
+import { conversationManager } from '~/common/chats/ConversationManager';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
-import { createAssistantTypingMessage, updatePurposeInHistory } from './editors';
 
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
 export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, parallelViewCount: number) {
+  const cHandler = conversationManager().getHandler(conversationId, 'runAssistantUpdatingState');
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // update the system message from the active Purpose, if not manually edited
-  history = updatePurposeInHistory(conversationId, history, assistantLlmId, systemPurpose);
+  history = cHandler.resyncPurposeInHistory(history, assistantLlmId, systemPurpose);
 
   // create a blank and 'typing' message for the assistant
-  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantLlmId, history[0].purposeId, '...');
+  const assistantMessageId = cHandler.messageAppendAssistant('...', assistantLlmId, history[0].purposeId);
 
   // when an abort controller is set, the UI switches to the "stop" mode
-  const controller = new AbortController();
-  const { startTyping, editMessage } = useChatStore.getState();
-  startTyping(conversationId, controller);
+  const abortController = new AbortController();
+  cHandler.setAbortController(abortController);
 
   // stream the assistant's messages
   await streamAssistantMessage(
@@ -37,12 +37,12 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     history,
     parallelViewCount,
     autoSpeak,
-    (updatedMessage) => editMessage(conversationId, assistantMessageId, updatedMessage, false),
-    controller.signal,
+    (update) => cHandler.messageEdit(assistantMessageId, update, false),
+    abortController.signal,
   );
 
   // clear to send, again
-  startTyping(conversationId, null);
+  cHandler.setAbortController(null);
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
@@ -51,6 +51,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
+
+  conversationManager().releaseHandler(cHandler, 'runAssistantUpdatingState');
 }
 
 
@@ -59,7 +61,7 @@ async function streamAssistantMessage(
   history: DMessage[],
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
-  editMessage: (updatedMessage: Partial<DMessage>) => void,
+  editMessage: (update: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
 ) {
 

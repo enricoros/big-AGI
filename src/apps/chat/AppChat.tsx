@@ -38,7 +38,7 @@ import { getInstantAppChatPanesCount, usePanesManager } from './components/panes
 
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
-import { runBrowseUpdatingState } from './editors/browse-load';
+import { runBrowseGetPageUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
 
@@ -162,7 +162,7 @@ export function AppChat() {
         switch (chatCommand.providerId) {
           case 'ass-browse':
             setMessages(conversationId, history);
-            return await runBrowseUpdatingState(conversationId, chatCommand.params!);
+            return await runBrowseGetPageUpdatingState(conversationId, chatCommand.params!);
 
           case 'ass-t2i':
             setMessages(conversationId, history);
