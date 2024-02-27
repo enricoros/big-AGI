@@ -5,9 +5,11 @@ browsing services, which are the most common way to render web pages in a headle
 
 Once configured, the Browsing service provides this functionality:
 
-- **Paste a URL**: Simply paste/drag a URL into the chat, and `big-AGI` will load and attach the page (very effective)
-- **Use /browse**: Type `/browse [URL]` in the chat to command `big-AGI` to load the specified web page
-- **ReAct**: ReAct will automatically use the `loadURL()` function whenever a URL is encountered
+- ✅ **Paste a URL**: Simply paste/drag a URL into the chat, and `big-AGI` will load and attach the page (very effective)
+- ✅ **Use /browse**: Type `/browse [URL]` in the chat to command `big-AGI` to load the specified web page
+- ✅ **ReAct**: ReAct will automatically use the `loadURL()` function whenever a URL is encountered
+- ✖️ NOT available: **Auto-browsing by LLMs**: if an LLM encounters a URL, it will NOT load the page and will likely respond
+  that it cannot browse the web - No technical limitation, just haven't gotten to implement this yet outside of `/react` yet
 
 First of all, you need to procure a Puppteer web browsing service endpoint. `big-AGI` supports services like:
 
@@ -109,3 +111,5 @@ If you encounter any issues or have questions about configuring the browse funct
 ---
 
 Enjoy the enhanced browsing experience within `big-AGI` and explore the web without ever leaving your chat!
+
+Last updated on Feb 27, 2024 ([edit on GitHub](https://github.com/enricoros/big-AGI/edit/main/docs/config-feature-browse.md))
