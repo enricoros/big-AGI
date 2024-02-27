@@ -35,5 +35,5 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
     return doRedirect;
   }, []);
 
-  return isRedirecting ? null : props.children;
+  return /*isRedirecting ? null :*/ props.children;
 }
