@@ -13,10 +13,11 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, getConversation, useConversation } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -25,20 +26,20 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
+import { Beam } from './components/beam/Beam';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatDropdowns } from './components/ChatDropdowns';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
-import { Ephemerals } from './components/Ephemerals';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
 
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
-import { runBrowseUpdatingState } from './editors/browse-load';
+import { runBrowseGetPageUpdatingState } from './editors/browse-load';
 import { runImageGenerationUpdatingState } from './editors/image-generate';
 import { runReActUpdatingState } from './editors/react-tangent';
 
@@ -52,9 +53,9 @@ export const CHAT_NOVEL_TITLE = 'Chat';
  */
 export type ChatModeId =
   | 'generate-text'
+  | 'generate-text-beam'
   | 'append-user'
   | 'generate-image'
-  | 'generate-best-of'
   | 'generate-react';
 
 
@@ -97,10 +98,10 @@ export function AppChat() {
   const {
     title: focusedChatTitle,
     isChatEmpty: isFocusedChatEmpty,
+    isDeveloper: isFocusedChatDeveloper,
     areChatsEmpty,
     conversationIdx: focusedChatNumber,
     newConversationId,
-    _remove_systemPurposeId: focusedSystemPurposeId,
     prependNewConversation,
     branchConversation,
     deleteConversations,
@@ -126,6 +127,10 @@ export function AppChat() {
   const willMulticast = isComposerMulticast && isMultiConversationId;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
+  const chatHandlers = React.useMemo(() => chatPanes.map(pane => {
+    return pane.conversationId ? ConversationManager.getHandler(pane.conversationId) : null;
+  }), [chatPanes]);
+
   const setFocusedConversationId = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
   }, [openConversationInFocusedPane]);
@@ -148,6 +153,7 @@ export function AppChat() {
     }
   }, [focusedChatNumber, focusedChatTitle]);
 
+
   // Execution
 
   const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]): Promise<void> => {
@@ -160,9 +166,12 @@ export function AppChat() {
       const chatCommand = extractChatCommand(lastMessage.text)[0];
       if (chatCommand && chatCommand.type === 'cmd') {
         switch (chatCommand.providerId) {
+          case 'ass-beam':
+            return ConversationManager.getHandler(conversationId).beamStore.create(history);
+
           case 'ass-browse':
             setMessages(conversationId, history);
-            return await runBrowseUpdatingState(conversationId, chatCommand.params!);
+            return await runBrowseGetPageUpdatingState(conversationId, chatCommand.params!);
 
           case 'ass-t2i':
             setMessages(conversationId, history);
@@ -194,15 +203,26 @@ export function AppChat() {
             const helpMessage = createDMessage('assistant', 'Available Chat Commands:\n' + chatCommandsText);
             helpMessage.originLLM = Brand.Title.Base;
             return setMessages(conversationId, [...history, helpMessage]);
+
+          default:
+            return setMessages(conversationId, [...history, createDMessage('assistant', 'This command is not supported.')]);
         }
       }
     }
 
+    // get the focused system purpose (note: we don't react to it, or it would invalidate half UI components..)
+    const conversationSystemPurposeId = getConversationSystemPurposeId(conversationId);
+    if (!conversationSystemPurposeId)
+      return setMessages(conversationId, [...history, createDMessage('assistant', 'No persona selected.')]);
+
     // synchronous long-duration tasks, which update the state as they go
-    if (chatLLMId && focusedSystemPurposeId) {
+    if (chatLLMId) {
       switch (chatModeId) {
         case 'generate-text':
-          return await runAssistantUpdatingState(conversationId, history, chatLLMId, focusedSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+          return await runAssistantUpdatingState(conversationId, history, chatLLMId, conversationSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+
+        case 'generate-text-beam':
+          return ConversationManager.getHandler(conversationId).beamStore.create(history);
 
         case 'append-user':
           return setMessages(conversationId, history);
@@ -228,7 +248,7 @@ export function AppChat() {
     // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
     console.log('handleExecuteConversation: issue running', chatModeId, conversationId, lastMessage);
     setMessages(conversationId, history);
-  }, [focusedSystemPurposeId, setMessages]);
+  }, [setMessages]);
 
   const handleComposerAction = React.useCallback((chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart): boolean => {
     // validate inputs
@@ -263,8 +283,8 @@ export function AppChat() {
     return enqueued;
   }, [chatPanes, willMulticast, _handleExecute]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], effectBestOf: boolean): Promise<void> => {
-    await _handleExecute(effectBestOf ? 'generate-best-of' : 'generate-text', conversationId, history);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], chatEffectBeam: boolean): Promise<void> => {
+    await _handleExecute(!chatEffectBeam ? 'generate-text' : 'generate-text-beam', conversationId, history);
   }, [_handleExecute]);
 
   const handleMessageRegenerateLast = React.useCallback(async () => {
@@ -295,6 +315,7 @@ export function AppChat() {
     await speakText(text);
   }, []);
 
+
   // Chat actions
 
   const handleConversationNew = React.useCallback((forceNoRecycle?: boolean) => {
@@ -302,7 +323,7 @@ export function AppChat() {
     // activate an existing new conversation if present, or create another
     const conversationId = (newConversationId && !forceNoRecycle)
       ? newConversationId
-      : prependNewConversation(focusedSystemPurposeId ?? undefined);
+      : prependNewConversation(getConversationSystemPurposeId(focusedConversationId) ?? undefined);
     setFocusedConversationId(conversationId);
 
     // if a folder is active, add the new conversation to the folder
@@ -312,7 +333,7 @@ export function AppChat() {
     // focus the composer
     composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedSystemPurposeId, newConversationId, prependNewConversation, setFocusedConversationId]);
+  }, [activeFolderId, focusedConversationId, newConversationId, prependNewConversation, setFocusedConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -365,6 +386,7 @@ export function AppChat() {
     !!deleteConversationIds?.length && handleDeleteConversations(deleteConversationIds, true);
   }, [deleteConversationIds, handleDeleteConversations]);
 
+
   // Shortcuts
 
   const handleOpenChatLlmOptions = React.useCallback(() => {
@@ -387,7 +409,8 @@ export function AppChat() {
   ], [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationNew, handleDeleteConversations, handleMessageRegenerateLast, handleNavigateHistory, handleOpenChatLlmOptions, isFocusedChatEmpty]);
   useGlobalShortcuts(shortcuts);
 
-  // Pluggable ApplicationBar components
+
+  // Pluggable Optima components
 
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
@@ -443,6 +466,7 @@ export function AppChat() {
 
       {chatPanes.map((pane, idx) => {
         const _paneConversationId = pane.conversationId;
+        const _paneChatHandler = chatHandlers[idx] ?? null;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${idx}-${_paneConversationId}`;
         const _sepId = `sep-pane-${idx}-${_paneConversationId}`;
@@ -499,10 +523,11 @@ export function AppChat() {
 
               <ChatMessageList
                 conversationId={_paneConversationId}
+                conversationHandler={_paneChatHandler}
                 capabilityHasT2I={capabilityHasT2I}
                 chatLLMContextTokens={chatLLM?.contextTokens ?? null}
+                fitScreen={isMobile || isMultiPane}
                 isMessageSelectionMode={isMessageSelectionMode}
-                isMobile={isMobile}
                 setIsMessageSelectionMode={setIsMessageSelectionMode}
                 onConversationBranch={handleConversationBranch}
                 onConversationExecuteHistory={handleConversationExecuteHistory}
@@ -514,20 +539,35 @@ export function AppChat() {
                 }}
               />
 
-              <Ephemerals
-                conversationId={_paneConversationId}
-                sx={{
-                  // TODO: Fixme post panels?
-                  // flexGrow: 0.1,
-                  flexShrink: 0.5,
-                  overflowY: 'auto',
-                  minHeight: 64,
-                }}
-              />
+              {/*<Ephemerals*/}
+              {/*  conversationId={_paneConversationId}*/}
+              {/*  sx={{*/}
+              {/*    // TODO: Fixme post panels?*/}
+              {/*    // flexGrow: 0.1,*/}
+              {/*    flexShrink: 0.5,*/}
+              {/*    overflowY: 'auto',*/}
+              {/*    minHeight: 64,*/}
+              {/*  }}*/}
+              {/*/>*/}
 
               {/* Visibility and actions are handled via Context */}
               <ScrollToBottomButton />
+
             </ScrollToBottom>
+
+            {/* Best-Of Mode */}
+            <Beam
+              conversationHandler={_paneChatHandler}
+              isMobile={isMobile}
+              sx={{
+                overflowY: 'auto',
+                backgroundColor: 'background.level2',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1, // stay on top of Chips :shrug:
+              }}
+            />
+
           </Panel>
 
           {/* Panel Separators & Resizers */}
@@ -549,7 +589,7 @@ export function AppChat() {
       conversationId={focusedConversationId}
       capabilityHasT2I={capabilityHasT2I}
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
-      isDeveloperMode={focusedSystemPurposeId === 'Developer'}
+      isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}

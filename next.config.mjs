@@ -1,18 +1,21 @@
-const BuildOptions = {
-  standalone: !!process.env.BUILD_STANDALONE,
-};
+// Non-default build types
+const buildType =
+  process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone'
+    : process.env.BIG_AGI_BUILD === 'static' ? 'export'
+      : undefined;
+
+buildType && console.log(`   🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
   reactStrictMode: true,
 
-  // [exporting] https://nextjs.org/docs/advanced-features/static-html-export
-  ...BuildOptions.standalone && {
-    // Export the frontend to ./dist
-    output: 'standalone',
+  // [exports] https://nextjs.org/docs/advanced-features/static-html-export
+  ...buildType && {
+    output: buildType,
     distDir: 'dist',
 
-    // Disable Image optimization
+    // disable image optimization for exports
     images: { unoptimized: true },
 
     // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
@@ -34,8 +37,9 @@ let nextConfig = {
       layers: true,
     };
 
-    // [exporting] prevent too many small files (50kb)
-    BuildOptions.standalone && (config.optimization.splitChunks.minSize = 50 * 1024);
+    // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
+    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
+      config.optimization.splitChunks.minSize = 40 * 1024;
 
     return config;
   },

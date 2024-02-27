@@ -102,7 +102,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
         }}
       >
         {!!modelsData && modelsData.models?.map((model, idx) => (
-          <Option key={'prodia-model-' + idx} value={model.id} sx={model.priority ? { fontWeight: 500 } : undefined}>
+          <Option key={'prodia-model-' + idx} value={model.id} sx={model.priority ? { fontWeight: 'md' } : undefined}>
             {model.gen === 'sdxl' && <Chip size='sm' variant='outlined'>XL</Chip>} {model.label}
           </Option>
         ))}

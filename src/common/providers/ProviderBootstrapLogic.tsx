@@ -1,7 +1,10 @@
 import * as React from 'react';
 
-import { getIsMobile } from '~/common/components/useMatchMedia';
+import { navigateToNews } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
+
+
+import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
 
 export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
@@ -14,13 +17,23 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   //  - loading the latest news (see ChatPage -> useRedirectToNewsOnUpdates)
   //  - loading the commander
   //  - ...
+  const isRedirecting = React.useMemo(() => {
 
-  // boot-up logic. this is not updated at route changes, but only at app startup
-  React.useEffect(() => {
-    if (getIsMobile()) {
-      // TODO: the app booted in mobile mode
+    // redirect to the news page if the news is outdated
+    let doRedirect = shallRedirectToNews();
+    if (doRedirect) {
+      markNewsAsSeen();
+      void navigateToNews();
     }
+
+    // redirect to the commander if the app is running on mobile
+    // if (!doRedirect && getIsMobile()) {
+    //   doRedirect = true;
+    //   void showCommander();
+    // }
+
+    return doRedirect;
   }, []);
 
-  return props.children;
+  return /*isRedirecting ? null :*/ props.children;
 }

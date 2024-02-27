@@ -3,6 +3,7 @@ import { DLLMId, getKnowledgeMapCutoff } from '~/modules/llms/store-llms';
 /*type Variables =
   | '{{Today}}'
   | '{{Cutoff}}'
+  | '{{PreferTables}}'
   | '{{RenderMermaid}}'
   | '{{RenderPlantUML}}'
   | '{{RenderSVG}}'
@@ -22,6 +23,7 @@ const variableResolvers: { [key in Variables]: (context: VariableResolverContext
     return getKnowledgeMapCutoff(context.assistantLlmId) || '';
   },
 
+  '{{PreferTables}}': () => 'Data presentation: prefer tables (auto-columns)',
   '{{RenderMermaid}}': () => 'Mermaid rendering: Enabled',
   '{{RenderPlantUML}}': () => 'PlantUML rendering: Enabled',
   '{{RenderSVG}}': () => 'SVG rendering: Enabled',
@@ -62,6 +64,9 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
     const formattedDateTime = formatter.format(new Date());
     mixed = mixed.replaceAll('{{LocaleNow}}', formattedDateTime /*`${formattedDateTime} (${userTimezone})`*/);
   }
+
+  // {{Prefer...}}
+  mixed = mixed.replace('{{PreferTables}}', 'Data presentation: prefer tables (auto-columns)');
 
   // {{Render...}}
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled');

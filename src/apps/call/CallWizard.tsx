@@ -4,10 +4,10 @@ import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typograp
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ChatIcon from '@mui/icons-material/Chat';
 import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
@@ -67,7 +67,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
           {props.button}
         </Typography>
         <ListItemDecorator>
-          {props.hasIssue ? <WarningIcon color='warning' /> : <CheckIcon color='success' />}
+          {props.hasIssue ? <WarningRoundedIcon color='warning' /> : <CheckIcon color='success' />}
         </ListItemDecorator>
       </CardContent>
     </Card>
@@ -122,7 +122,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     <Box sx={{ flexGrow: 0.5 }} />
 
-    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 200, textAlign: 'center' }}>
+    <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 'sm', textAlign: 'center' }}>
       Welcome to<br />
       <Box component='span' sx={{ animation: `${cssRainbowColorKeyframes} 15s linear infinite` }}>
         your first call
@@ -208,7 +208,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
           // boxShadow: allGood ? 'md' : 'none',
         }}
       >
-        {allGood ? <ArrowForwardIcon sx={{ fontSize: '1.5em' }} /> : <CloseIcon sx={{ fontSize: '1.5em' }} />}
+        {allGood ? <ArrowForwardIcon sx={{ fontSize: '1.5em' }} /> : <CloseRoundedIcon sx={{ fontSize: '1.5em' }} />}
       </IconButton>
     </Box>
 

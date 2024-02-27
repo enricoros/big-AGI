@@ -31,7 +31,9 @@ export function ProviderBackendAndNoSSR(props: { children: React.ReactNode }) {
   // [effect] in parallel preload the Tiktoken library - large WASM payload, so fire/forget
   React.useEffect(() => {
     void preloadTiktokenLibrary();
-  }, []);
+    // TEMP: for exported builds
+    // setCapabilties({});
+  }, [setCapabilties]);
 
 
   // block rendering until the capabilities are loaded

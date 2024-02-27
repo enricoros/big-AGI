@@ -192,7 +192,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         <BlocksRenderer
           text={diagramCode}
           fromRole='assistant'
-          isMobile={isMobile}
+          fitScreen={isMobile}
           contentScaling={contentScaling}
           renderTextAsMarkdown={false}
           specialDiagramMode

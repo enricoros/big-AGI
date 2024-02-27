@@ -9,13 +9,17 @@ import { useRouterRoute } from '~/common/app.routes';
 /**
  * https://github.com/enricoros/big-AGI/issues/299
  */
-export function AppPlaceholder(props: { text?: string }) {
+export function AppPlaceholder(props: {
+  title?: string,
+  text?: React.ReactNode,
+  children?: React.ReactNode,
+}) {
 
   // external state
   const route = useRouterRoute();
 
   // derived state
-  const placeholderAppName = capitalizeFirstLetter(route.replace('/', '') || 'Home');
+  const placeholderAppName = props.title || capitalizeFirstLetter(route.replace('/', '') || 'Home');
 
   return (
     <Box sx={{
@@ -35,11 +39,15 @@ export function AppPlaceholder(props: { text?: string }) {
         <Typography level='h1'>
           {placeholderAppName}
         </Typography>
-        <Typography>
-          {props.text || 'Intelligent applications to help you learn, think, and do'}
-        </Typography>
+        {!!props.text && (
+          <Typography>
+            {props.text}
+          </Typography>
+        )}
 
       </Box>
+
+      {props.children}
 
     </Box>
   );

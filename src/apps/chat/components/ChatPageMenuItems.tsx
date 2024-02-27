@@ -127,11 +127,9 @@ export function ChatPageMenuItems(props: {
 
     <ListDivider />
 
-    <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode}>
+    <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode} sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}>
       <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
-      <span style={props.isMessageSelectionMode ? { fontWeight: 800 } : {}}>
-        Cleanup ...
-      </span>
+      Cleanup ...
     </MenuItem>
 
     <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>

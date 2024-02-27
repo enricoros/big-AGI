@@ -43,7 +43,7 @@ export function AddFolderButton() {
         sx={{ ml: -1.5, mr: -0.5, flexGrow: 1, minWidth: 100 }}
       />
       {/*<IconButton color='danger' onClick={handleCancelAddFolder}>*/}
-      {/*  <CloseIcon />*/}
+      {/*  <CloseRoundedIcon />*/}
       {/*</IconButton>*/}
     </ListItem>
   ) : (
@@ -51,8 +51,9 @@ export function AddFolderButton() {
       <ListItemButton
         onClick={handleAddFolder}
         sx={{
-          fontSize: 'sm', fontWeight: 'lg',
-          // uniformize with the 'new chat' button
+          // equal to the 'new chat' button
+          fontSize: 'sm',
+          fontWeight: 'lg',
           color: 'neutral.outlinedColor',
         }}
       >

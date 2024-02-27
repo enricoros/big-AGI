@@ -29,7 +29,6 @@ export interface DConversation {
   updated: number | null;             // updated timestamp (Date.now())
   // Not persisted, used while in-memory, or temporarily by the UI
   abortController: AbortController | null;
-  ephemerals: DEphemeral[];
 }
 
 export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
@@ -41,7 +40,6 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     created: Date.now(),
     updated: Date.now(),
     abortController: null,
-    ephemerals: [],
   };
 }
 
@@ -87,25 +85,6 @@ export function createDMessage(role: DMessage['role'], text: string): DMessage {
   };
 }
 
-/**
- * InterimStep, a place side-channel information is displayed
- */
-export interface DEphemeral {
-  id: string;
-  title: string;
-  text: string;
-  state: object;
-}
-
-export function createDEphemeral(title: string, initialText: string): DEphemeral {
-  return {
-    id: uuidv4(),
-    title: title,
-    text: initialText,
-    state: {},
-  };
-}
-
 
 /// Conversations Store
 
@@ -113,7 +92,7 @@ interface ChatState {
   conversations: DConversation[];
 }
 
-interface ChatActions {
+export interface ChatActions {
   // store setters
   prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
@@ -121,7 +100,7 @@ interface ChatActions {
   deleteConversations: (conversationIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
-  startTyping: (conversationId: string, abortController: AbortController | null) => void;
+  setAbortController: (conversationId: string, abortController: AbortController | null) => void;
   stopTyping: (conversationId: string) => void;
   setMessages: (conversationId: string, messages: DMessage[]) => void;
   appendMessage: (conversationId: string, message: DMessage) => void;
@@ -130,11 +109,6 @@ interface ChatActions {
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
-
-  appendEphemeral: (conversationId: string, devTool: DEphemeral) => void;
-  deleteEphemeral: (conversationId: string, ephemeralId: string) => void;
-  updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) => void;
-  updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) => void;
 
   // utility function
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -217,9 +191,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           updated: Date.now(),
           // Set the new title for the branched conversation
           autoTitle: newTitle,
-          // reset ephemerals
+          // reset transient
           abortController: null,
-          ephemerals: [],
           // TODO: set references to parent conversation & message?
         };
 
@@ -271,7 +244,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               : conversation),
         })),
 
-      startTyping: (conversationId: string, abortController: AbortController | null) =>
+      setAbortController: (conversationId: string, abortController: AbortController | null) =>
         _get()._editConversation(conversationId, () =>
           ({
             abortController: abortController,
@@ -296,7 +269,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             tokenCount: updateTokenCounts(newMessages, false, 'setMessages'),
             updated: Date.now(),
             abortController: null,
-            ephemerals: [],
           };
         }),
 
@@ -368,44 +340,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             userTitle,
           }),
 
-      appendEphemeral: (conversationId: string, ephemeral: DEphemeral) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = [...conversation.ephemerals, ephemeral];
-          return {
-            ephemerals,
-          };
-        }),
-
-      deleteEphemeral: (conversationId: string, ephemeralId: string) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.filter((e: DEphemeral): boolean => e.id !== ephemeralId) || [];
-          return {
-            ephemerals,
-          };
-        }),
-
-      updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
-            e.id === ephemeralId
-              ? { ...e, text }
-              : e) || [];
-          return {
-            ephemerals,
-          };
-        }),
-
-      updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
-            e.id === ephemeralId
-              ? { ...e, state: state }
-              : e) || [];
-          return {
-            ephemerals,
-          };
-        }),
-
     }),
     {
       name: 'app-chats',
@@ -433,7 +367,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         ...state,
         conversations: state.conversations.map((conversation: DConversation) => {
           const {
-            abortController, ephemerals,
+            abortController,
             ...rest
           } = conversation;
           return rest;
@@ -452,7 +386,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 
           // rehydrate the transient properties
           conversation.abortController = null;
-          conversation.ephemerals = [];
         }
       },
 
@@ -525,6 +458,9 @@ function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom
 export const getConversation = (conversationId: DConversationId | null): DConversation | null =>
   conversationId ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null : null;
 
+export const getConversationSystemPurposeId = (conversationId: DConversationId | null): SystemPurposeId | null =>
+  getConversation(conversationId)?.systemPurposeId || null;
+
 export const useConversation = (conversationId: DConversationId | null) => useChatStore(state => {
   const { conversations } = state;
 
@@ -533,16 +469,17 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
   const title = conversation ? conversationTitle(conversation) : null;
   const isChatEmpty = conversation ? !conversation.messages.length : true;
+  const isDeveloper = conversation?.systemPurposeId === 'Developer';
   const areChatsEmpty = isChatEmpty && conversations.length < 2;
   const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
 
   return {
     title,
     isChatEmpty,
+    isDeveloper,
     areChatsEmpty,
     conversationIdx,
     newConversationId,
-    _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
     deleteConversations: state.deleteConversations,

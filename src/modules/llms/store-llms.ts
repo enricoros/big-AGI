@@ -343,3 +343,8 @@ export function useChatLLM() {
     return { chatLLM };
   }, shallow);
 }
+
+export function getLLMsDebugInfo() {
+  const { llms, sources, chatLLMId, fastLLMId, funcLLMId } = useModelsStore.getState();
+  return { sources: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId, funcId: funcLLMId };
+}

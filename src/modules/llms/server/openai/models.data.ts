@@ -286,19 +286,115 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 // [Mistral]
 
 const _knownMistralChatModels: ManualMappings = [
+  // Large
+  {
+    idPrefix: 'mistral-large-2402',
+    label: 'Mistral Large (2402)',
+    description: 'Top-tier reasoning for high-complexity tasks.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
+  },
+  {
+    idPrefix: 'mistral-large-latest',
+    label: 'Mistral Large (latest)',
+    symLink: 'mistral-large-2402',
+    hidden: true,
+    // copied
+    description: 'Top-tier reasoning for high-complexity tasks.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    idPrefix: 'mistral-large',
+    label: 'Mistral Large (?)',
+    description: 'Flagship model, with top-tier reasoning capabilities and language support (English, French, German, Italian, Spanish, and Code)',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+
+  // Medium - not updated on 2024-02-26
+  {
+    idPrefix: 'mistral-medium-2312',
+    label: 'Mistral Medium (2312)',
+    description: 'Mistral internal prototype model.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'mistral-medium-latest',
+    label: 'Mistral Medium (latest)',
+    symLink: 'mistral-medium-2312',
+    hidden: true,
+    // copied
+    description: 'Mistral internal prototype model.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
   {
     idPrefix: 'mistral-medium',
     label: 'Mistral Medium',
     description: 'Mistral internal prototype model.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+
+  // Small (8x7B)
+  {
+    idPrefix: 'mistral-small-2402',
+    label: 'Mistral Small (2402)',
+    description: 'Optimized endpoint. Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
+  },
+  {
+    idPrefix: 'mistral-small-2312',
+    label: 'Mistral Small (2312)',
+    description: 'Aka open-mixtral-8x7b. Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  {
+    idPrefix: 'mistral-small-latest',
+    label: 'Mistral Small (latest)',
+    symLink: 'mistral-small-2402',
+    hidden: true,
+    // copied
+    description: 'Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
   },
   {
     idPrefix: 'mistral-small',
     label: 'Mistral Small',
-    description: 'Higher reasoning capabilities and more capabilities (English, French, German, Italian, Spanish, and Code)',
+    description: 'Cost-efficient reasoning for low-latency workloads.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  // Open Mixtral (8x7B)
+  {
+    idPrefix: 'open-mixtral-8x7b',
+    label: 'Open Mixtral (8x7B)',
+    description: 'Mixtral 8x7B model, aka mistral-small-2312',
+    // symLink: 'mistral-small-2312',
+    // copied
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+
+  // Tiny (7B)
+  {
+    idPrefix: 'mistral-tiny-2312',
+    label: 'Mistral Tiny (2312)',
+    description: 'Aka open-mistral-7b. Used for large batch processing tasks where cost is a significant factor but reasoning capabilities are not crucial',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     idPrefix: 'mistral-tiny',
@@ -306,17 +402,35 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Used for large batch processing tasks where cost is a significant factor but reasoning capabilities are not crucial',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
+  // Open Mistral (7B)
+  {
+    idPrefix: 'open-mistral-7b',
+    label: 'Open Mistral (7B)',
+    description: 'Mistral 7B model, aka mistral-tiny-2312',
+    // symLink: 'mistral-tiny-2312',
+    // copied
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+
+
   {
     idPrefix: 'mistral-embed',
     label: 'Mistral Embed',
-    description: 'Mistral Medium on Mistral',
+    description: 'State-of-the-art semantic for extracting representation of text extracts.',
     // output: 1024 dimensions
     maxCompletionTokens: 1024, // HACK - it's 1024 dimensions, but those are not 'completion tokens'
     contextWindow: 32768, // actually unknown, assumed from the other models
     interfaces: [],
     hidden: true,
   },
+];
+
+
+const mistralModelFamilyOrder = [
+  'mistral-large', 'mistral-medium', 'mistral-small', 'open-mixtral-8x7b', 'mistral-tiny', 'open-mistral-7b', 'mistral-embed', '🔗',
 ];
 
 export function mistralModelToModelDescription(_model: unknown): ModelDescriptionSchema {
@@ -332,11 +446,16 @@ export function mistralModelToModelDescription(_model: unknown): ModelDescriptio
 }
 
 export function mistralModelsSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
-  if (a.hidden && !b.hidden)
-    return 1;
-  if (!a.hidden && b.hidden)
-    return -1;
-  return a.id.localeCompare(b.id);
+  const aPrefixIndex = mistralModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
+  const bPrefixIndex = mistralModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
+  if (aPrefixIndex !== -1 && bPrefixIndex !== -1) {
+    if (aPrefixIndex !== bPrefixIndex)
+      return aPrefixIndex - bPrefixIndex;
+    if (a.label.startsWith('🔗') && !b.label.startsWith('🔗')) return 1;
+    if (!a.label.startsWith('🔗') && b.label.startsWith('🔗')) return -1;
+    return b.label.localeCompare(a.label);
+  }
+  return aPrefixIndex !== -1 ? 1 : -1;
 }
 
 
@@ -524,10 +643,11 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
   {
     id: 'codellama-34b-instruct',
-    label: 'Codellama 34B Instruct',
-    description: 'Code Llama is a collection of pretrained and fine-tuned generative text models. This model is designed for general code synthesis and understanding.',
+    label: 'Codellama 34B Instruct (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Codellama 70B Instruct as a replacement.',
     contextWindow: 16384,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'codellama-70b-instruct',
@@ -538,72 +658,122 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
   },
   {
     id: 'llama-2-70b-chat',
-    label: 'Llama 2 70B Chat',
-    description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
+    label: 'Llama 2 70B Chat (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try mixtral-8x7b-instruct as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'mistral-7b-instruct',
     label: 'Mistral 7B Instruct',
     description: 'The Mistral-7B-Instruct-v0.1 Large Language Model (LLM) is a instruct fine-tuned version of the Mistral-7B-v0.1 generative text model using a variety of publicly available conversation datasets.',
-    contextWindow: 4096,
+    contextWindow: 16384,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'mixtral-8x7b-instruct',
     label: 'Mixtral 8x7B Instruct',
     description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
-    contextWindow: 4096,
+    contextWindow: 16384,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'pplx-7b-online',
-    label: 'Perplexity 7B Online',
-    description: 'Perplexity 7B Online',
+    label: 'Perplexity 7B Online (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Small Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-70b-online',
-    label: 'Perplexity 70B Online',
-    description: 'Perplexity 70B Online',
+    label: 'Perplexity 70B Online (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-8x7b-online',
-    label: 'Perplexity 8x7B Online',
-    description: 'Perplexity 8x7B Online',
+    label: 'Perplexity 8x7B Online (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-7b-chat',
-    label: 'Perplexity 7B Chat',
-    description: 'Perplexity 7B Chat',
+    label: 'Perplexity 7B Chat (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Small Chat as a replacement.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     id: 'pplx-70b-chat',
-    label: 'Perplexity 70B Chat',
-    description: 'Perplexity 70B Chat',
+    label: 'Perplexity 70B Chat (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  {
+    id: 'pplx-8x7b-chat',
+    label: 'Perplexity 8x7B Chat (deprecated)',
+    description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
+  {
+    id: 'sonar-small-chat',
+    label: 'Sonar Small Chat',
+    description: 'Sonar Small Chat',
+    contextWindow: 16384,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'sonar-medium-chat',
+    label: 'Sonar Medium Chat',
+    description: 'Sonar Medium Chat',
+    contextWindow: 16384,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'sonar-small-online',
+    label: 'Sonar Small Online 🌐',
+    description: 'Sonar Small Online',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
-    id: 'pplx-8x7b-chat',
-    label: 'Perplexity 8x7B Chat',
-    description: 'Perplexity 8x7B Chat',
+    id: 'sonar-medium-online',
+    label: 'Sonar Medium Online 🌐',
+    description: 'Sonar Medium Online',
     contextWindow: 4096,
     interfaces: [LLM_IF_OAI_Chat],
   },
 ];
 
+const perplexityAIModelFamilyOrder = [
+  'sonar-medium', 'sonar-small', 'mixtral', 'mistral', 'codellama', 'llama-2', '',
+];
+
 export function perplexityAIModelDescriptions() {
   // change this implementation once upstream implements some form of models listing
   return _knownPerplexityChatModels;
+}
+
+export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  const aPrefixIndex = perplexityAIModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
+  const bPrefixIndex = perplexityAIModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
+  // sort by family
+  if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
+    if (aPrefixIndex !== bPrefixIndex)
+      return aPrefixIndex - bPrefixIndex;
+  // then by reverse label
+  return b.label.localeCompare(a.label);
 }
 
 

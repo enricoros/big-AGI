@@ -7,10 +7,12 @@ import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { LocalAISourceSetup } from './LocalAISourceSetup';
+import { backendCaps } from '~/modules/backend/state-backend';
 
 
 export interface SourceSetupLocalAI {
-  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+  localAIHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+  localAIKey: string;   // use OpenAI-compatible API keys
 }
 
 export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
@@ -19,6 +21,10 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   rank: 22,
   location: 'local',
   instanceLimit: 4,
+  hasBackendCap: () => {
+    const { hasLlmLocalAIHost, hasLlmLocalAIKey } = backendCaps();
+    return hasLlmLocalAIHost || hasLlmLocalAIKey;
+  },
 
   // components
   Icon: LocalAIIcon,
@@ -27,13 +33,14 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
 
   // functions
   initializeSetup: () => ({
-    oaiHost: 'http://localhost:8080',
+    localAIHost: '',
+    localAIKey: '',
   }),
   getTransportAccess: (partialSetup) => ({
     dialect: 'localai',
-    oaiKey: '',
+    oaiKey: partialSetup?.localAIKey || '',
     oaiOrg: '',
-    oaiHost: partialSetup?.oaiHost || '',
+    oaiHost: partialSetup?.localAIHost || '',
     heliKey: '',
     moderationCheck: false,
   }),

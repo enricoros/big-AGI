@@ -16,13 +16,14 @@ export function SettingContentScaling(props: { noLabel?: boolean }) {
   return (
     <FormControl orientation='horizontal' sx={{ justifyContent: props.noLabel ? 'center' : 'space-between' }}>
       {!props.noLabel && (
-        <FormLabelStart title='Text Size'
-                        description={contentScaling === 'xs' ? 'Extra Small' : contentScaling === 'sm' ? 'Small' : 'Default'} />
+        <FormLabelStart
+          title='Text Size'
+          description={contentScaling === 'xs' ? 'Dense' : contentScaling === 'sm' ? 'Default' : 'Comfy'}
+        />
       )}
       <Stepper sx={{
         maxWidth: 160,
         width: '100%',
-        fontWeight: 'initial',
         '--Step-connectorThickness': '2px',
         '--StepIndicator-size': '2rem',
       }}>
@@ -40,6 +41,10 @@ export function SettingContentScaling(props: { noLabel?: boolean }) {
                   sx={{
                     // style
                     fontSize: sizeKey,
+                    // 400 would be more representative because it's the default, but being in a button we're 500 (md) instead of 400.
+                    //     However it's good to have that extra confidence when choosing a lower font size, as then while reading text
+                    //     the 400 makes lots of sense.
+                    // fontWeight: ...400?,
                     // borderRadius: !isActive ? '50%' : undefined,
                     borderRadius: '50%',
                     width: '1rem',

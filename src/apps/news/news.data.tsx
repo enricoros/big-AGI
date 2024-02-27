@@ -16,10 +16,6 @@ import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
 
 
-// update this variable every time you want to broadcast a new version to clients
-export const incrementalVersion: number = 13;
-
-
 const wowStyle: SxProps = {
   textDecoration: 'underline',
   textDecorationThickness: '0.4em',
@@ -43,7 +39,7 @@ function B(props: {
       : props.code ? `${Brand.URIs.OpenRepo}/blob/main/${props.code}`
         : props.href;
   const boldText = (
-    <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 600 }}>
+    <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 'lg' }}>
       {props.children}
     </Typography>
   );

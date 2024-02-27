@@ -1,34 +1,35 @@
-import { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/modules/llms/store-llms';
+import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
-import { DMessage, useChatStore } from '~/common/state/store-chats';
+import type { DMessage } from '~/common/state/store-chats';
+import { ConversationManager } from '~/common/chats/ConversationHandler';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
-import { createAssistantTypingMessage, updatePurposeInHistory } from './editors';
 
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
 export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, parallelViewCount: number) {
+  const cHandler = ConversationManager.getHandler(conversationId);
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // update the system message from the active Purpose, if not manually edited
-  history = updatePurposeInHistory(conversationId, history, assistantLlmId, systemPurpose);
+  history = cHandler.resyncPurposeInHistory(history, assistantLlmId, systemPurpose);
 
   // create a blank and 'typing' message for the assistant
-  const assistantMessageId = createAssistantTypingMessage(conversationId, assistantLlmId, history[0].purposeId, '...');
+  const assistantMessageId = cHandler.messageAppendAssistant('...', assistantLlmId, history[0].purposeId);
 
   // when an abort controller is set, the UI switches to the "stop" mode
-  const controller = new AbortController();
-  const { startTyping, editMessage } = useChatStore.getState();
-  startTyping(conversationId, controller);
+  const abortController = new AbortController();
+  cHandler.setAbortController(abortController);
 
   // stream the assistant's messages
   await streamAssistantMessage(
@@ -36,12 +37,12 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     history,
     parallelViewCount,
     autoSpeak,
-    (updatedMessage) => editMessage(conversationId, assistantMessageId, updatedMessage, false),
-    controller.signal,
+    (update) => cHandler.messageEdit(assistantMessageId, update, false),
+    abortController.signal,
   );
 
   // clear to send, again
-  startTyping(conversationId, null);
+  cHandler.setAbortController(null);
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
@@ -58,7 +59,7 @@ async function streamAssistantMessage(
   history: DMessage[],
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
-  editMessage: (updatedMessage: Partial<DMessage>) => void,
+  editMessage: (update: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
 ) {
 
@@ -67,7 +68,6 @@ async function streamAssistantMessage(
 
   const messages = history.map(({ role, text }) => ({ role, content: text }));
 
-  const incrementalAnswer: Partial<DMessage> = { text: '' };
 
   // Throttling setup
   let lastCallTime = 0;
@@ -83,33 +83,34 @@ async function streamAssistantMessage(
     }
   }
 
+  const incrementalAnswer: Partial<DMessage> = { text: '' };
+
   try {
-    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal,
-      ({ originLLM, textSoFar, typing }) => {
+    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal, (update: StreamingClientUpdate) => {
+      const textSoFar = update.textSoFar;
 
-        // grow the incremental message
-        if (originLLM) incrementalAnswer.originLLM = originLLM;
-        if (textSoFar) incrementalAnswer.text = textSoFar;
-        if (typing !== undefined) incrementalAnswer.typing = typing;
+      // grow the incremental message
+      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
+      if (textSoFar) incrementalAnswer.text = textSoFar;
+      if (update.typing !== undefined) incrementalAnswer.typing = update.typing;
 
-        // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
-        // This can be toggled from the settings
-        throttledEditMessage(incrementalAnswer);
+      // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
+      // This can be toggled from the settings
+      throttledEditMessage(incrementalAnswer);
 
-        // 📢 TTS: first-line
-        if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
-          let cutPoint = textSoFar.lastIndexOf('\n');
-          if (cutPoint < 0)
-            cutPoint = textSoFar.lastIndexOf('. ');
-          if (cutPoint > 100 && cutPoint < 400) {
-            spokenLine = true;
-            const firstParagraph = textSoFar.substring(0, cutPoint);
-            // fire/forget: we don't want to stall this loop
-            void speakText(firstParagraph);
-          }
+      // 📢 TTS: first-line
+      if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
+        let cutPoint = textSoFar.lastIndexOf('\n');
+        if (cutPoint < 0)
+          cutPoint = textSoFar.lastIndexOf('. ');
+        if (cutPoint > 100 && cutPoint < 400) {
+          spokenLine = true;
+          const firstParagraph = textSoFar.substring(0, cutPoint);
+          // fire/forget: we don't want to stall this loop
+          void speakText(firstParagraph);
         }
-      },
-    );
+      }
+    });
   } catch (error: any) {
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);

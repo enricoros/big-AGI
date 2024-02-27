@@ -90,6 +90,7 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
   // attractive: attract the user to click on this element
   [`&.${navItemClasses.attractive}`]: {
     animation: `${cssRainbowColorKeyframes} 5s infinite`,
+    animationDelay: '5s',
     transform: 'scale(1.4)',
   },
 

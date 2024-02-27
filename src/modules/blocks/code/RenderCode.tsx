@@ -19,8 +19,17 @@ import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
+export function getPlantUmlServerUrl(): string {
+  // set at nextjs build time
+  return process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL || 'https://www.plantuml.com/plantuml/svg/';
+}
 
 async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
+  // Get the PlantUML server from inline env var
+  let plantUmlServerUrl = getPlantUmlServerUrl();
+  if (!plantUmlServerUrl.endsWith('/'))
+    plantUmlServerUrl += '/';
+
   // fetch the PlantUML SVG
   let text: string = '';
   try {
@@ -29,23 +38,27 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 
     // retrieve and manually adapt the SVG, to remove the background
     const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
-    const response = await frontendSideFetch(`https://www.plantuml.com/plantuml/svg/${encodedPlantUML}`);
+    const response = await frontendSideFetch(`${plantUmlServerUrl}${encodedPlantUML}`);
     text = await response.text();
-  } catch (e) {
+  } catch (error) {
+    console.error('Error rendering PlantUML on server:', plantUmlServerUrl, error);
     return null;
   }
+
   // validate/extract the SVG
   const start = text.indexOf('<svg ');
   const end = text.indexOf('</svg>');
   if (start < 0 || end <= start)
     throw new Error('Could not render PlantUML');
+
+  // remove the background color
   const svg = text
     .slice(start, end + 6) // <svg ... </svg>
-    .replace('background:#FFFFFF;', ''); // transparent background
+    .replace('background:#FFFFFF;', '');
 
   // check for syntax errors
   if (svg.includes('>Syntax Error?</text>'))
-    throw new Error('syntax issue (it happens!). Please regenerate or change generator model.');
+    throw new Error('llm syntax issue (it happens!). Please regenerate or change the language model.');
 
   return svg;
 }
@@ -54,7 +67,7 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 export const overlayButtonsSx: SxProps = {
   position: 'absolute', top: 0, right: 0, zIndex: 10,
   display: 'flex', flexDirection: 'row', gap: 1,
-  opacity: 0, transition: 'opacity 0.2s',
+  opacity: 0, transition: 'opacity 0.15s',
   // '& > button': {
   // backgroundColor: 'background.level2',
   // backdropFilter: 'blur(12px)',
@@ -64,7 +77,7 @@ export const overlayButtonsSx: SxProps = {
 
 interface RenderCodeBaseProps {
   codeBlock: CodeBlock,
-  isMobile?: boolean,
+  fitScreen?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
   sx?: SxProps,
@@ -78,7 +91,7 @@ interface RenderCodeImplProps extends RenderCodeBaseProps {
 function RenderCodeImpl(props: RenderCodeImplProps) {
 
   // state
-  const [fitScreen, setFitScreen] = React.useState(!!props.isMobile);
+  const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
   const [showHTML, setShowHTML] = React.useState(false);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
@@ -148,7 +161,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          fontWeight: 500, whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
+          whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
@@ -217,7 +230,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
               </IconButton>
             </Tooltip>
           )}
-          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML) || (isSVG && showSVG && canScaleSVG)) && (
+          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML && !plantUmlError) || (isSVG && showSVG && canScaleSVG)) && (
             <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
               <IconButton variant={fitScreen ? 'solid' : 'soft'} onClick={() => setFitScreen(on => !on)}>
                 <FitScreenIcon />

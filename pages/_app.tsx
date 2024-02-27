@@ -1,9 +1,8 @@
 import * as React from 'react';
 import Head from 'next/head';
 import { MyAppProps } from 'next/app';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
-
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
@@ -20,7 +19,8 @@ import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
 import { ProviderTRPCQueryClient } from '~/common/providers/ProviderTRPCQueryClient';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
-import { isVercelFrontend } from '~/common/util/pwaUtils';
+import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
@@ -45,8 +45,9 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
       </ProviderSingleTab>
     </ProviderTheming>
 
-    {isVercelFrontend && <VercelAnalytics debug={false} />}
-    {isVercelFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+    {isVercelFromFrontend && <VercelAnalytics debug={false} />}
+    {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+    {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
 
   </>;
 

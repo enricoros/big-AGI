@@ -22,6 +22,7 @@ export const geminiModelsListOutputSchema = z.object({
       'countMessageTokens',
       'countTextTokens',
       'countTokens',
+      'createTunedModel',
       'createTunedTextModel',
       'embedContent',
       'embedText',
@@ -168,7 +169,7 @@ export const geminiGeneratedContentResponseSchema = z.object({
   // no candidates are returned only if there was something wrong with the prompt (see promptFeedback)
   candidates: z.array(z.object({
     index: z.number(),
-    content: geminiContentSchema,
+    content: geminiContentSchema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     finishReason: geminiFinishReasonSchema.optional(),
     safetyRatings: z.array(geminiSafetyRatingSchema),
     citationMetadata: z.object({

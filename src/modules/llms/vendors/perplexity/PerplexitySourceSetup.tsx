@@ -27,7 +27,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey: perplexityKey } = access;
 
-  // validate if url is a well formed proper url with zod
+  // key validation
   const needsUserKey = !ModelVendorPerplexity.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && sourceSetupValid);
   const showKeyError = !!perplexityKey && !sourceSetupValid;
@@ -53,6 +53,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
     <Typography level='body-sm'>
       The <Link href='https://docs.perplexity.ai/docs/getting-started'>Perplexity API</Link> offers inference
       as a service for a variety of models. See the <Link href='https://www.perplexity.ai/' target='_blank'>Perplexity AI</Link> website for more information.
+      🌐 Online models are quite unique as they can make use of internet data.
     </Typography>
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />

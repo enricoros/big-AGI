@@ -2,6 +2,7 @@
 FROM node:18-alpine AS base
 ENV NEXT_TELEMETRY_DISABLED 1
 
+
 # Dependencies
 FROM base AS deps
 WORKDIR /app
@@ -14,9 +15,14 @@ COPY src/server/prisma ./src/server/prisma
 ENV NODE_ENV development
 RUN npm ci
 
+
 # Builder
 FROM base AS builder
 WORKDIR /app
+
+# Optional argument to configure GA4 at build time (see: docs/deploy-analytics.md)
+ARG NEXT_PUBLIC_GA4_MEASUREMENT_ID
+ENV NEXT_PUBLIC_GA4_MEASUREMENT_ID=${NEXT_PUBLIC_GA4_MEASUREMENT_ID}
 
 # Copy development deps and source
 COPY --from=deps /app/node_modules ./node_modules
@@ -28,6 +34,7 @@ RUN npm run build
 
 # Reduce installed packages to production-only
 RUN npm prune --production
+
 
 # Runner
 FROM base AS runner
