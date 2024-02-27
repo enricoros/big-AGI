@@ -59,6 +59,7 @@ HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
 # Frontend variables
+NEXT_PUBLIC_GA4_MEASUREMENT_ID=
 NEXT_PUBLIC_PLANTUML_SERVER_URL=
 ```
 
@@ -136,7 +137,11 @@ The value of these variables are passed to the frontend (Web UI) - make sure the
 
 | Variable                          | Description                                                                              |
 |:----------------------------------|:-----------------------------------------------------------------------------------------|
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md)) |
 | `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. (code in RederCode.tsx) |
+
+> Important: these variables must be set at build time, which is required by Next.js to pass them to the frontend.
+> This is in contrast to the backend variables, which can be set when starting the local server/container.
 
 ---
 
