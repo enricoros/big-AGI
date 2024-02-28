@@ -53,7 +53,7 @@ export function messageBackground(messageRole: DMessage['role'] | string, wasEdi
     case 'assistant':
       return unknownAssistantIssue ? 'danger.softBg' : 'background.surface';
     case 'system':
-      return wasEdited ? 'warning.softHoverBg' : 'background.surface';
+      return wasEdited ? 'warning.softHoverBg' : 'neutral.softBg';
     default:
       return '#ff0000';
   }
