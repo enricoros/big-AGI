@@ -19,6 +19,7 @@ import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -27,6 +28,7 @@ import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, useChatNavRenderItems } from './useChatNavRenderItems';
 import { ClearFolderText } from './folders/useFolderDropdown';
+import { useChatShowRelativeSize } from '../store-app-chat';
 
 
 // this is here to make shallow comparisons work on the next hook
@@ -77,9 +79,10 @@ function ChatDrawer(props: {
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
+  const { showRelativeSize, toggleRelativeSize } = useChatShowRelativeSize();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatNavRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, navGrouping,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, navGrouping, showRelativeSize,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
     contentScaling: state.contentScaling,
@@ -140,22 +143,38 @@ function ChatDrawer(props: {
   const groupingComponent = React.useMemo(() => (
     <Dropdown>
       <MenuButton
-        aria-label='Group by'
+        aria-label='View options'
         slots={{ root: IconButton }}
         slotProps={{ root: { size: 'sm' } }}
       >
         <MoreVertIcon sx={{ fontSize: 'xl' }} />
       </MenuButton>
-      <Menu placement='bottom-start' sx={{ zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
+      <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
+        <ListItem>
+          <Typography level='body-sm'>Group By</Typography>
+        </ListItem>
         {(['date', 'persona'] as const).map(_gName => (
-          <MenuItem key={'group-' + _gName} selected={navGrouping === _gName} onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}>
+          <MenuItem
+            key={'group-' + _gName}
+            aria-label={`Group by ${_gName}`}
+            selected={navGrouping === _gName}
+            onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}
+          >
             <ListItemDecorator>{navGrouping === _gName && <CheckIcon />}</ListItemDecorator>
-            Group by {_gName}
+            {capitalizeFirstLetter(_gName)}
           </MenuItem>
         ))}
+        <ListDivider />
+        <ListItem>
+          <Typography level='body-sm'>Show</Typography>
+        </ListItem>
+        <MenuItem onClick={toggleRelativeSize}>
+          <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
+          Relative Size
+        </MenuItem>
       </Menu>
     </Dropdown>
-  ), [navGrouping]);
+  ), [navGrouping, showRelativeSize, toggleRelativeSize]);
 
 
   return <>
@@ -256,7 +275,7 @@ function ChatDrawer(props: {
               key={'nav-chat-' + item.conversationId}
               item={item}
               showSymbols={showSymbols}
-              bottomBarBasis={showSymbols ? filteredChatsBarBasis : 0}
+              bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
               onConversationDelete={handleConversationDeleteNoConfirmation}

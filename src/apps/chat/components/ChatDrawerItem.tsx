@@ -168,8 +168,7 @@ function ChatDrawerItem(props: {
 
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
 
-  const progress = props.bottomBarBasis ? 100 * (searchFrequency ?? messageCount) / props.bottomBarBasis : 0;
-
+  const progress = props.bottomBarBasis ? 100 * (searchFrequency || messageCount) / props.bottomBarBasis : 0;
 
   const titleRowComponent = React.useMemo(() => <>
 
@@ -234,7 +233,7 @@ function ChatDrawerItem(props: {
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
       <Box sx={{
-        backgroundColor: 'neutral.softBg',
+        backgroundColor: 'neutral.softHoverBg',
         position: 'absolute', left: 0, bottom: 0, width: progress + '%', height: 4,
       }} />
     ), [progress]);

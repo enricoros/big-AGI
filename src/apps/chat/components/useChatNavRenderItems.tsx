@@ -7,7 +7,6 @@ import type { ChatNavigationItemData } from './ChatDrawerItem';
 
 
 // configuration
-const AUTO_UNDERLINE_COUNT = 40;
 const SEARCH_MIN_CHARS = 3;
 
 
@@ -79,6 +78,7 @@ export function useChatNavRenderItems(
   activeFolder: DFolder | null,
   allFolders: DFolder[],
   grouping: ChatNavGrouping,
+  showRelativeSize: boolean,
 ): {
   renderNavItems: ChatRenderItemData[],
   filteredChatIDs: DConversationId[],
@@ -185,7 +185,7 @@ export function useChatNavRenderItems(
       const filteredChatIDs = chatNavItems.map(_c => _c.conversationId);
       const filteredChatsCount = chatNavItems.length;
       const filteredChatsAreEmpty = !filteredChatsCount || (filteredChatsCount === 1 && chatNavItems[0].isEmpty);
-      const filteredChatsBarBasis = (filteredChatsCount >= AUTO_UNDERLINE_COUNT || isSearching)
+      const filteredChatsBarBasis = ((showRelativeSize && filteredChatsCount >= 2) || isSearching)
         ? chatNavItems.reduce((longest, _c) => Math.max(longest, isSearching ? _c.searchFrequency : _c.messageCount), 1)
         : 0;
 
@@ -202,7 +202,9 @@ export function useChatNavRenderItems(
       // we only compare the renderNavItems array, which shall be changed if the rest changes
       return a.renderNavItems.length === b.renderNavItems.length
         && a.renderNavItems.every((_a, i) => shallow(_a, b.renderNavItems[i]))
-        && shallow(a.filteredChatIDs, b.filteredChatIDs);
+        && shallow(a.filteredChatIDs, b.filteredChatIDs)
+        // we also compare this, as it changes with a parameter
+        && a.filteredChatsBarBasis === b.filteredChatsBarBasis;
     },
   );
 }
