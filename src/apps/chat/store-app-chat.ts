@@ -10,6 +10,8 @@ export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
 
 interface AppChatStore {
 
+  // chat AI
+
   autoSpeak: ChatAutoSpeakType;
   setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void;
 
@@ -22,8 +24,13 @@ interface AppChatStore {
   autoTitleChat: boolean;
   setAutoTitleChat: (autoTitleChat: boolean) => void;
 
+  // chat UI
+
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
+
+  showRelativeSize: boolean;
+  setShowRelativeSize: (showRelativeSize: boolean) => void;
 
   showTextDiff: boolean;
   setShowTextDiff: (showTextDiff: boolean) => void;
@@ -51,6 +58,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
+
+    showRelativeSize: false,
+    setShowRelativeSize: (showRelativeSize: boolean) => _set({ showRelativeSize }),
 
     showTextDiff: false,
     setShowTextDiff: (showTextDiff: boolean) => _set({ showTextDiff }),
@@ -102,6 +112,12 @@ export const useChatMicTimeoutMsValue = (): number =>
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
+
+export const useChatShowRelativeSize = (): { showRelativeSize: boolean, toggleRelativeSize: () => void } => {
+  const showRelativeSize = useAppChatStore(state => state.showRelativeSize);
+  const toggleRelativeSize = () => useAppChatStore.getState().setShowRelativeSize(!showRelativeSize);
+  return { showRelativeSize, toggleRelativeSize };
+};
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
   useAppChatStore(state => [state.showTextDiff, state.setShowTextDiff], shallow);
