@@ -93,6 +93,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
         break;
 
       case 'azure':
+      case 'groq':
       case 'lmstudio':
       case 'localai':
       case 'mistral':

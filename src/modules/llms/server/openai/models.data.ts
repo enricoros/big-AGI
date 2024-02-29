@@ -776,6 +776,29 @@ export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescrip
   return b.label.localeCompare(a.label);
 }
 
+// Groq
+
+const _knownGroqModels: ModelDescriptionSchema[] = [
+  {
+    id: 'lama2-70b-4096',
+    label: 'Llama 2 70B Chat',
+    description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'mixtral-8x7b-32768',
+    label: 'Mixtral 8x7B Instruct v0.1',
+    description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  }
+];
+
+export function groqModelDescriptions() {
+  // change this implementation once upstream implements some form of models listing
+  return _knownGroqModels;
+}
 
 // Helpers
 
