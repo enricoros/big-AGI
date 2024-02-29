@@ -11,13 +11,13 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, groqModelDescriptions, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
 const openAIDialects = z.enum([
-  'azure', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
+  'azure', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
 
 export const openAIAccessSchema = z.object({
@@ -132,6 +132,11 @@ export const llmOpenAIRouter = createTRPCRouter({
           });
         return { models };
       }
+
+      // [Groq]: use a custom list of models 
+      // https://console.groq.com/docs/models
+      if (access.dialect === 'groq')
+        return { models: groqModelDescriptions() };
 
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
       if (access.dialect === 'perplexity')
@@ -370,6 +375,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
@@ -458,6 +464,21 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         url: oaiHost + apiPath,
       };
 
+      case 'groq':
+        const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
+        const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
+        if (!groqKey || !groqHost)
+          throw new Error('Missing Groq API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+
+        return {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          url: groqHost + apiPath,
+        };
+  
 
     case 'localai':
       const localAIKey = access.oaiKey || env.LOCALAI_API_KEY || '';

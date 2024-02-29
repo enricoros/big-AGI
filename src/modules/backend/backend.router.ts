@@ -29,6 +29,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
         hasLlmGemini: !!env.GEMINI_API_KEY,
+        hasLlmGroq: !!env.GROQ_API_KEY,
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
         hasLlmLocalAIKey: !!env.LOCALAI_API_KEY,
         hasLlmMistral: !!env.MISTRAL_API_KEY,
