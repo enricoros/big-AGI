@@ -22,13 +22,14 @@ export const backendRouter = createTRPCRouter({
     .query(async ({ ctx }) => {
       analyticsListCapabilities(ctx.hostName);
       return {
-        hasDB: (!!env.MDB_URI)||(!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
+        hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
         hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
         hasImagingProdia: !!env.PRODIA_API_KEY,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
         hasLlmGemini: !!env.GEMINI_API_KEY,
+        hasLlmGroq: !!env.GROQ_API_KEY,
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
         hasLlmLocalAIKey: !!env.LOCALAI_API_KEY,
         hasLlmMistral: !!env.MISTRAL_API_KEY,
