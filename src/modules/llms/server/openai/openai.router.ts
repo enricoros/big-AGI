@@ -464,21 +464,21 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         url: oaiHost + apiPath,
       };
 
-      case 'groq':
-        const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
-        const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
-        if (!groqKey || !groqHost)
-          throw new Error('Missing Groq API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+    case 'groq':
+      const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
+      const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
+      if (!groqKey)
+        throw new Error('Missing Groq API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
-        return {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${groqKey}`,
-          },
-          url: groqHost + apiPath,
-        };
-  
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        url: groqHost + apiPath,
+      };
+
 
     case 'localai':
       const localAIKey = access.oaiKey || env.LOCALAI_API_KEY || '';
