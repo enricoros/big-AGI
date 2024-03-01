@@ -11,10 +11,9 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, groqModelDescriptions, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
-
 
 const openAIDialects = z.enum([
   'azure', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
@@ -133,10 +132,6 @@ export const llmOpenAIRouter = createTRPCRouter({
         return { models };
       }
 
-      // [Groq]: use a custom list of models 
-      // https://console.groq.com/docs/models
-      if (access.dialect === 'groq')
-        return { models: groqModelDescriptions() };
 
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
       if (access.dialect === 'perplexity')
@@ -163,6 +158,11 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // every dialect has a different way to enumerate models - we execute the mapping on the server side
       switch (access.dialect) {
+
+        case 'groq':
+          models = openAIModels
+            .map(groqModelToModelDescription);
+          break;
 
         case 'lmstudio':
           models = openAIModels

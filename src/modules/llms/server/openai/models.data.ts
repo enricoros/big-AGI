@@ -4,7 +4,7 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
 import { wireOpenrouterModelsListOutputSchema } from './openrouter.wiretypes';
 import { wireTogetherAIListOutputSchema } from '~/modules/llms/server/openai/togetherai.wiretypes';
-
+import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
 
 // [Azure] / [OpenAI]
 const _knownOpenAIChatModels: ManualMappings = [
@@ -778,16 +778,16 @@ export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescrip
 
 // Groq
 
-const _knownGroqModels: ModelDescriptionSchema[] = [
+const _knownGroqModels: ManualMappings = [
+  // {
+  //   id: 'lama2-70b-4096',
+  //   label: 'Llama 2 70B Chat',
+  //   description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
+  //   contextWindow: 4096,
+  //   interfaces: [LLM_IF_OAI_Chat],
+  // },
   {
-    id: 'lama2-70b-4096',
-    label: 'Llama 2 70B Chat',
-    description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
-    contextWindow: 4096,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'mixtral-8x7b-32768',
+    idPrefix: 'mixtral-8x7b-32768',
     label: 'Mixtral 8x7B Instruct v0.1',
     description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
     contextWindow: 32768,
@@ -795,8 +795,19 @@ const _knownGroqModels: ModelDescriptionSchema[] = [
   }
 ];
 
+export function groqModelToModelDescription(_model: unknown): ModelDescriptionSchema {
+  const model = wireGroqModelsListOutputSchema.parse(_model);
+  return fromManualMapping(_knownGroqModels, model.id, model.created, undefined, {
+    idPrefix: model.id,
+    label: model.id.replaceAll(/[_-]/g, ' '),
+    description: 'New Model',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  });
+}
+
 export function groqModelDescriptions() {
-  // change this implementation once upstream implements some form of models listing
   return _knownGroqModels;
 }
 
