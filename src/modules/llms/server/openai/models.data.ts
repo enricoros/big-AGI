@@ -1,10 +1,10 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../../store-llms';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
+import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
 import { wireOpenrouterModelsListOutputSchema } from './openrouter.wiretypes';
-import { wireTogetherAIListOutputSchema } from '~/modules/llms/server/openai/togetherai.wiretypes';
-import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
+import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 
 // [Azure] / [OpenAI]
 const _knownOpenAIChatModels: ManualMappings = [
@@ -792,7 +792,7 @@ const _knownGroqModels: ManualMappings = [
     description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-  }
+  },
 ];
 
 export function groqModelToModelDescription(_model: unknown): ModelDescriptionSchema {
@@ -807,9 +807,6 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
   });
 }
 
-export function groqModelDescriptions() {
-  return _knownGroqModels;
-}
 
 // Helpers
 
