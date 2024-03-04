@@ -5,9 +5,10 @@ import { LLM_IF_OAI_Chat } from '../../store-llms';
 const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 
 export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
+  {
     id: 'claude-3-opus-20240229',
     label: 'Claude 3 Opus',
-    created: roundTime('2024-03-04'),
+    created: roundTime('2024-02-29'),
     description: 'Most powerful model for highly complex tasks',
     contextWindow: 200000,
     pricing: {
