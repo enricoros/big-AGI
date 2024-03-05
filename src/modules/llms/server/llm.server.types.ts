@@ -23,6 +23,7 @@ const modelDescriptionSchema = z.object({
   maxCompletionTokens: z.number().optional(),
   pricing: pricingSchema.optional(),
   // rateLimits: rateLimitsSchema.optional(),
+  trainingDataCutoff: z.string().optional(),
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
   hidden: z.boolean().optional(),
 });
