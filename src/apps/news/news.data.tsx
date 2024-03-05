@@ -35,6 +35,10 @@ interface NewsItem {
 export const NewsItems: NewsItem[] = [
   // still unannounced: screen capture (when removed from labs)
   {
+    versionCode: '1.14.0',
+    versionName: 'The Big One',
+  },
+  {
     versionCode: '1.13.0',
     versionName: 'Multi + Mind',
     versionMoji: '🧠🔀',
