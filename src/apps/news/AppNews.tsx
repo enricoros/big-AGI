@@ -3,8 +3,9 @@ import { keyframes } from '@emotion/react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, IconButton, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
@@ -12,7 +13,8 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
-import { NewsItems, newsRoadmapCallout } from './news.data';
+import { NewsItems } from './news.data';
+
 
 // number of news items to show by default, before the expander
 const DEFAULT_NEWS_COUNT = 3;
@@ -30,6 +32,39 @@ export const cssColorKeyframes = keyframes`
     75% {
         color: #083e75; /* Primary lighter shade (300) */
     }`;
+
+
+// callout, for special occasions
+export const newsRoadmapCallout =
+  <Card variant='solid' invertedColors>
+    <CardContent sx={{ gap: 2 }}>
+      <Typography level='title-lg'>
+        Open Roadmap
+      </Typography>
+      <Typography level='body-sm'>
+        Take a peek at our roadmap to see what&apos;s in the pipeline.
+        Discover upcoming features and let us know what excites you the most!
+      </Typography>
+      <Grid container spacing={1}>
+        <Grid xs={12} sm={7}>
+          <Button
+            fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
+            component={Link} href={Brand.URIs.OpenProject} noLinkStyle target='_blank'
+          >
+            Explore
+          </Button>
+        </Grid>
+        <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
+          <Button
+            fullWidth variant='plain' color='primary' endDecorator={<LaunchIcon />}
+            component={Link} href={Brand.URIs.OpenRepo + '/issues/new?template=roadmap-request.md&title=%5BSuggestion%5D'} noLinkStyle target='_blank'
+          >
+            Suggest a Feature
+          </Button>
+        </Grid>
+      </Grid>
+    </CardContent>
+  </Card>;
 
 
 export function AppNews() {
