@@ -17,6 +17,16 @@ Or fork & run on Vercel
 
 big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
 
+### What's New in 1.14.0 · March 6, 2024 · Modelmorphic
+
+- New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
+- **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
+- **Mistral** Large and Google **Gemini 1.5** support
+- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
+- And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
+- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
+
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13

@@ -4,7 +4,7 @@
 import { useAppStateStore } from '~/common/state/store-appstate';
 
 
-export const incrementalNewsVersion: number = 13;
+export const incrementalNewsVersion: number = 14;
 
 
 export function shallRedirectToNews() {
