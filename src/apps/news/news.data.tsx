@@ -55,8 +55,9 @@ export const NewsItems: NewsItem[] = [
   }*/
   {
     versionCode: '1.14.0',
-    versionName: 'ModelMorphic',
+    versionName: 'Modelmorphic',
     versionCoverImage: coverV114,
+    versionDate: new Date('2024-03-06T08:00:00Z'),
     items: [
       { text: <><B issue={407}>Perplexity</B> support, including Online models</>, issue: 407, icon: PerplexityIcon },
       { text: <><B issue={427}>Groq</B> support, with speeds up to 500 tok/s</>, issue: 427, icon: GroqIcon },
