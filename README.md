@@ -24,7 +24,8 @@ big-AGI is an open book; see the **[ready-to-ship and future ideas](https://gith
 - **Mistral** Large and Google **Gemini 1.5** support
 - Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
-- More UI improvements, documentation, bug fixes, and developer enhancements - see release for details
+- And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
+- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
 
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
