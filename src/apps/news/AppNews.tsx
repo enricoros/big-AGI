@@ -146,12 +146,15 @@ export function AppNews() {
                   </Box>
 
                   {!!ni.items && (ni.items.length > 0) && (
-                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
-                      {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                        < Typography component='div' level='body-sm'>
-                          {item.text}
-                        </Typography>
-                      </li>)}
+                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
+                      {ni.items.filter(item => item.dev !== true).map((item, idx) => (
+                        <li key={idx} style={{ listStyle: item.icon ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
+                          <Typography component='div' sx={{ fontSize: 'sm' }}>
+                            {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
+                            {item.text}
+                          </Typography>
+                        </li>
+                      ))}
                     </ul>
                   )}
 
