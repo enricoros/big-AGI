@@ -48,6 +48,10 @@ export function safeErrorString(error: any): string | null {
   return error.toString();
 }
 
+export function serverCapitalizeFirstLetter(string: string) {
+  return string?.length ? (string.charAt(0).toUpperCase() + string.slice(1)) : string;
+}
+
 
 /**
  * Weak (meaning the string could be encoded poorly) function that returns a string that can be used to debug a request

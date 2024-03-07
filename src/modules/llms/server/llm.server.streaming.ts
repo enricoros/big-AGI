@@ -121,7 +121,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
     console.error(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, requestAccess?.url);
 
     // client-side users visible message
-    return new NextResponse(`[Issue] ${access.dialect}: ${fetchOrVendorError}`
+    return new NextResponse(`[Issue] ${serverCapitalizeFirstLetter(access.dialect)}: ${fetchOrVendorError}`
       + (process.env.NODE_ENV === 'development' ? ` · [URL: ${requestAccess?.url}]` : ''), { status: 500 });
   }
 
