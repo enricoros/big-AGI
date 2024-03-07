@@ -1,10 +1,14 @@
 export namespace AnthropicWire {
-  export namespace Complete {
-    export interface Request {
-      prompt: string;
+  export namespace Messages {
+    export interface CreateRequest {
+      messages: {
+        content: string;
+        role: 'user' | 'assistant';
+      }[];
       model: string;
       max_tokens_to_sample?: number;
       stop_sequences?: string[];
+      max_tokens?: number;
       stream?: boolean;
       temperature?: number;
       top_k?: number;
@@ -14,16 +18,13 @@ export namespace AnthropicWire {
       };
     }
 
-    export interface Response {
-      completion: string;
-      stop_reason: 'stop_sequence' | 'max_tokens' | string;
+    export interface CreateResponse {
+      messages: {
+        content: string;
+        role: 'user' | 'assistant';
+      }[];
       model: string;
-      stop: string | null; // the stop sequence, if stop_reason is 'stop_sequence'
       log_id: string; // some log
-
-      // removed since the 2023-06-01 API version
-      // truncated: boolean;
-      // exception: string | null;
     }
   }
 }
