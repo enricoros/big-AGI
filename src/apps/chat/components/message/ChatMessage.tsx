@@ -64,6 +64,7 @@ const avatarIconSx = { width: 36, height: 36 };
 export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'] | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
     return <Avatar alt={messageSender} src={messageAvatar} />;
+
   const mascotSx = size === 'sm' ? avatarIconSx : { width: 64, height: 64 };
   switch (messageRole) {
     case 'system':
@@ -76,17 +77,18 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       // typing gif (people seem to love this, so keeping it after april fools')
       const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
       const isReact = messageOriginLLM?.startsWith('react-');
-      if (messageTyping) {
+
+      // animation: message typing
+      if (messageTyping)
         return <Avatar
           alt={messageSender} variant='plain'
-          src={isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp'
-            : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp'
-              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'}
+          src={isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' // brush
+            : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp' // mind
+              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'} // typing
           sx={{ ...mascotSx, borderRadius: 'sm' }}
         />;
-      }
 
-      // text-to-image: icon
+      // icon: text-to-image
       if (isTextToImage)
         return <FormatPaintIcon sx={{
           ...avatarIconSx,
@@ -95,15 +97,16 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
       // purpose symbol (if present)
       const symbol = SystemPurposes[messagePurposeId!]?.symbol;
-      if (symbol) return <Box sx={{
-        fontSize: '24px',
-        textAlign: 'center',
-        width: '100%',
-        minWidth: `${avatarIconSx.width}px`,
-        lineHeight: `${avatarIconSx.height}px`,
-      }}>
-        {symbol}
-      </Box>;
+      if (symbol)
+        return <Box sx={{
+          fontSize: '24px',
+          textAlign: 'center',
+          width: '100%',
+          minWidth: `${avatarIconSx.width}px`,
+          lineHeight: `${avatarIconSx.height}px`,
+        }}>
+          {symbol}
+        </Box>;
 
       // default assistant avatar
       return <SmartToyOutlinedIcon sx={avatarIconSx} />; // https://mui.com/static/images/avatar/2.jpg
