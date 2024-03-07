@@ -1,16 +1,46 @@
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_OAI_Chat } from '../../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '../../store-llms';
 
 const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 
 export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
+  {
+    id: 'claude-3-opus-20240229',
+    label: 'Claude 3 Opus',
+    created: roundTime('2024-02-29'),
+    description: 'Most powerful model for highly complex tasks',
+    contextWindow: 200000,
+    maxCompletionTokens: 4096,
+    pricing: {
+      cpmPrompt: 0.015,
+      cpmCompletion: 0.075,
+    },
+    trainingDataCutoff: 'Aug 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+  {
+    id: 'claude-3-sonnet-20240229',
+    label: 'Claude 3 Sonnet',
+    created: roundTime('2024-02-29'),
+    description: 'Ideal balance of intelligence and speed for enterprise workloads',
+    contextWindow: 200000,
+    maxCompletionTokens: 4096,
+    pricing: {
+      cpmPrompt: 0.003,
+      cpmCompletion: 0.015,
+    },
+    trainingDataCutoff: 'Aug 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+  /* Claude 3 Haiku will be here */
   {
     id: 'claude-2.1',
     label: 'Claude 2.1',
     created: roundTime('2023-11-21'),
     description: 'Superior performance on tasks that require complex reasoning, with reduced model hallucination rates',
     contextWindow: 200000,
+    maxCompletionTokens: 4096,
     pricing: {
       cpmPrompt: 0.008,
       cpmCompletion: 0.024,
@@ -23,6 +53,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     created: roundTime('2023-07-11'),
     description: 'Superior performance on tasks that require complex reasoning',
     contextWindow: 100000,
+    maxCompletionTokens: 4096,
     pricing: {
       cpmPrompt: 0.008,
       cpmCompletion: 0.024,
@@ -36,6 +67,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     created: roundTime('2023-08-09'),
     description: 'Low-latency, high throughput model',
     contextWindow: 100000,
+    maxCompletionTokens: 4096,
     pricing: {
       cpmPrompt: 0.00163,
       cpmCompletion: 0.00551,
@@ -48,6 +80,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     created: roundTime('2023-03-14'),
     description: 'Precise and fast',
     contextWindow: 100000,
+    maxCompletionTokens: 2048,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
@@ -57,16 +90,8 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     created: roundTime('2023-03-14'),
     description: 'Claude 1.3 is the latest version of Claude v1',
     contextWindow: 100000,
+    maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
-  },
-  {
-    id: 'claude-1.0',
-    label: 'Claude 1',
-    created: roundTime('2023-03-14'),
-    description: 'Claude 1.0 is the first version of Claude',
-    contextWindow: 9000,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
-  },
+  }
 ];

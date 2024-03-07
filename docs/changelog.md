@@ -5,12 +5,24 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.13.0 - Feb 2024
+### 1.15.0 - Mar 2024
 
-- milestone: [1.13.0](https://github.com/enricoros/big-agi/milestone/13)
+Prediction: OpenAI will release GPT-5 on March 14, 2024. We will support it on day 1.
+
+- milestone: [1.15.0](https://github.com/enricoros/big-agi/milestone/15)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
-## What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+### What's New in 1.14.0 · March 6, 2024 · Modelmorphic
+
+- New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
+- **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
+- **Mistral** Large and Google **Gemini 1.5** support
+- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
+- And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
+- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
+
+### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -22,7 +34,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-local-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/deploy-database.md) (thanks @ranfysvalle02), and speedups
 
-## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
+### What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
 

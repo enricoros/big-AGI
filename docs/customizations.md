@@ -43,6 +43,10 @@ Test your application thoroughly using local development (refer to README.md for
 - [deploy-cloudflare.md](deploy-cloudflare.md): for Cloudflare Workers deployment
 - [deploy-docker.md](deploy-docker.md): for Docker deployment instructions and examples
 
+## Debugging
+
+We introduced the `/info/debug` page that provides a detailed overview of the application's environment, including the API keys, environment variables, and other configuration settings.
+
 <br/> 
 
 ## Community Projects - Share Your Project
