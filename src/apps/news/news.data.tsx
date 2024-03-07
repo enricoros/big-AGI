@@ -7,6 +7,7 @@ import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import GoogleIcon from '@mui/icons-material/Google';
 import LaunchIcon from '@mui/icons-material/Launch';
 
+import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
@@ -54,11 +55,12 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.14.0',
+    versionCode: '1.14.1',
     versionName: 'Modelmorphic',
     versionCoverImage: coverV114,
-    versionDate: new Date('2024-03-06T08:00:00Z'),
+    versionDate: new Date('2024-03-07T08:00:00Z'),
     items: [
+      { text: <>Anthropic <B href='https://www.anthropic.com/news/claude-3-family'>Claude-3</B> support for smarter chats</>, issue: 443, icon: AnthropicIcon },
       { text: <><B issue={407}>Perplexity</B> support, including Online models</>, issue: 407, icon: PerplexityIcon },
       { text: <><B issue={427}>Groq</B> support, with speeds up to 500 tok/s</>, issue: 427, icon: GroqIcon },
       { text: <>Support for new Mistral-Large models</>, icon: MistralIcon },
