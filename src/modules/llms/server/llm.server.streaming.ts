@@ -317,7 +317,6 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
         if (responseMessage) {
           const { delta } = JSON.parse(data);
           Object.assign(responseMessage, delta);
-          console.log('Anthropic message delta:', delta);
         } else
           throw new Error('Unexpected message delta');
         break;
