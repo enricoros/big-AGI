@@ -62,7 +62,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
 
     const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
-      return await apiAsync.llmAnthropic.chatGenerate.mutate({
+      return await apiAsync.llmAnthropic.chatGenerateMessage.mutate({
         access,
         model: {
           id: llmRef,
