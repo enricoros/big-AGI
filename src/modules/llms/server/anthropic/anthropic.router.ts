@@ -66,9 +66,10 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
 export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWireMessagesRequest {
 
   // Take the System prompt, if it's the first message
+  // But if it's the only message, treat it as a user message
   history = [...history];
   let systemPrompt: string | undefined = undefined;
-  if (history[0].role === 'system')
+  if (history[0]?.role === 'system' && history.length > 1)
     systemPrompt = history.shift()?.content;
 
   // Transform the OpenAIHistorySchema into the target messages format, ensuring that roles alternate between 'user' and 'assistant's
