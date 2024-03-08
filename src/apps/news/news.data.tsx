@@ -48,7 +48,7 @@ export const NewsItems: NewsItem[] = [
   /*{
     versionCode: '1.15.0',
     items: [
-      Best-Of
+      Best-Of (Beam)
       Draw
       ...
       Screen Capture (when removed from labs)

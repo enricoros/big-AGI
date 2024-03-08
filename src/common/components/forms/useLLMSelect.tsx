@@ -16,11 +16,12 @@ import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
  * @param localState if true, the state is local to the hook, otherwise the global chat model is changed
  * @param label label of the select, use '' to hide it
  * @param placeholder placeholder of the select
+ * @param isHorizontal if true, the select is horizontal (label - select)
  */
-export function useLLMSelect(localState: boolean = true, label: string = 'Model', placeholder: string = 'Models …'): [DLLM | null, React.JSX.Element | null] {
+export function useLLMSelect(localState: boolean = true, label: string = 'Model', placeholder: string = 'Models …', isHorizontal: boolean = false): [DLLM | null, React.JSX.Element | null] {
 
   // state
-  const localSwitch = React.useRef(localState);
+  const localSwitch = React.useRef(localState).current;
 
   // external state
   const { llms, globalChatLLMId, globalSetChatLLMId } = useModelsStore(state => ({
@@ -33,8 +34,8 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
   const [localLLMId, setLocalLLMId] = React.useState<DLLMId | null>(globalChatLLMId);
 
   // global/local (stable) switch - do not change at runtime
-  const chatLLMId = localSwitch.current ? localLLMId : globalChatLLMId;
-  const setChatLLMId = localSwitch.current ? setLocalLLMId : globalSetChatLLMId;
+  const chatLLMId = localSwitch ? localLLMId : globalChatLLMId;
+  const setChatLLMId = localSwitch ? setLocalLLMId : globalSetChatLLMId;
 
 
   // derived state
@@ -78,7 +79,7 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
 
     // create the component
     return (
-      <FormControl>
+      <FormControl orientation={isHorizontal ? 'horizontal' : undefined}>
         {!!label && <FormLabelStart title={label} />}
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Select
@@ -112,7 +113,7 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
         </Box>
       </FormControl>
     );
-  }, [chatLLMId, label, llms, placeholder, setChatLLMId]);
+  }, [chatLLMId, isHorizontal, label, llms, placeholder, setChatLLMId]);
 
 
   return [chatLLM, component];
