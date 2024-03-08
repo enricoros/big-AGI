@@ -33,7 +33,7 @@ export function UxLabsSettings() {
   return <>
 
     <FormSwitchControl
-      title={<><ChatBeamIcon color={labsChatBeam ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Beam</>} description={'v1.14 · ' + (labsChatBeam ? 'Active' : 'Off')}
+      title={<><ChatBeamIcon color={labsChatBeam ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Beam</>} description={'v1.15 · ' + (labsChatBeam ? 'Active' : 'Off')}
       checked={labsChatBeam} onChange={setLabsChatBeam}
     />
 
