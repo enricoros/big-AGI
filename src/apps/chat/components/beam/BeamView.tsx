@@ -1,15 +1,29 @@
 import * as React from 'react';
+import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Sheet, Typography } from '@mui/joy';
+import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
 
 import { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeam } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 
-export function Beam(props: {
-  conversationHandler: ConversationHandler | null,
+export const animationEnter = keyframes`
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+        scale: 0.9;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        scale: 1;
+    }
+`;
+
+export function BeamView(props: {
+  conversationHandler: ConversationHandler,
   isMobile: boolean,
   sx?: SxProps
 }) {
@@ -20,13 +34,28 @@ export function Beam(props: {
   // external state
   const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, 'Beam LLM');
 
+  const handleClose = React.useCallback(() => {
+    props.conversationHandler.beamStore.destroy();
+  }, [props.conversationHandler.beamStore]);
+
   if (!config)
     return null;
 
   const lastMessage = config.history.slice(-1)[0] ?? null;
 
   return (
-    <Box sx={{ ...props.sx, px: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{
+      ...props.sx,
+
+      // animation
+      animation: `${animationEnter} 0.42s cubic-bezier(.17,.84,.44,1)`,
+
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+      px: { xs: 1, md: 2 },
+    }}>
 
       {/* Issues */}
       {!!config.configError && (
@@ -101,6 +130,12 @@ export function Beam(props: {
         <Sheet>
           a
         </Sheet>
+        <Sheet>
+          a
+        </Sheet>
+        <Sheet>
+          a
+        </Sheet>
       </Box>
 
       {/* Auto-Gatherer: All-in-one, Best-Of */}
@@ -131,6 +166,11 @@ export function Beam(props: {
         a
       </Box>
 
+      <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
+        <Button aria-label='Close Best-Of' variant='solid' color='neutral' onClick={handleClose} sx={{ ml: 'auto', minWidth: 100 }}>
+          Close
+        </Button>
+      </Box>
 
     </Box>
   );

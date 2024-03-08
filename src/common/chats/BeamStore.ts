@@ -16,6 +16,7 @@ function createConfig(history: DMessage[]): BeamConfig {
   return { history, lastMessage: history.slice(-1)[0]?.text || '' };
 }
 
+
 export interface BeamCandidate {
   id: string;
   text: string;
@@ -29,6 +30,7 @@ function createCandidate(): BeamCandidate {
     placeholder: '...',
   };
 }
+
 
 export class BeamStore extends EventTarget {
   private config: BeamConfig | null = null;
@@ -50,6 +52,11 @@ export class BeamStore extends EventTarget {
     }
     if (history.length < 1)
       this.config.configError = 'Warning: empty history. Skipping...';
+    this.dispatchEvent(new CustomEvent('stateChanged', { detail: { config: this.config } }));
+  }
+
+  destroy() {
+    this.config = null;
     this.dispatchEvent(new CustomEvent('stateChanged', { detail: { config: this.config } }));
   }
 
