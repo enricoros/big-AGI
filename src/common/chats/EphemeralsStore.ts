@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+import { customEventHelpers } from '~/common/util/eventUtils';
+
 import type { ConversationHandler } from './ConversationHandler';
 
 
@@ -23,6 +25,9 @@ function createDEphemeral(title: string, initialText: string): DEphemeral {
   };
 }
 
+const [dispatchEphemeralsChanged, installEphemeralsChangedListener] = customEventHelpers<DEphemeral[]>('ephemeralsChanged');
+
+
 /**
  * [store]: diy reactive store for a list of ephemerals
  */
@@ -39,7 +44,7 @@ export class EphemeralsStore extends EventTarget {
 
   append(ephemeral: DEphemeral): void {
     this.ephemerals.push(ephemeral);
-    this.dispatchEvent(new CustomEvent('ephemeralsChanged', { detail: { ephemerals: this.ephemerals } }));
+    dispatchEphemeralsChanged(this, this.ephemerals);
   }
 
   delete(ephemeralId: string): void {
@@ -47,7 +52,7 @@ export class EphemeralsStore extends EventTarget {
     console.log('EphemeralsStore: delete', index);
     if (index >= 0) {
       this.ephemerals.splice(index, 1);
-      this.dispatchEvent(new CustomEvent('ephemeralsChanged', { detail: { ephemerals: this.ephemerals } }));
+      dispatchEphemeralsChanged(this, this.ephemerals);
     }
   }
 
@@ -55,7 +60,7 @@ export class EphemeralsStore extends EventTarget {
     const ephemeral = this.ephemerals.find(e => e.id === ephemeralId);
     if (ephemeral) {
       Object.assign(ephemeral, update);
-      this.dispatchEvent(new CustomEvent('ephemeralsChanged', { detail: { ephemerals: this.ephemerals } }));
+      dispatchEphemeralsChanged(this, this.ephemerals);
     }
   }
 }
@@ -91,12 +96,7 @@ export function useEphemerals(conversationHandler: ConversationHandler | null): 
 
   React.useEffect(() => {
     if (!conversationHandler) return;
-    const handleEphemeralsChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<{ ephemerals: DEphemeral[] }>;
-      setEphemerals([...customEvent.detail.ephemerals]);
-    };
-    conversationHandler.ephemeralsStore.addEventListener('ephemeralsChanged', handleEphemeralsChanged);
-    return () => conversationHandler.ephemeralsStore.removeEventListener('ephemeralsChanged', handleEphemeralsChanged);
+    return installEphemeralsChangedListener(conversationHandler.ephemeralsStore, (detail) => setEphemerals([...detail]));
   }, [conversationHandler]);
 
   return ephemerals;

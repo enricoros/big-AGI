@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DMessage } from '~/common/state/store-chats';
 
 import type { ConversationHandler } from './ConversationHandler';
+import { customEventHelpers } from '~/common/util/eventUtils';
 
 
 export type BeamConfig = {
@@ -32,6 +33,14 @@ function createCandidate(): BeamCandidate {
 }
 
 
+interface BeamState {
+  config: BeamConfig | null;
+  candidates: BeamCandidate[];
+}
+
+const [dispatchStateChangeEvent, installStateChangeListener] = customEventHelpers<Partial<BeamState>>('stateChange');
+
+
 export class BeamStore extends EventTarget {
   private config: BeamConfig | null = null;
   private readonly candidates: BeamCandidate[] = [];
@@ -40,7 +49,7 @@ export class BeamStore extends EventTarget {
     super();
   }
 
-  get(): { config: BeamConfig | null, candidates: BeamCandidate[] } {
+  get(): BeamState {
     return { config: this.config, candidates: this.candidates };
   }
 
@@ -52,24 +61,24 @@ export class BeamStore extends EventTarget {
     }
     if (history.length < 1)
       this.config.configError = 'Warning: empty history. Skipping...';
-    this.dispatchEvent(new CustomEvent('stateChanged', { detail: { config: this.config } }));
+    dispatchStateChangeEvent(this, { config: this.config });
   }
 
   destroy() {
     this.config = null;
-    this.dispatchEvent(new CustomEvent('stateChanged', { detail: { config: this.config } }));
+    dispatchStateChangeEvent(this, { config: this.config });
   }
 
   appendCandidate(candidate: BeamCandidate): void {
     this.candidates.push(candidate);
-    this.dispatchEvent(new CustomEvent('stateChanged', { detail: { candidates: this.candidates } }));
+    dispatchStateChangeEvent(this, { candidates: this.candidates });
   }
 
   deleteCandidate(candidateId: BeamCandidate['id']): void {
     const index = this.candidates.findIndex(e => e.id === candidateId);
     if (index >= 0) {
       this.candidates.splice(index, 1);
-      this.dispatchEvent(new CustomEvent('stateChanged', { detail: { candidates: this.candidates } }));
+      dispatchStateChangeEvent(this, { candidates: this.candidates });
     }
   }
 
@@ -77,29 +86,19 @@ export class BeamStore extends EventTarget {
     const candidate = this.candidates.find(c => c.id === candidateId);
     if (candidate) {
       Object.assign(candidate, update);
-      this.dispatchEvent(new CustomEvent('stateChanged', { detail: { candidates: this.candidates } }));
+      dispatchStateChangeEvent(this, { candidates: this.candidates });
     }
   }
 }
 
 
-export function useBeam(conversationHandler: ConversationHandler | null): { config: BeamConfig | null, candidates: BeamCandidate[] } {
+export function useBeamState(conversationHandler: ConversationHandler): BeamState {
 
   // state
-  const [beamState, setBeamState] = React.useState<{ config: BeamConfig | null, candidates: BeamCandidate[] }>(() => {
-    return conversationHandler ? conversationHandler.beamStore.get() : { config: null, candidates: [] };
-  });
+  const [beamState, setBeamState] = React.useState<BeamState>(() => conversationHandler.beamStore.get());
 
-  // [effect] subscribe to events
   React.useEffect(() => {
-    if (!conversationHandler) return;
-    const handleStateChanged = (event: Event) => {
-      setBeamState(state => ({ ...state, ...(event as CustomEvent<{ config?: BeamConfig, candidates?: BeamCandidate[] }>).detail }));
-    };
-    conversationHandler.beamStore.addEventListener('stateChanged', handleStateChanged);
-    return () => {
-      conversationHandler.beamStore.removeEventListener('stateChanged', handleStateChanged);
-    };
+    return installStateChangeListener(conversationHandler.beamStore, (detail) => setBeamState(state => ({ ...state, ...detail })));
   }, [conversationHandler]);
 
   return beamState;
