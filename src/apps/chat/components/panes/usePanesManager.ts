@@ -143,10 +143,9 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
           chatPaneFocusIndex: insertIndex,
         }));
       }
-      // max reached, replace the next pane (with wraparound)
+      // max reached, replace the next pane (with wraparound) - note the outside logic won't get us here
       else {
         const replaceIndex = (chatPaneFocusIndex !== null ? chatPaneFocusIndex + 1 : 0) % MAX_CONCURRENT_PANES;
-        console.log('replaceIndex', replaceIndex);
         _set({
           chatPaneFocusIndex: replaceIndex,
         });
