@@ -96,7 +96,7 @@ export function useEphemerals(conversationHandler: ConversationHandler | null): 
 
   React.useEffect(() => {
     if (!conversationHandler) return;
-    return installEphemeralsChangedListener(conversationHandler.ephemeralsStore, (detail) => setEphemerals([...detail]));
+    return installEphemeralsChangedListener(conversationHandler.ephemeralsStore.find(), conversationHandler.ephemeralsStore, (detail) => setEphemerals([...detail]));
   }, [conversationHandler]);
 
   return ephemerals;
