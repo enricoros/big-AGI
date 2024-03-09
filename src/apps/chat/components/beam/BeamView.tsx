@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { keyframes } from '@emotion/react';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
@@ -11,6 +12,11 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { BeamHeader } from './BeamHeader';
 import { BeamRay } from './BeamRay';
 import { ChatMessageMemo } from '../message/ChatMessage';
+
+
+// component configuration
+const MIN_BEAM_COUNT = 2;
+const MAX_BEAM_COUNT = 8;
 
 
 const animationEnter = keyframes`
@@ -47,25 +53,29 @@ export function BeamView(props: {
   const { conversationHandler } = props;
 
   // state
-  const { isOpen, inputHistory, configIssue, mergeLlmId, setMergedLlmId } = useBeamStore(conversationHandler, (state) => ({
-    isOpen: state.isOpen,
-    inputHistory: state.inputHistory,
-    configIssue: state.configIssue,
-    mergeLlmId: state.allLlmId,
-    setMergedLlmId: state.setMergedLlmId,
-  }));
+  const { isOpen, inputHistory, configIssue, mergeLlmId, setMergedLlmId, beamsCount } = useBeamStore(conversationHandler,
+    useShallow((state) => ({
+      isOpen: state.isOpen,
+      inputHistory: state.inputHistory,
+      configIssue: state.configIssue,
+      mergeLlmId: state.gatherLlmId,
+      setMergedLlmId: state.setMergedLlmId,
+      beamsCount: state.rays.length,
+    })),
+  );
 
   // external state
   const [allChatLlm, allChatLlmComponent] = useLLMSelect(mergeLlmId, setMergedLlmId, props.isMobile ? '' : 'Beam Model');
 
   // derived state
-  const { beamSetCount } = conversationHandler;
+  const { beamSetRayCount } = conversationHandler;
   const lastMessage = inputHistory?.slice(-1)[0] || null;
 
   console.log('mergeLlmId', mergeLlmId);
-  const beamCount = 2;
 
   const handleCloseKeepRunning = React.useCallback(() => conversationHandler.beamClose(), [conversationHandler]);
+
+  const handleSetBeamCount = React.useCallback((n: number) => conversationHandler.beamSetRayCount(n), [conversationHandler]);
 
 
   const handleStart = React.useCallback(() => {
@@ -75,6 +85,10 @@ export function BeamView(props: {
 
 
   // change beam count
+
+  React.useEffect(() => {
+    !beamsCount && handleSetBeamCount(MIN_BEAM_COUNT);
+  }, [beamsCount, handleSetBeamCount]);
 
   // const beamCount = candidates.length;
   //
@@ -112,8 +126,8 @@ export function BeamView(props: {
       {/* Header */}
       <BeamHeader
         isMobile={props.isMobile}
-        beamCount={beamCount}
-        setBeamCount={beamSetCount}
+        beamCount={beamsCount}
+        setBeamCount={handleSetBeamCount}
         llmSelectComponent={allChatLlmComponent}
         onStart={handleCloseKeepRunning}
       />
@@ -130,28 +144,21 @@ export function BeamView(props: {
       )}
 
       {/* Rays */}
-      <Box sx={{
-        // style
-        mx: 'var(--Pad)',
+      {!!beamsCount && (
+        <Box sx={{
+          // style
+          mx: 'var(--Pad)',
 
-        // layout
-        display: 'grid',
-        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-        gap: { xs: 2, md: 2 },
-      }}>
-        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
-          test
-        </BeamRay>
-        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
-          test2
-        </BeamRay>
-        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
-          test3
-        </BeamRay>
-        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
-          test4
-        </BeamRay>
-      </Box>
+          // layout
+          display: 'grid',
+          gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+          gap: { xs: 2, md: 2 },
+        }}>
+          {Array.from({ length: beamsCount }, (_, idx) => (
+            <BeamRay key={idx} index={idx} parentLlmId={mergeLlmId} isMobile={props.isMobile} />
+          ))}
+        </Box>
+      )}
 
       {/* Bottom Bar */}
       <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1 }}>

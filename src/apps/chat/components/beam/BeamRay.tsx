@@ -47,7 +47,11 @@ const chatMessageSx: SxProps = {
 } as const;
 
 
-export function BeamRay(props: { parentLlmId: DLLMId | null, isMobile: boolean, children: React.ReactNode }) {
+export function BeamRay(props: {
+  index: number,
+  parentLlmId: DLLMId | null,
+  isMobile: boolean,
+}) {
 
   const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(false);
   const [allChatLlm, allChatLlmComponent] = useLLMSelect(
