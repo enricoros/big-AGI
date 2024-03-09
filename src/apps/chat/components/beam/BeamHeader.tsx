@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button, ButtonGroup, FormControl, Sheet, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
@@ -16,12 +15,13 @@ export function BeamHeader(props: {
 }) {
 
   return (
-    <Sheet
+    <Box
       // variant='outlined'
       sx={{
         // style
-        // backgroundColor: 'background.surface',
         // borderRadius: 'md',
+        // backgroundColor: 'background.popup',
+        backgroundColor: 'background.surface',
         boxShadow: 'md',
         p: 'var(--Pad)',
 
@@ -55,47 +55,47 @@ export function BeamHeader(props: {
       {/* LLM cell */}
       <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: props.isMobile ? undefined : 'center' }}>
         {props.llmSelectComponent}
-        {/*<Button variant='solid' color='neutral' onClick={handleClose}>*/}
-        {/*  Close*/}
-        {/*</Button>*/}
       </Box>
 
       {/* Count and Start cell */}
-      <Box sx={{
-        // gridColumn: '1 / -1',
-        display: 'flex', gap: 'calc(var(--Pad) / 2)', justifyContent: 'space-between', alignItems: 'center',
-      }}>
-        <FormControl>
-          {!props.isMobile && <FormLabelStart title='Beam Count' />}
-          <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 0 } }}>
-            <ButtonGroup variant='outlined'>
-              {[2, 4, 8].map((n) => {
-                const isActive = n === props.beamCount;
-                return (
-                  <Button
-                    key={n}
-                    // variant={isActive ? 'solid' : undefined}
-                    color='neutral'
-                    onClick={() => props.setBeamCount(n)}
-                    sx={{
-                      fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                      backgroundColor: isActive ? 'background.popup' : undefined,
-                    }}
-                  >
-                    {`x${n}`}
-                  </Button>
-                );
-              })}
-            </ButtonGroup>
-          </Box>
-        </FormControl>
+      <FormControl sx={{ flex: 1, display: 'flex', justifyContent: 'space-between' /* gridColumn: '1 / -1' */ }}>
+        {!props.isMobile && <FormLabelStart title='Beam Count' />}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-        {/* Start ... */}
-        <Button variant='solid' color='success' onClick={props.onStart} endDecorator={<ChatBeamIcon />} sx={{ minWidth: 120 }}>
-          Beam
-        </Button>
-      </Box>
+          {/* xN buttons */}
+          <ButtonGroup variant='outlined' sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
+            {[2, 4, 8].map((n) => {
+              const isActive = n === props.beamCount;
+              return (
+                <Button
+                  key={n}
+                  // variant={isActive ? 'solid' : undefined}
+                  color='neutral'
+                  onClick={() => props.setBeamCount(n)}
+                  sx={{
+                    fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                    backgroundColor: isActive ? 'background.popup' : undefined,
+                    maxWidth: '3rem',
+                  }}
+                >
+                  {`x${n}`}
+                </Button>
+              );
+            })}
+          </ButtonGroup>
 
-    </Sheet>
+          {/* Start ... */}
+          <Button
+            variant='solid' color='success'
+            onClick={props.onStart}
+            // endDecorator={<ChatBeamIcon />}
+            sx={{ ml: 'auto', minWidth: 80 }}
+          >
+            Beam
+          </Button>
+        </Box>
+      </FormControl>
+
+    </Box>
   );
 }
