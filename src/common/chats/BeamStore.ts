@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DMessage } from '~/common/state/store-chats';
-
-import type { ConversationHandler } from './ConversationHandler';
+import type { DMessage } from '~/common/state/store-chats';
 import { customEventHelpers } from '~/common/util/eventUtils';
 
 
@@ -66,7 +64,8 @@ export class BeamStore extends EventTarget {
 
   destroy() {
     this.config = null;
-    dispatchStateChangeEvent(this, { config: this.config });
+    this.candidates.length = 0;
+    dispatchStateChangeEvent(this, { config: this.config, candidates: this.candidates });
   }
 
   appendCandidate(candidate: BeamCandidate): void {
@@ -92,14 +91,14 @@ export class BeamStore extends EventTarget {
 }
 
 
-export function useBeamState(conversationHandler: ConversationHandler): BeamState {
+export function useBeamState(beamStore: BeamStore): BeamState {
 
   // state
-  const [beamState, setBeamState] = React.useState<BeamState>(() => conversationHandler.beamStore.get());
+  const [beamState, setBeamState] = React.useState<BeamState>(() => beamStore.get());
 
   React.useEffect(() => {
-    return installStateChangeListener(conversationHandler.beamStore, (detail) => setBeamState(state => ({ ...state, ...detail })));
-  }, [conversationHandler]);
+    return installStateChangeListener(beamStore, (detail) => setBeamState((state) => ({ ...state, ...detail })));
+  }, [beamStore]);
 
   return beamState;
 }
