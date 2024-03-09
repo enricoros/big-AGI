@@ -1,25 +1,50 @@
 import * as React from 'react';
 
-import { Card } from '@mui/joy';
-import { ChatMessageMemo } from '../message/ChatMessage';
+import { Box, styled } from '@mui/joy';
+
+import type { DLLMId } from '~/modules/llms/store-llms';
 import { createDMessage } from '~/common/state/store-chats';
 import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
-import { DLLMId } from '~/modules/llms/store-llms';
 
-// const beamClasses = {
-//   active: 'beam-Active',
-// } as const;
-//
-// const BeamSheet = styled(Sheet)(({ theme }) => ({
-//   // --Bar is defined in InvertedBar
-//   // '--MarginX': '0.25rem',
-//
-//   // active
-//   [`&.${beamClasses.active}`]: {
-//     // two inset shadows, one light blue and another deep blue
-//     boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
-//   },
-// })) as typeof Sheet;
+import { ChatMessageMemo } from '../message/ChatMessage';
+import { SxProps } from '@mui/joy/styles/types';
+
+
+const beamRayClasses = {
+  active: 'beamRay-Active',
+} as const;
+
+const BeamRayCard = styled(Box)(({ theme }) => ({
+  '--Card-padding': '1rem',
+
+  padding: 'var(--Card-padding)',
+
+  backgroundColor: theme.vars.palette.background.surface,
+
+  border: '1px solid',
+  borderColor: theme.vars.palette.neutral.outlinedBorder,
+  borderRadius: theme.radius.md,
+
+  [`&.${beamRayClasses.active}`]: {
+    boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
+  },
+
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--Pad_2)',
+}));
+BeamRayCard.displayName = 'BeamRayCard';
+
+const chatMessageSx: SxProps = {
+  p: 0,
+  m: 0,
+  border: 'none',
+  // border: '1px solid',
+  // borderColor: 'neutral.outlinedBorder',
+  // borderRadius: 'lg',
+  // borderBottomRightRadius: 0,
+  // boxShadow: 'sm',
+} as const;
 
 
 export function BeamRay(props: { parentLlmId: DLLMId | null, isMobile: boolean, children: React.ReactNode }) {
@@ -32,30 +57,15 @@ export function BeamRay(props: { parentLlmId: DLLMId | null, isMobile: boolean, 
     true,
   );
 
-  const msg = createDMessage('assistant', 'test');
+  const msg = React.useMemo(() => createDMessage('assistant', 'test'), []);
 
   return (
-    <Card
-      sx={{}}
-    >
+    <BeamRayCard>
 
       {allChatLlmComponent}
 
-      <ChatMessageMemo
-        message={msg}
-        fitScreen={props.isMobile}
-        isBottom={true}
-        sx={{
-          p: 0,
-          m: 0,
-          border: 'none',
-          // border: '1px solid',
-          // borderColor: 'neutral.outlinedBorder',
-          // borderRadius: 'lg',
-          // borderBottomRightRadius: 0,
-          // boxShadow: 'sm',
-        }}
-      />
-    </Card>
+      <ChatMessageMemo message={msg} fitScreen={props.isMobile} sx={chatMessageSx} />
+
+    </BeamRayCard>
   );
 }
