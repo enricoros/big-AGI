@@ -29,6 +29,15 @@ const animationEnter = keyframes`
 `;
 
 
+const chatMessageSx: SxProps = {
+  border: '1px solid',
+  borderColor: 'neutral.outlinedBorder',
+  borderRadius: 'lg',
+  // borderBottomRightRadius: 0,
+  boxShadow: 'sm',
+} as const;
+
+
 export function BeamView(props: {
   conversationHandler: ConversationHandler,
   isMobile: boolean,
@@ -116,17 +125,7 @@ export function BeamView(props: {
           display: 'grid',
           gap: 'var(--Pad_2)',
         }}>
-          <ChatMessageMemo
-            message={lastMessage}
-            fitScreen={props.isMobile}
-            sx={{
-              border: '1px solid',
-              borderColor: 'neutral.outlinedBorder',
-              borderRadius: 'lg',
-              // borderBottomRightRadius: 0,
-              boxShadow: 'sm',
-            }}
-          />
+          <ChatMessageMemo message={lastMessage} fitScreen={props.isMobile} sx={chatMessageSx} />
         </Box>
       )}
 
@@ -137,7 +136,7 @@ export function BeamView(props: {
 
         // layout
         display: 'grid',
-        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(360px, 1fr))',
+        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
         <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
@@ -155,8 +154,8 @@ export function BeamView(props: {
       </Box>
 
       {/* Bottom Bar */}
-      <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
-        <Button aria-label='Close Best-Of' variant='solid' color='neutral' onClick={handleCloseKeepRunning} sx={{ ml: 'auto', minWidth: 100 }}>
+      <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Button variant='solid' color='neutral' onClick={handleCloseKeepRunning} sx={{ ml: 'auto', minWidth: 100 }}>
           Close
         </Button>
       </Sheet>
