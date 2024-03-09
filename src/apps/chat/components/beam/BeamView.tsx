@@ -1,26 +1,17 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
+import { useState } from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
 
-import { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { useBeam } from '~/common/chats/BeamStore';
+import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import { useBeamState } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+import { BeamViewSheet } from './BeamViewSheet';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
+import { Brand } from '~/common/app.config';
+import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
-
-export const animationEnter = keyframes`
-    0% {
-        opacity: 0;
-        transform: translateY(8px);
-        scale: 0.9;
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        scale: 1;
-    }
-`;
 
 export function BeamView(props: {
   conversationHandler: ConversationHandler,
@@ -28,15 +19,18 @@ export function BeamView(props: {
   sx?: SxProps
 }) {
 
+  const { conversationHandler, isMobile } = props;
+
   // state
-  const { config, candidates } = useBeam(props.conversationHandler);
+  const { config, candidates } = useBeamState(conversationHandler.beamStore);
+  const [tempRepeat, setTempRepeat] = useState<number>(2);
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, 'Beam LLM');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, isMobile ? '' : 'Beam LLM');
 
   const handleClose = React.useCallback(() => {
-    props.conversationHandler.beamStore.destroy();
-  }, [props.conversationHandler.beamStore]);
+    conversationHandler.beamStore.destroy();
+  }, [conversationHandler.beamStore]);
 
   if (!config)
     return null;
@@ -44,17 +38,14 @@ export function BeamView(props: {
   const lastMessage = config.history.slice(-1)[0] ?? null;
 
   return (
-    <Box sx={{
+    <BeamViewSheet sx={{
+      '--Pad': { xs: '1rem', md: '1.5rem', xl: '1.5rem' },
+      '--Pad_2': 'calc(var(--Pad) * 2)',
       ...props.sx,
-
-      // animation
-      animation: `${animationEnter} 0.42s cubic-bezier(.17,.84,.44,1)`,
 
       // layout
       display: 'flex',
-      flexDirection: 'column',
-      gap: 2,
-      px: { xs: 1, md: 2 },
+      gap: 'var(--Pad)',
     }}>
 
       {/* Issues */}
@@ -64,11 +55,75 @@ export function BeamView(props: {
         </Alert>
       )}
 
+
+      <Sheet sx={{
+        // style
+        boxShadow: 'md',
+        p: 'var(--Pad)',
+
+        // layout: max 2 cols (/3 with gap) of min 200px per col
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/4), 1fr))',
+        gridAutoFlow: 'row dense',
+        gap: 'var(--Pad)',
+
+        // '& > *': { border: '2px solid red' },
+      }}>
+
+        {/* Title */}
+        <Box sx={{ display: 'flex', gap: 'var(--Pad)' }}>
+          <Typography level='h4'>
+            <ChatBeamIcon color='primary' sx={{
+              animation: `${cssRainbowColorKeyframes} 2s linear 2.66`,
+            }} />
+          </Typography>
+          <div>
+            <Typography level='h4' component='h2'>
+              {Brand.Title.Base} Beam
+            </Typography>
+
+            <Typography level='body-sm'>
+              Combine the smarts of many models into one
+            </Typography>
+          </div>
+        </Box>
+
+        {/* LLM cell */}
+        <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: isMobile ? undefined : 'center' }}>
+          {allChatLlmComponent}
+          {/*<Button variant='solid' color='neutral' onClick={handleClose}>*/}
+          {/*  Close*/}
+          {/*</Button>*/}
+        </Box>
+
+        {/* Count and Start cell */}
+        <Box sx={{
+          // gridColumn: '1 / -1',
+          display: 'flex', gap: 'calc(var(--Pad) / 2)', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 0 } }}>
+            {[2, 4, 8].map((n) => (
+              <Button
+                key={n}
+                variant={tempRepeat === n ? 'soft' : 'plain'} color='neutral'
+                onClick={() => setTempRepeat(n)}
+                sx={{ fontWeight: tempRepeat === n ? 'xl' : 400 /* reset, from 600 */ }}
+              >
+                {`x${n}`}
+              </Button>
+            ))}
+          </Box>
+
+          <Button variant='solid' color='primary' onClick={handleClose}>
+            Start
+          </Button>
+        </Box>
+
+      </Sheet>
+
+
       {/* Models,  [x] all same, */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'start', gap: 2 }}>
-        <Box sx={{ minWidth: 200 }}>
-          {allChatLlmComponent}
-        </Box>
 
         {!!lastMessage && (
           <Box sx={{
@@ -118,24 +173,9 @@ export function BeamView(props: {
         gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(400px, 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
-        <Sheet sx={{ minHeight: '50%' }}>
-          b
-        </Sheet>
-        <Sheet>
-          a
-        </Sheet>
-        <Sheet>
-          a
-        </Sheet>
-        <Sheet>
-          a
-        </Sheet>
-        <Sheet>
-          a
-        </Sheet>
-        <Sheet>
-          a
-        </Sheet>
+        {/*{candidates.map((candidate, index) => (*/}
+        {/*  <BeamActor key={candidate.id} candidate={candidate} />*/}
+        {/*))}*/}
       </Box>
 
       {/* Auto-Gatherer: All-in-one, Best-Of */}
@@ -172,6 +212,6 @@ export function BeamView(props: {
         </Button>
       </Box>
 
-    </Box>
+    </BeamViewSheet>
   );
 }
