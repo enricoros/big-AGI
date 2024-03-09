@@ -1,6 +1,6 @@
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
 
-import { ConversationManager } from '~/common/chats/ConversationHandler';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { TextToImageProvider } from '~/common/components/useCapabilities';
 
 
@@ -8,7 +8,7 @@ import { TextToImageProvider } from '~/common/components/useCapabilities';
  * Text to image, appended as an 'assistant' message
  */
 export async function runImageGenerationUpdatingState(conversationId: string, imageText: string) {
-  const handler = ConversationManager.getHandler(conversationId);
+  const handler = ConversationsManager.getHandler(conversationId);
 
   // Acquire the active TextToImageProvider
   let t2iProvider: TextToImageProvider | undefined = undefined;

@@ -1,15 +1,31 @@
 import * as React from 'react';
+import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Typography } from '@mui/joy';
+import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeamState } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamViewSheet } from './BeamViewSheet';
 import { BeamHeader } from './BeamHeader';
 import { ChatMessageMemo } from '../message/ChatMessage';
+
+
+const animationEnter = keyframes`
+    0% {
+        //opacity: 0;
+        //transform: translateY(8px);
+        scale: 1.1;
+        //rotate: -5deg;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        scale: 1;
+        rotate: 0;
+    }
+`;
 
 
 export function BeamView(props: {
@@ -57,12 +73,17 @@ export function BeamView(props: {
 
 
   return (
-    <BeamViewSheet sx={{
+    <Sheet sx={{
       '--Pad': { xs: '1rem', md: '1.5rem', xl: '1.5rem' },
       '--Pad_2': 'calc(var(--Pad) / 2)',
       ...props.sx,
 
-      // layout (see BeamViewSheet)
+      // animation
+      animation: `${animationEnter} 0.2s cubic-bezier(.17,.84,.44,1)`,
+
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
       gap: 'var(--Pad)',
     }}>
 
@@ -150,6 +171,6 @@ export function BeamView(props: {
         </Button>
       </Box>
 
-    </BeamViewSheet>
+    </Sheet>
   );
 }

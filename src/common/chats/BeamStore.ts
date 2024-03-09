@@ -47,10 +47,6 @@ export class BeamStore extends EventTarget {
     super();
   }
 
-  isActivated(): boolean {
-    return this.config !== null;
-  }
-
   get(): BeamState {
     return { config: this.config, candidates: this.candidates };
   }
