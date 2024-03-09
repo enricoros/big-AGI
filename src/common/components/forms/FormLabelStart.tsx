@@ -11,7 +11,7 @@ import { formLabelStartWidth } from '~/common/app.theme';
 /**
  * Shared label part (left side)
  */
-export const FormLabelStart = (props: {
+const FormLabelStartBase = (props: {
   title: string | React.JSX.Element,
   description?: string | React.JSX.Element
   tooltip?: string | React.JSX.Element,
@@ -48,3 +48,6 @@ export const FormLabelStart = (props: {
     </Box>
   , [props.onClick, props.sx, props.title, props.tooltip, props.description],
 );
+FormLabelStartBase.displayName = 'FormLabelStart';
+
+export const FormLabelStart = React.memo(FormLabelStartBase);
