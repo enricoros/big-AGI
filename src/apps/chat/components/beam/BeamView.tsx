@@ -1,16 +1,14 @@
 import * as React from 'react';
-import { useState } from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
+import { Alert, Box, Button, Typography } from '@mui/joy';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeamState } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+
 import { BeamViewSheet } from './BeamViewSheet';
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { Brand } from '~/common/app.config';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { BeamHeader } from './BeamHeader';
 
 
 export function BeamView(props: {
@@ -20,27 +18,48 @@ export function BeamView(props: {
 }) {
 
   const { conversationHandler, isMobile } = props;
+  const { beamStore } = conversationHandler;
 
   // state
-  const { config, candidates } = useBeamState(conversationHandler.beamStore);
-  const [tempRepeat, setTempRepeat] = useState<number>(2);
+  const { config, candidates } = useBeamState(beamStore);
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, isMobile ? '' : 'Beam LLM');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, isMobile ? '' : 'Beam Model');
 
   const handleClose = React.useCallback(() => {
-    conversationHandler.beamStore.destroy();
-  }, [conversationHandler.beamStore]);
+    beamStore.destroy();
+  }, [beamStore]);
+
+  const handleStart = React.useCallback(() => {
+    console.log('Start');
+    // beamStore.destroy();
+  }, []);
+
+
+  // change beam count
+
+  const beamCount = candidates.length;
+
+  const handleSetBeamCount = React.useCallback((n: number) => {
+    beamStore.setBeamCount(n);
+  }, [beamStore]);
+
+  const handleIncrementBeamCount = React.useCallback(() => {
+    beamStore.appendBeam();
+  }, [beamStore]);
+
+
+  const lastMessage = config ? config.history.slice(-1)[0] ?? null : null;
+
 
   if (!config)
     return null;
 
-  const lastMessage = config.history.slice(-1)[0] ?? null;
 
   return (
     <BeamViewSheet sx={{
       '--Pad': { xs: '1rem', md: '1.5rem', xl: '1.5rem' },
-      '--Pad_2': 'calc(var(--Pad) * 2)',
+      '--Pad_2': 'calc(var(--Pad) / 2)',
       ...props.sx,
 
       // layout
@@ -55,72 +74,14 @@ export function BeamView(props: {
         </Alert>
       )}
 
-
-      <Sheet sx={{
-        // style
-        boxShadow: 'md',
-        p: 'var(--Pad)',
-
-        // layout: max 2 cols (/3 with gap) of min 200px per col
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/4), 1fr))',
-        gridAutoFlow: 'row dense',
-        gap: 'var(--Pad)',
-
-        // '& > *': { border: '2px solid red' },
-      }}>
-
-        {/* Title */}
-        <Box sx={{ display: 'flex', gap: 'var(--Pad)' }}>
-          <Typography level='h4'>
-            <ChatBeamIcon color='primary' sx={{
-              animation: `${cssRainbowColorKeyframes} 2s linear 2.66`,
-            }} />
-          </Typography>
-          <div>
-            <Typography level='h4' component='h2'>
-              {Brand.Title.Base} Beam
-            </Typography>
-
-            <Typography level='body-sm'>
-              Combine the smarts of many models into one
-            </Typography>
-          </div>
-        </Box>
-
-        {/* LLM cell */}
-        <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: isMobile ? undefined : 'center' }}>
-          {allChatLlmComponent}
-          {/*<Button variant='solid' color='neutral' onClick={handleClose}>*/}
-          {/*  Close*/}
-          {/*</Button>*/}
-        </Box>
-
-        {/* Count and Start cell */}
-        <Box sx={{
-          // gridColumn: '1 / -1',
-          display: 'flex', gap: 'calc(var(--Pad) / 2)', justifyContent: 'space-between', alignItems: 'center',
-        }}>
-          <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 0 } }}>
-            {[2, 4, 8].map((n) => (
-              <Button
-                key={n}
-                variant={tempRepeat === n ? 'soft' : 'plain'} color='neutral'
-                onClick={() => setTempRepeat(n)}
-                sx={{ fontWeight: tempRepeat === n ? 'xl' : 400 /* reset, from 600 */ }}
-              >
-                {`x${n}`}
-              </Button>
-            ))}
-          </Box>
-
-          <Button variant='solid' color='primary' onClick={handleClose}>
-            Start
-          </Button>
-        </Box>
-
-      </Sheet>
-
+      {/* Header */}
+      <BeamHeader
+        isMobile={isMobile}
+        beamCount={beamCount}
+        setBeamCount={beamStore.setBeamCount}
+        llmSelectComponent={allChatLlmComponent}
+        onStart={handleClose}
+      />
 
       {/* Models,  [x] all same, */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'start', gap: 2 }}>
@@ -135,7 +96,6 @@ export function BeamView(props: {
             py: 1,
             px: 1,
             mb: 'auto',
-
 
             flex: 1,
           }}>
