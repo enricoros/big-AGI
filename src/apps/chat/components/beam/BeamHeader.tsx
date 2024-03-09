@@ -75,7 +75,10 @@ export function BeamHeader(props: {
                     // variant={isActive ? 'solid' : undefined}
                     color='neutral'
                     onClick={() => props.setBeamCount(n)}
-                    sx={{ fontWeight: isActive ? 'xl' : 400 /* reset, from 600 */ }}
+                    sx={{
+                      fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                      backgroundColor: isActive ? 'background.popup' : undefined,
+                    }}
                   >
                     {`x${n}`}
                   </Button>

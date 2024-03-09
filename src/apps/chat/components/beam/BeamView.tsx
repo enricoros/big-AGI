@@ -62,8 +62,7 @@ export function BeamView(props: {
       '--Pad_2': 'calc(var(--Pad) / 2)',
       ...props.sx,
 
-      // layout
-      display: 'flex',
+      // layout (see BeamViewSheet)
       gap: 'var(--Pad)',
     }}>
 

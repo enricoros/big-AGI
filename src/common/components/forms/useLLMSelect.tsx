@@ -105,6 +105,7 @@ export function useLLMSelect(localState: boolean = true, label: string = 'Model'
             }}
             sx={{
               flex: 1,
+              backgroundColor: 'background.popup',
               // minWidth: '200',
             }}
           >

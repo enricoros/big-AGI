@@ -6,7 +6,7 @@ const animationEnter = keyframes`
     0% {
         opacity: 0;
         transform: translateY(8px);
-        scale: 0.9;
+        scale: 1.1;
     }
     100% {
         opacity: 1;
@@ -17,7 +17,7 @@ const animationEnter = keyframes`
 
 export const BeamViewSheet = styled(Sheet)(({ theme }) => ({
   // animation
-  animation: `${animationEnter} 0.42s cubic-bezier(.17,.84,.44,1)`,
+  animation: `${animationEnter} 0.3s cubic-bezier(.17,.84,.44,1)`,
 
   // layout
   display: 'flex',
