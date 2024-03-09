@@ -563,7 +563,7 @@ export function AppChat() {
                 isMobile={isMobile}
                 sx={{
                   overflowY: 'auto',
-                  backgroundColor: 'background.level2',
+                  backgroundColor: 'background.level1',
                   // bgcolor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.9)`,
                   // backdropFilter: 'blur(6px)',
                   position: 'absolute',
