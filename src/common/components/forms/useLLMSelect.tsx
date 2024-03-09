@@ -120,7 +120,7 @@ export function useLLMSelect(
         </Box>
       </FormControl>
     );
-  }, [chatLLMId, isHorizontal, label, llms, placeholder, setChatLLMId]);
+  }, [chatLLMId, isHorizontal, label, llms, placeholder, setChatLLMId, smaller]);
 
 
   return [chatLLM, component];
