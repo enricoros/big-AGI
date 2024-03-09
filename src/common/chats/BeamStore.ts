@@ -105,7 +105,7 @@ export function useBeamState(beamStore: BeamStore): BeamState {
   const [beamState, setBeamState] = React.useState<BeamState>(() => beamStore.get());
 
   React.useEffect(() => {
-    return installStateChangeListener(beamStore, (detail) => setBeamState((state) => ({ ...state, ...detail })));
+    return installStateChangeListener(beamStore.get(), beamStore, (detail) => setBeamState((state) => ({ ...state, ...detail })));
   }, [beamStore]);
 
   return beamState;
