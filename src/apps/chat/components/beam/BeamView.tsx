@@ -5,7 +5,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { useBeamState } from '~/common/chats/BeamStore';
+import { useBeamStore } from '~/common/chats/store-beam';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
@@ -35,20 +35,29 @@ export function BeamView(props: {
   sx?: SxProps
 }) {
 
+  const { conversationHandler } = props;
+
   // state
-  const { beamStore } = props.conversationHandler;
-  const { config, candidates } = useBeamState(beamStore);
+  const { isOpen, inputHistory, configIssue, mergeLlmId, setMergedLlmId } = useBeamStore(conversationHandler, (state) => ({
+    isOpen: state.isOpen,
+    inputHistory: state.inputHistory,
+    configIssue: state.configIssue,
+    mergeLlmId: state.allLlmId,
+    setMergedLlmId: state.setMergedLlmId,
+  }));
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, props.isMobile ? '' : 'Beam Model');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(mergeLlmId, setMergedLlmId, props.isMobile ? '' : 'Beam Model');
 
   // derived state
-  const lastMessage = config?.history.slice(-1)[0] || null;
+  const { beamSetCount } = conversationHandler;
+  const lastMessage = inputHistory?.slice(-1)[0] || null;
 
+  console.log('mergeLlmId', mergeLlmId);
+  const beamCount = 2;
 
-  const handleClose = React.useCallback(() => {
-    beamStore.destroy();
-  }, [beamStore]);
+  const handleCloseKeepRunning = React.useCallback(() => conversationHandler.beamClose(), [conversationHandler]);
+
 
   const handleStart = React.useCallback(() => {
     console.log('Start');
@@ -58,18 +67,18 @@ export function BeamView(props: {
 
   // change beam count
 
-  const beamCount = candidates.length;
+  // const beamCount = candidates.length;
+  //
+  // const handleSetBeamCount = React.useCallback((n: number) => {
+  //   beamStore.setBeamCount(n);
+  // }, [beamStore]);
+  //
+  // const handleIncrementBeamCount = React.useCallback(() => {
+  //   beamStore.appendBeam();
+  // }, [beamStore]);
 
-  const handleSetBeamCount = React.useCallback((n: number) => {
-    beamStore.setBeamCount(n);
-  }, [beamStore]);
 
-  const handleIncrementBeamCount = React.useCallback(() => {
-    beamStore.appendBeam();
-  }, [beamStore]);
-
-
-  if (!config || !lastMessage)
+  if (!isOpen)
     return null;
 
 
@@ -89,15 +98,15 @@ export function BeamView(props: {
     }}>
 
       {/* Issues */}
-      {!!config?.configError && <Alert>{config.configError}</Alert>}
+      {!!configIssue && <Alert>{configIssue}</Alert>}
 
       {/* Header */}
       <BeamHeader
         isMobile={props.isMobile}
         beamCount={beamCount}
-        setBeamCount={beamStore.setBeamCount}
+        setBeamCount={beamSetCount}
         llmSelectComponent={allChatLlmComponent}
-        onStart={handleClose}
+        onStart={handleCloseKeepRunning}
       />
 
       {/* Last message */}
@@ -131,23 +140,23 @@ export function BeamView(props: {
         gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(360px, 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
-        <BeamRay key='a' isMobile={props.isMobile}>
+        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
           test
         </BeamRay>
-        <BeamRay key='b' isMobile={props.isMobile}>
+        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
           test2
         </BeamRay>
-        <BeamRay isMobile={props.isMobile}>
+        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
           test3
         </BeamRay>
-        <BeamRay isMobile={props.isMobile}>
+        <BeamRay parentLlmId={mergeLlmId} isMobile={props.isMobile}>
           test4
         </BeamRay>
       </Box>
 
       {/* Bottom Bar */}
       <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
-        <Button aria-label='Close Best-Of' variant='solid' color='neutral' onClick={handleClose} sx={{ ml: 'auto', minWidth: 100 }}>
+        <Button aria-label='Close Best-Of' variant='solid' color='neutral' onClick={handleCloseKeepRunning} sx={{ ml: 'auto', minWidth: 100 }}>
           Close
         </Button>
       </Sheet>

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Card } from '@mui/joy';
 import { ChatMessageMemo } from '../message/ChatMessage';
 import { createDMessage } from '~/common/state/store-chats';
-import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
+import { DLLMId } from '~/modules/llms/store-llms';
 
 // const beamClasses = {
 //   active: 'beam-Active',
@@ -21,17 +22,21 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 // })) as typeof Sheet;
 
 
-export function BeamRay(props: { isMobile: boolean, children: React.ReactNode }) {
+export function BeamRay(props: { parentLlmId: DLLMId | null, isMobile: boolean, children: React.ReactNode }) {
 
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, '');
+  const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(false);
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(
+    personaLlmId ?? props.parentLlmId,
+    setPersonaLlmId,
+    '',
+    true,
+  );
 
   const msg = createDMessage('assistant', 'test');
 
   return (
     <Card
-      sx={{
-
-      }}
+      sx={{}}
     >
 
       {allChatLlmComponent}
