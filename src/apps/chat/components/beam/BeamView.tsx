@@ -2,7 +2,7 @@ import * as React from 'react';
 import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
+import { Alert, Box, Button, Typography } from '@mui/joy';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeamState } from '~/common/chats/BeamStore';
@@ -73,7 +73,7 @@ export function BeamView(props: {
 
 
   return (
-    <Sheet sx={{
+    <Box sx={{
       '--Pad': { xs: '1rem', md: '1.5rem', xl: '1.5rem' },
       '--Pad_2': 'calc(var(--Pad) / 2)',
       ...props.sx,
@@ -109,12 +109,11 @@ export function BeamView(props: {
           <ChatMessageMemo
             message={lastMessage}
             fitScreen={props.isMobile}
-            // blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-            // onMessageEdit={(_messageId, text: string) => message.text = text}
             sx={{
               border: '1px solid',
+              borderColor: 'neutral.outlinedBorder',
               borderRadius: 'lg',
-              boxShadow: 'md',
+              boxShadow: 'sm',
             }}
           />
         </Box>
@@ -171,6 +170,6 @@ export function BeamView(props: {
         </Button>
       </Box>
 
-    </Sheet>
+    </Box>
   );
 }
