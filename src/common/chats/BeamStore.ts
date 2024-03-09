@@ -47,11 +47,16 @@ export class BeamStore extends EventTarget {
     super();
   }
 
+  isActivated(): boolean {
+    return this.config !== null;
+  }
+
   get(): BeamState {
     return { config: this.config, candidates: this.candidates };
   }
 
-  create(history: DMessage[]) {
+  setup(history: DMessage[]) {
+    this.destroy();
     if (this.config) {
       this.config.configError = 'Warning: config already exists. Skipping...';
     } else {
@@ -63,10 +68,13 @@ export class BeamStore extends EventTarget {
   }
 
   destroy() {
-    this.config = null;
-    this.candidates.length = 0;
-    dispatchStateChangeEvent(this, { config: this.config, candidates: this.candidates });
+    if (this.config) {
+      this.config = null;
+      this.candidates.length = 0;
+      dispatchStateChangeEvent(this, { config: this.config, candidates: this.candidates });
+    }
   }
+
 
   setBeamCount(n: number) {
     console.log('setBeamCount', n);
@@ -75,6 +83,8 @@ export class BeamStore extends EventTarget {
   appendBeam() {
     console.log('appendBeam');
   }
+
+
 
   appendCandidate(candidate: BeamCandidate): void {
     this.candidates.push(candidate);

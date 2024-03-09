@@ -1,6 +1,8 @@
 import * as React from 'react';
 
 import { Box, Button, ButtonGroup, FormControl, Sheet, Typography } from '@mui/joy';
+
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
@@ -15,12 +17,12 @@ export function BeamHeader(props: {
 
   return (
     <Sheet
-      variant='outlined'
+      // variant='outlined'
       sx={{
         // style
-        // borderRadius: 'lg',
-        // boxShadow: 'xs',
-        // m: 'var(--Pad_2)',
+        // backgroundColor: 'background.surface',
+        // borderRadius: 'md',
+        boxShadow: 'md',
         p: 'var(--Pad)',
 
         // layout: max 2 cols (/3 with gap) of min 200px per col
@@ -29,7 +31,7 @@ export function BeamHeader(props: {
         gridAutoFlow: 'row dense',
         gap: 'var(--Pad_2)',
 
-        // '& > *': { border: '2px solid red' },
+        // '& > *': { border: '1px solid red' },
       }}
     >
 
@@ -88,8 +90,9 @@ export function BeamHeader(props: {
           </Box>
         </FormControl>
 
-        <Button variant='solid' color='primary' onClick={props.onStart}>
-          Start
+        {/* Start ... */}
+        <Button variant='solid' color='success' onClick={props.onStart} endDecorator={<ChatBeamIcon />} sx={{ minWidth: 120 }}>
+          Beam
         </Button>
       </Box>
 

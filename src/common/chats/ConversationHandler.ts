@@ -9,6 +9,12 @@ import { BeamStore } from './BeamStore';
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
 
+/**
+ * ConversationHandler is a class to overlay state onto a conversation.
+ * It is a singleton per conversationId.
+ *  - View classes will react to this class (or its members) to update the UI.
+ *  - Controller classes will call directly methods in this class.
+ */
 export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;

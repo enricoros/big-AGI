@@ -13,15 +13,15 @@ import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
  *
- * @param localState if true, the state is local to the hook, otherwise the global chat model is changed
+ * @param initialLocalState if true, the state is local to the hook, otherwise the global chat model is changed
  * @param label label of the select, use '' to hide it
  * @param placeholder placeholder of the select
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
-export function useLLMSelect(localState: boolean = true, label: string = 'Model', placeholder: string = 'Models …', isHorizontal: boolean = false): [DLLM | null, React.JSX.Element | null] {
+export function useLLMSelect(initialLocalState: boolean = true, label: string = 'Model', placeholder: string = 'Models …', isHorizontal: boolean = false): [DLLM | null, React.JSX.Element | null] {
 
   // state
-  const localSwitch = React.useRef(localState).current;
+  const localSwitch = React.useRef(initialLocalState).current;
 
   // external state
   const { llms, globalChatLLMId, globalSetChatLLMId } = useModelsStore(state => ({
