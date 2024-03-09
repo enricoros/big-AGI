@@ -1,11 +1,13 @@
-import type { DLLMId } from '~/modules/llms/store-llms';
+import type { StoreApi } from 'zustand';
+
+import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
 
-import { BeamStore } from './BeamStore';
+import { type BeamStore, createBeamStore } from './store-beam';
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
 
@@ -19,13 +21,17 @@ export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;
 
-  readonly beamStore: BeamStore = new BeamStore();
+  private readonly beamStore: StoreApi<BeamStore>;
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 
   constructor(conversationId: DConversationId) {
     this.chatActions = useChatStore.getState();
     this.conversationId = conversationId;
+
+    // init beamstore
+    const inheritGlobalChatLlm = useModelsStore.getState().chatLLMId;
+    this.beamStore = createBeamStore(inheritGlobalChatLlm);
   }
 
 
@@ -65,6 +71,27 @@ export class ConversationHandler {
 
   messageEdit(messageId: string, update: Partial<DMessage>, touch: boolean): void {
     this.chatActions.editMessage(this.conversationId, messageId, update, touch);
+  }
+
+
+  // Beam
+
+  getBeamStore(): Readonly<StoreApi<BeamStore>> {
+    // used by the use() hook, and shall not be used elsewhere to guarantee state
+    return this.beamStore;
+  }
+
+  beamOpen(history: DMessage[]) {
+    this.beamClose();
+    this.beamStore.getState().open(history);
+  }
+
+  beamClose() {
+    this.beamStore.getState().close();
+  }
+
+  beamSetCount(count: number) {
+    console.log('beamSetCount', count);
   }
 
 

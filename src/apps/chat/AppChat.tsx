@@ -168,7 +168,7 @@ export function AppChat() {
         switch (chatCommand.providerId) {
           case 'ass-beam':
             Object.assign(lastMessage, { text: chatCommand.params || '' });
-            return ConversationsManager.getHandler(conversationId).beamStore.setup(history);
+            return ConversationsManager.getHandler(conversationId).beamOpen(history);
 
           case 'ass-browse':
             setMessages(conversationId, history);
@@ -223,7 +223,7 @@ export function AppChat() {
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, conversationSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
-          return ConversationsManager.getHandler(conversationId).beamStore.setup(history);
+          return ConversationsManager.getHandler(conversationId).beamOpen(history);
 
         case 'append-user':
           return setMessages(conversationId, history);
