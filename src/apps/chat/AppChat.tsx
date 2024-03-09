@@ -167,7 +167,8 @@ export function AppChat() {
       if (chatCommand && chatCommand.type === 'cmd') {
         switch (chatCommand.providerId) {
           case 'ass-beam':
-            return ConversationManager.getHandler(conversationId).beamStore.create(history);
+            Object.assign(lastMessage, { text: chatCommand.params || '' });
+            return ConversationManager.getHandler(conversationId).beamStore.setup(history);
 
           case 'ass-browse':
             setMessages(conversationId, history);
@@ -222,7 +223,7 @@ export function AppChat() {
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, conversationSystemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
-          return ConversationManager.getHandler(conversationId).beamStore.create(history);
+          return ConversationManager.getHandler(conversationId).beamStore.setup(history);
 
         case 'append-user':
           return setMessages(conversationId, history);
@@ -557,7 +558,7 @@ export function AppChat() {
             </ScrollToBottom>
 
             {/* Best-Of Mode */}
-            {!!_paneChatHandler && (
+            {!!_paneChatHandler?.beamStore.isActivated() && (
               <BeamView
                 conversationHandler={_paneChatHandler}
                 isMobile={isMobile}

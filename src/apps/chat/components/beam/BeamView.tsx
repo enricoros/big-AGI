@@ -9,6 +9,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamViewSheet } from './BeamViewSheet';
 import { BeamHeader } from './BeamHeader';
+import { ChatMessageMemo } from '../message/ChatMessage';
 
 
 export function BeamView(props: {
@@ -17,14 +18,16 @@ export function BeamView(props: {
   sx?: SxProps
 }) {
 
-  const { conversationHandler, isMobile } = props;
-  const { beamStore } = conversationHandler;
-
   // state
+  const { beamStore } = props.conversationHandler;
   const { config, candidates } = useBeamState(beamStore);
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, isMobile ? '' : 'Beam Model');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(true, props.isMobile ? '' : 'Beam Model');
+
+  // derived state
+  const lastMessage = config?.history.slice(-1)[0] || null;
+
 
   const handleClose = React.useCallback(() => {
     beamStore.destroy();
@@ -49,10 +52,7 @@ export function BeamView(props: {
   }, [beamStore]);
 
 
-  const lastMessage = config ? config.history.slice(-1)[0] ?? null : null;
-
-
-  if (!config)
+  if (!config || !lastMessage)
     return null;
 
 
@@ -67,58 +67,37 @@ export function BeamView(props: {
     }}>
 
       {/* Issues */}
-      {!!config.configError && (
-        <Alert>
-          {config.configError}
-        </Alert>
-      )}
+      {!!config?.configError && <Alert>{config.configError}</Alert>}
 
       {/* Header */}
       <BeamHeader
-        isMobile={isMobile}
+        isMobile={props.isMobile}
         beamCount={beamCount}
         setBeamCount={beamStore.setBeamCount}
         llmSelectComponent={allChatLlmComponent}
         onStart={handleClose}
       />
 
-      {/* Models,  [x] all same, */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'start', gap: 2 }}>
-
-        {!!lastMessage && (
-          <Box sx={{
-            backgroundColor: 'background.surface',
-            boxShadow: 'xs',
-            borderRadius: 'lg',
-            borderTopRightRadius: 0,
-            borderTopLeftRadius: 0,
-            py: 1,
-            px: 1,
-            mb: 'auto',
-
-            flex: 1,
-          }}>
-            {lastMessage.text}
-          </Box>
-          // <ChatMessageMemo
-          //   message={lastMessage}
-          //   fitScreen={props.isMobile}
-          //   sx={{
-          //     borderRadius: 'lg',
-          //     borderBottomRightRadius: lastMessage.role === 'assistant' ? undefined : 0,
-          //     borderBottomLeftRadius: lastMessage.role === 'user' ? undefined : 0,
-          //     boxShadow: 'xs',
-          //     my: 2,
-          //     px: 0,
-          //     py: 1,
-          //     alignSelf: 'self-end',
-          //     flex: 1,
-          //     maxHeight: '5rem',
-          //     overflow: 'hidden',
-          //   }}
-          // />
-        )}
-      </Box>
+      {/* Last message */}
+      {!!lastMessage && (
+        <Box sx={{
+          px: 'var(--Pad)',
+          display: 'grid',
+          gap: 'var(--Pad_2)',
+        }}>
+          <ChatMessageMemo
+            message={lastMessage}
+            fitScreen={props.isMobile}
+            // blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
+            // onMessageEdit={(_messageId, text: string) => message.text = text}
+            sx={{
+              border: '1px solid',
+              borderRadius: 'lg',
+              boxShadow: 'md',
+            }}
+          />
+        </Box>
+      )}
 
       {/* Grid */}
       <Box sx={{
