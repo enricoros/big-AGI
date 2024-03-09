@@ -10,33 +10,38 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 
 
+/*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
+  return useModelsStore(state => [state.chatLLMId, state.setChatLLMId], shallow);
+}*/
+
+export function useLLMSelectLocalState(initFromGlobal: boolean): [DLLMId | null, (llmId: DLLMId | null) => void] {
+  return React.useState<DLLMId | null>(initFromGlobal ? () => {
+    return useModelsStore.getState().chatLLMId;
+  } : null);
+}
+
+
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
  *
- * @param initialLocalState if true, the state is local to the hook, otherwise the global chat model is changed
+ * @param chatLLMId (required) the LLM id
+ * @param setChatLLMId (required) the function to set the LLM id
  * @param label label of the select, use '' to hide it
+ * @param smaller if true, the select is smaller
  * @param placeholder placeholder of the select
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
-export function useLLMSelect(initialLocalState: boolean = true, label: string = 'Model', placeholder: string = 'Models …', isHorizontal: boolean = false): [DLLM | null, React.JSX.Element | null] {
-
-  // state
-  const localSwitch = React.useRef(initialLocalState).current;
+export function useLLMSelect(
+  chatLLMId: DLLMId | null,
+  setChatLLMId: (llmId: DLLMId | null) => void,
+  label: string = 'Model',
+  smaller: boolean = false,
+  placeholder: string = 'Models …',
+  isHorizontal: boolean = false,
+): [DLLM | null, React.JSX.Element | null] {
 
   // external state
-  const { llms, globalChatLLMId, globalSetChatLLMId } = useModelsStore(state => ({
-    llms: state.llms,
-    globalChatLLMId: state.chatLLMId,
-    globalSetChatLLMId: state.setChatLLMId,
-  }), shallow);
-
-  // local state initially synced to the global state (may be used or not)
-  const [localLLMId, setLocalLLMId] = React.useState<DLLMId | null>(globalChatLLMId);
-
-  // global/local (stable) switch - do not change at runtime
-  const chatLLMId = localSwitch ? localLLMId : globalChatLLMId;
-  const setChatLLMId = localSwitch ? setLocalLLMId : globalSetChatLLMId;
-
+  const llms = useModelsStore(state => state.llms, shallow);
 
   // derived state
   const chatLLM = chatLLMId ? llms.find(llm => llm.id === chatLLMId) ?? null : null;
@@ -85,6 +90,7 @@ export function useLLMSelect(initialLocalState: boolean = true, label: string = 
           <Select
             variant='outlined'
             value={chatLLMId}
+            size={smaller ? 'sm' : undefined}
             onChange={(_event, value) => value && setChatLLMId(value)}
             placeholder={placeholder}
             slotProps={{
