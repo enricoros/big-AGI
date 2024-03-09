@@ -4,7 +4,7 @@ import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-import { ConversationManager } from '~/common/chats/ConversationHandler';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/state/store-chats';
 import { DEphemeral } from '~/common/chats/EphemeralsStore';
 import { lineHeightChatTextMd } from '~/common/app.theme';
@@ -78,7 +78,7 @@ function StateRenderer(props: { state: object }) {
 function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
 
   const handleDelete = React.useCallback(() => {
-    ConversationManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
+    ConversationsManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
   }, [conversationId, ephemeral.id]);
 
   return <Box
