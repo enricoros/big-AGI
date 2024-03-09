@@ -90,8 +90,8 @@ export class ConversationHandler {
     this.beamStore.getState().close();
   }
 
-  beamSetCount(count: number) {
-    console.log('beamSetCount', count);
+  beamSetRayCount(count: number) {
+    this.beamStore.getState().setRayCount(count);
   }
 
 
