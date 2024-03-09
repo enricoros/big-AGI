@@ -2,13 +2,14 @@ import * as React from 'react';
 import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Typography } from '@mui/joy';
+import { Alert, Box, Button, Sheet } from '@mui/joy';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeamState } from '~/common/chats/BeamStore';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
+import { BeamRay } from './BeamRay';
 import { ChatMessageMemo } from '../message/ChatMessage';
 
 
@@ -113,62 +114,43 @@ export function BeamView(props: {
               border: '1px solid',
               borderColor: 'neutral.outlinedBorder',
               borderRadius: 'lg',
+              // borderBottomRightRadius: 0,
               boxShadow: 'sm',
             }}
           />
         </Box>
       )}
 
-      {/* Grid */}
+      {/* Rays */}
       <Box sx={{
-        // my: 'auto',
-        // display: 'flex', flexDirection: 'column', alignItems: 'center',
-        border: '1px solid purple',
-        minHeight: '300px',
+        // style
+        mx: 'var(--Pad)',
 
         // layout
         display: 'grid',
-        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(400px, 1fr))',
+        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(360px, 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
-        {/*{candidates.map((candidate, index) => (*/}
-        {/*  <BeamActor key={candidate.id} candidate={candidate} />*/}
-        {/*))}*/}
+        <BeamRay key='a' isMobile={props.isMobile}>
+          test
+        </BeamRay>
+        <BeamRay key='b' isMobile={props.isMobile}>
+          test2
+        </BeamRay>
+        <BeamRay isMobile={props.isMobile}>
+          test3
+        </BeamRay>
+        <BeamRay isMobile={props.isMobile}>
+          test4
+        </BeamRay>
       </Box>
 
-      {/* Auto-Gatherer: All-in-one, Best-Of */}
-      <Box>
-        Gatherer
-      </Box>
-
-
-      <Box sx={{ flex: 1 }}>
-        <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
-          {/*{JSON.stringify(config, null, 2)}*/}
-        </Typography>
-      </Box>
-
-      <Box sx={{
-        height: '100%',
-        borderRadius: 'lg',
-        borderBottomLeftRadius: 0,
-        backgroundColor: 'background.surface',
-        boxShadow: 'lg',
-        m: 2,
-        p: '0.25rem 1rem',
-      }}>
-
-      </Box>
-
-      <Box>
-        a
-      </Box>
-
-      <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
+      {/* Bottom Bar */}
+      <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
         <Button aria-label='Close Best-Of' variant='solid' color='neutral' onClick={handleClose} sx={{ ml: 'auto', minWidth: 100 }}>
           Close
         </Button>
-      </Box>
+      </Sheet>
 
     </Box>
   );
