@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, FormControl, Sheet, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, Sheet, Typography } from '@mui/joy';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
@@ -66,20 +66,22 @@ export function BeamHeader(props: {
         <FormControl>
           {!props.isMobile && <FormLabelStart title='Beam Count' />}
           <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 0 } }}>
-            {[2, 4, 8].map((n) => {
-              const isActive = props.beamCount === n;
-              return (
-                <Button
-                  key={n}
-                  variant={isActive ? 'outlined' : 'plain'}
-                  color='neutral'
-                  onClick={() => props.setBeamCount(n)}
-                  sx={{ fontWeight: isActive ? 'xl' : 400 /* reset, from 600 */ }}
-                >
-                  {`x${n}`}
-                </Button>
-              );
-            })}
+            <ButtonGroup variant='outlined'>
+              {[2, 4, 8].map((n) => {
+                const isActive = n === props.beamCount;
+                return (
+                  <Button
+                    key={n}
+                    // variant={isActive ? 'solid' : undefined}
+                    color='neutral'
+                    onClick={() => props.setBeamCount(n)}
+                    sx={{ fontWeight: isActive ? 'xl' : 400 /* reset, from 600 */ }}
+                  >
+                    {`x${n}`}
+                  </Button>
+                );
+              })}
+            </ButtonGroup>
           </Box>
         </FormControl>
 
