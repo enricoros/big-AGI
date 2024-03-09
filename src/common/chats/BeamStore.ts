@@ -68,6 +68,14 @@ export class BeamStore extends EventTarget {
     dispatchStateChangeEvent(this, { config: this.config, candidates: this.candidates });
   }
 
+  setBeamCount(n: number) {
+    console.log('setBeamCount', n);
+  }
+
+  appendBeam() {
+    console.log('appendBeam');
+  }
+
   appendCandidate(candidate: BeamCandidate): void {
     this.candidates.push(candidate);
     dispatchStateChangeEvent(this, { candidates: this.candidates });
