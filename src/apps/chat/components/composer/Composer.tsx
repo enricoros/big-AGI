@@ -481,7 +481,7 @@ export function Composer(props: {
   const buttonText =
     isAppend ? 'Write'
       : isReAct ? 'ReAct'
-        : isTextBeam ? 'Best-Of'
+        : isTextBeam ? 'Beam'
           : isDraw ? 'Draw'
             : 'Chat';
 

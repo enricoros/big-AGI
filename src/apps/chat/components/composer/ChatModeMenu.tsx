@@ -33,7 +33,7 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     requiresTTI: true,
   },
   'generate-text-beam': {
-    label: 'Best of', // Best of, Auto-Prime, Top Pick, Select Best
+    label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
     description: 'Smarter: combine multiple models',
   },
   'generate-react': {

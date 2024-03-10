@@ -557,7 +557,6 @@ export function AppChat() {
 
             </ScrollToBottom>
 
-            {/* Best-Of Mode */}
             {!!_paneChatHandler && (
               <BeamView
                 key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
@@ -566,7 +565,7 @@ export function AppChat() {
                 sx={{
                   overflowY: 'auto',
                   backgroundColor: 'background.level1',
-                  // bgcolor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.9)`,
+                  // backgroundColor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.9)`,
                   // backdropFilter: 'blur(6px)',
                   position: 'absolute',
                   inset: 0,
