@@ -26,6 +26,7 @@ export const navItemClasses = {
   typeMenu: 'NavButton-typeMenu',
   typeApp: 'NavButton-typeApp',
   typeLinkOrModal: 'NavButton-typeLink',
+  dev: 'NavButton-dev',
   active: 'NavButton-active',
   paneOpen: 'NavButton-paneOpen',
   attractive: 'NavButton-attractive',
@@ -92,6 +93,11 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
     animation: `${cssRainbowColorKeyframes} 5s infinite`,
     animationDelay: '5s',
     transform: 'scale(1.4)',
+  },
+
+  // debug: show a red outline
+  [`&.${navItemClasses.dev}`]: {
+    border: '2px dashed red',
   },
 
 })) as typeof IconButton;
