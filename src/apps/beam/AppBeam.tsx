@@ -45,18 +45,20 @@ export function AppBeam() {
   ), [showDebug]), null, 'AppBeam');
 
   return (
-    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-      {showDebug ? (
-        <Typography level='body-xs' sx={{ whiteSpace: 'pre' }}>
+    <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
+
+      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{
+        // backgroundColor: 'background.level3',
+        height: '100%',
+      }} />
+
+      {showDebug && (
+        <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>
           {JSON.stringify({ conversationId: conversation.id }, null, 2) + '\n'}
           {JSON.stringify(beamStoreApi.getState(), null, 2)}
         </Typography>
-      ) : (
-        <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{
-          // backgroundColor: 'background.level3',
-          height: '100%',
-        }} />
       )}
+
     </Box>
   );
 }
