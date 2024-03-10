@@ -79,7 +79,7 @@ function BeamViewBase(props: {
   );
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
+  const [gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
   // derived state
   const lastMessage = inputHistory?.slice(-1)[0] || null;
@@ -135,19 +135,19 @@ function BeamViewBase(props: {
       gap: 'var(--Pad)',
     }}>
 
-      {/* Issues */}
+      {/* Config Issues */}
       {!!configIssue && <Alert>{configIssue}</Alert>}
 
       {/* Header */}
       <BeamHeader
         isMobile={props.isMobile}
+        llmComponent={gatherLlmComponent}
         rayCount={raysCount}
         setRayCount={handleRaySetCount}
-        llmSelectComponent={allChatLlmComponent}
         onStart={handleStart}
       />
 
-      {/* Last message */}
+      {/* User Message */}
       {!!lastMessage && (
         <Box sx={{
           px: 'var(--Pad)',
@@ -166,10 +166,7 @@ function BeamViewBase(props: {
       {/* Rays */}
       {!!raysCount && (
         <Box sx={{
-          // style
           mx: 'var(--Pad)',
-
-          // layout
           display: 'grid',
           gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
           gap: 'var(--Pad)',
@@ -183,12 +180,14 @@ function BeamViewBase(props: {
               gatherLlmId={gatherLlmId}
             />
           ))}
+          {/* Increment Rays Button */}
           {raysCount < MAX_RAY_COUNT && (
             <RayCard>
               <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
-                width: '100%',
                 height: '100%',
-                minHeight: 'calc(1 * var(--Pad))',
+                margin: 'calc(-1 * var(--Card-padding) + 0.25rem)',
+                minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
+                // minHeight: '2rem',
               }}>
                 <AddIcon />
               </Button>

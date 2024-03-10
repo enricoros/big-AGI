@@ -41,7 +41,7 @@ export function AppBeam() {
   usePluggableOptimaLayout(null, React.useMemo(() => <>
     {/* button to toggle debug info */}
     <Button size='sm' variant='plain' color='neutral' onClick={() => setShowDebug(on => !on)}>
-      {showDebug ? 'Hide' : 'Show'} debug info
+      {showDebug ? 'Hide' : 'Show'} debug
     </Button>
 
     {/* 'open' */}
@@ -49,22 +49,19 @@ export function AppBeam() {
       conversation.current = initTestConversation();
       beamStoreApi.getState().open(conversation.current.messages, useModelsStore.getState().chatLLMId);
     }}>
-      .open()
+      .open
     </Button>
 
     {/* 'close' */}
     <Button size='sm' variant='plain' color='neutral' onClick={() => beamStoreApi.getState().close()}>
-      .close()
+      .close
     </Button>
   </>, [beamStoreApi, showDebug]), null, 'AppBeam');
 
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
-      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{
-        // backgroundColor: 'background.level3',
-        height: '100%',
-      }} />
+      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
 
       {showDebug && (
         <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>

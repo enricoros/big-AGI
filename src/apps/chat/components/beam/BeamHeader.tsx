@@ -7,9 +7,9 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 export function BeamHeader(props: {
   isMobile: boolean,
+  llmComponent: React.ReactNode,
   rayCount: number,
   setRayCount: (n: number) => void,
-  llmSelectComponent: React.ReactNode,
   onStart: () => void,
 }) {
 
@@ -54,7 +54,7 @@ export function BeamHeader(props: {
 
       {/* LLM cell */}
       <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: props.isMobile ? undefined : 'center' }}>
-        {props.llmSelectComponent}
+        {props.llmComponent}
       </Box>
 
       {/* Count and Start cell */}
