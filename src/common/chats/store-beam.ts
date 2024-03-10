@@ -30,7 +30,7 @@ export interface BeamStore extends BeamState {
   open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
   close: () => void;
 
-  setMergedLlmId: (llmId: DLLMId | null) => void;
+  setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
 
   updateRay: (index: number, update: Partial<DBeam>) => void;
@@ -80,7 +80,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       // rays: [],            // remember the rays configuration
     }),
 
-    setMergedLlmId: (llmId: DLLMId | null) => _set({
+    setGatherLlmId: (llmId: DLLMId | null) => _set({
       gatherLlmId: llmId,
     }),
 
