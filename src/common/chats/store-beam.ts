@@ -32,10 +32,9 @@ export interface BeamStore extends BeamState {
   close: () => void;
 
   setMergedLlmId: (llmId: DLLMId | null) => void;
+  setRayCount: (count: number) => void;
 
-  setRayCount(count: number): void;
-
-  updateRay(index: number, update: Partial<DBeam>): void;
+  updateRay: (index: number, update: Partial<DBeam>) => void;
 
 }
 
@@ -59,9 +58,17 @@ export const createBeamStore = (initialLlmId: DLLMId | null) => createStore<Beam
       });
     },
 
-    close: () => _get().isOpen && _set({ isOpen: false, inputHistory: null, configIssue: null }),
+    close: () => _get().isOpen && _set({
+      isOpen: false,
+      inputHistory: null,
+      configIssue: null,
+      // gatherLlmId: null,   // remember the selected llm
+      // rays: [],            // remember the rays configuration
+    }),
 
-    setMergedLlmId: (llmId: DLLMId | null) => _set({ gatherLlmId: llmId }),
+    setMergedLlmId: (llmId: DLLMId | null) => _set({
+      gatherLlmId: llmId,
+    }),
 
     setRayCount: (count: number) => {
       const { rays } = _get();

@@ -50,12 +50,23 @@ export function BeamView(props: {
   sx?: SxProps
 }) {
 
+  // external state
+  const isOpen = useBeamStore(props.conversationHandler, state => state.isOpen);
+
+  return isOpen ? <BeamViewBase {...props} /> : null;
+}
+
+function BeamViewBase(props: {
+  conversationHandler: ConversationHandler,
+  isMobile: boolean,
+  sx?: SxProps
+}) {
+
   const { conversationHandler } = props;
 
   // state
-  const { isOpen, inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(conversationHandler,
+  const { inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(conversationHandler,
     useShallow((state) => ({
-      isOpen: state.isOpen,
       inputHistory: state.inputHistory,
       configIssue: state.configIssue,
       gatherLlmId: state.gatherLlmId,
@@ -75,7 +86,7 @@ export function BeamView(props: {
     conversationHandler.beamClose();
   }, [conversationHandler]);
 
-  const handleSetBeamCount = React.useCallback((n: number) => {
+  const handleSetRayCount = React.useCallback((n: number) => {
     conversationHandler.beamSetRayCount(n);
   }, [conversationHandler]);
 
@@ -90,22 +101,18 @@ export function BeamView(props: {
 
   const bootup = !raysCount;
   React.useEffect(() => {
-    bootup && handleSetBeamCount(MIN_RAY_COUNT);
-  }, [bootup, handleSetBeamCount]);
+    bootup && handleSetRayCount(MIN_RAY_COUNT);
+  }, [bootup, handleSetRayCount]);
 
   // const beamCount = candidates.length;
   //
-  // const handleSetBeamCount = React.useCallback((n: number) => {
+  // const handleSetRayCount = React.useCallback((n: number) => {
   //   beamStore.setBeamCount(n);
   // }, [beamStore]);
   //
   // const handleIncrementBeamCount = React.useCallback(() => {
   //   beamStore.appendBeam();
   // }, [beamStore]);
-
-
-  if (!isOpen)
-    return null;
 
 
   return (
@@ -130,7 +137,7 @@ export function BeamView(props: {
       <BeamHeader
         isMobile={props.isMobile}
         rayCount={raysCount}
-        setRayCount={handleSetBeamCount}
+        setRayCount={handleSetRayCount}
         llmSelectComponent={allChatLlmComponent}
         onStart={handleCloseKeepRunning}
       />
@@ -142,7 +149,12 @@ export function BeamView(props: {
           display: 'grid',
           gap: 'var(--Pad_2)',
         }}>
-          <ChatMessageMemo message={lastMessage} fitScreen={props.isMobile} sx={chatMessageSx} />
+          <ChatMessageMemo
+            message={lastMessage}
+            fitScreen={props.isMobile}
+            adjustContentScaling={-1}
+            sx={chatMessageSx}
+          />
         </Box>
       )}
 

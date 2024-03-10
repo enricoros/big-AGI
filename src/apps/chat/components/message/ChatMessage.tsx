@@ -192,7 +192,7 @@ export function ChatMessage(props: {
   isBottom?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
-  showAvatar?: boolean,
+  showAvatar?: boolean, // auto if undefined
   showBlocksDate?: boolean,
   adjustContentScaling?: number,
   onConversationBranch?: (messageId: string) => void,
