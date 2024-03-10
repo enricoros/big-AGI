@@ -5,7 +5,7 @@ import { Box, Button, Typography } from '@mui/joy';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { BeamStoreApi, createBeamStore, useBeamStore } from '~/common/chats/store-beam';
-import { createDConversation, createDMessage, DConversation } from '~/common/state/store-chats';
+import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
@@ -19,9 +19,9 @@ function initTestConversation(): DConversation {
   return conversation;
 }
 
-function initTestBeam(conversation: DConversation): BeamStoreApi {
+function initTestBeam(messages: DMessage[]): BeamStoreApi {
   const beamStore = createBeamStore();
-  beamStore.getState().open(conversation.messages, useModelsStore.getState().chatLLMId);
+  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId);
   return beamStore;
 }
 
@@ -29,20 +29,34 @@ function initTestBeam(conversation: DConversation): BeamStoreApi {
 export function AppBeam() {
 
   // state
-  const conversation = React.useRef<DConversation>(initTestConversation()).current;
-  const beamStoreApi = React.useRef(initTestBeam(conversation)).current;
+  const conversation = React.useRef<DConversation>(initTestConversation());
+  const beamStoreApi = React.useRef(initTestBeam(conversation.current.messages)).current;
   const [showDebug, setShowDebug] = React.useState(false);
 
   // external state
   const isMobile = useIsMobile();
-  useBeamStore(beamStoreApi, state => state); // force re-render on state change
+  const beamState = useBeamStore(beamStoreApi, state => state); // force re-render (of the JSON) on state change
 
   // layout
-  usePluggableOptimaLayout(null, React.useMemo(() => (
-    <Button size='sm' variant='soft' color='neutral' onClick={() => setShowDebug(on => !on)}>
+  usePluggableOptimaLayout(null, React.useMemo(() => <>
+    {/* button to toggle debug info */}
+    <Button size='sm' variant='plain' color='neutral' onClick={() => setShowDebug(on => !on)}>
       {showDebug ? 'Hide' : 'Show'} debug info
     </Button>
-  ), [showDebug]), null, 'AppBeam');
+
+    {/* 'open' */}
+    <Button size='sm' variant='plain' color='neutral' onClick={() => {
+      conversation.current = initTestConversation();
+      beamStoreApi.getState().open(conversation.current.messages, useModelsStore.getState().chatLLMId);
+    }}>
+      .open()
+    </Button>
+
+    {/* 'close' */}
+    <Button size='sm' variant='plain' color='neutral' onClick={() => beamStoreApi.getState().close()}>
+      .close()
+    </Button>
+  </>, [beamStoreApi, showDebug]), null, 'AppBeam');
 
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
@@ -54,8 +68,7 @@ export function AppBeam() {
 
       {showDebug && (
         <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>
-          {JSON.stringify({ conversationId: conversation.id }, null, 2) + '\n'}
-          {JSON.stringify(beamStoreApi.getState(), null, 2)}
+          {JSON.stringify({ conversationId: conversation.current.id, beamStore: beamState }, null, 2)}
         </Typography>
       )}
 
