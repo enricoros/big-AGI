@@ -149,6 +149,14 @@ export const themeBreakpoints = appTheme.breakpoints.values;
 // Dyanmic UI Sizing
 export type ContentScaling = 'xs' | 'sm' | 'md';
 
+export function adjustContentScaling(scaling: ContentScaling, offset?: number) {
+  if (!offset) return scaling;
+  const scalingArray = ['xs', 'sm', 'md'];
+  const scalingIndex = scalingArray.indexOf(scaling);
+  const newScalingIndex = Math.max(0, Math.min(scalingArray.length - 1, scalingIndex + offset));
+  return scalingArray[newScalingIndex] as ContentScaling;
+}
+
 interface ContentScalingOptions {
   // BlocksRenderer
   blockCodeFontSize: string;
