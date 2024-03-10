@@ -19,7 +19,7 @@ const rayCardClasses = {
   active: 'beamRay-Active',
 } as const;
 
-const RayCard = styled(Box)(({ theme }) => ({
+export const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
 
   padding: 'var(--Card-padding)',

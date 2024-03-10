@@ -94,6 +94,10 @@ export class ConversationHandler {
     this.beamStore.getState().setRayCount(count);
   }
 
+  beamIncreaseRayCount() {
+    this.beamStore.getState().setRayCount(this.beamStore.getState().rays.length + 1);
+  }
+
 
   // Ephemerals
 
