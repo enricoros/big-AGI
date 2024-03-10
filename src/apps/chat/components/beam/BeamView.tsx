@@ -15,8 +15,8 @@ import { ChatMessageMemo } from '../message/ChatMessage';
 
 
 // component configuration
-const MIN_BEAM_COUNT = 2;
-const MAX_BEAM_COUNT = 8;
+const MIN_RAY_COUNT = 2;
+const MAX_RAY_COUNT = 8;
 
 
 const animationEnter = keyframes`
@@ -53,29 +53,31 @@ export function BeamView(props: {
   const { conversationHandler } = props;
 
   // state
-  const { isOpen, inputHistory, configIssue, mergeLlmId, setMergedLlmId, beamsCount } = useBeamStore(conversationHandler,
+  const { isOpen, inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(conversationHandler,
     useShallow((state) => ({
       isOpen: state.isOpen,
       inputHistory: state.inputHistory,
       configIssue: state.configIssue,
-      mergeLlmId: state.gatherLlmId,
+      gatherLlmId: state.gatherLlmId,
       setMergedLlmId: state.setMergedLlmId,
-      beamsCount: state.rays.length,
+      raysCount: state.rays.length,
     })),
   );
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(mergeLlmId, setMergedLlmId, props.isMobile ? '' : 'Beam Model');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(gatherLlmId, setMergedLlmId, props.isMobile ? '' : 'Beam Model');
 
   // derived state
-  const { beamSetRayCount } = conversationHandler;
   const lastMessage = inputHistory?.slice(-1)[0] || null;
 
-  console.log('mergeLlmId', mergeLlmId);
 
-  const handleCloseKeepRunning = React.useCallback(() => conversationHandler.beamClose(), [conversationHandler]);
+  const handleCloseKeepRunning = React.useCallback(() => {
+    conversationHandler.beamClose();
+  }, [conversationHandler]);
 
-  const handleSetBeamCount = React.useCallback((n: number) => conversationHandler.beamSetRayCount(n), [conversationHandler]);
+  const handleSetBeamCount = React.useCallback((n: number) => {
+    conversationHandler.beamSetRayCount(n);
+  }, [conversationHandler]);
 
 
   const handleStart = React.useCallback(() => {
@@ -86,9 +88,10 @@ export function BeamView(props: {
 
   // change beam count
 
+  const bootup = !raysCount;
   React.useEffect(() => {
-    !beamsCount && handleSetBeamCount(MIN_BEAM_COUNT);
-  }, [beamsCount, handleSetBeamCount]);
+    bootup && handleSetBeamCount(MIN_RAY_COUNT);
+  }, [bootup, handleSetBeamCount]);
 
   // const beamCount = candidates.length;
   //
@@ -126,8 +129,8 @@ export function BeamView(props: {
       {/* Header */}
       <BeamHeader
         isMobile={props.isMobile}
-        beamCount={beamsCount}
-        setBeamCount={handleSetBeamCount}
+        rayCount={raysCount}
+        setRayCount={handleSetBeamCount}
         llmSelectComponent={allChatLlmComponent}
         onStart={handleCloseKeepRunning}
       />
@@ -144,7 +147,7 @@ export function BeamView(props: {
       )}
 
       {/* Rays */}
-      {!!beamsCount && (
+      {!!raysCount && (
         <Box sx={{
           // style
           mx: 'var(--Pad)',
@@ -154,8 +157,14 @@ export function BeamView(props: {
           gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
           gap: { xs: 2, md: 2 },
         }}>
-          {Array.from({ length: beamsCount }, (_, idx) => (
-            <BeamRay key={idx} index={idx} parentLlmId={mergeLlmId} isMobile={props.isMobile} />
+          {Array.from({ length: raysCount }, (_, idx) => (
+            <BeamRay
+              key={'ray-' + idx}
+              conversationHandler={conversationHandler}
+              index={idx}
+              isMobile={props.isMobile}
+              gatherLlmId={gatherLlmId}
+            />
           ))}
         </Box>
       )}
