@@ -60,6 +60,7 @@ export interface NavItemApp extends ItemBase {
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
+  isDev?: boolean,        // show a 'dev mode' badge
   _delete?: boolean,      // delete from the UI
 }
 
@@ -113,6 +114,7 @@ export const navItems: {
       route: '/draw',
       // hideOnMobile: true,
       hideDrawer: true,
+      isDev: true,
       _delete: true,
     },
     {
@@ -121,6 +123,7 @@ export const navItems: {
       iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
+      isDev: true,
       _delete: true,
     },
     {
@@ -129,6 +132,7 @@ export const navItems: {
       iconActive: AccountTreeIcon,
       type: 'app',
       route: '/patterns',
+      isDev: true,
       _delete: true,
     },
     {
@@ -139,6 +143,7 @@ export const navItems: {
       route: '/workspace',
       hideDrawer: true,
       hideOnMobile: true,
+      isDev: true,
       _delete: true,
     },
     // <-- divider here -->
@@ -162,6 +167,7 @@ export const navItems: {
       iconActive: ImageIcon,
       type: 'app',
       route: '/media',
+      isDev: true,
       _delete: true,
     },
     {

@@ -58,11 +58,11 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
           return <Divider key={'div-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
 
         return (
-          <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name}>
+          <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name + (app.isDev ? ' [DEV]' : '')}>
             <DesktopNavIcon
               variant={isActive ? 'solid' : undefined}
               onClick={isDrawerable ? toggleDrawer : () => Router.push(app.landingRoute || app.route)}
-              className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
+              className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
             >
               {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
               <app.icon />
