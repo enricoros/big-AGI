@@ -29,6 +29,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
 
 
@@ -160,6 +161,15 @@ export const navItems: {
       type: 'app',
       route: '/personas',
       hideBar: true,
+    },
+    {
+      name: 'Beam',
+      icon: ChatBeamIcon,
+      type: 'app',
+      route: '/dev/beam',
+      hideDrawer: true,
+      hideIcon: true,
+      isDev: true,
     },
     {
       name: 'Media Library',
