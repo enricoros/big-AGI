@@ -6,8 +6,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { useBeamStore } from '~/common/chats/store-beam';
+import { BeamStoreApi, useBeamStore } from '~/common/chats/store-beam';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
@@ -49,27 +48,27 @@ const userMessageSx: SxProps = {
 
 
 export function BeamView(props: {
-  conversationHandler: ConversationHandler,
+  beamStore: BeamStoreApi,
   isMobile: boolean,
-  sx?: SxProps
+  sx?: SxProps,
 }) {
 
   // external state
-  const isOpen = useBeamStore(props.conversationHandler, state => state.isOpen);
+  const isOpen = useBeamStore(props.beamStore, state => state.isOpen);
 
   return isOpen ? <BeamViewBase {...props} /> : null;
 }
 
 function BeamViewBase(props: {
-  conversationHandler: ConversationHandler,
+  beamStore: BeamStoreApi,
   isMobile: boolean,
   sx?: SxProps
 }) {
 
-  const { conversationHandler } = props;
+  const { close: beamClose, setRayCount: beamSetRayCount } = props.beamStore.getState();
 
   // state
-  const { inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(conversationHandler,
+  const { inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(props.beamStore,
     useShallow((state) => ({
       inputHistory: state.inputHistory,
       configIssue: state.configIssue,
@@ -86,17 +85,15 @@ function BeamViewBase(props: {
   const lastMessage = inputHistory?.slice(-1)[0] || null;
 
 
-  const handleCloseKeepRunning = React.useCallback(() => {
-    conversationHandler.beamClose();
-  }, [conversationHandler]);
+  const handleCloseKeepRunning = React.useCallback(() => beamClose(), [beamClose]);
 
   const handleRaySetCount = React.useCallback((n: number) => {
-    conversationHandler.beamSetRayCount(n);
-  }, [conversationHandler]);
+    beamSetRayCount(n);
+  }, [beamSetRayCount]);
 
   const handleRayIncreaseCount = React.useCallback(() => {
-    conversationHandler.beamIncreaseRayCount();
-  }, [conversationHandler]);
+    beamSetRayCount(raysCount + 1);
+  }, [beamSetRayCount, raysCount]);
 
 
   const handleStart = React.useCallback(() => {
@@ -147,7 +144,7 @@ function BeamViewBase(props: {
         rayCount={raysCount}
         setRayCount={handleRaySetCount}
         llmSelectComponent={allChatLlmComponent}
-        onStart={handleCloseKeepRunning}
+        onStart={handleStart}
       />
 
       {/* Last message */}
@@ -180,7 +177,7 @@ function BeamViewBase(props: {
           {Array.from({ length: raysCount }, (_, idx) => (
             <BeamRay
               key={'ray-' + idx}
-              conversationHandler={conversationHandler}
+              beamStore={props.beamStore}
               index={idx}
               isMobile={props.isMobile}
               gatherLlmId={gatherLlmId}

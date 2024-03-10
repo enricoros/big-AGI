@@ -560,7 +560,8 @@ export function AppChat() {
             {!!_paneChatHandler && (
               <BeamView
                 // key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
-                conversationHandler={_paneChatHandler}
+                // conversationHandler={_paneChatHandler}
+                beamStore={_paneChatHandler.getBeamStore()}
                 isMobile={isMobile}
                 sx={{
                   overflowY: 'auto',

@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { createStore } from 'zustand/vanilla';
-import { useStore } from 'zustand';
+import { type StoreApi, useStore } from 'zustand';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
-
-import { ConversationHandler } from './ConversationHandler';
 
 
 // Per-Beam Store
@@ -19,16 +17,16 @@ interface BeamState {
 
   isOpen: boolean;
   inputHistory: DMessage[] | null;
+  gatherLlmId: DLLMId | null;
   configIssue: string | null;
 
-  gatherLlmId: DLLMId | null;
   rays: DBeam[];
 
 }
 
 export interface BeamStore extends BeamState {
 
-  open: (history: DMessage[]) => void;
+  open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
   close: () => void;
 
   setMergedLlmId: (llmId: DLLMId | null) => void;
@@ -38,22 +36,36 @@ export interface BeamStore extends BeamState {
 
 }
 
+export type BeamStoreApi = Readonly<StoreApi<BeamStore>>;
 
-export const createBeamStore = (initialLlmId: DLLMId | null) => createStore<BeamStore>()(
+
+export const createBeamStore = () => createStore<BeamStore>()(
   (_set, _get) => ({
 
     isOpen: false,
     inputHistory: null,
+    gatherLlmId: null,
     configIssue: null,
 
-    gatherLlmId: initialLlmId,
     rays: [],
 
-    open: (history: DMessage[]) => {
-      const isValidHistory = history.length > 0 && history[history.length - 1].role === 'user';
+
+    open: (history: DMessage[], inheritLlmId: DLLMId | null) => {
+      const { isOpen: wasOpen, close } = _get();
+
+      // reset pending operations
+      close();
+
+      // if just opened, update the model with the current chat model
+      const gatherLlmId = !wasOpen && inheritLlmId;
+
+      // validate history
+      const isValidHistory = history.length >= 1 && history[history.length - 1].role === 'user';
+
       _set({
         isOpen: true,
         inputHistory: isValidHistory ? history : null,
+        ...(gatherLlmId ? { gatherLlmId } : {}),
         configIssue: isValidHistory ? null : 'Invalid history',
       });
     },
@@ -89,13 +101,11 @@ export const createBeamStore = (initialLlmId: DLLMId | null) => createStore<Beam
 );
 
 
-export const useBeamStore = <T, >(conversationHandler: ConversationHandler, selector: (store: BeamStore) => T): T =>
-  useStore(conversationHandler.getBeamStore(), selector);
+export const useBeamStore = <T, >(beamStore: BeamStoreApi, selector: (store: BeamStore) => T): T =>
+  useStore(beamStore, selector);
 
 
-export const useBeamStoreBeam = (conversationHandler: ConversationHandler, beamIndex: number) => {
-  const _beamStore = conversationHandler.getBeamStore();
-
+export const useBeamStoreBeam = (_beamStore: BeamStoreApi, beamIndex: number) => {
   const beam: DBeam | null = useStore(_beamStore, (store) => store.rays[beamIndex] ?? null);
 
   const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
