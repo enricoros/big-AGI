@@ -4,6 +4,8 @@ import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
+import UnfoldLessRoundedIcon from '@mui/icons-material/UnfoldLessRounded';
+import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
@@ -78,11 +80,6 @@ export function BlocksRenderer(props: {
   const fromUser = props.fromRole === 'user';
 
 
-  const handleTextUncollapse = React.useCallback(() => {
-    setForceUserExpanded(true);
-  }, []);
-
-
   // Memo text, which could be 'collapsed' to a few lines in case of user messages
 
   const { text, isTextCollapsed } = React.useMemo(() => {
@@ -93,6 +90,15 @@ export function BlocksRenderer(props: {
     }
     return { text: _text, isTextCollapsed: false };
   }, [forceUserExpanded, fromUser, _text]);
+
+  const handleTextCollapse = React.useCallback(() => {
+    setForceUserExpanded(false);
+  }, []);
+
+  const handleTextUncollapse = React.useCallback(() => {
+    setForceUserExpanded(true);
+  }, []);
+
 
   // Memo the styles, to minimize re-renders
 
@@ -207,7 +213,11 @@ export function BlocksRenderer(props: {
 
       )}
 
-      {isTextCollapsed && <Button variant='plain' color='neutral' onClick={handleTextUncollapse}>... expand ...</Button>}
+      {isTextCollapsed ? (
+        <Button variant='soft' color='primary' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, justifyContent: 'space-between' }}>Expand</Button>
+      ) : forceUserExpanded && (
+        <Button variant='plain' color='neutral' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, justifyContent: 'space-between' }}>Collapse</Button>
+      )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
       {/*<br />*/}
