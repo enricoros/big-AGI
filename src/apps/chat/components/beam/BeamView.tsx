@@ -4,13 +4,14 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
+import AddIcon from '@mui/icons-material/Add';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { useBeamStore } from '~/common/chats/store-beam';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
-import { BeamRay } from './BeamRay';
+import { BeamRay, RayCard } from './BeamRay';
 import { ChatMessageMemo } from '../message/ChatMessage';
 
 
@@ -86,8 +87,12 @@ function BeamViewBase(props: {
     conversationHandler.beamClose();
   }, [conversationHandler]);
 
-  const handleSetRayCount = React.useCallback((n: number) => {
+  const handleRaySetCount = React.useCallback((n: number) => {
     conversationHandler.beamSetRayCount(n);
+  }, [conversationHandler]);
+
+  const handleRayIncreaseCount = React.useCallback(() => {
+    conversationHandler.beamIncreaseRayCount();
   }, [conversationHandler]);
 
 
@@ -101,12 +106,12 @@ function BeamViewBase(props: {
 
   const bootup = !raysCount;
   React.useEffect(() => {
-    bootup && handleSetRayCount(MIN_RAY_COUNT);
-  }, [bootup, handleSetRayCount]);
+    bootup && handleRaySetCount(MIN_RAY_COUNT);
+  }, [bootup, handleRaySetCount]);
 
   // const beamCount = candidates.length;
   //
-  // const handleSetRayCount = React.useCallback((n: number) => {
+  // const handleRaySetCount = React.useCallback((n: number) => {
   //   beamStore.setBeamCount(n);
   // }, [beamStore]);
   //
@@ -137,7 +142,7 @@ function BeamViewBase(props: {
       <BeamHeader
         isMobile={props.isMobile}
         rayCount={raysCount}
-        setRayCount={handleSetRayCount}
+        setRayCount={handleRaySetCount}
         llmSelectComponent={allChatLlmComponent}
         onStart={handleCloseKeepRunning}
       />
@@ -178,6 +183,17 @@ function BeamViewBase(props: {
               gatherLlmId={gatherLlmId}
             />
           ))}
+          {raysCount < MAX_RAY_COUNT && (
+            <RayCard>
+              <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
+                width: '100%',
+                height: '100%',
+                minHeight: 'calc(3 * var(--Pad))',
+              }}>
+                <AddIcon />
+              </Button>
+            </RayCard>
+          )}
         </Box>
       )}
 
