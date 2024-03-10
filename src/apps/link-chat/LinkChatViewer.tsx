@@ -142,7 +142,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 key={'msg-' + message.id}
                 message={message}
                 fitScreen={isMobile}
-                blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
+                showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
                 onMessageEdit={(_messageId, text: string) => message.text = text}
               />,
             )}
