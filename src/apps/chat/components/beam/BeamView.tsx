@@ -36,12 +36,15 @@ const animationEnter = keyframes`
 `;
 
 
-const chatMessageSx: SxProps = {
+const userMessageSx: SxProps = {
   border: '1px solid',
   borderColor: 'neutral.outlinedBorder',
-  borderRadius: 'lg',
-  // borderBottomRightRadius: 0,
-  boxShadow: 'sm',
+  borderRadius: 'md',
+  borderTopLeftRadius: 0,
+  borderTopRightRadius: 0,
+  borderTop: 'none',
+  px: '0.5rem',
+  // boxShadow: 'sm',
 } as const;
 
 
@@ -151,14 +154,14 @@ function BeamViewBase(props: {
       {!!lastMessage && (
         <Box sx={{
           px: 'var(--Pad)',
-          display: 'grid',
-          gap: 'var(--Pad_2)',
+          mt: 'calc(-1 * var(--Pad))',
         }}>
           <ChatMessageMemo
             message={lastMessage}
             fitScreen={props.isMobile}
+            showAvatar={false}
             adjustContentScaling={-1}
-            sx={chatMessageSx}
+            sx={userMessageSx}
           />
         </Box>
       )}
@@ -172,7 +175,7 @@ function BeamViewBase(props: {
           // layout
           display: 'grid',
           gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-          gap: { xs: 2, md: 2 },
+          gap: 'var(--Pad)',
         }}>
           {Array.from({ length: raysCount }, (_, idx) => (
             <BeamRay
@@ -188,7 +191,7 @@ function BeamViewBase(props: {
               <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
                 width: '100%',
                 height: '100%',
-                minHeight: 'calc(3 * var(--Pad))',
+                minHeight: 'calc(1 * var(--Pad))',
               }}>
                 <AddIcon />
               </Button>

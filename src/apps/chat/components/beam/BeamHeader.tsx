@@ -23,6 +23,7 @@ export function BeamHeader(props: {
         backgroundColor: 'background.surface',
         boxShadow: 'md',
         p: 'var(--Pad)',
+        zIndex: 1, // stay on top of the user message
 
         // layout: max 2 cols (/3 with gap) of min 200px per col
         display: 'grid',
@@ -35,7 +36,7 @@ export function BeamHeader(props: {
     >
 
       {/* Title */}
-      <Box sx={{ display: 'flex', gap: 'var(--Pad_2)' }}>
+      <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
         {/*<Typography level='h4'>*/}
         {/*  <ChatBeamIcon sx={{ animation: `${cssRainbowColorKeyframes} 2s linear 2.66` }} />*/}
         {/*</Typography>*/}
@@ -45,7 +46,7 @@ export function BeamHeader(props: {
             Beam
           </Typography>
 
-          <Typography level='body-md'>
+          <Typography level='body-sm'>
             Combine the smarts of models
           </Typography>
         </div>

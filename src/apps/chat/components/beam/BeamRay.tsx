@@ -69,7 +69,7 @@ export function BeamRay(props: {
     true,
   );
 
-  const msg = React.useMemo(() => createDMessage('assistant', 'test'), []);
+  const msg = React.useMemo(() => createDMessage('assistant', '💫 ...'), []);
 
   return (
     <RayCard>
