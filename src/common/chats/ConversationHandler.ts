@@ -1,5 +1,3 @@
-import type { StoreApi } from 'zustand';
-
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
@@ -7,7 +5,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
 
-import { BeamStore, BeamStoreApi, createBeamStore } from './store-beam';
+import { createBeamStore } from './store-beam';
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
 
@@ -21,7 +19,7 @@ export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;
 
-  private readonly beamStore: StoreApi<BeamStore> = createBeamStore();
+  private readonly beamStore = createBeamStore();
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 
@@ -72,10 +70,7 @@ export class ConversationHandler {
 
   // Beam
 
-  getBeamStore(): BeamStoreApi {
-    // used by the useBeamStore() hooks, and shall not be used elsewhere to guarantee state
-    return this.beamStore;
-  }
+  getBeamStore = () => this.beamStore;
 
   beamOpen(history: DMessage[]) {
     this.beamStore.getState().open(history, useModelsStore.getState().chatLLMId);

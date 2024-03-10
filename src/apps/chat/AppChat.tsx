@@ -469,6 +469,7 @@ export function AppChat() {
       {chatPanes.map((pane, idx) => {
         const _paneConversationId = pane.conversationId;
         const _paneChatHandler = chatHandlers[idx] ?? null;
+        const _paneChatBeamStore = _paneChatHandler?.getBeamStore() ?? null;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
         const _sepId = `sep-pane-${idx}`;
@@ -557,11 +558,11 @@ export function AppChat() {
 
             </ScrollToBottom>
 
-            {!!_paneChatHandler && (
+            {!!_paneChatBeamStore && (
               <BeamView
                 // key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
                 // conversationHandler={_paneChatHandler}
-                beamStore={_paneChatHandler.getBeamStore()}
+                beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
                 sx={{
                   overflowY: 'auto',

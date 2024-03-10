@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { createStore } from 'zustand/vanilla';
 import { type StoreApi, useStore } from 'zustand';
 
@@ -42,6 +43,7 @@ export type BeamStoreApi = Readonly<StoreApi<BeamStore>>;
 export const createBeamStore = () => createStore<BeamStore>()(
   (_set, _get) => ({
 
+    debugId: uuidv4(),
     isOpen: false,
     inputHistory: null,
     gatherLlmId: null,
