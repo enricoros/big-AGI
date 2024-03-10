@@ -1,20 +1,24 @@
 import * as React from 'react';
 
-import { Box, styled } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, IconButton, styled, Tooltip } from '@mui/joy';
+import LinkIcon from '@mui/icons-material/Link';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+import { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { createDMessage } from '~/common/state/store-chats';
-import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
+import { useBeamStoreBeam } from '~/common/chats/store-beam';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { ChatMessageMemo } from '../message/ChatMessage';
-import { SxProps } from '@mui/joy/styles/types';
 
 
-const beamRayClasses = {
+const rayCardClasses = {
   active: 'beamRay-Active',
 } as const;
 
-const BeamRayCard = styled(Box)(({ theme }) => ({
+const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
 
   padding: 'var(--Card-padding)',
@@ -25,7 +29,7 @@ const BeamRayCard = styled(Box)(({ theme }) => ({
   borderColor: theme.vars.palette.neutral.outlinedBorder,
   borderRadius: theme.radius.md,
 
-  [`&.${beamRayClasses.active}`]: {
+  [`&.${rayCardClasses.active}`]: {
     boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
   },
 
@@ -33,7 +37,8 @@ const BeamRayCard = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   gap: 'var(--Pad_2)',
 }));
-BeamRayCard.displayName = 'BeamRayCard';
+RayCard.displayName = 'RayCard';
+
 
 const chatMessageSx: SxProps = {
   p: 0,
@@ -48,15 +53,20 @@ const chatMessageSx: SxProps = {
 
 
 export function BeamRay(props: {
+  conversationHandler: ConversationHandler
   index: number,
-  parentLlmId: DLLMId | null,
   isMobile: boolean,
+  gatherLlmId: DLLMId | null,
 }) {
 
-  const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(false);
+  // external state
+  const { beam, setRayLlmId, clearRayLlmId } = useBeamStoreBeam(props.conversationHandler, props.index);
+
+  const isLinked = !!props.gatherLlmId && !beam.scatterLlmId;
+
   const [allChatLlm, allChatLlmComponent] = useLLMSelect(
-    personaLlmId ?? props.parentLlmId,
-    setPersonaLlmId,
+    isLinked ? props.gatherLlmId : beam.scatterLlmId,
+    setRayLlmId,
     '',
     true,
   );
@@ -64,12 +74,22 @@ export function BeamRay(props: {
   const msg = React.useMemo(() => createDMessage('assistant', 'test'), []);
 
   return (
-    <BeamRayCard>
+    <RayCard>
 
-      {allChatLlmComponent}
+      {/* Controls Row */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ flex: 1 }}>
+          {allChatLlmComponent}
+        </Box>
+        <Tooltip title={isLinked ? undefined : 'Link Model'}>
+          <IconButton disabled={isLinked} onClick={clearRayLlmId}>
+            {isLinked ? <LinkIcon /> : <LinkOffIcon />}
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <ChatMessageMemo message={msg} fitScreen={props.isMobile} sx={chatMessageSx} />
 
-    </BeamRayCard>
+    </RayCard>
   );
 }

@@ -7,11 +7,10 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 export function BeamHeader(props: {
   isMobile: boolean,
-  beamCount: number,
-  setBeamCount: (n: number) => void,
+  rayCount: number,
+  setRayCount: (n: number) => void,
   llmSelectComponent: React.ReactNode,
   onStart: () => void,
-  // onClose: () => void,
 }) {
 
   return (
@@ -65,13 +64,13 @@ export function BeamHeader(props: {
           {/* xN buttons */}
           <ButtonGroup variant='outlined' sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
             {[2, 4, 8].map((n) => {
-              const isActive = n === props.beamCount;
+              const isActive = n === props.rayCount;
               return (
                 <Button
                   key={n}
                   // variant={isActive ? 'solid' : undefined}
                   color='neutral'
-                  onClick={() => props.setBeamCount(n)}
+                  onClick={() => props.setRayCount(n)}
                   sx={{
                     fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                     backgroundColor: isActive ? 'background.popup' : undefined,
@@ -91,7 +90,7 @@ export function BeamHeader(props: {
             // endDecorator={<ChatBeamIcon />}
             sx={{ ml: 'auto', minWidth: 80 }}
           >
-            Beam
+            Start
           </Button>
         </Box>
       </FormControl>

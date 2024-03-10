@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 
@@ -33,6 +34,9 @@ export interface BeamStore extends BeamState {
   setMergedLlmId: (llmId: DLLMId | null) => void;
 
   setRayCount(count: number): void;
+
+  updateRay(index: number, update: Partial<DBeam>): void;
+
 }
 
 
@@ -67,6 +71,13 @@ export const createBeamStore = (initialLlmId: DLLMId | null) => createStore<Beam
         _set({ rays: [...rays, ...Array(count - rays.length).fill({ scatterLlmId: null })] });
     },
 
+    updateRay: (index: number, update: Partial<DBeam>) => _set((state) => ({
+      rays: state.rays.map((ray, i) => (i === index)
+        ? { ...ray, ...update }
+        : ray,
+      ),
+    })),
+
   }),
 );
 
@@ -74,8 +85,17 @@ export const createBeamStore = (initialLlmId: DLLMId | null) => createStore<Beam
 export const useBeamStore = <T, >(conversationHandler: ConversationHandler, selector: (store: BeamStore) => T): T =>
   useStore(conversationHandler.getBeamStore(), selector);
 
+
 export const useBeamStoreBeam = (conversationHandler: ConversationHandler, beamIndex: number) => {
-  const vanillaBeamStore = conversationHandler.getBeamStore();
-  const beam: DBeam | null = useStore(vanillaBeamStore, (store) => store.rays[beamIndex] ?? null);
-  return { beam };
+  const _beamStore = conversationHandler.getBeamStore();
+
+  const beam: DBeam | null = useStore(_beamStore, (store) => store.rays[beamIndex] ?? null);
+
+  const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
+    _beamStore.getState().updateRay(beamIndex, { scatterLlmId: llmId });
+  }, [_beamStore, beamIndex]);
+
+  const clearRayLlmId = React.useCallback(() => setRayLlmId(null), [setRayLlmId]);
+
+  return { beam, clearRayLlmId, setRayLlmId };
 };
