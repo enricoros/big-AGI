@@ -21,16 +21,16 @@ const MAX_RAY_COUNT = 8;
 
 const animationEnter = keyframes`
     0% {
-        //opacity: 0;
+        opacity: 0;
         //transform: translateY(8px);
-        scale: 1.1;
+        scale: 0.95;
         //rotate: -5deg;
     }
     100% {
         opacity: 1;
-        transform: translateY(0);
+        //transform: translateY(0);
         scale: 1;
-        rotate: 0;
+        //rotate: 0;
     }
 `;
 
