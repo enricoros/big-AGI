@@ -68,18 +68,18 @@ function BeamViewBase(props: {
   const { close: beamClose, setRayCount: beamSetRayCount } = props.beamStore.getState();
 
   // state
-  const { inputHistory, configIssue, gatherLlmId, setMergedLlmId, raysCount } = useBeamStore(props.beamStore,
+  const { inputHistory, configIssue, gatherLlmId, setGatherLlmId, raysCount } = useBeamStore(props.beamStore,
     useShallow((state) => ({
       inputHistory: state.inputHistory,
       configIssue: state.configIssue,
       gatherLlmId: state.gatherLlmId,
-      setMergedLlmId: state.setMergedLlmId,
+      setGatherLlmId: state.setGatherLlmId,
       raysCount: state.rays.length,
     })),
   );
 
   // external state
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(gatherLlmId, setMergedLlmId, props.isMobile ? '' : 'Beam Model');
+  const [allChatLlm, allChatLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
   // derived state
   const lastMessage = inputHistory?.slice(-1)[0] || null;
