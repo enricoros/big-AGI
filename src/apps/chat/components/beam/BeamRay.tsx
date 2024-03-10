@@ -7,9 +7,9 @@ import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
-import { ConversationHandler } from '~/common/chats/ConversationHandler';
+
+import { BeamStoreApi, useBeamStoreBeam } from '~/common/chats/store-beam';
 import { createDMessage } from '~/common/state/store-chats';
-import { useBeamStoreBeam } from '~/common/chats/store-beam';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { ChatMessageMemo } from '../message/ChatMessage';
@@ -51,14 +51,14 @@ const chatMessageEmbeddedSx: SxProps = {
 
 
 export function BeamRay(props: {
-  conversationHandler: ConversationHandler
+  beamStore: BeamStoreApi,
   index: number,
   isMobile: boolean,
   gatherLlmId: DLLMId | null,
 }) {
 
   // external state
-  const { beam, setRayLlmId, clearRayLlmId } = useBeamStoreBeam(props.conversationHandler, props.index);
+  const { beam, setRayLlmId, clearRayLlmId } = useBeamStoreBeam(props.beamStore, props.index);
 
   const isLinked = !!props.gatherLlmId && !beam.scatterLlmId;
 

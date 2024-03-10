@@ -7,7 +7,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
 
-import { type BeamStore, createBeamStore } from './store-beam';
+import { BeamStore, BeamStoreApi, createBeamStore } from './store-beam';
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
 
@@ -21,17 +21,13 @@ export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;
 
-  private readonly beamStore: StoreApi<BeamStore>;
+  private readonly beamStore: StoreApi<BeamStore> = createBeamStore();
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 
   constructor(conversationId: DConversationId) {
     this.chatActions = useChatStore.getState();
     this.conversationId = conversationId;
-
-    // init beamstore
-    const inheritGlobalChatLlm = useModelsStore.getState().chatLLMId;
-    this.beamStore = createBeamStore(inheritGlobalChatLlm);
   }
 
 
@@ -76,26 +72,13 @@ export class ConversationHandler {
 
   // Beam
 
-  getBeamStore(): Readonly<StoreApi<BeamStore>> {
-    // used by the use() hook, and shall not be used elsewhere to guarantee state
+  getBeamStore(): BeamStoreApi {
+    // used by the useBeamStore() hooks, and shall not be used elsewhere to guarantee state
     return this.beamStore;
   }
 
   beamOpen(history: DMessage[]) {
-    this.beamClose();
-    this.beamStore.getState().open(history);
-  }
-
-  beamClose() {
-    this.beamStore.getState().close();
-  }
-
-  beamSetRayCount(count: number) {
-    this.beamStore.getState().setRayCount(count);
-  }
-
-  beamIncreaseRayCount() {
-    this.beamStore.getState().setRayCount(this.beamStore.getState().rays.length + 1);
+    this.beamStore.getState().open(history, useModelsStore.getState().chatLLMId);
   }
 
 
