@@ -603,7 +603,7 @@ export function ChatMessage(props: {
                     <KeyStroke combo='Ctrl + Shift + R' />
                   </Box>}
               {labsChatBeam && (
-                <Tooltip title={messageTyping ? null : 'Best-Of'}>
+                <Tooltip title={messageTyping ? null : 'Beam'}>
                   <IconButton
                     size='sm'
                     variant='outlined' color='primary'
