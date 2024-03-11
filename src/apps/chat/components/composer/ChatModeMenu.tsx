@@ -7,7 +7,6 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatModeId } from '../../AppChat';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 interface ChatModeDescription {
@@ -56,7 +55,6 @@ export function ChatModeMenu(props: {
 }) {
 
   // external state
-  const labsChatBeam = useUXLabsStore(state => state.labsChatBeam);
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
 
   return (
@@ -74,7 +72,6 @@ export function ChatModeMenu(props: {
 
       {/* ChatMode items */}
       {Object.entries(ChatModeItems)
-        .filter(([key, data]) => key !== 'generate-text-beam' || labsChatBeam)
         .map(([key, data]) =>
           <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
