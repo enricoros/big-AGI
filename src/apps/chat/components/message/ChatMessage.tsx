@@ -30,7 +30,8 @@ import { DMessage } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
-import { adjustContentScaling, cssRainbowColorKeyframes, themeScalingMap } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
+import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -92,7 +93,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (isTextToImage)
         return <FormatPaintIcon sx={{
           ...avatarIconSx,
-          animation: `${cssRainbowColorKeyframes} 1s linear 2.66`,
+          animation: `${animationColorRainbow} 1s linear 2.66`,
         }} />;
 
       // purpose symbol (if present)
@@ -450,7 +451,7 @@ export function ChatMessage(props: {
             <Tooltip title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
               <Typography level='body-xs' sx={{
                 overflowWrap: 'anywhere',
-                ...(messageTyping ? { animation: `${cssRainbowColorKeyframes} 5s linear infinite` } : {}),
+                ...(messageTyping ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
               }}>
                 {prettyBaseModel(messageOriginLLM)}
               </Typography>

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { animationEnterBelow } from '~/common/util/animUtils';
 
 
 export function BeamHeader(props: {
@@ -40,7 +41,7 @@ export function BeamHeader(props: {
       {/* Title */}
       <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
         {/*<Typography level='h4'>*/}
-        {/*  <ChatBeamIcon sx={{ animation: `${cssRainbowColorKeyframes} 2s linear 2.66` }} />*/}
+        {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
         {/*</Typography>*/}
         <div>
           <Typography level='h4' component='h2'>

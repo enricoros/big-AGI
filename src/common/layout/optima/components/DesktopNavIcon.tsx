@@ -1,6 +1,6 @@
 import { Box, IconButton, styled } from '@mui/joy';
 
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { animationColorRainbow } from '~/common/util/animUtils';
 
 
 export const DesktopNavGroupBox = styled(Box)({
@@ -90,7 +90,7 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
 
   // attractive: attract the user to click on this element
   [`&.${navItemClasses.attractive}`]: {
-    animation: `${cssRainbowColorKeyframes} 5s infinite`,
+    animation: `${animationColorRainbow} 5s infinite`,
     animationDelay: '5s',
     transform: 'scale(1.4)',
   },

@@ -1,17 +1,7 @@
 import * as React from 'react';
-// import { keyframes } from '@emotion/react';
 
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-
-// // noinspection CssUnresolvedCustomProperty
-// const cssBackgroundFadeIn = keyframes`
-//     0% {
-//         background-color: transparent
-//     }
-//     100% {
-//         background-color: var(--joy-palette-background-backdrop)
-//     }`;
 
 
 /**
