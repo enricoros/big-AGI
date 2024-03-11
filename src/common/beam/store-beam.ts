@@ -10,7 +10,7 @@ import { createDMessage, DMessage } from '~/common/state/store-chats';
 
 
 // configuration
-const PLACEHOLDER_SCATTER_TEXT = '💫 Generating ...'; // 💫 ..., 🖊️ ...
+const PLACEHOLDER_SCATTER_TEXT = '🖊️ ...'; // 💫 ..., 🖊️ ...
 const PLACEHOLDER_GATHER_TEXT = '📦 ...';
 
 
