@@ -6,12 +6,13 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 
-import { BeamStoreApi, useBeamStore } from '~/common/chats/store-beam';
+import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
 import { BeamRay, RayCard } from './BeamRay';
-import { ChatMessageMemo } from '../message/ChatMessage';
+import { BeamStoreApi, useBeamStore } from './store-beam';
 
 
 // component configuration
@@ -47,7 +48,7 @@ const userMessageSx: SxProps = {
 } as const;
 
 
-export function BeamView(props: {
+export function Beam(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
   sx?: SxProps,
@@ -171,6 +172,7 @@ function BeamViewBase(props: {
           gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
           gap: 'var(--Pad)',
         }}>
+
           {Array.from({ length: raysCount }, (_, idx) => (
             <BeamRay
               key={'ray-' + idx}
@@ -180,6 +182,7 @@ function BeamViewBase(props: {
               gatherLlmId={gatherLlmId}
             />
           ))}
+
           {/* Increment Rays Button */}
           {raysCount < MAX_RAY_COUNT && (
             <RayCard>
@@ -193,6 +196,7 @@ function BeamViewBase(props: {
               </Button>
             </RayCard>
           )}
+
         </Box>
       )}
 

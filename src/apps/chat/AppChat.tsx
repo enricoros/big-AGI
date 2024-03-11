@@ -11,6 +11,7 @@ import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromT
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
+import { Beam } from '~/common/beam/Beam';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
@@ -25,7 +26,6 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { BeamView } from './components/beam/BeamView';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatDropdowns } from './components/ChatDropdowns';
 import { ChatMessageList } from './components/ChatMessageList';
@@ -559,7 +559,7 @@ export function AppChat() {
             </ScrollToBottom>
 
             {!!_paneChatBeamStore && (
-              <BeamView
+              <Beam
                 // key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
                 // conversationHandler={_paneChatHandler}
                 beamStore={_paneChatBeamStore}
