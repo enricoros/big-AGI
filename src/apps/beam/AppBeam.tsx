@@ -60,7 +60,11 @@ export function AppBeam() {
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
-      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
+      <BeamView
+        beamStore={beamStoreApi}
+        isMobile={isMobile}
+        sx={{ height: '100%' }}
+      />
 
       {showDebug && (
         <Typography level='body-xs' sx={{
