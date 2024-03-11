@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Sheet } from '@mui/joy';
+import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
@@ -110,6 +110,16 @@ function BeamViewBase(props: {
 
 
   const lastMessage = inputHistory?.slice(-1)[0] || null;
+  const otherHistoryCount = Math.max(0, (inputHistory?.length || 0) - 1);
+  const isFirstMessageSystem = inputHistory?.[0]?.role === 'system';
+
+  const userMessageDecorator = React.useMemo(() => {
+    return (otherHistoryCount >= 1) ? (
+      <Typography level='body-xs' sx={{ lineHeight: '3rem', opacity: 0.5 }}>
+        {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} above
+      </Typography>
+    ) : null;
+  }, [isFirstMessageSystem, otherHistoryCount]);
 
 
   return (
@@ -153,6 +163,7 @@ function BeamViewBase(props: {
             fitScreen={props.isMobile}
             showAvatar={false}
             adjustContentScaling={-1}
+            topDecorator={userMessageDecorator}
             sx={userMessageSx}
           />
         </Box>
@@ -167,7 +178,7 @@ function BeamViewBase(props: {
           gap: 'var(--Pad)',
         }}>
 
-          {rayIds.map((rayId, idx) => (
+          {rayIds.map((rayId) => (
             <BeamRay
               key={'ray-' + rayId}
               beamStore={props.beamStore}
