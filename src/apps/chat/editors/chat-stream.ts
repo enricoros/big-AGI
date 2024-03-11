@@ -53,6 +53,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
 }
 
+type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 
 export async function streamAssistantMessage(
   llmId: DLLMId,
@@ -61,7 +62,9 @@ export async function streamAssistantMessage(
   autoSpeak: ChatAutoSpeakType,
   editMessage: (update: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
-) {
+): Promise<StreamMessageOutcome> {
+
+  let returnOutcome: StreamMessageOutcome = 'success';
 
   // speak once
   let spokenLine = false;
@@ -116,7 +119,9 @@ export async function streamAssistantMessage(
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
       incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
-    }
+      returnOutcome = 'errored';
+    } else
+      returnOutcome = 'aborted';
   }
 
   // Optimized:
@@ -127,4 +132,6 @@ export async function streamAssistantMessage(
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
     void speakText(incrementalAnswer.text);
+
+  return returnOutcome;
 }
