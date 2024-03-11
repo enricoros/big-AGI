@@ -1,16 +1,18 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, styled, Tooltip } from '@mui/joy';
+import { Box, IconButton, styled } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
-import TelegramIcon from '@mui/icons-material/Telegram';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamStoreApi, useBeamStoreRay } from './store-beam';
@@ -59,6 +61,33 @@ const chatMessageEmbeddedSx: SxProps = {
 } as const;
 
 
+function StartStopButton(props: {
+  isStarted: boolean,
+  isStopped: boolean,
+  onStart: () => void,
+  onStop: () => void,
+}) {
+  return (
+    <>
+      {props.isStopped && (
+        <GoodTooltip title='Start Single'>
+          <IconButton size='sm' variant='plain' color='success' onClick={props.onStart}>
+            <PlayArrowRoundedIcon />
+          </IconButton>
+        </GoodTooltip>
+      )}
+      {props.isStarted && (
+        <GoodTooltip title='Start Single'>
+          <IconButton size='sm' variant='plain' color='danger' onClick={props.onStop}>
+            <StopRoundedIcon />
+          </IconButton>
+        </GoodTooltip>
+      )}
+    </>
+  );
+}
+
+
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
   index: number,
@@ -71,27 +100,47 @@ export function BeamRay(props: {
   const isLinked = !!props.gatherLlmId && !dRay.scatterLlmId;
   const [rayLlm, rayLlmComponent] = useLLMSelect(isLinked ? props.gatherLlmId : dRay.scatterLlmId, setRayLlmId, '', true);
 
+
+  const handleStart = React.useCallback(() => {
+
+  }, []);
+
+  const handleStop = React.useCallback(() => {
+
+  }, []);
+
+  const isStopped = !dRay.genAbortController;
+
   return (
     <RayCard>
 
       {/* Controls Row */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* Drag */}
         {SHOW_DRAG_HANDLE && (
           <IconButton disabled size='sm' sx={undefined /*{ ml: 'calc(-0.5 * var(--Card-padding))' }*/}>
             <DragIndicatorIcon />
           </IconButton>
         )}
+
+        {/* LLM Selector*/}
         <Box sx={{ flex: 1 }}>
           {rayLlmComponent}
         </Box>
-        <Tooltip title={isLinked ? undefined : 'Link Model'}>
+        {/* Linker */}
+        <GoodTooltip title={isLinked ? undefined : 'Link Model'}>
           <IconButton disabled={isLinked} size='sm' onClick={clearRayLlmId}>
             {isLinked ? <LinkIcon /> : <LinkOffIcon />}
           </IconButton>
-        </Tooltip>
-        <IconButton size='sm'>
-          <TelegramIcon />
-        </IconButton>
+        </GoodTooltip>
+
+        {/* Start / Stop */}
+        <StartStopButton
+          isStarted={!isStopped}
+          isStopped={isStopped}
+          onStart={handleStart}
+          onStop={handleStop}
+        />
       </Box>
 
       {/* Ray Message */}

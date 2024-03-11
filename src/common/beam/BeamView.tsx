@@ -68,7 +68,7 @@ function BeamViewBase(props: {
     isGathering: state.isGathering,
     raysCount: state.rays.length,
   })));
-  const { close: beamClose, setRayCount, startScattering, stopScattering, setGatherLlmId } = props.beamStore.getState();
+  const { close: beamClose, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId } = props.beamStore.getState();
   const [gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
 
@@ -82,11 +82,6 @@ function BeamViewBase(props: {
 
 
   // runnning
-
-  const handleStart = React.useCallback(() => startScattering(gatherLlmId), [gatherLlmId, startScattering]);
-
-  const handleStop = React.useCallback(() => stopScattering(), [gatherLlmId, stopScattering]);
-
 
   // [effect] start with 2 rays
   const bootup = !raysCount;
@@ -124,8 +119,8 @@ function BeamViewBase(props: {
         setRayCount={handleRaySetCount}
         startEnabled={readyScatter}
         startBusy={isScattering}
-        onStart={handleStart}
-        onStop={handleDispose}
+        onStart={startScatteringAll}
+        onStop={stopScatteringAll}
       />
 
       {/* User Message */}
