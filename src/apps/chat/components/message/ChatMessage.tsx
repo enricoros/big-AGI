@@ -196,6 +196,7 @@ export function ChatMessage(props: {
   showAvatar?: boolean, // auto if undefined
   showBlocksDate?: boolean,
   adjustContentScaling?: number,
+  topDecorator?: React.ReactNode,
   onConversationBranch?: (messageId: string) => void,
   onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBeam: boolean) => Promise<void>,
   onConversationTruncate?: (messageId: string) => void,
@@ -411,18 +412,33 @@ export function ChatMessage(props: {
   return (
     <ListItem
       sx={{
-        display: 'flex', flexDirection: !fromAssistant ? 'row-reverse' : 'row', alignItems: 'flex-start',
-        gap: { xs: 0, md: 1 },
+        // style
+        backgroundColor: backgroundColor,
         px: { xs: 1, md: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2 },
         py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
-        backgroundColor,
-        borderBottom: '1px solid',
-        borderBottomColor: 'divider',
-        ...(ENABLE_COPY_MESSAGE_OVERLAY && { position: 'relative' }),
+        ...(!('borderBottom' in (props.sx || {})) && {
+          borderBottom: '1px solid',
+          borderBottomColor: 'divider',
+        }),
+        ...(!!props.topDecorator && { pt: '3rem' }),
         '&:hover > button': { opacity: 1 },
+
+        // layout
+        display: 'flex',
+        flexDirection: !fromAssistant ? 'row-reverse' : 'row',
+        alignItems: 'flex-start',
+        gap: { xs: 0, md: 1 },
+
         ...props.sx,
       }}
     >
+
+      {/* (Optional) underlayed top decorator */}
+      {props.topDecorator && (
+        <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, textAlign: 'center' }}>
+          {props.topDecorator}
+        </Box>
+      )}
 
       {/* Avatar */}
       {showAvatar && (
