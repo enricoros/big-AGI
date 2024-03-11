@@ -74,6 +74,9 @@ export const animationStopEnter = keyframes`
     }
 `;
 
+const zIndexComposerOverlayDrop = 10;
+const zIndexComposerOverlayMic = 20;
+
 const dropperCardSx: SxProps = {
   display: 'none',
   position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
@@ -81,7 +84,7 @@ const dropperCardSx: SxProps = {
   border: '2px dashed',
   borderRadius: 'xs',
   boxShadow: 'none',
-  zIndex: 10,
+  zIndex: zIndexComposerOverlayDrop,
 } as const;
 
 const dropppedCardDraggingSx: SxProps = {
@@ -625,7 +628,7 @@ export function Composer(props: {
               {isSpeechEnabled && (
                 <Box sx={{
                   position: 'absolute', top: 0, right: 0,
-                  zIndex: 21,
+                  zIndex: zIndexComposerOverlayMic + 1,
                   mt: isDesktop ? 1 : 0.25,
                   mr: isDesktop ? 1 : 0.25,
                   display: 'flex', flexDirection: 'column', gap: isDesktop ? 1 : 0.25,
@@ -652,7 +655,7 @@ export function Composer(props: {
                     border: '1px solid',
                     borderColor: 'primary.solidBg',
                     borderRadius: 'sm',
-                    zIndex: 20,
+                    zIndex: zIndexComposerOverlayMic,
                     px: 1.5, py: 1,
                   }}>
                   <Typography>

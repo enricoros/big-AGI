@@ -16,7 +16,7 @@ import { makeAvatar, messageBackground } from './ChatMessage';
 export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens: number, onClose: () => void, onSelectAll: (selected: boolean) => void, onDeleteMessages: () => void }) =>
   <Sheet color='warning' variant='solid' invertedColors sx={{
     display: 'flex', flexDirection: 'row', alignItems: 'center',
-    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 101,
+    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 101 /* Cleanup Selection Header on top of messages */,
     boxShadow: 'md',
     gap: { xs: 1, sm: 2 }, px: { xs: 1, md: 2 }, py: 1,
   }}>

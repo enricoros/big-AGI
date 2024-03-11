@@ -571,7 +571,7 @@ export function AppChat() {
                   // backdropFilter: 'blur(6px)',
                   position: 'absolute',
                   inset: 0,
-                  zIndex: 1, // stay on top of Chips :shrug:
+                  zIndex: 10, // stay on top of Message > Chips (:1), and Overlays (:2) :shrug:
                 }}
               />
             )}
@@ -602,7 +602,7 @@ export function AppChat() {
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
       sx={{
-        zIndex: 21, // position: 'sticky', bottom: 0,
+        zIndex: 51, // just to allocate a surface, and potentially have a shadow
         backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
         borderTopColor: 'divider',

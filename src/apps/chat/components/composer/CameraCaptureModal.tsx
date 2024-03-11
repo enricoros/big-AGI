@@ -85,7 +85,7 @@ export function CameraCaptureModal(props: {
       }}>
 
         {/* Top bar */}
-        <Sheet variant='solid' invertedColors sx={{ zIndex: 10, display: 'flex', justifyContent: 'space-between', p: 1 }}>
+        <Sheet variant='solid' invertedColors sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
           <Select
             variant='solid' color='neutral'
             value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
@@ -116,7 +116,7 @@ export function CameraCaptureModal(props: {
 
           {showInfo && !!info && <Typography
             sx={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
+              position: 'absolute', inset: 0, zIndex: 1, /* camera info on top of video */
               background: 'rgba(0,0,0,0.5)', color: 'white',
               whiteSpace: 'pre', overflowY: 'scroll',
             }}>
@@ -127,7 +127,7 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='soft' sx={{ display: 'flex', flexDirection: 'column', zIndex: 20, gap: 1, p: 1 }}>
+        <Sheet variant='soft' sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
 
           {!!error && <InlineError error={error} />}
 
@@ -137,7 +137,7 @@ export function CameraCaptureModal(props: {
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
             {/* Info */}
-            <IconButton size='lg' disabled={!info} variant='soft' onClick={() => setShowInfo(info => !info)} sx={{ zIndex: 30 }}>
+            <IconButton size='lg' disabled={!info} variant='soft' onClick={() => setShowInfo(info => !info)}>
               <InfoIcon />
             </IconButton>
             {/*<Button disabled={ocrProgress !== null} fullWidth variant='solid' size='lg' onClick={handleVideoOCRClicked} sx={{ flex: 1, maxWidth: 260 }}>*/}
