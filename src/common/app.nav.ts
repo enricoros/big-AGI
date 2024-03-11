@@ -28,9 +28,10 @@ import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 
-import { Brand } from '~/common/app.config';
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
+
+import { Brand } from './app.config';
+import { ChatBeamIcon } from './components/icons/ChatBeamIcon';
 
 
 // enable to show all items, for layout development

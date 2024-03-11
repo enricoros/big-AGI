@@ -21,9 +21,6 @@ interface UXLabsStore {
   labsChatBarAlt: false | 'title',
   setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
 
-  labsChatBeam: boolean;
-  setLabsChatBeam: (labsChatBeam: boolean) => void;
-
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
 
@@ -42,9 +39,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsChatBarAlt: false,
       setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
 
-      labsChatBeam: false,
-      setLabsChatBeam: (labsChatBeam: boolean) => set({ labsChatBeam }),
-
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
 
@@ -54,10 +48,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
     },
   ),
 );
-
-export function getUXLabsChatBeam() {
-  return useUXLabsStore.getState().labsChatBeam;
-}
 
 export function getUXLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
