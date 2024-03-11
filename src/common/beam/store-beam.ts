@@ -9,6 +9,11 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 
 
+// configuration
+const PLACEHOLDER_SCATTER_TEXT = '💫 Generating ...'; // 💫 ..., 🖊️ ...
+const PLACEHOLDER_GATHER_TEXT = '📦 ...';
+
+
 // Ray - each invidual thread of the beam
 
 type DRayId = string;
@@ -26,7 +31,7 @@ function createDRay(scatterLlmId: DLLMId | null): DRay {
   return {
     rayId: uuidv4(),
     status: 'empty',
-    message: createDMessage('assistant', '💫 ...'), // String.fromCharCode(65 + index) /*+ ' ... 🖊️'*/ /* '💫 ...' */),
+    message: createDMessage('assistant', ''),
     scatterLlmId,
   };
 }
@@ -81,7 +86,7 @@ function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
     status: 'scattering',
     message: {
       ...ray.message,
-      text: '💫 Generating ...',
+      text: PLACEHOLDER_SCATTER_TEXT,
       updated: Date.now(),
     },
     scatterLlmId: rayLlmId,
@@ -94,8 +99,21 @@ function rayScatterStop(ray: DRay): DRay {
   ray.genAbortController?.abort();
   return {
     ...ray,
+    ...(ray.status === 'scattering' ? { status: 'stopped' } : {}),
     genAbortController: undefined,
   };
+}
+
+export function rayIsError(ray: DRay | null): boolean {
+  return ray?.status === 'error';
+}
+
+export function rayIsScattering(ray: DRay | null): boolean {
+  return ray?.status === 'scattering';
+}
+
+export function rayIsSelectable(ray: DRay | null): boolean {
+  return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== PLACEHOLDER_SCATTER_TEXT;
 }
 
 
@@ -177,7 +195,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
         inputHistory: isValidHistory ? history : null,
         inputIssues: isValidHistory ? null : 'Invalid history',
         ...(gatherLlmId ? { gatherLlmId } : {}),
-        gatherMessage: isValidHistory ? createDMessage('assistant', '💫 ...') : null,
+        gatherMessage: isValidHistory ? createDMessage('assistant', PLACEHOLDER_GATHER_TEXT) : null,
         readyScatter: isValidHistory,
       });
     },
@@ -246,10 +264,10 @@ export const createBeamStore = () => createStore<BeamStore>()(
     toggleScattering: (rayId: DRayId) => {
       const store = _get();
       const newRays = store.rays.map((ray) => (ray.rayId === rayId)
-        ? (ray.genAbortController ? rayScatterStop(ray) : rayScatterStart(ray, _get()))
+        ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, _get()))
         : ray,
       );
-      const anyStarted = newRays.some((ray) => !!ray.genAbortController);
+      const anyStarted = newRays.some((ray) => ray.status === 'scattering');
       _set({
         isScattering: anyStarted,
         rays: newRays,
@@ -278,7 +296,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       const { rays } = _get();
 
       // Check if all rays have finished generating
-      const allDone = rays.every(ray => !ray.genAbortController);
+      const allDone = rays.every(ray => ray.status !== 'scattering');
 
       if (allDone) {
         // If all rays are done, update state accordingly

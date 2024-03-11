@@ -3,10 +3,10 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, styled, Typography } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
@@ -17,7 +17,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, useBeamStore } from './store-beam';
+import { BeamStoreApi, rayIsError, rayIsScattering, rayIsSelectable, useBeamStore } from './store-beam';
 
 
 // component configuration
@@ -54,18 +54,12 @@ export const RayCard = styled(Box)(({ theme }) => ({
 RayCard.displayName = 'RayCard';
 
 
-function rayCardStatusSx(status?: 'empty' | 'scattering' | 'success' | 'stopped' | 'error'): SxProps | null {
-  switch (status) {
-    // case 'success':
-    //   return { backgroundColor: 'background.popup' };
-    case 'error':
-      return {
-        backgroundColor: 'danger.softBg',
-        borderColor: 'danger.outlinedBorder',
-      };
-    default:
-      return null;
-  }
+function rayCardStatusSx(isError: boolean, _isSelectable: boolean): SxProps | null {
+  if (isError)
+    return { backgroundColor: 'danger.softBg', borderColor: 'danger.outlinedBorder' };
+  // if (isSelectable)
+  //   return { cursor: 'pointer' };
+  return null;
 }
 
 
@@ -142,8 +136,9 @@ export function BeamRay(props: {
   const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
 
   // derived state
-  const isEmpty = !ray?.message?.updated;
-  const isScattering = !!ray?.genAbortController;
+  const isError = rayIsError(ray);
+  const isScattering = rayIsScattering(ray);
+  const isSelectable = rayIsSelectable(ray);
   const { removeRay, updateRay, toggleScattering } = props.beamStore.getState();
 
   const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
@@ -167,7 +162,7 @@ export function BeamRay(props: {
 
 
   return (
-    <RayCard sx={rayCardStatusSx(ray?.status)}>
+    <RayCard sx={rayCardStatusSx(isError, isSelectable)}>
 
       {DEBUG_STATUS && (
         <Typography level='body-sm'>
@@ -177,7 +172,7 @@ export function BeamRay(props: {
 
       {/* Controls Row */}
       <ControlsRow
-        isEmpty={isEmpty}
+        isEmpty={!isSelectable}
         isLlmLinked={isLlmLinked}
         isScattering={isScattering}
         llmComponent={llmComponent}
@@ -187,7 +182,7 @@ export function BeamRay(props: {
       />
 
       {/* Ray Message */}
-      {(!!ray?.message && !isEmpty) && (
+      {!!ray?.message?.text && (
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
