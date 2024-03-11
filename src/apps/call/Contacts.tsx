@@ -125,7 +125,6 @@ function CallContactCard(props: {
           sx={{
             mx: 'auto',
             mt: '-2.5rem',
-            zIndex: 1,
           }}
         />
 

@@ -63,7 +63,14 @@ export function AppBeam() {
       <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
 
       {showDebug && (
-        <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>
+        <Typography level='body-xs' sx={{
+          whiteSpace: 'pre',
+          position: 'absolute',
+          inset: 0,
+          zIndex: 1 /* debug on top of BeamView */,
+          backdropFilter: 'blur(8px)',
+          padding: '1rem',
+        }}>
           {JSON.stringify({ conversationId: conversation.current.id, beamStore }, null, 2)}
         </Typography>
       )}

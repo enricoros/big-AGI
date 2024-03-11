@@ -90,7 +90,7 @@ export function AppNews() {
       }}>
 
         <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite`, zIndex: 1 }}>{firstNews?.versionCode}</Box>!
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
         </Typography>
 
         <Typography sx={{ mb: 2 }} level='title-sm'>
@@ -134,7 +134,7 @@ export function AppNews() {
                         sx={idx ? {} : {
                           animation: `${cssRainbowColorKeyframes} 5s infinite`,
                           fontWeight: 'lg',
-                          zIndex: 1,
+                          zIndex: 1, /* perf-opt */
                         }}
                       >
                         {ni.versionName}
