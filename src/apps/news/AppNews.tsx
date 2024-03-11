@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
@@ -10,28 +9,14 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
+import { animationColorRainbow, animationColorBlues } from '~/common/util/animUtils';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
 import { NewsItems } from './news.data';
 
 
 // number of news items to show by default, before the expander
 const DEFAULT_NEWS_COUNT = 3;
-
-export const cssColorKeyframes = keyframes`
-    0%, 100% {
-        color: #636B74; /* Neutral main color (500) */
-    }
-    25% {
-        color: #12467B; /* Primary darker shade (700) */
-    }
-    50% {
-        color: #0B6BCB; /* Primary main color (500) */
-    }
-    75% {
-        color: #083e75; /* Primary lighter shade (300) */
-    }`;
 
 
 // callout, for special occasions
@@ -90,7 +75,7 @@ export function AppNews() {
       }}>
 
         <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
         </Typography>
 
         <Typography sx={{ mb: 2 }} level='title-sm'>
@@ -132,7 +117,7 @@ export function AppNews() {
                       <Box
                         component='span'
                         sx={idx ? {} : {
-                          animation: `${cssRainbowColorKeyframes} 5s infinite`,
+                          animation: `${animationColorRainbow} 5s infinite`,
                           fontWeight: 'lg',
                           zIndex: 1, /* perf-opt */
                         }}

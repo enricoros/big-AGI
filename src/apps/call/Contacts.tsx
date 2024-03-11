@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { keyframes } from '@emotion/react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
+import { animationShadowLimey } from '~/common/util/animUtils';
 import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
@@ -17,27 +17,6 @@ import { useAppCallStore } from './state/store-app-call';
 
 // number of conversations to show before collapsing
 const COLLAPSED_COUNT = 2;
-
-
-export const niceShadowKeyframes = keyframes`
-    100%, 0% {
-        //background-color: rgb(102, 0, 51);
-        box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(183, 255, 0);
-    }
-    25% {
-        //background-color: rgb(76, 0, 76);
-        box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 251, 0);
-        //scale: 1.2;
-    }
-    50% {
-        //background-color: rgb(63, 0, 128);
-        box-shadow: 1px 1px 0 white, 2px 2px 12px rgba(0, 255, 81);
-        //scale: 0.8;
-    }
-    75% {
-        //background-color: rgb(0, 0, 128);
-        box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 153, 0);
-    }`;
 
 
 const ContactCardAvatar = (props: { size: string, symbol?: string, imageUrl?: string, onClick?: () => void, sx?: SxProps }) =>
@@ -281,7 +260,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
           borderRadius: '50%',
           pointerEvents: 'none',
           backgroundColor: 'background.popup',
-          animation: `${niceShadowKeyframes} 5s infinite`,
+          animation: `${animationShadowLimey} 5s infinite`,
         }}>
         <CallIcon />
       </IconButton>

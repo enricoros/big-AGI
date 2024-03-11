@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
-import { keyframes } from '@emotion/react';
 
 import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
@@ -27,6 +26,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { animationEnterBelow } from '~/common/util/animUtils';
 import { countModelTokens } from '~/common/util/token-counter';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
@@ -62,17 +62,6 @@ import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 
-
-export const animationStopEnter = keyframes`
-    from {
-        opacity: 0;
-        transform: translateY(8px)
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0)
-    }
-`;
 
 const zIndexComposerOverlayDrop = 10;
 const zIndexComposerOverlayMic = 20;
@@ -735,7 +724,7 @@ export function Composer(props: {
                     fullWidth variant='soft' disabled={!props.conversationId}
                     onClick={handleStopClicked}
                     endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
-                    sx={{ animation: `${animationStopEnter} 0.1s ease-out` }}
+                    sx={{ animation: `${animationEnterBelow} 0.1s ease-out` }}
                   >
                     Stop
                   </Button>

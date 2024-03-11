@@ -13,8 +13,7 @@ import MoreTimeIcon from '@mui/icons-material/MoreTime';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
-import { animationStopEnter } from '../../chat/components/composer/Composer';
-
+import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -291,7 +290,7 @@ export function PromptDesigner(props: {
                 endDecorator={<FormatPaintIcon />}
                 onClick={handlePromptEnqueue}
                 sx={{
-                  animation: `${animationStopEnter} 0.1s ease-out`,
+                  animation: `${animationEnterBelow} 0.1s ease-out`,
                   boxShadow: !props.isMobile ? `0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)` : 'none',
                   justifyContent: 'space-between',
                 }}
@@ -306,7 +305,7 @@ export function PromptDesigner(props: {
                 endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
                 onClick={handleDrawStop}
                 sx={{
-                  // animation: `${animationStopEnter} 0.1s ease-out`,
+                  // animation: `${animationEnterBelow} 0.1s ease-out`,
                   boxShadow: !props.isMobile ? `0 8px 24px -4px rgb(var(--joy-palette-warning-mainChannel) / 20%)` : 'none',
                   justifyContent: 'space-between',
                 }}
@@ -321,7 +320,7 @@ export function PromptDesigner(props: {
                 endDecorator={<MoreTimeIcon sx={{ fontSize: 18 }} />}
                 onClick={handlePromptEnqueue}
                 sx={{
-                  animation: `${animationStopEnter} 0.1s ease-out`,
+                  animation: `${animationEnterBelow} 0.1s ease-out`,
                   boxShadow: !props.isMobile ? `0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)` : 'none',
                   justifyContent: 'space-between',
                 }}

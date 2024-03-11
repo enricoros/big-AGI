@@ -10,50 +10,12 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
-
-/*export const cssRainbowBackgroundKeyframes = keyframes`
-    100%, 0% {
-        background-color: rgb(128, 0, 0);
-    }
-    8% {
-        background-color: rgb(102, 51, 0);
-    }
-    16% {
-        background-color: rgb(64, 64, 0);
-    }
-    25% {
-        background-color: rgb(38, 76, 0);
-    }
-    33% {
-        background-color: rgb(0, 89, 0);
-    }
-    41% {
-        background-color: rgb(0, 76, 41);
-    }
-    50% {
-        background-color: rgb(0, 64, 64);
-    }
-    58% {
-        background-color: rgb(0, 51, 102);
-    }
-    66% {
-        background-color: rgb(0, 0, 128);
-    }
-    75% {
-        background-color: rgb(63, 0, 128);
-    }
-    83% {
-        background-color: rgb(76, 0, 76);
-    }
-    91% {
-        background-color: rgb(102, 0, 51);
-    }`;*/
 
 function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: string, button?: React.JSX.Element }) {
   return (
@@ -124,7 +86,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     <Typography level='title-lg' sx={{ fontSize: '3rem', fontWeight: 'sm', textAlign: 'center' }}>
       Welcome to<br />
-      <Box component='span' sx={{ animation: `${cssRainbowColorKeyframes} 15s linear infinite` }}>
+      <Box component='span' sx={{ animation: `${animationColorRainbow} 15s linear infinite` }}>
         your first call
       </Box>
     </Typography>

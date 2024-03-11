@@ -8,6 +8,7 @@ import AddIcon from '@mui/icons-material/Add';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
+import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamHeader } from './BeamHeader';
@@ -18,22 +19,6 @@ import { BeamStoreApi, useBeamStore } from './store-beam';
 // component configuration
 const MIN_RAY_COUNT = 2;
 const MAX_RAY_COUNT = 8;
-
-
-const animationEnter = keyframes`
-    0% {
-        opacity: 0;
-        //transform: translateY(8px);
-        scale: 0.95;
-        //rotate: -5deg;
-    }
-    100% {
-        opacity: 1;
-        //transform: translateY(0);
-        scale: 1;
-        //rotate: 0;
-    }
-`;
 
 
 const userMessageSx: SxProps = {
@@ -119,7 +104,7 @@ function BeamViewBase(props: {
       ...props.sx,
 
       // animation
-      animation: `${animationEnter} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
 
       // layout
       display: 'flex',
