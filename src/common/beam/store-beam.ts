@@ -212,7 +212,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
         });
       } else if (count > rays.length) {
         _set({
-          rays: [...rays, ...Array(count - rays.length).fill(null).map((_, index) => createDRay(null))],
+          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createDRay(_get().gatherLlmId))],
         });
       }
     },
