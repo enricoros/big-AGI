@@ -11,7 +11,7 @@ import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromT
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import { Beam } from '~/common/beam/Beam';
+import { BeamView } from '~/common/beam/BeamView';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
@@ -559,7 +559,7 @@ export function AppChat() {
             </ScrollToBottom>
 
             {!!_paneChatBeamStore && (
-              <Beam
+              <BeamView
                 // key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
                 // conversationHandler={_paneChatHandler}
                 beamStore={_paneChatBeamStore}

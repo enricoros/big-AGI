@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/joy';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { Beam } from '~/common/beam/Beam';
+import { BeamView } from '~/common/beam/BeamView';
 import { BeamStoreApi, createBeamStore, useBeamStore } from '~/common/beam/store-beam';
 import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -60,7 +60,7 @@ export function AppBeam() {
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
-      <Beam beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
+      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
 
       {showDebug && (
         <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>
