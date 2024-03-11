@@ -21,7 +21,7 @@ interface DRay {
   genAbortController?: AbortController;
 }
 
-function createDRay(scatterLlmId: DLLMId | null, _index: number): DRay {
+function createDRay(scatterLlmId: DLLMId | null): DRay {
   return {
     rayId: uuidv4(),
     message: createDMessage('assistant', '💫 ...'), // String.fromCharCode(65 + index) /*+ ' ... 🖊️'*/ /* '💫 ...' */),
@@ -61,7 +61,6 @@ function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
       genAbortController: undefined,
     }))
     .catch((error) => {
-      console.error('rayScatterStart', error);
       updateRay(ray.rayId, {
           genAbortController: undefined,
           scatterIssue: error?.message || error?.toString() || 'Unknown error',
@@ -103,6 +102,8 @@ interface BeamState {
   inputIssues: string | null;
 
   gatherLlmId: DLLMId | null;
+  gatherMessage: DMessage | null;
+  gatherAbortController: AbortController | null;
 
   rays: DRay[];
 
@@ -126,7 +127,6 @@ export interface BeamStore extends BeamState {
   stopScatteringAll: () => void;
   toggleScattering: (rayId: DRayId) => void;
   removeRay: (rayId: DRayId) => void;
-
   updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
 
   syncRaysStateToBeam: () => void;
@@ -147,6 +147,8 @@ export const createBeamStore = () => createStore<BeamStore>()(
     inputHistory: null,
     inputIssues: null,
     gatherLlmId: null,
+    gatherMessage: null,
+    gatherAbortController: null,
     rays: [],
     readyScatter: false,
     isScattering: false,
@@ -170,22 +172,31 @@ export const createBeamStore = () => createStore<BeamStore>()(
         inputHistory: isValidHistory ? history : null,
         inputIssues: isValidHistory ? null : 'Invalid history',
         ...(gatherLlmId ? { gatherLlmId } : {}),
+        gatherMessage: isValidHistory ? createDMessage('assistant', '💫 ...') : null,
         readyScatter: isValidHistory,
       });
     },
 
-    close: () => /*_get().isOpen &&*/ _set({
-      isOpen: false,
-      inputHistory: null,
-      inputIssues: null,
-      // gatherLlmId: null,   // remember the selected llm
-      // remember the model configuration for the rays
-      rays: _get().rays.map((ray, index) => createDRay(ray.scatterLlmId, index)),
-      readyScatter: false,
-      isScattering: false,
-      readyGather: false,
-      isGathering: false,
-    }),
+    close: () => { /*_get().isOpen &&*/
+      const { rays: prevRays } = _get();
+
+      // abort all rays and the gathermessage
+      prevRays.forEach(rayScatterStop);
+
+      _set({
+        isOpen: false,
+        inputHistory: null,
+        inputIssues: null,
+        // gatherLlmId: null,   // remember the selected llm
+        gatherMessage: null,
+        gatherAbortController: null,
+        rays: prevRays.map((ray) => createDRay(ray.scatterLlmId /* remember only the model configuration */)),
+        readyScatter: false,
+        isScattering: false,
+        readyGather: false,
+        isGathering: false,
+      });
+    },
 
 
     setGatherLlmId: (llmId: DLLMId | null) => _set({
@@ -194,20 +205,22 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
     setRayCount: (count: number) => {
       const { rays } = _get();
-      if (count < rays.length)
+      if (count < rays.length) {
+        rays.slice(count).forEach(rayScatterStop);
         _set({
           rays: rays.slice(0, count),
         });
-      else if (count > rays.length)
+      } else if (count > rays.length) {
         _set({
-          rays: [...rays, ...Array(count - rays.length).fill(null).map((_, index) => createDRay(null, rays.length + index))],
+          rays: [...rays, ...Array(count - rays.length).fill(null).map((_, index) => createDRay(null))],
         });
+      }
     },
 
 
     startScatteringAll: () => {
       const { readyScatter, isScattering, inputHistory, rays } = _get();
-      if (!readyScatter || isScattering) {
+      if (!readyScatter) {
         console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
         return;
       }
@@ -218,11 +231,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
     stopScatteringAll: () => {
-      const { isScattering, rays } = _get();
-      if (!isScattering) {
-        console.warn('stopScattering: not scattering', { isScattering });
-        return;
-      }
+      const { rays } = _get();
       _set({
         isScattering: false,
         rays: rays.map(ray => rayScatterStop(ray)),
@@ -242,9 +251,14 @@ export const createBeamStore = () => createStore<BeamStore>()(
       });
     },
 
-
     removeRay: (rayId: DRayId) => _set((state) => ({
-      rays: state.rays.filter((ray) => ray.rayId !== rayId),
+      rays: state.rays.filter((ray) => {
+        if (ray.rayId === rayId) {
+          rayScatterStop(ray);
+          return false;
+        }
+        return true;
+      }),
     })),
 
     updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
@@ -256,7 +270,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
 
     syncRaysStateToBeam: () => {
-      const { isScattering, rays } = _get();
+      const { rays } = _get();
 
       // Check if all rays have finished generating
       const allDone = rays.every(ray => !ray.genAbortController);
@@ -267,11 +281,8 @@ export const createBeamStore = () => createStore<BeamStore>()(
           isScattering: false,
           // Update other state properties as needed
         });
-
-        console.log('All rays have finished generating');
-      } else {
-        // If not all rays are done, update state accordingly
-        console.log('__Not all rays have finished generating');
+        // TODO... continue
+        console.log('All rays have finished generating - TODO: ');
       }
     },
 
