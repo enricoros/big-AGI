@@ -5,6 +5,7 @@ import { Box, IconButton, styled, Tooltip } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
@@ -26,13 +27,12 @@ const rayCardClasses = {
 export const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
 
-  padding: 'var(--Card-padding)',
-
   backgroundColor: theme.vars.palette.background.surface,
-
   border: '1px solid',
   borderColor: theme.vars.palette.neutral.outlinedBorder,
   borderRadius: theme.radius.md,
+
+  padding: 'var(--Card-padding)',
 
   [`&.${rayCardClasses.active}`]: {
     boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
@@ -41,6 +41,10 @@ export const RayCard = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--Pad_2)',
+
+  // uncomment the following to limit the card height
+  // maxHeight: 'calc(0.8 * (100dvh - 16rem))',
+  // overflow: 'auto',
 }));
 RayCard.displayName = 'RayCard';
 
@@ -85,16 +89,29 @@ export function BeamRay(props: {
             {isLinked ? <LinkIcon /> : <LinkOffIcon />}
           </IconButton>
         </Tooltip>
+        <IconButton size='sm'>
+          <TelegramIcon />
+        </IconButton>
       </Box>
 
+      {/* Ray Message */}
       {(!!dRay.message && !!dRay.message.updated) && (
-        <ChatMessageMemo
-          message={dRay.message}
-          fitScreen={props.isMobile}
-          showAvatar={false}
-          adjustContentScaling={-1}
-          sx={chatMessageEmbeddedSx}
-        />
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          // uncomment the following to limit the message height
+          // overflow: 'auto',
+          // maxHeight: 'calc(0.8 * (100vh - 16rem))',
+          // aspectRatio: 1,
+        }}>
+          <ChatMessageMemo
+            message={dRay.message}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={chatMessageEmbeddedSx}
+          />
+        </Box>
       )}
 
     </RayCard>

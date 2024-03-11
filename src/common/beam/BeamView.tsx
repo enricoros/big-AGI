@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
@@ -69,7 +68,7 @@ function BeamViewBase(props: {
     isGathering: state.isGathering,
     raysCount: state.rays.length,
   })));
-  const { close: beamClose, setRayCount, startScattering, setGatherLlmId } = props.beamStore.getState();
+  const { close: beamClose, setRayCount, startScattering, stopScattering, setGatherLlmId } = props.beamStore.getState();
   const [gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
 
@@ -85,6 +84,8 @@ function BeamViewBase(props: {
   // runnning
 
   const handleStart = React.useCallback(() => startScattering(gatherLlmId), [gatherLlmId, startScattering]);
+
+  const handleStop = React.useCallback(() => stopScattering(), [gatherLlmId, stopScattering]);
 
 
   // [effect] start with 2 rays
@@ -124,6 +125,7 @@ function BeamViewBase(props: {
         startEnabled={readyScatter}
         startBusy={isScattering}
         onStart={handleStart}
+        onStop={handleDispose}
       />
 
       {/* User Message */}
