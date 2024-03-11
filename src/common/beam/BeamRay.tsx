@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, styled, Typography } from '@mui/joy';
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
@@ -17,7 +18,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, rayIsError, rayIsScattering, rayIsSelectable, useBeamStore } from './store-beam';
+import { BeamStoreApi, rayIsError, rayIsScattering, rayIsSelectable, rayIsUserSelected, useBeamStore } from './store-beam';
 
 
 // component configuration
@@ -43,6 +44,8 @@ export const RayCard = styled(Box)(({ theme }) => ({
     boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
   },
 
+  position: 'relative',
+
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--Pad_2)',
@@ -54,11 +57,13 @@ export const RayCard = styled(Box)(({ theme }) => ({
 RayCard.displayName = 'RayCard';
 
 
-function rayCardStatusSx(isError: boolean, _isSelectable: boolean): SxProps | null {
+function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: boolean): SxProps | null {
   if (isError)
     return { backgroundColor: 'danger.softBg', borderColor: 'danger.outlinedBorder' };
-  // if (isSelectable)
-  //   return { cursor: 'pointer' };
+  if (isSelectable)
+    return { backgroundColor: isSelected ? 'success.softBg' : undefined, cursor: 'pointer' };
+  if (isSelected)
+    return { backgroundColor: 'success.softBg' };
   return null;
 }
 
@@ -139,7 +144,8 @@ export function BeamRay(props: {
   const isError = rayIsError(ray);
   const isScattering = rayIsScattering(ray);
   const isSelectable = rayIsSelectable(ray);
-  const { removeRay, updateRay, toggleScattering } = props.beamStore.getState();
+  const isSelected = rayIsUserSelected(ray);
+  const { removeRay, updateRay, toggleScattering /*, toggleUserSelection*/ } = props.beamStore.getState();
 
   const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
   const llmId: DLLMId | null = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
@@ -152,17 +158,24 @@ export function BeamRay(props: {
 
   // handlers
 
-  const handleRayToggleGenerate = React.useCallback(() => {
-    toggleScattering(props.rayId);
-  }, [props.rayId, toggleScattering]);
-
   const handleRayRemove = React.useCallback(() => {
     removeRay(props.rayId);
   }, [props.rayId, removeRay]);
 
+  const handleRayToggleGenerate = React.useCallback(() => {
+    toggleScattering(props.rayId);
+  }, [props.rayId, toggleScattering]);
+
+  /*const handleRayToggleSelect = React.useCallback(() => {
+    toggleUserSelection(props.rayId);
+  }, [props.rayId, toggleUserSelection]);*/
+
 
   return (
-    <RayCard sx={rayCardStatusSx(isError, isSelectable)}>
+    <RayCard
+      // onClick={isSelectable ? handleRayToggleSelect : undefined}
+      sx={rayCardStatusSx(isError, false /*isSelectable*/, false /*isSelected*/)}
+    >
 
       {DEBUG_STATUS && (
         <Typography level='body-sm'>
@@ -201,6 +214,17 @@ export function BeamRay(props: {
         </Box>
       )}
 
+      {/* Readiness | Selection indicator */}
+      {isSelected && (
+        <Box sx={{
+          display: 'flex',
+          position: 'absolute',
+          bottom: '0.5rem',
+          right: '0.5rem',
+        }}>
+          <CheckCircleOutlineRoundedIcon sx={{ fontSize: 'md', color: 'success.solidBg' }} />
+        </Box>
+      )}
     </RayCard>
   );
 }

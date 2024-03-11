@@ -25,6 +25,7 @@ interface DRay {
   scatterLlmId: DLLMId | null;
   scatterIssue?: string;
   genAbortController?: AbortController;
+  userSelected: boolean;
 }
 
 function createDRay(scatterLlmId: DLLMId | null): DRay {
@@ -33,6 +34,7 @@ function createDRay(scatterLlmId: DLLMId | null): DRay {
     status: 'empty',
     message: createDMessage('assistant', ''),
     scatterLlmId,
+    userSelected: false,
   };
 }
 
@@ -92,6 +94,7 @@ function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
     scatterLlmId: rayLlmId,
     scatterIssue: undefined,
     genAbortController: abortController,
+    userSelected: false,
   };
 }
 
@@ -114,6 +117,10 @@ export function rayIsScattering(ray: DRay | null): boolean {
 
 export function rayIsSelectable(ray: DRay | null): boolean {
   return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== PLACEHOLDER_SCATTER_TEXT;
+}
+
+export function rayIsUserSelected(ray: DRay | null): boolean {
+  return !!ray?.userSelected;
 }
 
 
@@ -149,6 +156,7 @@ interface BeamStore extends BeamState {
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
   toggleScattering: (rayId: DRayId) => void;
+  toggleUserSelection: (rayId: DRayId) => void;
   removeRay: (rayId: DRayId) => void;
   updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
 
@@ -273,6 +281,13 @@ export const createBeamStore = () => createStore<BeamStore>()(
         rays: newRays,
       });
     },
+
+    toggleUserSelection: (rayId: DRayId) => _set((state) => ({
+      rays: state.rays.map((ray) => (ray.rayId === rayId)
+        ? { ...ray, userSelected: !ray.userSelected }
+        : ray,
+      ),
+    })),
 
     removeRay: (rayId: DRayId) => _set((state) => ({
       rays: state.rays.filter((ray) => {
