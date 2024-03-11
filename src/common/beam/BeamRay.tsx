@@ -195,8 +195,9 @@ export function BeamRay(props: {
       />
 
       {/* Ray Message */}
-      {!!ray?.message?.text && (
+      {(!!ray?.message?.text || !!ray?.message?.updated) && (
         <Box sx={{
+          minHeight: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           // uncomment the following to limit the message height
