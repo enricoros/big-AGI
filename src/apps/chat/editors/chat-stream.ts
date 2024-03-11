@@ -54,7 +54,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 }
 
 
-async function streamAssistantMessage(
+export async function streamAssistantMessage(
   llmId: DLLMId,
   history: DMessage[],
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root

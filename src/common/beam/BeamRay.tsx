@@ -48,7 +48,8 @@ RayCard.displayName = 'RayCard';
 const chatMessageEmbeddedSx: SxProps = {
   // style: to undo the style of ChatMessage
   border: 'none',
-  m: 0,
+  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
+  my: 0,
   px: 0,
   py: 0,
 } as const;
@@ -62,9 +63,9 @@ export function BeamRay(props: {
 }) {
 
   // external state
-  const { ray, setRayLlmId, clearRayLlmId } = useBeamStoreRay(props.beamStore, props.index);
-  const isLinked = !!props.gatherLlmId && !ray.scatterLlmId;
-  const [rayLlm, rayLlmComponent] = useLLMSelect(isLinked ? props.gatherLlmId : ray.scatterLlmId, setRayLlmId, '', true);
+  const { dRay, setRayLlmId, clearRayLlmId } = useBeamStoreRay(props.beamStore, props.index);
+  const isLinked = !!props.gatherLlmId && !dRay.scatterLlmId;
+  const [rayLlm, rayLlmComponent] = useLLMSelect(isLinked ? props.gatherLlmId : dRay.scatterLlmId, setRayLlmId, '', true);
 
   return (
     <RayCard>
@@ -86,9 +87,9 @@ export function BeamRay(props: {
         </Tooltip>
       </Box>
 
-      {(!!ray.message && !!ray.message.updated) && (
+      {(!!dRay.message && !!dRay.message.updated) && (
         <ChatMessageMemo
-          message={ray.message}
+          message={dRay.message}
           fitScreen={props.isMobile}
           showAvatar={false}
           adjustContentScaling={-1}
