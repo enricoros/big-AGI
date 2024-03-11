@@ -9,8 +9,14 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 const beamGatherControlsSx: SxProps = {
   ...beamControlsSx,
+
+  // style
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
+
+  // layout
+  display: 'flex',
+  alignItems: 'center',
 };
 
 export function BeamGatherControls(props: {
