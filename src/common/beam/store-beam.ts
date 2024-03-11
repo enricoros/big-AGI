@@ -5,24 +5,22 @@ import { type StoreApi, useStore } from 'zustand';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { DMessage } from '~/common/state/store-chats';
+import { createDMessage, DMessage } from '~/common/state/store-chats';
 
 
-// Per-Beam Store
-
-interface DBeam {
+interface DRay {
   scatterLlmId: DLLMId | null;
+  message: DMessage;
+  isGenerating?: boolean;
+  abortController?: AbortController;
 }
 
 interface BeamState {
-
   isOpen: boolean;
   inputHistory: DMessage[] | null;
+  inputIssues: string | null;
   gatherLlmId: DLLMId | null;
-  configIssue: string | null;
-
-  rays: DBeam[];
-
+  rays: DRay[];
 }
 
 export interface BeamStore extends BeamState {
@@ -33,7 +31,7 @@ export interface BeamStore extends BeamState {
   setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
 
-  updateRay: (index: number, update: Partial<DBeam>) => void;
+  updateRay: (index: number, update: Partial<DRay>) => void;
 
 }
 
@@ -43,12 +41,14 @@ export type BeamStoreApi = Readonly<StoreApi<BeamStore>>;
 export const createBeamStore = () => createStore<BeamStore>()(
   (_set, _get) => ({
 
+    // internal
     debugId: uuidv4(),
+
+    // state
     isOpen: false,
     inputHistory: null,
+    inputIssues: null,
     gatherLlmId: null,
-    configIssue: null,
-
     rays: [],
 
 
@@ -67,15 +67,15 @@ export const createBeamStore = () => createStore<BeamStore>()(
       _set({
         isOpen: true,
         inputHistory: isValidHistory ? history : null,
+        inputIssues: isValidHistory ? null : 'Invalid history',
         ...(gatherLlmId ? { gatherLlmId } : {}),
-        configIssue: isValidHistory ? null : 'Invalid history',
       });
     },
 
     close: () => _get().isOpen && _set({
       isOpen: false,
       inputHistory: null,
-      configIssue: null,
+      inputIssues: null,
       // gatherLlmId: null,   // remember the selected llm
       // rays: [],            // remember the rays configuration
     }),
@@ -87,12 +87,19 @@ export const createBeamStore = () => createStore<BeamStore>()(
     setRayCount: (count: number) => {
       const { rays } = _get();
       if (count < rays.length)
-        _set({ rays: rays.slice(0, count) });
+        _set({
+          rays: rays.slice(0, count),
+        });
       else if (count > rays.length)
-        _set({ rays: [...rays, ...Array(count - rays.length).fill({ scatterLlmId: null })] });
+        _set({
+          rays: [...rays, ...Array(count - rays.length).fill({
+            scatterLlmId: null,
+            message: createDMessage('assistant', '💫 ...'),
+          } satisfies DRay)],
+        });
     },
 
-    updateRay: (index: number, update: Partial<DBeam>) => _set((state) => ({
+    updateRay: (index: number, update: Partial<DRay>) => _set((state) => ({
       rays: state.rays.map((ray, i) => (i === index)
         ? { ...ray, ...update }
         : ray,
@@ -107,14 +114,16 @@ export const useBeamStore = <T, >(beamStore: BeamStoreApi, selector: (store: Bea
   useStore(beamStore, selector);
 
 
-export const useBeamStoreBeam = (_beamStore: BeamStoreApi, beamIndex: number) => {
-  const beam: DBeam | null = useStore(_beamStore, (store) => store.rays[beamIndex] ?? null);
+export const useBeamStoreRay = (beamStore: BeamStoreApi, rayIndex: number) => {
+  const ray: DRay | null = useStore(beamStore, (store) => store.rays[rayIndex] ?? null);
 
   const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
-    _beamStore.getState().updateRay(beamIndex, { scatterLlmId: llmId });
-  }, [_beamStore, beamIndex]);
+    beamStore.getState().updateRay(rayIndex, { scatterLlmId: llmId });
+  }, [beamStore, rayIndex]);
 
-  const clearRayLlmId = React.useCallback(() => setRayLlmId(null), [setRayLlmId]);
+  const clearRayLlmId = React.useCallback(() => {
+    setRayLlmId(null);
+  }, [setRayLlmId]);
 
-  return { beam, clearRayLlmId, setRayLlmId };
+  return { ray, clearRayLlmId, setRayLlmId };
 };

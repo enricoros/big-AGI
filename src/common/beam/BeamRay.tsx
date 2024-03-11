@@ -10,10 +10,13 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { createDMessage } from '~/common/state/store-chats';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, useBeamStoreBeam } from './store-beam';
+import { BeamStoreApi, useBeamStoreRay } from './store-beam';
+
+
+// component configuration
+const SHOW_DRAG_HANDLE = false;
 
 
 const rayCardClasses = {
@@ -59,29 +62,22 @@ export function BeamRay(props: {
 }) {
 
   // external state
-  const { beam, setRayLlmId, clearRayLlmId } = useBeamStoreBeam(props.beamStore, props.index);
-
-  const isLinked = !!props.gatherLlmId && !beam.scatterLlmId;
-
-  const [allChatLlm, allChatLlmComponent] = useLLMSelect(
-    isLinked ? props.gatherLlmId : beam.scatterLlmId,
-    setRayLlmId,
-    '',
-    true,
-  );
-
-  const msg = React.useMemo(() => createDMessage('assistant', '💫 ...'), []);
+  const { ray, setRayLlmId, clearRayLlmId } = useBeamStoreRay(props.beamStore, props.index);
+  const isLinked = !!props.gatherLlmId && !ray.scatterLlmId;
+  const [rayLlm, rayLlmComponent] = useLLMSelect(isLinked ? props.gatherLlmId : ray.scatterLlmId, setRayLlmId, '', true);
 
   return (
     <RayCard>
 
       {/* Controls Row */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton disabled size='sm' sx={undefined /*{ ml: 'calc(-0.5 * var(--Card-padding))' }*/}>
-          <DragIndicatorIcon />
-        </IconButton>
+        {SHOW_DRAG_HANDLE && (
+          <IconButton disabled size='sm' sx={undefined /*{ ml: 'calc(-0.5 * var(--Card-padding))' }*/}>
+            <DragIndicatorIcon />
+          </IconButton>
+        )}
         <Box sx={{ flex: 1 }}>
-          {allChatLlmComponent}
+          {rayLlmComponent}
         </Box>
         <Tooltip title={isLinked ? undefined : 'Link Model'}>
           <IconButton disabled={isLinked} size='sm' onClick={clearRayLlmId}>
@@ -90,13 +86,15 @@ export function BeamRay(props: {
         </Tooltip>
       </Box>
 
-      <ChatMessageMemo
-        message={msg}
-        fitScreen={props.isMobile}
-        showAvatar={false}
-        adjustContentScaling={-1}
-        sx={chatMessageEmbeddedSx}
-      />
+      {(!!ray.message && !!ray.message.updated) && (
+        <ChatMessageMemo
+          message={ray.message}
+          fitScreen={props.isMobile}
+          showAvatar={false}
+          adjustContentScaling={-1}
+          sx={chatMessageEmbeddedSx}
+        />
+      )}
 
     </RayCard>
   );
