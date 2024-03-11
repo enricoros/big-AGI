@@ -15,6 +15,7 @@ type DRayId = string;
 
 interface DRay {
   rayId: DRayId;
+  status: 'empty' | 'scattering' | 'success' | 'stopped' | 'error';
   message: DMessage;
   scatterLlmId: DLLMId | null;
   scatterIssue?: string;
@@ -24,6 +25,7 @@ interface DRay {
 function createDRay(scatterLlmId: DLLMId | null): DRay {
   return {
     rayId: uuidv4(),
+    status: 'empty',
     message: createDMessage('assistant', '💫 ...'), // String.fromCharCode(65 + index) /*+ ' ... 🖊️'*/ /* '💫 ...' */),
     scatterLlmId,
   };
@@ -57,24 +59,26 @@ function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
 
   // stream the assistant's messages
   streamAssistantMessage(rayLlmId, inputHistory, rays.length, 'off', updateMessage, abortController.signal)
-    .then(() => updateRay(ray.rayId, {
-      genAbortController: undefined,
-    }))
+    .then((outcome) => {
+      updateRay(ray.rayId, {
+        status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',
+        genAbortController: undefined,
+      });
+    })
     .catch((error) => {
       updateRay(ray.rayId, {
-          genAbortController: undefined,
-          scatterIssue: error?.message || error?.toString() || 'Unknown error',
-        },
-      );
+        status: 'error',
+        scatterIssue: error?.message || error?.toString() || 'Unknown error',
+        genAbortController: undefined,
+      });
     })
     .finally(() => {
-      // const allDone = rays.every(ray => !ray.genAbortController);
-      // if (allDone) ...
       syncRaysStateToBeam();
     });
 
   return {
-    ...ray,
+    rayId: ray.rayId,
+    status: 'scattering',
     message: {
       ...ray.message,
       text: '💫 Generating ...',
@@ -95,6 +99,8 @@ function rayScatterStop(ray: DRay): DRay {
 }
 
 
+// Beam
+
 interface BeamState {
 
   isOpen: boolean;
@@ -114,8 +120,7 @@ interface BeamState {
 
 }
 
-
-export interface BeamStore extends BeamState {
+interface BeamStore extends BeamState {
 
   open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
   close: () => void;

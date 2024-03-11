@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, styled } from '@mui/joy';
+import { Box, IconButton, styled, Typography } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import LinkIcon from '@mui/icons-material/Link';
@@ -22,6 +22,7 @@ import { BeamStoreApi, useBeamStore } from './store-beam';
 
 // component configuration
 const SHOW_DRAG_HANDLE = false;
+const DEBUG_STATUS = false;
 
 
 const rayCardClasses = {
@@ -51,6 +52,21 @@ export const RayCard = styled(Box)(({ theme }) => ({
   // overflow: 'auto',
 }));
 RayCard.displayName = 'RayCard';
+
+
+function rayCardStatusSx(status?: 'empty' | 'scattering' | 'success' | 'stopped' | 'error'): SxProps | null {
+  switch (status) {
+    // case 'success':
+    //   return { backgroundColor: 'background.popup' };
+    case 'error':
+      return {
+        backgroundColor: 'danger.softBg',
+        borderColor: 'danger.outlinedBorder',
+      };
+    default:
+      return null;
+  }
+}
 
 
 function ControlsRow(props: {
@@ -106,6 +122,7 @@ function ControlsRow(props: {
 
 const chatMessageEmbeddedSx: SxProps = {
   // style: to undo the style of ChatMessage
+  backgroundColor: 'none',
   border: 'none',
   mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
   my: 0,
@@ -150,7 +167,13 @@ export function BeamRay(props: {
 
 
   return (
-    <RayCard>
+    <RayCard sx={rayCardStatusSx(ray?.status)}>
+
+      {DEBUG_STATUS && (
+        <Typography level='body-sm'>
+          {ray?.status}
+        </Typography>
+      )}
 
       {/* Controls Row */}
       <ControlsRow
