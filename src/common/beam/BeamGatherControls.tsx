@@ -17,6 +17,7 @@ const beamGatherControlsSx: SxProps = {
   // layout
   display: 'flex',
   alignItems: 'center',
+  gap: 'var(--Pad_2)',
 };
 
 export function BeamGatherControls(props: {
@@ -31,31 +32,9 @@ export function BeamGatherControls(props: {
   return (
     <Box sx={beamGatherControlsSx}>
 
-      {/* Title */}
-      <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto', border: '2px solid red' }}>
-        {/*<Typography level='h4'>*/}
-        {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
-        {/*</Typography>*/}
-        <div>
-          <Typography level='h4' component='h2'>
-            {/*big-AGI · */}
-            Gather
-          </Typography>
-
-          <Typography level='body-sm'>
-            Test
-          </Typography>
-        </div>
-      </Box>
-
-      <Box sx={{ whiteSpace: 'break-spaces', border: '2px solid red' }}>
-        {JSON.stringify(props)}
-      </Box>
-
       {/* Algo */}
-      <FormControl sx={{ flex: 1, display: 'flex', justifyContent: 'space-between' /* gridColumn: '1 / -1' */ }}>
+      <FormControl>
         {!props.isMobile && <FormLabelStart title='Beam Fusion' />}
-
         <ButtonGroup variant='soft' color='success'>
           <Button
             sx={{
@@ -89,6 +68,9 @@ export function BeamGatherControls(props: {
         </ButtonGroup>
       </FormControl>
 
+      <Typography sx={{ flex: 1, whiteSpace: 'break-spaces', border: '1px solid red' }}>
+        {JSON.stringify(props)}
+      </Typography>
 
       <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
         Close
