@@ -72,7 +72,7 @@ function BeamViewBase(props: {
   const { inputHistory, configIssue, gatherLlmId, setGatherLlmId, raysCount } = useBeamStore(props.beamStore,
     useShallow((state) => ({
       inputHistory: state.inputHistory,
-      configIssue: state.configIssue,
+      configIssue: state.inputIssues,
       gatherLlmId: state.gatherLlmId,
       setGatherLlmId: state.setGatherLlmId,
       raysCount: state.rays.length,
@@ -86,6 +86,8 @@ function BeamViewBase(props: {
   const lastMessage = inputHistory?.slice(-1)[0] || null;
 
 
+  // handlers
+
   const handleCloseKeepRunning = React.useCallback(() => beamClose(), [beamClose]);
 
   const handleRaySetCount = React.useCallback((n: number) => {
@@ -96,29 +98,17 @@ function BeamViewBase(props: {
     beamSetRayCount(raysCount + 1);
   }, [beamSetRayCount, raysCount]);
 
-
-  const handleStart = React.useCallback(() => {
-    console.log('Start');
-    // beamStore.destroy();
-  }, []);
-
-
-  // change beam count
-
+  // [effect] start with 2 rays
   const bootup = !raysCount;
   React.useEffect(() => {
     bootup && handleRaySetCount(MIN_RAY_COUNT);
   }, [bootup, handleRaySetCount]);
 
-  // const beamCount = candidates.length;
-  //
-  // const handleRaySetCount = React.useCallback((n: number) => {
-  //   beamStore.setBeamCount(n);
-  // }, [beamStore]);
-  //
-  // const handleIncrementBeamCount = React.useCallback(() => {
-  //   beamStore.appendBeam();
-  // }, [beamStore]);
+
+  const handleStart = React.useCallback(() => {
+    console.log('Start');
+    // beamStore.destroy();
+  }, []);
 
 
   return (

@@ -34,7 +34,7 @@ export function AppBeam() {
 
   // external state
   const isMobile = useIsMobile();
-  const beamState = useBeamStore(beamStoreApi, state => state); // force re-render (of the JSON) on state change
+  const beamStore = useBeamStore(beamStoreApi, state => state);
 
   // layout
   usePluggableOptimaLayout(null, React.useMemo(() => <>
@@ -64,7 +64,7 @@ export function AppBeam() {
 
       {showDebug && (
         <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>
-          {JSON.stringify({ conversationId: conversation.current.id, beamStore: beamState }, null, 2)}
+          {JSON.stringify({ conversationId: conversation.current.id, beamStore }, null, 2)}
         </Typography>
       )}
 
