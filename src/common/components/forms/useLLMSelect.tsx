@@ -28,6 +28,7 @@ export function useLLMSelectLocalState(initFromGlobal: boolean): [DLLMId | null,
  * @param setChatLLMId (required) the function to set the LLM id
  * @param label label of the select, use '' to hide it
  * @param smaller if true, the select is smaller
+ * @param disabled
  * @param placeholder placeholder of the select
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
@@ -36,6 +37,7 @@ export function useLLMSelect(
   setChatLLMId: (llmId: DLLMId | null) => void,
   label: string = 'Model',
   smaller: boolean = false,
+  disabled: boolean = false,
   placeholder: string = 'Models …',
   isHorizontal: boolean = false,
 ): [DLLM | null, React.JSX.Element | null] {
@@ -55,7 +57,7 @@ export function useLLMSelect(
   const componentOptions = React.useMemo(() => {
     // create the option items
     let formerVendor: IModelVendor | null = null;
-    return _filteredLLMs.reduce((acc, llm, index) => {
+    return _filteredLLMs.reduce((acc, llm, _index) => {
 
       const vendor = findVendorById(llm._source?.vId);
       const vendorChanged = vendor !== formerVendor;
@@ -103,6 +105,7 @@ export function useLLMSelect(
         variant='outlined'
         value={chatLLMId}
         size={smaller ? 'sm' : undefined}
+        disabled={disabled}
         onChange={onSelectChange}
         placeholder={placeholder}
         slotProps={{
@@ -131,7 +134,7 @@ export function useLLMSelect(
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [chatLLMId, componentOptions, isHorizontal, label, onSelectChange, placeholder, smaller]);
+  ), [chatLLMId, componentOptions, disabled, isHorizontal, label, onSelectChange, placeholder, smaller]);
 
 
   return [chatLLM, llmSelectComponent];
