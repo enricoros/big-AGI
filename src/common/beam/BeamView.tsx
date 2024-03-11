@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Sheet } from '@mui/joy';
-import AddIcon from '@mui/icons-material/Add';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
@@ -29,6 +29,24 @@ const userMessageSx: SxProps = {
   borderTop: 'none',
   px: '0.5rem',
   // boxShadow: 'sm',
+  // the following make it end-aligned
+  // borderBottomRightRadius: 0,
+  // borderRight: 'none',
+  // px: 'var(--Pad)',
+} as const;
+
+const assistantMessageSx: SxProps = {
+  border: '1px solid',
+  borderBottom: 0,
+  borderColor: 'neutral.outlinedBorder',
+  borderRadius: 'md',
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
+  px: '0.5rem',
+  // boxShadow: 'sm',
+  // the following make it start-aligned
+  // borderTopLeftRadius: 0,
+  // borderLeft: 'none',
 } as const;
 
 
@@ -53,23 +71,24 @@ function BeamViewBase(props: {
   // linked state
   const {
     inputHistory, inputIssues,
-    gatherLlmId,
+    gatherLlmId, gatherMessage,
     readyScatter, isScattering,
     readyGather, isGathering,
-    raysCount,
   } = useBeamStore(props.beamStore, useShallow((state) => ({
     // state
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
     gatherLlmId: state.gatherLlmId,
+    gatherMessage: state.gatherMessage,
     readyScatter: state.readyScatter,
     isScattering: state.isScattering,
     readyGather: state.readyGather,
     isGathering: state.isGathering,
-    raysCount: state.rays.length,
   })));
+  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
+  const raysCount = rayIds.length;
   const { close: beamClose, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId } = props.beamStore.getState();
-  const [gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
+  const [_gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
 
   // configuration
@@ -84,7 +103,7 @@ function BeamViewBase(props: {
   // runnning
 
   // [effect] start with 2 rays
-  const bootup = !raysCount;
+  const bootup = raysCount < MIN_RAY_COUNT;
   React.useEffect(() => {
     bootup && handleRaySetCount(MIN_RAY_COUNT);
   }, [bootup, handleRaySetCount]);
@@ -148,11 +167,11 @@ function BeamViewBase(props: {
           gap: 'var(--Pad)',
         }}>
 
-          {Array.from({ length: raysCount }, (_, idx) => (
+          {rayIds.map((rayId, idx) => (
             <BeamRay
-              key={'ray-' + idx}
+              key={'ray-' + rayId}
               beamStore={props.beamStore}
-              index={idx}
+              rayId={rayId}
               isMobile={props.isMobile}
               gatherLlmId={gatherLlmId}
             />
@@ -160,14 +179,14 @@ function BeamViewBase(props: {
 
           {/* Increment Rays Button */}
           {raysCount < MAX_RAY_COUNT && (
-            <RayCard>
+            <RayCard sx={{ mb: 'auto' }}>
               <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
                 height: '100%',
                 margin: 'calc(-1 * var(--Card-padding) + 0.25rem)',
                 minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
                 // minHeight: '2rem',
               }}>
-                <AddIcon />
+                <AddCircleOutlineRoundedIcon />
               </Button>
             </RayCard>
           )}
@@ -175,8 +194,26 @@ function BeamViewBase(props: {
         </Box>
       )}
 
+      <Box sx={{ flex: 1 }} />
+
+      {/* Gather Message */}
+      {!!gatherMessage && (
+        <Box sx={{
+          px: 'var(--Pad)',
+          mb: 'calc(-1 * var(--Pad))',
+        }}>
+          <ChatMessageMemo
+            message={gatherMessage}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={assistantMessageSx}
+          />
+        </Box>
+      )}
+
       {/* Bottom Bar */}
-      <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Sheet sx={{ p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1, boxShadow: 'md' }}>
         <Button variant='solid' color='neutral' onClick={handleDispose} sx={{ ml: 'auto', minWidth: 100 }}>
           Close
         </Button>

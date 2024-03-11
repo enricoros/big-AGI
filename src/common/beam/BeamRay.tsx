@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, styled } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded';
+import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
@@ -82,25 +82,24 @@ function StartStopButton(props: { isStarted: boolean, isFirstTime: boolean, onTo
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  index: number,
+  rayId: string
   isMobile: boolean,
   gatherLlmId: DLLMId | null,
 }) {
 
   // external state
-  const ray = useBeamStore(props.beamStore, (store) => store.rays[props.index] ?? null);
+  const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
 
   // derived state
-  const rayId = ray?.rayId || null;
   const rayEmpty = !ray?.message?.updated;
   const rayScattering = !!ray?.genAbortController;
   const { removeRay, updateRay, toggleScattering } = props.beamStore.getState();
 
-  const isLlmLinked = !!props.gatherLlmId && !ray.scatterLlmId;
+  const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
   const rayLlmId = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
   const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
-    return rayId && updateRay(rayId, { scatterLlmId: llmId });
-  }, [rayId, updateRay]);
+    updateRay(props.rayId, { scatterLlmId: llmId });
+  }, [props.rayId, updateRay]);
   const clearRayLlmId = React.useCallback(() => setRayLlmId(null), [setRayLlmId]);
   const [_rayLlm, rayLlmComponent] = useLLMSelect(
     rayLlmId, setRayLlmId,
@@ -111,12 +110,12 @@ export function BeamRay(props: {
   // handlers
 
   const handleRayToggleGenerate = React.useCallback(() => {
-    rayId && toggleScattering(rayId);
-  }, [rayId, toggleScattering]);
+    toggleScattering(props.rayId);
+  }, [props.rayId, toggleScattering]);
 
   const handleRemoveRay = React.useCallback(() => {
-    rayId && removeRay(rayId);
-  }, [rayId, removeRay]);
+    removeRay(props.rayId);
+  }, [props.rayId, removeRay]);
 
 
   return (
@@ -154,14 +153,13 @@ export function BeamRay(props: {
         {/* Remove */}
         <GoodTooltip title='Remove'>
           <IconButton size='sm' variant='plain' color='neutral' onClick={handleRemoveRay}>
-            <HighlightOffRoundedIcon />
-            {/*<RemoveCircleOutlineRoundedIcon />*/}
+            <RemoveCircleOutlineRoundedIcon />
           </IconButton>
         </GoodTooltip>
       </Box>
 
       {/* Ray Message */}
-      {(!!ray.message && !rayEmpty) && (
+      {(!!ray?.message && !rayEmpty) && (
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
