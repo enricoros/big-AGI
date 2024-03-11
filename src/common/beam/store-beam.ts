@@ -44,7 +44,7 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
   if (onlyIdle && ray.status !== 'empty')
     return ray;
 
-  const { gatherLlmId, inputHistory, rays, updateRay, syncRaysStateToBeam } = beamStore;
+  const { gatherLlmId, inputHistory, rays, _updateRay, syncRaysStateToBeam } = beamStore;
 
   // validate model
   const rayLlmId = ray.scatterLlmId || gatherLlmId;
@@ -57,7 +57,7 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
 
   const abortController = new AbortController();
 
-  const updateMessage = (update: Partial<DMessage>) => updateRay(ray.rayId, (ray) => ({
+  const updateMessage = (update: Partial<DMessage>) => _updateRay(ray.rayId, (ray) => ({
     ...ray,
     message: {
       ...ray.message,
@@ -69,13 +69,13 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
   // stream the assistant's messages
   streamAssistantMessage(rayLlmId, inputHistory, rays.length, 'off', updateMessage, abortController.signal)
     .then((outcome) => {
-      updateRay(ray.rayId, {
+      _updateRay(ray.rayId, {
         status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',
         genAbortController: undefined,
       });
     })
     .catch((error) => {
-      updateRay(ray.rayId, {
+      _updateRay(ray.rayId, {
         status: 'error',
         scatterIssue: error?.message || error?.toString() || 'Unknown error',
         genAbortController: undefined,
@@ -154,13 +154,14 @@ interface BeamStore extends BeamState {
 
   setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
+  removeRay: (rayId: DRayId) => void;
 
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
   toggleScattering: (rayId: DRayId) => void;
   toggleUserSelection: (rayId: DRayId) => void;
-  removeRay: (rayId: DRayId) => void;
-  updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
+  setRayLlmId: (rayId: DRayId, llmId: DLLMId | null) => void;
+  _updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
 
   syncRaysStateToBeam: () => void;
 
@@ -237,7 +238,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     }),
 
     setRayCount: (count: number) => {
-      const { rays } = _get();
+      const { rays, syncRaysStateToBeam } = _get();
       if (count < rays.length) {
         rays.slice(count).forEach(rayScatterStop);
         _set({
@@ -248,20 +249,31 @@ export const createBeamStore = () => createStore<BeamStore>()(
           rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createDRay(_get().gatherLlmId))],
         });
       }
+      syncRaysStateToBeam();
+    },
+
+    removeRay: (rayId: DRayId) => {
+      const { syncRaysStateToBeam } = _get();
+      _set((state) => ({
+        rays: state.rays.filter((ray) => {
+          if (ray.rayId === rayId) {
+            rayScatterStop(ray);
+            return false;
+          }
+          return true;
+        }),
+      }));
+      syncRaysStateToBeam();
     },
 
 
     startScatteringAll: () => {
-      const { readyScatter, isScattering, inputHistory, rays } = _get();
-      if (!readyScatter) {
-        console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
-        return;
-      }
-      const newRays = rays.map(ray => rayScatterStart(ray, false, _get()));
+      const { rays, syncRaysStateToBeam } = _get();
       _set({
-        isScattering: newRays.some((ray) => ray.status === 'scattering'),
-        rays: newRays
+        rays: rays.map(ray => rayScatterStart(ray, false, _get())),
       });
+      // always need to invoke syncRaysStateToBeam after rayScatterStart
+      syncRaysStateToBeam();
     },
 
     stopScatteringAll: () => {
@@ -273,16 +285,15 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
     toggleScattering: (rayId: DRayId) => {
-      const store = _get();
-      const newRays = store.rays.map((ray) => (ray.rayId === rayId)
-        ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, false, _get()))
-        : ray,
-      );
-      const anyStarted = newRays.some((ray) => ray.status === 'scattering');
+      const { rays, syncRaysStateToBeam } = _get();
       _set({
-        isScattering: anyStarted,
-        rays: newRays,
+        rays: rays.map((ray) => (ray.rayId === rayId)
+          ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, false, _get()))
+          : ray,
+        ),
       });
+      // always need to invoke syncRaysStateToBeam after rayScatterStart
+      syncRaysStateToBeam();
     },
 
     toggleUserSelection: (rayId: DRayId) => _set((state) => ({
@@ -292,17 +303,15 @@ export const createBeamStore = () => createStore<BeamStore>()(
       ),
     })),
 
-    removeRay: (rayId: DRayId) => _set((state) => ({
-      rays: state.rays.filter((ray) => {
-        if (ray.rayId === rayId) {
-          rayScatterStop(ray);
-          return false;
-        }
-        return true;
-      }),
+    setRayLlmId: (rayId: DRayId, llmId: DLLMId | null) => _set((state) => ({
+      rays: state.rays.map((ray) => (ray.rayId === rayId)
+        ? { ...ray, scatterLlmId: llmId }
+        : ray,
+      ),
     })),
 
-    updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
+
+    _updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
       rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
         : ray,
@@ -314,17 +323,15 @@ export const createBeamStore = () => createStore<BeamStore>()(
       const { rays } = _get();
 
       // Check if all rays have finished generating
-      const allDone = rays.every(ray => ray.status !== 'scattering');
+      const hasRays = rays.length > 0;
+      const allDone = !rays.some(rayIsScattering);
+      const raysReady = rays.filter(rayIsSelectable).length;
 
-      if (allDone) {
-        // If all rays are done, update state accordingly
-        _set({
-          isScattering: false,
-          // Update other state properties as needed
-        });
-        // TODO... continue
-        console.log('All rays have finished generating - TODO: ');
-      }
+      console.log('syncRaysStateToBeam', { count: rays.length, isScattering: hasRays && !allDone, allDone, raysReady });
+
+      _set({
+        isScattering: hasRays && !allDone,
+      });
     },
 
   }),

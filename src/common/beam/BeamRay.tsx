@@ -145,13 +145,11 @@ export function BeamRay(props: {
   const isScattering = rayIsScattering(ray);
   const isSelectable = rayIsSelectable(ray);
   const isSelected = rayIsUserSelected(ray);
-  const { removeRay, updateRay, toggleScattering /*, toggleUserSelection*/ } = props.beamStore.getState();
+  const { removeRay, toggleScattering, setRayLlmId } = props.beamStore.getState();
 
   const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
   const llmId: DLLMId | null = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
-  const setLlmId = React.useCallback((llmId: DLLMId | null) => {
-    updateRay(props.rayId, { scatterLlmId: llmId });
-  }, [props.rayId, updateRay]);
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => setRayLlmId(props.rayId, llmId), [props.rayId, setRayLlmId]);
   const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
   const [_, llmComponent] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
 
