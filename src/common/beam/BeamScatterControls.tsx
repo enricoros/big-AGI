@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
@@ -8,7 +9,30 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationEnterBelow } from '~/common/util/animUtils';
 
 
-export function BeamHeader(props: {
+export const beamControlsSx: SxProps = {
+  // style
+  // borderRadius: 'md',
+  // backgroundColor: 'background.popup',
+  backgroundColor: 'background.surface',
+  boxShadow: 'md',
+  p: 'var(--Pad)',
+  zIndex: 1, // stay on top of messages, for shadow to cast on it
+};
+
+const beamScatterControlsSx: SxProps = {
+  ...beamControlsSx,
+
+  // layout: max 2 cols (/3 with gap) of min 200px per col
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/4), 1fr))',
+  gridAutoFlow: 'row dense',
+  gap: 'var(--Pad_2)',
+
+  // '& > *': { border: '1px solid red' },
+}
+
+
+export function BeamScatterControls(props: {
   isMobile: boolean,
   llmComponent: React.ReactNode,
   rayCount: number,
@@ -20,26 +44,7 @@ export function BeamHeader(props: {
 }) {
 
   return (
-    <Box
-      // variant='outlined'
-      sx={{
-        // style
-        // borderRadius: 'md',
-        // backgroundColor: 'background.popup',
-        backgroundColor: 'background.surface',
-        boxShadow: 'md',
-        p: 'var(--Pad)',
-        zIndex: 1, // stay on top of the user message, for shadow to cast on it
-
-        // layout: max 2 cols (/3 with gap) of min 200px per col
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/4), 1fr))',
-        gridAutoFlow: 'row dense',
-        gap: 'var(--Pad_2)',
-
-        // '& > *': { border: '1px solid red' },
-      }}
-    >
+    <Box sx={beamScatterControlsSx}>
 
       {/* Title */}
       <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
