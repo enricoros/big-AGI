@@ -10,25 +10,28 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 
 
+// Ray - each invidual thread of the beam
+
+type DRayId = string;
+
 interface DRay {
+  rayId: DRayId;
   message: DMessage;
   scatterLlmId: DLLMId | null;
   scatterIssue?: string;
-  isGenerating?: boolean;
-  abortController?: AbortController;
+  genAbortController?: AbortController;
 }
 
-function createDRay(scatterLlmId: DLLMId | null, index: number): DRay {
+function createDRay(scatterLlmId: DLLMId | null, _index: number): DRay {
   return {
+    rayId: uuidv4(),
     message: createDMessage('assistant', '💫 ...'), // String.fromCharCode(65 + index) /*+ ' ... 🖊️'*/ /* '💫 ...' */),
     scatterLlmId,
   };
 }
 
 
-export interface BeamStore {
-
-  // state
+interface BeamState {
 
   isOpen: boolean;
   inputHistory: DMessage[] | null;
@@ -43,7 +46,10 @@ export interface BeamStore {
   readyGather: boolean;
   isGathering: boolean;
 
-  // actions
+}
+
+
+export interface BeamStore extends BeamState {
 
   open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
   close: () => void;
@@ -51,11 +57,14 @@ export interface BeamStore {
   setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
 
-  updateRayByIndex: (index: number, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
+  startScatteringAll: () => void;
+  stopScatteringAll: () => void;
 
-  startScattering: (gatherLlmId: DLLMId | null) => void;
-  stopScattering: () => void;
-  syncState: () => void;
+  updateRayById: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
+  startScattering: (ray: DRay) => DRay;
+  stopScattering: (ray: DRay) => DRay;
+
+  syncRaysStateToBeam: () => void;
 
 }
 
@@ -130,93 +139,102 @@ export const createBeamStore = () => createStore<BeamStore>()(
         });
     },
 
-    updateRayByIndex: (index: number, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
-      rays: state.rays.map((ray, i) => (i === index)
+
+    startScatteringAll: () => {
+      const { readyScatter, isScattering, inputHistory, rays, startScattering } = _get();
+      if (!readyScatter || isScattering) {
+        console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
+        return;
+      }
+      _set({
+        isScattering: true,
+        rays: rays.map(startScattering),
+      });
+    },
+
+    stopScatteringAll: () => {
+      const { isScattering, rays, stopScattering } = _get();
+      if (!isScattering) {
+        console.warn('stopScattering: not scattering', { isScattering });
+        return;
+      }
+      _set({
+        isScattering: false,
+        rays: rays.map(stopScattering),
+      });
+    },
+
+
+    updateRayById: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
+      rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
         : ray,
       ),
     })),
 
+    startScattering: (ray: DRay): DRay => {
+      if (ray.genAbortController)
+        return ray;
 
-    startScattering: (gatherLlmId: DLLMId | null) => {
-      const { isScattering, readyScatter, inputHistory, rays, updateRayByIndex, syncState } = _get();
-      if (isScattering || !readyScatter) {
-        console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
-        return;
-      }
+      const { gatherLlmId, inputHistory, rays, updateRayById, syncRaysStateToBeam } = _get();
 
-      // start scattering all rays
-      _set({
-        isScattering: true,
-        rays: rays.map((ray, index) => {
+      // validate model
+      const rayLlmId = ray.scatterLlmId || gatherLlmId;
+      if (!rayLlmId)
+        return { ...ray, scatterIssue: 'No model selected' };
 
-          // validate model
-          const rayScatterLlmId = ray.scatterLlmId || gatherLlmId;
-          if (!rayScatterLlmId)
-            return { ...ray, scatterIssue: 'No model selected' };
+      // validate history
+      if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
+        return { ...ray, scatterIssue: `Invalid conversation history (${inputHistory?.length})` };
 
-          // validate history
-          if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
-            return { ...ray, scatterIssue: 'Invalid history' };
+      const abortController = new AbortController();
 
-          const abortController = new AbortController();
-
-          // stream the assistant's messages
-          streamAssistantMessage(
-            rayScatterLlmId,
-            inputHistory,
-            rays.length,
-            'off',
-            (update) => {
-              // console.log(`ray ${index} update`, update);
-              updateRayByIndex(index, (ray) => ({ ...ray, message: { ...ray.message, ...update, updated: Date.now() } }));
-            },
-            abortController.signal,
-          ).then(() => {
-            updateRayByIndex(index, { isGenerating: false });
-          }).catch((error) => {
-            console.error(`ray ${index} error`, error);
-            updateRayByIndex(index, { isGenerating: false, scatterIssue: error?.message || error?.toString() || 'Unknown error' });
-          }).finally(() => {
-            syncState();
-          });
-
-          return {
-            ...ray,
-            isGenerating: true,
-            abortController: abortController,
-          };
-        }),
+      // stream the assistant's messages
+      streamAssistantMessage(
+        rayLlmId,
+        inputHistory,
+        rays.length,
+        'off',
+        (update) => updateRayById(ray.rayId, (ray) => ({
+          ...ray,
+          message: {
+            ...ray.message,
+            ...update,
+            updated: Date.now(),
+          },
+        })),
+        abortController.signal,
+      ).then(() => updateRayById(ray.rayId, {
+          genAbortController: undefined,
+        },
+      )).catch((error) => updateRayById(ray.rayId, {
+          genAbortController: undefined,
+          scatterIssue: error?.message || error?.toString() || 'Unknown error',
+        },
+      )).finally(() => {
+        syncRaysStateToBeam();
       });
 
+      return {
+        ...ray,
+        genAbortController: abortController,
+      };
     },
 
-    stopScattering: () => {
-      const { isScattering, rays } = _get();
-      if (!isScattering) {
-        console.warn('stopScattering: not scattering', { isScattering });
-        return;
-      }
-
-      // TODO...
-
-      // // stop scattering all rays
-      // rays.forEach((ray) => {
-      //   if (ray.abortController)
-      //     ray.abortController.abort();
-      // });
-      //
-      // _set({
-      //   isScattering: false,
-      // });
-
+    stopScattering: (ray: DRay): DRay => {
+      ray.genAbortController?.abort();
+      return {
+        ...ray,
+        genAbortController: undefined,
+      };
     },
 
-    syncState: () => {
+
+    syncRaysStateToBeam: () => {
       const { isScattering, rays } = _get();
 
       // Check if all rays have finished generating
-      const allDone = rays.every(ray => !ray.isGenerating);
+      const allDone = rays.every(ray => !ray.genAbortController);
 
       if (allDone) {
         // If all rays are done, update state accordingly
@@ -244,12 +262,16 @@ export const useBeamStoreRay = (beamStore: BeamStoreApi, rayIndex: number) => {
   const dRay: DRay | null = useStore(beamStore, (store) => store.rays[rayIndex] ?? null);
 
   const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
-    beamStore.getState().updateRayByIndex(rayIndex, { scatterLlmId: llmId });
-  }, [beamStore, rayIndex]);
+    beamStore.getState().updateRayById(dRay.rayId, { scatterLlmId: llmId });
+  }, [beamStore, dRay.rayId]);
 
   const clearRayLlmId = React.useCallback(() => {
     setRayLlmId(null);
   }, [setRayLlmId]);
+
+  const startStopRay = React.useCallback(() => {
+
+  }, []);
 
   return { dRay, clearRayLlmId, setRayLlmId };
 };
