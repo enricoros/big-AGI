@@ -10,6 +10,8 @@ export function BeamHeader(props: {
   llmComponent: React.ReactNode,
   rayCount: number,
   setRayCount: (n: number) => void,
+  startEnabled: boolean,
+  startBusy: boolean
   onStart: () => void,
 }) {
 
@@ -23,7 +25,7 @@ export function BeamHeader(props: {
         backgroundColor: 'background.surface',
         boxShadow: 'md',
         p: 'var(--Pad)',
-        zIndex: 1, // stay on top of the user message
+        zIndex: 1, // stay on top of the user message, for shadow to cast on it
 
         // layout: max 2 cols (/3 with gap) of min 200px per col
         display: 'grid',
@@ -86,7 +88,10 @@ export function BeamHeader(props: {
 
           {/* Start ... */}
           <Button
-            variant='solid' color='success'
+            variant='solid'
+            color='success'
+            disabled={!props.startEnabled || props.startBusy}
+            loading={props.startBusy}
             onClick={props.onStart}
             // endDecorator={<ChatBeamIcon />}
             sx={{ ml: 'auto', minWidth: 80 }}

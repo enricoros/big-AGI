@@ -66,37 +66,41 @@ function BeamViewBase(props: {
   sx?: SxProps
 }) {
 
-  const { close: beamClose, setRayCount: beamSetRayCount } = props.beamStore.getState();
-
-  // state
-  const { inputHistory, configIssue, gatherLlmId, setGatherLlmId, raysCount } = useBeamStore(props.beamStore,
-    useShallow((state) => ({
-      inputHistory: state.inputHistory,
-      configIssue: state.inputIssues,
-      gatherLlmId: state.gatherLlmId,
-      setGatherLlmId: state.setGatherLlmId,
-      raysCount: state.rays.length,
-    })),
-  );
-
-  // external state
+  // linked state
+  const {
+    inputHistory, inputIssues,
+    gatherLlmId,
+    readyScatter, isScattering,
+    readyGather, isGathering,
+    raysCount,
+  } = useBeamStore(props.beamStore, useShallow((state) => ({
+    // state
+    inputHistory: state.inputHistory,
+    inputIssues: state.inputIssues,
+    gatherLlmId: state.gatherLlmId,
+    readyScatter: state.readyScatter,
+    isScattering: state.isScattering,
+    readyGather: state.readyGather,
+    isGathering: state.isGathering,
+    raysCount: state.rays.length,
+  })));
+  const { close: beamClose, setRayCount, startScattering, setGatherLlmId } = props.beamStore.getState();
   const [gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
-  // derived state
-  const lastMessage = inputHistory?.slice(-1)[0] || null;
+
+  // configuration
+
+  const handleDispose = React.useCallback(() => beamClose(), [beamClose]);
+
+  const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
+
+  const handleRayIncreaseCount = React.useCallback(() => setRayCount(raysCount + 1), [setRayCount, raysCount]);
 
 
-  // handlers
+  // runnning
 
-  const handleCloseKeepRunning = React.useCallback(() => beamClose(), [beamClose]);
+  const handleStart = React.useCallback(() => startScattering(gatherLlmId), [gatherLlmId, startScattering]);
 
-  const handleRaySetCount = React.useCallback((n: number) => {
-    beamSetRayCount(n);
-  }, [beamSetRayCount]);
-
-  const handleRayIncreaseCount = React.useCallback(() => {
-    beamSetRayCount(raysCount + 1);
-  }, [beamSetRayCount, raysCount]);
 
   // [effect] start with 2 rays
   const bootup = !raysCount;
@@ -105,10 +109,7 @@ function BeamViewBase(props: {
   }, [bootup, handleRaySetCount]);
 
 
-  const handleStart = React.useCallback(() => {
-    console.log('Start');
-    // beamStore.destroy();
-  }, []);
+  const lastMessage = inputHistory?.slice(-1)[0] || null;
 
 
   return (
@@ -127,7 +128,7 @@ function BeamViewBase(props: {
     }}>
 
       {/* Config Issues */}
-      {!!configIssue && <Alert>{configIssue}</Alert>}
+      {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
       {/* Header */}
       <BeamHeader
@@ -135,6 +136,8 @@ function BeamViewBase(props: {
         llmComponent={gatherLlmComponent}
         rayCount={raysCount}
         setRayCount={handleRaySetCount}
+        startEnabled={readyScatter}
+        startBusy={isScattering}
         onStart={handleStart}
       />
 
@@ -192,7 +195,7 @@ function BeamViewBase(props: {
 
       {/* Bottom Bar */}
       <Sheet sx={{ mt: 'auto', p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        <Button variant='solid' color='neutral' onClick={handleCloseKeepRunning} sx={{ ml: 'auto', minWidth: 100 }}>
+        <Button variant='solid' color='neutral' onClick={handleDispose} sx={{ ml: 'auto', minWidth: 100 }}>
           Close
         </Button>
       </Sheet>
