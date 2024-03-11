@@ -53,6 +53,57 @@ export const RayCard = styled(Box)(({ theme }) => ({
 RayCard.displayName = 'RayCard';
 
 
+function ControlsRow(props: {
+  isEmpty: boolean;
+  isLlmLinked: boolean;
+  isScattering: boolean;
+  llmComponent: React.ReactNode;
+  onLink: () => void;
+  onRemove: () => void;
+  onToggleGenerate: () => void;
+}) {
+  return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    {SHOW_DRAG_HANDLE && (
+      <IconButton disabled size='sm'>
+        <DragIndicatorIcon />
+      </IconButton>
+    )}
+
+    <Box sx={{ flex: 1 }}>
+      {props.llmComponent}
+    </Box>
+
+    {!props.isLlmLinked && (
+      <GoodTooltip title={props.isLlmLinked ? undefined : 'Link Model'}>
+        <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>
+          {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
+        </IconButton>
+      </GoodTooltip>
+    )}
+
+    {!props.isScattering ? (
+      <GoodTooltip title='Generate'>
+        <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
+          {props.isEmpty ? <PlayArrowRoundedIcon /> : <ReplayRoundedIcon />}
+        </IconButton>
+      </GoodTooltip>
+    ) : (
+      <GoodTooltip title='Stop'>
+        <IconButton size='sm' variant='plain' color='danger' onClick={props.onToggleGenerate}>
+          <StopRoundedIcon />
+        </IconButton>
+      </GoodTooltip>
+    )}
+
+    <GoodTooltip title='Remove'>
+      <IconButton size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
+        <RemoveCircleOutlineRoundedIcon />
+      </IconButton>
+    </GoodTooltip>
+  </Box>;
+}
+
+
 const chatMessageEmbeddedSx: SxProps = {
   // style: to undo the style of ChatMessage
   border: 'none',
@@ -61,23 +112,6 @@ const chatMessageEmbeddedSx: SxProps = {
   px: 0,
   py: 0,
 } as const;
-
-
-function StartStopButton(props: { isStarted: boolean, isFirstTime: boolean, onToggleGenerate: () => void }) {
-  return !props.isStarted ? (
-    <GoodTooltip title='Generate'>
-      <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
-        {props.isFirstTime ? <PlayArrowRoundedIcon /> : <ReplayRoundedIcon />}
-      </IconButton>
-    </GoodTooltip>
-  ) : (
-    <GoodTooltip title='Stop'>
-      <IconButton size='sm' variant='plain' color='danger' onClick={props.onToggleGenerate}>
-        <StopRoundedIcon />
-      </IconButton>
-    </GoodTooltip>
-  );
-}
 
 
 export function BeamRay(props: {
@@ -91,20 +125,17 @@ export function BeamRay(props: {
   const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
 
   // derived state
-  const rayEmpty = !ray?.message?.updated;
-  const rayScattering = !!ray?.genAbortController;
+  const isEmpty = !ray?.message?.updated;
+  const isScattering = !!ray?.genAbortController;
   const { removeRay, updateRay, toggleScattering } = props.beamStore.getState();
 
   const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
-  const rayLlmId = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
-  const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
+  const llmId: DLLMId | null = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => {
     updateRay(props.rayId, { scatterLlmId: llmId });
   }, [props.rayId, updateRay]);
-  const clearRayLlmId = React.useCallback(() => setRayLlmId(null), [setRayLlmId]);
-  const [_rayLlm, rayLlmComponent] = useLLMSelect(
-    rayLlmId, setRayLlmId,
-    '', true, rayScattering,
-  );
+  const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
+  const [_, llmComponent] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
 
 
   // handlers
@@ -113,7 +144,7 @@ export function BeamRay(props: {
     toggleScattering(props.rayId);
   }, [props.rayId, toggleScattering]);
 
-  const handleRemoveRay = React.useCallback(() => {
+  const handleRayRemove = React.useCallback(() => {
     removeRay(props.rayId);
   }, [props.rayId, removeRay]);
 
@@ -122,44 +153,18 @@ export function BeamRay(props: {
     <RayCard>
 
       {/* Controls Row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {/* Drag */}
-        {SHOW_DRAG_HANDLE && (
-          <IconButton disabled size='sm' sx={undefined /*{ ml: 'calc(-0.5 * var(--Card-padding))' }*/}>
-            <DragIndicatorIcon />
-          </IconButton>
-        )}
-
-        {/* LLM Selector*/}
-        <Box sx={{ flex: 1 }}>
-          {rayLlmComponent}
-        </Box>
-        {/* Linker */}
-        {!isLlmLinked && (
-          <GoodTooltip title={isLlmLinked ? undefined : 'Link Model'}>
-            <IconButton disabled={isLlmLinked || rayScattering} size='sm' onClick={clearRayLlmId}>
-              {isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
-            </IconButton>
-          </GoodTooltip>
-        )}
-
-        {/* Start / Stop */}
-        <StartStopButton
-          isStarted={rayScattering}
-          isFirstTime={rayEmpty}
-          onToggleGenerate={handleRayToggleGenerate}
-        />
-
-        {/* Remove */}
-        <GoodTooltip title='Remove'>
-          <IconButton size='sm' variant='plain' color='neutral' onClick={handleRemoveRay}>
-            <RemoveCircleOutlineRoundedIcon />
-          </IconButton>
-        </GoodTooltip>
-      </Box>
+      <ControlsRow
+        isEmpty={isEmpty}
+        isLlmLinked={isLlmLinked}
+        isScattering={isScattering}
+        llmComponent={llmComponent}
+        onLink={handleLlmLink}
+        onRemove={handleRayRemove}
+        onToggleGenerate={handleRayToggleGenerate}
+      />
 
       {/* Ray Message */}
-      {(!!ray?.message && !rayEmpty) && (
+      {(!!ray?.message && !isEmpty) && (
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
