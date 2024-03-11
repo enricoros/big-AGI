@@ -22,7 +22,7 @@ import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 
 
 // How long is the user collapsed message
-const USER_COLLAPSED_LINES: number = 8;
+const USER_COLLAPSED_LINES: number = 7;
 
 
 const blocksSx: SxProps = {
@@ -214,9 +214,9 @@ export function BlocksRenderer(props: {
       )}
 
       {isTextCollapsed ? (
-        <Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Expand</Button>
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Expand</Button></Box>
       ) : forceUserExpanded && (
-        <Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Collapse</Button>
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Collapse</Button></Box>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
