@@ -4,12 +4,11 @@ import { Box, Button, Typography } from '@mui/joy';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { BeamStoreApi, createBeamStore, useBeamStore } from '~/common/chats/store-beam';
+import { Beam } from '~/common/beam/Beam';
+import { BeamStoreApi, createBeamStore, useBeamStore } from '~/common/beam/store-beam';
 import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-
-import { BeamView } from '../chat/components/beam/BeamView';
 
 
 function initTestConversation(): DConversation {
@@ -61,7 +60,7 @@ export function AppBeam() {
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
-      <BeamView beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
+      <Beam beamStore={beamStoreApi} isMobile={isMobile} sx={{ height: '100%' }} />
 
       {showDebug && (
         <Typography level='body-xs' sx={{ whiteSpace: 'pre', position: 'absolute', inset: 0, zIndex: 1, backdropFilter: 'blur(8px)', padding: '1rem' }}>

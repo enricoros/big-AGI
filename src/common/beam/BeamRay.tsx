@@ -6,13 +6,14 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 
+import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { BeamStoreApi, useBeamStoreBeam } from '~/common/chats/store-beam';
 import { createDMessage } from '~/common/state/store-chats';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { ChatMessageMemo } from '../message/ChatMessage';
+import { BeamStoreApi, useBeamStoreBeam } from './store-beam';
 
 
 const rayCardClasses = {
