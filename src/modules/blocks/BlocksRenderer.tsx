@@ -214,9 +214,9 @@ export function BlocksRenderer(props: {
       )}
 
       {isTextCollapsed ? (
-        <Button variant='soft' color='primary' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, justifyContent: 'space-between' }}>Expand</Button>
+        <Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Expand</Button>
       ) : forceUserExpanded && (
-        <Button variant='plain' color='neutral' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, justifyContent: 'space-between' }}>Collapse</Button>
+        <Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Collapse</Button>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
