@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { createStore } from 'zustand/vanilla';
 import { type StoreApi, useStore } from 'zustand';
@@ -27,6 +26,72 @@ function createDRay(scatterLlmId: DLLMId | null, _index: number): DRay {
     rayId: uuidv4(),
     message: createDMessage('assistant', '💫 ...'), // String.fromCharCode(65 + index) /*+ ' ... 🖊️'*/ /* '💫 ...' */),
     scatterLlmId,
+  };
+}
+
+function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
+  if (ray.genAbortController)
+    return ray;
+
+  const { gatherLlmId, inputHistory, rays, updateRay, syncRaysStateToBeam } = beamStore;
+
+  // validate model
+  const rayLlmId = ray.scatterLlmId || gatherLlmId;
+  if (!rayLlmId)
+    return { ...ray, scatterIssue: 'No model selected' };
+
+  // validate history
+  if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
+    return { ...ray, scatterIssue: `Invalid conversation history (${inputHistory?.length})` };
+
+  const abortController = new AbortController();
+
+  const updateMessage = (update: Partial<DMessage>) => updateRay(ray.rayId, (ray) => ({
+    ...ray,
+    message: {
+      ...ray.message,
+      ...update,
+      updated: Date.now(),
+    },
+  }));
+
+  // stream the assistant's messages
+  streamAssistantMessage(rayLlmId, inputHistory, rays.length, 'off', updateMessage, abortController.signal)
+    .then(() => updateRay(ray.rayId, {
+      genAbortController: undefined,
+    }))
+    .catch((error) => {
+      console.error('rayScatterStart', error);
+      updateRay(ray.rayId, {
+          genAbortController: undefined,
+          scatterIssue: error?.message || error?.toString() || 'Unknown error',
+        },
+      );
+    })
+    .finally(() => {
+      // const allDone = rays.every(ray => !ray.genAbortController);
+      // if (allDone) ...
+      syncRaysStateToBeam();
+    });
+
+  return {
+    ...ray,
+    message: {
+      ...ray.message,
+      text: '💫 Generating ...',
+      updated: Date.now(),
+    },
+    scatterLlmId: rayLlmId,
+    scatterIssue: undefined,
+    genAbortController: abortController,
+  };
+}
+
+function rayScatterStop(ray: DRay): DRay {
+  ray.genAbortController?.abort();
+  return {
+    ...ray,
+    genAbortController: undefined,
   };
 }
 
@@ -59,10 +124,10 @@ export interface BeamStore extends BeamState {
 
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
+  toggleScattering: (rayId: DRayId) => void;
+  removeRay: (rayId: DRayId) => void;
 
-  updateRayById: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
-  startScattering: (ray: DRay) => DRay;
-  stopScattering: (ray: DRay) => DRay;
+  updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
 
   syncRaysStateToBeam: () => void;
 
@@ -141,93 +206,53 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
 
     startScatteringAll: () => {
-      const { readyScatter, isScattering, inputHistory, rays, startScattering } = _get();
+      const { readyScatter, isScattering, inputHistory, rays } = _get();
       if (!readyScatter || isScattering) {
         console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
         return;
       }
       _set({
         isScattering: true,
-        rays: rays.map(startScattering),
+        rays: rays.map(ray => rayScatterStart(ray, _get())),
       });
     },
 
     stopScatteringAll: () => {
-      const { isScattering, rays, stopScattering } = _get();
+      const { isScattering, rays } = _get();
       if (!isScattering) {
         console.warn('stopScattering: not scattering', { isScattering });
         return;
       }
       _set({
         isScattering: false,
-        rays: rays.map(stopScattering),
+        rays: rays.map(ray => rayScatterStop(ray)),
+      });
+    },
+
+    toggleScattering: (rayId: DRayId) => {
+      const store = _get();
+      const newRays = store.rays.map((ray) => (ray.rayId === rayId)
+        ? (ray.genAbortController ? rayScatterStop(ray) : rayScatterStart(ray, _get()))
+        : ray,
+      );
+      const anyStarted = newRays.some((ray) => !!ray.genAbortController);
+      _set({
+        isScattering: anyStarted,
+        rays: newRays,
       });
     },
 
 
-    updateRayById: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
+    removeRay: (rayId: DRayId) => _set((state) => ({
+      rays: state.rays.filter((ray) => ray.rayId !== rayId),
+    })),
+
+    updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
       rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
         : ray,
       ),
     })),
-
-    startScattering: (ray: DRay): DRay => {
-      if (ray.genAbortController)
-        return ray;
-
-      const { gatherLlmId, inputHistory, rays, updateRayById, syncRaysStateToBeam } = _get();
-
-      // validate model
-      const rayLlmId = ray.scatterLlmId || gatherLlmId;
-      if (!rayLlmId)
-        return { ...ray, scatterIssue: 'No model selected' };
-
-      // validate history
-      if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
-        return { ...ray, scatterIssue: `Invalid conversation history (${inputHistory?.length})` };
-
-      const abortController = new AbortController();
-
-      // stream the assistant's messages
-      streamAssistantMessage(
-        rayLlmId,
-        inputHistory,
-        rays.length,
-        'off',
-        (update) => updateRayById(ray.rayId, (ray) => ({
-          ...ray,
-          message: {
-            ...ray.message,
-            ...update,
-            updated: Date.now(),
-          },
-        })),
-        abortController.signal,
-      ).then(() => updateRayById(ray.rayId, {
-          genAbortController: undefined,
-        },
-      )).catch((error) => updateRayById(ray.rayId, {
-          genAbortController: undefined,
-          scatterIssue: error?.message || error?.toString() || 'Unknown error',
-        },
-      )).finally(() => {
-        syncRaysStateToBeam();
-      });
-
-      return {
-        ...ray,
-        genAbortController: abortController,
-      };
-    },
-
-    stopScattering: (ray: DRay): DRay => {
-      ray.genAbortController?.abort();
-      return {
-        ...ray,
-        genAbortController: undefined,
-      };
-    },
 
 
     syncRaysStateToBeam: () => {
@@ -256,22 +281,3 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
 export const useBeamStore = <T, >(beamStore: BeamStoreApi, selector: (store: BeamStore) => T): T =>
   useStore(beamStore, selector);
-
-
-export const useBeamStoreRay = (beamStore: BeamStoreApi, rayIndex: number) => {
-  const dRay: DRay | null = useStore(beamStore, (store) => store.rays[rayIndex] ?? null);
-
-  const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
-    beamStore.getState().updateRayById(dRay.rayId, { scatterLlmId: llmId });
-  }, [beamStore, dRay.rayId]);
-
-  const clearRayLlmId = React.useCallback(() => {
-    setRayLlmId(null);
-  }, [setRayLlmId]);
-
-  const startStopRay = React.useCallback(() => {
-
-  }, []);
-
-  return { dRay, clearRayLlmId, setRayLlmId };
-};

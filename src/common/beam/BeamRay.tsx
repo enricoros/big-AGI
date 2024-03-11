@@ -3,9 +3,11 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, styled } from '@mui/joy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
@@ -15,7 +17,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, useBeamStoreRay } from './store-beam';
+import { BeamStoreApi, useBeamStore } from './store-beam';
 
 
 // component configuration
@@ -61,29 +63,19 @@ const chatMessageEmbeddedSx: SxProps = {
 } as const;
 
 
-function StartStopButton(props: {
-  isStarted: boolean,
-  isStopped: boolean,
-  onStart: () => void,
-  onStop: () => void,
-}) {
-  return (
-    <>
-      {props.isStopped && (
-        <GoodTooltip title='Start Single'>
-          <IconButton size='sm' variant='plain' color='success' onClick={props.onStart}>
-            <PlayArrowRoundedIcon />
-          </IconButton>
-        </GoodTooltip>
-      )}
-      {props.isStarted && (
-        <GoodTooltip title='Start Single'>
-          <IconButton size='sm' variant='plain' color='danger' onClick={props.onStop}>
-            <StopRoundedIcon />
-          </IconButton>
-        </GoodTooltip>
-      )}
-    </>
+function StartStopButton(props: { isStarted: boolean, isFirstTime: boolean, onToggleGenerate: () => void }) {
+  return !props.isStarted ? (
+    <GoodTooltip title='Generate'>
+      <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
+        {props.isFirstTime ? <PlayArrowRoundedIcon /> : <ReplayRoundedIcon />}
+      </IconButton>
+    </GoodTooltip>
+  ) : (
+    <GoodTooltip title='Stop'>
+      <IconButton size='sm' variant='plain' color='danger' onClick={props.onToggleGenerate}>
+        <StopRoundedIcon />
+      </IconButton>
+    </GoodTooltip>
   );
 }
 
@@ -96,20 +88,36 @@ export function BeamRay(props: {
 }) {
 
   // external state
-  const { dRay, setRayLlmId, clearRayLlmId } = useBeamStoreRay(props.beamStore, props.index);
-  const isLinked = !!props.gatherLlmId && !dRay.scatterLlmId;
-  const [rayLlm, rayLlmComponent] = useLLMSelect(isLinked ? props.gatherLlmId : dRay.scatterLlmId, setRayLlmId, '', true);
+  const ray = useBeamStore(props.beamStore, (store) => store.rays[props.index] ?? null);
+
+  // derived state
+  const rayId = ray?.rayId || null;
+  const rayEmpty = !ray?.message?.updated;
+  const rayScattering = !!ray?.genAbortController;
+  const { removeRay, updateRay, toggleScattering } = props.beamStore.getState();
+
+  const isLlmLinked = !!props.gatherLlmId && !ray.scatterLlmId;
+  const rayLlmId = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
+  const setRayLlmId = React.useCallback((llmId: DLLMId | null) => {
+    return rayId && updateRay(rayId, { scatterLlmId: llmId });
+  }, [rayId, updateRay]);
+  const clearRayLlmId = React.useCallback(() => setRayLlmId(null), [setRayLlmId]);
+  const [_rayLlm, rayLlmComponent] = useLLMSelect(
+    rayLlmId, setRayLlmId,
+    '', true, rayScattering,
+  );
 
 
-  const handleStart = React.useCallback(() => {
+  // handlers
 
-  }, []);
+  const handleRayToggleGenerate = React.useCallback(() => {
+    rayId && toggleScattering(rayId);
+  }, [rayId, toggleScattering]);
 
-  const handleStop = React.useCallback(() => {
+  const handleRemoveRay = React.useCallback(() => {
+    rayId && removeRay(rayId);
+  }, [rayId, removeRay]);
 
-  }, []);
-
-  const isStopped = !dRay.genAbortController;
 
   return (
     <RayCard>
@@ -128,23 +136,32 @@ export function BeamRay(props: {
           {rayLlmComponent}
         </Box>
         {/* Linker */}
-        <GoodTooltip title={isLinked ? undefined : 'Link Model'}>
-          <IconButton disabled={isLinked} size='sm' onClick={clearRayLlmId}>
-            {isLinked ? <LinkIcon /> : <LinkOffIcon />}
-          </IconButton>
-        </GoodTooltip>
+        {!isLlmLinked && (
+          <GoodTooltip title={isLlmLinked ? undefined : 'Link Model'}>
+            <IconButton disabled={isLlmLinked || rayScattering} size='sm' onClick={clearRayLlmId}>
+              {isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
+            </IconButton>
+          </GoodTooltip>
+        )}
 
         {/* Start / Stop */}
         <StartStopButton
-          isStarted={!isStopped}
-          isStopped={isStopped}
-          onStart={handleStart}
-          onStop={handleStop}
+          isStarted={rayScattering}
+          isFirstTime={rayEmpty}
+          onToggleGenerate={handleRayToggleGenerate}
         />
+
+        {/* Remove */}
+        <GoodTooltip title='Remove'>
+          <IconButton size='sm' variant='plain' color='neutral' onClick={handleRemoveRay}>
+            <HighlightOffRoundedIcon />
+            {/*<RemoveCircleOutlineRoundedIcon />*/}
+          </IconButton>
+        </GoodTooltip>
       </Box>
 
       {/* Ray Message */}
-      {(!!dRay.message && !!dRay.message.updated) && (
+      {(!!ray.message && !rayEmpty) && (
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -154,7 +171,7 @@ export function BeamRay(props: {
           // aspectRatio: 1,
         }}>
           <ChatMessageMemo
-            message={dRay.message}
+            message={ray.message}
             fitScreen={props.isMobile}
             showAvatar={false}
             adjustContentScaling={-1}
