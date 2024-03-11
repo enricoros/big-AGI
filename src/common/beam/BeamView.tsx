@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
+import { Alert, Box, Button, Typography } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
@@ -10,8 +10,9 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamScatterControls } from './BeamScatterControls';
+import { BeamGatherControls } from './BeamGatherControls';
 import { BeamRay, RayCard } from './BeamRay';
+import { BeamScatterControls } from './BeamScatterControls';
 import { BeamStoreApi, useBeamStore } from './store-beam';
 
 
@@ -24,9 +25,9 @@ const userMessageSx: SxProps = {
   border: '1px solid',
   borderColor: 'neutral.outlinedBorder',
   borderRadius: 'md',
+  borderTop: 'none',
   borderTopLeftRadius: 0,
   borderTopRightRadius: 0,
-  borderTop: 'none',
   px: '0.5rem',
   // boxShadow: 'sm',
   // the following make it end-aligned
@@ -36,10 +37,11 @@ const userMessageSx: SxProps = {
 } as const;
 
 const assistantMessageSx: SxProps = {
+  backgroundColor: 'success.softBg',
   border: '1px solid',
-  borderBottom: 0,
   borderColor: 'neutral.outlinedBorder',
   borderRadius: 'md',
+  borderBottom: 'none',
   borderBottomLeftRadius: 0,
   borderBottomRightRadius: 0,
   px: '0.5rem',
@@ -93,7 +95,7 @@ function BeamViewBase(props: {
 
   // configuration
 
-  const handleDispose = React.useCallback(() => beamClose(), [beamClose]);
+  const handleBeamDispose = React.useCallback(() => beamClose(), [beamClose]);
 
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
@@ -140,7 +142,7 @@ function BeamViewBase(props: {
       {/* Config Issues */}
       {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
-      {/* Header */}
+      {/* Scatter Controls */}
       <BeamScatterControls
         isMobile={props.isMobile}
         llmComponent={gatherLlmComponent}
@@ -169,47 +171,41 @@ function BeamViewBase(props: {
         </Box>
       )}
 
-      {/* Rays */}
-      {!!raysCount && (
-        <Box sx={{
-          mx: 'var(--Pad)',
-          display: 'grid',
-          gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-          gap: 'var(--Pad)',
-        }}>
+      {/* Rays Grid */}
+      <Box sx={{
+        mx: 'var(--Pad)',
+        mb: 'auto',
+        display: 'grid',
+        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+        gap: 'var(--Pad)',
+      }}>
 
-          {rayIds.map((rayId) => (
-            <BeamRay
-              key={'ray-' + rayId}
-              beamStore={props.beamStore}
-              rayId={rayId}
-              isMobile={props.isMobile}
-              gatherLlmId={gatherLlmId}
-            />
-          ))}
+        {rayIds.map((rayId) => (
+          <BeamRay
+            key={'ray-' + rayId}
+            beamStore={props.beamStore}
+            rayId={rayId}
+            isMobile={props.isMobile}
+            gatherLlmId={gatherLlmId}
+          />
+        ))}
 
-          {/* Increment Rays Button */}
-          {raysCount < MAX_RAY_COUNT && (
-            <RayCard sx={{ mb: 'auto' }}>
-              <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
-                height: '100%',
-                margin: 'calc(-1 * var(--Card-padding) + 0.25rem)',
-                minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
-                // minHeight: '2rem',
-              }}>
-                <AddCircleOutlineRoundedIcon />
-              </Button>
-            </RayCard>
-          )}
+        {/* Add Ray */}
+        {raysCount < MAX_RAY_COUNT && (
+          <RayCard sx={{ mb: 'auto' }}>
+            <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
+              margin: 'calc(-1 * var(--Card-padding) + 0.25rem)',
+              minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
+            }}>
+              <AddCircleOutlineRoundedIcon />
+            </Button>
+          </RayCard>
+        )}
 
-        </Box>
-      )}
-
-      {/* <-- v-expander --> */}
-      <Box sx={{ flex: 1 }} />
+      </Box>
 
       {/* Gather Message */}
-      {!!gatherMessage && (
+      {(!!gatherMessage && !!gatherMessage.updated) && (
         <Box sx={{
           px: 'var(--Pad)',
           mb: 'calc(-1 * var(--Pad))',
@@ -224,12 +220,15 @@ function BeamViewBase(props: {
         </Box>
       )}
 
-      {/* Bottom Bar */}
-      <Sheet sx={{ p: 'var(--Pad)', display: 'flex', flexWrap: 'wrap', gap: 1, boxShadow: 'md' }}>
-        <Button variant='solid' color='neutral' onClick={handleDispose} sx={{ ml: 'auto', minWidth: 100 }}>
-          Close
-        </Button>
-      </Sheet>
+      {/* Gather Controls */}
+      <BeamGatherControls
+        isMobile={props.isMobile}
+        gatherEnabled={true}
+        gatherBusy={false}
+        onStart={() => null}
+        onStop={() => null}
+        onClose={handleBeamDispose}
+      />
 
     </Box>
   );
