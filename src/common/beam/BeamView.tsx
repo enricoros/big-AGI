@@ -10,7 +10,7 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamHeader } from './BeamHeader';
+import { BeamScatterControls } from './BeamScatterControls';
 import { BeamRay, RayCard } from './BeamRay';
 import { BeamStoreApi, useBeamStore } from './store-beam';
 
@@ -141,7 +141,7 @@ function BeamViewBase(props: {
       {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
       {/* Header */}
-      <BeamHeader
+      <BeamScatterControls
         isMobile={props.isMobile}
         llmComponent={gatherLlmComponent}
         rayCount={raysCount}
@@ -205,6 +205,7 @@ function BeamViewBase(props: {
         </Box>
       )}
 
+      {/* <-- v-expander --> */}
       <Box sx={{ flex: 1 }} />
 
       {/* Gather Message */}
