@@ -560,15 +560,10 @@ export function AppChat() {
 
             {!!_paneChatBeamStore && (
               <BeamView
-                // key={`beam-${_paneConversationId}` /* used to invalidate state when switching chats */}
-                // conversationHandler={_paneChatHandler}
                 beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
                 sx={{
-                  overflowY: 'auto',
                   backgroundColor: 'background.level1',
-                  // backgroundColor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.9)`,
-                  // backdropFilter: 'blur(6px)',
                   position: 'absolute',
                   inset: 0,
                   zIndex: 10, // stay on top of Message > Chips (:1), and Overlays (:2) :shrug:
