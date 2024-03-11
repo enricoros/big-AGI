@@ -1,6 +1,8 @@
 import * as React from 'react';
 
 import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -14,6 +16,7 @@ export function BeamHeader(props: {
   startEnabled: boolean,
   startBusy: boolean
   onStart: () => void,
+  onStop: () => void,
 }) {
 
   return (
@@ -87,18 +90,28 @@ export function BeamHeader(props: {
             })}
           </ButtonGroup>
 
-          {/* Start ... */}
-          <Button
-            variant='solid'
-            color='success'
-            disabled={!props.startEnabled || props.startBusy}
-            loading={props.startBusy}
-            onClick={props.onStart}
-            // endDecorator={<ChatBeamIcon />}
-            sx={{ ml: 'auto', minWidth: 80 }}
-          >
-            Start
-          </Button>
+          {!props.startBusy ? (
+            // Start
+            <Button
+              variant='solid' color='success'
+              disabled={!props.startEnabled || props.startBusy} loading={props.startBusy}
+              endDecorator={<PlayArrowRoundedIcon />}
+              onClick={props.onStart}
+              sx={{ ml: 'auto', minWidth: 80, animation: `${animationEnterBelow} 0.1s ease-out` }}
+            >
+              Start
+            </Button>
+          ) : (
+            // Stop
+            <Button
+              variant='solid' color='danger'
+              endDecorator={<StopRoundedIcon />}
+              onClick={props.onStop}
+              sx={{ ml: 'auto', minWidth: 80, animation: `${animationEnterBelow} 0.1s ease-out` }}
+            >
+              Stop
+            </Button>
+          )}
         </Box>
       </FormControl>
 

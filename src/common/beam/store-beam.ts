@@ -54,6 +54,7 @@ export interface BeamStore {
   updateRayByIndex: (index: number, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
 
   startScattering: (gatherLlmId: DLLMId | null) => void;
+  stopScattering: () => void;
   syncState: () => void;
 
 }
@@ -187,6 +188,27 @@ export const createBeamStore = () => createStore<BeamStore>()(
           };
         }),
       });
+
+    },
+
+    stopScattering: () => {
+      const { isScattering, rays } = _get();
+      if (!isScattering) {
+        console.warn('stopScattering: not scattering', { isScattering });
+        return;
+      }
+
+      // TODO...
+
+      // // stop scattering all rays
+      // rays.forEach((ray) => {
+      //   if (ray.abortController)
+      //     ray.abortController.abort();
+      // });
+      //
+      // _set({
+      //   isScattering: false,
+      // });
 
     },
 
