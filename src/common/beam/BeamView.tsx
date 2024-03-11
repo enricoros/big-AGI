@@ -48,7 +48,7 @@ const userMessageSx: SxProps = {
 } as const;
 
 
-export function Beam(props: {
+export function BeamView(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
   sx?: SxProps,
