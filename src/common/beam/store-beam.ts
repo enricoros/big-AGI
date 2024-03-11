@@ -38,8 +38,10 @@ function createDRay(scatterLlmId: DLLMId | null): DRay {
   };
 }
 
-function rayScatterStart(ray: DRay, beamStore: BeamStore): DRay {
+function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DRay {
   if (ray.genAbortController)
+    return ray;
+  if (onlyIdle && ray.status !== 'empty')
     return ray;
 
   const { gatherLlmId, inputHistory, rays, updateRay, syncRaysStateToBeam } = beamStore;
@@ -255,9 +257,10 @@ export const createBeamStore = () => createStore<BeamStore>()(
         console.warn('startScattering: not ready', { isScattering, readyScatter, inputHistory });
         return;
       }
+      const newRays = rays.map(ray => rayScatterStart(ray, false, _get()));
       _set({
-        isScattering: true,
-        rays: rays.map(ray => rayScatterStart(ray, _get())),
+        isScattering: newRays.some((ray) => ray.status === 'scattering'),
+        rays: newRays
       });
     },
 
@@ -272,7 +275,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     toggleScattering: (rayId: DRayId) => {
       const store = _get();
       const newRays = store.rays.map((ray) => (ray.rayId === rayId)
-        ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, _get()))
+        ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, false, _get()))
         : ray,
       );
       const anyStarted = newRays.some((ray) => ray.status === 'scattering');
