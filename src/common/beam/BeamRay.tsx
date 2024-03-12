@@ -193,7 +193,7 @@ export function BeamRay(props: {
       />
 
       {/* Ray Message */}
-      {(!!ray?.message?.text || !!ray?.message?.updated) && (
+      {(!!ray?.message?.text || ray?.status === 'scattering') && (
         <Box sx={{
           minHeight: '1.5rem',
           display: 'flex',
