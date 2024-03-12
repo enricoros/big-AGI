@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { Alert } from '@mui/joy';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -40,11 +39,9 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
-    <Alert variant='soft' color='warning' startDecorator={<WarningRoundedIcon color='warning' />}>
+    <Alert variant='soft' color='success'>
       <div>
-        Note: <strong>Claude-3</strong> API support is being added as the Anthropic API has changed. Please refer to <Link
-        level='body-sm' href='https://github.com/enricoros/big-AGI/issues/443' target='_blank'>issue #443</Link> for
-        updates.
+        Note: <strong>Claude-3</strong> models are now supported.
       </div>
     </Alert>
 
@@ -86,4 +83,5 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     {isError && <InlineError error={error} />}
 
   </>;
+  ;
 }

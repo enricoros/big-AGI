@@ -8,7 +8,7 @@ import { SxProps } from '@mui/joy/styles/types';
  * Tooltip with text that wraps to multiple lines (doesn't go too long)
  */
 export const GoodTooltip = (props: {
-  title: string | React.JSX.Element | null,
+  title: React.ReactNode,
   placement?: 'top' | 'bottom' | 'top-start',
   isError?: boolean, isWarning?: boolean,
   children: React.JSX.Element,

@@ -1,5 +1,5 @@
 export function capitalizeFirstLetter(string: string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  return string?.length ? (string.charAt(0).toUpperCase() + string.slice(1)) : string;
 }
 
 export function createBase36Uid(checkDuplicates: string[]): string {

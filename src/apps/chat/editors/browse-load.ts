@@ -1,10 +1,10 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { ConversationManager } from '~/common/chats/ConversationHandler';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
 
 
 export const runBrowseGetPageUpdatingState = async (conversationId: string, url: string) => {
-  const cHandler = ConversationManager.getHandler(conversationId);
+  const cHandler = ConversationsManager.getHandler(conversationId);
 
   // noinspection HttpUrlsUsage
   const shortUrl = url.replace('https://www.', '').replace('https://', '').replace('http://', '').replace('www.', '');

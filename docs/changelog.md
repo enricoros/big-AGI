@@ -12,8 +12,9 @@ Prediction: OpenAI will release GPT-5 on March 14, 2024. We will support it on d
 - milestone: [1.15.0](https://github.com/enricoros/big-agi/milestone/15)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
-### What's New in 1.14.0 · March 6, 2024 · Modelmorphic
+### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
 
+- **Anthropic** [Claude-3](https://www.anthropic.com/news/claude-3-family) model family support. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support

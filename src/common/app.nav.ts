@@ -29,6 +29,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
 
 
@@ -60,6 +61,7 @@ export interface NavItemApp extends ItemBase {
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
+  isDev?: boolean,        // show a 'dev mode' badge
   _delete?: boolean,      // delete from the UI
 }
 
@@ -113,6 +115,7 @@ export const navItems: {
       route: '/draw',
       // hideOnMobile: true,
       hideDrawer: true,
+      isDev: true,
       _delete: true,
     },
     {
@@ -121,6 +124,7 @@ export const navItems: {
       iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
+      isDev: true,
       _delete: true,
     },
     {
@@ -129,6 +133,7 @@ export const navItems: {
       iconActive: AccountTreeIcon,
       type: 'app',
       route: '/patterns',
+      isDev: true,
       _delete: true,
     },
     {
@@ -139,6 +144,7 @@ export const navItems: {
       route: '/workspace',
       hideDrawer: true,
       hideOnMobile: true,
+      isDev: true,
       _delete: true,
     },
     // <-- divider here -->
@@ -157,11 +163,21 @@ export const navItems: {
       hideBar: true,
     },
     {
+      name: 'Beam',
+      icon: ChatBeamIcon,
+      type: 'app',
+      route: '/dev/beam',
+      hideDrawer: true,
+      hideIcon: true,
+      isDev: true,
+    },
+    {
       name: 'Media Library',
       icon: ImageOutlinedIcon,
       iconActive: ImageIcon,
       type: 'app',
       route: '/media',
+      isDev: true,
       _delete: true,
     },
     {

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
+import { v4 as uuidv4 } from 'uuid';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 
@@ -9,13 +10,21 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 // change this to increase/decrease the number history steps per pane
 const MAX_HISTORY_LENGTH = 10;
 
+// change this to allow for more/less panes
+const MAX_CONCURRENT_PANES = 4;
+
 // change to true to enable verbose console logging
 const DEBUG_PANES_MANAGER = false;
 
 
 interface ChatPane {
 
+  paneId: string;
+
   conversationId: DConversationId | null;
+
+  // other per-pane storage? or would this be cluttering the panes(view)-only abstaction?
+  // ... we are currently creating companion ConversationHandler obects for this
 
   history: DConversationId[]; // History of the conversationIds for this pane
   historyIndex: number; // Current position in the history for this pane
@@ -42,9 +51,19 @@ interface AppChatPanesStore {
 
 function createPane(conversationId: DConversationId | null = null): ChatPane {
   return {
+    paneId: uuidv4(),
     conversationId,
     history: conversationId ? [conversationId] : [],
     historyIndex: conversationId ? 0 : -1,
+  };
+}
+
+function duplicatePane(pane: ChatPane): ChatPane {
+  return {
+    paneId: uuidv4(),
+    conversationId: pane.conversationId,
+    history: [...pane.history],
+    historyIndex: pane.historyIndex,
   };
 }
 
@@ -68,8 +87,14 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
           };
         }
 
-        // Check if the conversation is already open in the focused pane.
+        // Sanity check: Get the focused pane
         const focusedPane = chatPanes[chatPaneFocusIndex];
+        if (!focusedPane) {
+          console.warn('openConversationInFocusedPane: focusedPane is null', chatPaneFocusIndex, chatPanes);
+          return state;
+        }
+
+        // Check if the conversation is already open in the focused pane.
         if (focusedPane.conversationId === conversationId) {
           if (DEBUG_PANES_MANAGER)
             console.log(`open-focuses: ${conversationId} is open in focused pane`, chatPaneFocusIndex, chatPanes);
@@ -80,7 +105,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         const truncatedHistory = focusedPane.history.slice(0, focusedPane.historyIndex + 1);
         const newHistory = [...truncatedHistory, conversationId].slice(-MAX_HISTORY_LENGTH);
 
-        // Update the focused pane with the new conversation.
+        // Update the focused pane with the new conversation and history.
         const newPanes = [...chatPanes];
         newPanes[chatPaneFocusIndex] = {
           ...focusedPane,
@@ -103,21 +128,30 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
       // Open a conversation in a new pane, reusing an existing pane if possible.
       const { chatPanes, chatPaneFocusIndex, openConversationInFocusedPane } = _get();
 
-      // one pane open: split it
-      if (chatPanes.length === 1) {
-        _set({
-          chatPanes: Array.from({ length: 2 }, () => ({ ...chatPanes[0] })),
-          chatPaneFocusIndex: 1,
-        });
+      // Copy from the focused pane, if there's one
+      const focusedPane = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex] ?? null : null;
+
+      // if fewer than the maximum panes, create a new pane and focus it
+      if (chatPanes.length < MAX_CONCURRENT_PANES) {
+        const insertIndex = chatPaneFocusIndex !== null ? chatPaneFocusIndex + 1 : chatPanes.length;
+        _set((state) => ({
+          chatPanes: [
+            ...state.chatPanes.slice(0, insertIndex),
+            focusedPane ? duplicatePane(focusedPane) : createPane(null),
+            ...state.chatPanes.slice(insertIndex),
+          ],
+          chatPaneFocusIndex: insertIndex,
+        }));
       }
-      // more than 2 panes, reuse the alt pane
-      else if (chatPanes.length >= 2 && chatPaneFocusIndex !== null) {
+      // max reached, replace the next pane (with wraparound) - note the outside logic won't get us here
+      else {
+        const replaceIndex = (chatPaneFocusIndex !== null ? chatPaneFocusIndex + 1 : 0) % MAX_CONCURRENT_PANES;
         _set({
-          chatPaneFocusIndex: chatPaneFocusIndex === 0 ? 1 : 0,
+          chatPaneFocusIndex: replaceIndex,
         });
       }
 
-      // will create a pane if none exists, or load the conversation in the focused pane
+      // Open the conversation in the newly created or updated pane
       openConversationInFocusedPane(conversationId);
 
       if (DEBUG_PANES_MANAGER)
@@ -171,21 +205,18 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
         // Clone the pane at the specified index, including a deep copy of the history array
         const paneToDuplicate = chatPanes[_srcIndex];
-        const duplicatedPane = {
-          ...paneToDuplicate,
-          history: [...paneToDuplicate.history], // Deep copy of the history array
-        };
+        const dstIndex = _srcIndex + 1;
 
         // Insert the duplicated pane into the array, right after the original pane
         const newPanes = [
-          ...chatPanes.slice(0, _srcIndex + 1),
-          duplicatedPane,
-          ...chatPanes.slice(_srcIndex + 1),
+          ...chatPanes.slice(0, dstIndex),
+          duplicatePane(paneToDuplicate),
+          ...chatPanes.slice(dstIndex),
         ];
 
         return {
           chatPanes: newPanes,
-          chatPaneFocusIndex: _srcIndex + 1,
+          chatPaneFocusIndex: dstIndex,
         };
       }),
 
@@ -284,7 +315,8 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
       }),
 
   }), {
-    name: 'app-app-chat-panes',
+    // note: added the '-2' suffix on 20240308 to invalidate the persisted state, as we are adding a paneId
+    name: 'app-app-chat-panes-2',
   },
 ));
 
@@ -336,7 +368,7 @@ export function usePanesManager() {
 
 export function usePaneDuplicateOrClose() {
   return useAppChatPanesStore(state => ({
-    canAddPane: state.chatPanes.length < 4,
+    canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES,
     isMultiPane: state.chatPanes.length > 1,
     duplicateFocusedPane: state.duplicateFocusedPane,
     removeOtherPanes: state.removeOtherPanes,
