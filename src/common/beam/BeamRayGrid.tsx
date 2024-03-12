@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
@@ -15,6 +16,20 @@ export const MAX_RAY_COUNT = 8;
 export const CONTROLS_RAY_PRESETS = [2, 4, 8];
 
 
+const beamRayGridDesktopSx: SxProps = {
+  mx: 'var(--Pad)',
+  mb: 'auto',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+  gap: 'var(--Pad)',
+} as const;
+
+const beamRayGridMobileSx: SxProps = {
+  ...beamRayGridDesktopSx,
+  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+} as const;
+
+
 export function BeamRayGrid(props: {
   beamStore: any,
   gatherLlmId: DLLMId | null,
@@ -27,14 +42,9 @@ export function BeamRayGrid(props: {
 
 
   return (
-    <Box sx={{
-      mx: 'var(--Pad)',
-      mb: 'auto',
-      display: 'grid',
-      gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-      gap: 'var(--Pad)',
-    }}>
+    <Box sx={props.isMobile ? beamRayGridMobileSx : beamRayGridDesktopSx}>
 
+      {/* Rays */}
       {props.rayIds.map((rayId) => (
         <BeamRay
           key={'ray-' + rayId}

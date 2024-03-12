@@ -69,9 +69,9 @@ function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: bo
 }
 
 
-const ControlsRowMemo = React.memo(ControlsRow);
+const RayControlsMemo = React.memo(RayControls);
 
-function ControlsRow(props: {
+function RayControls(props: {
   isEmpty: boolean,
   isLlmLinked: boolean,
   isRemovable: boolean
@@ -82,10 +82,12 @@ function ControlsRow(props: {
   onToggleGenerate: () => void,
 }) {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+    {/* Drag Handle */}
     {SHOW_DRAG_HANDLE && (
-      <IconButton disabled size='sm'>
-        <DragIndicatorIcon />
-      </IconButton>
+      <div style={{ display: 'flex' }}>
+        <DragIndicatorIcon sx={{ fontSize: 'xl', my: 'auto' }} />
+      </div>
     )}
 
     <Box sx={{ flex: 1 }}>
@@ -189,7 +191,7 @@ export function BeamRay(props: {
       )}
 
       {/* Controls Row */}
-      <ControlsRowMemo
+      <RayControlsMemo
         isEmpty={!isSelectable}
         isLlmLinked={isLlmLinked}
         isRemovable={props.isRemovable}
