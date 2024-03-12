@@ -9,9 +9,9 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamGatherControls } from './BeamGatherControls';
+import { BeamPaneGather } from './BeamPaneGather';
+import { BeamPaneScatter } from './BeamPaneScatter';
 import { BeamRayGrid, DEF_RAY_COUNT, MIN_RAY_COUNT } from './BeamRayGrid';
-import { BeamScatterControls } from './BeamScatterControls';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 
 
@@ -139,7 +139,7 @@ export function BeamView(props: {
       }}>
 
         {/* Scatter Controls */}
-        <BeamScatterControls
+        <BeamPaneScatter
           isMobile={props.isMobile}
           llmComponent={gatherLlmComponent}
           rayCount={raysCount}
@@ -195,7 +195,7 @@ export function BeamView(props: {
       </Box>
 
       {/* Gather Controls */}
-      <BeamGatherControls
+      <BeamPaneGather
         isMobile={props.isMobile}
         gatherCount={readyGather}
         gatherEnabled={readyGather > 0 && !isScattering}
