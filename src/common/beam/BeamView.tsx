@@ -239,7 +239,8 @@ function BeamViewBase(props: {
       {/* Gather Controls */}
       <BeamGatherControls
         isMobile={props.isMobile}
-        gatherEnabled={true}
+        gatherCount={readyGather}
+        gatherEnabled={readyGather > 0 && !isScattering}
         gatherBusy={false}
         onStart={() => null}
         onStop={() => null}

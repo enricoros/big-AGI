@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup } from '@mui/joy';
 
 import { beamControlsSx } from './BeamScatterControls';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -22,20 +22,22 @@ const beamGatherControlsSx: SxProps = {
 
 export function BeamGatherControls(props: {
   isMobile: boolean,
+  gatherCount: number
   gatherEnabled: boolean,
   gatherBusy: boolean,
   onStart: () => void,
   onStop: () => void,
-  onClose: () => void
+  onClose: () => void,
 }) {
+  const { gatherCount, gatherEnabled, gatherBusy } = props;
 
   return (
     <Box sx={beamGatherControlsSx}>
 
       {/* Algo */}
-      <FormControl>
-        {!props.isMobile && <FormLabelStart title='Beam Fusion' />}
-        <ButtonGroup variant='soft' color='success'>
+      {false && <FormControl disabled={!gatherEnabled}>
+        {!props.isMobile && <FormLabelStart title={`Beam Fusion${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />}
+        <ButtonGroup disabled={!gatherEnabled} variant='soft' color='success'>
           <Button
             sx={{
               // fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
@@ -51,26 +53,19 @@ export function BeamGatherControls(props: {
           <Button>
             ya
           </Button>
-
-          {/*{[2, 4, 8].map((n) => {*/}
-          {/*  const isActive = n === props.rayCount;*/}
-          {/*  return (*/}
-          {/*    <Button*/}
-          {/*      key={n}*/}
-          {/*      // variant={isActive ? 'solid' : undefined}*/}
-          {/*      color='neutral'*/}
-          {/*      onClick={() => props.setRayCount(n)}*/}
-          {/*    >*/}
-          {/*      {`x${n}`}*/}
-          {/*    </Button>*/}
-          {/*  );*/}
-          {/*})}*/}
         </ButtonGroup>
-      </FormControl>
+      </FormControl>}
 
-      <Typography sx={{ flex: 1, whiteSpace: 'break-spaces', border: '1px solid red' }}>
-        {JSON.stringify(props)}
-      </Typography>
+      {gatherEnabled && (
+        <FormControl>
+          <FormLabelStart title={`Beam Fusion${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />
+          <RadioGroup size='sm' defaultValue='outlined' orientation='horizontal'>
+            <Radio value='one' label='Pick Top' />
+            <Radio value='many' label='Improve Best' />
+            <Radio value='all' label='Fuse All' />
+          </RadioGroup>
+        </FormControl>
+      )}
 
       <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
         Close

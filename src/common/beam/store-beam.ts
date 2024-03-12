@@ -136,15 +136,16 @@ interface BeamState {
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
 
+  rays: DRay[];
+
   gatherLlmId: DLLMId | null;
   gatherMessage: DMessage | null;
   gatherAbortController: AbortController | null;
 
-  rays: DRay[];
+  readyScatter: boolean; // true if the input is valid
+  isScattering: boolean; // true if any ray is scattering at the moment
 
-  readyScatter: boolean;
-  isScattering: boolean;
-  readyGather: boolean;
+  readyGather: number;   // 0, or number of the rays that are ready to gather
   isGathering: boolean;
 
 }
@@ -182,13 +183,13 @@ export const createBeamStore = () => createStore<BeamStore>()(
     isOpen: false,
     inputHistory: null,
     inputIssues: null,
+    rays: [],
     gatherLlmId: null,
     gatherMessage: null,
     gatherAbortController: null,
-    rays: [],
     readyScatter: false,
     isScattering: false,
-    readyGather: false,
+    readyGather: 0,
     isGathering: false,
 
 
@@ -223,13 +224,17 @@ export const createBeamStore = () => createStore<BeamStore>()(
         isOpen: false,
         inputHistory: null,
         inputIssues: null,
+
+        rays: prevRays.map((ray) => createDRay(ray.scatterLlmId)), // remember only the model configuration
+
         // gatherLlmId: null,   // remember the selected llm
         gatherMessage: null,
         gatherAbortController: null,
-        rays: prevRays.map((ray) => createDRay(ray.scatterLlmId /* remember only the model configuration */)),
+
         readyScatter: false,
         isScattering: false,
-        readyGather: false,
+
+        readyGather: 0,
         isGathering: false,
       });
     },
@@ -333,6 +338,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
       _set({
         isScattering: hasRays && !allDone,
+        readyGather: raysReady,
       });
     },
 
