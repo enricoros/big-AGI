@@ -2,8 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Button, Typography } from '@mui/joy';
-import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+import { Alert, Box, Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
@@ -11,16 +10,9 @@ import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamGatherControls } from './BeamGatherControls';
-import { BeamRay, RayCard } from './BeamRay';
+import { BeamRayGrid, DEF_RAY_COUNT, MIN_RAY_COUNT } from './BeamRayGrid';
 import { BeamScatterControls } from './BeamScatterControls';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
-
-
-// component configuration
-const MIN_RAY_COUNT = 1;
-const DEF_RAY_COUNT = 2;
-const MAX_RAY_COUNT = 8;
-export const CONTROLS_RAY_PRESETS = [2, 4, 8];
 
 
 const userMessageSx: SxProps = {
@@ -61,6 +53,8 @@ export function BeamView(props: {
 }) {
 
   // linked state
+  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
+  const raysCount = rayIds.length;
   const {
     inputHistory, inputIssues,
     gatherLlmId, gatherMessage,
@@ -77,8 +71,6 @@ export function BeamView(props: {
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-  const raysCount = rayIds.length;
   const { close: beamClose, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId } = props.beamStore.getState();
   const [_gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
@@ -94,7 +86,7 @@ export function BeamView(props: {
 
   // runnning
 
-  // [effect] start with 2 rays
+  // [effect] pre-populate a default number of rays
   const bootup = raysCount < MIN_RAY_COUNT;
   React.useEffect(() => {
     bootup && handleRaySetCount(DEF_RAY_COUNT);
@@ -104,6 +96,7 @@ export function BeamView(props: {
   const lastMessage = inputHistory?.slice(-1)[0] || null;
   const otherHistoryCount = Math.max(0, (inputHistory?.length || 0) - 1);
   const isFirstMessageSystem = inputHistory?.[0]?.role === 'system';
+
 
   const userMessageDecorator = React.useMemo(() => {
     return (otherHistoryCount >= 1) ? (
@@ -175,40 +168,13 @@ export function BeamView(props: {
         )}
 
         {/* Rays Grid */}
-        <Box sx={{
-          mx: 'var(--Pad)',
-          mb: 'auto',
-          display: 'grid',
-          gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-          gap: 'var(--Pad)',
-        }}>
-
-          {rayIds.map((rayId) => (
-            <BeamRay
-              key={'ray-' + rayId}
-              beamStore={props.beamStore}
-              rayId={rayId}
-              isMobile={props.isMobile}
-              isRemovable={raysCount > MIN_RAY_COUNT}
-              gatherLlmId={gatherLlmId}
-            />
-          ))}
-
-          {/* Add Ray */}
-          {raysCount < MAX_RAY_COUNT && (
-            <RayCard sx={{ mb: 'auto' }}>
-              <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
-                minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
-                marginBlock: 'calc(-1 * var(--Card-padding) + 0.25rem)',
-                marginInline: 'calc(-1 * var(--Card-padding) + 0.375rem)',
-                // justifyContent: 'end',
-              }}>
-                <AddCircleOutlineRoundedIcon />
-              </Button>
-            </RayCard>
-          )}
-
-        </Box>
+        <BeamRayGrid
+          beamStore={props.beamStore}
+          gatherLlmId={gatherLlmId}
+          isMobile={props.isMobile}
+          rayIds={rayIds}
+          onIncreaseRayCount={handleRayIncreaseCount}
+        />
 
         {/* Gather Message */}
         {(!!gatherMessage && !!gatherMessage.updated) && (
