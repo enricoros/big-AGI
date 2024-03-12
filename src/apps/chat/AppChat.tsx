@@ -14,12 +14,14 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 import { BeamView } from '~/common/beam/BeamView';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
+import { useAreBeamsOpen } from '~/common/beam/store-beam.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
@@ -32,7 +34,6 @@ import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
@@ -98,6 +99,12 @@ export function AppChat() {
   const chatHandlers = React.useMemo(() => chatPanes.map(pane => {
     return pane.conversationId ? ConversationsManager.getHandler(pane.conversationId) : null;
   }), [chatPanes]);
+
+  const beamsStores = React.useMemo(() => chatHandlers.map(handler => {
+    return handler?.getBeamStore() ?? null;
+  }), [chatHandlers]);
+
+  const beamsOpens = useAreBeamsOpen(beamsStores);
 
   const {
     title: focusedChatTitle,
@@ -469,7 +476,8 @@ export function AppChat() {
       {chatPanes.map((pane, idx) => {
         const _paneConversationId = pane.conversationId;
         const _paneChatHandler = chatHandlers[idx] ?? null;
-        const _paneChatBeamStore = _paneChatHandler?.getBeamStore() ?? null;
+        const _paneChatBeamStore = beamsStores[idx] ?? null;
+        const _paneChatBeamIsOpen = !!beamsOpens?.[idx];
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
         const _sepId = `sep-pane-${idx}`;
@@ -558,7 +566,7 @@ export function AppChat() {
 
             </ScrollToBottom>
 
-            {!!_paneChatBeamStore && (
+            {(_paneChatBeamIsOpen && !!_paneChatBeamStore) && (
               <BeamView
                 beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
@@ -596,7 +604,9 @@ export function AppChat() {
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
-      sx={{
+      sx={(focusedPaneIndex !== null && beamsOpens[focusedPaneIndex]) ? {
+        display: 'none',
+      } : {
         zIndex: 51, // just to allocate a surface, and potentially have a shadow
         backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,

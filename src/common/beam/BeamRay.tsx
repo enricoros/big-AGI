@@ -18,7 +18,8 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, rayIsError, rayIsScattering, rayIsSelectable, rayIsUserSelected, useBeamStore } from './store-beam';
+import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { rayIsError, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './store-beam';
 
 
 // component configuration
@@ -26,9 +27,9 @@ const SHOW_DRAG_HANDLE = false;
 const DEBUG_STATUS = false;
 
 
-const rayCardClasses = {
-  active: 'beamRay-Active',
-} as const;
+// const rayCardClasses = {
+//   active: 'beamRay-Active',
+// } as const;
 
 export const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
@@ -40,9 +41,9 @@ export const RayCard = styled(Box)(({ theme }) => ({
 
   padding: 'var(--Card-padding)',
 
-  [`&.${rayCardClasses.active}`]: {
-    boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
-  },
+  // [`&.${rayCardClasses.active}`]: {
+  //   boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
+  // },
 
   position: 'relative',
 
@@ -68,20 +69,25 @@ function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: bo
 }
 
 
-function ControlsRow(props: {
-  isEmpty: boolean;
-  isLlmLinked: boolean;
-  isScattering: boolean;
-  llmComponent: React.ReactNode;
-  onLink: () => void;
-  onRemove: () => void;
-  onToggleGenerate: () => void;
+const RayControlsMemo = React.memo(RayControls);
+
+function RayControls(props: {
+  isEmpty: boolean,
+  isLlmLinked: boolean,
+  isRemovable: boolean
+  isScattering: boolean,
+  llmComponent: React.ReactNode,
+  onLink: () => void,
+  onRemove: () => void,
+  onToggleGenerate: () => void,
 }) {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+    {/* Drag Handle */}
     {SHOW_DRAG_HANDLE && (
-      <IconButton disabled size='sm'>
-        <DragIndicatorIcon />
-      </IconButton>
+      <div style={{ display: 'flex' }}>
+        <DragIndicatorIcon sx={{ fontSize: 'xl', my: 'auto' }} />
+      </div>
     )}
 
     <Box sx={{ flex: 1 }}>
@@ -110,11 +116,13 @@ function ControlsRow(props: {
       </GoodTooltip>
     )}
 
-    <GoodTooltip title='Remove'>
-      <IconButton size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
-        <RemoveCircleOutlineRoundedIcon />
-      </IconButton>
-    </GoodTooltip>
+    {props.isRemovable && (
+      <GoodTooltip title='Remove'>
+        <IconButton disabled={!props.isRemovable} size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
+          <RemoveCircleOutlineRoundedIcon />
+        </IconButton>
+      </GoodTooltip>
+    )}
   </Box>;
 }
 
@@ -132,8 +140,9 @@ const chatMessageEmbeddedSx: SxProps = {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  rayId: string
+  rayId: string,
   isMobile: boolean,
+  isRemovable: boolean
   gatherLlmId: DLLMId | null,
 }) {
 
@@ -182,9 +191,10 @@ export function BeamRay(props: {
       )}
 
       {/* Controls Row */}
-      <ControlsRow
+      <RayControlsMemo
         isEmpty={!isSelectable}
         isLlmLinked={isLlmLinked}
+        isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
         onLink={handleLlmLink}

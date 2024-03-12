@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { FormControl, ListDivider, ListItemDecorator, Option, Select } from '@mui/joy';
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
@@ -20,6 +21,11 @@ export function useLLMSelectLocalState(initFromGlobal: boolean): [DLLMId | null,
   } : null);
 }
 
+const llmSelectSx: SxProps = {
+  flex: 1,
+  backgroundColor: 'background.popup',
+  // minWidth: '200',
+};
 
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
@@ -48,6 +54,7 @@ export function useLLMSelect(
   }, shallow);
 
   // derived state
+  const noIcons = false; //smaller;
   const chatLLM = chatLLMId
     ? _filteredLLMs.find(llm => llm.id === chatLLMId) ?? null
     : null;
@@ -77,7 +84,7 @@ export function useLLMSelect(
           // Disabled to avoid regenerating the memo too frequently
           // sx={llm.id === chatLLMId ? { fontWeight: 'md' } : undefined}
         >
-          {!!vendor?.Icon && (
+          {(!noIcons && !!vendor?.Icon) && (
             <ListItemDecorator>
               <vendor.Icon />
             </ListItemDecorator>
@@ -91,7 +98,7 @@ export function useLLMSelect(
 
       return acc;
     }, [] as React.JSX.Element[]);
-  }, [_filteredLLMs]);
+  }, [_filteredLLMs, noIcons]);
 
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => value && setChatLLMId(value), [setChatLLMId]);
@@ -124,11 +131,7 @@ export function useLLMSelect(
             },
           },
         }}
-        sx={{
-          flex: 1,
-          backgroundColor: 'background.popup',
-          // minWidth: '200',
-        }}
+        sx={llmSelectSx}
       >
         {componentOptions}
       </Select>

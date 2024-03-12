@@ -3,8 +3,9 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup } from '@mui/joy';
 
-import { beamControlsSx } from './BeamScatterControls';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+
+import { beamControlsSx } from './BeamPaneScatter';
 
 
 const beamGatherControlsSx: SxProps = {
@@ -20,7 +21,7 @@ const beamGatherControlsSx: SxProps = {
   gap: 'var(--Pad_2)',
 };
 
-export function BeamGatherControls(props: {
+export function BeamPaneGather(props: {
   isMobile: boolean,
   gatherCount: number
   gatherEnabled: boolean,

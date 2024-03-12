@@ -106,7 +106,7 @@ export const animationEnterScaleUp = keyframes`
     0% {
         opacity: 0;
         //transform: translateY(8px);
-        scale: 0.95;
+        scale: 0.98;
         //rotate: -5deg;
     }
     100% {
