@@ -13,7 +13,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { BeamGatherControls } from './BeamGatherControls';
 import { BeamRay, RayCard } from './BeamRay';
 import { BeamScatterControls } from './BeamScatterControls';
-import { BeamStoreApi, useBeamStore } from './store-beam';
+import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 
 
 // component configuration

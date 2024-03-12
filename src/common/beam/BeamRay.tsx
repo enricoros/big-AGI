@@ -18,7 +18,8 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamStoreApi, rayIsError, rayIsScattering, rayIsSelectable, rayIsUserSelected, useBeamStore } from './store-beam';
+import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { rayIsError, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './store-beam';
 
 
 // component configuration
