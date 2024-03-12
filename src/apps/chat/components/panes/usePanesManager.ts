@@ -47,7 +47,7 @@ interface AppChatPanesStore extends AppChatPanesState {
   duplicateFocusedPane: (/*paneIndex: number*/) => void;
   removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
-  setFocusedPane: (paneIndex: number) => void;
+  setFocusedPaneIndex: (paneIndex: number) => void;
   _onConversationsChanged: (conversationIds: DConversationId[]) => void;
 
 }
@@ -251,7 +251,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         };
       }),
 
-    setFocusedPane: (paneIndex: number) =>
+    setFocusedPaneIndex: (paneIndex: number) =>
       _set(state => {
         if (state.chatPaneFocusIndex === paneIndex)
           return state;
@@ -333,13 +333,13 @@ export function usePanesManager() {
     // state
     chatPanes: state.chatPanes as Readonly<ChatPane[]>,
     focusedPaneIndex: state.chatPaneFocusIndex,
-    focusedConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
+    focusedPaneConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
     // methods
     openConversationInFocusedPane: state.openConversationInFocusedPane,
     openConversationInSplitPane: state.openConversationInSplitPane,
     navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
     removePane: state.removePane,
-    setFocusedPane: state.setFocusedPane,
+    setFocusedPaneIndex: state.setFocusedPaneIndex,
     _onConversationsChanged: state._onConversationsChanged,
   })));
 
