@@ -68,6 +68,7 @@ function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: bo
   return null;
 }
 
+const ControlsRowMemo = React.memo(ControlsRow);
 
 function ControlsRow(props: {
   isEmpty: boolean;
@@ -183,7 +184,7 @@ export function BeamRay(props: {
       )}
 
       {/* Controls Row */}
-      <ControlsRow
+      <ControlsRowMemo
         isEmpty={!isSelectable}
         isLlmLinked={isLlmLinked}
         isScattering={isScattering}
