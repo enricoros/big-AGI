@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createStore } from 'zustand/vanilla';
-import { type StoreApi, useStore } from 'zustand';
 
 import { streamAssistantMessage } from '../../apps/chat/editors/chat-stream';
 
@@ -150,7 +149,7 @@ interface BeamState {
 
 }
 
-interface BeamStore extends BeamState {
+export interface BeamStore extends BeamState {
 
   open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
   close: () => void;
@@ -169,8 +168,6 @@ interface BeamStore extends BeamState {
   syncRaysStateToBeam: () => void;
 
 }
-
-export type BeamStoreApi = Readonly<StoreApi<BeamStore>>;
 
 
 export const createBeamStore = () => createStore<BeamStore>()(
@@ -253,7 +250,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
         });
       } else if (count > rays.length) {
         _set({
-          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createDRay(_get().gatherLlmId))],
+          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createDRay(null))],
         });
       }
       syncRaysStateToBeam();
@@ -344,7 +341,3 @@ export const createBeamStore = () => createStore<BeamStore>()(
 
   }),
 );
-
-
-export const useBeamStore = <T, >(beamStore: BeamStoreApi, selector: (store: BeamStore) => T): T =>
-  useStore(beamStore, selector);
