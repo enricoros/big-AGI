@@ -27,9 +27,9 @@ const SHOW_DRAG_HANDLE = false;
 const DEBUG_STATUS = false;
 
 
-const rayCardClasses = {
-  active: 'beamRay-Active',
-} as const;
+// const rayCardClasses = {
+//   active: 'beamRay-Active',
+// } as const;
 
 export const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
@@ -41,9 +41,9 @@ export const RayCard = styled(Box)(({ theme }) => ({
 
   padding: 'var(--Card-padding)',
 
-  [`&.${rayCardClasses.active}`]: {
-    boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
-  },
+  // [`&.${rayCardClasses.active}`]: {
+  //   boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
+  // },
 
   position: 'relative',
 
