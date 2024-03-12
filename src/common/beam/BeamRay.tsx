@@ -113,11 +113,13 @@ function ControlsRow(props: {
       </GoodTooltip>
     )}
 
-    <GoodTooltip title='Remove'>
-      <IconButton disabled={!props.isRemovable} size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
-        <RemoveCircleOutlineRoundedIcon />
-      </IconButton>
-    </GoodTooltip>
+    {props.isRemovable && (
+      <GoodTooltip title='Remove'>
+        <IconButton disabled={!props.isRemovable} size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
+          <RemoveCircleOutlineRoundedIcon />
+        </IconButton>
+      </GoodTooltip>
+    )}
   </Box>;
 }
 

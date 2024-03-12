@@ -198,8 +198,10 @@ export function BeamView(props: {
           {raysCount < MAX_RAY_COUNT && (
             <RayCard sx={{ mb: 'auto' }}>
               <Button variant='plain' color='neutral' onClick={handleRayIncreaseCount} sx={{
-                margin: 'calc(-1 * var(--Card-padding) + 0.25rem)',
                 minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
+                marginBlock: 'calc(-1 * var(--Card-padding) + 0.25rem)',
+                marginInline: 'calc(-1 * var(--Card-padding) + 0.375rem)',
+                // justifyContent: 'end',
               }}>
                 <AddCircleOutlineRoundedIcon />
               </Button>
