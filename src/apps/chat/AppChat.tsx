@@ -107,12 +107,15 @@ export function AppChat() {
   const beamsOpens = useAreBeamsOpen(beamsStores);
 
   const {
+    // focused
     title: focusedChatTitle,
-    isChatEmpty: isFocusedChatEmpty,
+    isEmpty: isFocusedChatEmpty,
     isDeveloper: isFocusedChatDeveloper,
-    areChatsEmpty,
     conversationIdx: focusedChatNumber,
-    newConversationId,
+    // all
+    hasConversations,
+    recycleNewConversationId,
+    // actions
     prependNewConversation,
     branchConversation,
     deleteConversations,
@@ -329,8 +332,8 @@ export function AppChat() {
   const handleConversationNew = React.useCallback((forceNoRecycle?: boolean) => {
 
     // activate an existing new conversation if present, or create another
-    const conversationId = (newConversationId && !forceNoRecycle)
-      ? newConversationId
+    const conversationId = (recycleNewConversationId && !forceNoRecycle)
+      ? recycleNewConversationId
       : prependNewConversation(getConversationSystemPurposeId(focusedConversationId) ?? undefined);
     setFocusedConversationId(conversationId);
 
@@ -341,7 +344,7 @@ export function AppChat() {
     // focus the composer
     composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedConversationId, newConversationId, prependNewConversation, setFocusedConversationId]);
+  }, [activeFolderId, focusedConversationId, prependNewConversation, recycleNewConversationId, setFocusedConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -452,7 +455,7 @@ export function AppChat() {
         isMobile={isMobile}
         conversationId={focusedConversationId}
         disableItems={!focusedConversationId || isFocusedChatEmpty}
-        hasConversations={!areChatsEmpty}
+        hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationClear}
@@ -460,7 +463,7 @@ export function AppChat() {
         // onConversationNew={handleConversationNew}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [areChatsEmpty, focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, /*handleConversationNew,*/ isFocusedChatEmpty, isMessageSelectionMode, isMobile],
+    [focusedConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
   usePluggableOptimaLayout(drawerContent, barContent, menuItems, 'AppChat');
