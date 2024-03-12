@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
@@ -31,11 +31,14 @@ interface ChatPane {
 
 }
 
-interface AppChatPanesStore {
+interface AppChatPanesState {
 
-  // state
   chatPanes: ChatPane[];
   chatPaneFocusIndex: number | null;
+
+}
+
+interface AppChatPanesStore extends AppChatPanesState {
 
   // actions
   openConversationInFocusedPane: (conversationId: DConversationId) => void;
@@ -45,7 +48,7 @@ interface AppChatPanesStore {
   removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
   setFocusedPane: (paneIndex: number) => void;
-  onConversationsChanged: (conversationIds: DConversationId[]) => void;
+  _onConversationsChanged: (conversationIds: DConversationId[]) => void;
 
 }
 
@@ -263,7 +266,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
      * It takes care of `creating the first pane` as well as `removing invalid history items, reassiging
      * conversationIds, and re-focusing the pane`.
      */
-    onConversationsChanged: (conversationIds: DConversationId[]) =>
+    _onConversationsChanged: (conversationIds: DConversationId[]) =>
       _set(state => {
         const { chatPanes, chatPaneFocusIndex } = state;
 
@@ -326,40 +329,29 @@ export function getInstantAppChatPanesCount() {
 
 export function usePanesManager() {
   // use Panes
-  const { onConversationsChanged, ...panesFunctions } = useAppChatPanesStore(state => {
-    const {
-      chatPaneFocusIndex,
-      chatPanes,
-      navigateHistoryInFocusedPane,
-      onConversationsChanged,
-      openConversationInFocusedPane,
-      openConversationInSplitPane,
-      removePane,
-      setFocusedPane,
-    } = state;
-    const focusedConversationId = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex]?.conversationId ?? null : null;
-    return {
-      chatPanes: chatPanes as Readonly<ChatPane[]>,
-      focusedConversationId,
-      navigateHistoryInFocusedPane,
-      onConversationsChanged,
-      openConversationInFocusedPane,
-      openConversationInSplitPane,
-      focusedPaneIndex: chatPaneFocusIndex,
-      removePane,
-      setFocusedPane,
-    };
-  }, shallow);
+  const { _onConversationsChanged, ...panesFunctions } = useAppChatPanesStore(useShallow(state => ({
+    // state
+    chatPanes: state.chatPanes as Readonly<ChatPane[]>,
+    focusedPaneIndex: state.chatPaneFocusIndex,
+    focusedConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
+    // methods
+    openConversationInFocusedPane: state.openConversationInFocusedPane,
+    openConversationInSplitPane: state.openConversationInSplitPane,
+    navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
+    removePane: state.removePane,
+    setFocusedPane: state.setFocusedPane,
+    _onConversationsChanged: state._onConversationsChanged,
+  })));
 
   // use Conversation IDs[]
-  const conversationIDs: DConversationId[] = useChatStore(state => {
-    return state.conversations.map(_c => _c.id);
-  }, shallow);
+  const conversationIDs: DConversationId[] = useChatStore(useShallow(state =>
+    state.conversations.map(_c => _c.id),
+  ));
 
   // [Effect] Ensure all Panes have a valid Conversation ID
   React.useEffect(() => {
-    onConversationsChanged(conversationIDs);
-  }, [conversationIDs, onConversationsChanged]);
+    _onConversationsChanged(conversationIDs);
+  }, [conversationIDs, _onConversationsChanged]);
 
   return {
     ...panesFunctions,
@@ -367,10 +359,12 @@ export function usePanesManager() {
 }
 
 export function usePaneDuplicateOrClose() {
-  return useAppChatPanesStore(state => ({
+  return useAppChatPanesStore(useShallow(state => ({
+    // state
     canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES,
     isMultiPane: state.chatPanes.length > 1,
+    // actions
     duplicateFocusedPane: state.duplicateFocusedPane,
     removeOtherPanes: state.removeOtherPanes,
-  }), shallow);
+  })));
 }
