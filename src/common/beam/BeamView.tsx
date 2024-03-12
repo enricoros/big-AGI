@@ -118,8 +118,8 @@ function BeamViewBase(props: {
 
   const userMessageDecorator = React.useMemo(() => {
     return (otherHistoryCount >= 1) ? (
-      <Typography level='body-xs' sx={{ lineHeight: '3rem', opacity: 0.5 }}>
-        {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} above
+      <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.8 }}>
+        {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before
       </Typography>
     ) : null;
   }, [isFirstMessageSystem, otherHistoryCount]);

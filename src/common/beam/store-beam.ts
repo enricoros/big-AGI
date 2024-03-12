@@ -62,7 +62,8 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
     message: {
       ...ray.message,
       ...update,
-      updated: Date.now(),
+      // only update the timestamp when the text changes
+      ...(update.text ? { updated: Date.now() } : {}),
     },
   }));
 
@@ -91,7 +92,8 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
     message: {
       ...ray.message,
       text: PLACEHOLDER_SCATTER_TEXT,
-      updated: Date.now(),
+      created: Date.now(),
+      updated: null,
     },
     scatterLlmId: rayLlmId,
     scatterIssue: undefined,
