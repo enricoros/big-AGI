@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
@@ -34,6 +34,24 @@ export function BeamPaneGather(props: {
 
   return (
     <Box sx={beamGatherControlsSx}>
+
+      {/* Title */}
+      <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
+        {/*<Typography level='h4'>*/}
+        {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
+        {/*</Typography>*/}
+        <div>
+          <Typography level='h4' component='h2'>
+            {/*big-AGI · */}
+            Choose
+          </Typography>
+
+          <Typography level='body-sm'>
+            Combine the replies
+          </Typography>
+        </div>
+      </Box>
+
 
       {/* Algo */}
       {false && <FormControl disabled={!gatherEnabled}>
