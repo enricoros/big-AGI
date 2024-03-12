@@ -86,12 +86,14 @@ export function AppChat() {
   const { chatLLM } = useChatLLM();
 
   const {
+    // state
     chatPanes,
+    focusedPaneIndex,
     focusedConversationId,
+    // actions
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
     openConversationInSplitPane,
-    focusedPaneIndex,
     removePane,
     setFocusedPane,
   } = usePanesManager();
