@@ -100,6 +100,12 @@ export function AppChat() {
     return pane.conversationId ? ConversationsManager.getHandler(pane.conversationId) : null;
   }), [chatPanes]);
 
+  const beamsStores = React.useMemo(() => chatHandlers.map(handler => {
+    return handler?.getBeamStore() ?? null;
+  }), [chatHandlers]);
+
+  const beamsOpens = useAreBeamsOpen(beamsStores);
+
   const {
     title: focusedChatTitle,
     isChatEmpty: isFocusedChatEmpty,
@@ -470,7 +476,8 @@ export function AppChat() {
       {chatPanes.map((pane, idx) => {
         const _paneConversationId = pane.conversationId;
         const _paneChatHandler = chatHandlers[idx] ?? null;
-        const _paneChatBeamStore = _paneChatHandler?.getBeamStore() ?? null;
+        const _paneChatBeamStore = beamsStores[idx] ?? null;
+        const _paneChatBeamIsOpen = !!beamsOpens?.[idx];
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
         const _sepId = `sep-pane-${idx}`;
@@ -559,7 +566,7 @@ export function AppChat() {
 
             </ScrollToBottom>
 
-            {!!_paneChatBeamStore && (
+            {(_paneChatBeamIsOpen && !!_paneChatBeamStore) && (
               <BeamView
                 beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
@@ -597,7 +604,9 @@ export function AppChat() {
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
-      sx={{
+      sx={(focusedPaneIndex !== null && beamsOpens[focusedPaneIndex]) ? {
+        display: 'none',
+      } : {
         zIndex: 51, // just to allocate a surface, and potentially have a shadow
         backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
