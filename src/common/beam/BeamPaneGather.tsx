@@ -42,8 +42,7 @@ export function BeamPaneGather(props: {
         {/*</Typography>*/}
         <div>
           <Typography level='h4' component='h2'>
-            {/*big-AGI · */}
-            Choose
+            Merge
           </Typography>
 
           <Typography level='body-sm'>
@@ -76,12 +75,12 @@ export function BeamPaneGather(props: {
       </FormControl>}
 
       {gatherEnabled && (
-        <FormControl>
-          <FormLabelStart title={`Beam Fusion${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />
+        <FormControl sx={{mx: 'auto'}}>
+          <FormLabelStart title={`Candidates ${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />
           <RadioGroup size='sm' defaultValue='outlined' orientation='horizontal'>
-            <Radio value='one' label='Pick Top' />
-            <Radio value='many' label='Improve Best' />
-            <Radio value='all' label='Fuse All' />
+            <Radio value='one' label='Choose' />
+            <Radio value='many' label='Improve' />
+            <Radio value='all' label='Fuse' />
           </RadioGroup>
         </FormControl>
       )}

@@ -60,7 +60,8 @@ export function BeamPaneScatter(props: {
           </Typography>
 
           <Typography level='body-sm'>
-            Combine the smarts of models
+            Explore the solution space
+            {/*Combine the smarts of models*/}
           </Typography>
         </div>
       </Box>
