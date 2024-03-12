@@ -55,19 +55,6 @@ const assistantMessageSx: SxProps = {
 export function BeamView(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
-  sx?: SxProps,
-}) {
-
-  // external state
-  const isOpen = useBeamStore(props.beamStore, state => state.isOpen);
-
-  return isOpen ? <BeamViewBase {...props} /> : null;
-}
-
-
-function BeamViewBase(props: {
-  beamStore: BeamStoreApi,
-  isMobile: boolean,
   sx?: SxProps
 }) {
 
