@@ -115,9 +115,12 @@ export function BeamView(props: {
       // enter animation
       animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
 
-      // layout
+      // scrollable layout
+      overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
+      gap: 'var(--Pad)',
+      pb: 'var(--Pad)',
 
       ...props.sx,
     }}>
@@ -125,74 +128,59 @@ export function BeamView(props: {
       {/* Config Issues */}
       {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
+      {/* Scatter Controls */}
+      <BeamPaneScatter
+        isMobile={props.isMobile}
+        llmComponent={gatherLlmComponent}
+        rayCount={raysCount}
+        setRayCount={handleRaySetCount}
+        startEnabled={readyScatter}
+        startBusy={isScattering}
+        onStart={startScatteringAll}
+        onStop={stopScatteringAll}
+      />
 
-      {/* Scrollable Layout (Scatter and Rays and Gather message) */}
-      <Box sx={{
-        flex: 1,
-        overflowY: 'auto',
+      {/* User Message */}
+      {!!lastMessage && (
+        <Box sx={{
+          px: 'var(--Pad)',
+          mt: 'calc(-1 * var(--Pad))',
+        }}>
+          <ChatMessageMemo
+            message={lastMessage}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            topDecorator={userMessageDecorator}
+            sx={userMessageSx}
+          />
+        </Box>
+      )}
 
-        // scrollable layout
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--Pad)',
-        pb: 'var(--Pad)',
-      }}>
+      {/* Rays Grid */}
+      <BeamRayGrid
+        beamStore={props.beamStore}
+        gatherLlmId={gatherLlmId}
+        isMobile={props.isMobile}
+        rayIds={rayIds}
+        onIncreaseRayCount={handleRayIncreaseCount}
+      />
 
-        {/* Scatter Controls */}
-        <BeamPaneScatter
-          isMobile={props.isMobile}
-          llmComponent={gatherLlmComponent}
-          rayCount={raysCount}
-          setRayCount={handleRaySetCount}
-          startEnabled={readyScatter}
-          startBusy={isScattering}
-          onStart={startScatteringAll}
-          onStop={stopScatteringAll}
-        />
-
-        {/* User Message */}
-        {!!lastMessage && (
-          <Box sx={{
-            px: 'var(--Pad)',
-            mt: 'calc(-1 * var(--Pad))',
-          }}>
-            <ChatMessageMemo
-              message={lastMessage}
-              fitScreen={props.isMobile}
-              showAvatar={false}
-              adjustContentScaling={-1}
-              topDecorator={userMessageDecorator}
-              sx={userMessageSx}
-            />
-          </Box>
-        )}
-
-        {/* Rays Grid */}
-        <BeamRayGrid
-          beamStore={props.beamStore}
-          gatherLlmId={gatherLlmId}
-          isMobile={props.isMobile}
-          rayIds={rayIds}
-          onIncreaseRayCount={handleRayIncreaseCount}
-        />
-
-        {/* Gather Message */}
-        {(!!gatherMessage && !!gatherMessage.updated) && (
-          <Box sx={{
-            px: 'var(--Pad)',
-            mb: 'calc(-1 * var(--Pad))',
-          }}>
-            <ChatMessageMemo
-              message={gatherMessage}
-              fitScreen={props.isMobile}
-              showAvatar={false}
-              adjustContentScaling={-1}
-              sx={assistantMessageSx}
-            />
-          </Box>
-        )}
-
-      </Box>
+      {/* Gather Message */}
+      {(!!gatherMessage && !!gatherMessage.updated) && (
+        <Box sx={{
+          px: 'var(--Pad)',
+          mb: 'calc(-1 * var(--Pad))',
+        }}>
+          <ChatMessageMemo
+            message={gatherMessage}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={assistantMessageSx}
+          />
+        </Box>
+      )}
 
       {/* Gather Controls */}
       <BeamPaneGather
