@@ -6,10 +6,10 @@ import FolderIcon from '@mui/icons-material/Folder';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { StrictModeDroppable } from '~/common/components/StrictModeDroppable';
 
 import { AddFolderButton } from './AddFolderButton';
 import { FolderListItem } from './FolderListItem';
-import { StrictModeDroppable } from './StrictModeDroppable';
 
 
 export function ChatFolderList(props: {
