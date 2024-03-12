@@ -17,8 +17,10 @@ import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 
 
 // component configuration
-const MIN_RAY_COUNT = 2;
+const MIN_RAY_COUNT = 1;
+const DEF_RAY_COUNT = 2;
 const MAX_RAY_COUNT = 8;
+export const CONTROLS_RAY_PRESETS = [2, 4, 8];
 
 
 const userMessageSx: SxProps = {
@@ -95,7 +97,7 @@ export function BeamView(props: {
   // [effect] start with 2 rays
   const bootup = raysCount < MIN_RAY_COUNT;
   React.useEffect(() => {
-    bootup && handleRaySetCount(MIN_RAY_COUNT);
+    bootup && handleRaySetCount(DEF_RAY_COUNT);
   }, [bootup, handleRaySetCount]);
 
 
@@ -187,6 +189,7 @@ export function BeamView(props: {
               beamStore={props.beamStore}
               rayId={rayId}
               isMobile={props.isMobile}
+              isRemovable={raysCount > MIN_RAY_COUNT}
               gatherLlmId={gatherLlmId}
             />
           ))}
