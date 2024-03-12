@@ -8,7 +8,7 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationEnterBelow } from '~/common/util/animUtils';
 
-import { CONTROLS_RAY_PRESETS } from './BeamView';
+import { CONTROLS_RAY_PRESETS } from './BeamRayGrid';
 
 
 export const beamControlsSx: SxProps = {
