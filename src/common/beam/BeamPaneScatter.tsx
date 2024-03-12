@@ -34,7 +34,7 @@ const beamScatterControlsSx: SxProps = {
 };
 
 
-export function BeamScatterControls(props: {
+export function BeamPaneScatter(props: {
   isMobile: boolean,
   llmComponent: React.ReactNode,
   rayCount: number,
