@@ -20,7 +20,7 @@ import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandl
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
-import { themeBgAppChatComposer } from '~/common/app.theme';
+import { themeBgAppChatComposer, themeZIndexBeamView } from '~/common/app.theme';
 import { useAreBeamsOpen } from '~/common/beam/store-beam.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -567,16 +567,19 @@ export function AppChat() {
             </ScrollToBottom>
 
             {(_paneChatBeamIsOpen && !!_paneChatBeamStore) && (
+              // <Modal open onClose={() => console.log('CLOSE!')}>
               <BeamView
                 beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
                 sx={{
                   backgroundColor: 'background.level1',
+                  boxShadow: 'lg',
                   position: 'absolute',
                   inset: 0,
-                  zIndex: 10, // stay on top of Message > Chips (:1), and Overlays (:2) :shrug:
+                  zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)
                 }}
               />
+              // </Modal>
             )}
 
           </Panel>
