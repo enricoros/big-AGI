@@ -20,7 +20,7 @@ function initTestConversation(): DConversation {
 }
 
 function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamStore()): BeamStoreApi {
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId);
+  beamStore.getState().initialize(messages, useModelsStore.getState().chatLLMId);
   return beamStore;
 }
 
@@ -35,6 +35,12 @@ export function AppBeam() {
   // external state
   const isMobile = useIsMobile();
   const beamState = useBeamStore(beamStoreApi, state => state);
+
+
+  const handleClose = React.useCallback(() => {
+    beamStoreApi.getState().terminate();
+  }, [beamStoreApi]);
+
 
   // layout
   usePluggableOptimaLayout(null, React.useMemo(() => <>
@@ -52,10 +58,11 @@ export function AppBeam() {
     </Button>
 
     {/* 'close' */}
-    <Button size='sm' variant='plain' color='neutral' onClick={() => beamStoreApi.getState().close()}>
+    <Button size='sm' variant='plain' color='neutral' onClick={handleClose}>
       .close
     </Button>
   </>, [beamStoreApi, showDebug]), null, 'AppBeam');
+
 
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>

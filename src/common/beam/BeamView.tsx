@@ -71,13 +71,13 @@ export function BeamView(props: {
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const { close: beamClose, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId } = props.beamStore.getState();
+  const { setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId, terminate } = props.beamStore.getState();
   const [_gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
 
   // configuration
 
-  const handleBeamDispose = React.useCallback(() => beamClose(), [beamClose]);
+  const handleTerminate = React.useCallback(() => terminate(), [terminate]);
 
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
@@ -190,7 +190,7 @@ export function BeamView(props: {
         gatherBusy={false}
         onStart={() => null}
         onStop={() => null}
-        onClose={handleBeamDispose}
+        onClose={handleTerminate}
       />
 
     </Box>
