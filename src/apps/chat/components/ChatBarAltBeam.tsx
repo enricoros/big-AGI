@@ -5,6 +5,7 @@ import { Box, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -17,18 +18,40 @@ export function ChatBarAltBeam(props: {
   beamStore: BeamStoreApi,
 }) {
 
+  // state
+  const [showCloseConfirmation, setShowCloseConfirmation] = React.useState(false);
+
+
   // external beam state
   const { closebeam, isScattering, isGathering, readyGather } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
     isGathering: store.isGathering,
-    readyGather: store.readyGather,
+    readyGather: store.readyGather, // Assuming this state exists and is a number
     // actions
     closebeam: store.close,
   })));
 
-  // esc to close
-  useGlobalShortcut(ShortcutKeyName.Esc, false, false, false, closebeam);
+
+  const handleCloseBeam = () => {
+    const requestConfirmation = isScattering || isGathering || readyGather > 0;
+    if (requestConfirmation)
+      setShowCloseConfirmation(true);
+    else
+      closebeam();
+  };
+
+  const handleCloseConfirmation = () => {
+    closebeam();
+    setShowCloseConfirmation(false);
+  };
+
+  const handleCloseDenial = () => {
+    setShowCloseConfirmation(false);
+  };
+
+  // esc to close with confirmation
+  useGlobalShortcut(ShortcutKeyName.Esc, false, false, false, handleCloseBeam);
 
 
   return (
@@ -50,11 +73,23 @@ export function ChatBarAltBeam(props: {
       </Typography>
 
       <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Close Beam Mode <KeyStroke combo='Esc' /></Box>}>
-        <FadeInButton aria-label='Close' size='sm' onClick={closebeam}>
+        <FadeInButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
           <CloseRoundedIcon />
         </FadeInButton>
       </GoodTooltip>
 
+      {/* Confirmation Modal */}
+      {showCloseConfirmation && (
+        <ConfirmationModal
+          open
+          onClose={handleCloseDenial}
+          onPositive={handleCloseConfirmation}
+          lowStakes
+          noTitleBar
+          confirmationText='Are you sure you want to close Beam Mode? Unsaved text will be lost.'
+          positiveActionText='Yes, close'
+        />
+      )}
     </Box>
   );
 }
