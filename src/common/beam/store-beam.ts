@@ -130,6 +130,10 @@ export function rayIsUserSelected(ray: DRay | null): boolean {
   return !!ray?.userSelected;
 }
 
+export function rayIsImported(ray: DRay | null): boolean {
+  return !!ray?.imported;
+}
+
 
 // Beam
 
