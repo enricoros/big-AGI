@@ -33,24 +33,27 @@ export function ChatBarAltBeam(props: {
   })));
 
 
-  const handleCloseBeam = () => {
-    const requestConfirmation = isScattering || isGathering || readyGather > 0;
-    if (requestConfirmation)
+  // closure handlers
+
+  const requiresConfirmation = isScattering || isGathering || readyGather > 0;
+  const handleCloseBeam = React.useCallback(() => {
+    if (requiresConfirmation)
       setShowCloseConfirmation(true);
     else
       closebeam();
-  };
+  }, [requiresConfirmation, closebeam]);
 
-  const handleCloseConfirmation = () => {
+  const handleCloseConfirmation = React.useCallback(() => {
     closebeam();
     setShowCloseConfirmation(false);
-  };
+  }, [closebeam]);
 
-  const handleCloseDenial = () => {
+  const handleCloseDenial = React.useCallback(() => {
     setShowCloseConfirmation(false);
-  };
+  }, []);
 
-  // esc to close with confirmation
+
+  // intercept esc this beam is focused
   useGlobalShortcut(ShortcutKeyName.Esc, false, false, false, handleCloseBeam);
 
 
