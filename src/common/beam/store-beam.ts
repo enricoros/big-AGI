@@ -6,6 +6,7 @@ import { streamAssistantMessage } from '../../apps/chat/editors/chat-stream';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
+import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 
 // configuration
@@ -69,7 +70,7 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
   }));
 
   // stream the assistant's messages
-  streamAssistantMessage(rayLlmId, inputHistory, rays.length, 'off', updateMessage, abortController.signal)
+  streamAssistantMessage(rayLlmId, inputHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
     .then((outcome) => {
       _updateRay(ray.rayId, {
         status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',

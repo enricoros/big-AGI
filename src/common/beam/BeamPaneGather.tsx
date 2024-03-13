@@ -51,7 +51,7 @@ export function BeamPaneGather(props: {
           </Typography>
 
           <Typography level='body-sm'>
-            Combine the replies
+            Combine {gatherCount > 1 ? `the ${gatherCount} replies` : 'the replies'}
           </Typography>
         </div>
       </Box>
