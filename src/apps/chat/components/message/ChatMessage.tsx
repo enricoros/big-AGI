@@ -76,6 +76,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
     case 'assistant':
       // typing gif (people seem to love this, so keeping it after april fools')
+      const isDownload = messageOriginLLM === 'web';
       const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
       const isReact = messageOriginLLM?.startsWith('react-');
 
@@ -83,9 +84,10 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (messageTyping)
         return <Avatar
           alt={messageSender} variant='plain'
-          src={isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' // brush
-            : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp' // mind
-              : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'} // typing
+          src={isDownload ? 'https://i.giphy.com/RxR1KghIie2iI.webp' // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp
+            : isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' // brush
+              : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp' // mind
+                : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'} // typing
           sx={{ ...mascotSx, borderRadius: 'sm' }}
         />;
 
