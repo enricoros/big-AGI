@@ -8,7 +8,7 @@ import { SxProps } from '@mui/joy/styles/types';
  * Base for our Modal components (Preferences, Models Setup, etc.)
  */
 export function GoodModal(props: {
-  title?: string | React.JSX.Element,
+  title?: React.ReactNode,
   titleStartDecorator?: React.JSX.Element,
   strongerTitle?: boolean,
   noTitleBar?: boolean,
