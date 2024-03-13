@@ -8,7 +8,7 @@ import { CommandsHelp } from './CommandsHelp';
 import { CommandsReact } from './CommandsReact';
 
 
-export type CommandsProviderId = 'ass-beam' | 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help';
+export type CommandsProviderId = 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help' | 'mode-beam';
 
 type TextCommandPiece =
   | { type: 'text'; value: string; }
@@ -16,12 +16,12 @@ type TextCommandPiece =
 
 
 const ChatCommandsProviders: Record<CommandsProviderId, ICommandsProvider> = {
-  'ass-beam': CommandsBeam,
   'ass-browse': CommandsBrowse,
   'ass-react': CommandsReact,
   'ass-t2i': CommandsDraw,
   'chat-alter': CommandsAlter,
   'cmd-help': CommandsHelp,
+  'mode-beam': CommandsBeam,
 };
 
 export function findAllChatCommands(): ChatCommand[] {

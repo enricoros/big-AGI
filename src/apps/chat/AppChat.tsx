@@ -184,10 +184,6 @@ export function AppChat() {
       const chatCommand = extractChatCommand(lastMessage.text)[0];
       if (chatCommand && chatCommand.type === 'cmd') {
         switch (chatCommand.providerId) {
-          case 'ass-beam':
-            Object.assign(lastMessage, { text: chatCommand.params || '' });
-            return ConversationsManager.getHandler(conversationId).beamOpen(history);
-
           case 'ass-browse':
             setMessages(conversationId, history);
             return await runBrowseGetPageUpdatingState(conversationId, chatCommand.params!);
@@ -222,6 +218,10 @@ export function AppChat() {
             const helpMessage = createDMessage('assistant', 'Available Chat Commands:\n' + chatCommandsText);
             helpMessage.originLLM = Brand.Title.Base;
             return setMessages(conversationId, [...history, helpMessage]);
+
+          case 'mode-beam':
+            Object.assign(lastMessage, { text: chatCommand.params || '' });
+            return ConversationsManager.getHandler(conversationId).beamOpen(history);
 
           default:
             return setMessages(conversationId, [...history, createDMessage('assistant', 'This command is not supported.')]);
