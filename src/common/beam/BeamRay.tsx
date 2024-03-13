@@ -59,6 +59,18 @@ export const RayCard = styled(Box)(({ theme }) => ({
 RayCard.displayName = 'RayCard';
 
 
+/*const letterSx: SxProps = {
+  width: '1rem',
+  py: 0.25,
+  fontSize: 'xs',
+  backgroundColor: 'background.popup',
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 'xs',
+  textAlign: 'center',
+};*/
+
+
 function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: boolean): SxProps | null {
   if (isError)
     return { backgroundColor: 'danger.softBg', borderColor: 'danger.outlinedBorder' };
@@ -73,9 +85,10 @@ function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: bo
 const RayControlsMemo = React.memo(RayControls);
 
 function RayControls(props: {
+  // rayIndex: number
   isEmpty: boolean,
   isLlmLinked: boolean,
-  isRemovable: boolean
+  isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
   onLink: () => void,
@@ -90,6 +103,10 @@ function RayControls(props: {
         <DragIndicatorIcon sx={{ fontSize: 'xl', my: 'auto' }} />
       </div>
     )}
+
+    {/*<Box sx={letterSx}>*/}
+    {/*  {String.fromCharCode(65 + props.rayIndex)}*/}
+    {/*</Box>*/}
 
     <Box sx={{ flex: 1 }}>
       {props.llmComponent}
@@ -142,6 +159,7 @@ const chatMessageEmbeddedSx: SxProps = {
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
   rayId: string,
+  // rayIndex: number,
   isMobile: boolean,
   isRemovable: boolean
   gatherLlmId: DLLMId | null,
@@ -204,6 +222,7 @@ export function BeamRay(props: {
 
       {/* Controls Row */}
       <RayControlsMemo
+        // rayIndex={props.rayIndex}
         isEmpty={!isSelectable}
         isLlmLinked={isLlmLinked}
         isRemovable={props.isRemovable}
