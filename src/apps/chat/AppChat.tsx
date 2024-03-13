@@ -231,7 +231,7 @@ export function AppChat() {
             // remove '/beam ', as we want to be a user chat message
             Object.assign(lastMessage, { text: chatCommand.params || '' });
             cHandler.messagesReplace(history);
-            return ConversationsManager.getHandler(conversationId).beamGenerate(history);
+            return ConversationsManager.getHandler(conversationId).beamInvoke(history, [], null);
 
           default:
             return cHandler.messagesReplace([...history, createDMessage('assistant', 'This command is not supported.')]);
@@ -255,7 +255,7 @@ export function AppChat() {
 
       case 'generate-text-beam':
         cHandler.messagesReplace(history);
-        return cHandler.beamGenerate(history);
+        return cHandler.beamInvoke(history, [], null);
 
       case 'append-user':
         return cHandler.messagesReplace(history);
@@ -331,9 +331,9 @@ export function AppChat() {
     if (focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
       if (lastMessage.role === 'assistant')
-        ConversationsManager.getHandler(focusedConversation.id).beamReplaceMessage(focusedConversation.messages.slice(0, -1), [lastMessage], lastMessage.id);
+        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages.slice(0, -1), [lastMessage], lastMessage.id);
       else if (lastMessage.role === 'user')
-        ConversationsManager.getHandler(focusedConversation.id).beamGenerate(focusedConversation.messages);
+        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages, [], null);
     }
   }, [focusedPaneConversationId]);
 
