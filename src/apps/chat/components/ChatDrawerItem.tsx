@@ -21,6 +21,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
 
 import { CHAT_NOVEL_TITLE } from '../AppChat';
+import { STREAM_TEXT_INDICATOR } from '../editors/chat-stream';
 
 
 // set to true to display the conversation IDs
@@ -204,7 +205,7 @@ function ChatDrawerItem(props: {
         }}
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
-        {title.trim() ? title : CHAT_NOVEL_TITLE}{assistantTyping && '...'}
+        {title.trim() ? title : CHAT_NOVEL_TITLE}{assistantTyping && STREAM_TEXT_INDICATOR}
       </Box>
     ) : (
       <InlineTextarea
