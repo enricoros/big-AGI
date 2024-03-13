@@ -324,7 +324,18 @@ export function AppChat() {
       const history = lastMessage.role === 'assistant' ? focusedConversation.messages.slice(0, -1) : [...focusedConversation.messages];
       return await _handleExecute('generate-text', focusedConversation.id, history);
     }
-  }, [focusedPaneConversationId, _handleExecute]);
+  }, [_handleExecute, focusedPaneConversationId]);
+
+  const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
+    const focusedConversation = getConversation(focusedPaneConversationId);
+    if (focusedConversation?.messages?.length) {
+      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
+      if (lastMessage.role === 'assistant')
+        ConversationsManager.getHandler(focusedConversation.id).beamReplaceMessage(focusedConversation.messages.slice(0, -1), [lastMessage], lastMessage.id);
+      else if (lastMessage.role === 'user')
+        ConversationsManager.getHandler(focusedConversation.id).beamGenerate(focusedConversation.messages);
+    }
+  }, [focusedPaneConversationId]);
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
@@ -428,6 +439,7 @@ export function AppChat() {
 
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
     // focused conversation
+    ['b', true, true, false, handleMessageBeamLastInFocusedPane],
     ['r', true, true, false, handleMessageRegenerateLastInFocusedPane],
     ['n', true, false, true, handleConversationNewInFocusedPane],
     ['b', true, false, true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationBranch(focusedPaneConversationId, null))],
