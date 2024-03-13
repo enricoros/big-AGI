@@ -93,25 +93,31 @@ export class ConversationHandler {
    * Note: make sure the history is adjusted for the System Purpose already, as we won't do it here.
    */
   beamGenerate(newHistory: DMessage[]) {
-    // This will replace the conversation history, and use Beam to generate the next 'assistant' message
     const handleReplaceFullHistory = (messageText: string, llmId: DLLMId) => {
+      // replace (may truncate) the conversation history and append a message
       const newMessage = createDMessage('assistant', messageText);
       newMessage.originLLM = llmId;
       newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
       this.messagesReplace([...newHistory, newMessage]);
+
+      // close beam
+      this.beamStore.getState().terminate();
     };
 
-    // open the store
+    // open beam
     this.beamStore.getState().open(newHistory, useModelsStore.getState().chatLLMId, handleReplaceFullHistory);
   }
 
   beamReplaceMessage(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], replaceMessageId: DMessage['id']): void {
-    // This will replace a single message in history after Beam has generated it
     const handleReplaceSingleMessage = (messageText: string, llmId: DLLMId) => {
+      // replace a single message in the conversation history
       this.messageEdit(replaceMessageId, { text: messageText, originLLM: llmId }, true);
+
+      // close beam
+      this.beamStore.getState().terminate();
     };
 
-    // open the store and import the messages
+    // open beam and import the messages
     const { open: beamOpen, importRays: beamImportRays } = this.beamStore.getState();
     beamOpen(viewHistory, useModelsStore.getState().chatLLMId, handleReplaceSingleMessage);
     beamImportRays(importMessages);

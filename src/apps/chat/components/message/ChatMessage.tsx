@@ -84,7 +84,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
       if (messageTyping)
         return <Avatar
           alt={messageSender} variant='plain'
-          src={isDownload ? 'https://i.giphy.com/RxR1KghIie2iI.webp' // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp
+          src={isDownload ? 'https://i.giphy.com/26u6dIwIphLj8h10A.webp' // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp, floppy: https://i.giphy.com/RxR1KghIie2iI.webp
             : isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' // brush
               : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp' // mind
                 : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'} // typing
@@ -616,7 +616,7 @@ export function ChatMessage(props: {
               <ListItemDecorator><ChatBeamIcon color='primary' /></ListItemDecorator>
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
-                : <>Beam <span style={{ opacity: 0.5 }}>this answer</span></>}
+                : 'Beam'}
             </MenuItem>
           )}
           {!!props.onMessageAssistantFrom && (
