@@ -36,7 +36,7 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
   // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
   // contain: 'strict',
-  boxShadow: theme.shadow.md,
+  boxShadow: `0 0 32px 4px rgba(${theme.palette.neutral.darkChannel} / 0.16)`, // was: theme.shadow.md, which is too think and complex
 
   // content layout
   display: 'flex',
