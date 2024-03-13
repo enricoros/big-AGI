@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Box, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -214,20 +214,20 @@ function ChatDrawer(props: {
 
       {enableFolders && <ListDivider sx={{ mb: 0 }} />}
 
-      {/* Search Input Field */}
-      <DebounceInputMemo
-        minChars={2}
-        onDebounce={setDebouncedSearchQuery}
-        debounceTimeout={300}
-        placeholder='Search...'
-        aria-label='Search'
-        endDecorator={groupingComponent}
-        sx={{ m: 2 }}
-      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', m: 2, gap: 2 }}>
 
-      {/* New Chat Button */}
-      <ListItem sx={{ mx: '0.25rem', mb: 0.5 }}>
-        <ListItemButton
+        {/* Search Input Field */}
+        <DebounceInputMemo
+          minChars={2}
+          onDebounce={setDebouncedSearchQuery}
+          debounceTimeout={300}
+          placeholder='Search...'
+          aria-label='Search'
+          endDecorator={groupingComponent}
+        />
+
+        {/* New Chat Button */}
+        <Button
           // variant='outlined'
           variant={disableNewButton ? undefined : 'soft'}
           color='primary'
@@ -235,7 +235,8 @@ function ChatDrawer(props: {
           onClick={handleButtonNew}
           sx={{
             // ...PageDrawerTallItemSx,
-            px: 'calc(var(--ListItem-paddingX) - 0.25rem)',
+            justifyContent: 'flex-start',
+            padding: '0px 0.75rem',
 
             // text size
             fontSize: 'sm',
@@ -245,16 +246,17 @@ function ChatDrawer(props: {
             // backgroundColor: 'background.popup',
             border: '1px solid',
             borderColor: 'neutral.outlinedBorder',
-            borderRadius: 'md',
-            // color: 'neutral.plainColor',
+            borderRadius: 'sm',
+            '--ListItemDecorator-size': 'calc(2.5rem - 1px)', // compensate for the border
             // boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'xs',
             // transition: 'box-shadow 0.2s',
           }}
         >
-          <ListItemDecorator><AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} /></ListItemDecorator>
+          <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
           New chat
-        </ListItemButton>
-      </ListItem>
+        </Button>
+
+      </Box>
 
       {/*<ListDivider sx={{ mt: 0 }} />*/}
 
