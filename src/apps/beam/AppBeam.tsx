@@ -19,8 +19,7 @@ function initTestConversation(): DConversation {
   return conversation;
 }
 
-function initTestBeamStore(messages: DMessage[]): BeamStoreApi {
-  const beamStore = createBeamStore();
+function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamStore()): BeamStoreApi {
   beamStore.getState().open(messages, useModelsStore.getState().chatLLMId);
   return beamStore;
 }
@@ -47,7 +46,7 @@ export function AppBeam() {
     {/* 'open' */}
     <Button size='sm' variant='plain' color='neutral' onClick={() => {
       conversation.current = initTestConversation();
-      beamStoreApi.getState().open(conversation.current.messages, useModelsStore.getState().chatLLMId);
+      initTestBeamStore(conversation.current.messages, beamStoreApi);
     }}>
       .open
     </Button>
