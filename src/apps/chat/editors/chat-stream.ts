@@ -1,6 +1,5 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
-import { SystemPurposeId } from '../../../data';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
@@ -12,20 +11,20 @@ import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
 
+export const STREAM_TEXT_INDICATOR = '...';
+
+
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, systemPurpose: SystemPurposeId, parallelViewCount: number) {
+export async function runAssistantUpdatingState(conversationId: string, history: DMessage[], assistantLlmId: DLLMId, parallelViewCount: number) {
   const cHandler = ConversationsManager.getHandler(conversationId);
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
-  // update the system message from the active Purpose, if not manually edited
-  history = cHandler.resyncPurposeInHistory(history, assistantLlmId, systemPurpose);
-
   // create a blank and 'typing' message for the assistant
-  const assistantMessageId = cHandler.messageAppendAssistant('...', assistantLlmId, history[0].purposeId);
+  const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, history[0].purposeId, assistantLlmId, true);
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
