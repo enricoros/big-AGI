@@ -608,6 +608,14 @@ export function ChatMessage(props: {
           )}
           {/* Restart/try */}
           {!!props.onConversationRestartFrom && <ListDivider />}
+          {!!props.onConversationRestartFrom && labsChatBeam && (
+            <MenuItem onClick={handleOpsConversationRestartFromBeam}>
+              <ListItemDecorator><ChatBeamIcon color='primary' /></ListItemDecorator>
+              {!fromAssistant
+                ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
+                : <>Beam <span style={{ opacity: 0.5 }}>this answer</span></>}
+            </MenuItem>
+          )}
           {!!props.onConversationRestartFrom && (
             <MenuItem onClick={handleOpsConversationRestartFrom}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
@@ -615,22 +623,7 @@ export function ChatMessage(props: {
                 ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
                   ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
-                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-                    Retry
-                    <KeyStroke combo='Ctrl + Shift + R' />
-                  </Box>}
-              {labsChatBeam && (
-                <Tooltip title={messageTyping ? null : 'Beam'}>
-                  <IconButton
-                    size='sm'
-                    variant='outlined' color='primary'
-                    onClick={handleOpsConversationRestartFromBeam}
-                    sx={{ ml: 'auto', my: '-0.25rem' /* absorb the menuItem padding */ }}
-                  >
-                    <ChatBeamIcon /> {/*<GavelIcon />*/}
-                  </IconButton>
-                </Tooltip>
-              )}
+                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
             </MenuItem>
           )}
         </CloseableMenu>
