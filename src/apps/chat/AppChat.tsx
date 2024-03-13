@@ -649,7 +649,7 @@ export function AppChat() {
       sx={beamOpenStoreInFocusedPane ? {
         display: 'none',
       } : {
-        zIndex: 51, // just to allocate a surface, and potentially have a shadow
+        zIndex: 21, // just to allocate a surface, and potentially have a shadow
         backgroundColor: themeBgAppChatComposer,
         borderTop: `1px solid`,
         borderTopColor: 'divider',
