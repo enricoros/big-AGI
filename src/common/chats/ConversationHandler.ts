@@ -88,39 +88,36 @@ export class ConversationHandler {
 
   getBeamStore = () => this.beamStore;
 
+
   /**
-   * Opens a beam on the given history, and only replaces the history once the user accepts the beam
-   * Note: make sure the history is adjusted for the System Purpose already, as we won't do it here.
+   * Opens a beam over the given history
+   *
+   * @param viewHistory The history up to the point where the beam is invoked
+   * @param importMessages If set, any message to import into the beam as pre-set rays
+   * @param destReplaceMessageId If set, the output will replace the message with this id, otherwise it will append to the history
    */
-  beamGenerate(newHistory: DMessage[]) {
-    const handleReplaceFullHistory = (messageText: string, llmId: DLLMId) => {
-      // replace (may truncate) the conversation history and append a message
-      const newMessage = createDMessage('assistant', messageText);
-      newMessage.originLLM = llmId;
-      newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
-      this.messagesReplace([...newHistory, newMessage]);
+  beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
+    const { open: beamOpen, importRays: beamImportRays, terminate: beamTerminate } = this.beamStore.getState();
+
+    const onBeamSuccess = (messageText: string, llmId: DLLMId) => {
+      // set output when going back to the chat
+      if (destReplaceMessageId) {
+        // replace a single message in the conversation history
+        this.messageEdit(destReplaceMessageId, { text: messageText, originLLM: llmId }, true);
+      } else {
+        // replace (may truncate) the conversation history and append a message
+        const newMessage = createDMessage('assistant', messageText);
+        newMessage.originLLM = llmId;
+        newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
+        this.messagesReplace([...viewHistory, newMessage]);
+      }
 
       // close beam
       this.beamStore.getState().terminate();
     };
 
-    // open beam
-    this.beamStore.getState().open(newHistory, useModelsStore.getState().chatLLMId, handleReplaceFullHistory);
-  }
-
-  beamReplaceMessage(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], replaceMessageId: DMessage['id']): void {
-    const handleReplaceSingleMessage = (messageText: string, llmId: DLLMId) => {
-      // replace a single message in the conversation history
-      this.messageEdit(replaceMessageId, { text: messageText, originLLM: llmId }, true);
-
-      // close beam
-      this.beamStore.getState().terminate();
-    };
-
-    // open beam and import the messages
-    const { open: beamOpen, importRays: beamImportRays } = this.beamStore.getState();
-    beamOpen(viewHistory, useModelsStore.getState().chatLLMId, handleReplaceSingleMessage);
-    beamImportRays(importMessages);
+    beamOpen(viewHistory, useModelsStore.getState().chatLLMId, onBeamSuccess);
+    importMessages.length && beamImportRays(importMessages);
   }
 
 
