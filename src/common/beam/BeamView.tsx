@@ -11,7 +11,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamPaneGather } from './BeamPaneGather';
 import { BeamPaneScatter } from './BeamPaneScatter';
-import { BeamRayGrid, DEF_RAY_COUNT, MIN_RAY_COUNT } from './BeamRayGrid';
+import { BeamRayGrid, DEF_RAY_COUNT } from './BeamRayGrid';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 
 
@@ -87,17 +87,16 @@ export function BeamView(props: {
   // runnning
 
   // [effect] pre-populate a default number of rays
-  const bootup = raysCount < MIN_RAY_COUNT;
+  const bootup = raysCount < DEF_RAY_COUNT;
   React.useEffect(() => {
     bootup && handleRaySetCount(DEF_RAY_COUNT);
   }, [bootup, handleRaySetCount]);
 
 
   const lastMessage = inputHistory?.slice(-1)[0] || null;
+
   const otherHistoryCount = Math.max(0, (inputHistory?.length || 0) - 1);
   const isFirstMessageSystem = inputHistory?.[0]?.role === 'system';
-
-
   const userMessageDecorator = React.useMemo(() => {
     return (otherHistoryCount >= 1) ? (
       <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.8 }}>
