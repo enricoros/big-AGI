@@ -80,7 +80,9 @@ export function ChatModeMenu(props: {
         .map(([key, data]) =>
           <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Badge invisible={!data.highlight} color='success' variant='solid' size='sm'><Radio checked={key === props.chatModeId} /></Badge>
+              <Badge invisible={!data.highlight} color='success' size='sm'>
+                <Radio color={data.highlight ? 'success' : undefined} checked={key === props.chatModeId} />
+              </Badge>
               <Box sx={{ flexGrow: 1 }}>
                 <Typography>{data.label}</Typography>
                 <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.capabilityHasTTI) ? 'Unconfigured' : ''}</Typography>
