@@ -215,7 +215,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       terminate();
 
       // if just opened, update the model with the current chat model
-      const gatherLlmId = !wasOpen && inheritLlmId;
+      const gatherLlmId = !wasOpen && initialLlmId;
 
       // validate history
       const history = [...chatHistory];
