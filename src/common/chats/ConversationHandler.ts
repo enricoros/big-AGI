@@ -73,8 +73,19 @@ export class ConversationHandler {
 
   getBeamStore = () => this.beamStore;
 
-  beamOpen(history: DMessage[]) {
-    this.beamStore.getState().initialize(history, useModelsStore.getState().chatLLMId);
+  /**
+   * This will replace the conversation history, and use Beam to generate the next 'assistant' message
+   */
+  beamGenerateNext(history: DMessage[]) {
+    // overwrite history - NOTE: maybe this should be done once at the end of beam?
+    this.chatActions.setMessages(this.conversationId, history);
+    // generate beam from the same history
+    this.beamStore.getState().initialize(history, /*[], null,*/ useModelsStore.getState().chatLLMId);
+  }
+
+  beamReplaceMessage(history: DMessage[], importMessages: DMessage[], replaceMessage: DMessage['id'] | null): void {
+    // generate beam from the given history, then replace the message at the end
+    this.beamStore.getState().initialize(history, /*importMessages, replaceMessage,*/ useModelsStore.getState().chatLLMId);
   }
 
 

@@ -100,6 +100,7 @@ export function Composer(props: {
 }) {
 
   // state
+  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
   const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
@@ -113,7 +114,6 @@ export function Composer(props: {
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();

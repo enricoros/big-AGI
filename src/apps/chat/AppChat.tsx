@@ -220,8 +220,8 @@ export function AppChat() {
             return setMessages(conversationId, [...history, helpMessage]);
 
           case 'mode-beam':
-            Object.assign(lastMessage, { text: chatCommand.params || '' });
-            return ConversationsManager.getHandler(conversationId).beamOpen(history);
+            Object.assign(lastMessage, { text: chatCommand.params || '' }); // remove the '/command'
+            return ConversationsManager.getHandler(conversationId).beamGenerateNext(history);
 
           default:
             return setMessages(conversationId, [...history, createDMessage('assistant', 'This command is not supported.')]);
@@ -241,7 +241,7 @@ export function AppChat() {
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
-          return ConversationsManager.getHandler(conversationId).beamOpen(history);
+          return ConversationsManager.getHandler(conversationId).beamGenerateNext(history);
 
         case 'append-user':
           return setMessages(conversationId, history);
@@ -302,8 +302,8 @@ export function AppChat() {
     return enqueued;
   }, [chatPanes, willMulticast, _handleExecute]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[], chatEffectBeam: boolean): Promise<void> => {
-    await _handleExecute(!chatEffectBeam ? 'generate-text' : 'generate-text-beam', conversationId, history);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
+    await _handleExecute('generate-text', conversationId, history);
   }, [_handleExecute]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
