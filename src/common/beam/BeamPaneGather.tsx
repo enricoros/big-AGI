@@ -4,7 +4,6 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup, Typography } from '@mui/joy';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
@@ -48,7 +47,7 @@ export function BeamPaneGather(props: {
         {/*</Typography>*/}
         <div>
           <Typography level='h4' component='h2'>
-            <AutoAwesomeOutlinedIcon sx={{fontSize:'1rem'}} /> Merge
+            <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} /> Merge
           </Typography>
 
           <Typography level='body-sm'>
@@ -80,17 +79,17 @@ export function BeamPaneGather(props: {
         </ButtonGroup>
       </FormControl>}
 
-      {gatherEnabled && (
-        // <FormControl sx={{ mx: 'auto' }}>
-        //   <FormLabelStart title={`Candidates ${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />
-          <RadioGroup size='sm' defaultValue='outlined' orientation='vertical' sx={{mx:'auto'}}>
-            <Radio value='one' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Chooose</Typography>} />
-            {/*<Radio value='many' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Improve</Typography>} />*/}
-            <Radio value='all' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Fuse</Typography>} />
-            <Radio value='manual' label='Manual' />
-          </RadioGroup>
-        // </FormControl>
-      )}
+      {/*{gatherEnabled && (*/}
+      {/*  // <FormControl sx={{ mx: 'auto' }}>*/}
+      {/*  //   <FormLabelStart title={`Candidates ${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />*/}
+      <RadioGroup size='sm' orientation={props.isMobile ? 'vertical' : 'horizontal'} sx={{ mx: 'auto' }}>
+        <Radio value='one' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Chooose</Typography>} />
+        {/*<Radio value='many' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Improve</Typography>} />*/}
+        <Radio value='all' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Fuse</Typography>} />
+        <Radio value='manual' label='Manual' />
+      </RadioGroup>
+      {/*// </FormControl>*/}
+      {/*)}*/}
 
       <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
         Close
