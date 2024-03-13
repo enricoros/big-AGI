@@ -612,7 +612,7 @@ export function ChatMessage(props: {
           {/* Beam/Restart */}
           {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
           {!!props.onMessageBeam && labsChatBeam && (
-            <MenuItem onClick={handleOpsBeamFrom}>
+            <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
               <ListItemDecorator><ChatBeamIcon color='primary' /></ListItemDecorator>
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
@@ -620,7 +620,7 @@ export function ChatMessage(props: {
             </MenuItem>
           )}
           {!!props.onMessageAssistantFrom && (
-            <MenuItem onClick={handleOpsAssistantFrom}>
+            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
               {!fromAssistant
                 ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
