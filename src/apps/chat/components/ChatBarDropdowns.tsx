@@ -7,7 +7,7 @@ import { usePersonaIdDropdown } from './usePersonaDropdown';
 import { useFolderDropdown } from './folders/useFolderDropdown';
 
 
-export function ChatDropdowns(props: {
+export function ChatBarDropdowns(props: {
   conversationId: DConversationId | null
 }) {
 

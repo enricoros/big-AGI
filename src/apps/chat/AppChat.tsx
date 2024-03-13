@@ -28,11 +28,12 @@ import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optim
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
+import { ChatBarAltBeam } from './components/ChatBarAltBeam';
+import { ChatBarAltTitle } from './components/ChatBarAltTitle';
+import { ChatBarDropdowns } from './components/ChatBarDropdowns';
 import { ChatDrawerMemo } from './components/ChatDrawer';
-import { ChatDropdowns } from './components/ChatDropdowns';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
-import { ChatTitle } from './components/ChatTitle';
 import { Composer } from './components/composer/Composer';
 import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
@@ -107,7 +108,10 @@ export function AppChat() {
   }), [chatHandlers]);
 
   const beamsOpens = useAreBeamsOpen(beamsStores);
-  const beamOpenInFocusedPane = focusedPaneIndex !== null ? (beamsOpens?.[focusedPaneIndex] ?? false) : false;
+  const beamOpenStoreInFocusedPane = React.useMemo(() => {
+    const open = focusedPaneIndex !== null ? (beamsOpens?.[focusedPaneIndex] ?? false) : false;
+    return open ? beamsStores?.[focusedPaneIndex!] ?? null : null;
+  }, [beamsOpens, beamsStores, focusedPaneIndex]);
 
   const {
     // focused
@@ -434,10 +438,12 @@ export function AppChat() {
 
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
-  const focusedBarContent = React.useMemo(() => (barAltTitle === null)
-      ? <ChatDropdowns conversationId={focusedPaneConversationId} />
-      : <ChatTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, focusedPaneConversationId],
+  const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
+      ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} />
+      : (barAltTitle === null)
+        ? <ChatBarDropdowns conversationId={focusedPaneConversationId} />
+        : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
+    , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId],
   );
 
   const drawerContent = React.useMemo(() =>
@@ -619,7 +625,7 @@ export function AppChat() {
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
-      sx={beamOpenInFocusedPane ? {
+      sx={beamOpenStoreInFocusedPane ? {
         display: 'none',
       } : {
         zIndex: 51, // just to allocate a surface, and potentially have a shadow
