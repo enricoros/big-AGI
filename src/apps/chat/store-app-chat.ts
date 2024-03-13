@@ -29,6 +29,9 @@ interface AppChatStore {
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
+  showPersonaIcons: boolean;
+  setShowPersonaIcons: (showPersonaIcons: boolean) => void;
+
   showRelativeSize: boolean;
   setShowRelativeSize: (showRelativeSize: boolean) => void;
 
@@ -58,6 +61,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
+
+    showPersonaIcons: true,
+    setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons }),
 
     showRelativeSize: false,
     setShowRelativeSize: (showRelativeSize: boolean) => _set({ showRelativeSize }),
@@ -112,6 +118,12 @@ export const useChatMicTimeoutMsValue = (): number =>
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
+
+export const useChatShowPersonaIcons = (): { showPersonaIcons: boolean, togglePersonaIcons: () => void } => {
+  const showPersonaIcons = useAppChatStore(state => state.showPersonaIcons);
+  const togglePersonaIcons = () => useAppChatStore.getState().setShowPersonaIcons(!showPersonaIcons);
+  return { showPersonaIcons, togglePersonaIcons };
+}
 
 export const useChatShowRelativeSize = (): { showRelativeSize: boolean, toggleRelativeSize: () => void } => {
   const showRelativeSize = useAppChatStore(state => state.showRelativeSize);

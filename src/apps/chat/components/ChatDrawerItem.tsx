@@ -279,7 +279,7 @@ function ChatDrawerItem(props: {
         {/* buttons row */}
         {isActive && (
           <Box sx={{ display: 'flex', gap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
-            <ListItemDecorator />
+            {props.showSymbols && <ListItemDecorator />}
 
             {/* Current Folder color, and change initiator */}
             {!deleteArmed && <>
