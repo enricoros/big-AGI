@@ -611,6 +611,16 @@ export function ChatMessage(props: {
           )}
           {/* Beam/Restart */}
           {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
+          {!!props.onMessageAssistantFrom && (
+            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
+              <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
+              {!fromAssistant
+                ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
+                : !props.isBottom
+                  ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
+                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
+            </MenuItem>
+          )}
           {!!props.onMessageBeam && labsChatBeam && (
             <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
               <ListItemDecorator>
@@ -620,17 +630,9 @@ export function ChatMessage(props: {
               </ListItemDecorator>
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
-                : 'Beam'}
-            </MenuItem>
-          )}
-          {!!props.onMessageAssistantFrom && (
-            <MenuItem disabled={fromSystem} onClick={handleOpsAssistantFrom}>
-              <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
-              {!fromAssistant
-                ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
-                  ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
-                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
+                  ? <>Beam <span style={{ opacity: 0.5 }}>this message</span></>
+                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Beam<KeyStroke combo='Ctrl + Shift + B' /></Box>}
             </MenuItem>
           )}
         </CloseableMenu>
