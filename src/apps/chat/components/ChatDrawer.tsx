@@ -28,7 +28,7 @@ import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, useChatNavRenderItems } from './useChatNavRenderItems';
 import { ClearFolderText } from './folders/useFolderDropdown';
-import { useChatShowRelativeSize } from '../store-app-chat';
+import { useChatShowPersonaIcons, useChatShowRelativeSize } from '../store-app-chat';
 
 
 // this is here to make shallow comparisons work on the next hook
@@ -79,6 +79,7 @@ function ChatDrawer(props: {
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
+  const { showPersonaIcons, togglePersonaIcons } = useChatShowPersonaIcons();
   const { showRelativeSize, toggleRelativeSize } = useChatShowRelativeSize();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatNavRenderItems(
@@ -168,6 +169,10 @@ function ChatDrawer(props: {
         <ListItem>
           <Typography level='body-sm'>Show</Typography>
         </ListItem>
+        <MenuItem onClick={togglePersonaIcons}>
+          <ListItemDecorator>{showPersonaIcons && <CheckIcon />}</ListItemDecorator>
+          Persona Icons
+        </MenuItem>
         <MenuItem onClick={toggleRelativeSize}>
           <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
           Relative Size
@@ -280,7 +285,7 @@ function ChatDrawer(props: {
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
               item={item}
-              showSymbols={showSymbols}
+              showSymbols={showPersonaIcons && showSymbols}
               bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
