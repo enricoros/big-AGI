@@ -221,7 +221,7 @@ export function AppChat() {
 
           case 'mode-beam':
             Object.assign(lastMessage, { text: chatCommand.params || '' }); // remove the '/command'
-            return ConversationsManager.getHandler(conversationId).beamGenerateNext(history);
+            return ConversationsManager.getHandler(conversationId).beamGenerate(history);
 
           default:
             return setMessages(conversationId, [...history, createDMessage('assistant', 'This command is not supported.')]);
@@ -241,7 +241,7 @@ export function AppChat() {
           return await runAssistantUpdatingState(conversationId, history, chatLLMId, systemPurposeId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
         case 'generate-text-beam':
-          return ConversationsManager.getHandler(conversationId).beamGenerateNext(history);
+          return ConversationsManager.getHandler(conversationId).beamGenerate(history);
 
         case 'append-user':
           return setMessages(conversationId, history);

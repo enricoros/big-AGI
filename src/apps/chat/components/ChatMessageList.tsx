@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, List } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
@@ -52,7 +52,7 @@ export function ChatMessageList(props: {
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
+  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
@@ -61,7 +61,7 @@ export function ChatMessageList(props: {
       editMessage: state.editMessage,
       setMessages: state.setMessages,
     };
-  }, shallow);
+  }));
   const ephemerals = useEphemerals(props.conversationHandler);
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
@@ -97,7 +97,7 @@ export function ChatMessageList(props: {
           if (truncatedHistory.length >= 2)
             props.conversationHandler.beamReplaceMessage(truncatedHistory.slice(0, -1), [lastMessage], lastMessage.id);
         } else
-          props.conversationHandler.beamGenerateNext(truncatedHistory);
+          props.conversationHandler.beamGenerate(truncatedHistory);
       }
     }
   }, [conversationId, props.conversationHandler]);

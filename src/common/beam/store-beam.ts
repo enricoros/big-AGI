@@ -25,6 +25,7 @@ interface DRay {
   scatterIssue?: string;
   genAbortController?: AbortController;
   userSelected: boolean;
+  imported: boolean;
 }
 
 function createDRay(scatterLlmId: DLLMId | null): DRay {
@@ -34,6 +35,7 @@ function createDRay(scatterLlmId: DLLMId | null): DRay {
     message: createDMessage('assistant', ''),
     scatterLlmId,
     userSelected: false,
+    imported: false,
   };
 }
 
@@ -98,6 +100,7 @@ function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DR
     scatterIssue: undefined,
     genAbortController: abortController,
     userSelected: false,
+    imported: false,
   };
 }
 
@@ -129,11 +132,14 @@ export function rayIsUserSelected(ray: DRay | null): boolean {
 
 // Beam
 
+type BeamSuccessCallback = (text: string, llmId: DLLMId) => void;
+
 interface BeamState {
 
   isOpen: boolean;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
+  onSuccessCallback: BeamSuccessCallback | null;
 
   rays: DRay[];
 
@@ -149,14 +155,37 @@ interface BeamState {
 
 }
 
+const initialBeamState = (): BeamState => ({
+
+  isOpen: false,
+  inputHistory: null,
+  inputIssues: null,
+  onSuccessCallback: null,
+
+  rays: [],
+
+  gatherLlmId: null,
+  gatherMessage: null,
+  gatherAbortController: null,
+
+  readyScatter: false,
+  isScattering: false,
+
+  readyGather: 0,
+  isGathering: false,
+
+});
+
 export interface BeamStore extends BeamState {
 
-  initialize: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
+  open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
-  setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
   removeRay: (rayId: DRayId) => void;
+  importRays: (messages: DMessage[]) => void;
+
+  setGatherLlmId: (llmId: DLLMId | null) => void;
 
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
@@ -177,20 +206,9 @@ export const createBeamStore = () => createStore<BeamStore>()(
     debugId: uuidv4(),
 
     // state
-    isOpen: false,
-    inputHistory: null,
-    inputIssues: null,
-    rays: [],
-    gatherLlmId: null,
-    gatherMessage: null,
-    gatherAbortController: null,
-    readyScatter: false,
-    isScattering: false,
-    readyGather: 0,
-    isGathering: false,
+    ...initialBeamState(),
 
-
-    initialize: (history: DMessage[], inheritLlmId: DLLMId | null) => {
+    open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
       const { isOpen: wasOpen, terminate } = _get();
 
       // reset pending operations
@@ -200,46 +218,42 @@ export const createBeamStore = () => createStore<BeamStore>()(
       const gatherLlmId = !wasOpen && inheritLlmId;
 
       // validate history
+      const history = [...chatHistory];
       const isValidHistory = history.length >= 1 && history[history.length - 1].role === 'user';
       _set({
+        // input
         isOpen: true,
         inputHistory: isValidHistory ? history : null,
         inputIssues: isValidHistory ? null : 'Invalid history',
-        ...(gatherLlmId ? { gatherLlmId } : {}),
+        onSuccessCallback: callback,
+
+        // rays already reset
+
+        // gather
+        ...(gatherLlmId ? { gatherLlmId: gatherLlmId } : {}),
         gatherMessage: isValidHistory ? createDMessage('assistant', PLACEHOLDER_GATHER_TEXT) : null,
+
+        // state
         readyScatter: isValidHistory,
       });
     },
 
     terminate: () => { /*_get().isOpen &&*/
-      const { rays: prevRays } = _get();
+      const { rays: prevRays, gatherLlmId: prevGatherLlmId, gatherAbortController } = _get();
 
       // abort all rays and the gathermessage
       prevRays.forEach(rayScatterStop);
+      gatherAbortController?.abort();
 
       _set({
-        isOpen: false,
-        inputHistory: null,
-        inputIssues: null,
+        ...initialBeamState(),
 
-        rays: prevRays.map((ray) => createDRay(ray.scatterLlmId)), // remember only the model configuration
-
-        // gatherLlmId: null,   // remember the selected llm
-        gatherMessage: null,
-        gatherAbortController: null,
-
-        readyScatter: false,
-        isScattering: false,
-
-        readyGather: 0,
-        isGathering: false,
+        // remember some state between terminations
+        rays: prevRays.map((prevRay) => createDRay(prevRay.scatterLlmId)),
+        gatherLlmId: prevGatherLlmId,
       });
     },
 
-
-    setGatherLlmId: (llmId: DLLMId | null) => _set({
-      gatherLlmId: llmId,
-    }),
 
     setRayCount: (count: number) => {
       const { rays, syncRaysStateToBeam } = _get();
@@ -269,6 +283,32 @@ export const createBeamStore = () => createStore<BeamStore>()(
       }));
       syncRaysStateToBeam();
     },
+
+    importRays: (messages: DMessage[]) => {
+      const { rays, syncRaysStateToBeam } = _get();
+      _set({
+        rays: [
+          ...messages.map((message) => {
+              const ray = createDRay(null);
+              if (message.text.trim()) {
+                ray.status = 'success';
+                ray.message.text = message.text;
+                ray.message.updated = Date.now();
+                ray.imported = true;
+              }
+              return ray;
+            },
+          ),
+          ...rays.filter((ray) => ray.status !== 'empty'),
+        ],
+      });
+      syncRaysStateToBeam();
+    },
+
+
+    setGatherLlmId: (llmId: DLLMId | null) => _set({
+      gatherLlmId: llmId,
+    }),
 
 
     startScatteringAll: () => {
