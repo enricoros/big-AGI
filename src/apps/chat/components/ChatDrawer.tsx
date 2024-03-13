@@ -229,7 +229,8 @@ function ChatDrawer(props: {
       <ListItem sx={{ mx: '0.25rem', mb: 0.5 }}>
         <ListItemButton
           // variant='outlined'
-          variant={disableNewButton ? undefined : 'outlined'}
+          variant={disableNewButton ? undefined : 'soft'}
+          color='primary'
           disabled={disableNewButton}
           onClick={handleButtonNew}
           sx={{
@@ -241,10 +242,13 @@ function ChatDrawer(props: {
             fontWeight: 'lg',
 
             // style
+            // backgroundColor: 'background.popup',
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
             borderRadius: 'md',
-            boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'sm',
-            backgroundColor: 'background.popup',
-            transition: 'box-shadow 0.2s',
+            // color: 'neutral.plainColor',
+            // boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'xs',
+            // transition: 'box-shadow 0.2s',
           }}
         >
           <ListItemDecorator><AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} /></ListItemDecorator>
