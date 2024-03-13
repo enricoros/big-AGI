@@ -31,11 +31,11 @@ export function ChatBarAltBeam(props: {
         <Box
           component='span'
           sx={
-            isGathering ? { animation: `${animationColorBeamGather} 3s infinite`, px: 1.5, py: 0.5 }
-              : isScattering ? { animation: `${animationColorBeamScatter} 5s infinite` }
-                : { animation: `${animationEnterBelow} 0.2s`, fontWeight: 'lg' }
+            isGathering ? { animation: `${animationColorBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
+              : isScattering ? { animation: `${animationColorBeamScatter} 5s infinite, ${animationEnterBelow} 0.6s` }
+                : { fontWeight: 'lg' }
           }>
-          {isGathering ? 'Merging...' : isScattering ? 'Scattering...' : 'Beam'}
+          {isGathering ? 'Merging...' : isScattering ? 'Beaming...' : 'Beam'}
         </Box>
         {(!isGathering && !isScattering) && ' Mode'}
       </Typography>
