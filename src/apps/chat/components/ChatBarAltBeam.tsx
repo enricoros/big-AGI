@@ -5,6 +5,9 @@ import { Box, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { KeyStroke } from '~/common/components/KeyStroke';
+import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 
 import { FadeInButton } from './ChatDrawerItem';
 import { animationColorBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
@@ -14,13 +17,19 @@ export function ChatBarAltBeam(props: {
   beamStore: BeamStoreApi,
 }) {
 
-  const { closebeam, isScattering, isGathering } = useBeamStore(props.beamStore, useShallow((store) => ({
+  // external beam state
+  const { closebeam, isScattering, isGathering, readyGather } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
     isGathering: store.isGathering,
+    readyGather: store.readyGather,
     // actions
     closebeam: store.close,
   })));
+
+  // esc to close
+  useGlobalShortcut(ShortcutKeyName.Esc, false, false, false, closebeam);
+
 
   return (
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 3 }, alignItems: 'center' }}>
@@ -40,9 +49,11 @@ export function ChatBarAltBeam(props: {
         {(!isGathering && !isScattering) && ' Mode'}
       </Typography>
 
-      <FadeInButton aria-label='Close' size='sm' onClick={closebeam}>
-        <CloseRoundedIcon />
-      </FadeInButton>
+      <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Close Beam Mode <KeyStroke combo='Esc' /></Box>}>
+        <FadeInButton aria-label='Close' size='sm' onClick={closebeam}>
+          <CloseRoundedIcon />
+        </FadeInButton>
+      </GoodTooltip>
 
     </Box>
   );
