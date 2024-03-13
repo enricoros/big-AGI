@@ -73,19 +73,25 @@ export class ConversationHandler {
 
   getBeamStore = () => this.beamStore;
 
-  /**
-   * This will replace the conversation history, and use Beam to generate the next 'assistant' message
-   */
-  beamGenerateNext(history: DMessage[]) {
-    // overwrite history - NOTE: maybe this should be done once at the end of beam?
-    this.chatActions.setMessages(this.conversationId, history);
-    // generate beam from the same history
-    this.beamStore.getState().initialize(history, /*[], null,*/ useModelsStore.getState().chatLLMId);
+  beamGenerate(newHistory: DMessage[]) {
+    // This will replace the conversation history, and use Beam to generate the next 'assistant' message
+    const handleReplaceFullHistory = (messageText: string, llmId: DLLMId) => {
+      this.chatActions.setMessages(this.conversationId, newHistory);
+      this.messageAppendAssistant(messageText, llmId);
+    };
+    const { open: beamOpen } = this.beamStore.getState();
+    // TODO: resync purpose when opening
+    beamOpen(newHistory, useModelsStore.getState().chatLLMId, handleReplaceFullHistory);
   }
 
-  beamReplaceMessage(history: DMessage[], importMessages: DMessage[], replaceMessage: DMessage['id'] | null): void {
-    // generate beam from the given history, then replace the message at the end
-    this.beamStore.getState().initialize(history, /*importMessages, replaceMessage,*/ useModelsStore.getState().chatLLMId);
+  beamReplaceMessage(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], replaceMessageId: DMessage['id']): void {
+    // This will replace a single message in history after Beam has generated it
+    const handleReplaceSingleMessage = (messageText: string, llmId: DLLMId) => {
+      this.messageEdit(replaceMessageId, { text: messageText, originLLM: llmId }, true);
+    };
+    const { open: beamOpen, importRays: beamImportRays } = this.beamStore.getState();
+    beamOpen(viewHistory, useModelsStore.getState().chatLLMId, handleReplaceSingleMessage);
+    beamImportRays(importMessages);
   }
 
 
