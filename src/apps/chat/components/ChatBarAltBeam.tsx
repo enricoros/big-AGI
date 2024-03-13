@@ -9,9 +9,9 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { animationColorBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
 
 import { FadeInButton } from './ChatDrawerItem';
-import { animationColorBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
 
 
 export function ChatBarAltBeam(props: {
@@ -23,13 +23,13 @@ export function ChatBarAltBeam(props: {
 
 
   // external beam state
-  const { closebeam, isScattering, isGathering, readyGather } = useBeamStore(props.beamStore, useShallow((store) => ({
+  const { isScattering, isGathering, readyGather, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
     isGathering: store.isGathering,
     readyGather: store.readyGather, // Assuming this state exists and is a number
     // actions
-    closebeam: store.close,
+    terminateBeam: store.terminate,
   })));
 
 
@@ -40,13 +40,13 @@ export function ChatBarAltBeam(props: {
     if (requiresConfirmation)
       setShowCloseConfirmation(true);
     else
-      closebeam();
-  }, [requiresConfirmation, closebeam]);
+      terminateBeam();
+  }, [requiresConfirmation, terminateBeam]);
 
   const handleCloseConfirmation = React.useCallback(() => {
-    closebeam();
+    terminateBeam();
     setShowCloseConfirmation(false);
-  }, [closebeam]);
+  }, [terminateBeam]);
 
   const handleCloseDenial = React.useCallback(() => {
     setShowCloseConfirmation(false);

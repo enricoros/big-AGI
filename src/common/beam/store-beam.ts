@@ -151,8 +151,8 @@ interface BeamState {
 
 export interface BeamStore extends BeamState {
 
-  open: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
-  close: () => void;
+  initialize: (history: DMessage[], inheritLlmId: DLLMId | null) => void;
+  terminate: () => void;
 
   setGatherLlmId: (llmId: DLLMId | null) => void;
   setRayCount: (count: number) => void;
@@ -190,11 +190,11 @@ export const createBeamStore = () => createStore<BeamStore>()(
     isGathering: false,
 
 
-    open: (history: DMessage[], inheritLlmId: DLLMId | null) => {
-      const { isOpen: wasOpen, close } = _get();
+    initialize: (history: DMessage[], inheritLlmId: DLLMId | null) => {
+      const { isOpen: wasOpen, terminate } = _get();
 
       // reset pending operations
-      close();
+      terminate();
 
       // if just opened, update the model with the current chat model
       const gatherLlmId = !wasOpen && inheritLlmId;
@@ -211,7 +211,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       });
     },
 
-    close: () => { /*_get().isOpen &&*/
+    terminate: () => { /*_get().isOpen &&*/
       const { rays: prevRays } = _get();
 
       // abort all rays and the gathermessage

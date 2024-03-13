@@ -74,7 +74,7 @@ export class ConversationHandler {
   getBeamStore = () => this.beamStore;
 
   beamOpen(history: DMessage[]) {
-    this.beamStore.getState().open(history, useModelsStore.getState().chatLLMId);
+    this.beamStore.getState().initialize(history, useModelsStore.getState().chatLLMId);
   }
 
 
