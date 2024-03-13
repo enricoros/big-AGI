@@ -34,7 +34,7 @@ export function ChatMessageList(props: {
   fitScreen: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBeam: boolean) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -71,26 +71,42 @@ export function ChatMessageList(props: {
 
   // text actions
 
-  const handleRunExample = React.useCallback(async (text: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)], false);
+  const handleRunExample = React.useCallback(async (examplePrompt: string) => {
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]);
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
   // message menu methods proxy
 
-  const handleConversationBranch = React.useCallback((messageId: string) => {
-    conversationId && onConversationBranch(conversationId, messageId);
-  }, [conversationId, onConversationBranch]);
-
-  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number, chatEffectBeam: boolean) => {
+  const handleMessageAssistantFrom = React.useCallback(async (messageId: string, offset: number) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory, chatEffectBeam);
+      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory);
     }
   }, [conversationId, onConversationExecuteHistory]);
 
-  const handleConversationTruncate = React.useCallback((messageId: string) => {
+  const handleMessageBeam = React.useCallback(async (messageId: string) => {
+    if (!conversationId || !props.conversationHandler) return;
+    const messages = getConversation(conversationId)?.messages;
+    if (messages?.length) {
+      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+      const lastMessage = truncatedHistory[truncatedHistory.length - 1];
+      if (lastMessage) {
+        if (lastMessage.role === 'assistant') {
+          if (truncatedHistory.length >= 2)
+            props.conversationHandler.beamReplaceMessage(truncatedHistory.slice(0, -1), [lastMessage], lastMessage.id);
+        } else
+          props.conversationHandler.beamGenerateNext(truncatedHistory);
+      }
+    }
+  }, [conversationId, props.conversationHandler]);
+
+  const handleMessageBranch = React.useCallback((messageId: string) => {
+    conversationId && onConversationBranch(conversationId, messageId);
+  }, [conversationId, onConversationBranch]);
+
+  const handleMessageTruncate = React.useCallback((messageId: string) => {
     const messages = getConversation(conversationId)?.messages;
     if (conversationId && messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
@@ -239,11 +255,12 @@ export function ChatMessageList(props: {
               isBottom={idx === count - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
-              onConversationBranch={handleConversationBranch}
-              onConversationRestartFrom={handleConversationRestartFrom}
-              onConversationTruncate={handleConversationTruncate}
+              onMessageAssistantFrom={handleMessageAssistantFrom}
+              onMessageBeam={handleMessageBeam}
+              onMessageBranch={handleMessageBranch}
               onMessageDelete={handleMessageDelete}
               onMessageEdit={handleMessageEdit}
+              onMessageTruncate={handleMessageTruncate}
               onTextDiagram={handleTextDiagram}
               onTextImagine={handleTextImagine}
               onTextSpeak={handleTextSpeak}

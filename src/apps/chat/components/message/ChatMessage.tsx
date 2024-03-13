@@ -197,11 +197,12 @@ export function ChatMessage(props: {
   showBlocksDate?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
-  onConversationBranch?: (messageId: string) => void,
-  onConversationRestartFrom?: (messageId: string, offset: number, chatEffectBeam: boolean) => Promise<void>,
-  onConversationTruncate?: (messageId: string) => void,
+  onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
+  onMessageBeam?: (messageId: string) => Promise<void>,
+  onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
+  onMessageTruncate?: (messageId: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
@@ -276,23 +277,23 @@ export function ChatMessage(props: {
     closeOpsMenu();
   }, [isEditing, messageTyping]);
 
-  const handleOpsConversationBranch = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // to try to not steal the focus from the banched conversation
-    props.onConversationBranch && props.onConversationBranch(messageId);
-    closeOpsMenu();
-  };
-
-  const handleOpsConversationRestartFrom = async (e: React.MouseEvent) => {
+  const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
     closeOpsMenu();
-    props.onConversationRestartFrom && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, false);
+    await props.onMessageAssistantFrom?.(messageId, fromAssistant ? -1 : 0);
   };
 
-  const handleOpsConversationRestartFromBeam = async (e: React.MouseEvent) => {
+  const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    props.onConversationRestartFrom && labsChatBeam && await props.onConversationRestartFrom(messageId, fromAssistant ? -1 : 0, true);
+    labsChatBeam && await props.onMessageBeam?.(messageId);
+  };
+
+  const handleOpsBranch = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // to try to not steal the focus from the banched conversation
+    props.onMessageBranch?.(messageId);
+    closeOpsMenu();
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -325,12 +326,12 @@ export function ChatMessage(props: {
   };
 
   const handleOpsTruncate = (_e: React.MouseEvent) => {
-    props.onConversationTruncate && props.onConversationTruncate(messageId);
+    props.onMessageTruncate?.(messageId);
     closeOpsMenu();
   };
 
   const handleOpsDelete = (_e: React.MouseEvent) => {
-    props.onMessageDelete && props.onMessageDelete(messageId);
+    props.onMessageDelete?.(messageId);
   };
 
 
@@ -561,8 +562,8 @@ export function ChatMessage(props: {
               <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
-          {!!props.onConversationBranch && (
-            <MenuItem onClick={handleOpsConversationBranch} disabled={fromSystem}>
+          {!!props.onMessageBranch && (
+            <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
                 <ForkRightIcon />
               </ListItemDecorator>
@@ -570,7 +571,7 @@ export function ChatMessage(props: {
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
             </MenuItem>
           )}
-          {!!props.onConversationTruncate && (
+          {!!props.onMessageTruncate && (
             <MenuItem onClick={handleOpsTruncate} disabled={props.isBottom}>
               <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
               Truncate
@@ -606,18 +607,18 @@ export function ChatMessage(props: {
               Speak
             </MenuItem>
           )}
-          {/* Restart/try */}
-          {!!props.onConversationRestartFrom && <ListDivider />}
-          {!!props.onConversationRestartFrom && labsChatBeam && (
-            <MenuItem onClick={handleOpsConversationRestartFromBeam}>
+          {/* Beam/Restart */}
+          {(!!props.onMessageAssistantFrom || !!props.onMessageBeam) && <ListDivider />}
+          {!!props.onMessageBeam && labsChatBeam && (
+            <MenuItem onClick={handleOpsBeamFrom}>
               <ListItemDecorator><ChatBeamIcon color='primary' /></ListItemDecorator>
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
                 : <>Beam <span style={{ opacity: 0.5 }}>this answer</span></>}
             </MenuItem>
           )}
-          {!!props.onConversationRestartFrom && (
-            <MenuItem onClick={handleOpsConversationRestartFrom}>
+          {!!props.onMessageAssistantFrom && (
+            <MenuItem onClick={handleOpsAssistantFrom}>
               <ListItemDecorator>{fromAssistant ? <ReplayIcon color='primary' /> : <TelegramIcon color='primary' />}</ListItemDecorator>
               {!fromAssistant
                 ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
