@@ -123,8 +123,8 @@ export function ExplainerCarousel(props: {
     <Box sx={{
       flex: 1,
       mx: 'auto',
-      maxWidth: '900px', // <Container/>
-      minWidth: '80%',   // ensure it's not too snug on desktop
+      width: { sm: '92%', md: '86%' }, /* Default to 80% width */
+      maxWidth: '900px',    /* But don't go over 900px */
 
       // content
       display: 'flex',
@@ -164,27 +164,23 @@ export function ExplainerCarousel(props: {
 
 
       {/* Page Message */}
-      <Box sx={{
-        // display: 'grid',
-      }}>
-        {!!mdMessage && (
-          <ChatMessageMemo
-            message={mdMessage}
-            fitScreen={isMobile}
-            showAvatar={false}
-            adjustContentScaling={isMobile ? -1 : undefined}
-            sx={{
-              minHeight: '17rem', // 256px
-              py: 2,
-              border: 'none',
-              bordreRadius: 0,
-              borderRadius: 'xl',
-              // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-darkChannel) / 0.12)',
-              boxShadow: '0 60px 32px -60px rgb(var(--joy-palette-primary-darkChannel) / 0.14)',
-            }}
-          />
-        )}
-      </Box>
+      {!!mdMessage && (
+        <ChatMessageMemo
+          message={mdMessage}
+          fitScreen={isMobile}
+          showAvatar={false}
+          adjustContentScaling={isMobile ? -1 : undefined}
+          sx={{
+            minHeight: '17rem', // 256px
+            py: 2,
+            border: 'none',
+            bordreRadius: 0,
+            borderRadius: 'xl',
+            // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-darkChannel) / 0.12)',
+            boxShadow: '0 60px 32px -60px rgb(var(--joy-palette-primary-darkChannel) / 0.14)',
+          }}
+        />
+      )}
 
 
       {/* Buttons */}
