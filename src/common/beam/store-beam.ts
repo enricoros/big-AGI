@@ -186,6 +186,8 @@ export interface BeamStore extends BeamState {
   open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
+  editHistoryMessage: (messageId: string, newText: string) => void;
+
   setRayCount: (count: number) => void;
   removeRay: (rayId: DRayId) => void;
   importRays: (messages: DMessage[]) => void;
@@ -258,6 +260,15 @@ export const createBeamStore = () => createStore<BeamStore>()(
         gatherLlmId: prevGatherLlmId,
       });
     },
+
+
+    editHistoryMessage: (messageId: string, newText: string) =>
+      _set((state) => ({
+        inputHistory: state.inputHistory?.map((message) => (message.id !== messageId) ? message : {
+          ...message,
+          text: newText,
+        }),
+      })),
 
 
     setRayCount: (count: number) => {

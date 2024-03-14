@@ -23,7 +23,7 @@ const userMessageSx: SxProps = {
   borderTopLeftRadius: 0,
   borderTopRightRadius: 0,
   // px: '0.5rem',
-  px: '0.125rem',
+  pr: '0.125rem',
   // boxShadow: 'sm',
   // the following make it end-aligned
   // borderBottomRightRadius: 0,
@@ -75,7 +75,7 @@ export function BeamView(props: {
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const { setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId, terminate } = props.beamStore.getState();
+  const { editHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId, terminate } = props.beamStore.getState();
   const [_gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam Model');
 
 
@@ -155,6 +155,7 @@ export function BeamView(props: {
             showAvatar={true}
             adjustContentScaling={-1}
             topDecorator={userMessageDecorator}
+            onMessageEdit={editHistoryMessage}
             sx={userMessageSx}
           />
         </Box>
