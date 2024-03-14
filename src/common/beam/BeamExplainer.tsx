@@ -35,16 +35,16 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
 **Beam** allows you to run multiple AI models in parallel, exploring the solution space from different points of view.
 
 1. Reach closer to your goal, faster
-2. Tap into multiple AI perspectives
-3. Uncover beyond conventional solutions
+2. Tap into multiple AI perspectives at once
+3. Discover unconventional solutions
 
 #### How to Beam (Phase 1/2):
 
-- Define your problem
-- Launch multiple AI models, up to 8
-- Keep good responses, discard the noise, repeat
+- Clearly define your problem
+- Launch up to 8 AI models in parallel
+- Keep insightful responses, filter out the noise, and repeat
 
-> Beam until you are satisfied or undecided on a few responses.
+> Beam until you are satisfied or have narrowed down to a few promising responses.
 
 **Beaming** is the first step. Be curious.
 `,
@@ -55,23 +55,23 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     titleSpark: 'MERGE',
     titleSuffix: ': Convergence', // Synthesis, Convergence
     mdContent: `
-**Merge** combines the best AI responses into a single one.
+**Merge** combines the most valuable AI responses into a single cohesive response.
 
 1. Combine insights into one solution
-2. Leverage collective AI wisdom
+2. Leverage the collective wisdom of AI
 
 #### How to Merge:
-Uses all the remaining Beam responses, and lets you choose how to fuse them together. 
+Utilizes all the remaining Beam responses and allows you to choose how to fuse them.
 
 - Select the fusion *LLM*
 - Choose a Merge *method*, then *start*:
-  - **✨ Pick**: AI chooses the best response
-  - **✨ Fusion**: AI combines the best parts of each response
-  - **✨ Compare**: AI breaks down and compares the responses
-  - **✨ Custom**: define your own fusion prompt 
+  - **✨ Pick**: AI selects the most promising response
+  - **✨ Fusion**: AI combines the best elements of each response
+  - **✨ Compare**: AI analyzes and compares the responses
+  - **✨ Custom**: Define your own fusion prompt
 - Review and accept the results, or try again
 
-**Done**, you can now bring the merged message, or any other message, back to the chat.
+**Done**. You can now bring the merged message or any other message back to the chat.
     `, // > Merge until you have a single, high-quality response. Or choose the final response manually, skipping merge.
   },
   {
@@ -79,19 +79,19 @@ Uses all the remaining Beam responses, and lets you choose how to fuse them toge
     stepName: 'Tips',
     titleSuffix: 'Effectiveness Tips',
     mdContent: `
-#### Human in the loop
-You, the user, provide the creative direction and final judgement. The AI models are justy tools to give you drafts to quickly evaluate.
-There are additional deep reasons why this works [in our blog](https://big-agi.com/blog/introducing-beam).
+#### Human-in-the-loop · N × GPT-4 -> GPT-5
+You, the user, provide creative direction and final judgement. The AI models are powerful tools that generate drafts for you to quickly evaluate and refine.
+There are profound reasons why this approach works, which we explore [in our blog](https://big-agi.com/blog/introducing-beam).
 
 #### Best Use
-This tool is crafted for the **early stages** of a process, where it delivers unparalleled insights and perspectives precisely **when your
-project needs clarity and direction**. 
+This tool is designed for the **early stages** of a process, where it delivers unparalleled insights and perspectives precisely **when your
+project needs clarity and direction**.
 
 The diversity of perspectives acts **like the wisdom of a seasoned team**, offering a wide array of solutions and viewpoints.
 
-#### Warnings
-The tool **will consume more Tokens** than a regular chat, which is one more reason to use it early on when
-a chat history is short and the return of investment is greater.
+#### Considerations
+The tool **will consume more Tokens** than a regular chat, which is another reason to use it early on when
+a chat history is short, and the return on investment is greater.
 `,
   },
 ] as const;

@@ -9,6 +9,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { createDMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -42,6 +43,7 @@ function AllStepsStepper(props: {
   steps: ExplainerStep[],
   activeIndex: number,
   isMobile: boolean,
+  onStepClicked: (stepIndex: number) => void,
 }) {
   return (
     <Stepper sx={stepSequenceSx}>
@@ -54,6 +56,7 @@ function AllStepsStepper(props: {
             orientation='vertical'
             completed={completed}
             active={active}
+            onClick={() => props.onStepClicked(stepIndex)}
             indicator={
               <StepIndicator variant={(completed || active) ? 'solid' : 'outlined'} color='primary'>
                 {completed ? <CheckRoundedIcon /> : active ? <KeyboardArrowDownRoundedIcon /> : undefined}
@@ -99,7 +102,7 @@ export function ExplainerCarousel(props: {
   const isMobile = useIsMobile();
 
   // derived state
-  const isDone = stepIndex > props.steps.length - 1;
+  const isLastPage = stepIndex === props.steps.length - 1;
   const activeStep = props.steps[stepIndex] ?? null;
 
   // handlers
@@ -155,6 +158,7 @@ export function ExplainerCarousel(props: {
           steps={props.steps}
           activeIndex={stepIndex}
           isMobile={isMobile}
+          onStepClicked={setStepIndex}
         />
       </Box>
 
@@ -188,14 +192,19 @@ export function ExplainerCarousel(props: {
         {/* Advance Button */}
         <Button
           variant='solid'
-          endDecorator={<ArrowForwardRoundedIcon />}
-          onClick={() => setStepIndex(step => step < props.steps.length - 1 ? step + 1 : step)}
+          endDecorator={isLastPage ? <ChatBeamIcon /> : <ArrowForwardRoundedIcon />}
+          onClick={() => {
+            if (isLastPage)
+              props.onFinished();
+            else
+              setStepIndex(step => step < props.steps.length - 1 ? step + 1 : step);
+          }}
           sx={{
             boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
             minWidth: 180,
           }}
         >
-          Continue
+          {isLastPage ? 'Continue' : 'Next'}
         </Button>
 
         {/* Back Button */}
