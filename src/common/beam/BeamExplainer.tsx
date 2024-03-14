@@ -67,10 +67,10 @@ Utilizes all the remaining Beam responses and allows you to choose how to fuse t
 
 - Select the fusion *LLM*
 - Choose a Merge *method*, then *start*:
-  - **✨ Pick**: AI selects the most promising response
-  - **✨ Fusion**: AI combines the best elements of each response
-  - **✨ Compare**: AI analyzes and compares the responses
-  - **✨ Custom**: Define your own fusion prompt
+- **✨ Pick**: AI selects the most promising response
+- **✨ Fusion**: AI combines the best elements of each response
+- **✨ Compare**: AI analyzes and compares the responses
+- **✨ Custom**: Define your own fusion prompt
 - Review and accept the results, or try again
 
 **Done**. You can now bring the merged message or any other message back to the chat.
