@@ -64,11 +64,9 @@ function AllStepsStepper(props: {
               fontSize={props.isMobile ? 'sm' : undefined}
               fontWeight='xl'
               endDecorator={
-                step.stepName && <Typography fontSize='sm' fontWeight='normal'>{step.stepName}</Typography>
+                step.stepName && <Typography fontSize='sm' fontWeight='normal' sx={{ mr: 0.5 }}>{step.stepName}</Typography>
               }
-            >
-              {step.stepDigits}
-            </Typography>
+            >{step.stepDigits ?? null}</Typography>
           </Step>
         );
       }))}
@@ -113,9 +111,9 @@ export function ExplainerCarousel(props: {
 
 
   // [effect] restart from 0 if steps change
-  React.useEffect(() => {
-    setStepIndex(0);
-  }, [props.steps]);
+  // React.useEffect(() => {
+  //   setStepIndex(0);
+  // }, [props.steps]);
 
 
   return (
@@ -129,7 +127,7 @@ export function ExplainerCarousel(props: {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-around',
-      gap: 'var(--Pad)',
+      gap: 2,
     }}>
 
 
@@ -164,7 +162,6 @@ export function ExplainerCarousel(props: {
       {/* Page Message */}
       <Box sx={{
         // display: 'grid',
-        // px: 'var(--Pad)',
       }}>
         {!!mdMessage && (
           <ChatMessageMemo
@@ -187,7 +184,7 @@ export function ExplainerCarousel(props: {
 
 
       {/* Buttons */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--Pad_2)' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
         {/* Advance Button */}
         <Button
           variant='solid'
@@ -207,7 +204,7 @@ export function ExplainerCarousel(props: {
           color='neutral'
           onClick={() => setStepIndex(step => step > 0 ? step - 1 : step)}
           sx={{
-            minWidth: 120,
+            minWidth: 140,
           }}
         >
           Previous
