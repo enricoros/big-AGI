@@ -20,7 +20,7 @@ const beamRayGridDesktopSx: SxProps = {
   mx: 'var(--Pad)',
   mb: 'auto',
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(max(min(100%, 390px), 100%/5), 1fr))',
   gap: 'var(--Pad)',
 } as const;
 
