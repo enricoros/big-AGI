@@ -186,3 +186,17 @@ export const animationShadowLimey = keyframes`
         //background-color: rgb(0, 0, 128);
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 153, 0);
     }`;
+
+export const animationTextShadowLimey = keyframes`
+    100%, 0% {
+        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(183, 255, 0);
+    }
+    25% {
+        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 251, 0);
+    }
+    50% {
+        text-shadow: 2px 2px 0 white, 4px 4px 0 rgba(0, 255, 81);
+    }
+    75% {
+        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 153, 0);
+    }`;
