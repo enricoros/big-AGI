@@ -414,6 +414,7 @@ export function ChatMessage(props: {
 
   return (
     <ListItem
+      role='chat-message'
       sx={{
         // style
         backgroundColor: backgroundColor,
@@ -449,6 +450,8 @@ export function ChatMessage(props: {
           onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
           onClick={event => setOpsMenuAnchor(event.currentTarget)}
           sx={{
+            // make this stick to the top of the screen
+            position: 'sticky', top: 0,
             // flexBasis: 0, // this won't let the item grow
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             minWidth: { xs: 50, md: 64 },
