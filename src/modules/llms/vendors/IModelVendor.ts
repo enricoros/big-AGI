@@ -1,6 +1,8 @@
 import type React from 'react';
 import type { TRPCClientErrorBase } from '@trpc/client';
 
+import type { SvgIconProps } from '@mui/joy';
+
 import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
@@ -18,7 +20,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
   readonly hasBackendCap?: () => boolean; // used to show a 'geen checkmark' in the list of vendors when adding sources
 
   // components
-  readonly Icon: React.ComponentType | string;
+  readonly Icon: React.FunctionComponent<SvgIconProps>;
   readonly SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
   readonly LLMOptionsComponent: React.ComponentType<{ llm: TDLLM }>;
 

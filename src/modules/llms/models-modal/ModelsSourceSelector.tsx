@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { Avatar, Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -23,12 +23,8 @@ import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendor
 
 function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
   let icon: React.JSX.Element | null = null;
-  if (vendor?.Icon) {
-    if (typeof vendor.Icon === 'string')
-      icon = <Avatar sx={{ width: 24, height: 24 }}>{vendor.Icon}</Avatar>;
-    else
-      icon = <vendor.Icon />;
-  }
+  if (vendor?.Icon)
+    icon = <vendor.Icon />;
   return (greenMark && icon)
     ? <Badge size='sm' badgeContent='' slotProps={{ badge: { sx: { backgroundColor: 'lime', boxShadow: 'none', border: '1px solid gray', p: 0 } } }}>{icon}</Badge>
     : icon;

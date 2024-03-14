@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, styled, Typography } from '@mui/joy';
+import { Box, IconButton, styled, SvgIconProps, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
@@ -91,6 +91,7 @@ function RayControls(props: {
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
+  llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
   onLink: () => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
@@ -107,6 +108,10 @@ function RayControls(props: {
     {/*<Box sx={letterSx}>*/}
     {/*  {String.fromCharCode(65 + props.rayIndex)}*/}
     {/*</Box>*/}
+
+    {props.llmVendorIcon && (
+      <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
+    )}
 
     <Box sx={{ flex: 1 }}>
       {props.llmComponent}
@@ -181,7 +186,7 @@ export function BeamRay(props: {
   const llmId: DLLMId | null = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => setRayLlmId(props.rayId, llmId), [props.rayId, setRayLlmId]);
   const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
-  const [_, llmComponent] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
+  const [_, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
 
 
   // handlers
@@ -228,6 +233,7 @@ export function BeamRay(props: {
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
+        llmVendorIcon={llmVendorIcon}
         onLink={handleLlmLink}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
