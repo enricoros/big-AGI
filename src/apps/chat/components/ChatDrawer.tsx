@@ -179,7 +179,7 @@ function ChatDrawer(props: {
         </MenuItem>
       </Menu>
     </Dropdown>
-  ), [navGrouping, showRelativeSize, toggleRelativeSize]);
+  ), [navGrouping, showPersonaIcons, showRelativeSize, togglePersonaIcons, toggleRelativeSize]);
 
 
   return <>
@@ -187,7 +187,7 @@ function ChatDrawer(props: {
     {/* Drawer Header */}
     <PageDrawerHeader title='Chats' onClose={closeDrawer}>
       <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
-        <IconButton onClick={toggleEnableFolders}>
+        <IconButton size='sm' onClick={toggleEnableFolders}>
           {enableFolders ? <FoldersToggleOn /> : <FoldersToggleOff />}
         </IconButton>
       </Tooltip>

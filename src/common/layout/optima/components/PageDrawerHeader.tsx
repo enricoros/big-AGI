@@ -37,7 +37,7 @@ export const PageDrawerHeader = (props: {
       {props.title}
     </Typography>
 
-    <IconButton aria-label='Close Drawer' onClick={props.onClose}>
+    <IconButton aria-label='Close Drawer' size='sm' onClick={props.onClose}>
       <CloseRoundedIcon />
     </IconButton>
 
