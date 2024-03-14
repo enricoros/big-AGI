@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Button, ButtonGroup, IconButton, Tooltip } from '@mui/joy';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 
 // const desktopButtonLegend =
@@ -48,7 +48,7 @@ export function ButtonPromptFromIdea(props: {
       </Button>
       <Tooltip disableInteractive title='Use Idea'>
         <IconButton size='sm' onClick={onIdeaUse}>
-          <ArrowForwardIcon />
+          <ArrowForwardRoundedIcon />
         </IconButton>
       </Tooltip>
     </ButtonGroup>
