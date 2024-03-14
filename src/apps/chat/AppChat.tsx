@@ -610,9 +610,9 @@ export function AppChat() {
               <BeamView
                 beamStore={_paneChatBeamStore}
                 isMobile={isMobile}
+                showExplainer
                 sx={{
                   backgroundColor: 'background.level1',
-                  boxShadow: 'lg',
                   position: 'absolute',
                   inset: 0,
                   zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)

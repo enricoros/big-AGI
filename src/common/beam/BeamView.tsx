@@ -8,11 +8,13 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamPaneGather } from './BeamPaneGather';
 import { BeamPaneScatter } from './BeamPaneScatter';
 import { BeamRayGrid, DEF_RAY_COUNT } from './BeamRayGrid';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { BeamExplainer } from './BeamExplainer';
 
 
 const userMessageSx: SxProps = {
@@ -50,13 +52,15 @@ const assistantMessageSx: SxProps = {
 export function BeamView(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
-  sx?: SxProps
+  showExplainer?: boolean,
+  sx?: SxProps,
 }) {
 
   // state
   const [showHistoryMessage, setShowHistoryMessage] = React.useState(true);
 
   // linked state
+  const { novel: wizardUnseen, touch: wizardCompleted } = useUICounter('beam-wizard');
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const raysCount = rayIds.length;
   const {
@@ -109,6 +113,8 @@ export function BeamView(props: {
     ) : null;
   }, [isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
 
+  if (props.showExplainer && wizardUnseen)
+    return <BeamExplainer onWizardComplete={wizardCompleted} sx={props.sx} />;
 
   return (
     <Box sx={{
