@@ -40,9 +40,10 @@ export function BeamPaneScatter(props: {
   rayCount: number,
   setRayCount: (n: number) => void,
   startEnabled: boolean,
-  startBusy: boolean
+  startBusy: boolean,
   onStart: () => void,
   onStop: () => void,
+  onExplainerShow: () => any
 }) {
 
   return (
@@ -54,7 +55,10 @@ export function BeamPaneScatter(props: {
         {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
         {/*</Typography>*/}
         <div>
-          <Typography level='h4' component='h2'>
+          <Typography
+            level='h4' component='h2'
+            onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
+          >
             {/*big-AGI · */}
             Beam
           </Typography>

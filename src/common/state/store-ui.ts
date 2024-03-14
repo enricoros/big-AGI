@@ -44,6 +44,7 @@ interface UIPreferencesStore {
 
   actionCounters: Record<string, number>;
   incrementActionCounter: (key: string) => void;
+  resetActionCounter: (key: string) => void;
 
 }
 
@@ -90,6 +91,10 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
         set((state) => ({
           actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
         })),
+      resetActionCounter: (key: string) =>
+        set((state) => ({
+          actionCounters: { ...state.actionCounters, [key]: 0 },
+        })),
 
     }),
     {
@@ -123,13 +128,14 @@ type KnownKeys =
 export function useUICounter(key: KnownKeys, novelty: number = 1) {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
 
-  const touch = React.useCallback(() =>
-      useUIPreferencesStore.getState().incrementActionCounter(key)
-    , [key]);
+  const touch = React.useCallback(() => useUIPreferencesStore.getState().incrementActionCounter(key), [key]);
+
+  const forget = React.useCallback(() => useUIPreferencesStore.getState().resetActionCounter(key), [key]);
 
   return {
     // value,
     novel: value < novelty,
     touch,
+    forget,
   };
 }
