@@ -118,7 +118,7 @@ export function BeamView(props: {
 
   return (
     <Box sx={{
-      '--Pad': { xs: '1rem', md: '1.5rem', xl: '1.5rem' },
+      '--Pad': { xs: '1rem', md: '1.5rem' },
       '--Pad_2': 'calc(var(--Pad) / 2)',
 
       // enter animation
