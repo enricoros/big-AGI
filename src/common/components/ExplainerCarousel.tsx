@@ -178,6 +178,11 @@ export function ExplainerCarousel(props: {
             borderRadius: 'xl',
             // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-darkChannel) / 0.12)',
             boxShadow: '0 60px 32px -60px rgb(var(--joy-palette-primary-darkChannel) / 0.14)',
+
+            // customize the embedded GitHub Markdown for transparent images
+            ['.markdown-body img']: {
+              '--color-canvas-default': 'transparent!important',
+            },
           }}
         />
       )}
