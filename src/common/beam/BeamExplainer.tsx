@@ -21,6 +21,8 @@ const beamSteps: ExplainerPage[] = [
 
 Your journey to brilliance continues. Unlock the power of **Beaming** to explore vast possibilities and **Merge** to crystalize your vision.
 
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-830px-alpha.png)
+
 **BEAM** is where ideas flourish. Welcome to the future of creativity. 
 
 **Let's begin.**
@@ -45,8 +47,6 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
 - Keep insightful responses, filter out the noise, and repeat
 
 > Beam until you are satisfied or have narrowed down to a few promising responses.
-
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-830px-alpha.png)
 
 **Beaming** is the first step. Be curious.
 `,
