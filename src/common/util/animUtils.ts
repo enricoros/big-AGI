@@ -200,3 +200,69 @@ export const animationTextShadowLimey = keyframes`
     75% {
         text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 153, 0);
     }`;
+
+// export const animationShadowBlueDarker = keyframes`
+//     0%, 100% {
+//         box-shadow: 3px 3px 0 rgb(135, 206, 235), /* Sky Blue */ 6px 6px 0 rgb(70, 130, 180), /* Steel Blue */ 9px 9px 0 rgb(0, 128, 128); /* Teal */
+//     }
+//     25% {
+//         box-shadow: 3px 3px 0 rgb(116, 172, 223), /* Softer Sky Blue */ 6px 6px 0 rgb(60, 120, 170), /* Softer Steel Blue */ 9px 9px 0 rgb(0, 118, 118); /* Softer Teal */
+//     }
+//     50% {
+//         box-shadow: 3px 3px 0 rgb(100, 149, 237), /* Cornflower Blue */ 6px 6px 0 rgb(30, 144, 255), /* Dodger Blue */ 9px 9px 0 rgb(0, 206, 209); /* Dark Turquoise */
+//     }
+//     75% {
+//         box-shadow: 3px 3px 0 rgb(65, 105, 225), /* Royal Blue */ 6px 6px 0 rgb(0, 0, 255), /* Blue */ 9px 9px 0 rgb(0, 139, 139); /* Dark Cyan */
+//     }
+// `;
+//
+// export const animationShadowLimeyDarker = keyframes`
+//     0%, 100% {
+//         box-shadow: 3px 3px 0 rgb(50, 205, 50), /* Lime Green */ 6px 6px 0 rgb(60, 179, 113), /* Medium Sea Green */ 9px 9px 0 rgb(34, 139, 34); /* Forest Green */
+//     }
+//     25% {
+//         box-shadow: 3px 3px 0 rgb(124, 252, 0), /* Lawn Green */ 6px 6px 0 rgb(107, 142, 35), /* Olive Drab */ 9px 9px 0 rgb(85, 107, 47); /* Dark Olive Green */
+//     }
+//     50% {
+//         box-shadow: 3px 3px 0 rgb(173, 255, 47), /* Green Yellow */ 6px 6px 0 rgb(154, 205, 50), /* Yellow Green */ 9px 9px 0 rgb(0, 100, 0); /* Dark Green */
+//     }
+//     75% {
+//         box-shadow: 3px 3px 0 rgb(0, 255, 0), /* Lime */ 6px 6px 0 rgb(50, 205, 50), /* Lime Green */ 9px 9px 0 rgb(0, 128, 0); /* Green */
+//     }
+// `;
+//
+// export const blobMorph = keyframes`
+//     0%, 100% {
+//         border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+//     }
+//     25% {
+//         border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+//     }
+//     50% {
+//         border-radius: 30% 30% 70% 70% / 70% 70% 30% 30%;
+//     }
+//     75% {
+//         border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+//     }
+// `;
+//
+// export const bouncyBoxShadow = keyframes`
+//     0% {
+//         box-shadow: 0 8px 8px 0 rgba(11, 107, 203, 0.2);
+//     }
+//     20% {
+//         box-shadow: 12px 20px 24px 0 rgba(11, 107, 203, 0.2);
+//     }
+//     40% {
+//         box-shadow: -12px 32px 24px 0 rgba(11, 107, 203, 0.2);
+//     }
+//     60% {
+//         box-shadow: 24px -4px 24px 0 rgba(11, 107, 203, 0.2);
+//     }
+//     80% {
+//         box-shadow: -24px 14px 24px 0 rgba(11, 107, 203, 0.2);
+//     }
+//     100% {
+//         box-shadow: 0 8px 8px 0 rgba(11, 107, 203, 0.2);
+//     }
+// `;
