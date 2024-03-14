@@ -81,15 +81,17 @@ Uses all the remaining Beam responses, and lets you choose how to fuse them toge
     mdContent: `
 #### Human in the loop
 You, the user, provide the creative direction and final judgement. The AI models are justy tools to give you drafts to quickly evaluate.
+There are additional deep reasons why this works [in our blog](https://big-agi.com/blog/introducing-beam).
 
 #### Best Use
-1. Best used in early, creative stages - when the direction is hard to grasp
-2. Best used when the AI solution is non-trivial
-3. Best used when you need Multiple perspectives to enrich or derisk a solution
+This tool is crafted for the **early stages** of a process, where it delivers unparalleled insights and perspectives precisely **when your
+project needs clarity and direction**. 
+
+The diversity of perspectives acts **like the wisdom of a seasoned team**, offering a wide array of solutions and viewpoints.
 
 #### Warnings
-The tool will consume more AI 'Tokens' than a regular chat, which is one more reason to use it early on when
-a chat history is short.
+The tool **will consume more Tokens** than a regular chat, which is one more reason to use it early on when
+a chat history is short and the return of investment is greater.
 `,
   },
 ] as const;
