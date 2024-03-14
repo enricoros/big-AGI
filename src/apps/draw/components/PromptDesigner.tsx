@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -218,7 +218,7 @@ export function PromptDesigner(props: {
 
               <Dropdown>
                 <MenuButton slots={{ root: IconButton }}>
-                  <ArrowForwardIcon />
+                  <ArrowForwardRoundedIcon />
                 </MenuButton>
                 <Menu placement='top'>
                   {/* Add From History? */}
