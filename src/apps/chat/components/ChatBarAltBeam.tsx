@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Typography } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
@@ -61,6 +61,7 @@ export function ChatBarAltBeam(props: {
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 3 }, alignItems: 'center' }}>
 
       {/*<ChatBeamIcon sx={{ fontSize: 'md' }} />*/}
+      <IconButton size='sm' disabled />
 
       <Typography level='title-md'>
         <Box

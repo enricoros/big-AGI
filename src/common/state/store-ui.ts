@@ -110,9 +110,17 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
   ),
 );
 
-// formerly:
-//  - export-share: badge on the 'share' button in the Chat Menu
-export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter' | 'acknowledge-translation-warning', novelty: number = 1) {
+
+// former: 'export-share'           // not shared a Chat Link yet
+type KnownKeys =
+  | 'acknowledge-translation-warning' // displayed if Chrome is translating the page (may crash)
+  | 'beam-wizard'                     // first Beam
+  | 'call-wizard'                     // first Call
+  | 'composer-shift-enter'            // not used Shift + Enter in the Composer yet
+  | 'share-chat-link'                 // not shared a Chat Link yet
+  ;
+
+export function useUICounter(key: KnownKeys, novelty: number = 1) {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
 
   const touch = React.useCallback(() =>
