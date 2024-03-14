@@ -37,7 +37,7 @@ export function ChatFolderList(props: {
         sx={(theme) => ({
           '& ul': {
             '--List-gap': '0px',
-            bgcolor: 'background.surface',
+            bgcolor: 'background.popup',
             '& > li:first-of-type > [role="button"]': {
               borderTopRightRadius: 'var(--List-radius)',
               borderTopLeftRadius: 'var(--List-radius)',
@@ -69,7 +69,7 @@ export function ChatFolderList(props: {
             '--joy-palette-neutral-plainHoverBg': 'rgba(255 255 255 / 0.1)',
             '--joy-palette-neutral-plainActiveBg': 'rgba(255 255 255 / 0.16)',
           },
-          boxShadow: 'sm',
+          boxShadow: 'xs',
         })}
       >
         <ListItem nested>
