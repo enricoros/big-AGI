@@ -46,7 +46,7 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
 
 > Beam until you are satisfied or have narrowed down to a few promising responses.
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-830px.png)
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-830px-alpha.png)
 
 **Beaming** is the first step. Be curious.
 `,
