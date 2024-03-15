@@ -38,8 +38,12 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
   if (!inputTrimmed.startsWith('/'))
     return [{ type: 'text', value: input }];
 
-  // Split the input on the first occurrence of whitespace
-  const [potentialCommand, ...paramsArray] = inputTrimmed.split(/\s+/, 2);
+  // Find the first space to separate the command from its parameters (if any)
+  const firstSpaceIndex = inputTrimmed.indexOf(' ');
+  const commandMatch = inputTrimmed.match(/^\/\S+/);
+  const potentialCommand = commandMatch ? commandMatch[0] : inputTrimmed;
+
+  const textAfterCommand = firstSpaceIndex >= 0 ? inputTrimmed.substring(firstSpaceIndex + 1) : '';
 
   // Check if the potential command is an actual command
   for (const provider of Object.values(ChatCommandsProviders)) {
@@ -47,23 +51,34 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
       if (cmd.primary === potentialCommand || cmd.alternatives?.includes(potentialCommand)) {
 
         // command needs arguments: take the rest of the input as parameters
-        if (cmd.arguments?.length) {
-          const params = paramsArray.length > 0 ? paramsArray.join(' ') : '';
-          return [{ type: 'cmd', providerId: provider.id, command: potentialCommand, params: params || undefined, isError: !params || undefined }];
-        }
+        if (cmd.arguments?.length) return [{
+          type: 'cmd',
+          providerId: provider.id,
+          command: potentialCommand,
+          params: textAfterCommand || undefined,
+          isError: !textAfterCommand || undefined,
+        }];
 
         // command without arguments, treat any text after as a separate text piece
-        const pieces: TextCommandPiece[] = [{ type: 'cmd', providerId: provider.id, command: potentialCommand, params: undefined }];
-        if (paramsArray.length > 0) {
-          const textAfterCommand = paramsArray.join(' ');
-          if (textAfterCommand)
-            pieces.push({ type: 'text', value: textAfterCommand });
-        }
+        const pieces: TextCommandPiece[] = [{
+          type: 'cmd',
+          providerId: provider.id,
+          command: potentialCommand,
+          params: undefined,
+        }];
+        textAfterCommand && pieces.push({
+          type: 'text',
+          value: textAfterCommand,
+        });
+        console.log(pieces);
         return pieces;
       }
     }
   }
 
   // No command found, return the entire input as text
-  return [{ type: 'text', value: input }];
+  return [{
+    type: 'text',
+    value: input,
+  }];
 }
