@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Badge, Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { KeyStroke } from '~/common/components/KeyStroke';
+import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatModeId } from '../../AppChat';
@@ -35,8 +35,9 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
   },
   'generate-text-beam': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
-    description: 'Smarter: combine multiple models',
+    description: 'Combine multiple models', // Smarter: combine...
     highlight: true,
+    shortcut: 'Ctrl + Enter'
   },
   'generate-react': {
     label: 'Reason + Act', //  · α
@@ -88,7 +89,7 @@ export function ChatModeMenu(props: {
                 <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.capabilityHasTTI) ? 'Unconfigured' : ''}</Typography>
               </Box>
               {(key === props.chatModeId || !!data.shortcut) && (
-                <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline)} />
+                <KeyStroke combo={platformAwareKeystrokes(fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline))} />
               )}
             </Box>
           </MenuItem>)}

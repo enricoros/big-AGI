@@ -221,7 +221,7 @@ export function ExplainerCarousel(props: {
             minWidth: 180,
           }}
         >
-          {isLastPage ? 'Continue' : 'Next'}
+          {isLastPage ? 'Start' : 'Next'}
         </Button>
 
         {/* Back Button */}

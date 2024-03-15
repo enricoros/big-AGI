@@ -28,6 +28,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { countModelTokens } from '~/common/util/token-counter';
+import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { playSoundUrl } from '~/common/util/audioUtils';
@@ -280,9 +281,15 @@ export function Composer(props: {
     // Enter: primary action
     if (e.key === 'Enter') {
 
-      // Alt: append the message instead
+      // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey) {
         handleSendAction('append-user', composeText);
+        return e.preventDefault();
+      }
+
+      // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
+      if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
+        handleSendAction('generate-text-beam', composeText);
         return e.preventDefault();
       }
 
