@@ -34,16 +34,14 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     <ProviderTheming emotionCache={emotionCache}>
       <ProviderSingleTab>
         <ProviderTRPCQuerySettings>
-          {/* Re-router to News */}
-          <ProviderBootstrapLogic>
-            {/* Backend config */}
-            <ProviderBackendCapabilities>
-              {/* ^ SSR boundary */}
+          <ProviderBackendCapabilities>
+            {/* ^ SSR boundary */}
+            <ProviderBootstrapLogic>
               <ProviderSnacks>
                 <Component {...pageProps} />
               </ProviderSnacks>
-            </ProviderBackendCapabilities>
-          </ProviderBootstrapLogic>
+            </ProviderBootstrapLogic>
+          </ProviderBackendCapabilities>
         </ProviderTRPCQuerySettings>
       </ProviderSingleTab>
     </ProviderTheming>
