@@ -228,6 +228,8 @@ export function AppChat() {
             return;
 
           case 'mode-beam':
+            if (chatCommand.isError)
+              return cHandler.messagesReplace(history);
             // remove '/beam ', as we want to be a user chat message
             Object.assign(lastMessage, { text: chatCommand.params || '' });
             cHandler.messagesReplace(history);
