@@ -21,7 +21,7 @@ const beamSteps: ExplainerPage[] = [
 
 Your journey to brilliance continues. Unlock the power of **Beaming** to explore vast possibilities and **Merge** to crystalize your vision.
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-830px-alpha.png)
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
 
 **BEAM** is where ideas flourish. Welcome to the future of creativity. 
 
@@ -58,6 +58,8 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     titleSuffix: ': Convergence', // Synthesis, Convergence
     mdContent: `
 **Merge** combines the most valuable AI responses into a single cohesive response.
+
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1660px-alpha.png)
 
 1. Combine insights into one solution
 2. Leverage the collective wisdom of AI
