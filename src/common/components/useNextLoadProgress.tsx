@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useRouter } from 'next/router';
+import type { Router } from 'next/router';
 import { default as NProgress } from 'nprogress';
 
 
@@ -7,10 +7,7 @@ import { default as NProgress } from 'nprogress';
  * Not show the bar for very fast loads (with a delay), and for the same route
  * NOTE: make sure that the applicatio is importing nprogress.css!
  */
-export function useNextLoadProgress(delay: number = 250) {
-
-  // external state
-  const router = useRouter();
+export function useNextLoadProgress(route: string, events: typeof Router.events, delay = 250) {
 
   // this fires both when the page is refreshed, and when the route changes
   React.useEffect(() => {
@@ -28,7 +25,7 @@ export function useNextLoadProgress(delay: number = 250) {
     };
 
     const handleStart = (newRoute: string) => {
-      if (newRoute === router.route) return;
+      if (newRoute === route) return;
 
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
@@ -36,15 +33,15 @@ export function useNextLoadProgress(delay: number = 250) {
       }, delay);
     };
 
-    router.events.on('routeChangeStart', handleStart);
-    router.events.on('routeChangeComplete', handleStop);
-    router.events.on('routeChangeError', handleStop);
+    events.on('routeChangeStart', handleStart);
+    events.on('routeChangeComplete', handleStop);
+    events.on('routeChangeError', handleStop);
 
     return () => {
       handleStop();
-      router.events.off('routeChangeStart', handleStart);
-      router.events.off('routeChangeComplete', handleStop);
-      router.events.off('routeChangeError', handleStop);
+      events.off('routeChangeStart', handleStart);
+      events.off('routeChangeComplete', handleStop);
+      events.off('routeChangeError', handleStop);
     };
-  }, [delay, router]);
+  }, [delay, events, route]);
 }
