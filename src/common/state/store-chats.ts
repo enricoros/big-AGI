@@ -16,7 +16,7 @@ export type DConversationId = string;
  * Conversation, a list of messages between humans and bots
  * Future:
  * - draftUserMessage?: { text: string; attachments: any[] };
- * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
+ * - isMuted: boolean; isArchived: boolean; Starred: boolean; participants: string[];
  */
 export interface DConversation {
   id: DConversationId;
@@ -65,11 +65,16 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
+  flags?: DMessageFlag[];    // user-set per-message flags
+
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
   created: number;                  // created timestamp
   updated: number | null;           // updated timestamp
 }
+
+export type DMessageFlag =
+  | 'starred'; // user starred this
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
@@ -83,6 +88,17 @@ export function createDMessage(role: DMessage['role'], text: string): DMessage {
     created: Date.now(),
     updated: null,
   };
+}
+
+export function messageHasFlag(message: DMessage, flag: DMessageFlag): boolean {
+  return message.flags?.includes(flag) ?? false;
+}
+
+export function messageToggleFlag(message: DMessage, flag: DMessageFlag): DMessageFlag[] {
+  if (message.flags?.includes(flag))
+    return message.flags.filter(_f => _f !== flag);
+  else
+    return [...(message.flags || []), flag];
 }
 
 
