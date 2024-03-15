@@ -105,7 +105,7 @@ export interface ChatActions {
   setMessages: (conversationId: string, messages: DMessage[]) => void;
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
+  editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -299,26 +299,29 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
+      editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
           const chatLLMId = getChatLLMId();
-          const messages = conversation.messages.map((message: DMessage): DMessage =>
-            message.id === messageId
-              ? {
+          const messages = conversation.messages.map((message: DMessage): DMessage => {
+            if (message.id === messageId) {
+              const updatedMessage = typeof update === 'function' ? update(message) : update;
+              return {
                 ...message,
                 ...updatedMessage,
-                ...(setUpdated && { updated: Date.now() }),
+                ...(touchUpdated && { updated: Date.now() }),
                 ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
                   tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)') ?? 0,
                 })),
-              }
-              : message);
+              };
+            }
+            return message;
+          });
 
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
-            ...(setUpdated && { updated: Date.now() }),
+            ...(touchUpdated && { updated: Date.now() }),
           };
         }),
 
