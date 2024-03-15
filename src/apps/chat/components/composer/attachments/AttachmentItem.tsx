@@ -6,6 +6,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
+import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -73,6 +74,7 @@ const converterTypeToIconMap: { [key in AttachmentConverterType]: React.Componen
   'pdf-images': PictureAsPdfIcon,
   'image': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
+  'ego-message-md': TelegramIcon,
   'unhandled': TextureIcon,
 };
 
