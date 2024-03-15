@@ -301,6 +301,11 @@ function ChatDrawer(props: {
             <Typography key={'nav-info-' + idx} level='body-xs' sx={{ textAlign: 'center', color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
               {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
               {item.message}
+              {filterHasStars && <>
+                <Button variant='soft' size='sm' onClick={toggleFilterHasStars} sx={{ display: 'block', mt: 2, mx: 'auto' }}>
+                  remove filters
+                </Button>
+              </>}
             </Typography>
           ) : null,
         )}
