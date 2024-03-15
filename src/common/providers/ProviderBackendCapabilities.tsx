@@ -22,7 +22,8 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
   // external state
   const [haveCapabilities, storeBackendCapabilities] = useKnowledgeOfBackendCaps();
 
-  // load from the backend
+
+  // fetch capabilities
   const { data } = apiQuery.backend.listCapabilities.useQuery(undefined, {
     staleTime: 1000 * 60 * 60 * 24, // 1 day
   });
