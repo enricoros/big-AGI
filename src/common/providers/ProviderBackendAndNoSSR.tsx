@@ -28,19 +28,19 @@ export function ProviderBackendAndNoSSR(props: { children: React.ReactNode }) {
   });
 
 
+  // [effect] copy from the backend capabilities payload to the frontend state store
+  React.useEffect(() => {
+    if (data)
+      storeBackendCapabilities(data);
+  }, [data, storeBackendCapabilities]);
+
   // [effect] warn if the backend is not available
   React.useEffect(() => {
     if (!haveCapabilities) {
       const timeout = setTimeout(() => setBackendTimeout(true), BACKEND_WARNING_TIMEOUT);
       return () => clearTimeout(timeout);
     }
-  }, [data, haveCapabilities]);
-
-  // [effect] copy from the backend capabilities payload to the frontend state store
-  React.useEffect(() => {
-    if (data)
-      storeBackendCapabilities(data);
-  }, [data, storeBackendCapabilities]);
+  }, [haveCapabilities]);
 
   // [effect] then preload the Tiktoken library right when proceeding to the UI
   React.useEffect(() => {
