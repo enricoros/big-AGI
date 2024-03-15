@@ -21,8 +21,6 @@ const beamSteps: ExplainerPage[] = [
 
 Your journey to brilliance continues. Unlock the power of **Beaming** to explore vast possibilities and **Merge** to crystalize your vision.
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
-
 **BEAM** is where ideas flourish. Welcome to the future of creativity. 
 
 **Let's begin.**
@@ -35,6 +33,8 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     titleSuffix: ': Exploration',
     mdContent: `
 **Beam** allows you to run multiple AI models in parallel, exploring the solution space from different points of view.
+
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
 
 1. Reach closer to your goal, faster
 2. Tap into multiple AI perspectives at once
@@ -59,7 +59,7 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     mdContent: `
 **Merge** combines the most valuable AI responses into a single cohesive response.
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1660px-alpha.png)
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1600px-alpha.png)
 
 1. Combine insights into one solution
 2. Leverage the collective wisdom of AI
