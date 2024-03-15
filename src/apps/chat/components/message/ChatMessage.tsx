@@ -459,10 +459,10 @@ export function ChatMessage(props: {
 
         // style: when starred
         ...(isUserStarred && {
-          outline: '2px solid',
+          outline: '3px solid',
           outlineColor: 'primary.solidBg',
           boxShadow: 'lg',
-          borderRadius: 'md',
+          borderRadius: 'lg',
           zIndex: 1,
         }),
 
