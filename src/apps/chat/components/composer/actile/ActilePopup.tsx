@@ -49,7 +49,7 @@ export function ActilePopup(props: {
           const labelNormal = item.label.slice(props.activePrefixLength);
           return (
             <ListItem
-              key={item.id}
+              key={item.key}
               variant={isActive ? 'soft' : undefined}
               color={isActive ? 'primary' : undefined}
               onClick={() => props.onItemClick(item)}
