@@ -60,7 +60,26 @@ export function messageBackground(messageRole: DMessage['role'] | string, wasEdi
   }
 }
 
-const avatarIconSx = { width: 36, height: 36 };
+const avatarIconSx = {
+  width: 36,
+  height: 36,
+};
+
+const personaSx: SxProps = {
+  // make this stick to the top of the screen
+  position: 'sticky',
+  top: 0,
+
+  // flexBasis: 0, // this won't let the item grow
+  minWidth: { xs: 50, md: 64 },
+  maxWidth: 80,
+  textAlign: 'center',
+  // layout
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+};
+
 
 export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'] | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
@@ -444,33 +463,29 @@ export function ChatMessage(props: {
         </Box>
       )}
 
-      {/* Avatar */}
+      {/* Avatar (Persona) */}
       {showAvatar && (
-        <Box
-          onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-          onClick={event => setOpsMenuAnchor(event.currentTarget)}
-          sx={{
-            // make this stick to the top of the screen
-            position: 'sticky', top: 0,
-            // flexBasis: 0, // this won't let the item grow
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            minWidth: { xs: 50, md: 64 },
-            maxWidth: 80,
-            textAlign: 'center',
-          }}
-        >
+        <Box sx={personaSx}>
 
-          {isHovering ? (
-            <IconButton variant='soft' color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
-              <MoreVertIcon />
-            </IconButton>
-          ) : (
-            avatarEl
-          )}
+          {/* Persona Avatar or Menu Button */}
+          <Box
+            onClick={event => setOpsMenuAnchor(event.currentTarget)}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            sx={{ display: 'flex' }}
+          >
+            {(isHovering || opsMenuAnchor) ? (
+              <IconButton variant='soft' color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
+                <MoreVertIcon />
+              </IconButton>
+            ) : (
+              avatarEl
+            )}
+          </Box>
 
           {/* Assistant model name */}
           {fromAssistant && (
-            <Tooltip title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
+            <Tooltip arrow title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
               <Typography level='body-xs' sx={{
                 overflowWrap: 'anywhere',
                 ...(messageTyping ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
