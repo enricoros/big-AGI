@@ -22,6 +22,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   location: 'local',
   instanceLimit: 4,
   hasBackendCap: () => {
+    // this is to show the green mark on the vendor icon in the setup screen
     const { hasLlmLocalAIHost, hasLlmLocalAIKey } = backendCaps();
     return hasLlmLocalAIHost || hasLlmLocalAIKey;
   },
