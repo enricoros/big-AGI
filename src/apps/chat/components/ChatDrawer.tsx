@@ -10,6 +10,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/state/store-chats';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -28,7 +29,7 @@ import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, useChatNavRenderItems } from './useChatNavRenderItems';
 import { ClearFolderText } from './folders/useFolderDropdown';
-import { useChatShowPersonaIcons, useChatShowRelativeSize } from '../store-app-chat';
+import { useChatDrawerFilters } from '../store-app-chat';
 
 
 // this is here to make shallow comparisons work on the next hook
@@ -79,11 +80,14 @@ function ChatDrawer(props: {
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
-  const { showPersonaIcons, togglePersonaIcons } = useChatShowPersonaIcons();
-  const { showRelativeSize, toggleRelativeSize } = useChatShowRelativeSize();
+  const {
+    filterHasStars, toggleFilterHasStars,
+    showPersonaIcons, toggleShowPersonaIcons,
+    showRelativeSize, toggleShowRelativeSize,
+  } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatNavRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, navGrouping, showRelativeSize,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, navGrouping, showRelativeSize,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
     contentScaling: state.contentScaling,
@@ -165,21 +169,31 @@ function ChatDrawer(props: {
             {capitalizeFirstLetter(_gName)}
           </MenuItem>
         ))}
+
+        <ListDivider />
+        <ListItem>
+          <Typography level='body-sm'>Filter</Typography>
+        </ListItem>
+        <MenuItem onClick={toggleFilterHasStars}>
+          <ListItemDecorator>{filterHasStars && <CheckIcon />}</ListItemDecorator>
+          Starred <StarOutlineRoundedIcon />
+        </MenuItem>
+
         <ListDivider />
         <ListItem>
           <Typography level='body-sm'>Show</Typography>
         </ListItem>
-        <MenuItem onClick={togglePersonaIcons}>
+        <MenuItem onClick={toggleShowPersonaIcons}>
           <ListItemDecorator>{showPersonaIcons && <CheckIcon />}</ListItemDecorator>
           Persona Icons
         </MenuItem>
-        <MenuItem onClick={toggleRelativeSize}>
+        <MenuItem onClick={toggleShowRelativeSize}>
           <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
           Relative Size
         </MenuItem>
       </Menu>
     </Dropdown>
-  ), [navGrouping, showPersonaIcons, showRelativeSize, togglePersonaIcons, toggleRelativeSize]);
+  ), [filterHasStars, navGrouping, showPersonaIcons, showRelativeSize, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize]);
 
 
   return <>
@@ -267,20 +281,6 @@ function ChatDrawer(props: {
 
       {/* List of Chat Titles (and actions) */}
       <Box sx={{ flex: 1, overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
-        {/*<ListItem sticky sx={{ justifyContent: 'space-between', boxShadow: 'sm' }}>*/}
-        {/*  <Typography level='body-sm'>*/}
-        {/*    Conversations*/}
-        {/*  </Typography>*/}
-        {/*  <ToggleButtonGroup variant='soft' size='sm' value={grouping} onChange={(_event, newValue) => newValue && setGrouping(newValue)}>*/}
-        {/*    <IconButton value='off'>*/}
-        {/*      <AccessTimeIcon />*/}
-        {/*    </IconButton>*/}
-        {/*    <IconButton value='persona'>*/}
-        {/*      <PersonIcon />*/}
-        {/*    </IconButton>*/}
-        {/*  </ToggleButtonGroup>*/}
-        {/*</ListItem>*/}
-
         {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
@@ -298,7 +298,8 @@ function ChatDrawer(props: {
               {item.title}
             </Typography>
           ) : item.type === 'nav-item-info-message' ? (
-            <Typography key={'nav-info-' + idx} level='body-xs' sx={{ textAlign: 'center', my: 'calc(var(--ListItem-minHeight) / 2)' }}>
+            <Typography key={'nav-info-' + idx} level='body-xs' sx={{ textAlign: 'center', color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
+              {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
               {item.message}
             </Typography>
           ) : null,
