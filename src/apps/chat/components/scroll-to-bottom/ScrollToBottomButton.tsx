@@ -19,7 +19,9 @@ const buttonSx: SxProps = {
   // style it
   backgroundColor: 'background.surface',
   borderRadius: '50%',
-  boxShadow: 'md',
+  border: '1px solid',
+  borderColor: 'neutral.500',
+  boxShadow: 'sm',
 
   // fade it in when hovering
   // transition: 'all 0.15s',
@@ -43,7 +45,7 @@ export function ScrollToBottomButton() {
     return null;
 
   return (
-    <IconButton aria-label='Scroll To Bottom' variant='outlined' onClick={handleStickToBottom} sx={buttonSx}>
+    <IconButton aria-label='Scroll To Bottom' variant='plain' onClick={handleStickToBottom} sx={buttonSx}>
       <KeyboardDoubleArrowDownIcon />
     </IconButton>
   );
