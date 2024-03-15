@@ -42,13 +42,18 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
 
   const actileInterceptTextChange = React.useCallback((trailingText: string) => {
     for (const provider of providers) {
-      if (provider.checkTriggerText(trailingText)) {
-        setProvider(provider);
-        setPopupOpen(true);
-        setActiveSearchString(provider.searchPrefix);
+      if (provider.fastCheckTriggerText(trailingText)) {
         provider
           .fetchItems()
-          .then(items => setItems(items))
+          .then(items => {
+            // if there are no items, ignore
+            if (!items.length) return;
+            // open and init the popup-aided search operation
+            setPopupOpen(true);
+            setProvider(provider);
+            setItems(items);
+            setActiveSearchString(provider.searchPrefix);
+          })
           .catch(error => {
             handleClose();
             console.error('Failed to fetch popup items:', error);

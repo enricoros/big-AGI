@@ -7,7 +7,7 @@ export const providerCommands = (onItemSelect: (item: ActileItem) => void): Acti
   title: 'Chat Commands',
   searchPrefix: '/',
 
-  checkTriggerText: (trailingText: string) =>
+  fastCheckTriggerText: (trailingText: string) =>
     trailingText.trim() === '/',
 
   fetchItems: async () => {

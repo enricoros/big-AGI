@@ -15,7 +15,7 @@ export interface ActileProvider {
   title: string;
   searchPrefix: string;
 
-  checkTriggerText: (trailingText: string) => boolean;
+  fastCheckTriggerText: (trailingText: string) => boolean;
 
   fetchItems: () => Promise<ActileItem[]>;
   onItemSelect: (item: ActileItem) => void;
