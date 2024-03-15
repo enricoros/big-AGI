@@ -22,6 +22,12 @@ import type { OpenAIWire } from './openai/openai.wiretypes';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
 
 
+// configuration
+const USER_SYMBOL_MAX_TOKENS = '🧱';
+const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
+// const USER_SYMBOL_NO_DATA_RECEIVED_BROKEN = '🔌';
+
+
 /**
  * Event stream formats
  *  - 'sse' is the default format, and is used by all vendors except Ollama
@@ -121,7 +127,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
     console.error(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, requestAccess?.url);
 
     // client-side users visible message
-    return new NextResponse(`[Issue] ${serverCapitalizeFirstLetter(access.dialect)}: ${fetchOrVendorError}`
+    return new NextResponse(`**[Service Issue] ${serverCapitalizeFirstLetter(access.dialect)}**: ${fetchOrVendorError}`
       + (process.env.NODE_ENV === 'development' ? ` · [URL: ${requestAccess?.url}]` : ''), { status: 500 });
   }
 
@@ -191,6 +197,7 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
+  let hasReceivedData = false;
 
   return new TransformStream({
     start: async (controller): Promise<void> => {
@@ -225,7 +232,7 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
         } catch (error: any) {
           if (SERVER_DEBUG_WIRE)
             console.log(' - E: parse issue:', event.data, error?.message || error);
-          controller.enqueue(textEncoder.encode(` **[Stream Issue] ${dialectLabel}: ${safeErrorString(error) || 'Unknown stream parsing error'}**`));
+          controller.enqueue(textEncoder.encode(` **[Stream Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
           controller.terminate();
         }
       };
@@ -238,7 +245,17 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
 
     // stream=true is set because the data is not guaranteed to be final and un-chunked
     transform: (chunk: Uint8Array) => {
+      hasReceivedData = true;
       eventSourceParser.feed(textDecoder.decode(chunk, { stream: true }));
+    },
+
+    flush: (controller): void => {
+      // if we get a flush() without having received any data, we should terminate the stream
+      // NOTE: happens with Gemini on 2024-03-14
+      if (!hasReceivedData) {
+        controller.enqueue(textEncoder.encode(` **[Service Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: No data was sent by the server.`));
+        controller.terminate();
+      }
     },
   });
 }
@@ -360,24 +377,24 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
     // Prompt Safety Errors: pass through errors from Gemini
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return { text: `[Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`, close: true };
+      return { text: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`, close: true };
     }
 
     // expect a single completion
     const singleCandidate = generationChunk.candidates?.[0] ?? null;
     if (!singleCandidate)
-      throw new Error(`Gemini: expected 1 completion, got ${generationChunk.candidates?.length}`);
+      throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
 
     // no contents: could be an expected or unexpected condition
     if (!singleCandidate.content) {
       if (singleCandidate.finishReason === 'MAX_TOKENS')
-        return { text: ' 🧱', close: true };
-      throw new Error('Gemini: server response missing content');
+        return { text: ` ${USER_SYMBOL_MAX_TOKENS}`, close: true };
+      throw new Error('server response missing content');
     }
 
     // expect a single part
     if (singleCandidate.content.parts?.length !== 1 || !('text' in singleCandidate.content.parts[0]))
-      throw new Error(`Gemini: expected 1 text part, got ${singleCandidate.content.parts?.length}`);
+      throw new Error(`expected 1 text part, got ${singleCandidate.content.parts?.length}`);
 
     // expect a single text in the part
     let text = singleCandidate.content.parts[0].text || '';
