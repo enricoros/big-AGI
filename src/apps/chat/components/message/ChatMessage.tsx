@@ -475,7 +475,7 @@ export function ChatMessage(props: {
             sx={{ display: 'flex' }}
           >
             {(isHovering || opsMenuAnchor) ? (
-              <IconButton variant='soft' color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
+              <IconButton variant={opsMenuAnchor ? 'solid' : 'soft'} color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
                 <MoreVertIcon />
               </IconButton>
             ) : (
