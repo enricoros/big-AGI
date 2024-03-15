@@ -104,8 +104,9 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) return;
 
           // append the PlantUML diagram to the assistant response
-          assistantMessageText += `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`;
-          editMessage(conversationId, assistantMessageId, { text: assistantMessageText }, false);
+          editMessage(conversationId, assistantMessageId, {
+            text: assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`,
+          }, false);
         }
       }
     }).catch(err => {
