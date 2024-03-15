@@ -35,7 +35,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`${moduleName} error (fetch):`, error);
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[Issue] ${moduleName}: (network) ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
+        message: `**[Issue] ${moduleName}: (network):** ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
       });
     }
 
@@ -50,7 +50,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`${moduleName} error (upstream):`, response.status, response.statusText, payload);
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[Issue] ${moduleName}: ${response.statusText}` // (${response.status})`
+        message: `**[Issue] ${moduleName}**: ${response.statusText}` // (${response.status})`
           + (payload ? ` - ${safeErrorString(payload)}` : '')
           + (response.status === 403 ? ` - is "${url}" accessible by the server?` : '')
           + (response.status === 502 ? ` - is "${url}" not available?` : ''),
@@ -64,7 +64,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       console.error(`${moduleName} error (parse):`, error);
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: `[Issuec] ${moduleName}: (parsing) ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
+        message: `**[Issue] ${moduleName}: (parsing):** ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
       });
     }
   };
