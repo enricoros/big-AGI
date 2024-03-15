@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Button, Typography } from '@mui/joy';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';

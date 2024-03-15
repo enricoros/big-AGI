@@ -1,9 +1,13 @@
 import * as React from 'react';
 
-import { useBackendCapsKnowledge } from '~/modules/backend/state-backend';
+import { useKnowledgeOfBackendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { apiQuery } from '~/common/util/trpc.client';
 import { preloadTiktokenLibrary } from '~/common/util/token-counter';
+
+
+// configuration
+const BACKEND_WARNING_TIMEOUT = 5000;
 
 
 /**
@@ -12,30 +16,42 @@ import { preloadTiktokenLibrary } from '~/common/util/token-counter';
  */
 export function ProviderBackendAndNoSSR(props: { children: React.ReactNode }) {
 
+  // state
+  const [backendTimeout, setBackendTimeout] = React.useState(false);
+
   // external state
-  const [haveCapabilities, setCapabilties] = useBackendCapsKnowledge();
+  const [haveCapabilities, storeBackendCapabilities] = useKnowledgeOfBackendCaps();
 
   // load from the backend
-  const { data: capabilities } = apiQuery.backend.listCapabilities.useQuery(undefined, {
+  const { data } = apiQuery.backend.listCapabilities.useQuery(undefined, {
     staleTime: 1000 * 60 * 60 * 24, // 1 day
   });
 
 
-  // [effect] copy from the backend (capabilities) to the state (setCapabilties)
+  // [effect] warn if the backend is not available
   React.useEffect(() => {
-    if (capabilities)
-      setCapabilties(capabilities);
-  }, [capabilities, setCapabilties]);
+    if (!haveCapabilities) {
+      const timeout = setTimeout(() => setBackendTimeout(true), BACKEND_WARNING_TIMEOUT);
+      return () => clearTimeout(timeout);
+    }
+  }, [data, haveCapabilities]);
 
-
-  // [effect] in parallel preload the Tiktoken library - large WASM payload, so fire/forget
+  // [effect] copy from the backend capabilities payload to the frontend state store
   React.useEffect(() => {
-    void preloadTiktokenLibrary();
-    // TEMP: for exported builds
-    // setCapabilties({});
-  }, [setCapabilties]);
+    if (data)
+      storeBackendCapabilities(data);
+  }, [data, storeBackendCapabilities]);
+
+  // [effect] then preload the Tiktoken library right when proceeding to the UI
+  React.useEffect(() => {
+    // large WASM payload, so fire/forget
+    if (haveCapabilities)
+      void preloadTiktokenLibrary();
+  }, [haveCapabilities]);
 
 
-  // block rendering until the capabilities are loaded
-  return !haveCapabilities ? null : props.children;
+  // create components after the capabilities are loaded
+  return haveCapabilities ? props.children
+    : backendTimeout ? <div style={{ textAlign: 'center', marginBlock: '3rem' }}>Cannot esablish a connection with the application server.</div>
+      : null;
 }

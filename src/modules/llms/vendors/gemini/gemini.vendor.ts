@@ -1,4 +1,4 @@
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';

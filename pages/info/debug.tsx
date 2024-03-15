@@ -6,7 +6,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 
 import { AppPlaceholder } from '../../src/apps/AppPlaceholder';
 
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 import { getPlantUmlServerUrl } from '~/modules/blocks/code/RenderCode';
 
 import { withLayout } from '~/common/layout/withLayout';

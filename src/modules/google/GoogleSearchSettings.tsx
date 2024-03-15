@@ -5,7 +5,7 @@ import { FormControl, FormHelperText, Input } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';

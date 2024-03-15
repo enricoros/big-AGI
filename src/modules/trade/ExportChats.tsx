@@ -4,7 +4,7 @@ import { Box, Button, Grid, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { DConversationId, getConversation } from '~/common/state/store-chats';
 

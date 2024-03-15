@@ -7,7 +7,7 @@ import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { LocalAISourceSetup } from './LocalAISourceSetup';
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 
 export interface SourceSetupLocalAI {
