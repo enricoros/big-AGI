@@ -9,6 +9,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   const [popupOpen, setPopupOpen] = React.useState(false);
   const [provider, setProvider] = React.useState<ActileProvider | null>(null);
 
+  const [title, setTitle] = React.useState<string>('');
   const [items, setItems] = React.useState<ActileItem[]>([]);
   const [activeSearchString, setActiveSearchString] = React.useState<string>('');
   const [activeItemIndex, setActiveItemIndex] = React.useState<number>(0);
@@ -25,6 +26,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   const handleClose = React.useCallback(() => {
     setPopupOpen(false);
     setProvider(null);
+    setTitle('');
     setItems([]);
     setActiveSearchString('');
     setActiveItemIndex(0);
@@ -45,14 +47,15 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
       if (provider.fastCheckTriggerText(trailingText)) {
         provider
           .fetchItems()
-          .then(items => {
+          .then(({ title, searchPrefix, items }) => {
             // if there are no items, ignore
-            if (!items.length) return;
-            // open and init the popup-aided search operation
-            setPopupOpen(true);
-            setProvider(provider);
-            setItems(items);
-            setActiveSearchString(provider.searchPrefix);
+            if (items.length) {
+              setPopupOpen(true);
+              setProvider(provider);
+              setTitle(title);
+              setItems(items);
+              setActiveSearchString(searchPrefix);
+            }
           })
           .catch(error => {
             handleClose();
@@ -105,14 +108,14 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
       <ActilePopup
         anchorEl={anchorRef.current}
         onClose={handleClose}
-        title={provider?.title}
+        title={title}
         items={activeItems}
         activeItemIndex={activeItemIndex}
         activePrefixLength={activeSearchString.length}
         onItemClick={handlePopupItemClicked}
       />
     );
-  }, [activeItemIndex, activeItems, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, provider?.title]);
+  }, [activeItemIndex, activeItems, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, title]);
 
   return {
     actileComponent,
