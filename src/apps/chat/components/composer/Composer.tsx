@@ -23,7 +23,7 @@ import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vend
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId, getConversation, useChatStore } from '~/common/state/store-chats';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -39,8 +39,9 @@ import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import type { ActileItem, ActileProvider } from './actile/ActileProvider';
+import type { ActileItem } from './actile/ActileProvider';
 import { providerCommands } from './actile/providerCommands';
+import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentId } from './attachments/store-attachments';
@@ -128,7 +129,7 @@ export function Composer(props: {
     };
   }, shallow);
   const { inComposer: browsingInComposer } = useBrowseCapability();
-  const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
+  const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
     useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
 
@@ -238,7 +239,7 @@ export function Composer(props: {
 
   // Actiles
 
-  const onActileCommandSelect = React.useCallback((item: ActileItem) => {
+  const onActileCommandPaste = React.useCallback((item: ActileItem) => {
     if (props.composerTextAreaRef.current) {
       const textArea = props.composerTextAreaRef.current;
       const currentText = textArea.value;
@@ -259,9 +260,22 @@ export function Composer(props: {
     }
   }, [props.composerTextAreaRef, setComposeText]);
 
-  const actileProviders: ActileProvider[] = React.useMemo(() => {
-    return [providerCommands(onActileCommandSelect)];
-  }, [onActileCommandSelect]);
+  const onActileMessageAttach = React.useCallback((item: StarredMessageItem) => {
+    // get the message
+    const conversation = getConversation(item.conversationId);
+    const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
+    if (conversation && messageToAttach && messageToAttach.text) {
+      // Testing with this serialization for LLM. Note it will still be within a multi-part message,
+      // this could be in a titled markdown block. Don't know yet how this fares with different LLMs.
+      const chatTitle = conversationTitle(conversation);
+      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageToAttach.text.trim()}\n`;
+      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageToAttach.text.slice(0, 10)}...`);
+    }
+  }, [attachAppendEgoMessage]);
+
+  const actileProviders = React.useMemo(() => {
+    return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileMessageAttach)];
+  }, [onActileCommandPaste, onActileMessageAttach]);
 
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 

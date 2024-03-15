@@ -18,7 +18,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   // derived state
   const activeItems = React.useMemo(() => {
     const search = activeSearchString.trim().toLowerCase();
-    return items.filter(item => item.label.toLowerCase().startsWith(search));
+    return items.filter(item => item.label?.toLowerCase().startsWith(search));
   }, [items, activeSearchString]);
   const activeItem = activeItemIndex >= 0 && activeItemIndex < activeItems.length ? activeItems[activeItemIndex] : null;
 
