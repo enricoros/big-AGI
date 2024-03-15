@@ -81,9 +81,9 @@ Utilizes all the remaining Beam responses and allows you to choose how to fuse t
   {
     stepDigits: '',
     stepName: 'Tips',
-    titleSuffix: 'Effectiveness Tips',
+    titleSuffix: 'Effectiveness Tips', //  · N × GPT-4 -> GPT-5
     mdContent: `
-#### Human-in-the-loop · N × GPT-4 -> GPT-5
+#### Human as a Judge
 You, the user, provide creative direction and final judgement. The AI models are powerful tools that generate drafts for you to quickly evaluate and refine.
 There are profound reasons why this approach works, which we explore [in our blog](https://big-agi.com/blog/introducing-beam).
 
