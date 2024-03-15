@@ -14,7 +14,7 @@ const BACKEND_WARNING_TIMEOUT = 5000;
  * Note: we used to have a NoSSR wrapper inside the AppLayout component (which was delaying rendering 1 cycle),
  * however this wrapper is now providing the same function, given the network roundtrip.
  */
-export function ProviderBackendAndNoSSR(props: { children: React.ReactNode }) {
+export function ProviderBackendCapabilities(props: { children: React.ReactNode }) {
 
   // state
   const [backendTimeout, setBackendTimeout] = React.useState(false);
