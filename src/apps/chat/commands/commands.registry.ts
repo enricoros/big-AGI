@@ -70,7 +70,6 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
           type: 'text',
           value: textAfterCommand,
         });
-        console.log(pieces);
         return pieces;
       }
     }

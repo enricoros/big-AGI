@@ -100,6 +100,16 @@ export const useAttachments = (enableLoadURLs: boolean) => {
   }, [attachAppendFile, createAttachment, enableLoadURLs]);
 
 
+  const attachAppendEgoMessage = React.useCallback((blockTitle: string, textPlain: string, attachmentLabel: string) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendEgo', { blockTitle, textPlain, attachmentLabel });
+
+    return createAttachment({
+      media: 'ego', method: 'ego-message', label: attachmentLabel, blockTitle: blockTitle, textPlain: textPlain,
+    });
+  }, [createAttachment]);
+
+
   const attachAppendClipboardItems = React.useCallback(async () => {
 
     // if there's an issue accessing the clipboard, show it passively
@@ -178,6 +188,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
     // create attachments
     attachAppendClipboardItems,
     attachAppendDataTransfer,
+    attachAppendEgoMessage,
     attachAppendFile,
 
     // manage attachments
