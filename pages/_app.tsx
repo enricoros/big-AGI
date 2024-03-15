@@ -13,7 +13,7 @@ import '~/common/styles/GithubMarkdown.css';
 import '~/common/styles/NProgress.css';
 import '~/common/styles/app.styles.css';
 
-import { ProviderBackendAndNoSSR } from '~/common/providers/ProviderBackendAndNoSSR';
+import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
@@ -35,11 +35,11 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
       <ProviderSingleTab>
         <ProviderTRPCQuerySettings>
           <ProviderBootstrapLogic>
-            <ProviderBackendAndNoSSR>
+            <ProviderBackendCapabilities>
               <ProviderSnacks>
                 <Component {...pageProps} />
               </ProviderSnacks>
-            </ProviderBackendAndNoSSR>
+            </ProviderBackendCapabilities>
           </ProviderBootstrapLogic>
         </ProviderTRPCQuerySettings>
       </ProviderSingleTab>
