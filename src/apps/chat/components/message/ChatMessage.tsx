@@ -16,6 +16,8 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
@@ -26,7 +28,7 @@ import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage } from '~/common/state/store-chats';
+import { DMessage, DMessageUserFlag, messageHasUserFlag } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
@@ -223,6 +225,7 @@ export function ChatMessage(props: {
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageEdit?: (messageId: string, text: string) => void,
+  onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
@@ -262,6 +265,8 @@ export function ChatMessage(props: {
     updated: messageUpdated,
   } = props.message;
 
+  const isUserStarred = messageHasUserFlag(props.message, 'starred');
+
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
@@ -282,6 +287,8 @@ export function ChatMessage(props: {
 
   // Operations Menu
 
+  const { onMessageToggleUserFlag } = props;
+
   const closeOpsMenu = () => setOpsMenuAnchor(null);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
@@ -297,6 +304,10 @@ export function ChatMessage(props: {
     e.preventDefault();
     closeOpsMenu();
   }, [isEditing, messageTyping]);
+
+  const handleOpsToggleStarred = React.useCallback(() => {
+    onMessageToggleUserFlag?.(messageId, 'starred');
+  }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -439,11 +450,26 @@ export function ChatMessage(props: {
         backgroundColor: backgroundColor,
         px: { xs: 1, md: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2 },
         py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
+
+        // style: omit border if set externally
         ...(!('borderBottom' in (props.sx || {})) && {
           borderBottom: '1px solid',
           borderBottomColor: 'divider',
         }),
-        ...(!!props.topDecorator && { pt: '2.5rem' }),
+
+        // style: when starred
+        ...(isUserStarred && {
+          outline: '2px solid',
+          outlineColor: 'primary.solidBg',
+          boxShadow: 'lg',
+          borderRadius: 'md',
+          zIndex: 1,
+        }),
+
+        // style: make room for a top decorator if set
+        ...(!!props.topDecorator && {
+          pt: '2.5rem',
+        }),
         '&:hover > button': { opacity: 1 },
 
         // layout
@@ -561,6 +587,7 @@ export function ChatMessage(props: {
 
           {/* Edit / Copy */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Edit */}
             {!!props.onMessageEdit && (
               <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
                 <ListItemDecorator><EditIcon /></ListItemDecorator>
@@ -568,10 +595,20 @@ export function ChatMessage(props: {
                 {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
               </MenuItem>
             )}
+            {/* Copy */}
             <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
               <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
               Copy
             </MenuItem>
+            {/* Starred */}
+            {!!onMessageToggleUserFlag && (
+              <MenuItem onClick={handleOpsToggleStarred} sx={{ flexGrow: 0, px: 1 }}>
+                {isUserStarred
+                  ? <StarRoundedIcon color='primary' sx={{ fontSize: 'xl2' }} />
+                  : <StarOutlineRoundedIcon sx={{ fontSize: 'xl2' }} />
+                }
+              </MenuItem>
+            )}
           </Box>
           {/* Delete / Branch / Truncate */}
           {!!props.onMessageDelete && <ListDivider />}
