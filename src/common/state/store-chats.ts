@@ -65,7 +65,7 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
-  flags?: DMessageFlag[];    // user-set per-message flags
+  userFlags?: DMessageUserFlag[];       // user-set per-message flags
 
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
@@ -73,7 +73,7 @@ export interface DMessage {
   updated: number | null;           // updated timestamp
 }
 
-export type DMessageFlag =
+export type DMessageUserFlag =
   | 'starred'; // user starred this
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
@@ -90,15 +90,15 @@ export function createDMessage(role: DMessage['role'], text: string): DMessage {
   };
 }
 
-export function messageHasFlag(message: DMessage, flag: DMessageFlag): boolean {
-  return message.flags?.includes(flag) ?? false;
+export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
+  return message.userFlags?.includes(flag) ?? false;
 }
 
-export function messageToggleFlag(message: DMessage, flag: DMessageFlag): DMessageFlag[] {
-  if (message.flags?.includes(flag))
-    return message.flags.filter(_f => _f !== flag);
+export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
+  if (message.userFlags?.includes(flag))
+    return message.userFlags.filter(_f => _f !== flag);
   else
-    return [...(message.flags || []), flag];
+    return [...(message.userFlags || []), flag];
 }
 
 

@@ -88,7 +88,6 @@ export class ConversationHandler {
 
   getBeamStore = () => this.beamStore;
 
-
   /**
    * Opens a beam over the given history
    *

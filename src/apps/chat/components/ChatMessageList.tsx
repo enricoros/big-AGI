@@ -10,7 +10,7 @@ import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -127,6 +127,12 @@ export function ChatMessageList(props: {
 
   const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
     conversationId && editMessage(conversationId, messageId, { text: newText }, true);
+  }, [conversationId, editMessage]);
+
+  const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
+    conversationId && editMessage(conversationId, messageId, (message) => ({
+      userFlags: messageToggleUserFlag(message, userFlag),
+    }), false);
   }, [conversationId, editMessage]);
 
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
@@ -267,6 +273,7 @@ export function ChatMessageList(props: {
               onMessageBranch={handleMessageBranch}
               onMessageDelete={handleMessageDelete}
               onMessageEdit={handleMessageEdit}
+              onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
               onTextDiagram={handleTextDiagram}
               onTextImagine={handleTextImagine}
