@@ -59,10 +59,10 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     mdContent: `
 **Merge** combines the most valuable AI responses into a single cohesive response.
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1600px-alpha.png)
-
 1. Combine insights into one solution
 2. Leverage the collective wisdom of AI
+
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1600px-alpha.png)
 
 #### How to Merge:
 Utilizes all the remaining Beam responses and allows you to choose how to fuse them.
@@ -131,8 +131,10 @@ export function BeamExplainer(props: {
         steps={beamSteps}
         footer={
           <Typography level='body-xs' sx={{ textAlign: 'center', maxWidth: '400px', mx: 'auto' }}>
-            The journey from exploration to refinement is iterative.
-            Each cycle sharpens your ideas, bringing you closer to innovation.
+            Unlock beaming, combine AI wisdom, achieve clarity.
+            {/*Discover, Design and Dream.*/}
+            {/*The journey from exploration to refinement is iterative.*/}
+            {/*Each cycle sharpens your ideas, bringing you closer to innovation.*/}
           </Typography>
         }
         onFinished={props.onWizardComplete}

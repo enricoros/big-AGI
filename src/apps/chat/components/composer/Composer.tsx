@@ -192,6 +192,10 @@ export function Composer(props: {
     handleSendAction(chatModeId, composeText);
   }, [chatModeId, composeText, handleSendAction]);
 
+  // const handleSendTextBeamClicked = React.useCallback(() => {
+  //   handleSendAction('generate-text-beam', composeText);
+  // }, [composeText, handleSendAction]);
+
   const handleStopClicked = React.useCallback(() => {
     !!props.conversationId && stopTyping(props.conversationId);
   }, [props.conversationId, stopTyping]);
@@ -729,6 +733,13 @@ export function Composer(props: {
                     Stop
                   </Button>
                 )}
+
+                {/* [Beam] Open Beam */}
+                {/*{isText && <Tooltip title='Open Beam'>*/}
+                {/*  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleSendTextBeamClicked}>*/}
+                {/*    <ChatBeamIcon />*/}
+                {/*  </IconButton>*/}
+                {/*</Tooltip>}*/}
 
                 {/* [Draw] Imagine */}
                 {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
