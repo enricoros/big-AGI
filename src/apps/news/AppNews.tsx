@@ -9,7 +9,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
-import { animationColorRainbow, animationColorBlues } from '~/common/util/animUtils';
+import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
