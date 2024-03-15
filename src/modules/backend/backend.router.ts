@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { BackendCapabilities } from '~/modules/backend/state-backend';
+import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';

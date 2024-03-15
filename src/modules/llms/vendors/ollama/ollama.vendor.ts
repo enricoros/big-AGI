@@ -1,4 +1,4 @@
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';

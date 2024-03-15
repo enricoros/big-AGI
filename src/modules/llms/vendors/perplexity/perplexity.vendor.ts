@@ -1,4 +1,4 @@
-import { backendCaps } from '~/modules/backend/state-backend';
+import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
 
