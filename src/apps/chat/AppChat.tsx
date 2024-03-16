@@ -546,7 +546,7 @@ export function AppChat() {
                 borderRadius: '0.375rem',
                 border: `2px solid ${_paneIsFocused
                   ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
-                  : ((willMulticast || !isMultiConversationId) ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
+                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.background.level1)}`,
                 // DISABLED on 2024-03-13, it gets in the way quite a lot
                 // filter: (!willMulticast && !_paneIsFocused)
                 //   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
