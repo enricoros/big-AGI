@@ -7,7 +7,6 @@ import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { LocalAISourceSetup } from './LocalAISourceSetup';
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
 
 
 export interface SourceSetupLocalAI {
@@ -21,10 +20,9 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   rank: 22,
   location: 'local',
   instanceLimit: 4,
-  hasBackendCap: () => {
+  hasBackendCap: (backendCapabilities) => {
     // this is to show the green mark on the vendor icon in the setup screen
-    const { hasLlmLocalAIHost, hasLlmLocalAIKey } = backendCaps();
-    return hasLlmLocalAIHost || hasLlmLocalAIKey;
+    return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },
 
   // components

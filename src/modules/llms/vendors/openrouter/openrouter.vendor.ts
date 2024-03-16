@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -38,7 +36,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCap: () => backendCaps().hasLlmOpenRouter,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOpenRouter,
 
   // components
   Icon: OpenRouterIcon,

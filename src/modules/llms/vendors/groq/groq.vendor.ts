@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -21,7 +19,7 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmGroq,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmGroq,
 
   // components
   Icon: GroqIcon,

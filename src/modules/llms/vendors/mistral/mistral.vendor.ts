@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -24,7 +22,7 @@ export const ModelVendorMistral: IModelVendor<SourceSetupMistral, OpenAIAccessSc
   rank: 15,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmMistral,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmMistral,
 
   // components
   Icon: MistralIcon,

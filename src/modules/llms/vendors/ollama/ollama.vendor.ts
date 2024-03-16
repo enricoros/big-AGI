@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
@@ -25,7 +23,7 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
   rank: 20,
   location: 'local',
   instanceLimit: 2,
-  hasBackendCap: () => backendCaps().hasLlmOllama,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOllama,
 
   // components
   Icon: OllamaIcon,

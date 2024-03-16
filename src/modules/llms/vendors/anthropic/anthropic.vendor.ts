@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
@@ -29,7 +27,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
   rank: 13,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmAnthropic,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmAnthropic,
 
   // components
   Icon: AnthropicIcon,
