@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-import { SvgIcon } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { SvgIcon, SvgIconProps } from '@mui/joy';
 
-export function GeminiIcon(props: { sx?: SxProps }) {
+export function GeminiIcon(props: SvgIconProps) {
   return <SvgIcon viewBox='0 0 24 24' width='24' height='24' strokeWidth={0} stroke='none' fill='currentColor' {...props}>
     <g transform='matrix(0.25528557,0,0,0.25528409,1.353,-9.2592294)'>
       <path

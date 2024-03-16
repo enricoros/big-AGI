@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-import { SvgIcon } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { SvgIcon, SvgIconProps } from '@mui/joy';
 
-export function OpenAIIcon(props: { sx?: SxProps }) {
+export function OpenAIIcon(props: SvgIconProps) {
   return <SvgIcon viewBox='0 0 24 24' width='24' height='24' stroke='currentColor' strokeWidth={1.5} fill='none' strokeLinecap='round' strokeLinejoin='round' {...props}>
     {/*<path stroke='none' d='M0 0h24v24H0z' fill='none'></path>*/}
     <path d='M11.217 19.384a3.501 3.501 0 0 0 6.783 -1.217v-5.167l-6 -3.35' fill='none' />
