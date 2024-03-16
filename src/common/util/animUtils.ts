@@ -19,6 +19,20 @@ export const animationColorBeamScatter = keyframes`
         color: rgb(255, 204, 77);
     }`;
 
+/*export const animationColorLimey = keyframes`
+    100%, 0% {
+        color: rgb(183, 255, 0);
+    }
+    25% {
+        color: rgb(255, 251, 0);
+    }
+    50% {
+        color: rgba(0, 255, 81);
+    }
+    75% {
+        color: rgb(255, 153, 0);
+    }`;
+*/
 
 export const animationColorBeamGather = keyframes`
     100%, 0% {
@@ -187,7 +201,7 @@ export const animationShadowLimey = keyframes`
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 153, 0);
     }`;
 
-export const animationTextShadowLimey = keyframes`
+/*export const animationTextShadowLimey = keyframes`
     100%, 0% {
         text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(183, 255, 0);
     }
@@ -200,7 +214,7 @@ export const animationTextShadowLimey = keyframes`
     75% {
         text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 153, 0);
     }`;
-
+*/
 // export const animationShadowBlueDarker = keyframes`
 //     0%, 100% {
 //         box-shadow: 3px 3px 0 rgb(135, 206, 235), /* Sky Blue */ 6px 6px 0 rgb(70, 130, 180), /* Steel Blue */ 9px 9px 0 rgb(0, 128, 128); /* Teal */
