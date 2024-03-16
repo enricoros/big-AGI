@@ -503,6 +503,5 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
     deleteConversations: state.deleteConversations,
-    setMessages: state.setMessages,
   };
 }, shallow);
