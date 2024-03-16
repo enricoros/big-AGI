@@ -22,7 +22,7 @@ export function ButtonMultiChat(props: { isMobile?: boolean, multiChat: boolean,
     <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between' }}>
       <FormLabel sx={{ gap: 1, flexFlow: 'row nowrap' }}>
         <Box sx={{ display: { xs: 'none', lg: 'inline-block' } }}>
-          {multiChat ? <ChatMulticastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatMulticastOffIcon />}
+          {multiChat ? <ChatMulticastOnIcon color='primary' /> : <ChatMulticastOffIcon />}
         </Box>
         {multiChat ? 'Multichat · On' : 'Multichat'}
       </FormLabel>
