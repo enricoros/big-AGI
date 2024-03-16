@@ -35,6 +35,7 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
+import { useAppStateStore } from '~/common/state/store-appstate';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
@@ -116,6 +117,7 @@ export function Composer(props: {
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
+  const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
   const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
@@ -522,14 +524,14 @@ export function Composer(props: {
           : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
             : props.capabilityHasT2I ? 'Chat · /beam · /draw · drop files...'
               : 'Chat · /react · drop files...';
-  if (isDesktop) {
+  if (isDesktop && timeToShowTips) {
     if (explainShiftEnter)
-      textPlaceholder += !enterIsNewline ? '\n💡 Shift + Enter to add a new line' : '\n💡 Shift + Enter to send';
+      textPlaceholder += !enterIsNewline ? '\n\n💡 Shift + Enter to add a new line' : '\n\n💡 Shift + Enter to send';
     else if (explainAltEnter)
-      textPlaceholder += platformAwareKeystrokes('\n💡 Tip: Alt + Enter to just append the message');
+      textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Alt + Enter to just append the message');
     // 1.15.0: enable this
     // else if (explainCtrlEnter)
-    //   textPlaceholder += platformAwareKeystrokes('\n💡 Tip: Ctrl + Enter to beam');
+    //   textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Ctrl + Enter to beam');
   }
 
   return (
