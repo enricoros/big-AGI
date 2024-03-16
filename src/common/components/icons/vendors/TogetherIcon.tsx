@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-import { SvgIcon } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+import { SvgIcon, SvgIconProps } from '@mui/joy';
 
-export function TogetherIcon(props: { sx?: SxProps }) {
+export function TogetherIcon(props: SvgIconProps) {
   return <SvgIcon viewBox='0 0 976 180' width='24' height='24' strokeWidth={0} stroke='none' fill='currentColor' strokeLinecap='butt' strokeLinejoin='miter' {...props}>
     <path d='M972.52,2.94 C970.56,0.98 968.08,0 965.072,0 C962.066,0 959.584,0.98 957.624,2.94 C955.664,4.9 954.684,7.383 954.684,10.388 C954.684,13.393 955.664,15.876 957.624,17.836 C959.584,19.796 962.066,20.776 965.072,20.776 C968.08,20.776 970.56,19.796 972.52,17.836 C974.48,15.876 975.46,13.393 975.46,10.388 C975.46,7.383 974.48,4.9 972.52,2.94' id='Fill-1' />
     <polygon points='957.036 138.572 973.11 138.572 973.11 38.612 957.036 38.612' />
