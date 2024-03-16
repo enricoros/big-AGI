@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { AzureIcon } from '~/common/components/icons/vendors/AzureIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -41,7 +39,7 @@ export const ModelVendorAzure: IModelVendor<SourceSetupAzure, OpenAIAccessSchema
   rank: 14,
   location: 'cloud',
   instanceLimit: 2,
-  hasBackendCap: () => backendCaps().hasLlmAzureOpenAI,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmAzureOpenAI,
 
   // components
   Icon: AzureIcon,

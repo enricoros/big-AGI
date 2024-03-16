@@ -68,6 +68,6 @@ export function useKnowledgeOfBackendCaps(): [boolean, (capabilities: Partial<Ba
   return useBackendCapabilitiesStore(useShallow(state => [state.loadedCapabilities, state.setCapabilities]));
 }
 
-export function backendCaps(): BackendCapabilities {
+export function backendCapabilities(): BackendCapabilities {
   return useBackendCapabilitiesStore.getState();
 }

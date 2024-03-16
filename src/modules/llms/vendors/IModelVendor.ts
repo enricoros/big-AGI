@@ -3,6 +3,8 @@ import type { TRPCClientErrorBase } from '@trpc/client';
 
 import type { SvgIconProps } from '@mui/joy';
 
+import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+
 import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
@@ -17,7 +19,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
   readonly location: 'local' | 'cloud';
   readonly instanceLimit: number;
   readonly hasFreeModels?: boolean;
-  readonly hasBackendCap?: () => boolean; // used to show a 'geen checkmark' in the list of vendors when adding sources
+  readonly hasBackendCap?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'geen checkmark' in the list of vendors when adding sources
 
   // components
   readonly Icon: React.FunctionComponent<SvgIconProps>;

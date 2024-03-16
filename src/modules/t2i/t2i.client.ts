@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
+import { backendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
@@ -85,7 +85,7 @@ export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, pro
       return await openAIGenerateImagesOrThrow(provider.id, prompt, count);
 
     case 'prodia':
-      const hasProdiaServer = backendCaps().hasImagingProdia;
+      const hasProdiaServer = backendCapabilities().hasImagingProdia;
       const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
         throw new Error('No Prodia configuration found for TextToImage');
@@ -127,7 +127,7 @@ function getTextToImageProviders(openAIModelSources: OpenAIModelSource[], hasPro
   }
 
   // add Prodia
-  const hasProdiaServer = backendCaps().hasImagingProdia;
+  const hasProdiaServer = backendCapabilities().hasImagingProdia;
   providers.push({
     id: 'prodia',
     label: 'Prodia',

@@ -28,13 +28,12 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   const advanced = useToggleableBoolean(!!props.sourceId?.includes('-'));
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorOpenAI);
 
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const needsUserKey = !ModelVendorOpenAI.hasBackendCap?.();
   const keyValid = isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;

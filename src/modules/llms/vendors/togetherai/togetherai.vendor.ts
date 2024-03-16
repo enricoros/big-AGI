@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -23,7 +21,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
   rank: 17,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmTogetherAI,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmTogetherAI,
 
   // components
   Icon: TogetherIcon,

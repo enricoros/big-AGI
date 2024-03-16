@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/store-backend-capabilities';
-
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 
@@ -37,7 +35,7 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
   rank: 11,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmGemini,
+  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmGemini,
 
   // components
   Icon: GeminiIcon,
