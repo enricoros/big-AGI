@@ -547,9 +547,10 @@ export function AppChat() {
                 border: `2px solid ${_paneIsFocused
                   ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
                   : ((willMulticast || !isMultiConversationId) ? theme.palette.warning.softActiveBg : theme.palette.background.level1)}`,
-                filter: (!willMulticast && !_paneIsFocused)
-                  ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
-                  : undefined,
+                // DISABLED on 2024-03-13, it gets in the way quite a lot
+                // filter: (!willMulticast && !_paneIsFocused)
+                //   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
+                //   : undefined,
               } : {
                 // NOTE: this is a workaround for the 'stuck-after-collapse-close' issue. We will collapse the 'other' pane, which
                 // will get it removed (onCollapse), and somehow this pane will be stuck with a pointerEvents: 'none' style, which de-facto
