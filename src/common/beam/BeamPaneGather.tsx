@@ -18,6 +18,10 @@ const beamGatherControlsSx: SxProps = {
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
 
+  // the fact that this works, means we got the CSS and layout right
+  position: 'sticky',
+  bottom: 0,
+
   // layout
   display: 'flex',
   alignItems: 'center',
@@ -46,8 +50,8 @@ export function BeamPaneGather(props: {
         {/*<Typography level='h4'>*/}
         {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
         {/*</Typography>*/}
-        <Box sx={{my:'auto'}}>
-          <ScrollToBottomButton inline/>
+        <Box sx={{ my: 'auto' }}>
+          <ScrollToBottomButton inline />
         </Box>
         <div>
           <Typography level='h4' component='h2'>
