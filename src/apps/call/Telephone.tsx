@@ -331,22 +331,9 @@ export function Telephone(props: {
         padding: 0, // move this to the ScrollToBottom component
       }}>
 
-        <ScrollToBottom
-          // bootToBottom
-          stickToBottomInitial
-          sx={{
-            // allows the content to be scrolled (all browsers)
-            overflowY: 'auto',
-            // actually make sure this scrolls & fills
-            height: '100%',
+        <ScrollToBottom stickToBottomInitial>
 
-            // content
-            display: 'grid',
-            padding: 1,
-          }}
-        >
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
             {/* Call Messages [] */}
             {callMessages.map((message) =>

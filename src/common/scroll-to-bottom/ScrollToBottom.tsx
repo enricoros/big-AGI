@@ -18,8 +18,8 @@
  */
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
 import type { SxProps } from '@mui/joy/styles/types';
+import { Box } from '@mui/joy';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 
@@ -49,7 +49,18 @@ function DebugBorderBox(props: { heightPx: number, color: string }) {
   );
 }
 
+const scrollableBoxSx: SxProps = {
+  // allows the content to be scrolled (all browsers)
+  overflowY: 'auto',
+  // actually make sure this scrolls & fills
+  height: '100%',
+} as const;
 
+
+/**
+ * This scroller works best with a single oversized child component.
+ * The scrollbar (overflowY: 'auto') is handled here.
+ */
 export function ScrollToBottom(props: {
   bootToBottom?: boolean,
   bootSmoothly?: boolean,
@@ -239,7 +250,11 @@ export function ScrollToBottom(props: {
       notifyBooting,
       setStickToBottom,
     }}>
-      <Box ref={scrollableElementRef} sx={props.sx}>
+      {/* Scrollable v-maxed */}
+      <Box ref={scrollableElementRef} sx={!props.sx ? scrollableBoxSx : ({
+        ...scrollableBoxSx,
+        ...props.sx,
+      } as SxProps)}>
         {props.children}
         {DEBUG_SCROLL_TO_BOTTOM && <DebugBorderBox heightPx={USER_STICKY_MARGIN} color='red' />}
         {DEBUG_SCROLL_TO_BOTTOM && <DebugBorderBox heightPx={100} color='blue' />}
