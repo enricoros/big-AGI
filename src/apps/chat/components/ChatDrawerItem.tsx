@@ -54,6 +54,7 @@ export interface ChatNavigationItemData {
   isAlsoOpen: string | false;
   isEmpty: boolean;
   title: string;
+  userFlagsSummary: string | undefined;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
   messageCount: number;
@@ -87,7 +88,7 @@ function ChatDrawerItem(props: {
 
   // derived state
   const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
-  const { conversationId, isActive, isAlsoOpen, title, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
+  const { conversationId, isActive, isAlsoOpen, title, userFlagsSummary, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
 
@@ -220,16 +221,19 @@ function ChatDrawerItem(props: {
       />
     )}
 
-    {/* Display search frequency if it exists and is greater than 0 */}
-    {searchFrequency > 0 && (
-      <Box sx={{ ml: 1 }}>
-        <Typography level='body-sm'>
-          {searchFrequency}
-        </Typography>
-      </Box>
-    )}
+    {/* Right text */}
+    {searchFrequency > 0 ? (
+      // Display search frequency if it exists and is greater than 0
+      <Typography level='body-sm'>
+        {searchFrequency}
+      </Typography>
+    ) : (userFlagsSummary && props.showSymbols) ? (
+      <Typography sx={{ mr: '5px' }}>
+        {userFlagsSummary}
+      </Typography>
+    ) : null}
 
-  </>, [assistantTyping, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, props.showSymbols, searchFrequency, textSymbol, title]);
+  </>, [assistantTyping, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, props.showSymbols, searchFrequency, textSymbol, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
