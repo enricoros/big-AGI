@@ -14,13 +14,13 @@ import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConvers
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
+import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
-import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
 
 
 /**

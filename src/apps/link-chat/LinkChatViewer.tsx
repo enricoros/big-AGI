@@ -5,10 +5,10 @@ import { Box, Button, Card, CardContent, List, ListItem, Tooltip, Typography } f
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
-import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
 import { launchAppChat } from '~/common/app.routes';
@@ -109,7 +109,8 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
       }}>
 
         <ScrollToBottom
-          bootToBottom bootSmoothly
+          bootToBottom
+          bootSmoothly
           sx={{
             // allows the content to be scrolled (all browsers)
             overflowY: 'auto',

@@ -9,8 +9,8 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 
-import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
-import { ScrollToBottomButton } from '../chat/components/scroll-to-bottom/ScrollToBottomButton';
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/useLLMDropdown';
 
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
