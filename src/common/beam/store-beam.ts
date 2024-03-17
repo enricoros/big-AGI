@@ -142,6 +142,7 @@ type BeamSuccessCallback = (text: string, llmId: DLLMId) => void;
 interface BeamState {
 
   isOpen: boolean;
+  isMaximized: boolean;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
   onSuccessCallback: BeamSuccessCallback | null;
@@ -163,6 +164,7 @@ interface BeamState {
 const initialBeamState = (): BeamState => ({
 
   isOpen: false,
+  isMaximized: false,
   inputHistory: null,
   inputIssues: null,
   onSuccessCallback: null,
@@ -186,6 +188,7 @@ export interface BeamStore extends BeamState {
   open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
+  setIsMaximized: (maximized: boolean) => void;
   editHistoryMessage: (messageId: string, newText: string) => void;
 
   setRayCount: (count: number) => void;
@@ -261,6 +264,10 @@ export const createBeamStore = () => createStore<BeamStore>()(
       });
     },
 
+
+    setIsMaximized: (maximized: boolean) => _set({
+      isMaximized: maximized,
+    }),
 
     editHistoryMessage: (messageId: string, newText: string) =>
       _set((state) => ({

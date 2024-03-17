@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import MaximizeRoundedIcon from '@mui/icons-material/MaximizeRounded';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -11,11 +12,10 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { animationColorBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
 
-import { FadeInButton } from './ChatDrawerItem';
-
 
 export function ChatBarAltBeam(props: {
   beamStore: BeamStoreApi,
+  isMobile?: boolean
 }) {
 
   // state
@@ -23,12 +23,13 @@ export function ChatBarAltBeam(props: {
 
 
   // external beam state
-  const { isScattering, isGathering, readyGather, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
+  const { isScattering, isGathering, readyGather, setIsMaximized, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
     isGathering: store.isGathering,
     readyGather: store.readyGather, // Assuming this state exists and is a number
     // actions
+    setIsMaximized: store.setIsMaximized,
     terminateBeam: store.terminate,
   })));
 
@@ -52,6 +53,10 @@ export function ChatBarAltBeam(props: {
     setShowCloseConfirmation(false);
   }, []);
 
+  const handleMaximizeBeam = React.useCallback(() => {
+    setIsMaximized(true);
+  }, [setIsMaximized]);
+
 
   // intercept esc this beam is focused
   useGlobalShortcut(ShortcutKeyName.Esc, false, false, false, handleCloseBeam);
@@ -60,9 +65,19 @@ export function ChatBarAltBeam(props: {
   return (
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 3 }, alignItems: 'center' }}>
 
-      {/*<ChatBeamIcon sx={{ fontSize: 'md' }} />*/}
-      <IconButton size='sm' disabled />
+      {/* [desktop] maximize button, or a disabled spacer  */}
+      {props.isMobile ? (
+        // <ChatBeamIcon sx={{ fontSize: 'md' }} />
+        <IconButton size='sm' disabled />
+      ) : (
+        <GoodTooltip title='Maximize'>
+          <IconButton size='sm' onClick={handleMaximizeBeam}>
+            <MaximizeRoundedIcon />
+          </IconButton>
+        </GoodTooltip>
+      )}
 
+      {/* Title & Status */}
       <Typography level='title-md'>
         <Box
           component='span'
@@ -76,11 +91,13 @@ export function ChatBarAltBeam(props: {
         {(!isGathering && !isScattering) && ' Mode'}
       </Typography>
 
+      {/* Right Close Icon */}
       <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Close Beam Mode <KeyStroke combo='Esc' /></Box>}>
-        <FadeInButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
+        <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
           <CloseRoundedIcon />
-        </FadeInButton>
+        </IconButton>
       </GoodTooltip>
+
 
       {/* Confirmation Modal */}
       {showCloseConfirmation && (
