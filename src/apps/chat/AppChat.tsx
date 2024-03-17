@@ -565,12 +565,6 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
-              sx={{
-                // allows the content to be scrolled (all browsers)
-                overflowY: 'auto',
-                // actually make sure this scrolls & fills
-                height: '100%',
-              }}
             >
 
               <ChatMessageList

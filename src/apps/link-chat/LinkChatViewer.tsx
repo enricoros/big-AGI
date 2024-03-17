@@ -108,16 +108,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
         p: 0,
       }}>
 
-        <ScrollToBottom
-          bootToBottom
-          bootSmoothly
-          sx={{
-            // allows the content to be scrolled (all browsers)
-            overflowY: 'auto',
-            // actually make sure this scrolls & fills
-            height: '100%',
-          }}
-        >
+        <ScrollToBottom bootToBottom bootSmoothly>
 
           <List sx={{
             p: 0,
