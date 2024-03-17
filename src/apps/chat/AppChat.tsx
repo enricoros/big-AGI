@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import { Box, useTheme } from '@mui/joy';
+import { useTheme } from '@mui/joy';
 
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
@@ -11,7 +11,6 @@ import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromT
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import { BeamView } from '~/common/beam/BeamView';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
@@ -21,7 +20,7 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
-import { themeBgAppChatComposer, themeZIndexBeamView } from '~/common/app.theme';
+import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useAreBeamsOpen } from '~/common/beam/store-beam.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -32,6 +31,7 @@ import type { ComposerOutputMultiPart } from './components/composer/composer.typ
 import { ChatBarAltBeam } from './components/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/ChatBarAltTitle';
 import { ChatBarDropdowns } from './components/ChatBarDropdowns';
+import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
@@ -461,11 +461,11 @@ export function AppChat() {
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
 
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
-      ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} />
+      ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
         ? <ChatBarDropdowns conversationId={focusedPaneConversationId} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId],
+    , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId, isMobile],
   );
 
   const drawerContent = React.useMemo(() =>
@@ -603,19 +603,7 @@ export function AppChat() {
             </ScrollToBottom>
 
             {(_paneChatBeamIsOpen && !!_paneChatBeamStore) && (
-              // <Modal open onClose={() => console.log('CLOSE!')}>
-              <Box sx={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)
-              }}>
-                <BeamView
-                  beamStore={_paneChatBeamStore}
-                  isMobile={isMobile}
-                  showExplainer
-                />
-              </Box>
-              // </Modal>
+              <ChatBeamWrapper beamStore={_paneChatBeamStore} isMobile={isMobile} />
             )}
 
           </Panel>
