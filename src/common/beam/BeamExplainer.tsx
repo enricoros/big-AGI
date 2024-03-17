@@ -40,7 +40,7 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
 2. Tap into multiple AI perspectives at once
 3. Discover unconventional solutions
 
-#### How to Beam (Phase 1/2):
+#### How to Beam:
 
 - Clearly define your problem
 - Launch up to 8 AI models in parallel
