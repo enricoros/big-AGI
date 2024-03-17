@@ -565,6 +565,7 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
+              sx={_paneChatBeamIsOpen ? { display: 'none' } : undefined}
             >
 
               <ChatMessageList
