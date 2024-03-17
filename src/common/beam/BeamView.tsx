@@ -6,6 +6,7 @@ import { Alert, Box, Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
@@ -53,7 +54,6 @@ export function BeamView(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
   showExplainer?: boolean,
-  sx?: SxProps,
 }) {
 
   // state
@@ -114,96 +114,101 @@ export function BeamView(props: {
   }, [isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
 
   if (props.showExplainer && explainerUnseen)
-    return <BeamExplainer onWizardComplete={explainerCompleted} sx={props.sx} />;
+    return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
   return (
-    <Box sx={{
-      '--Pad': { xs: '1rem', md: '1.5rem' },
-      '--Pad_2': 'calc(var(--Pad) / 2)',
+    <ScrollToBottom disableAutoStick>
 
-      // enter animation
-      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      <Box sx={{
+        // scroller fill
+        minHeight: '100%',
 
-      // scrollable layout
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 'var(--Pad)',
-      pb: 'var(--Pad)',
+        // enter animation
+        animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
 
-      ...props.sx,
-    }}>
+        // config
+        '--Pad': { xs: '1rem', md: '1.5rem' },
+        '--Pad_2': 'calc(var(--Pad) / 2)',
 
-      {/* Config Issues */}
-      {!!inputIssues && <Alert>{inputIssues}</Alert>}
+        // layout
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--Pad)',
+        pb: 'var(--Pad)',
+      }}>
 
-      {/* Scatter Controls */}
-      <BeamPaneScatter
-        isMobile={props.isMobile}
-        llmComponent={gatherLlmComponent}
-        rayCount={raysCount}
-        setRayCount={handleRaySetCount}
-        startEnabled={readyScatter}
-        startBusy={isScattering}
-        onStart={startScatteringAll}
-        onStop={stopScatteringAll}
-        onExplainerShow={explainerShow}
-      />
+        {/* Config Issues */}
+        {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
-      {/* User Message */}
-      {!!lastMessage && (
-        <Box sx={{
-          px: 'var(--Pad)',
-          mt: 'calc(-1 * var(--Pad))',
-        }}>
-          <ChatMessageMemo
-            message={lastMessage}
-            fitScreen={props.isMobile}
-            showAvatar={true}
-            adjustContentScaling={-1}
-            topDecorator={userMessageDecorator}
-            onMessageEdit={editHistoryMessage}
-            sx={userMessageSx}
-          />
-        </Box>
-      )}
+        {/* Scatter Controls */}
+        <BeamPaneScatter
+          isMobile={props.isMobile}
+          llmComponent={gatherLlmComponent}
+          rayCount={raysCount}
+          setRayCount={handleRaySetCount}
+          startEnabled={readyScatter}
+          startBusy={isScattering}
+          onStart={startScatteringAll}
+          onStop={stopScatteringAll}
+          onExplainerShow={explainerShow}
+        />
 
-      {/* Rays Grid */}
-      <BeamRayGrid
-        beamStore={props.beamStore}
-        gatherLlmId={gatherLlmId}
-        isMobile={props.isMobile}
-        rayIds={rayIds}
-        onIncreaseRayCount={handleRayIncreaseCount}
-      />
+        {/* User Message */}
+        {!!lastMessage && (
+          <Box sx={{
+            px: 'var(--Pad)',
+            mt: 'calc(-1 * var(--Pad))',
+          }}>
+            <ChatMessageMemo
+              message={lastMessage}
+              fitScreen={props.isMobile}
+              showAvatar={true}
+              adjustContentScaling={-1}
+              topDecorator={userMessageDecorator}
+              onMessageEdit={editHistoryMessage}
+              sx={userMessageSx}
+            />
+          </Box>
+        )}
 
-      {/* Gather Message */}
-      {(!!gatherMessage && !!gatherMessage.updated) && (
-        <Box sx={{
-          px: 'var(--Pad)',
-          mb: 'calc(-1 * var(--Pad))',
-        }}>
-          <ChatMessageMemo
-            message={gatherMessage}
-            fitScreen={props.isMobile}
-            showAvatar={false}
-            adjustContentScaling={-1}
-            sx={assistantMessageSx}
-          />
-        </Box>
-      )}
+        {/* Rays Grid */}
+        <BeamRayGrid
+          beamStore={props.beamStore}
+          gatherLlmId={gatherLlmId}
+          isMobile={props.isMobile}
+          rayIds={rayIds}
+          onIncreaseRayCount={handleRayIncreaseCount}
+        />
 
-      {/* Gather Controls */}
-      <BeamPaneGather
-        isMobile={props.isMobile}
-        gatherCount={readyGather}
-        gatherEnabled={readyGather > 0 && !isScattering}
-        gatherBusy={false}
-        onStart={() => null}
-        onStop={() => null}
-        onClose={handleTerminate}
-      />
+        {/* Gather Message */}
+        {(!!gatherMessage && !!gatherMessage.updated) && (
+          <Box sx={{
+            px: 'var(--Pad)',
+            mb: 'calc(-1 * var(--Pad))',
+          }}>
+            <ChatMessageMemo
+              message={gatherMessage}
+              fitScreen={props.isMobile}
+              showAvatar={false}
+              adjustContentScaling={-1}
+              sx={assistantMessageSx}
+            />
+          </Box>
+        )}
 
-    </Box>
+        {/* Gather Controls */}
+        <BeamPaneGather
+          isMobile={props.isMobile}
+          gatherCount={readyGather}
+          gatherEnabled={readyGather > 0 && !isScattering}
+          gatherBusy={false}
+          onStart={() => null}
+          onStop={() => null}
+          onClose={handleTerminate}
+        />
+
+      </Box>
+
+    </ScrollToBottom>
   );
 }

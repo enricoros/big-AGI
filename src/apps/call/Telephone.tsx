@@ -333,7 +333,7 @@ export function Telephone(props: {
 
         <ScrollToBottom stickToBottomInitial>
 
-          <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
             {/* Call Messages [] */}
             {callMessages.map((message) =>

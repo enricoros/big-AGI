@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import { useTheme } from '@mui/joy';
+import { Box, useTheme } from '@mui/joy';
 
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
@@ -604,17 +604,17 @@ export function AppChat() {
 
             {(_paneChatBeamIsOpen && !!_paneChatBeamStore) && (
               // <Modal open onClose={() => console.log('CLOSE!')}>
-              <BeamView
-                beamStore={_paneChatBeamStore}
-                isMobile={isMobile}
-                showExplainer
-                sx={{
-                  backgroundColor: 'background.level1',
-                  position: 'absolute',
-                  inset: 0,
-                  zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)
-                }}
-              />
+              <Box sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: themeZIndexBeamView, // stay on top of Message > Chips (:1), and Overlays (:2) - note: Desktop Drawer (:26)
+              }}>
+                <BeamView
+                  beamStore={_paneChatBeamStore}
+                  isMobile={isMobile}
+                  showExplainer
+                />
+              </Box>
               // </Modal>
             )}
 
