@@ -16,6 +16,8 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -34,8 +36,6 @@ import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
-import { ScrollToBottom } from './components/scroll-to-bottom/ScrollToBottom';
-import { ScrollToBottomButton } from './components/scroll-to-bottom/ScrollToBottomButton';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
 
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
