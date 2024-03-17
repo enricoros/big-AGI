@@ -9,10 +9,7 @@ import { useScrollToBottom } from './useScrollToBottom';
 
 const inlineButtonSx: SxProps = {
   // style it
-  backgroundColor: 'background.surface',
-  borderRadius: '50%',
-  border: '1px solid',
-  borderColor: 'neutral.500',
+  // NOTE: just an IconButton when inline
 
   // fade it in when hovering
   // transition: 'all 0.15s',
@@ -25,6 +22,10 @@ const absoluteButtonSx: SxProps = {
   ...inlineButtonSx,
 
   // more style when float
+  backgroundColor: 'background.surface',
+  border: '1px solid',
+  borderColor: 'neutral.500',
+  borderRadius: '50%',
   boxShadow: 'sm',
 
   // place this on the bottom-right corner (FAB-like)
