@@ -564,7 +564,7 @@ export function AppChat() {
 
             <ScrollToBottom
               bootToBottom
-              stickToBottom
+              stickToBottomInitial
               sx={{
                 // allows the content to be scrolled (all browsers)
                 overflowY: 'auto',

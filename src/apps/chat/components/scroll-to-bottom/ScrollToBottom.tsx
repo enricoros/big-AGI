@@ -51,17 +51,18 @@ function DebugBorderBox(props: { heightPx: number, color: string }) {
 
 
 export function ScrollToBottom(props: {
-  bootToBottom?: boolean
-  bootSmoothly?: boolean
-  stickToBottom?: boolean
-  sx?: SxProps
+  bootToBottom?: boolean,
+  bootSmoothly?: boolean,
+  stickToBottomInitial?: boolean,
+  disableAutoStick?: boolean, // disables auto-sticking when at the bottom - only the button will make it stick
+  sx?: SxProps,
   children: React.ReactNode,
 }) {
 
   // state
 
   const [state, setState] = React.useState<ScrollToBottomState>({
-    stickToBottom: props.stickToBottom || false,
+    stickToBottom: props.stickToBottomInitial || false,
     booting: props.bootToBottom || false,
     atBottom: undefined,
   });
@@ -184,8 +185,12 @@ export function ScrollToBottom(props: {
       const stickToBottom = atBottom;
 
       // update state only if anything changed
-      setState(state => (state.stickToBottom !== stickToBottom || state.atBottom !== atBottom)
-        ? ({ ...state, stickToBottom, atBottom })
+      setState(state => state.stickToBottom !== stickToBottom || state.atBottom !== atBottom
+        ? {
+          ...state,
+          stickToBottom: props.disableAutoStick ? (state.stickToBottom && stickToBottom) : stickToBottom,
+          atBottom,
+        }
         : state,
       );
     };
@@ -196,7 +201,7 @@ export function ScrollToBottom(props: {
     scrollable.addEventListener('scroll', _scrollEventsListener);
     return () => scrollable.removeEventListener('scroll', _scrollEventsListener);
 
-  }, [state.booting]);
+  }, [props.disableAutoStick, state.booting]);
 
 
   // actions for this context
