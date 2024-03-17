@@ -6,16 +6,8 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 
 import { useScrollToBottom } from './useScrollToBottom';
 
-// const object
-const buttonSx: SxProps = {
-  // place this on the bottom-right corner (FAB-like)
-  position: 'absolute',
-  bottom: '2rem',
-  right: {
-    xs: '1rem',
-    md: '2rem',
-  },
 
+const inlineButtonSx: SxProps = {
   // style it
   backgroundColor: 'background.surface',
   borderRadius: '50%',
@@ -30,8 +22,20 @@ const buttonSx: SxProps = {
   // },
 } as const;
 
+const absoluteButtonSx: SxProps = {
+  ...inlineButtonSx,
 
-export function ScrollToBottomButton() {
+  // place this on the bottom-right corner (FAB-like)
+  position: 'absolute',
+  bottom: '2rem',
+  right: {
+    xs: '1rem',
+    md: '2rem',
+  },
+} as const;
+
+
+export function ScrollToBottomButton(props: { inline?: boolean }) {
 
   // state
   const { atBottom, stickToBottom, setStickToBottom } = useScrollToBottom();
@@ -45,7 +49,12 @@ export function ScrollToBottomButton() {
     return null;
 
   return (
-    <IconButton aria-label='Scroll To Bottom' variant='plain' onClick={handleStickToBottom} sx={buttonSx}>
+    <IconButton
+      aria-label='Scroll To Bottom'
+      variant='plain'
+      onClick={handleStickToBottom}
+      sx={props.inline ? inlineButtonSx : absoluteButtonSx}
+    >
       <KeyboardDoubleArrowDownIcon />
     </IconButton>
   );
