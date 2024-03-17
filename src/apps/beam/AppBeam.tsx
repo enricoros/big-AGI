@@ -71,7 +71,6 @@ export function AppBeam() {
         <BeamView
           beamStore={beamStoreApi}
           isMobile={isMobile}
-          sx={{ height: '100%' }}
         />
       )}
 

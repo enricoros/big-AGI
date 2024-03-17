@@ -60,6 +60,8 @@ const scrollableBoxSx: SxProps = {
 /**
  * This scroller works best with a single oversized child component.
  * The scrollbar (overflowY: 'auto') is handled here.
+ *
+ * NOTE: the first (possibly only) child shall have { minHeight: '100%' } to auto-fill
  */
 export function ScrollToBottom(props: {
   bootToBottom?: boolean,

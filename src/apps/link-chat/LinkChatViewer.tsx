@@ -111,6 +111,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
         <ScrollToBottom bootToBottom bootSmoothly>
 
           <List sx={{
+            minHeight: '100%',
             p: 0,
             display: 'flex', flexDirection: 'column',
             flexGrow: 1,
