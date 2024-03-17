@@ -1,7 +1,7 @@
 import { shallow } from 'zustand/shallow';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { conversationTitle, DConversationId, messageHasUserFlag, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId, DMessageUserFlag, messageHasUserFlag, messageUserFlagToEmoji, useChatStore } from '~/common/state/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
 
@@ -113,6 +113,11 @@ export function useChatNavRenderItems(
             searchFrequency = titleFrequency + messageFrequency;
           }
 
+          // union of message flags -> emoji string
+          const allFlags = new Set<DMessageUserFlag>();
+          _c.messages.forEach(_m => _m.userFlags?.forEach(flag => allFlags.add(flag)));
+          const userFlagsSummary = !allFlags.size ? undefined : Array.from(allFlags).map(messageUserFlagToEmoji).join('');
+
           // create the ChatNavigationData
           return {
             type: 'nav-item-chat-data',
@@ -121,6 +126,7 @@ export function useChatNavRenderItems(
             isAlsoOpen,
             isEmpty: !_c.messages.length && !_c.userTitle,
             title,
+            userFlagsSummary,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled
               : _c.id === activeConversationId        // only show the folder for active conversation(s)

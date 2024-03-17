@@ -101,6 +101,14 @@ export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag)
     return [...(message.userFlags || []), flag];
 }
 
+const dMessageUserFlagToEmojiMap: Record<DMessageUserFlag, string> = {
+  starred: '⭐️',
+};
+
+export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
+  return dMessageUserFlagToEmojiMap[flag] || '❓';
+}
+
 
 /// Conversations Store
 

@@ -185,7 +185,7 @@ function ChatDrawer(props: {
         </ListItem>
         <MenuItem onClick={toggleShowPersonaIcons}>
           <ListItemDecorator>{showPersonaIcons && <CheckIcon />}</ListItemDecorator>
-          Persona Icons
+          Icons
         </MenuItem>
         <MenuItem onClick={toggleShowRelativeSize}>
           <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
