@@ -13,7 +13,6 @@ const inlineButtonSx: SxProps = {
   borderRadius: '50%',
   border: '1px solid',
   borderColor: 'neutral.500',
-  boxShadow: 'sm',
 
   // fade it in when hovering
   // transition: 'all 0.15s',
@@ -24,6 +23,9 @@ const inlineButtonSx: SxProps = {
 
 const absoluteButtonSx: SxProps = {
   ...inlineButtonSx,
+
+  // more style when float
+  boxShadow: 'sm',
 
   // place this on the bottom-right corner (FAB-like)
   position: 'absolute',
@@ -55,7 +57,7 @@ export function ScrollToBottomButton(props: { inline?: boolean }) {
       onClick={handleStickToBottom}
       sx={props.inline ? inlineButtonSx : absoluteButtonSx}
     >
-      <KeyboardDoubleArrowDownIcon />
+      <KeyboardDoubleArrowDownIcon sx={{ fontSize: 'xl' }} />
     </IconButton>
   );
 }
