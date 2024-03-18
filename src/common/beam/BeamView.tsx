@@ -20,11 +20,11 @@ import { BeamExplainer } from './BeamExplainer';
 
 const userMessageSx: SxProps = {
   border: '1px solid',
-  borderColor: 'neutral.outlinedBorder',
+  borderColor: 'primary.outlinedBorder',
   borderRadius: 'md',
-  borderTop: 'none',
-  borderTopLeftRadius: 0,
-  borderTopRightRadius: 0,
+  borderBottom: 'none',
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
   // px: '0.5rem',
   pr: '0.125rem',
   // boxShadow: 'sm',
@@ -134,11 +134,30 @@ export function BeamView(props: {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--Pad)',
-        pb: 'var(--Pad)',
+        py: 'var(--Pad)',
       }}>
 
         {/* Config Issues */}
         {!!inputIssues && <Alert>{inputIssues}</Alert>}
+
+
+        {/* User Message */}
+        {!!lastMessage && (
+          <Box sx={{
+            px: 'var(--Pad)',
+            mb: 'calc(-1 * var(--Pad))',
+          }}>
+            <ChatMessageMemo
+              message={lastMessage}
+              fitScreen={props.isMobile}
+              showAvatar={true}
+              adjustContentScaling={-1}
+              topDecorator={userMessageDecorator}
+              onMessageEdit={editHistoryMessage}
+              sx={userMessageSx}
+            />
+          </Box>
+        )}
 
         {/* Scatter Controls */}
         <BeamPaneScatter
@@ -152,24 +171,6 @@ export function BeamView(props: {
           onStop={stopScatteringAll}
           onExplainerShow={explainerShow}
         />
-
-        {/* User Message */}
-        {!!lastMessage && (
-          <Box sx={{
-            px: 'var(--Pad)',
-            mt: 'calc(-1 * var(--Pad))',
-          }}>
-            <ChatMessageMemo
-              message={lastMessage}
-              fitScreen={props.isMobile}
-              showAvatar={true}
-              adjustContentScaling={-1}
-              topDecorator={userMessageDecorator}
-              onMessageEdit={editHistoryMessage}
-              sx={userMessageSx}
-            />
-          </Box>
-        )}
 
         {/* Rays Grid */}
         <BeamRayGrid
