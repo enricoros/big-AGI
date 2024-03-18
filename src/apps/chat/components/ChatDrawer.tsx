@@ -294,7 +294,15 @@ function ChatDrawer(props: {
               onConversationFolderChange={handleConversationFolderChange}
             />
           ) : item.type === 'nav-item-group' ? (
-            <Typography key={'nav-divider-' + idx} level='body-xs' sx={{ textAlign: 'center', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
+            <Typography key={'nav-divider-' + idx} level='body-xs' sx={{
+              textAlign: 'center',
+              my: 'calc(var(--ListItem-minHeight) / 4)',
+              // keeps the group header sticky to the top
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'background.popup',
+              zIndex: 1,
+            }}>
               {item.title}
             </Typography>
           ) : item.type === 'nav-item-info-message' ? (
