@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
-import { createDRay, DRay, DRayId, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from '~/common/beam/beam.rays';
+import { createBRay, BRay, BRayId, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from '~/common/beam/beam.rays';
 
 
 // configuration
@@ -26,7 +26,7 @@ interface BeamState {
   inputIssues: string | null;
   onSuccessCallback: BeamSuccessCallback | null;
 
-  rays: DRay[];
+  rays: BRay[];
 
   gatherLlmId: DLLMId | null;
   gatherMessage: DMessage | null;
@@ -71,17 +71,17 @@ export interface BeamStore extends BeamState {
   editHistoryMessage: (messageId: string, newText: string) => void;
 
   setRayCount: (count: number) => void;
-  removeRay: (rayId: DRayId) => void;
+  removeRay: (rayId: BRayId) => void;
   importRays: (messages: DMessage[]) => void;
 
   setGatherLlmId: (llmId: DLLMId | null) => void;
 
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
-  toggleScattering: (rayId: DRayId) => void;
-  toggleUserSelection: (rayId: DRayId) => void;
-  setRayLlmId: (rayId: DRayId, llmId: DLLMId | null) => void;
-  _updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => void;
+  toggleScattering: (rayId: BRayId) => void;
+  toggleUserSelection: (rayId: BRayId) => void;
+  setRayLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
+  _updateRay: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
   syncRaysStateToBeam: () => void;
 
@@ -138,7 +138,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
         ...initialBeamState(),
 
         // remember some state between terminations
-        rays: prevRays.map((prevRay) => createDRay(prevRay.scatterLlmId)),
+        rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
         gatherLlmId: prevGatherLlmId,
       });
     },
@@ -166,13 +166,13 @@ export const createBeamStore = () => createStore<BeamStore>()(
         });
       } else if (count > rays.length) {
         _set({
-          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createDRay(null))],
+          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createBRay(null))],
         });
       }
       syncRaysStateToBeam();
     },
 
-    removeRay: (rayId: DRayId) => {
+    removeRay: (rayId: BRayId) => {
       const { syncRaysStateToBeam } = _get();
       _set((state) => ({
         rays: state.rays.filter((ray) => {
@@ -191,7 +191,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       _set({
         rays: [
           ...messages.map((message) => {
-              const ray = createDRay(null);
+              const ray = createBRay(null);
               if (message.text.trim()) {
                 ray.status = 'success';
                 ray.message.text = message.text;
@@ -230,7 +230,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
       });
     },
 
-    toggleScattering: (rayId: DRayId) => {
+    toggleScattering: (rayId: BRayId) => {
       const { rays, syncRaysStateToBeam } = _get();
       _set({
         rays: rays.map((ray) => (ray.rayId === rayId)
@@ -242,14 +242,14 @@ export const createBeamStore = () => createStore<BeamStore>()(
       syncRaysStateToBeam();
     },
 
-    toggleUserSelection: (rayId: DRayId) => _set((state) => ({
+    toggleUserSelection: (rayId: BRayId) => _set((state) => ({
       rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, userSelected: !ray.userSelected }
         : ray,
       ),
     })),
 
-    setRayLlmId: (rayId: DRayId, llmId: DLLMId | null) => _set((state) => ({
+    setRayLlmId: (rayId: BRayId, llmId: DLLMId | null) => _set((state) => ({
       rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, scatterLlmId: llmId }
         : ray,
@@ -257,7 +257,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     })),
 
 
-    _updateRay: (rayId: DRayId, update: Partial<DRay> | ((ray: DRay) => Partial<DRay>)) => _set((state) => ({
+    _updateRay: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => _set((state) => ({
       rays: state.rays.map((ray) => (ray.rayId === rayId)
         ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
         : ray,

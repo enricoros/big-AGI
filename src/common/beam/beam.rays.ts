@@ -14,10 +14,10 @@ import type { BeamStore } from './store-beam';
 const PLACEHOLDER_SCATTER_TEXT = '🖊️ ...'; // 💫 ..., 🖊️ ...
 
 
-export type DRayId = string;
+export type BRayId = string;
 
-export interface DRay {
-  rayId: DRayId;
+export interface BRay {
+  rayId: BRayId;
   status: 'empty' | 'scattering' | 'success' | 'stopped' | 'error';
   message: DMessage;
   scatterLlmId: DLLMId | null;
@@ -28,7 +28,7 @@ export interface DRay {
 }
 
 
-export function createDRay(scatterLlmId: DLLMId | null): DRay {
+export function createBRay(scatterLlmId: DLLMId | null): BRay {
   return {
     rayId: uuidv4(),
     status: 'empty',
@@ -39,7 +39,7 @@ export function createDRay(scatterLlmId: DLLMId | null): DRay {
   };
 }
 
-export function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamStore): DRay {
+export function rayScatterStart(ray: BRay, onlyIdle: boolean, beamStore: BeamStore): BRay {
   if (ray.genAbortController)
     return ray;
   if (onlyIdle && ray.status !== 'empty')
@@ -104,7 +104,7 @@ export function rayScatterStart(ray: DRay, onlyIdle: boolean, beamStore: BeamSto
   };
 }
 
-export function rayScatterStop(ray: DRay): DRay {
+export function rayScatterStop(ray: BRay): BRay {
   ray.genAbortController?.abort();
   return {
     ...ray,
@@ -114,22 +114,22 @@ export function rayScatterStop(ray: DRay): DRay {
 }
 
 
-export function rayIsError(ray: DRay | null): boolean {
+export function rayIsError(ray: BRay | null): boolean {
   return ray?.status === 'error';
 }
 
-export function rayIsScattering(ray: DRay | null): boolean {
+export function rayIsScattering(ray: BRay | null): boolean {
   return ray?.status === 'scattering';
 }
 
-export function rayIsSelectable(ray: DRay | null): boolean {
+export function rayIsSelectable(ray: BRay | null): boolean {
   return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== PLACEHOLDER_SCATTER_TEXT;
 }
 
-export function rayIsUserSelected(ray: DRay | null): boolean {
+export function rayIsUserSelected(ray: BRay | null): boolean {
   return !!ray?.userSelected;
 }
 
-export function rayIsImported(ray: DRay | null): boolean {
+export function rayIsImported(ray: BRay | null): boolean {
   return !!ray?.imported;
 }
