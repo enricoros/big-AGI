@@ -14,5 +14,6 @@ export const GATHER_PLACEHOLDER = '📦 ...';
 
 // BEAM graphics
 export const BEAM_SCATTER_COLOR = 'neutral' as const;
+export const BEAM_GATHER_COLOR= 'success' as const;
 export const BEAM_INVERT_USER_MESSAGE = true;
 export const SCATTER_RAY_SHOW_DRAG_HANDLE = false;

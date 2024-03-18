@@ -58,8 +58,8 @@ export function BeamPaneScatter(props: {
   return (
     <Box sx={props.isMobile ? beamScatterControlsSx : desktopBeamScatterControlsSx}>
 
-      {/* Title Cell */}
-      <Box sx={{ my: 'auto' }}>
+      {/* Title */}
+      <Box>
         <Typography
           level='h4' component='h2'
           onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
@@ -73,7 +73,7 @@ export function BeamPaneScatter(props: {
         </Typography>
       </Box>
 
-      {/* Count and Start cell */}
+      {/* Ray presets */}
       <FormControl sx={{ my: '-0.25rem' }}>
         <FormLabelStart title='Beam Count' sx={{ mb: '0.25rem' /* orig: 6px */ }} />
         <ButtonGroup variant='outlined'>

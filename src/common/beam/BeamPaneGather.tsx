@@ -1,13 +1,18 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, Radio, RadioGroup, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
+import { animationColorBeamScatter } from '~/common/util/animUtils';
 
+import { BEAM_GATHER_COLOR } from './beam.config';
 import { beamControlsSx } from './BeamPaneScatter';
 
 
@@ -20,15 +25,19 @@ const beamGatherControlsSx: SxProps = {
 
   // layout
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
-  // display: 'grid',
-  // gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/4), 1fr))',
-  // gridAutoFlow: 'row dense',
-  gap: 'var(--Pad_2)',
+  justifyContent: 'space-between',
+  columnGap: 'var(--Pad_2)',
+  rowGap: 'var(--Pad)',
+  py: 'calc(2 * var(--Pad) / 3)',
 };
 
 const desktopBeamControlsSx: SxProps = {
   ...beamGatherControlsSx,
+
+  // undo the larger mobile padding
+  rowGap: 'var(--Pad_2)',
 
   // the fact that this works, means we got the CSS and layout right
   position: 'sticky',
@@ -51,67 +60,89 @@ export function BeamPaneGather(props: {
   return (
     <Box sx={props.isMobile ? beamGatherControlsSx : desktopBeamControlsSx}>
 
+
       {/* Title */}
-      <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
-        {/*<Typography level='h4'>*/}
-        {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
-        {/*</Typography>*/}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
         <div>
           <Typography level='h4' component='h2'>
-            <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} /> Merge
+            {gatherBusy
+              ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamScatter} 2s linear infinite` }} />
+              : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />} Merge
           </Typography>
-
-          <Typography level='body-sm'>
+          <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
           </Typography>
         </div>
-        <Box sx={{ my: 'auto' }}>
-          <ScrollToBottomButton inline />
-        </Box>
+        <ScrollToBottomButton inline />
       </Box>
 
-      {/* LLM cell */}
-      <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: props.isMobile ? undefined : 'center' }}>
+      {/* Method */}
+      <FormControl sx={{ my: '-0.25rem' }}>
+        <FormLabelStart title={<><AutoAwesomeRoundedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
+        <ButtonGroup variant='outlined'>
+          {['Guided', 'Fusion'].map((n, idx) => {
+            const isActive = idx === 0; //fasn === props.rayCount;
+            return (
+              <Button
+                key={n}
+                color={isActive ? BEAM_GATHER_COLOR : 'neutral'}
+                // size='sm'
+                sx={{
+                  // backgroundColor: isActive ? 'background.popup' : undefined,
+                  backgroundColor: isActive ? `${BEAM_GATHER_COLOR}.softBg` : 'background.popup',
+                  fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                  // width: '3.125rem',
+                  // minHeight: '2.25rem',
+                }}
+              >
+                {n}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
+      </FormControl>
+
+      {/* Method (Radio)*/}
+      {/*<FormControl>*/}
+      {/*  <FormLabelStart title={<><AutoAwesomeRoundedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px } />*!/*/}
+      {/*  <RadioGroup orientation={props.isMobile ? 'vertical' : 'horizontal'}>*/}
+      {/*    <Radio color={BEAM_GATHER_COLOR} value='one' label='Guided' />*/}
+      {/*    <Radio color={BEAM_GATHER_COLOR} value='many' label={<Typography>Fusion</Typography>} />*/}
+      {/*    /!*<Radio value='one' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Chooose</Typography>} />*!/*/}
+      {/*    /!*<Radio value='many' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Improve</Typography>} />*!/*/}
+      {/*    /!*<Radio value='all' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Fuse</Typography>} />*!/*/}
+      {/*    /!*<Radio value='manual' label='Manual' />*!/*/}
+      {/*  </RadioGroup>*/}
+      {/*</FormControl>*/}
+
+      {/* LLM */}
+      <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 220 }}>
         {props.mergeLlmComponent}
       </Box>
 
-      {/* Algo */}
-      {false && <FormControl disabled={!gatherEnabled}>
-        {!props.isMobile && <FormLabelStart title={`Beam Fusion${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />}
-        <ButtonGroup disabled={!gatherEnabled} variant='soft' color='success'>
-          <Button
-            sx={{
-              // fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-              // backgroundColor: isActive ? 'background.popup' : undefined,
-              // maxWidth: '3rem',
-            }}
-          >
-            test
-          </Button>
-          <Button variant='solid'>
-            ya
-          </Button>
-          <Button>
-            ya
-          </Button>
-        </ButtonGroup>
-      </FormControl>}
-
-      {/*{gatherEnabled && (*/}
-      {/*  // <FormControl sx={{ mx: 'auto' }}>*/}
-      {/*  //   <FormLabelStart title={`Candidates ${gatherEnabled ? ` (${props.gatherCount})` : ''}`} />*/}
-      <RadioGroup size='sm' orientation={props.isMobile ? 'vertical' : 'horizontal'} sx={{ mx: 'auto' }}>
-        <Radio value='one' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Chooose</Typography>} />
-        {/*<Radio value='many' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Improve</Typography>} />*/}
-        <Radio value='all' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Fuse</Typography>} />
-        <Radio value='manual' label='Manual' />
-      </RadioGroup>
-      {/*// </FormControl>*/}
-      {/*)}*/}
-
-      <Button variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
-        Close
-      </Button>
+      {/* Start / Stop buttons */}
+      {!gatherBusy ? (
+        <Button
+          // key='gather-start' // used for animation triggering, which we don't have now
+          variant='solid' color={BEAM_GATHER_COLOR}
+          disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
+          endDecorator={<MergeRoundedIcon />}
+          onClick={props.onStart}
+          sx={{ minWidth: 120 }}
+        >
+          Merge
+        </Button>
+      ) : (
+        <Button
+          // key='gather-stop'
+          variant='solid' color='danger'
+          endDecorator={<StopRoundedIcon />}
+          onClick={props.onStop}
+          sx={{ minWidth: 120 }}
+        >
+          Stop
+        </Button>
+      )}
 
     </Box>
   );

@@ -23,6 +23,11 @@ const userMessageContainerSx: SxProps = {
   pt: 'var(--Pad)',
   px: 'var(--Pad)',
   mb: 'calc(-1 * var(--Pad))',
+
+  // sticky user message, only displaced by the scatter controls
+  // NOTE: disabled: should feel good but feels weird
+  // position: 'sticky',
+  // top: 0,
 };
 
 const userMessageContainerInvertedSx: SxProps = {
@@ -92,7 +97,7 @@ export function BeamView(props: {
     isGathering: state.isGathering,
   })));
   const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setMergeLlmId, terminate } = props.beamStore.getState();
-  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model');
+  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model', true);
 
   // configuration
 
