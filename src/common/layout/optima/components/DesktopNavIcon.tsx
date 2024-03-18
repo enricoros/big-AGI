@@ -1,6 +1,6 @@
 import { Box, IconButton, styled } from '@mui/joy';
 
-import { animationColorBeamScatter } from '~/common/util/animUtils';
+import { animationColorBeamScatterINV } from '~/common/util/animUtils';
 
 
 export const DesktopNavGroupBox = styled(Box)({
@@ -93,7 +93,7 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
   // attractive: attract the user to click on this element
   [`&.${navItemClasses.attractive}`]: {
     '--Icon-fontSize': '2rem',
-    animation: `${animationColorBeamScatter} 4s infinite`,
+    animation: `${animationColorBeamScatterINV} 4s infinite`,
   },
 
   // debug: show a red outline

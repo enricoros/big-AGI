@@ -1,22 +1,32 @@
 import { keyframes } from '@emotion/react';
 
 
-export const animationColorBeamScatter = keyframes`
+export const animationColorBeamScatterINV = keyframes`
     100%, 0% {
-        //color: rgb(183, 255, 0);
         color: rgb(219, 255, 77);
     }
     25% {
-        //color: rgb(255, 251, 0);
         color: rgb(255, 255, 128);
     }
     50% {
-        //color: rgba(0, 255, 81);
         color: rgba(128, 255, 153);
     }
     75% {
-        //color: rgb(255, 153, 0);
         color: rgb(255, 204, 77);
+    }`;
+
+export const animationColorBeamScatter = keyframes`
+    100%, 0% {
+        color: rgb(85, 140, 47); // A rich, dark green
+    }
+    25% {
+        color: rgb(75, 115, 35); // A slightly desaturated green for contrast
+    }
+    50% {
+        color: rgba(65, 155, 55); // A brighter, more saturated green with slight transparency
+    }
+    75% {
+        color: rgb(95, 130, 40); // A blend between the first and third colors for a smooth transition
     }`;
 
 export const animationColorBeamGather = keyframes`
