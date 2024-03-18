@@ -3,7 +3,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
-import { ChatActions, createDMessage, DConversationId, DMessage, useChatStore } from '../state/store-chats';
+import { ChatActions, createDMessage, DConversationId, DMessage, getConversationSystemPurposeId, useChatStore } from '../state/store-chats';
 
 import { createBeamStore } from '~/common/beam/store-beam';
 
@@ -32,9 +32,10 @@ export class ConversationHandler {
 
   // Conversation Management
 
-  resyncPurposeInHistory(history: DMessage[], assistantLlmId: DLLMId, purposeId: SystemPurposeId): DMessage[] {
+  inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined): DMessage[] {
+    const purposeId = getConversationSystemPurposeId(this.conversationId);
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
-    const systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
+    let systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
       systemMessage.text = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
@@ -42,9 +43,13 @@ export class ConversationHandler {
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)
       if (purposeId === 'Custom')
         systemMessage.updated = Date.now();
+
+      // HACK: refresh the object to trigger a re-render of this message
+      systemMessage = { ...systemMessage };
     }
     history.unshift(systemMessage);
-    this.chatActions.setMessages(this.conversationId, history);
+    // NOTE: disabled on 2024-03-13; we are only manipulating the history in-place, an we'll set it later in every code branch
+    // this.chatActions.setMessages(this.conversationId, history);
     return history;
   }
 
@@ -55,10 +60,16 @@ export class ConversationHandler {
 
   // Message Management
 
-  messageAppendAssistant(text: string, llmLabel: DLLMId | string /* 'DALL·E' | 'Prodia' | 'react-...' | 'web'*/, purposeId?: SystemPurposeId): string {
+  /**
+   * @param text assistant text
+   * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
+   * @param purposeId purpose that supposedly triggered this message
+   * @param typing whether the assistant is typing at the onset
+   */
+  messageAppendAssistant(text: string, purposeId: SystemPurposeId | undefined, llmLabel: DLLMId | string, typing: boolean): string {
     const assistantMessage: DMessage = createDMessage('assistant', text);
-    assistantMessage.typing = true;
-    assistantMessage.purposeId = purposeId;
+    assistantMessage.typing = typing;
+    assistantMessage.purposeId = purposeId ?? undefined;
     assistantMessage.originLLM = llmLabel;
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
     return assistantMessage.id;
@@ -68,13 +79,48 @@ export class ConversationHandler {
     this.chatActions.editMessage(this.conversationId, messageId, update, touch);
   }
 
+  messagesReplace(messages: DMessage[]): void {
+    this.chatActions.setMessages(this.conversationId, messages);
+
+    // if zeroing the messages, also terminate an active beam
+    if (!messages.length)
+      this.beamStore.getState().terminate();
+  }
+
 
   // Beam
 
   getBeamStore = () => this.beamStore;
 
-  beamOpen(history: DMessage[]) {
-    this.beamStore.getState().open(history, useModelsStore.getState().chatLLMId);
+  /**
+   * Opens a beam over the given history
+   *
+   * @param viewHistory The history up to the point where the beam is invoked
+   * @param importMessages If set, any message to import into the beam as pre-set rays
+   * @param destReplaceMessageId If set, the output will replace the message with this id, otherwise it will append to the history
+   */
+  beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
+    const { open: beamOpen, importRays: beamImportRays, terminate: beamTerminate } = this.beamStore.getState();
+
+    const onBeamSuccess = (messageText: string, llmId: DLLMId) => {
+      // set output when going back to the chat
+      if (destReplaceMessageId) {
+        // replace a single message in the conversation history
+        this.messageEdit(destReplaceMessageId, { text: messageText, originLLM: llmId }, true);
+      } else {
+        // replace (may truncate) the conversation history and append a message
+        const newMessage = createDMessage('assistant', messageText);
+        newMessage.originLLM = llmId;
+        newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
+        this.messagesReplace([...viewHistory, newMessage]);
+      }
+
+      // close beam
+      this.beamStore.getState().terminate();
+    };
+
+    beamOpen(viewHistory, useModelsStore.getState().chatLLMId, onBeamSuccess);
+    importMessages.length && beamImportRays(importMessages);
   }
 
 

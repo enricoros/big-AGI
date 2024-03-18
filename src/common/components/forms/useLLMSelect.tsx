@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { FormControl, ListDivider, ListItemDecorator, Option, Select } from '@mui/joy';
+import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
@@ -46,7 +46,7 @@ export function useLLMSelect(
   disabled: boolean = false,
   placeholder: string = 'Models …',
   isHorizontal: boolean = false,
-): [DLLM | null, React.JSX.Element | null] {
+): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
 
   // external state
   const _filteredLLMs = useModelsStore(state => {
@@ -106,7 +106,7 @@ export function useLLMSelect(
   // Memo the Select component
   const llmSelectComponent = React.useMemo(() => (
     <FormControl orientation={isHorizontal ? 'horizontal' : undefined}>
-      {!!label && <FormLabelStart title={label} />}
+      {!!label && <FormLabelStart title={label} sx={{ mb: '0.25rem' /* orig: 6px */ }} />}
       {/*<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>*/}
       <Select
         variant='outlined'
@@ -139,6 +139,10 @@ export function useLLMSelect(
     </FormControl>
   ), [chatLLMId, componentOptions, disabled, isHorizontal, label, onSelectChange, placeholder, smaller]);
 
+  // Memo the vendor icon for the chat LLM
+  const chatLLMVendorIconFC = React.useMemo(() => {
+    return findVendorById(chatLLM?._source?.vId)?.Icon;
+  }, [chatLLM]);
 
-  return [chatLLM, llmSelectComponent];
+  return [chatLLM, llmSelectComponent, chatLLMVendorIconFC];
 }

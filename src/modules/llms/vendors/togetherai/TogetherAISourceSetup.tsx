@@ -27,14 +27,13 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, access,
-    partialSetup, sourceSetupValid, updateSetup,
+    partialSetup, sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorTogetherAI);
 
   // derived state
   const { oaiKey: togetherKey } = access;
 
   // validate if url is a well formed proper url with zod
-  const needsUserKey = !ModelVendorTogetherAI.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!togetherKey && sourceSetupValid);
   const showKeyError = !!togetherKey && !sourceSetupValid;
 

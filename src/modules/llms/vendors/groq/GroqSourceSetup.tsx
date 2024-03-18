@@ -21,14 +21,13 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, access,
-    sourceSetupValid, updateSetup,
+    sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorGroq);
 
   // derived state
   const { oaiKey: groqKey } = access;
 
   // key validation
-  const needsUserKey = !ModelVendorGroq.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!groqKey && sourceSetupValid);
   const showKeyError = !!groqKey && !sourceSetupValid;
 

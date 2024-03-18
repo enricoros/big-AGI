@@ -6,9 +6,9 @@ export const isBrowser = typeof window !== 'undefined';
 // this sort of detection is brittle, but we use it for very optional features
 const safeUA = isBrowser ? window.navigator?.userAgent || '' : '';
 export const isIPhoneUser = /iPhone|iPod/.test(safeUA);
-export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K/.test(safeUA);
-export const isChromeDesktop = safeUA.indexOf('Chrome') > -1 && safeUA.indexOf('Mobile') === -1;
-export const isFirefox = safeUA.indexOf('Firefox') > -1;
+export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K|iPad/.test(safeUA);
+export const isChromeDesktop = safeUA.includes('Chrome') && !safeUA.includes('Mobile');
+export const isFirefox = safeUA.includes('Firefox');
 
 // deployment environment
 export const isVercelFromBackendOrSSR = !!process.env.VERCEL_ENV;
@@ -29,7 +29,10 @@ export function webShare(title: string, text: string, url: string, onShared?: ()
   if (isBrowser && navigator.share)
     navigator.share({ title, text, url })
       .then(() => onShared?.())
-      .catch((error) => console.log('Error sharing', error));
+      .catch((error) => {
+        console.error('Error sharing', error);
+        alert('Sharing failed. This browser may not support sharing.');
+      });
 }
 
 export function clientHostName(): string {

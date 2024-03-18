@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
@@ -26,8 +27,14 @@ interface AppChatStore {
 
   // chat UI
 
+  filterHasStars: boolean;
+  setFilterHasStars: (filterHasStars: boolean) => void;
+
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
+
+  showPersonaIcons: boolean;
+  setShowPersonaIcons: (showPersonaIcons: boolean) => void;
 
   showRelativeSize: boolean;
   setShowRelativeSize: (showRelativeSize: boolean) => void;
@@ -56,8 +63,14 @@ const useAppChatStore = create<AppChatStore>()(persist(
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
 
+    filterHasStars: false,
+    setFilterHasStars: (filterHasStars: boolean) => _set({ filterHasStars }),
+
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
+
+    showPersonaIcons: true,
+    setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons }),
 
     showRelativeSize: false,
     setShowRelativeSize: (showRelativeSize: boolean) => _set({ showRelativeSize }),
@@ -113,10 +126,18 @@ export const useChatMicTimeoutMsValue = (): number =>
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
 
-export const useChatShowRelativeSize = (): { showRelativeSize: boolean, toggleRelativeSize: () => void } => {
-  const showRelativeSize = useAppChatStore(state => state.showRelativeSize);
-  const toggleRelativeSize = () => useAppChatStore.getState().setShowRelativeSize(!showRelativeSize);
-  return { showRelativeSize, toggleRelativeSize };
+export const useChatDrawerFilters = () => {
+  const values = useAppChatStore(useShallow(state => ({
+    filterHasStars: state.filterHasStars,
+    showPersonaIcons: state.showPersonaIcons,
+    showRelativeSize: state.showRelativeSize,
+  })));
+  return {
+    ...values,
+    toggleFilterHasStars: () => useAppChatStore.getState().setFilterHasStars(!values.filterHasStars),
+    toggleShowPersonaIcons: () => useAppChatStore.getState().setShowPersonaIcons(!values.showPersonaIcons),
+    toggleShowRelativeSize: () => useAppChatStore.getState().setShowRelativeSize(!values.showRelativeSize),
+  };
 };
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { KeyStroke } from '~/common/components/KeyStroke';
+import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatModeId } from '../../AppChat';
@@ -13,6 +13,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 interface ChatModeDescription {
   label: string;
   description: string | React.JSX.Element;
+  highlight?: boolean;
   shortcut?: string;
   requiresTTI?: boolean;
 }
@@ -34,7 +35,8 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
   },
   'generate-text-beam': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
-    description: 'Smarter: combine multiple models',
+    description: 'Combine multiple models', // Smarter: combine...
+    shortcut: 'Ctrl + Enter',
   },
   'generate-react': {
     label: 'Reason + Act', //  · α
@@ -78,13 +80,15 @@ export function ChatModeMenu(props: {
         .map(([key, data]) =>
           <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Radio checked={key === props.chatModeId} />
+              {/*<Badge invisible={!data.highlight} color='success' size='sm'>*/}
+              <Radio color={data.highlight ? 'success' : undefined} checked={key === props.chatModeId} />
+              {/*</Badge>*/}
               <Box sx={{ flexGrow: 1 }}>
                 <Typography>{data.label}</Typography>
                 <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.capabilityHasTTI) ? 'Unconfigured' : ''}</Typography>
               </Box>
               {(key === props.chatModeId || !!data.shortcut) && (
-                <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline)} />
+                <KeyStroke combo={platformAwareKeystrokes(fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline))} />
               )}
             </Box>
           </MenuItem>)}

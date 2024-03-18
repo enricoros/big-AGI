@@ -22,13 +22,12 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   const advanced = useToggleableBoolean();
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorAnthropic);
 
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = access;
 
-  const needsUserKey = !ModelVendorAnthropic.hasBackendCap?.();
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);

@@ -5,6 +5,8 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '../../store-llms';
 const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 
 export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
+
+  // Claude-3 models - https://docs.anthropic.com/claude/docs/models-overview#model-comparison
   {
     id: 'claude-3-opus-20240229',
     label: 'Claude 3 Opus',
@@ -33,7 +35,22 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
   },
-  /* Claude 3 Haiku will be here */
+  {
+    id: 'claude-3-haiku-20240307',
+    label: 'Claude 3 Haiku',
+    created: roundTime('2024-03-07'),
+    description: 'Fastest and most compact model for near-instant responsiveness',
+    contextWindow: 200000,
+    maxCompletionTokens: 4096,
+    pricing: {
+      cpmPrompt: 0.00025,
+      cpmCompletion: 0.00125,
+    },
+    trainingDataCutoff: 'Aug 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+  },
+
+  // Claude 2 models
   {
     id: 'claude-2.1',
     label: 'Claude 2.1',
@@ -93,5 +110,5 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
-  }
+  },
 ];

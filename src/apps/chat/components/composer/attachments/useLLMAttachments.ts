@@ -131,11 +131,13 @@ function attachmentCollapseOutputs(initialTextBlockText: string | null, outputs:
     // start a new part
     else {
       if (output.type === 'text-block') {
+        // THIS IS NOT CORRECT - we seem to be doing it just for downstream token counting - FIX IT
+        // Do not serialize here
         accumulatedOutputs.push({
           type: 'text-block',
           text: `\n\n\`\`\`${output.title}\n${output.text}\n\`\`\``,
           title: null,
-          collapsible: false,
+          collapsible: false, // Wrong
         });
       } else {
         accumulatedOutputs.push(output);

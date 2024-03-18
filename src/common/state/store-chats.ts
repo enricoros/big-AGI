@@ -16,7 +16,7 @@ export type DConversationId = string;
  * Conversation, a list of messages between humans and bots
  * Future:
  * - draftUserMessage?: { text: string; attachments: any[] };
- * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
+ * - isMuted: boolean; isArchived: boolean; Starred: boolean; participants: string[];
  */
 export interface DConversation {
   id: DConversationId;
@@ -65,11 +65,16 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
+  userFlags?: DMessageUserFlag[];       // user-set per-message flags
+
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
   created: number;                  // created timestamp
   updated: number | null;           // updated timestamp
 }
+
+export type DMessageUserFlag =
+  | 'starred'; // user starred this
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
@@ -83,6 +88,25 @@ export function createDMessage(role: DMessage['role'], text: string): DMessage {
     created: Date.now(),
     updated: null,
   };
+}
+
+export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
+  return message.userFlags?.includes(flag) ?? false;
+}
+
+export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
+  if (message.userFlags?.includes(flag))
+    return message.userFlags.filter(_f => _f !== flag);
+  else
+    return [...(message.userFlags || []), flag];
+}
+
+const dMessageUserFlagToEmojiMap: Record<DMessageUserFlag, string> = {
+  starred: '⭐️',
+};
+
+export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
+  return dMessageUserFlagToEmojiMap[flag] || '❓';
 }
 
 
@@ -105,7 +129,7 @@ export interface ChatActions {
   setMessages: (conversationId: string, messages: DMessage[]) => void;
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
+  editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -299,26 +323,29 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
+      editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
           const chatLLMId = getChatLLMId();
-          const messages = conversation.messages.map((message: DMessage): DMessage =>
-            message.id === messageId
-              ? {
+          const messages = conversation.messages.map((message: DMessage): DMessage => {
+            if (message.id === messageId) {
+              const updatedMessage = typeof update === 'function' ? update(message) : update;
+              return {
                 ...message,
                 ...updatedMessage,
-                ...(setUpdated && { updated: Date.now() }),
+                ...(touchUpdated && { updated: Date.now() }),
                 ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
                   tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)') ?? 0,
                 })),
-              }
-              : message);
+              };
+            }
+            return message;
+          });
 
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
-            ...(setUpdated && { updated: Date.now() }),
+            ...(touchUpdated && { updated: Date.now() }),
           };
         }),
 
@@ -466,23 +493,23 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
 
   // this object will change if any sub-prop changes as well
   const conversation = conversationId ? conversations.find(_c => _c.id === conversationId) ?? null : null;
-  const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
   const title = conversation ? conversationTitle(conversation) : null;
-  const isChatEmpty = conversation ? !conversation.messages.length : true;
+  const isEmpty = conversation ? !conversation.messages.length : true;
   const isDeveloper = conversation?.systemPurposeId === 'Developer';
-  const areChatsEmpty = isChatEmpty && conversations.length < 2;
-  const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
+  const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
+
+  const hasConversations = conversations.length > 1 || (conversations.length === 1 && !!conversations[0].messages.length);
+  const recycleNewConversationId = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
 
   return {
     title,
-    isChatEmpty,
+    isEmpty,
     isDeveloper,
-    areChatsEmpty,
     conversationIdx,
-    newConversationId,
+    hasConversations,
+    recycleNewConversationId,
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
     deleteConversations: state.deleteConversations,
-    setMessages: state.setMessages,
   };
 }, shallow);

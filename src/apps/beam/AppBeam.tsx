@@ -19,9 +19,8 @@ function initTestConversation(): DConversation {
   return conversation;
 }
 
-function initTestBeamStore(messages: DMessage[]): BeamStoreApi {
-  const beamStore = createBeamStore();
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId);
+function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamStore()): BeamStoreApi {
+  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, () => null);
   return beamStore;
 }
 
@@ -37,6 +36,12 @@ export function AppBeam() {
   const isMobile = useIsMobile();
   const beamState = useBeamStore(beamStoreApi, state => state);
 
+
+  const handleClose = React.useCallback(() => {
+    beamStoreApi.getState().terminate();
+  }, [beamStoreApi]);
+
+
   // layout
   usePluggableOptimaLayout(null, React.useMemo(() => <>
     {/* button to toggle debug info */}
@@ -47,16 +52,17 @@ export function AppBeam() {
     {/* 'open' */}
     <Button size='sm' variant='plain' color='neutral' onClick={() => {
       conversation.current = initTestConversation();
-      beamStoreApi.getState().open(conversation.current.messages, useModelsStore.getState().chatLLMId);
+      initTestBeamStore(conversation.current.messages, beamStoreApi);
     }}>
       .open
     </Button>
 
     {/* 'close' */}
-    <Button size='sm' variant='plain' color='neutral' onClick={() => beamStoreApi.getState().close()}>
+    <Button size='sm' variant='plain' color='neutral' onClick={handleClose}>
       .close
     </Button>
-  </>, [beamStoreApi, showDebug]), null, 'AppBeam');
+  </>, [beamStoreApi, handleClose, showDebug]), null, 'AppBeam');
+
 
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
@@ -65,7 +71,6 @@ export function AppBeam() {
         <BeamView
           beamStore={beamStoreApi}
           isMobile={isMobile}
-          sx={{ height: '100%' }}
         />
       )}
 

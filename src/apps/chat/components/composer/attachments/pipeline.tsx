@@ -132,6 +132,18 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
         });
       }
       break;
+
+    case 'ego':
+      edit({
+        label: source.label,
+        ref: source.blockTitle,
+        input: {
+          mimeType: 'ego/message',
+          data: source.textPlain,
+          dataSize: source.textPlain.length,
+        },
+      });
+      break;
   }
 
   edit({ inputLoading: false });
@@ -190,6 +202,11 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
     case input.mimeType.startsWith('image/'):
       converters.push({ id: 'image', name: `Image (coming soon)` });
       converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
+      break;
+
+    // EGO
+    case input.mimeType === 'ego/message':
+      converters.push({ id: 'ego-message-md', name: 'Message' });
       break;
 
     // catch-all
@@ -331,6 +348,15 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       } catch (error) {
         console.error(error);
       }
+      break;
+
+    case 'ego-message-md':
+      outputs.push({
+        type: 'text-block',
+        text: inputDataToString(input.data),
+        title: ref,
+        collapsible: true,
+      });
       break;
 
     case 'unhandled':

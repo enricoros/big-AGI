@@ -1,10 +1,8 @@
 import * as React from 'react';
 
-import type { SxProps } from '@mui/joy/styles/types';
-import { ColorPaletteProp, SvgIcon } from '@mui/joy';
+import { SvgIcon, SvgIconProps } from '@mui/joy';
 
-
-export function ChatBeamIcon(props: { color?: ColorPaletteProp, sx?: SxProps }) {
+export function ChatBeamIcon(props: SvgIconProps) {
   return (
     <SvgIcon viewBox='0 0 24 24' width='24' height='24' stroke='currentColor' fill='currentColor' strokeLinejoin='round'  {...props}>
       <path d='M 4,12 14,9' />

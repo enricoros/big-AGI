@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typography } from '@mui/joy';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatIcon from '@mui/icons-material/Chat';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -170,7 +170,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
           // boxShadow: allGood ? 'md' : 'none',
         }}
       >
-        {allGood ? <ArrowForwardIcon sx={{ fontSize: '1.5em' }} /> : <CloseRoundedIcon sx={{ fontSize: '1.5em' }} />}
+        {allGood ? <ArrowForwardRoundedIcon sx={{ fontSize: '1.5em' }} /> : <CloseRoundedIcon sx={{ fontSize: '1.5em' }} />}
       </IconButton>
     </Box>
 

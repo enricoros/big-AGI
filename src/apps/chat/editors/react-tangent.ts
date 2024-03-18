@@ -2,7 +2,9 @@ import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+
+import { STREAM_TEXT_INDICATOR } from './chat-stream';
 
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
@@ -10,12 +12,15 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 /**
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
-export async function runReActUpdatingState(conversationId: string, question: string, assistantLlmId: DLLMId) {
-  const cHandler = ConversationsManager.getHandler(conversationId);
+export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
+  if (!question) {
+    cHandler.messageAppendAssistant('Issue: no question provided.', undefined, 'issue', false);
+    return;
+  }
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = cHandler.messageAppendAssistant('...', assistantModelLabel, undefined);
+  const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, undefined, assistantModelLabel, true);
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 
   // create an ephemeral space

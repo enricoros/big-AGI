@@ -13,7 +13,7 @@ import { CHAT_NOVEL_TITLE } from '../AppChat';
 import { FadeInButton } from './ChatDrawerItem';
 
 
-export function ChatTitle(props: {
+export function ChatBarAltTitle(props: {
   conversationId: DConversationId | null,
   conversationTitle: string,
 }) {
