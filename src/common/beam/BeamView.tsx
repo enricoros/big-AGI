@@ -97,7 +97,7 @@ export function BeamView(props: {
     isGathering: state.isGathering,
   })));
   const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setMergeLlmId, terminate } = props.beamStore.getState();
-  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model', true);
+  const [_, mergeLlmComponent, mergeLlmVendorIcon] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model', true);
 
   // configuration
 
@@ -216,6 +216,7 @@ export function BeamView(props: {
           gatherEnabled={readyGather > 0 && !isScattering}
           isMobile={props.isMobile}
           mergeLlmComponent={mergeLlmComponent}
+          mergeLlmVendorIcon={mergeLlmVendorIcon}
           onStart={() => null}
           onStop={() => null}
           onClose={handleTerminate}
