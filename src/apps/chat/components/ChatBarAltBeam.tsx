@@ -10,7 +10,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { animationBackgroundBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
+import { animationBackgroundBeamGather, animationColorBeamScatterINV, animationEnterBelow } from '~/common/util/animUtils';
 
 
 export function ChatBarAltBeam(props: {
@@ -66,10 +66,7 @@ export function ChatBarAltBeam(props: {
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 3 }, alignItems: 'center' }}>
 
       {/* [desktop] maximize button, or a disabled spacer  */}
-      {props.isMobile ? (
-        // <ChatBeamIcon sx={{ fontSize: 'md' }} />
-        <IconButton size='sm' disabled />
-      ) : (
+      {props.isMobile ? null : (
         <GoodTooltip title='Maximize'>
           <IconButton size='sm' onClick={handleMaximizeBeam}>
             <MaximizeRoundedIcon />
@@ -83,7 +80,7 @@ export function ChatBarAltBeam(props: {
           component='span'
           sx={
             isGathering ? { animation: `${animationBackgroundBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
-              : isScattering ? { animation: `${animationColorBeamScatter} 5s infinite, ${animationEnterBelow} 0.6s` }
+              : isScattering ? { animation: `${animationColorBeamScatterINV} 5s infinite, ${animationEnterBelow} 0.6s` }
                 : { fontWeight: 'lg' }
           }>
           {isGathering ? 'Merging...' : isScattering ? 'Beaming...' : 'Beam'}

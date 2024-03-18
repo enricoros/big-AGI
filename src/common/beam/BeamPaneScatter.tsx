@@ -8,9 +8,9 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { animationColorBeamGather, animationEnterBelow } from '~/common/util/animUtils';
+import { animationColorBeamScatter } from '~/common/util/animUtils';
 
-import { SCATTER_RAY_PRESETS } from './beam.config';
+import { BEAM_SCATTER_COLOR, SCATTER_RAY_PRESETS } from './beam.config';
 
 
 export const beamControlsSx: SxProps = {
@@ -27,13 +27,12 @@ export const beamControlsSx: SxProps = {
 const beamScatterControlsSx: SxProps = {
   ...beamControlsSx,
 
-  // layout: max 2 cols (/3 with gap) of min 200px per col
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(max(200px, 100%/3), 1fr))',
-  gridAutoFlow: 'row dense',
+  // layout
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'space-between',
   gap: 'var(--Pad_2)',
-
-  // '& > *': { border: '1px solid red' },
 };
 
 const desktopBeamScatterControlsSx: SxProps = {
@@ -66,71 +65,65 @@ export function BeamPaneScatter(props: {
           onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
         >
           {props.startBusy
-            ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamGather} 2s linear infinite` }} />
+            ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamScatter} 2s linear infinite` }} />
             : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />} Beam
-
-          {/*<ChatBeamIcon*/}
-          {/*  sx={{*/}
-          {/*    fontSize: '1rem',*/}
-          {/*    ...props.startBusy && { animation: `${animationBeamGatherColor} 2s linear infinite` },*/}
-          {/*  }} /> Beam*/}
         </Typography>
-        <Typography level='body-sm'>
+        <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
           Explore the solution space
         </Typography>
       </Box>
 
       {/* Count and Start cell */}
-      <FormControl sx={{ flex: 1, display: 'flex', justifyContent: 'space-between' /* gridColumn: '1 / -1' */ }}>
-        {!props.isMobile && <FormLabelStart title='Beam Count' />}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-
-          {/* xN buttons */}
-          <ButtonGroup variant='outlined' sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
-            {SCATTER_RAY_PRESETS.map((n) => {
-              const isActive = n === props.rayCount;
-              return (
-                <Button
-                  key={n}
-                  // variant={isActive ? 'solid' : undefined}
-                  color='neutral'
-                  onClick={() => props.setRayCount(n)}
-                  sx={{
-                    fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                    backgroundColor: isActive ? 'background.popup' : undefined,
-                    maxWidth: '3rem',
-                  }}
-                >
-                  {`x${n}`}
-                </Button>
-              );
-            })}
-          </ButtonGroup>
-
-          {!props.startBusy ? (
-            // Start
-            <Button
-              variant='solid' color='success'
-              disabled={!props.startEnabled || props.startBusy} loading={props.startBusy}
-              endDecorator={<PlayArrowRoundedIcon />}
-              onClick={props.onStart}
-              sx={{ ml: 'auto', minWidth: 80, animation: `${animationEnterBelow} 0.1s ease-out` }}
-            >
-              Start
-            </Button>
-          ) : (
-            // Stop
-            <Button
-              variant='solid' color='danger'
-              endDecorator={<StopRoundedIcon />}
-              onClick={props.onStop}
-              sx={{ ml: 'auto', minWidth: 80, animation: `${animationEnterBelow} 0.1s ease-out` }}
-            >
-              Stop
-            </Button>
-          )}
-        </Box>
+      <FormControl sx={{ my: '-0.25rem' }}>
+        <FormLabelStart title='Beam Count' sx={{ mb: '0.25rem' /* orig: 6px */ }} />
+        <ButtonGroup variant='outlined'>
+          {SCATTER_RAY_PRESETS.map((n) => {
+            const isActive = n === props.rayCount;
+            return (
+              <Button
+                key={n}
+                // variant={isActive ? 'solid' : undefined}
+                color={isActive ? BEAM_SCATTER_COLOR : 'neutral'}
+                // color='neutral'
+                size='sm'
+                onClick={() => props.setRayCount(n)}
+                sx={{
+                  // backgroundColor: isActive ? 'background.popup' : undefined,
+                  backgroundColor: isActive ? `${BEAM_SCATTER_COLOR}.softBg` : 'background.popup',
+                  fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                  width: '3.125rem',
+                }}
+              >
+                {`x${n}`}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
       </FormControl>
+
+      {/* Start / Stop buttons */}
+      {!props.startBusy ? (
+        <Button
+          // key='scatter-start' // used for animation triggering, which we don't have now
+          variant='solid' color={BEAM_SCATTER_COLOR}
+          disabled={!props.startEnabled || props.startBusy} loading={props.startBusy}
+          endDecorator={<PlayArrowRoundedIcon />}
+          onClick={props.onStart}
+          sx={{ minWidth: 120 }}
+        >
+          Start
+        </Button>
+      ) : (
+        <Button
+          // key='scatter-stop'
+          variant='solid' color='danger'
+          endDecorator={<StopRoundedIcon />}
+          onClick={props.onStop}
+          sx={{ minWidth: 120 }}
+        >
+          Stop
+        </Button>
+      )}
 
     </Box>
   );
