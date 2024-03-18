@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, styled, SvgIconProps, Typography } from '@mui/joy';
+import { Box, IconButton, styled, SvgIconProps } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
@@ -17,15 +17,12 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { InlineError } from '~/common/components/InlineError';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { SCATTER_RAY_SHOW_DRAG_HANDLE } from './beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.rays';
-
-
-// component configuration
-const SHOW_DRAG_HANDLE = false;
-const DEBUG_STATUS = false;
 
 
 // const rayCardClasses = {
@@ -99,7 +96,7 @@ function RayControls(props: {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
     {/* Drag Handle */}
-    {SHOW_DRAG_HANDLE && (
+    {SCATTER_RAY_SHOW_DRAG_HANDLE && (
       <div style={{ display: 'flex' }}>
         <DragIndicatorIcon sx={{ fontSize: 'xl', my: 'auto' }} />
       </div>
@@ -163,11 +160,10 @@ const chatMessageEmbeddedSx: SxProps = {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  rayId: string,
-  // rayIndex: number,
   isMobile: boolean,
   isRemovable: boolean
-  gatherLlmId: DLLMId | null,
+  linkedLlmId: DLLMId | null,
+  rayId: string,
 }) {
 
   // external state
@@ -180,11 +176,11 @@ export function BeamRay(props: {
   const isSelected = rayIsUserSelected(ray);
   const isImported = rayIsImported(ray);
   const showUseButton = isSelectable && !isScattering;
-  const { removeRay, toggleScattering, setRayLlmId } = props.beamStore.getState();
+  const { removeRay, rayToggleScattering, raySetScatterLlmId } = props.beamStore.getState();
 
-  const isLlmLinked = !!props.gatherLlmId && !ray?.scatterLlmId;
-  const llmId: DLLMId | null = isLlmLinked ? props.gatherLlmId : ray?.scatterLlmId || null;
-  const setLlmId = React.useCallback((llmId: DLLMId | null) => setRayLlmId(props.rayId, llmId), [props.rayId, setRayLlmId]);
+  const isLlmLinked = !!props.linkedLlmId && !ray?.scatterLlmId;
+  const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.scatterLlmId || null;
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetScatterLlmId(props.rayId, llmId), [props.rayId, raySetScatterLlmId]);
   const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
   const [_, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
 
@@ -205,8 +201,8 @@ export function BeamRay(props: {
   }, [props.rayId, removeRay]);
 
   const handleRayToggleGenerate = React.useCallback(() => {
-    toggleScattering(props.rayId);
-  }, [props.rayId, toggleScattering]);
+    rayToggleScattering(props.rayId);
+  }, [props.rayId, rayToggleScattering]);
 
   /*const handleRayToggleSelect = React.useCallback(() => {
     toggleUserSelection(props.rayId);
@@ -218,12 +214,6 @@ export function BeamRay(props: {
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
       sx={rayCardStatusSx(isError, false /*isSelectable*/, false /*isSelected*/)}
     >
-
-      {DEBUG_STATUS && (
-        <Typography level='body-sm'>
-          {ray?.status}
-        </Typography>
-      )}
 
       {/* Controls Row */}
       <RayControlsMemo
@@ -238,6 +228,9 @@ export function BeamRay(props: {
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
       />
+
+      {/* Show issue, if any */}
+      {!!ray?.scatterIssue && <InlineError error={ray.scatterIssue} />}
 
       {/* Ray Message */}
       {(!!ray?.message?.text || ray?.status === 'scattering') && (

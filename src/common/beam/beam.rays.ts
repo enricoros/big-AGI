@@ -8,10 +8,7 @@ import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BeamStore } from './store-beam';
-
-
-// configuration
-const PLACEHOLDER_SCATTER_TEXT = '🖊️ ...'; // 💫 ..., 🖊️ ...
+import { SCATTER_PLACEHOLDER } from './beam.config';
 
 
 export type BRayId = string;
@@ -39,18 +36,15 @@ export function createBRay(scatterLlmId: DLLMId | null): BRay {
   };
 }
 
-export function rayScatterStart(ray: BRay, onlyIdle: boolean, beamStore: BeamStore): BRay {
+export function rayScatterStart(ray: BRay, llmId: DLLMId | null, onlyIdle: boolean, beamStore: BeamStore): BRay {
   if (ray.genAbortController)
     return ray;
   if (onlyIdle && ray.status !== 'empty')
     return ray;
-
-  const { gatherLlmId, inputHistory, rays, _updateRay, syncRaysStateToBeam } = beamStore;
-
-  // validate model
-  const rayLlmId = ray.scatterLlmId || gatherLlmId;
-  if (!rayLlmId)
+  if (!llmId)
     return { ...ray, scatterIssue: 'No model selected' };
+
+  const { inputHistory, rays, _rayUpdate, syncRaysStateToBeam } = beamStore;
 
   // validate history
   if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
@@ -58,7 +52,7 @@ export function rayScatterStart(ray: BRay, onlyIdle: boolean, beamStore: BeamSto
 
   const abortController = new AbortController();
 
-  const updateMessage = (update: Partial<DMessage>) => _updateRay(ray.rayId, (ray) => ({
+  const updateMessage = (update: Partial<DMessage>) => _rayUpdate(ray.rayId, (ray) => ({
     ...ray,
     message: {
       ...ray.message,
@@ -69,15 +63,15 @@ export function rayScatterStart(ray: BRay, onlyIdle: boolean, beamStore: BeamSto
   }));
 
   // stream the assistant's messages
-  streamAssistantMessage(rayLlmId, inputHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  streamAssistantMessage(llmId, inputHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
     .then((outcome) => {
-      _updateRay(ray.rayId, {
+      _rayUpdate(ray.rayId, {
         status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',
         genAbortController: undefined,
       });
     })
     .catch((error) => {
-      _updateRay(ray.rayId, {
+      _rayUpdate(ray.rayId, {
         status: 'error',
         scatterIssue: error?.message || error?.toString() || 'Unknown error',
         genAbortController: undefined,
@@ -92,11 +86,11 @@ export function rayScatterStart(ray: BRay, onlyIdle: boolean, beamStore: BeamSto
     status: 'scattering',
     message: {
       ...ray.message,
-      text: PLACEHOLDER_SCATTER_TEXT,
+      text: SCATTER_PLACEHOLDER,
       created: Date.now(),
       updated: null,
     },
-    scatterLlmId: rayLlmId,
+    scatterLlmId: llmId,
     scatterIssue: undefined,
     genAbortController: abortController,
     userSelected: false,
@@ -123,7 +117,7 @@ export function rayIsScattering(ray: BRay | null): boolean {
 }
 
 export function rayIsSelectable(ray: BRay | null): boolean {
-  return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== PLACEHOLDER_SCATTER_TEXT;
+  return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {

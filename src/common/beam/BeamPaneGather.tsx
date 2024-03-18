@@ -33,15 +33,15 @@ const desktopBeamControlsSx: SxProps = {
   // the fact that this works, means we got the CSS and layout right
   position: 'sticky',
   bottom: 0,
-}
-
+};
 
 
 export function BeamPaneGather(props: {
-  isMobile: boolean,
+  gatherBusy: boolean,
   gatherCount: number
   gatherEnabled: boolean,
-  gatherBusy: boolean,
+  isMobile: boolean,
+  mergeLlmComponent: React.ReactNode,
   onStart: () => void,
   onStop: () => void,
   onClose: () => void,
@@ -56,9 +56,6 @@ export function BeamPaneGather(props: {
         {/*<Typography level='h4'>*/}
         {/*  <ChatBeamIcon sx={{ animation: `${animationColorDarkerRainbow} 2s linear 2.66` }} />*/}
         {/*</Typography>*/}
-        <Box sx={{ my: 'auto' }}>
-          <ScrollToBottomButton inline />
-        </Box>
         <div>
           <Typography level='h4' component='h2'>
             <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} /> Merge
@@ -68,8 +65,15 @@ export function BeamPaneGather(props: {
             Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
           </Typography>
         </div>
+        <Box sx={{ my: 'auto' }}>
+          <ScrollToBottomButton inline />
+        </Box>
       </Box>
 
+      {/* LLM cell */}
+      <Box sx={{ display: 'flex', gap: 'calc(var(--Pad) / 2)', alignItems: 'center', justifyContent: props.isMobile ? undefined : 'center' }}>
+        {props.mergeLlmComponent}
+      </Box>
 
       {/* Algo */}
       {false && <FormControl disabled={!gatherEnabled}>

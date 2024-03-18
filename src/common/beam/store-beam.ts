@@ -1,17 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
 import { createStore } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { createDMessage, DMessage } from '~/common/state/store-chats';
-import { createBRay, BRay, BRayId, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from '~/common/beam/beam.rays';
+import type { DMessage } from '~/common/state/store-chats';
 
-
-// configuration
-const PLACEHOLDER_GATHER_TEXT = '📦 ...';
-
-
-// Ray - each invidual thread of the beam
+import { BFusion, fusionGatherStop } from './beam.fusions';
+import { BRay, BRayId, createBRay, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from './beam.rays';
 
 
 // Beam
@@ -27,16 +21,14 @@ interface BeamState {
   onSuccessCallback: BeamSuccessCallback | null;
 
   rays: BRay[];
+  fusions: BFusion[];
 
-  gatherLlmId: DLLMId | null;
-  gatherMessage: DMessage | null;
-  gatherAbortController: AbortController | null;
+  mergeLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
 
   readyScatter: boolean; // true if the input is valid
-  isScattering: boolean; // true if any ray is scattering at the moment
-
   readyGather: number;   // 0, or number of the rays that are ready to gather
-  isGathering: boolean;
+  isScattering: boolean; // true if any ray is scattering at the moment
+  isGathering: boolean;  // true if any fusion is gathering at the moment
 
 }
 
@@ -49,40 +41,40 @@ const initialBeamState = (): BeamState => ({
   onSuccessCallback: null,
 
   rays: [],
+  fusions: [],
 
-  gatherLlmId: null,
-  gatherMessage: null,
-  gatherAbortController: null,
+  mergeLlmId: null,
 
   readyScatter: false,
-  isScattering: false,
-
   readyGather: 0,
+  isScattering: false,
   isGathering: false,
 
 });
 
 export interface BeamStore extends BeamState {
 
+  // lifecycle
   open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
   setIsMaximized: (maximized: boolean) => void;
-  editHistoryMessage: (messageId: string, newText: string) => void;
+  editInputHistoryMessage: (messageId: string, newText: string) => void;
 
+  // rays
   setRayCount: (count: number) => void;
   removeRay: (rayId: BRayId) => void;
   importRays: (messages: DMessage[]) => void;
-
-  setGatherLlmId: (llmId: DLLMId | null) => void;
-
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
-  toggleScattering: (rayId: BRayId) => void;
-  toggleUserSelection: (rayId: BRayId) => void;
-  setRayLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
-  _updateRay: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
+  rayToggleScattering: (rayId: BRayId) => void;
+  raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
+  _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
+  // fusions
+  setMergeLlmId: (llmId: DLLMId | null) => void;
+
+  // state sync
   syncRaysStateToBeam: () => void;
 
 }
@@ -91,20 +83,14 @@ export interface BeamStore extends BeamState {
 export const createBeamStore = () => createStore<BeamStore>()(
   (_set, _get) => ({
 
-    // internal
-    debugId: uuidv4(),
-
     // state
     ...initialBeamState(),
 
-    open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+    open: (chatHistory: Readonly<DMessage[]>, initialMergeLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
       const { isOpen: wasOpen, terminate } = _get();
 
       // reset pending operations
       terminate();
-
-      // if just opened, update the model with the current chat model
-      const gatherLlmId = !wasOpen && initialLlmId;
 
       // validate history
       const history = [...chatHistory];
@@ -119,8 +105,10 @@ export const createBeamStore = () => createStore<BeamStore>()(
         // rays already reset
 
         // gather
-        ...(gatherLlmId ? { gatherLlmId: gatherLlmId } : {}),
-        gatherMessage: isValidHistory ? createDMessage('assistant', PLACEHOLDER_GATHER_TEXT) : null,
+        ...((!wasOpen && initialMergeLlmId) && {
+          // update the model only if the dialog was not already open
+          mergeLlmId: initialMergeLlmId,
+        }),
 
         // state
         readyScatter: isValidHistory,
@@ -128,28 +116,30 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
     terminate: () => { /*_get().isOpen &&*/
-      const { rays: prevRays, gatherLlmId: prevGatherLlmId, gatherAbortController } = _get();
+      const { rays: prevRays, fusions: prevFusions, mergeLlmId } = _get();
 
-      // abort all rays and the gathermessage
+      // Terminate all rays and fusions
       prevRays.forEach(rayScatterStop);
-      gatherAbortController?.abort();
+      prevFusions.forEach(fusionGatherStop);
 
       _set({
         ...initialBeamState(),
 
-        // remember some state between terminations
+        // (remember after termination) models for each ray
         rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
-        gatherLlmId: prevGatherLlmId,
+        // (remember after termination) gather model
+        mergeLlmId,
       });
     },
 
 
-    setIsMaximized: (maximized: boolean) => _set({
-      isMaximized: maximized,
-    }),
+    setIsMaximized: (maximized: boolean) =>
+      _set({
+        isMaximized: maximized,
+      }),
 
-    editHistoryMessage: (messageId: string, newText: string) =>
-      _set((state) => ({
+    editInputHistoryMessage: (messageId: string, newText: string) =>
+      _set(state => ({
         inputHistory: state.inputHistory?.map((message) => (message.id !== messageId) ? message : {
           ...message,
           text: newText,
@@ -157,41 +147,46 @@ export const createBeamStore = () => createStore<BeamStore>()(
       })),
 
 
+    /// Rays ///
+
     setRayCount: (count: number) => {
       const { rays, syncRaysStateToBeam } = _get();
       if (count < rays.length) {
+        // Terminate exceeding rays
         rays.slice(count).forEach(rayScatterStop);
         _set({
           rays: rays.slice(0, count),
         });
       } else if (count > rays.length) {
         _set({
-          rays: [...rays, ...Array(count - rays.length).fill(null).map(() => createBRay(null))],
+          rays: [...rays, ...Array(count - rays.length).fill(null)
+            // Create missing rays (unconfigured, unstarted)
+            .map(() => createBRay(null)),
+          ],
         });
       }
       syncRaysStateToBeam();
     },
 
     removeRay: (rayId: BRayId) => {
-      const { syncRaysStateToBeam } = _get();
-      _set((state) => ({
+      _set(state => ({
         rays: state.rays.filter((ray) => {
-          if (ray.rayId === rayId) {
-            rayScatterStop(ray);
-            return false;
-          }
-          return true;
+          const shallStay = ray.rayId !== rayId;
+          // Terminate the removed ray
+          !shallStay && rayScatterStop(ray);
+          return shallStay;
         }),
       }));
-      syncRaysStateToBeam();
+      _get().syncRaysStateToBeam();
     },
 
     importRays: (messages: DMessage[]) => {
-      const { rays, syncRaysStateToBeam } = _get();
-      _set({
+      _set(state => ({
         rays: [
+          // prepend the imported rays
           ...messages.map((message) => {
               const ray = createBRay(null);
+              // pre-fill the ray status with the message and to a successful state
               if (message.text.trim()) {
                 ray.status = 'success';
                 ray.message.text = message.text;
@@ -201,64 +196,52 @@ export const createBeamStore = () => createStore<BeamStore>()(
               return ray;
             },
           ),
-          ...rays.filter((ray) => ray.status !== 'empty'),
+          // trim the back if too many empties
+          ...state.rays.filter((ray) => ray.status !== 'empty'),
         ],
-      });
-      syncRaysStateToBeam();
+      }));
+      _get().syncRaysStateToBeam();
     },
 
 
-    setGatherLlmId: (llmId: DLLMId | null) => _set({
-      gatherLlmId: llmId,
-    }),
+    setMergeLlmId: (llmId: DLLMId | null) =>
+      _set({
+        mergeLlmId: llmId,
+      }),
 
 
     startScatteringAll: () => {
-      const { rays, syncRaysStateToBeam } = _get();
-      _set({
-        rays: rays.map(ray => rayScatterStart(ray, false, _get())),
-      });
-      // always need to invoke syncRaysStateToBeam after rayScatterStart
-      syncRaysStateToBeam();
+      _set(state => ({
+        // Start all rays
+        rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || state.mergeLlmId, false, _get())),
+      }));
+      _get().syncRaysStateToBeam();
     },
 
-    stopScatteringAll: () => {
-      const { rays } = _get();
-      _set({
+    stopScatteringAll: () =>
+      _set(state => ({
         isScattering: false,
-        rays: rays.map(ray => rayScatterStop(ray)),
-      });
-    },
+        // Terminate all rays
+        rays: state.rays.map(rayScatterStop),
+      })),
 
-    toggleScattering: (rayId: BRayId) => {
-      const { rays, syncRaysStateToBeam } = _get();
-      _set({
-        rays: rays.map((ray) => (ray.rayId === rayId)
-          ? (ray.status === 'scattering' ? rayScatterStop(ray) : rayScatterStart(ray, false, _get()))
-          : ray,
-        ),
-      });
-      // always need to invoke syncRaysStateToBeam after rayScatterStart
+    rayToggleScattering: (rayId: BRayId) => {
+      const { mergeLlmId, _rayUpdate, syncRaysStateToBeam } = _get();
+      _rayUpdate(rayId, (ray) =>
+        ray.status === 'scattering'
+          ? /* User Terminated the ray */ rayScatterStop(ray)
+          : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || mergeLlmId, false, _get()),
+      );
       syncRaysStateToBeam();
     },
 
-    toggleUserSelection: (rayId: BRayId) => _set((state) => ({
-      rays: state.rays.map((ray) => (ray.rayId === rayId)
-        ? { ...ray, userSelected: !ray.userSelected }
-        : ray,
-      ),
-    })),
+    raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) =>
+      _get()._rayUpdate(rayId, {
+        scatterLlmId: llmId,
+      }),
 
-    setRayLlmId: (rayId: BRayId, llmId: DLLMId | null) => _set((state) => ({
-      rays: state.rays.map((ray) => (ray.rayId === rayId)
-        ? { ...ray, scatterLlmId: llmId }
-        : ray,
-      ),
-    })),
-
-
-    _updateRay: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => _set((state) => ({
-      rays: state.rays.map((ray) => (ray.rayId === rayId)
+    _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => _set(state => ({
+      rays: state.rays.map(ray => (ray.rayId === rayId)
         ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
         : ray,
       ),
