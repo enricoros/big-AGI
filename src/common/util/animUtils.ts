@@ -177,13 +177,13 @@ export const animationEnterBelow = keyframes`
 
 export const animationEnterScaleUp = keyframes`
     0% {
-        opacity: 0;
+        //opacity: 0;
         //transform: translateY(8px);
         scale: 0.98;
         //rotate: -5deg;
     }
     100% {
-        opacity: 1;
+        //opacity: 1;
         //transform: translateY(0);
         scale: 1;
         //rotate: 0;
