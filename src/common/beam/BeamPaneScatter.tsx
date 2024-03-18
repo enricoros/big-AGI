@@ -19,8 +19,8 @@ export const beamControlsSx: SxProps = {
   // backgroundColor: 'background.popup',
   backgroundColor: 'background.surface',
   boxShadow: 'md',
-  px: 'var(--Pad)',
-  py: 'calc(2 * var(--Pad) / 3)',
+  p: 'var(--Pad)',
+  // py: 'calc(2 * var(--Pad) / 3)',
   zIndex: 1, // stay on top of messages, for shadow to cast on it
 };
 

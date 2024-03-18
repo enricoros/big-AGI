@@ -36,7 +36,7 @@ export function ChatBeamWrapper(props: {
         inset: 0,
       }}>
         {beamView}
-        <ModalClose />
+        <ModalClose sx={{ color: 'white', backgroundColor: 'background.surface', boxShadow: 'xs', mr: 2 }} />
       </Box>
     </Modal>
   ) : (
