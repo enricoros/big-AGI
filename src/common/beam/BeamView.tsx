@@ -212,3 +212,22 @@ export function BeamView(props: {
     </ScrollToBottom>
   );
 }
+
+
+/* Commented code with a callout box to explain the first message
+  <Box>
+    <CalloutTopRightIcon sx={{ color: 'primary.solidBg', fontSize: '2.53rem', rotate: '-10deg' }} />
+    <Chip
+      color='primary'
+      variant='solid'
+      endDecorator={<ChipDelete onClick={() => alert('aa')} />}
+      sx={{
+        mx: -2,
+        py: 1,
+        px: 2,
+      }}
+    >
+      Last message in the conversation
+    </Chip>
+  </Box>
+*/
