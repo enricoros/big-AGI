@@ -18,10 +18,6 @@ const beamGatherControlsSx: SxProps = {
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
 
-  // the fact that this works, means we got the CSS and layout right
-  position: 'sticky',
-  bottom: 0,
-
   // layout
   display: 'flex',
   alignItems: 'center',
@@ -30,6 +26,16 @@ const beamGatherControlsSx: SxProps = {
   // gridAutoFlow: 'row dense',
   gap: 'var(--Pad_2)',
 };
+
+const desktopBeamControlsSx: SxProps = {
+  ...beamGatherControlsSx,
+
+  // the fact that this works, means we got the CSS and layout right
+  position: 'sticky',
+  bottom: 0,
+}
+
+
 
 export function BeamPaneGather(props: {
   isMobile: boolean,
@@ -43,7 +49,7 @@ export function BeamPaneGather(props: {
   const { gatherCount, gatherEnabled, gatherBusy } = props;
 
   return (
-    <Box sx={beamGatherControlsSx}>
+    <Box sx={props.isMobile ? beamGatherControlsSx : desktopBeamControlsSx}>
 
       {/* Title */}
       <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
@@ -59,7 +65,7 @@ export function BeamPaneGather(props: {
           </Typography>
 
           <Typography level='body-sm'>
-            Combine {gatherCount > 1 ? `the ${gatherCount} replies` : 'the replies'}
+            Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
           </Typography>
         </div>
       </Box>
