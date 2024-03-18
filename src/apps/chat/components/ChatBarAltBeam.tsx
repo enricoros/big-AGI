@@ -10,7 +10,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { animationColorBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
+import { animationBackgroundBeamGather, animationColorBeamScatter, animationEnterBelow } from '~/common/util/animUtils';
 
 
 export function ChatBarAltBeam(props: {
@@ -82,7 +82,7 @@ export function ChatBarAltBeam(props: {
         <Box
           component='span'
           sx={
-            isGathering ? { animation: `${animationColorBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
+            isGathering ? { animation: `${animationBackgroundBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
               : isScattering ? { animation: `${animationColorBeamScatter} 5s infinite, ${animationEnterBelow} 0.6s` }
                 : { fontWeight: 'lg' }
           }>

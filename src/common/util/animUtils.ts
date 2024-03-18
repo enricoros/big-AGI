@@ -19,35 +19,19 @@ export const animationColorBeamScatter = keyframes`
         color: rgb(255, 204, 77);
     }`;
 
-/*export const animationColorLimey = keyframes`
-    100%, 0% {
-        color: rgb(183, 255, 0);
-    }
-    25% {
-        color: rgb(255, 251, 0);
-    }
-    50% {
-        color: rgba(0, 255, 81);
-    }
-    75% {
-        color: rgb(255, 153, 0);
-    }`;
-*/
-
 export const animationColorBeamGather = keyframes`
     100%, 0% {
-        background-color: rgb(102, 0, 51);
+        color: rgb(102, 0, 51);
     }
     25% {
-        background-color: rgb(76, 0, 76);
+        color: rgb(76, 0, 76);
     }
     50% {
-        background-color: rgb(63, 0, 128);
+        color: rgb(63, 0, 128);
     }
     75% {
-        background-color: rgb(0, 0, 128);
+        color: rgb(0, 0, 128);
     }`;
-
 
 export const animationColorBlues = keyframes`
     0%, 100% {
@@ -62,6 +46,21 @@ export const animationColorBlues = keyframes`
     75% {
         color: #083e75; /* Primary lighter shade (300) */
     }`;
+
+/*export const animationColorLimey = keyframes`
+    100%, 0% {
+        color: rgb(183, 255, 0);
+    }
+    25% {
+        color: rgb(255, 251, 0);
+    }
+    50% {
+        color: rgba(0, 255, 81);
+    }
+    75% {
+        color: rgb(255, 153, 0);
+    }`;
+*/
 
 export const animationColorRainbow = keyframes`
     100%, 0% {
@@ -101,7 +100,22 @@ export const animationColorRainbow = keyframes`
         color: rgb(204, 0, 102);
     }`;
 
-/*export const animationColorDarkerRainbow = keyframes`
+
+export const animationBackgroundBeamGather = keyframes`
+    100%, 0% {
+        background-color: rgb(102, 0, 51);
+    }
+    25% {
+        background-color: rgb(76, 0, 76);
+    }
+    50% {
+        background-color: rgb(63, 0, 128);
+    }
+    75% {
+        background-color: rgb(0, 0, 128);
+    }`;
+
+/*export const animationBackgroundDarkerRainbow = keyframes`
     100%, 0% {
         background-color: rgb(128, 0, 0);
     }
@@ -138,6 +152,7 @@ export const animationColorRainbow = keyframes`
     91% {
         background-color: rgb(102, 0, 51);
     }`;*/
+
 
 export const animationEnterBelow = keyframes`
     from {
