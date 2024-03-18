@@ -25,9 +25,10 @@ import { SCATTER_RAY_SHOW_DRAG_HANDLE } from './beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.rays';
 
 
-// const rayCardClasses = {
-//   active: 'beamRay-Active',
-// } as const;
+const rayCardClasses = {
+  errored: 'rayCard-Errored',
+  selectable: 'rayCard-Selectable',
+} as const;
 
 export const RayCard = styled(Box)(({ theme }) => ({
   '--Card-padding': '1rem',
@@ -42,6 +43,14 @@ export const RayCard = styled(Box)(({ theme }) => ({
   // [`&.${rayCardClasses.active}`]: {
   //   boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
   // },
+
+  [`&.${rayCardClasses.selectable}`]: {
+    backgroundColor: theme.vars.palette.background.popup,
+  },
+  [`&.${rayCardClasses.errored}`]: {
+    backgroundColor: theme.vars.palette.danger.softBg,
+    borderColor: theme.vars.palette.danger.outlinedBorder,
+  },
 
   position: 'relative',
 
@@ -66,17 +75,6 @@ RayCard.displayName = 'RayCard';
   borderRadius: 'xs',
   textAlign: 'center',
 };*/
-
-
-function rayCardStatusSx(isError: boolean, isSelectable: boolean, isSelected: boolean): SxProps | null {
-  if (isError)
-    return { backgroundColor: 'danger.softBg', borderColor: 'danger.outlinedBorder' };
-  if (isSelectable)
-    return { backgroundColor: isSelected ? 'success.softBg' : undefined, cursor: 'pointer' };
-  if (isSelected)
-    return { backgroundColor: 'success.softBg' };
-  return null;
-}
 
 
 const RayControlsMemo = React.memo(RayControls);
@@ -115,7 +113,7 @@ function RayControls(props: {
     </Box>
 
     {!props.isLlmLinked && (
-      <GoodTooltip title={props.isLlmLinked ? undefined : 'Link Model'}>
+      <GoodTooltip title={props.isLlmLinked ? undefined : 'Link to the Merge model'}>
         <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>
           {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
         </IconButton>
@@ -212,7 +210,7 @@ export function BeamRay(props: {
   return (
     <RayCard
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
-      sx={rayCardStatusSx(isError, false /*isSelectable*/, false /*isSelected*/)}
+      className={`${isError ? rayCardClasses.errored : ''} ${isSelectable ? rayCardClasses.selectable : ''}`}
     >
 
       {/* Controls Row */}

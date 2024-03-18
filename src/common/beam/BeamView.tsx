@@ -11,13 +11,25 @@ import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
+import { BEAM_INVERT_USER_MESSAGE, SCATTER_RAY_DEF } from './beam.config';
 import { BeamExplainer } from './BeamExplainer';
 import { BeamPaneGather } from './BeamPaneGather';
 import { BeamPaneScatter } from './BeamPaneScatter';
 import { BeamRayGrid } from './BeamRayGrid';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
-import { SCATTER_RAY_DEF } from './beam.config';
 
+
+const userMessageContainerSx: SxProps = {
+  pt: 'var(--Pad)',
+  px: 'var(--Pad)',
+  mb: 'calc(-1 * var(--Pad))',
+};
+
+const userMessageContainerInvertedSx: SxProps = {
+  ...userMessageContainerSx,
+  backgroundColor: 'neutral.solidBg',
+  pt: 0,
+};
 
 const userMessageSx: SxProps = {
   border: '1px solid',
@@ -80,7 +92,7 @@ export function BeamView(props: {
     isGathering: state.isGathering,
   })));
   const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setMergeLlmId, terminate } = props.beamStore.getState();
-  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Beam and Merge Model');
+  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model');
 
   // configuration
 
@@ -133,7 +145,7 @@ export function BeamView(props: {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--Pad)',
-        py: 'var(--Pad)',
+        pb: 'var(--Pad)',
       }}>
 
         {/* Config Issues */}
@@ -142,10 +154,7 @@ export function BeamView(props: {
 
         {/* User Message */}
         {!!lastMessage && (
-          <Box sx={{
-            px: 'var(--Pad)',
-            mb: 'calc(-1 * var(--Pad))',
-          }}>
+          <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageContainerInvertedSx : userMessageContainerSx}>
             <ChatMessageMemo
               message={lastMessage}
               fitScreen={props.isMobile}
