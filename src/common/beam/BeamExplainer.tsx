@@ -101,31 +101,31 @@ a chat history is short, and the return on investment is greater.
 ] as const;
 
 
+const beamExplainerSx: SxProps = {
+  // allows the content to be scrolled (all browsers)
+  overflowY: 'auto',
+  // actually make sure this scrolls & fills
+  height: '100%',
+
+  // style
+  padding: { xs: '1rem', md: '1.5rem' },
+  animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+
+  // layout
+  display: 'grid',
+};
+
+
 export function BeamExplainer(props: {
   onWizardComplete: () => any,
-  sx?: SxProps,
 }) {
 
   return (
     <Box
       // variant={grayUI ? 'solid' : 'soft'}
       // invertedColors={grayUI ? true : undefined}
-      sx={{
-        '--Pad': { xs: '1rem', md: '1.5rem' },
-        '--Pad_2': 'calc(var(--Pad) / 2)',
-
-        // enter animation
-        animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
-
-        // scrollable layout
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-
-        padding: 'var(--Pad)',
-
-        ...props.sx,
-      }}>
+      sx={beamExplainerSx}
+    >
 
       <ExplainerCarousel
         steps={beamSteps}
