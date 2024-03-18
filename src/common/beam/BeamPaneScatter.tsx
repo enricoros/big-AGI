@@ -33,6 +33,14 @@ const beamScatterControlsSx: SxProps = {
   // '& > *': { border: '1px solid red' },
 };
 
+const desktopBeamScatterControlsSx: SxProps = {
+  ...beamScatterControlsSx,
+
+  // the fact that this works, means we got the CSS and layout right
+  position: 'sticky',
+  top: 0,
+};
+
 
 export function BeamPaneScatter(props: {
   isMobile: boolean,
@@ -47,7 +55,7 @@ export function BeamPaneScatter(props: {
 }) {
 
   return (
-    <Box sx={beamScatterControlsSx}>
+    <Box sx={props.isMobile ? beamScatterControlsSx : desktopBeamScatterControlsSx}>
 
       {/* Title */}
       <Box sx={{ display: 'flex', gap: 'var(--Pad_2)', my: 'auto' }}>
