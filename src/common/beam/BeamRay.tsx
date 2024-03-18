@@ -20,7 +20,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
-import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './store-beam';
+import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.rays';
 
 
 // component configuration
