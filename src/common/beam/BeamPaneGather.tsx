@@ -1,16 +1,15 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, SvgIconProps, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
-import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { animationColorBeamScatter } from '~/common/util/animUtils';
+import { animationColorBeamGather } from '~/common/util/animUtils';
 
 import { BEAM_GATHER_COLOR } from './beam.config';
 import { beamControlsSx } from './BeamPaneScatter';
@@ -51,11 +50,14 @@ export function BeamPaneGather(props: {
   gatherEnabled: boolean,
   isMobile: boolean,
   mergeLlmComponent: React.ReactNode,
+  mergeLlmVendorIcon?: React.FunctionComponent<SvgIconProps>,
   onStart: () => void,
   onStop: () => void,
   onClose: () => void,
 }) {
   const { gatherCount, gatherEnabled, gatherBusy } = props;
+
+  const Icon = props.mergeLlmVendorIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return (
     <Box sx={props.isMobile ? beamGatherControlsSx : desktopBeamControlsSx}>
@@ -65,9 +67,7 @@ export function BeamPaneGather(props: {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
         <div>
           <Typography level='h4' component='h2'>
-            {gatherBusy
-              ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamScatter} 2s linear infinite` }} />
-              : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />} Merge
+            <Icon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} /> Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
@@ -78,9 +78,9 @@ export function BeamPaneGather(props: {
 
       {/* Method */}
       <FormControl sx={{ my: '-0.25rem' }}>
-        <FormLabelStart title={<><AutoAwesomeRoundedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
+        <FormLabelStart title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
         <ButtonGroup variant='outlined'>
-          {['Guided', 'Fusion'].map((n, idx) => {
+          {['Guided', 'Auto'].map((n, idx) => {
             const isActive = idx === 0; //fasn === props.rayCount;
             return (
               <Button
