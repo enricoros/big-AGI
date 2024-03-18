@@ -11,11 +11,12 @@ import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
+import { BeamExplainer } from './BeamExplainer';
 import { BeamPaneGather } from './BeamPaneGather';
 import { BeamPaneScatter } from './BeamPaneScatter';
-import { BeamRayGrid, DEF_RAY_COUNT } from './BeamRayGrid';
+import { BeamRayGrid } from './BeamRayGrid';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
-import { BeamExplainer } from './BeamExplainer';
+import { SCATTER_RAY_DEF } from './beam.config';
 
 
 const userMessageSx: SxProps = {
@@ -65,23 +66,21 @@ export function BeamView(props: {
   const raysCount = rayIds.length;
   const {
     inputHistory, inputIssues,
-    gatherLlmId, gatherMessage,
+    mergeLlmId,
     readyScatter, isScattering,
     readyGather, isGathering,
   } = useBeamStore(props.beamStore, useShallow((state) => ({
     // state
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
-    gatherLlmId: state.gatherLlmId,
-    gatherMessage: state.gatherMessage,
+    mergeLlmId: state.mergeLlmId,
     readyScatter: state.readyScatter,
     isScattering: state.isScattering,
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const { editHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setGatherLlmId, terminate } = props.beamStore.getState();
-  const [_gatherLlm, gatherLlmComponent] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Beam and Merge Model');
-
+  const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setMergeLlmId, terminate } = props.beamStore.getState();
+  const [_, mergeLlmComponent] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Beam and Merge Model');
 
   // configuration
 
@@ -95,9 +94,9 @@ export function BeamView(props: {
   // runnning
 
   // [effect] pre-populate a default number of rays
-  const bootup = raysCount < DEF_RAY_COUNT;
+  const bootup = raysCount < SCATTER_RAY_DEF;
   React.useEffect(() => {
-    bootup && handleRaySetCount(DEF_RAY_COUNT);
+    bootup && handleRaySetCount(SCATTER_RAY_DEF);
   }, [bootup, handleRaySetCount]);
 
 
@@ -153,7 +152,7 @@ export function BeamView(props: {
               showAvatar={true}
               adjustContentScaling={-1}
               topDecorator={userMessageDecorator}
-              onMessageEdit={editHistoryMessage}
+              onMessageEdit={editInputHistoryMessage}
               sx={userMessageSx}
             />
           </Box>
@@ -162,7 +161,6 @@ export function BeamView(props: {
         {/* Scatter Controls */}
         <BeamPaneScatter
           isMobile={props.isMobile}
-          llmComponent={gatherLlmComponent}
           rayCount={raysCount}
           setRayCount={handleRaySetCount}
           startEnabled={readyScatter}
@@ -175,34 +173,35 @@ export function BeamView(props: {
         {/* Rays Grid */}
         <BeamRayGrid
           beamStore={props.beamStore}
-          gatherLlmId={gatherLlmId}
+          linkedLlmId={mergeLlmId}
           isMobile={props.isMobile}
           rayIds={rayIds}
           onIncreaseRayCount={handleRayIncreaseCount}
         />
 
         {/* Gather Message */}
-        {(!!gatherMessage && !!gatherMessage.updated) && (
-          <Box sx={{
-            px: 'var(--Pad)',
-            mb: 'calc(-1 * var(--Pad))',
-          }}>
-            <ChatMessageMemo
-              message={gatherMessage}
-              fitScreen={props.isMobile}
-              showAvatar={false}
-              adjustContentScaling={-1}
-              sx={assistantMessageSx}
-            />
-          </Box>
-        )}
+        {/*{(!!gatherMessage && !!gatherMessage.updated) && (*/}
+        {/*  <Box sx={{*/}
+        {/*    px: 'var(--Pad)',*/}
+        {/*    mb: 'calc(-1 * var(--Pad))',*/}
+        {/*  }}>*/}
+        {/*    <ChatMessageMemo*/}
+        {/*      message={gatherMessage}*/}
+        {/*      fitScreen={props.isMobile}*/}
+        {/*      showAvatar={false}*/}
+        {/*      adjustContentScaling={-1}*/}
+        {/*      sx={assistantMessageSx}*/}
+        {/*    />*/}
+        {/*  </Box>*/}
+        {/*)}*/}
 
         {/* Gather Controls */}
         <BeamPaneGather
-          isMobile={props.isMobile}
+          gatherBusy={isGathering}
           gatherCount={readyGather}
           gatherEnabled={readyGather > 0 && !isScattering}
-          gatherBusy={false}
+          isMobile={props.isMobile}
+          mergeLlmComponent={mergeLlmComponent}
           onStart={() => null}
           onStop={() => null}
           onClose={handleTerminate}
