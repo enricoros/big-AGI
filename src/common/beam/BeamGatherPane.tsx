@@ -13,7 +13,7 @@ import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { BEAM_GATHER_COLOR } from './beam.config';
-import { beamControlsSx } from './BeamPaneScatter';
+import { beamControlsSx } from './BeamScatterPane';
 import { beamFusionSpecs } from './beam.fusions';
 
 
@@ -46,7 +46,7 @@ const desktopBeamControlsSx: SxProps = {
 };
 
 
-export function BeamPaneGather(props: {
+export function BeamGatherPane(props: {
   isMobile: boolean,
   gatherBusy: boolean,
   gatherCount: number,
