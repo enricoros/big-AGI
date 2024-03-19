@@ -13,19 +13,14 @@ import { animationColorBeamScatter } from '~/common/util/animUtils';
 import { BEAM_SCATTER_COLOR, SCATTER_RAY_PRESETS } from './beam.config';
 
 
-export const beamControlsSx: SxProps = {
+// [shared] scatter/gather pane style
+export const beamPaneSx: SxProps = {
   // style
-  // borderRadius: 'md',
-  // backgroundColor: 'background.popup',
-  backgroundColor: 'background.surface',
+  backgroundColor: 'background.surface', // background.popup
   boxShadow: 'md',
   p: 'var(--Pad)',
   // py: 'calc(2 * var(--Pad) / 3)',
-  zIndex: 1, // stay on top of messages, for shadow to cast on it
-};
-
-const beamScatterControlsSx: SxProps = {
-  ...beamControlsSx,
+  zIndex: 1, // cast shadow on the rays/fusion
 
   // layout
   display: 'flex',
@@ -35,8 +30,8 @@ const beamScatterControlsSx: SxProps = {
   gap: 'var(--Pad_2)',
 };
 
-const desktopBeamScatterControlsSx: SxProps = {
-  ...beamScatterControlsSx,
+const desktopBeamScatterPaneSx: SxProps = {
+  ...beamPaneSx,
 
   // the fact that this works, means we got the CSS and layout right
   position: 'sticky',
@@ -56,7 +51,7 @@ export function BeamScatterPane(props: {
 }) {
 
   return (
-    <Box sx={props.isMobile ? beamScatterControlsSx : desktopBeamScatterControlsSx}>
+    <Box sx={props.isMobile ? beamPaneSx : desktopBeamScatterPaneSx}>
 
       {/* Title */}
       <Box>

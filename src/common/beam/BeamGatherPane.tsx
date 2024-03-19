@@ -13,34 +13,25 @@ import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { BEAM_GATHER_COLOR } from './beam.config';
-import { beamControlsSx } from './BeamScatterPane';
 import { beamFusionSpecs } from './beam.fusions';
+import { beamPaneSx } from './BeamScatterPane';
 
 
-const beamGatherControlsSx: SxProps = {
-  ...beamControlsSx,
-
-  // style
+const mobileBeamGatherPane: SxProps = {
+  ...beamPaneSx,
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
 
-  // layout
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  columnGap: 'var(--Pad_2)',
+  // [mobile] larger gap in between rows, as on mobile we have a smaller gap
   rowGap: 'var(--Pad)',
-  py: 'calc(2 * var(--Pad) / 3)',
 };
 
-const desktopBeamControlsSx: SxProps = {
-  ...beamGatherControlsSx,
+const desktopBeamGatherPaneSx: SxProps = {
+  ...beamPaneSx,
+  borderTop: '1px solid',
+  borderTopColor: 'neutral.outlinedBorder',
 
-  // undo the larger mobile padding
-  rowGap: 'var(--Pad_2)',
-
-  // the fact that this works, means we got the CSS and layout right
+  // [desktop] keep visible at the bottom
   position: 'sticky',
   bottom: 0,
 };
@@ -75,7 +66,7 @@ export function BeamGatherPane(props: {
 
 
   return (
-    <Box sx={props.isMobile ? beamGatherControlsSx : desktopBeamControlsSx}>
+    <Box sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}>
 
 
       {/* Title */}
