@@ -11,16 +11,16 @@ import { RayCard, rayCardClasses } from './BeamRay';
 
 const fusionRayCardSx: SxProps = {
   mx: 'var(--Pad)',
-  mt: 'calc(-1 * var(--Pad))',
+  mt: 'calc(-1 * var(--Pad))', // absorb gap to the prev-bottom
 
+  // boxShadow: 'sm',
   // borderColor: 'success.outlinedBorder',
   borderTop: 'none',
   borderTopLeftRadius: 0,
   borderTopRightRadius: 0,
-  // boxShadow: 'sm',
 };
 
-const chatMessageEmbeddedSx: SxProps = {
+const fusionChatMessageSx: SxProps = {
   // style: to undo the style of ChatMessage
   backgroundColor: 'none',
   border: 'none',
@@ -34,6 +34,7 @@ const chatMessageEmbeddedSx: SxProps = {
 export function BeamFusion(props: {
   fusionIndex: number | null, isMobile: boolean, beamStore: BeamStoreApi
 }) {
+
   return (
     <RayCard
       className={rayCardClasses.selectable}
@@ -44,7 +45,7 @@ export function BeamFusion(props: {
         fitScreen={props.isMobile}
         showAvatar={false}
         adjustContentScaling={-1}
-        sx={chatMessageEmbeddedSx}
+        sx={fusionChatMessageSx}
       />
     </RayCard>
   );

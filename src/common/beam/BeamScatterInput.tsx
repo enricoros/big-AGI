@@ -10,10 +10,10 @@ import type { DMessage } from '~/common/state/store-chats';
 import { BEAM_INVERT_USER_MESSAGE } from './beam.config';
 
 
-const userMessageContainerSx: SxProps = {
+const userMessageWrapperSx: SxProps = {
   pt: 'var(--Pad)',
   px: 'var(--Pad)',
-  mb: 'calc(-1 * var(--Pad))',
+  mb: 'calc(-1 * var(--Pad))', // absorb gap to the next-top
 
   // sticky user message, only displaced by the scatter controls
   // NOTE: disabled: should feel good but feels weird
@@ -21,13 +21,13 @@ const userMessageContainerSx: SxProps = {
   // top: 0,
 };
 
-const userMessageContainerInvertedSx: SxProps = {
-  ...userMessageContainerSx,
+const userMessageWrapperINVSx: SxProps = {
+  ...userMessageWrapperSx,
   backgroundColor: 'neutral.solidBg',
   pt: 0,
 };
 
-const userMessageSx: SxProps = {
+const userChatMessageSx: SxProps = {
   border: '1px solid',
   borderColor: 'primary.outlinedBorder',
   borderRadius: 'md',
@@ -81,7 +81,7 @@ export function BeamScatterInput(props: {
     return null;
 
   return (
-    <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageContainerInvertedSx : userMessageContainerSx}>
+    <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageWrapperINVSx : userMessageWrapperSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}
@@ -89,7 +89,7 @@ export function BeamScatterInput(props: {
         adjustContentScaling={-1}
         topDecorator={userMessageDecorator}
         onMessageEdit={props.editHistory}
-        sx={userMessageSx}
+        sx={userChatMessageSx}
       />
     </Box>
   );
