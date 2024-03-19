@@ -228,9 +228,10 @@ export function BeamRay(props: {
                 right: 0,
                 fontSize: 'xs',
                 px: isImported ? 1 : undefined,
+                whiteSpace: 'nowrap',
               }}
             >
-              {ray?.imported ? 'Original' : /*'Use'*/ <TelegramIcon />}
+              {ray?.imported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
             </IconButton>
           </GoodTooltip>
         </Box>
