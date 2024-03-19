@@ -24,7 +24,7 @@ import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 
-import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.rays';
+import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 
 
 const chatMessageEmbeddedSx: SxProps = {
