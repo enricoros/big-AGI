@@ -71,7 +71,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       const isPaneOpen = isDrawerable && isDrawerOpen;
 
       if (checkDivider(app))
-        return <Divider key={'div-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
+        return <Divider key={'app-sep-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
 
       return (
         <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name + (app.isDev ? ' [DEV]' : '')}>
@@ -90,21 +90,23 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     // Overflow dropdown menu
     if (overflowApps.length) {
       components.push(
-        <Dropdown>
-          <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
-            <MoreHorizRoundedIcon />
-          </MenuButton>
-          <Menu variant='solid' invertedColors placement='right' sx={{ m: 1 }}>
-            {overflowApps.map((app, appIdx) =>
-              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)}>
-                <ListItemDecorator>
-                  <app.icon />
-                </ListItemDecorator>
-                {app.name + (app.isDev ? ' [DEV]' : '')}
-              </MenuItem>,
-            )}
-          </Menu>
-        </Dropdown>,
+        <Tooltip title='More Apps' key='app-overflow'>
+          <Dropdown>
+            <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
+              <MoreHorizRoundedIcon />
+            </MenuButton>
+            <Menu variant='solid' invertedColors placement='right-start'>
+              {overflowApps.map((app, appIdx) =>
+                <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
+                  <ListItemDecorator sx={{ ml: 1 }}>
+                    <app.icon />
+                  </ListItemDecorator>
+                  {app.name + (app.isDev ? ' [DEV]' : '')}
+                </MenuItem>,
+              )}
+            </Menu>
+          </Dropdown>
+        </Tooltip>,
       );
     }
     return components;
