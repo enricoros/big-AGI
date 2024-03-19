@@ -7,7 +7,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
@@ -590,7 +590,7 @@ export function ChatMessage(props: {
             {/* Edit */}
             {!!props.onMessageEdit && (
               <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
-                <ListItemDecorator><EditIcon /></ListItemDecorator>
+                <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
                 {isEditing ? 'Discard' : 'Edit'}
                 {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
               </MenuItem>

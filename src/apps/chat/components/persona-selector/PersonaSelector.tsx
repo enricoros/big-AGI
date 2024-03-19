@@ -5,7 +5,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -259,7 +259,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           </Typography>
           <Tooltip disableInteractive title={editMode ? 'Done Editing' : 'Edit Tiles'}>
             <IconButton size='sm' onClick={toggleEditMode} sx={{ my: '-0.25rem' /* absorb the button padding */ }}>
-              {editMode ? <DoneIcon /> : <EditIcon />}
+              {editMode ? <DoneIcon /> : <EditRoundedIcon />}
             </IconButton>
           </Tooltip>
         </Box>
