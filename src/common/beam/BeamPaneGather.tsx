@@ -52,7 +52,7 @@ export function BeamPaneGather(props: {
   gatherCount: number,
   gatherEnabled: boolean,
   gatherLlmComponent: React.ReactNode,
-  gatherLlmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   fusionIndex: number | null,
   setFusionIndex: (index: number | null) => void
   onStartFusion: () => void,
@@ -71,7 +71,7 @@ export function BeamPaneGather(props: {
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
 
 
-  const Icon = props.gatherLlmVendorIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+  const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
 
   return (
