@@ -8,15 +8,15 @@ import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage'
 import { createDMessage } from '~/common/state/store-chats';
 
 
-const configWrapperSx: SxProps = {
+const gatherConfigWrapperSx: SxProps = {
   px: 'var(--Pad)',
-  mb: 'calc(-1 * var(--Pad))',
+  mb: 'calc(-1 * var(--Pad))', // absorb gap to the next-top
 };
 
-const configSx: SxProps = {
+const configChatMessageSx: SxProps = {
   backgroundColor: 'success.softBg',
   border: '1px solid',
-  borderColor: 'neutral.outlinedBorder',
+  borderColor: 'success.outlinedBorder',
   borderRadius: 'md',
   borderBottom: 'none',
   borderBottomLeftRadius: 0,
@@ -30,14 +30,16 @@ export function BeamGatherConfig(props: {
   fusionIndex: number | null
 }) {
 
+
+
   return (
-    <Box sx={configWrapperSx}>
+    <Box sx={gatherConfigWrapperSx}>
       <ChatMessageMemo
         message={createDMessage('assistant', 'Gather the messages you want to merge.')}
         fitScreen={props.isMobile}
         showAvatar={false}
         adjustContentScaling={-1}
-        sx={configSx}
+        sx={configChatMessageSx}
       />
     </Box>
   );
