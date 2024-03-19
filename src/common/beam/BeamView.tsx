@@ -27,29 +27,18 @@ export function BeamView(props: {
   // linked state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
   const {
-    editInputHistoryMessage,
-    setFusionIndex,
-    setFusionLlmId,
-    setRayCount,
-    startGatheringCurrent,
-    startScatteringAll,
-    stopGatheringCurrent,
-    stopScatteringAll,
+    /* root */ editInputHistoryMessage,
+    /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
+    /* gather */ setFusionIndex, setFusionLlmId, startFusion, stopFusion,
   } = props.beamStore.getState();
   const {
-    inputHistory, inputIssues,
-    fusionIndex, fusionLlmId,
-    readyScatter, isScattering,
-    readyGather, isGathering,
+    /* root */ inputHistory, inputIssues, inputReady,
+    /* scatter */ isScattering, raysReady,
+    /* gather */ fusionIndex, fusionLlmId, isGathering,
   } = useBeamStore(props.beamStore, useShallow(state => ({
-    inputHistory: state.inputHistory,
-    inputIssues: state.inputIssues,
-    fusionIndex: state.fusionIndex,
-    fusionLlmId: state.fusionLlmId,
-    readyScatter: state.readyScatter,
-    isScattering: state.isScattering,
-    readyGather: state.readyGather,
-    isGathering: state.isGathering,
+    inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
+    isScattering: state.isScattering, raysReady: state.raysReady,
+    fusionIndex: state.fusionIndex, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
@@ -59,9 +48,7 @@ export function BeamView(props: {
   const raysCount = rayIds.length;
 
 
-  // configuration
-
-  // const handleTerminate = React.useCallback(() => terminate(), [terminate]);
+  // handlers
 
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
@@ -119,7 +106,7 @@ export function BeamView(props: {
           isMobile={props.isMobile}
           rayCount={raysCount}
           setRayCount={handleRaySetCount}
-          startEnabled={readyScatter}
+          startEnabled={inputReady}
           startBusy={isScattering}
           onStart={startScatteringAll}
           onStop={stopScatteringAll}
@@ -148,13 +135,13 @@ export function BeamView(props: {
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}
           gatherBusy={isGathering}
-          gatherCount={readyGather}
-          gatherEnabled={readyGather > 0 && !isScattering && fusionIndex !== null}
+          gatherCount={raysReady}
+          gatherEnabled={raysReady > 0 && !isScattering && fusionIndex !== null}
           isMobile={props.isMobile}
           fusionIndex={fusionIndex}
           setFusionIndex={setFusionIndex}
-          onStartFusion={startGatheringCurrent}
-          onStopFusion={stopGatheringCurrent}
+          onStartFusion={startFusion}
+          onStopFusion={stopFusion}
         />
 
         {/* Fusion Output */}

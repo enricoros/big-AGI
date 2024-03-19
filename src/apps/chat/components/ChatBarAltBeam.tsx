@@ -23,11 +23,11 @@ export function ChatBarAltBeam(props: {
 
 
   // external beam state
-  const { isScattering, isGathering, readyGather, setIsMaximized, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
+  const { isScattering, isGathering, requiresConfirmation, setIsMaximized, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
     isGathering: store.isGathering,
-    readyGather: store.readyGather, // Assuming this state exists and is a number
+    requiresConfirmation: store.isScattering || store.isGathering || store.raysReady > 0,
     // actions
     setIsMaximized: store.setIsMaximized,
     terminateBeam: store.terminate,
@@ -36,7 +36,6 @@ export function ChatBarAltBeam(props: {
 
   // closure handlers
 
-  const requiresConfirmation = isScattering || isGathering || readyGather > 0;
   const handleCloseBeam = React.useCallback(() => {
     if (requiresConfirmation)
       setShowCloseConfirmation(true);
