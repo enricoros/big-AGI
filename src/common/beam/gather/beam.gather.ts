@@ -86,16 +86,14 @@ interface GatherStateSlice {
 
 }
 
-export const initGatherStateSlice = (_prevFusions: BFusion[]): GatherStateSlice => {
-
-  // recreate the fusions, ignoring prevFusions for now (could implement some param recycle, eventually)
-  const fusions: BFusion[] = [
-    ...beamFusionSpecs.map(spec => ({ ...spec.fTemplate })),
-  ];
+export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice => {
+  // stop any ongoing fusions
+  prevFusions.forEach(fusionGatherStop);
 
   return {
-    fusions,
-    fusionIndex: null,
+    // recreate all fusions (no recycle)
+    fusions: beamFusionSpecs.map(spec => ({ ...spec.fTemplate })),
+    fusionIndex: 1,
     fusionLlmId: null,
     isGathering: false,
   };
@@ -113,7 +111,7 @@ export interface GatherStoreSlice extends GatherStateSlice {
 export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
 
   // initial state
-  ...initGatherStateSlice([]),
+  ...reInitGatherStateSlice([]),
 
 
   setFusionIndex: (index: number | null) =>
