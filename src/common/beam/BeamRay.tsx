@@ -25,7 +25,7 @@ import { SCATTER_RAY_SHOW_DRAG_HANDLE } from './beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.rays';
 
 
-const rayCardClasses = {
+export const rayCardClasses = {
   errored: 'rayCard-Errored',
   selectable: 'rayCard-Selectable',
 } as const;

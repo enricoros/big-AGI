@@ -1,10 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-
-import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box } from '@mui/joy';
-
-import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
@@ -12,30 +8,14 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
+import { BeamFusion } from './BeamFusion';
+import { BeamGatherConfig } from './BeamGatherConfig';
 import { BeamGatherPane } from './BeamGatherPane';
 import { BeamRayGrid } from './BeamRayGrid';
 import { BeamScatterInput } from './BeamScatterInput';
 import { BeamScatterPane } from './BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 import { SCATTER_RAY_DEF } from './beam.config';
-
-import { createDMessage } from '~/common/state/store-chats';
-
-
-const assistantMessageSx: SxProps = {
-  backgroundColor: 'success.softBg',
-  border: '1px solid',
-  borderColor: 'neutral.outlinedBorder',
-  borderRadius: 'md',
-  borderBottom: 'none',
-  borderBottomLeftRadius: 0,
-  borderBottomRightRadius: 0,
-  px: '0.5rem',
-  // boxShadow: 'sm',
-  // the following make it start-aligned
-  // borderTopLeftRadius: 0,
-  // borderLeft: 'none',
-} as const;
 
 
 export function BeamView(props: {
@@ -126,6 +106,7 @@ export function BeamView(props: {
         {/* Config Issues */}
         {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
+
         {/* User Message */}
         <BeamScatterInput
           isMobile={props.isMobile}
@@ -145,6 +126,7 @@ export function BeamView(props: {
           onExplainerShow={explainerShow}
         />
 
+
         {/* Rays Grid */}
         <BeamRayGrid
           beamStore={props.beamStore}
@@ -154,25 +136,12 @@ export function BeamView(props: {
           onIncreaseRayCount={handleRayIncreaseCount}
         />
 
-        {/* Gather Message */}
-        <Box sx={{
-          px: 'var(--Pad)',
-          mb: 'calc(-1 * var(--Pad))',
-        }}>
-          <ChatMessageMemo
-            message={createDMessage('assistant', 'Gather the messages you want to merge.')}
-            fitScreen={props.isMobile}
-            showAvatar={false}
-            adjustContentScaling={-1}
-            sx={assistantMessageSx}
-          />
-        </Box>
 
-        {/*{(fusionIndex !== null) && (*/}
-        {/*  <BeamFusionSettings*/}
-        {/*    fusionIndex={fusionIndex}*/}
-        {/*  />*/}
-        {/*)}*/}
+        {/* Fusion Config */}
+        <BeamGatherConfig
+          fusionIndex={fusionIndex}
+          isMobile={props.isMobile}
+        />
 
         {/* Gather Controls */}
         <BeamGatherPane
@@ -186,6 +155,13 @@ export function BeamView(props: {
           setFusionIndex={setFusionIndex}
           onStartFusion={startGatheringCurrent}
           onStopFusion={stopGatheringCurrent}
+        />
+
+        {/* Fusion Output */}
+        <BeamFusion
+          beamStore={props.beamStore}
+          fusionIndex={fusionIndex}
+          isMobile={props.isMobile}
         />
 
       </Box>
