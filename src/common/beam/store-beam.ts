@@ -23,7 +23,7 @@ interface BeamState {
   rays: BRay[];
   fusions: BFusion[];
 
-  mergeLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
+  fusionLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
 
   readyScatter: boolean; // true if the input is valid
   readyGather: number;   // 0, or number of the rays that are ready to gather
@@ -43,7 +43,7 @@ const initialBeamState = (): BeamState => ({
   rays: [],
   fusions: [],
 
-  mergeLlmId: null,
+  fusionLlmId: null,
 
   readyScatter: false,
   readyGather: 0,
@@ -72,7 +72,7 @@ export interface BeamStore extends BeamState {
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
   // fusions
-  setMergeLlmId: (llmId: DLLMId | null) => void;
+  setFusionLlmId: (llmId: DLLMId | null) => void;
 
   // state sync
   syncRaysStateToBeam: () => void;
@@ -86,7 +86,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     // state
     ...initialBeamState(),
 
-    open: (chatHistory: Readonly<DMessage[]>, initialMergeLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+    open: (chatHistory: Readonly<DMessage[]>, initialFusionLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
       const { isOpen: wasOpen, terminate } = _get();
 
       // reset pending operations
@@ -105,9 +105,9 @@ export const createBeamStore = () => createStore<BeamStore>()(
         // rays already reset
 
         // gather
-        ...((!wasOpen && initialMergeLlmId) && {
+        ...((!wasOpen && initialFusionLlmId) && {
           // update the model only if the dialog was not already open
-          mergeLlmId: initialMergeLlmId,
+          fusionLlmId: initialFusionLlmId,
         }),
 
         // state
@@ -116,7 +116,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
     terminate: () => { /*_get().isOpen &&*/
-      const { rays: prevRays, fusions: prevFusions, mergeLlmId } = _get();
+      const { rays: prevRays, fusions: prevFusions, fusionLlmId } = _get();
 
       // Terminate all rays and fusions
       prevRays.forEach(rayScatterStop);
@@ -128,7 +128,7 @@ export const createBeamStore = () => createStore<BeamStore>()(
         // (remember after termination) models for each ray
         rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
         // (remember after termination) gather model
-        mergeLlmId,
+        fusionLlmId,
       });
     },
 
@@ -204,16 +204,16 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
 
-    setMergeLlmId: (llmId: DLLMId | null) =>
+    setFusionLlmId: (llmId: DLLMId | null) =>
       _set({
-        mergeLlmId: llmId,
+        fusionLlmId: llmId,
       }),
 
 
     startScatteringAll: () => {
       _set(state => ({
         // Start all rays
-        rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || state.mergeLlmId, false, _get())),
+        rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || state.fusionLlmId, false, _get())),
       }));
       _get().syncRaysStateToBeam();
     },
@@ -226,11 +226,11 @@ export const createBeamStore = () => createStore<BeamStore>()(
       })),
 
     rayToggleScattering: (rayId: BRayId) => {
-      const { mergeLlmId, _rayUpdate, syncRaysStateToBeam } = _get();
+      const { fusionLlmId, _rayUpdate, syncRaysStateToBeam } = _get();
       _rayUpdate(rayId, (ray) =>
         ray.status === 'scattering'
           ? /* User Terminated the ray */ rayScatterStop(ray)
-          : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || mergeLlmId, false, _get()),
+          : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || fusionLlmId, false, _get()),
       );
       syncRaysStateToBeam();
     },
