@@ -65,6 +65,16 @@ export const RayCard = styled(Box)(({ theme }) => ({
 RayCard.displayName = 'RayCard';
 
 
+const chatMessageEmbeddedSx: SxProps = {
+  // style: to undo the style of ChatMessage
+  backgroundColor: 'none',
+  border: 'none',
+  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
+  my: 0,
+  px: 0,
+  py: 0,
+} as const;
+
 /*const letterSx: SxProps = {
   width: '1rem',
   py: 0.25,
@@ -143,17 +153,6 @@ function RayControls(props: {
     )}
   </Box>;
 }
-
-
-const chatMessageEmbeddedSx: SxProps = {
-  // style: to undo the style of ChatMessage
-  backgroundColor: 'none',
-  border: 'none',
-  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
-  my: 0,
-  px: 0,
-  py: 0,
-} as const;
 
 
 export function BeamRay(props: {
