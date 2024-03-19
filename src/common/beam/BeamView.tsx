@@ -127,7 +127,6 @@ export function BeamView(props: {
         {/* Fusion Config */}
         <BeamGatherConfig
           beamStore={props.beamStore}
-          fusionIndex={fusionIndex}
           isMobile={props.isMobile}
         />
 
@@ -148,7 +147,6 @@ export function BeamView(props: {
         {/* Fusion Output */}
         <BeamGatherOutput
           beamStore={props.beamStore}
-          fusionIndex={fusionIndex}
           isMobile={props.isMobile}
         />
 

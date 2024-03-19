@@ -7,7 +7,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { BEAM_INVERT_USER_MESSAGE } from '../beam.config';
+import { SCATTER_INVERT_USER_MESSAGE } from '../beam.config';
 
 
 const userMessageWrapperSx: SxProps = {
@@ -81,7 +81,7 @@ export function BeamScatterInput(props: {
     return null;
 
   return (
-    <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageWrapperINVSx : userMessageWrapperSx}>
+    <Box sx={SCATTER_INVERT_USER_MESSAGE ? userMessageWrapperINVSx : userMessageWrapperSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}

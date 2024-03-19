@@ -7,61 +7,59 @@ import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { GATHER_PLACEHOLDER } from '../beam.config';
 
 
-export interface BFusion {
-  // set at creation
-  userPrompt: string;
-
-  // set at lifecycle
-  llmId: DLLMId | null;
-
-  // variable
-  status: 'idle' | 'fusing' | 'success' | 'stopped' | 'error';
-  outputMessage: DMessage;
-  issue?: string;
-  abortController?: AbortController;
-}
-
-function createBFusion(systemPrompt: string): BFusion {
-  return {
-    userPrompt: systemPrompt,
-    llmId: null,
-    status: 'idle',
-    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
-  };
-}
-
-
 // Choose, Improve, Fuse, Manual
 
-interface BeamFusionSpec {
-  fType: 'guided' | 'fuse' | 'custom',
-  fLabel: string;
-  fTemplate: BFusion;
-}
-
-export const beamFusionSpecs: BeamFusionSpec[] = [
+export const FUSION_PROGRAMS: { label: string, factory: () => BFusion }[] = [
   {
-    fType: 'guided',
-    fLabel: 'Guided',
-    fTemplate: createBFusion(
-      'Use function calling for this - or Json mode?',
-    ),
+    label: 'Guided', factory: () => ({
+      instructions: [{
+        type: 'chat-generate',
+        systemPrompt: 'You are',
+        userPrompt: 'Perform this',
+        outputType: 'fin',
+      }],
+      currentInstructionIndex: 0,
+      isEditable: false,
+      llmId: null,
+      status: 'idle',
+      outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+    }),
   },
   {
-    fType: 'fuse',
-    fLabel: 'Fuse',
-    fTemplate: createBFusion(
-      'I am your father',
-    ),
+    label: 'Fuse', factory: () => ({
+      instructions: [{
+        type: 'chat-generate',
+        systemPrompt: 'You are an editor',
+        userPrompt: 'Best of all',
+        outputType: 'fin',
+      }],
+      currentInstructionIndex: 0,
+      isEditable: false,
+      llmId: null,
+      status: 'idle',
+      outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER + '2'),
+    }),
   },
   {
-    fType: 'custom',
-    fLabel: 'Custom',
-    fTemplate: createBFusion(
-      '...',
-    ),
+    label: 'Custom', factory: () => ({
+      instructions: [],
+      currentInstructionIndex: 0,
+      isEditable: true,
+      llmId: null,
+      status: 'idle',
+      outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER + '3'),
+    }),
   },
 ];
+
+function executeInstruction(instruction: TInstruction): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      console.log('executed', instruction);
+      resolve();
+    }, 1000);
+  });
+}
 
 export function fusionGatherStop(fusion: BFusion): BFusion {
   fusion.abortController?.abort();
@@ -74,6 +72,31 @@ export function fusionGatherStop(fusion: BFusion): BFusion {
 
 
 /// Gather Store Slice ///
+
+type TInstruction = {
+  type: 'chat-generate',
+  systemPrompt: string;
+  userPrompt: string;
+  outputType: 'fin' | 'user-checklist';
+} | {
+  type: 'user-input-checklist'
+};
+
+export interface BFusion {
+  // set at creation, adjusted later if this is a custom fusion (and only when idle)
+  instructions: TInstruction[];
+  currentInstructionIndex: number;
+  isEditable: boolean;
+
+  // set at lifecycle
+  llmId: DLLMId | null;
+
+  // variable
+  status: 'idle' | 'fusing' | 'success' | 'stopped' | 'error';
+  outputMessage: DMessage;
+  issue?: string;
+  abortController?: AbortController;
+}
 
 interface GatherStateSlice {
 
@@ -92,7 +115,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
 
   return {
     // recreate all fusions (no recycle)
-    fusions: beamFusionSpecs.map(spec => ({ ...spec.fTemplate })),
+    fusions: FUSION_PROGRAMS.map(spec => spec.factory()),
     fusionIndex: null,
     fusionLlmId: null,
     isGathering: false,

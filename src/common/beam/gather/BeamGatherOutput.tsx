@@ -33,13 +33,12 @@ const fusionChatMessageSx: SxProps = {
 
 
 export function BeamGatherOutput(props: {
-  fusionIndex: number | null,
   isMobile: boolean,
   beamStore: BeamStoreApi
 }) {
 
   // external state
-  const fusion = useBeamStore(props.beamStore, store => props.fusionIndex !== null ? store.fusions[props.fusionIndex] ?? null : null);
+  const fusion = useBeamStore(props.beamStore, store => store.fusionIndex !== null ? store.fusions[store.fusionIndex] ?? null : null);
 
   if (!fusion)
     return null;
