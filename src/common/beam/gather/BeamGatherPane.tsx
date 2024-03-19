@@ -15,7 +15,7 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { BEAM_GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
-import { beamFusionSpecs } from './beam.fusions';
+import { beamFusionSpecs } from './beam.gather';
 
 
 const mobileBeamGatherPane: SxProps = {
