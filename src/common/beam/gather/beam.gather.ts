@@ -93,7 +93,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   return {
     // recreate all fusions (no recycle)
     fusions: beamFusionSpecs.map(spec => ({ ...spec.fTemplate })),
-    fusionIndex: 1,
+    fusionIndex: null,
     fusionLlmId: null,
     isGathering: false,
   };

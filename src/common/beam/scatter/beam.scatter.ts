@@ -147,7 +147,7 @@ export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => 
   prevRays.forEach(rayScatterStop);
 
   return {
-    // keep the same quantity of rays and same llms
+    // (remember) keep the same quantity of rays and same llms
     rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
 
     isScattering: false,

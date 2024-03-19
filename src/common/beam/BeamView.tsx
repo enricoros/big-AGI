@@ -8,7 +8,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
-import { BeamFusion } from './gather/BeamFusion';
+import { BeamGatherOutput } from './gather/BeamGatherOutput';
 import { BeamGatherConfig } from './gather/BeamGatherConfig';
 import { BeamGatherPane } from './gather/BeamGatherPane';
 import { BeamRayGrid } from './scatter/BeamRayGrid';
@@ -146,7 +146,7 @@ export function BeamView(props: {
         />
 
         {/* Fusion Output */}
-        <BeamFusion
+        <BeamGatherOutput
           beamStore={props.beamStore}
           fusionIndex={fusionIndex}
           isMobile={props.isMobile}
