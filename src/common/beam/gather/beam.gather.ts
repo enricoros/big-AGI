@@ -7,37 +7,61 @@ import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { GATHER_PLACEHOLDER } from '../beam.config';
 
 
-// Choose, Improve, Fuse, Manual
-
-export interface BeamFusionSpec {
-  id: 'guided' | 'fuse' | 'custom',
-  name: string;
-}
-
-export const beamFusionSpecs: BeamFusionSpec[] = [
-  { id: 'guided', name: 'Guided' },
-  { id: 'fuse', name: 'Fuse' },
-  { id: 'custom', name: 'Custom' },
-];
-
 export interface BFusion {
-  fusionId: BeamFusionSpec['id'];
+  // set at creation
+  userPrompt: string;
+
+  // set at lifecycle
+  llmId: DLLMId | null;
+
+  // variable
   status: 'idle' | 'fusing' | 'success' | 'stopped' | 'error';
-  message: DMessage;
-  llmId: DLLMId;
+  outputMessage: DMessage;
   issue?: string;
   abortController?: AbortController;
 }
 
-
-export function createBFusion(fusionId: BeamFusionSpec['id'], fusionLlmId: DLLMId): BFusion {
+function createBFusion(systemPrompt: string): BFusion {
   return {
-    fusionId,
+    userPrompt: systemPrompt,
+    llmId: null,
     status: 'idle',
-    message: createDMessage('assistant', GATHER_PLACEHOLDER),
-    llmId: fusionLlmId,
+    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
   };
 }
+
+
+// Choose, Improve, Fuse, Manual
+
+interface BeamFusionSpec {
+  fType: 'guided' | 'fuse' | 'custom',
+  fLabel: string;
+  fTemplate: BFusion;
+}
+
+export const beamFusionSpecs: BeamFusionSpec[] = [
+  {
+    fType: 'guided',
+    fLabel: 'Guided',
+    fTemplate: createBFusion(
+      'Use function calling for this - or Json mode?',
+    ),
+  },
+  {
+    fType: 'fuse',
+    fLabel: 'Fuse',
+    fTemplate: createBFusion(
+      'I am your father',
+    ),
+  },
+  {
+    fType: 'custom',
+    fLabel: 'Custom',
+    fTemplate: createBFusion(
+      '...',
+    ),
+  },
+];
 
 export function fusionGatherStop(fusion: BFusion): BFusion {
   fusion.abortController?.abort();
@@ -62,16 +86,20 @@ interface GatherStateSlice {
 
 }
 
-export const initGatherStateSlice = (): GatherStateSlice => ({
+export const initGatherStateSlice = (_prevFusions: BFusion[]): GatherStateSlice => {
 
-  fusions: [],
+  // recreate the fusions, ignoring prevFusions for now (could implement some param recycle, eventually)
+  const fusions: BFusion[] = [
+    ...beamFusionSpecs.map(spec => ({ ...spec.fTemplate })),
+  ];
 
-  fusionIndex: null,
-  fusionLlmId: null,
-
-  isGathering: false,
-
-});
+  return {
+    fusions,
+    fusionIndex: null,
+    fusionLlmId: null,
+    isGathering: false,
+  };
+};
 
 export interface GatherStoreSlice extends GatherStateSlice {
 
@@ -85,7 +113,7 @@ export interface GatherStoreSlice extends GatherStateSlice {
 export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
 
   // initial state
-  ...initGatherStateSlice(),
+  ...initGatherStateSlice([]),
 
 
   setFusionIndex: (index: number | null) =>

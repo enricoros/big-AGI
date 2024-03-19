@@ -3,9 +3,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import { createDMessage } from '~/common/state/store-chats';
-
-import type { BeamStoreApi } from '../store-beam.hooks';
+import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { BeamCard, beamCardClasses } from '../BeamCard';
 
 
@@ -31,9 +29,20 @@ const fusionChatMessageSx: SxProps = {
 } as const;
 
 
+// const placeholderMessage = createDMessage('assistant', 'Click the Merge button to combine the Beams.');
+
+
 export function BeamFusion(props: {
-  fusionIndex: number | null, isMobile: boolean, beamStore: BeamStoreApi
+  fusionIndex: number | null,
+  isMobile: boolean,
+  beamStore: BeamStoreApi
 }) {
+
+  // external state
+  const fusion = useBeamStore(props.beamStore, store => props.fusionIndex !== null ? store.fusions[props.fusionIndex] ?? null : null);
+
+  if (!fusion)
+    return null;
 
   return (
     <BeamCard
@@ -41,7 +50,7 @@ export function BeamFusion(props: {
       sx={fusionRayCardSx}
     >
       <ChatMessageMemo
-        message={createDMessage('assistant', 'Gather the messages you want to merge.')}
+        message={fusion.outputMessage}
         fitScreen={props.isMobile}
         showAvatar={false}
         adjustContentScaling={-1}

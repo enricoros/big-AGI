@@ -91,7 +91,7 @@ export function BeamGatherPane(props: {
             const isActive = idx === props.fusionIndex;
             return (
               <Button
-                key={'gather-method-' + spec.id}
+                key={'gather-method-' + spec.fType}
                 color={isActive ? BEAM_GATHER_COLOR : 'neutral'}
                 onClick={event => handleMethodClicked(idx, !!event?.shiftKey)}
                 // size='sm'
@@ -102,7 +102,7 @@ export function BeamGatherPane(props: {
                   // minHeight: '2.25rem',
                 }}
               >
-                {spec.name}
+                {spec.fLabel}
               </Button>
             );
           })}
