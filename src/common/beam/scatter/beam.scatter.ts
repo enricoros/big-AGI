@@ -142,14 +142,18 @@ interface ScatterStateSlice {
 
 }
 
-export const initScatterStateSlice = (): ScatterStateSlice => ({
+export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => {
+  // stop all ongoing rays
+  prevRays.forEach(rayScatterStop);
 
-  rays: [],
+  return {
+    // keep the same quantity of rays and same llms
+    rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
 
-  isScattering: false,
-  raysReady: 0,
-
-});
+    isScattering: false,
+    raysReady: 0,
+  };
+};
 
 export interface ScatterStoreSlice extends ScatterStateSlice {
 
@@ -171,7 +175,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
 export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice & ScatterStoreSlice, [], [], ScatterStoreSlice> = (_set, _get) => ({
 
   // init state
-  ...initScatterStateSlice(),
+  ...reInitScatterStateSlice([]),
 
 
   setRayCount: (count: number) => {

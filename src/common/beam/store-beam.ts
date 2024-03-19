@@ -4,8 +4,8 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { createBRay, createScatterSlice, initScatterStateSlice, rayScatterStop, ScatterStoreSlice } from './scatter/beam.scatter';
-import { createGatherSlice, fusionGatherStop, GatherStoreSlice, initGatherStateSlice } from './gather/beam.gather';
+import { createBRay, createScatterSlice, reInitScatterStateSlice, rayScatterStop, ScatterStoreSlice } from './scatter/beam.scatter';
+import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './gather/beam.gather';
 
 
 /// Beam Store (vanilla, creator function) ///
@@ -96,17 +96,11 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   terminate: () => { /*_get().isOpen &&*/
     const { rays: prevRays, fusions: prevFusions, fusionLlmId } = _get();
 
-    // Terminate all rays and fusions
-    prevRays.forEach(rayScatterStop);
-    prevFusions.forEach(fusionGatherStop);
-
     _set({
       ...initRootStateSlice(),
-      ...initScatterStateSlice(),
-      ...initGatherStateSlice(prevFusions),
+      ...reInitScatterStateSlice(prevRays),
+      ...reInitGatherStateSlice(prevFusions),
 
-      // (remember after termination) models for each ray
-      rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
       // (remember after termination) gather model
       fusionLlmId,
     });
