@@ -5,7 +5,7 @@ import { Box, Button, Card, IconButton, Input, Stack, Tooltip, Typography } from
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DoneIcon from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LinkIcon from '@mui/icons-material/Link';
@@ -198,7 +198,7 @@ export function ChatLinkDetails(props: {
                       disabled={isEditingDeletionKey}
                       onClick={handleKeyEditBegin}
                     >
-                      <EditIcon />
+                      <EditRoundedIcon />
                     </IconButton>
                   </Tooltip>
                   <IconButton

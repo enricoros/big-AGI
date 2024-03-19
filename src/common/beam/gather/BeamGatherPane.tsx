@@ -86,27 +86,29 @@ export function BeamGatherPane(props: {
       {/* Method */}
       <FormControl sx={{ my: '-0.25rem' }}>
         <FormLabelStart title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
-        <ButtonGroup variant='outlined'>
-          {FUSION_PROGRAMS.map((fusion, idx) => {
-            const isActive = idx === props.fusionIndex;
-            return (
-              <Button
-                key={'gather-method-' + idx}
-                color={isActive ? GATHER_COLOR : 'neutral'}
-                onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
-                // size='sm'
-                sx={{
-                  // backgroundColor: isActive ? 'background.popup' : undefined,
-                  backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
-                  fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                  // minHeight: '2.25rem',
-                }}
-              >
-                {fusion.label}
-              </Button>
-            );
-          })}
-        </ButtonGroup>
+        <Box sx={{ display: 'flex', flexAlign: 'center', gap: 1 }}>
+          <ButtonGroup variant='outlined'>
+            {FUSION_PROGRAMS.map((fusion, idx) => {
+              const isActive = idx === props.fusionIndex;
+              return (
+                <Button
+                  key={'gather-method-' + idx}
+                  color={isActive ? GATHER_COLOR : 'neutral'}
+                  onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
+                  // size='sm'
+                  sx={{
+                    // backgroundColor: isActive ? 'background.popup' : undefined,
+                    backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
+                    fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                    // minHeight: '2.25rem',
+                  }}
+                >
+                  {fusion.label}
+                </Button>
+              );
+            })}
+          </ButtonGroup>
+        </Box>
       </FormControl>
 
       {/* LLM */}

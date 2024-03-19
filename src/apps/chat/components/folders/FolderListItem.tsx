@@ -5,7 +5,7 @@ import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListI
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -214,7 +214,7 @@ export function FolderListItem(props: {
               }}
             >
               <ListItemDecorator>
-                <EditIcon />
+                <EditRoundedIcon />
               </ListItemDecorator>
               Edit
             </MenuItem>
