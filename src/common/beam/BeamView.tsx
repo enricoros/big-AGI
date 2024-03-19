@@ -83,25 +83,31 @@ export function BeamView(props: {
   const raysCount = rayIds.length;
   const {
     inputHistory, inputIssues,
-    fusionLlmId,
+    fusionIndex, fusionLlmId,
     readyScatter, isScattering,
     readyGather, isGathering,
   } = useBeamStore(props.beamStore, useShallow((state) => ({
     // state
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
+    fusionIndex: state.fusionIndex,
     fusionLlmId: state.fusionLlmId,
     readyScatter: state.readyScatter,
     isScattering: state.isScattering,
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setFusionLlmId, terminate } = props.beamStore.getState();
-  const [_, mergeLlmComponent, mergeLlmVendorIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
+  const {
+    editInputHistoryMessage,
+    setRayCount, startScatteringAll, stopScatteringAll,
+    setFusionIndex, setFusionLlmId, startGatheringCurrent, stopGatheringCurrent,
+    // terminate,
+  } = props.beamStore.getState();
+  const [_, gatherLlmComponent, gatherLlmVendorIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
 
   // configuration
 
-  const handleTerminate = React.useCallback(() => terminate(), [terminate]);
+  // const handleTerminate = React.useCallback(() => terminate(), [terminate]);
 
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
@@ -211,15 +217,16 @@ export function BeamView(props: {
 
         {/* Gather Controls */}
         <BeamPaneGather
+          gatherLlmComponent={gatherLlmComponent}
+          gatherLlmVendorIcon={gatherLlmVendorIcon}
           gatherBusy={isGathering}
           gatherCount={readyGather}
           gatherEnabled={readyGather > 0 && !isScattering}
           isMobile={props.isMobile}
-          mergeLlmComponent={mergeLlmComponent}
-          mergeLlmVendorIcon={mergeLlmVendorIcon}
-          onStart={() => null}
-          onStop={() => null}
-          onClose={handleTerminate}
+          fusionIndex={fusionIndex}
+          setFusionIndex={setFusionIndex}
+          onStartFusion={startGatheringCurrent}
+          onStopFusion={stopGatheringCurrent}
         />
 
       </Box>

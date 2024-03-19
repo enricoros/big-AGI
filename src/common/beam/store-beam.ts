@@ -23,6 +23,7 @@ interface BeamState {
   rays: BRay[];
   fusions: BFusion[];
 
+  fusionIndex: number | null;
   fusionLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
 
   readyScatter: boolean; // true if the input is valid
@@ -43,6 +44,7 @@ const initialBeamState = (): BeamState => ({
   rays: [],
   fusions: [],
 
+  fusionIndex: null,
   fusionLlmId: null,
 
   readyScatter: false,
@@ -72,7 +74,10 @@ export interface BeamStore extends BeamState {
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
   // fusions
+  setFusionIndex: (index: number | null) => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
+  startGatheringCurrent: () => void;
+  stopGatheringCurrent: () => void;
 
   // state sync
   syncRaysStateToBeam: () => void;
@@ -204,12 +209,6 @@ export const createBeamStore = () => createStore<BeamStore>()(
     },
 
 
-    setFusionLlmId: (llmId: DLLMId | null) =>
-      _set({
-        fusionLlmId: llmId,
-      }),
-
-
     startScatteringAll: () => {
       _set(state => ({
         // Start all rays
@@ -246,6 +245,27 @@ export const createBeamStore = () => createStore<BeamStore>()(
         : ray,
       ),
     })),
+
+
+    /// Fusions ///
+
+    setFusionIndex: (index: number | null) =>
+      _set({
+        fusionIndex: index,
+      }),
+
+    setFusionLlmId: (llmId: DLLMId | null) =>
+      _set({
+        fusionLlmId: llmId,
+      }),
+
+    startGatheringCurrent: () => {
+      console.log('startGatheringCurrent');
+    },
+
+    stopGatheringCurrent: () => {
+      console.log('stopGatheringCurrent');
+    },
 
 
     syncRaysStateToBeam: () => {

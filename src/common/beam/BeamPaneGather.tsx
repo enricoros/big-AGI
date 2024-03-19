@@ -10,9 +10,11 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { animationColorBeamGather } from '~/common/util/animUtils';
+import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { BEAM_GATHER_COLOR } from './beam.config';
 import { beamControlsSx } from './BeamPaneScatter';
+import { beamFusionSpecs } from './beam.fusions';
 
 
 const beamGatherControlsSx: SxProps = {
@@ -45,19 +47,32 @@ const desktopBeamControlsSx: SxProps = {
 
 
 export function BeamPaneGather(props: {
-  gatherBusy: boolean,
-  gatherCount: number
-  gatherEnabled: boolean,
   isMobile: boolean,
-  mergeLlmComponent: React.ReactNode,
-  mergeLlmVendorIcon?: React.FunctionComponent<SvgIconProps>,
-  onStart: () => void,
-  onStop: () => void,
-  onClose: () => void,
+  gatherBusy: boolean,
+  gatherCount: number,
+  gatherEnabled: boolean,
+  gatherLlmComponent: React.ReactNode,
+  gatherLlmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  fusionIndex: number | null,
+  setFusionIndex: (index: number | null) => void
+  onStartFusion: () => void,
+  onStopFusion: () => void,
 }) {
-  const { gatherCount, gatherEnabled, gatherBusy } = props;
 
-  const Icon = props.mergeLlmVendorIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+  // external state
+  const { setStickToBottom } = useScrollToBottom();
+
+  // derived state
+  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex } = props;
+
+  const handleMethodClicked = React.useCallback((idx: number, shiftPressed: boolean) => {
+    setStickToBottom(true);
+    setFusionIndex((idx !== props.fusionIndex || !shiftPressed) ? idx : null);
+  }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
+
+
+  const Icon = props.gatherLlmVendorIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+
 
   return (
     <Box sx={props.isMobile ? beamGatherControlsSx : desktopBeamControlsSx}>
@@ -80,44 +95,31 @@ export function BeamPaneGather(props: {
       <FormControl sx={{ my: '-0.25rem' }}>
         <FormLabelStart title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
         <ButtonGroup variant='outlined'>
-          {['Guided', 'Auto'].map((n, idx) => {
-            const isActive = idx === 0; //fasn === props.rayCount;
+          {beamFusionSpecs.map((spec, idx) => {
+            const isActive = idx === props.fusionIndex;
             return (
               <Button
-                key={n}
+                key={'gather-method-' + spec.id}
                 color={isActive ? BEAM_GATHER_COLOR : 'neutral'}
+                onClick={event => handleMethodClicked(idx, !!event?.shiftKey)}
                 // size='sm'
                 sx={{
                   // backgroundColor: isActive ? 'background.popup' : undefined,
                   backgroundColor: isActive ? `${BEAM_GATHER_COLOR}.softBg` : 'background.popup',
                   fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                  // width: '3.125rem',
                   // minHeight: '2.25rem',
                 }}
               >
-                {n}
+                {spec.name}
               </Button>
             );
           })}
         </ButtonGroup>
       </FormControl>
 
-      {/* Method (Radio)*/}
-      {/*<FormControl>*/}
-      {/*  <FormLabelStart title={<><AutoAwesomeRoundedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px } />*!/*/}
-      {/*  <RadioGroup orientation={props.isMobile ? 'vertical' : 'horizontal'}>*/}
-      {/*    <Radio color={BEAM_GATHER_COLOR} value='one' label='Guided' />*/}
-      {/*    <Radio color={BEAM_GATHER_COLOR} value='many' label={<Typography>Fusion</Typography>} />*/}
-      {/*    /!*<Radio value='one' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Chooose</Typography>} />*!/*/}
-      {/*    /!*<Radio value='many' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Improve</Typography>} />*!/*/}
-      {/*    /!*<Radio value='all' label={<Typography startDecorator={<AutoAwesomeRoundedIcon />}>Fuse</Typography>} />*!/*/}
-      {/*    /!*<Radio value='manual' label='Manual' />*!/*/}
-      {/*  </RadioGroup>*/}
-      {/*</FormControl>*/}
-
       {/* LLM */}
       <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 220 }}>
-        {props.mergeLlmComponent}
+        {props.gatherLlmComponent}
       </Box>
 
       {/* Start / Stop buttons */}
@@ -127,7 +129,7 @@ export function BeamPaneGather(props: {
           variant='solid' color={BEAM_GATHER_COLOR}
           disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
           endDecorator={<MergeRoundedIcon />}
-          onClick={props.onStart}
+          onClick={props.onStartFusion}
           sx={{ minWidth: 120 }}
         >
           Merge
@@ -137,7 +139,7 @@ export function BeamPaneGather(props: {
           // key='gather-stop'
           variant='solid' color='danger'
           endDecorator={<StopRoundedIcon />}
-          onClick={props.onStop}
+          onClick={props.onStopFusion}
           sx={{ minWidth: 120 }}
         >
           Stop
