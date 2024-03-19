@@ -6,9 +6,11 @@ import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRou
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { BeamStoreApi } from './store-beam.hooks';
-import { BeamRay, RayCard } from './BeamRay';
-import { SCATTER_RAY_MAX, SCATTER_RAY_MIN } from './beam.config';
+import type { BeamStoreApi } from '../store-beam.hooks';
+import { BeamCard } from '../BeamCard';
+import { SCATTER_RAY_MAX, SCATTER_RAY_MIN } from '../beam.config';
+
+import { BeamRay } from './BeamRay';
 
 
 const beamRayGridDesktopSx: SxProps = {
@@ -52,7 +54,7 @@ export function BeamRayGrid(props: {
 
       {/* Add Ray */}
       {raysCount < SCATTER_RAY_MAX && (
-        <RayCard sx={{ mb: 'auto' }}>
+        <BeamCard sx={{ mb: 'auto' }}>
           <Button variant='plain' color='neutral' onClick={props.onIncreaseRayCount} sx={{
             minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',
             marginBlock: 'calc(-1 * var(--Card-padding) + 0.25rem)',
@@ -61,7 +63,7 @@ export function BeamRayGrid(props: {
           }}>
             <AddCircleOutlineRoundedIcon />
           </Button>
-        </RayCard>
+        </BeamCard>
       )}
 
     </Box>

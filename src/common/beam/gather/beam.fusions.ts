@@ -2,7 +2,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 
-import { GATHER_PLACEHOLDER } from './beam.config';
+import { GATHER_PLACEHOLDER } from '../beam.config';
 
 
 // Choose, Improve, Fuse, Manual

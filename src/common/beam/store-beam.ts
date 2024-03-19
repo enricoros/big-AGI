@@ -4,8 +4,8 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { BFusion, fusionGatherStop } from './beam.fusions';
-import { BRay, BRayId, createBRay, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from './beam.rays';
+import { BFusion, fusionGatherStop } from './gather/beam.fusions';
+import { BRay, BRayId, createBRay, rayIsScattering, rayIsSelectable, rayScatterStart, rayScatterStop } from './scatter/beam.rays';
 
 
 // Beam

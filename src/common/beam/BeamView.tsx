@@ -8,12 +8,12 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
-import { BeamFusion } from './BeamFusion';
-import { BeamGatherConfig } from './BeamGatherConfig';
-import { BeamGatherPane } from './BeamGatherPane';
-import { BeamRayGrid } from './BeamRayGrid';
-import { BeamScatterInput } from './BeamScatterInput';
-import { BeamScatterPane } from './BeamScatterPane';
+import { BeamFusion } from './gather/BeamFusion';
+import { BeamGatherConfig } from './gather/BeamGatherConfig';
+import { BeamGatherPane } from './gather/BeamGatherPane';
+import { BeamRayGrid } from './scatter/BeamRayGrid';
+import { BeamScatterInput } from './scatter/BeamScatterInput';
+import { BeamScatterPane } from './scatter/BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 import { SCATTER_RAY_DEF } from './beam.config';
 

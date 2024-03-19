@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
 import { createDMessage } from '~/common/state/store-chats';
 

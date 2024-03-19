@@ -3,11 +3,11 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Typography } from '@mui/joy';
 
-import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { BEAM_INVERT_USER_MESSAGE } from './beam.config';
+import { BEAM_INVERT_USER_MESSAGE } from '../beam.config';
 
 
 const userMessageWrapperSx: SxProps = {

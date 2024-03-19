@@ -1,12 +1,12 @@
 import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 
-import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
 import { createDMessage } from '~/common/state/store-chats';
 
-import type { BeamStoreApi } from './store-beam.hooks';
-import { RayCard, rayCardClasses } from './BeamRay';
+import type { BeamStoreApi } from '../store-beam.hooks';
+import { BeamCard, beamCardClasses } from '../BeamCard';
 
 
 const fusionRayCardSx: SxProps = {
@@ -36,8 +36,8 @@ export function BeamFusion(props: {
 }) {
 
   return (
-    <RayCard
-      className={rayCardClasses.selectable}
+    <BeamCard
+      className={beamCardClasses.selectable}
       sx={fusionRayCardSx}
     >
       <ChatMessageMemo
@@ -47,6 +47,6 @@ export function BeamFusion(props: {
         adjustContentScaling={-1}
         sx={fusionChatMessageSx}
       />
-    </RayCard>
+    </BeamCard>
   );
 }
