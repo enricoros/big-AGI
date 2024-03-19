@@ -32,7 +32,7 @@ const fusionChatMessageSx: SxProps = {
 // const placeholderMessage = createDMessage('assistant', 'Click the Merge button to combine the Beams.');
 
 
-export function BeamFusion(props: {
+export function BeamGatherOutput(props: {
   fusionIndex: number | null,
   isMobile: boolean,
   beamStore: BeamStoreApi

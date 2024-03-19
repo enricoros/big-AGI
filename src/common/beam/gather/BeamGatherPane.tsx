@@ -57,7 +57,7 @@ export function BeamGatherPane(props: {
   // derived state
   const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex } = props;
 
-  const handleMethodClicked = React.useCallback((idx: number, shiftPressed: boolean) => {
+  const handleFusionActivate = React.useCallback((idx: number, shiftPressed: boolean) => {
     setStickToBottom(true);
     setFusionIndex((idx !== props.fusionIndex || !shiftPressed) ? idx : null);
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
@@ -93,7 +93,7 @@ export function BeamGatherPane(props: {
               <Button
                 key={'gather-method-' + spec.fType}
                 color={isActive ? BEAM_GATHER_COLOR : 'neutral'}
-                onClick={event => handleMethodClicked(idx, !!event?.shiftKey)}
+                onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
                 // size='sm'
                 sx={{
                   // backgroundColor: isActive ? 'background.popup' : undefined,
