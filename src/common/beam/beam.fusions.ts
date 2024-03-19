@@ -8,17 +8,14 @@ import { GATHER_PLACEHOLDER } from './beam.config';
 // Choose, Improve, Fuse, Manual
 
 export interface BeamFusionSpec {
-  id: 'guided' | 'fuse' | 'manual',
+  id: 'guided' | 'fuse' | 'custom',
   name: string;
 }
 
 export const beamFusionSpecs: BeamFusionSpec[] = [
-  {
-    id: 'guided',
-    name: 'Guided',
-  },
+  { id: 'guided', name: 'Guided' },
   { id: 'fuse', name: 'Fuse' },
-  { id: 'manual', name: 'Manual' },
+  { id: 'custom', name: 'Custom' },
 ];
 
 export interface BFusion {

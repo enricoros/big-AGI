@@ -79,15 +79,22 @@ export function BeamView(props: {
 
   // linked state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
-  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-  const raysCount = rayIds.length;
+  const {
+    editInputHistoryMessage,
+    setFusionIndex,
+    setFusionLlmId,
+    setRayCount,
+    startGatheringCurrent,
+    startScatteringAll,
+    stopGatheringCurrent,
+    stopScatteringAll,
+  } = props.beamStore.getState();
   const {
     inputHistory, inputIssues,
     fusionIndex, fusionLlmId,
     readyScatter, isScattering,
     readyGather, isGathering,
-  } = useBeamStore(props.beamStore, useShallow((state) => ({
-    // state
+  } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
     fusionIndex: state.fusionIndex,
@@ -97,13 +104,14 @@ export function BeamView(props: {
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const {
-    editInputHistoryMessage,
-    setRayCount, startScatteringAll, stopScatteringAll,
-    setFusionIndex, setFusionLlmId, startGatheringCurrent, stopGatheringCurrent,
-    // terminate,
-  } = props.beamStore.getState();
-  const [_, gatherLlmComponent, gatherLlmVendorIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
+  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
+  const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
+
+
+  // derived state
+  const raysCount = rayIds.length;
+
+  const lastHistoryMessage = inputHistory?.slice(-1)[0] || null;
 
   // configuration
 
@@ -123,8 +131,7 @@ export function BeamView(props: {
   }, [bootup, handleRaySetCount]);
 
 
-  const lastMessage = inputHistory?.slice(-1)[0] || null;
-
+  // user message decorator
   const otherHistoryCount = Math.max(0, (inputHistory?.length || 0) - 1);
   const isFirstMessageSystem = inputHistory?.[0]?.role === 'system';
   const userMessageDecorator = React.useMemo(() => {
@@ -135,8 +142,11 @@ export function BeamView(props: {
     ) : null;
   }, [isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
 
+
+  // Explainer, if unseen
   if (props.showExplainer && explainerUnseen)
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
+
 
   return (
     <ScrollToBottom disableAutoStick>
@@ -164,10 +174,10 @@ export function BeamView(props: {
 
 
         {/* User Message */}
-        {!!lastMessage && (
+        {!!lastHistoryMessage && (
           <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageContainerInvertedSx : userMessageContainerSx}>
             <ChatMessageMemo
-              message={lastMessage}
+              message={lastHistoryMessage}
               fitScreen={props.isMobile}
               showAvatar={true}
               adjustContentScaling={-1}
@@ -215,13 +225,17 @@ export function BeamView(props: {
         {/*  </Box>*/}
         {/*)}*/}
 
+        {/*<BeamFusionSettings*/}
+        {/*  fusionIndex={fusionIndex}*/}
+        {/*  />*/}
+
         {/* Gather Controls */}
         <BeamPaneGather
           gatherLlmComponent={gatherLlmComponent}
-          gatherLlmVendorIcon={gatherLlmVendorIcon}
+          gatherLlmIcon={gatherLlmIcon}
           gatherBusy={isGathering}
           gatherCount={readyGather}
-          gatherEnabled={readyGather > 0 && !isScattering}
+          gatherEnabled={readyGather > 0 && !isScattering && fusionIndex !== null}
           isMobile={props.isMobile}
           fusionIndex={fusionIndex}
           setFusionIndex={setFusionIndex}
