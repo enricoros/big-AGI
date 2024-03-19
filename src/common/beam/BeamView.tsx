@@ -83,21 +83,21 @@ export function BeamView(props: {
   const raysCount = rayIds.length;
   const {
     inputHistory, inputIssues,
-    mergeLlmId,
+    fusionLlmId,
     readyScatter, isScattering,
     readyGather, isGathering,
   } = useBeamStore(props.beamStore, useShallow((state) => ({
     // state
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
-    mergeLlmId: state.mergeLlmId,
+    fusionLlmId: state.fusionLlmId,
     readyScatter: state.readyScatter,
     isScattering: state.isScattering,
     readyGather: state.readyGather,
     isGathering: state.isGathering,
   })));
-  const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setMergeLlmId, terminate } = props.beamStore.getState();
-  const [_, mergeLlmComponent, mergeLlmVendorIcon] = useLLMSelect(mergeLlmId, setMergeLlmId, props.isMobile ? '' : 'Merge Model', true);
+  const { editInputHistoryMessage, setRayCount, startScatteringAll, stopScatteringAll, setFusionLlmId, terminate } = props.beamStore.getState();
+  const [_, mergeLlmComponent, mergeLlmVendorIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
 
   // configuration
 
@@ -187,7 +187,7 @@ export function BeamView(props: {
         {/* Rays Grid */}
         <BeamRayGrid
           beamStore={props.beamStore}
-          linkedLlmId={mergeLlmId}
+          linkedLlmId={fusionLlmId}
           isMobile={props.isMobile}
           rayIds={rayIds}
           onIncreaseRayCount={handleRayIncreaseCount}
