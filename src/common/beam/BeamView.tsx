@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Alert, Box, Typography } from '@mui/joy';
+import { Alert, Box } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
 
@@ -11,46 +11,16 @@ import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
-import { BEAM_INVERT_USER_MESSAGE, SCATTER_RAY_DEF } from './beam.config';
 import { BeamExplainer } from './BeamExplainer';
 import { BeamPaneGather } from './BeamPaneGather';
 import { BeamPaneScatter } from './BeamPaneScatter';
 import { BeamRayGrid } from './BeamRayGrid';
+import { BeamScatterInput } from './BeamScatterInput';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { SCATTER_RAY_DEF } from './beam.config';
 
+import { createDMessage } from '~/common/state/store-chats';
 
-const userMessageContainerSx: SxProps = {
-  pt: 'var(--Pad)',
-  px: 'var(--Pad)',
-  mb: 'calc(-1 * var(--Pad))',
-
-  // sticky user message, only displaced by the scatter controls
-  // NOTE: disabled: should feel good but feels weird
-  // position: 'sticky',
-  // top: 0,
-};
-
-const userMessageContainerInvertedSx: SxProps = {
-  ...userMessageContainerSx,
-  backgroundColor: 'neutral.solidBg',
-  pt: 0,
-};
-
-const userMessageSx: SxProps = {
-  border: '1px solid',
-  borderColor: 'primary.outlinedBorder',
-  borderRadius: 'md',
-  borderBottom: 'none',
-  borderBottomLeftRadius: 0,
-  borderBottomRightRadius: 0,
-  // px: '0.5rem',
-  pr: '0.125rem',
-  // boxShadow: 'sm',
-  // the following make it end-aligned
-  // borderBottomRightRadius: 0,
-  // borderRight: 'none',
-  // px: 'var(--Pad)',
-} as const;
 
 const assistantMessageSx: SxProps = {
   backgroundColor: 'success.softBg',
@@ -73,9 +43,6 @@ export function BeamView(props: {
   isMobile: boolean,
   showExplainer?: boolean,
 }) {
-
-  // state
-  const [showHistoryMessage, setShowHistoryMessage] = React.useState(true);
 
   // linked state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
@@ -111,7 +78,6 @@ export function BeamView(props: {
   // derived state
   const raysCount = rayIds.length;
 
-  const lastHistoryMessage = inputHistory?.slice(-1)[0] || null;
 
   // configuration
 
@@ -129,18 +95,6 @@ export function BeamView(props: {
   React.useEffect(() => {
     bootup && handleRaySetCount(SCATTER_RAY_DEF);
   }, [bootup, handleRaySetCount]);
-
-
-  // user message decorator
-  const otherHistoryCount = Math.max(0, (inputHistory?.length || 0) - 1);
-  const isFirstMessageSystem = inputHistory?.[0]?.role === 'system';
-  const userMessageDecorator = React.useMemo(() => {
-    return (otherHistoryCount >= 1 && showHistoryMessage) ? (
-      <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.9 }} onClick={() => setShowHistoryMessage(on => !on)}>
-        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before ...
-      </Typography>
-    ) : null;
-  }, [isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
 
 
   // Explainer, if unseen
@@ -172,21 +126,12 @@ export function BeamView(props: {
         {/* Config Issues */}
         {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
-
         {/* User Message */}
-        {!!lastHistoryMessage && (
-          <Box sx={BEAM_INVERT_USER_MESSAGE ? userMessageContainerInvertedSx : userMessageContainerSx}>
-            <ChatMessageMemo
-              message={lastHistoryMessage}
-              fitScreen={props.isMobile}
-              showAvatar={true}
-              adjustContentScaling={-1}
-              topDecorator={userMessageDecorator}
-              onMessageEdit={editInputHistoryMessage}
-              sx={userMessageSx}
-            />
-          </Box>
-        )}
+        <BeamScatterInput
+          isMobile={props.isMobile}
+          history={inputHistory}
+          editHistory={editInputHistoryMessage}
+        />
 
         {/* Scatter Controls */}
         <BeamPaneScatter
@@ -210,24 +155,24 @@ export function BeamView(props: {
         />
 
         {/* Gather Message */}
-        {/*{(!!gatherMessage && !!gatherMessage.updated) && (*/}
-        {/*  <Box sx={{*/}
-        {/*    px: 'var(--Pad)',*/}
-        {/*    mb: 'calc(-1 * var(--Pad))',*/}
-        {/*  }}>*/}
-        {/*    <ChatMessageMemo*/}
-        {/*      message={gatherMessage}*/}
-        {/*      fitScreen={props.isMobile}*/}
-        {/*      showAvatar={false}*/}
-        {/*      adjustContentScaling={-1}*/}
-        {/*      sx={assistantMessageSx}*/}
-        {/*    />*/}
-        {/*  </Box>*/}
-        {/*)}*/}
+        <Box sx={{
+          px: 'var(--Pad)',
+          mb: 'calc(-1 * var(--Pad))',
+        }}>
+          <ChatMessageMemo
+            message={createDMessage('assistant', 'Gather the messages you want to merge.')}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={assistantMessageSx}
+          />
+        </Box>
 
-        {/*<BeamFusionSettings*/}
-        {/*  fusionIndex={fusionIndex}*/}
+        {/*{(fusionIndex !== null) && (*/}
+        {/*  <BeamFusionSettings*/}
+        {/*    fusionIndex={fusionIndex}*/}
         {/*  />*/}
+        {/*)}*/}
 
         {/* Gather Controls */}
         <BeamPaneGather
