@@ -12,10 +12,10 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
-import { BEAM_GATHER_COLOR } from '../beam.config';
+import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
-import { beamFusionSpecs } from './beam.gather';
+import { FUSION_PROGRAMS } from './beam.gather';
 
 
 const mobileBeamGatherPane: SxProps = {
@@ -87,22 +87,22 @@ export function BeamGatherPane(props: {
       <FormControl sx={{ my: '-0.25rem' }}>
         <FormLabelStart title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
         <ButtonGroup variant='outlined'>
-          {beamFusionSpecs.map((spec, idx) => {
+          {FUSION_PROGRAMS.map((fusion, idx) => {
             const isActive = idx === props.fusionIndex;
             return (
               <Button
-                key={'gather-method-' + spec.fType}
-                color={isActive ? BEAM_GATHER_COLOR : 'neutral'}
+                key={'gather-method-' + idx}
+                color={isActive ? GATHER_COLOR : 'neutral'}
                 onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
                 // size='sm'
                 sx={{
                   // backgroundColor: isActive ? 'background.popup' : undefined,
-                  backgroundColor: isActive ? `${BEAM_GATHER_COLOR}.softBg` : 'background.popup',
+                  backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
                   fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                   // minHeight: '2.25rem',
                 }}
               >
-                {spec.fLabel}
+                {fusion.label}
               </Button>
             );
           })}
@@ -118,7 +118,7 @@ export function BeamGatherPane(props: {
       {!gatherBusy ? (
         <Button
           // key='gather-start' // used for animation triggering, which we don't have now
-          variant='solid' color={BEAM_GATHER_COLOR}
+          variant='solid' color={GATHER_COLOR}
           disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
           endDecorator={<MergeRoundedIcon />}
           onClick={props.onStartFusion}

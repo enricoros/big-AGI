@@ -10,7 +10,7 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationColorBeamScatter } from '~/common/util/animUtils';
 
-import { BEAM_SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
+import { SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
 
@@ -62,13 +62,13 @@ export function BeamScatterPane(props: {
               <Button
                 key={n}
                 // variant={isActive ? 'solid' : undefined}
-                color={isActive ? BEAM_SCATTER_COLOR : 'neutral'}
+                color={isActive ? SCATTER_COLOR : 'neutral'}
                 // color='neutral'
                 size='sm'
                 onClick={() => props.setRayCount(n)}
                 sx={{
                   // backgroundColor: isActive ? 'background.popup' : undefined,
-                  backgroundColor: isActive ? `${BEAM_SCATTER_COLOR}.softBg` : 'background.popup',
+                  backgroundColor: isActive ? `${SCATTER_COLOR}.softBg` : 'background.popup',
                   fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                   width: '3.125rem',
                 }}
@@ -84,7 +84,7 @@ export function BeamScatterPane(props: {
       {!props.startBusy ? (
         <Button
           // key='scatter-start' // used for animation triggering, which we don't have now
-          variant='solid' color={BEAM_SCATTER_COLOR}
+          variant='solid' color={SCATTER_COLOR}
           disabled={!props.startEnabled || props.startBusy} loading={props.startBusy}
           endDecorator={<PlayArrowRoundedIcon />}
           onClick={props.onStart}
