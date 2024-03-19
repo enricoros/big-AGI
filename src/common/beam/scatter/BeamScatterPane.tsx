@@ -10,25 +10,9 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationColorBeamScatter } from '~/common/util/animUtils';
 
-import { BEAM_SCATTER_COLOR, SCATTER_RAY_PRESETS } from './beam.config';
+import { BEAM_SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
+import { beamPaneSx } from '../BeamCard';
 
-
-// [shared] scatter/gather pane style
-export const beamPaneSx: SxProps = {
-  // style
-  backgroundColor: 'background.surface', // background.popup
-  boxShadow: 'md',
-  p: 'var(--Pad)',
-  // py: 'calc(2 * var(--Pad) / 3)',
-  zIndex: 1, // cast shadow on the rays/fusion
-
-  // layout
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 'var(--Pad_2)',
-};
 
 const desktopBeamScatterPaneSx: SxProps = {
   ...beamPaneSx,

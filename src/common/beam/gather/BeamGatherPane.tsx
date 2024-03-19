@@ -12,9 +12,10 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
-import { BEAM_GATHER_COLOR } from './beam.config';
+import { BEAM_GATHER_COLOR } from '../beam.config';
+import { beamPaneSx } from '../BeamCard';
+
 import { beamFusionSpecs } from './beam.fusions';
-import { beamPaneSx } from './BeamScatterPane';
 
 
 const mobileBeamGatherPane: SxProps = {

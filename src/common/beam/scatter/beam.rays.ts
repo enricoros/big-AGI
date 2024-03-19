@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { streamAssistantMessage } from '../../apps/chat/editors/chat-stream';
+import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import type { BeamStore } from './store-beam';
-import { SCATTER_PLACEHOLDER } from './beam.config';
+import type { BeamStore } from '../store-beam';
+import { SCATTER_PLACEHOLDER } from '../beam.config';
 
 
 export type BRayId = string;
