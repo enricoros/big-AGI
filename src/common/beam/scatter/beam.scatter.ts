@@ -137,9 +137,8 @@ interface ScatterStateSlice {
 
   rays: BRay[];
 
-  readyScatter: boolean; // true if the input is valid
-  readyGather: number;   // 0, or number of the rays that are ready to gather
   isScattering: boolean; // true if any ray is scattering at the moment
+  raysReady: number;     // 0, or number of the rays that are ready to gather
 
 }
 
@@ -147,9 +146,8 @@ export const initScatterStateSlice = (): ScatterStateSlice => ({
 
   rays: [],
 
-  readyScatter: false,
-  readyGather: 0,
   isScattering: false,
+  raysReady: 0,
 
 });
 
@@ -282,7 +280,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
 
     _set({
       isScattering: hasRays && !allDone,
-      readyGather: raysReady,
+      raysReady,
     });
   },
 

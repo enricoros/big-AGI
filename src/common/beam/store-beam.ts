@@ -32,6 +32,7 @@ interface RootStateSlice {
   isMaximized: boolean;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
+  inputReady: boolean;
   onSuccessCallback: BeamSuccessCallback | null;
 
 }
@@ -42,6 +43,7 @@ const initRootStateSlice = (): RootStateSlice => ({
   isMaximized: false,
   inputHistory: null,
   inputIssues: null,
+  inputReady: false,
   onSuccessCallback: null,
 
 });
@@ -78,6 +80,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       isOpen: true,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid history',
+      inputReady: isValidHistory,
       onSuccessCallback: callback,
 
       // rays already reset
@@ -87,9 +90,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
         // update the model only if the dialog was not already open
         fusionLlmId: initialFusionLlmId,
       }),
-
-      // state
-      readyScatter: isValidHistory,
     });
   },
 

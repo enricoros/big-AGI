@@ -77,8 +77,8 @@ export interface GatherStoreSlice extends GatherStateSlice {
 
   setFusionIndex: (index: number | null) => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
-  startGatheringCurrent: () => void;
-  stopGatheringCurrent: () => void;
+  startFusion: () => void;
+  stopFusion: () => void;
 
 }
 
@@ -98,11 +98,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
       fusionLlmId: llmId,
     }),
 
-  startGatheringCurrent: () => {
+  startFusion: () => {
     console.log('startGatheringCurrent');
   },
 
-  stopGatheringCurrent: () => {
+  stopFusion: () => {
     console.log('stopGatheringCurrent');
   },
 
