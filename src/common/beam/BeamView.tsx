@@ -12,10 +12,10 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
-import { BeamPaneGather } from './BeamPaneGather';
-import { BeamPaneScatter } from './BeamPaneScatter';
+import { BeamGatherPane } from './BeamGatherPane';
 import { BeamRayGrid } from './BeamRayGrid';
 import { BeamScatterInput } from './BeamScatterInput';
+import { BeamScatterPane } from './BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
 import { SCATTER_RAY_DEF } from './beam.config';
 
@@ -134,7 +134,7 @@ export function BeamView(props: {
         />
 
         {/* Scatter Controls */}
-        <BeamPaneScatter
+        <BeamScatterPane
           isMobile={props.isMobile}
           rayCount={raysCount}
           setRayCount={handleRaySetCount}
@@ -175,7 +175,7 @@ export function BeamView(props: {
         {/*)}*/}
 
         {/* Gather Controls */}
-        <BeamPaneGather
+        <BeamGatherPane
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}
           gatherBusy={isGathering}

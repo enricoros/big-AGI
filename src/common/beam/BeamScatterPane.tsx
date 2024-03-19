@@ -44,7 +44,7 @@ const desktopBeamScatterControlsSx: SxProps = {
 };
 
 
-export function BeamPaneScatter(props: {
+export function BeamScatterPane(props: {
   isMobile: boolean,
   rayCount: number,
   setRayCount: (n: number) => void,
