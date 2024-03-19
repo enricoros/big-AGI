@@ -68,7 +68,7 @@ export function BeamView(props: {
   if (props.showExplainer && explainerUnseen)
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
-
+  console.log('BeamView', props.beamStore.getState());
   return (
     <ScrollToBottom disableAutoStick>
 
@@ -126,6 +126,7 @@ export function BeamView(props: {
 
         {/* Fusion Config */}
         <BeamGatherConfig
+          beamStore={props.beamStore}
           fusionIndex={fusionIndex}
           isMobile={props.isMobile}
         />
@@ -136,7 +137,7 @@ export function BeamView(props: {
           gatherLlmIcon={gatherLlmIcon}
           gatherBusy={isGathering}
           gatherCount={raysReady}
-          gatherEnabled={raysReady > 0 && !isScattering && fusionIndex !== null}
+          gatherEnabled={raysReady > 0 && !isGathering && fusionIndex !== null}
           isMobile={props.isMobile}
           fusionIndex={fusionIndex}
           setFusionIndex={setFusionIndex}

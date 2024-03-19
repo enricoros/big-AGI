@@ -103,7 +103,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       ...initRootStateSlice(),
       ...initScatterStateSlice(),
-      ...initGatherStateSlice(),
+      ...initGatherStateSlice(prevFusions),
 
       // (remember after termination) models for each ray
       rays: prevRays.map((prevRay) => createBRay(prevRay.scatterLlmId)),
