@@ -1,11 +1,10 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, Dropdown, FormControl, IconButton, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Dropdown, FormControl, IconButton, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
@@ -15,10 +14,9 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
+import { FUSION_FACTORIES } from './beam.gather';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
-
-import { FUSION_FACTORIES } from './beam.gather';
 
 
 const mobileBeamGatherPane: SxProps = {
@@ -42,8 +40,8 @@ const desktopBeamGatherPaneSx: SxProps = {
 
 
 function BeamGatherDropdown(props: {
-  fusionShowPrompts: boolean,
-  toggleFusionShowPrompts: () => void,
+  gatherShowPrompts: boolean,
+  toggleGatherShowPrompts: () => void,
 }) {
   return (
     <Dropdown>
@@ -58,8 +56,8 @@ function BeamGatherDropdown(props: {
         <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
-        <MenuItem onClick={props.toggleFusionShowPrompts}>
-          <ListItemDecorator>{props.fusionShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+        <MenuItem onClick={props.toggleGatherShowPrompts}>
+          <ListItemDecorator>{props.gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
           Show Prompts
         </MenuItem>
       </Menu>
@@ -70,16 +68,15 @@ function BeamGatherDropdown(props: {
 
 export function BeamGatherPane(props: {
   isMobile: boolean,
+  fusionIndex: number | null,
+  setFusionIndex: (index: number | null) => void,
   gatherBusy: boolean,
   gatherCount: number,
   gatherEnabled: boolean,
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
-  fusionIndex: number | null,
-  fusionShowPrompts: boolean,
-  setFusionIndex: (index: number | null) => void,
-  toggleFusionShowPrompts: () => void,
-  onFusionCustomizeFrom: (index: number) => void,
+  gatherShowPrompts: boolean,
+  toggleGatherShowPrompts: () => void,
   onFusionStart: () => void,
   onFusionStop: () => void,
 }) {
@@ -88,20 +85,16 @@ export function BeamGatherPane(props: {
   const { setStickToBottom } = useScrollToBottom();
 
   // derived state
-  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex, onFusionCustomizeFrom } = props;
+  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex } = props;
 
   const handleFusionActivate = React.useCallback((idx: number, shiftPressed: boolean) => {
     setStickToBottom(true);
     setFusionIndex((idx !== props.fusionIndex || !shiftPressed) ? idx : null);
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
 
-  const handleFusionCustomize = React.useCallback(() => {
-    props.fusionIndex !== null && onFusionCustomizeFrom(props.fusionIndex);
-  }, [onFusionCustomizeFrom, props.fusionIndex]);
-
   const dropdownMemo = React.useMemo(() => {
-    return <BeamGatherDropdown fusionShowPrompts={props.fusionShowPrompts} toggleFusionShowPrompts={props.toggleFusionShowPrompts} />;
-  }, [props.fusionShowPrompts, props.toggleFusionShowPrompts]);
+    return <BeamGatherDropdown gatherShowPrompts={props.gatherShowPrompts} toggleGatherShowPrompts={props.toggleGatherShowPrompts} />;
+  }, [props.gatherShowPrompts, props.toggleGatherShowPrompts]);
 
 
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
@@ -152,13 +145,13 @@ export function BeamGatherPane(props: {
               );
             })}
           </ButtonGroup>
-          {(props.fusionIndex !== null) && (
-            <Tooltip disableInteractive title='Customize This Merge'>
-              <IconButton size='sm' color='success' disabled={props.gatherBusy || props.fusionIndex === 2} onClick={handleFusionCustomize}>
-                {props.fusionIndex === 2 ? null : <EditRoundedIcon />}
-              </IconButton>
-            </Tooltip>
-          )}
+          {/*{(props.fusionIndex !== null) && (*/}
+          {/*  <Tooltip disableInteractive title='Customize This Merge'>*/}
+          {/*    <IconButton size='sm' color='success' disabled={props.gatherBusy || props.fusionIndex === 2} onClick={handleFusionCopyAsCustom}>*/}
+          {/*      {props.fusionIndex === 2 ? null : <EditRoundedIcon />}*/}
+          {/*    </IconButton>*/}
+          {/*  </Tooltip>*/}
+          {/*)}*/}
         </Box>
       </FormControl>
 

@@ -110,10 +110,11 @@ export interface BFusion {
 
 interface GatherStateSlice {
 
-  fusions: BFusion[];
+  gatherShowPrompts: boolean;
 
+  fusions: BFusion[];
   fusionIndex: number | null;
-  fusionShowPrompts: boolean;
+
   fusionLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
 
   isGathering: boolean;  // true if any fusion is gathering at the moment
@@ -125,10 +126,9 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   prevFusions.forEach(fusionGatherStop);
 
   return {
-    // recreate all fusions (no recycle)
+    gatherShowPrompts: false,
     fusions: FUSION_FACTORIES.map(spec => spec.factory()),
     fusionIndex: null,
-    fusionShowPrompts: false,
     fusionLlmId: null,
     isGathering: false,
   };
@@ -136,11 +136,11 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
 
 export interface GatherStoreSlice extends GatherStateSlice {
 
+  toggleGatherShowPrompts: () => void;
   setFusionIndex: (index: number | null) => void;
-  toggleFusionShowPrompts: () => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
 
-  fusionCustomizeFrom: (sourceIndex: number) => void;
+  fusionCopyAsCustom: (sourceIndex: number) => void; // copies 'source' to custom
   fusionInstructionEdit: (fusionIndex: number, instructionIndex: number, update: Partial<TInstruction>) => void;
   fusionStart: () => void;
   fusionStop: () => void;
@@ -155,15 +155,15 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
   ...reInitGatherStateSlice([]),
 
 
+  toggleGatherShowPrompts: () =>
+    _set(state => ({
+      gatherShowPrompts: !state.gatherShowPrompts,
+    })),
+
   setFusionIndex: (index: number | null) =>
     _set({
       fusionIndex: index,
     }),
-
-  toggleFusionShowPrompts: () =>
-    _set(state => ({
-      fusionShowPrompts: !state.fusionShowPrompts,
-    })),
 
   setFusionLlmId: (llmId: DLLMId | null) =>
     _set({
@@ -178,7 +178,7 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
       ),
     })),
 
-  fusionCustomizeFrom: (sourceIndex: number) => {
+  fusionCopyAsCustom: (sourceIndex: number) => {
     const { fusions, setFusionIndex, _fusionUpdate } = _get();
     const editableFusionIndex = fusions.findIndex(fusion => fusion.isEditable);
     const fusionFactory = FUSION_FACTORIES[sourceIndex];
