@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CheckIcon from '@mui/icons-material/Check';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
@@ -152,7 +152,7 @@ function ChatDrawer(props: {
         slots={{ root: IconButton }}
         slotProps={{ root: { size: 'sm' } }}
       >
-        <MoreVertIcon sx={{ fontSize: 'xl' }} />
+        <MoreVertIcon />
       </MenuButton>
       <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
         <ListItem>
@@ -165,7 +165,7 @@ function ChatDrawer(props: {
             selected={navGrouping === _gName}
             onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}
           >
-            <ListItemDecorator>{navGrouping === _gName && <CheckIcon />}</ListItemDecorator>
+            <ListItemDecorator>{navGrouping === _gName && <CheckRoundedIcon />}</ListItemDecorator>
             {capitalizeFirstLetter(_gName)}
           </MenuItem>
         ))}
@@ -175,7 +175,7 @@ function ChatDrawer(props: {
           <Typography level='body-sm'>Filter</Typography>
         </ListItem>
         <MenuItem onClick={toggleFilterHasStars}>
-          <ListItemDecorator>{filterHasStars && <CheckIcon />}</ListItemDecorator>
+          <ListItemDecorator>{filterHasStars && <CheckRoundedIcon />}</ListItemDecorator>
           Starred <StarOutlineRoundedIcon />
         </MenuItem>
 
@@ -184,11 +184,11 @@ function ChatDrawer(props: {
           <Typography level='body-sm'>Show</Typography>
         </ListItem>
         <MenuItem onClick={toggleShowPersonaIcons}>
-          <ListItemDecorator>{showPersonaIcons && <CheckIcon />}</ListItemDecorator>
+          <ListItemDecorator>{showPersonaIcons && <CheckRoundedIcon />}</ListItemDecorator>
           Icons
         </MenuItem>
         <MenuItem onClick={toggleShowRelativeSize}>
-          <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
+          <ListItemDecorator>{showRelativeSize && <CheckRoundedIcon />}</ListItemDecorator>
           Relative Size
         </MenuItem>
       </Menu>
