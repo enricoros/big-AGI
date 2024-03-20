@@ -52,13 +52,13 @@ function BeamGatherDropdown(props: {
       >
         <MoreHorizRoundedIcon />
       </MenuButton>
-      <Menu placement='right-end' sx={{ minWidth: 180 }}>
+      <Menu placement='right-end' sx={{ minWidth: 200 }}>
         <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
         <MenuItem onClick={props.toggleGatherShowPrompts}>
           <ListItemDecorator>{props.gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
-          Show Prompts
+          Show All Prompts
         </MenuItem>
       </Menu>
     </Dropdown>

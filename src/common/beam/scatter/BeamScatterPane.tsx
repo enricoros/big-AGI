@@ -31,7 +31,7 @@ export function BeamScatterPane(props: {
   startBusy: boolean,
   onStart: () => void,
   onStop: () => void,
-  onExplainerShow: () => any
+  onExplainerShow: () => any,
 }) {
 
   return (
@@ -101,6 +101,7 @@ export function BeamScatterPane(props: {
           sx={{ minWidth: 120 }}
         >
           Stop
+          {/*{props.rayCount > props.raysReady && ` (${props.rayCount - props.raysReady})`}*/}
         </Button>
       )}
 

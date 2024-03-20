@@ -136,7 +136,7 @@ export function BeamView(props: {
           setFusionIndex={setFusionIndex}
           gatherBusy={isGathering}
           gatherCount={raysReady}
-          gatherEnabled={raysReady > 0 && !isGathering && fusionIndex !== null}
+          gatherEnabled={raysReady >= 2 && !isGathering && fusionIndex !== null}
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}
           gatherShowPrompts={gatherShowPrompts}

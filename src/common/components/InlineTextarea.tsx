@@ -9,6 +9,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 export function InlineTextarea(props: {
   initialText: string,
   placeholder?: string,
+  plain?: boolean
   invertedColors?: boolean,
   onEdit: (text: string) => void,
   onCancel?: () => void,
@@ -37,9 +38,9 @@ export function InlineTextarea(props: {
 
   return (
     <Textarea
-      variant={props.invertedColors ? 'plain' : 'soft'}
-      color={props.invertedColors ? 'primary' : 'warning'}
-      autoFocus
+      variant={props.invertedColors ? 'plain' : !props.plain ? 'soft' : undefined}
+      color={props.invertedColors ? 'primary' : !props.plain ? 'warning' : undefined}
+      autoFocus={!props.plain}
       minRows={1}
       placeholder={props.placeholder}
       value={text} onChange={handleEditTextChanged}
