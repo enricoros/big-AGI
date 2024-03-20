@@ -30,18 +30,25 @@ export const FUSION_FACTORIES: { label: string, Icon: React.FunctionComponent, d
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
     description: 'A brainstorming session with AI, where you first pick your favorite ideas from a list it generates, and then the AI combines those picks into a tailored solution.',
     factory: () => ({
-      instructions: [{
-        type: 'chat-generate',
-        systemPrompt: `You are an intelligent agent tasked with analyzing a set of AI-generated alternatives to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.`,
-        userPrompt: 'Given the conversation history and the {{N}} alternatives provided, identify and list the key insights, themes, or solutions as distinct options in a checklist format. Each item should be clearly articulated to allow for easy selection by the user. Ensure the checklist is comprehensive, covering the breadth of ideas presented in the alternatives, yet concise enough to facilitate clear decision-making.',
-        outputType: 'user-checklist',
-      }, {
-        type: 'chat-generate',
-        systemPrompt: 'You are a master synthesizer, now equipped with specific insights selected by the user from a checklist you previously helped generate. Your task is to integrate these selected insights into a single, cohesive response. This synthesis should address the user\'s original query comprehensively, incorporating the best elements of the user\'s chosen options. Aim for clarity, coherence, and actionability in your final output.',
-        userPrompt: 'Given the user\'s selected options from the checklist, synthesize these into a single, cohesive, comprehensive response that addresses the original query. Ensure the synthesis is coherent, integrating the selected insights in a manner that provides clear, actionable advice or solutions. The final output should reflect a deep understanding of the user\'s preferences and the conversation\'s context.',
-        outputType: 'fin',
-      }],
       ...commonInitialization(false),
+      instructions: [
+        {
+          type: 'chat-generate',
+          name: 'Generate Checklist',
+          method: 's-s0-h0-u0-aN-u',
+          systemPrompt: `You are an intelligent agent tasked with analyzing a set of AI-generated alternatives to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.`,
+          userPrompt: 'Given the conversation history and the {{N}} alternatives provided, identify and list the key insights, themes, or solutions as distinct options in a checklist format. Each item should be clearly articulated to allow for easy selection by the user. Ensure the checklist is comprehensive, covering the breadth of ideas presented in the alternatives, yet concise enough to facilitate clear decision-making.',
+          outputType: 'user-checklist',
+        },
+        {
+          type: 'chat-generate',
+          name: 'Checklist-guided Merge',
+          method: 's-s0-h0-u0-aN-u',
+          systemPrompt: 'You are a master synthesizer, now equipped with specific insights selected by the user from a checklist you previously helped generate. Your task is to integrate these selected insights into a single, cohesive response. This synthesis should address the user\'s original query comprehensively, incorporating the best elements of the user\'s chosen options. Aim for clarity, coherence, and actionability in your final output.',
+          userPrompt: 'Given the user\'s selected options from the checklist, synthesize these into a single, cohesive, comprehensive response that addresses the original query. Ensure the synthesis is coherent, integrating the selected insights in a manner that provides clear, actionable advice or solutions. The final output should reflect a deep understanding of the user\'s preferences and the conversation\'s context.',
+          outputType: 'display-message',
+        },
+      ],
     }),
   },
   {
@@ -49,9 +56,13 @@ export const FUSION_FACTORIES: { label: string, Icon: React.FunctionComponent, d
     Icon: MediationOutlinedIcon,
     description: 'AI combines conversation details and various AI-generated ideas into one clear, comprehensive answer, making sense of diverse insights for you.',
     factory: () => ({
-      instructions: [{
-        type: 'chat-generate',
-        systemPrompt: `
+      ...commonInitialization(false),
+      instructions: [
+        {
+          type: 'chat-generate',
+          name: 'Syntesizing Fusion',
+          method: 's-s0-h0-u0-aN-u',
+          systemPrompt: `
 You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single, comprehensive response that addresses the core objectives or questions.
 
 Consider the conversation history, the last user message, and the diverse perspectives presented in the {{N}} response alternatives.
@@ -59,11 +70,11 @@ Consider the conversation history, the last user message, and the diverse perspe
 Your response should integrate the most relevant insights from these inputs into a cohesive and actionable answer.
 
 Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
-        userPrompt: 'Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.',
-        // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
-        outputType: 'fin',
-      }],
-      ...commonInitialization(false),
+          userPrompt: 'Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.',
+          // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
+          outputType: 'display-message',
+        },
+      ],
     }),
   },
   {
@@ -71,16 +82,20 @@ Synthesize the perfect response that merges the key insights and provides clear 
     Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
     factory: () => ({
-      instructions: [{
-        type: 'chat-generate',
-        systemPrompt: `
+      ...commonInitialization(true),
+      instructions: [
+        {
+          type: 'chat-generate',
+          name: 'Executing Your Merge Strategy',
+          method: 's-s0-h0-u0-aN-u',
+          systemPrompt: `
 Your task is to synthesize a cohesive and relevant response based on the following messages: the original system message, the full conversation history up to the user query, the user query, and a set of {{N}} answers generated independently.
 These alternatives explore different solutions and perspectives and are presented in random order. Your output should integrate insights from these alternatives, aligned with the conversation's context and objectives, into a single, coherent response that addresses the user's needs and questions as expressed throughout the conversation.`.trim(),
-        userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
-        // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
-        outputType: 'fin',
-      }],
-      ...commonInitialization(true),
+          userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
+          // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
+          outputType: 'display-message',
+        },
+      ],
     }),
   },
 ];
@@ -114,14 +129,20 @@ export function fusionGatherStop(fusion: BFusion): BFusion {
 
 export type TChatGenerateInstruction = {
   type: 'chat-generate',
+  name: string;
+  /**
+   * - s-s0-h0-u0-aN-u: sandwiches the existing history and the new proposals in between the System and User prompts of the Instruction
+   */
+  method: 's-s0-h0-u0-aN-u',
   systemPrompt: string;
   userPrompt: string;
   evalPrompt?: string;
-  outputType: 'fin' | 'user-checklist';
+  outputType: 'display-message' | 'user-checklist';
 }
 
 export type TInstruction = TChatGenerateInstruction | {
   type: 'user-input-checklist'
+  name: string;
 };
 
 export interface BFusion {
