@@ -1,11 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, IconButton, SvgIconProps, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Dropdown, FormControl, IconButton, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, SvgIconProps, Tooltip, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -39,6 +41,33 @@ const desktopBeamGatherPaneSx: SxProps = {
 };
 
 
+function BeamGatherDropdown(props: {
+  fusionShowPrompts: boolean,
+  toggleFusionShowPrompts: () => void,
+}) {
+  return (
+    <Dropdown>
+      <MenuButton
+        aria-label='Merge Options'
+        slots={{ root: IconButton }}
+        slotProps={{ root: { size: 'sm', sx: { my: -0.5 /* to not disrupt the layouting */ } } }}
+      >
+        <MoreHorizRoundedIcon />
+      </MenuButton>
+      <Menu placement='right-end' sx={{ minWidth: 180 }}>
+        <ListItem>
+          <Typography level='body-sm'>Advanced</Typography>
+        </ListItem>
+        <MenuItem onClick={props.toggleFusionShowPrompts}>
+          <ListItemDecorator>{props.fusionShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+          Show Prompts
+        </MenuItem>
+      </Menu>
+    </Dropdown>
+  );
+}
+
+
 export function BeamGatherPane(props: {
   isMobile: boolean,
   gatherBusy: boolean,
@@ -47,7 +76,9 @@ export function BeamGatherPane(props: {
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   fusionIndex: number | null,
-  setFusionIndex: (index: number | null) => void
+  fusionShowPrompts: boolean,
+  setFusionIndex: (index: number | null) => void,
+  toggleFusionShowPrompts: () => void,
   onFusionCustomizeFrom: (index: number) => void,
   onFusionStart: () => void,
   onFusionStop: () => void,
@@ -68,6 +99,11 @@ export function BeamGatherPane(props: {
     props.fusionIndex !== null && onFusionCustomizeFrom(props.fusionIndex);
   }, [onFusionCustomizeFrom, props.fusionIndex]);
 
+  const dropdownMemo = React.useMemo(() => {
+    return <BeamGatherDropdown fusionShowPrompts={props.fusionShowPrompts} toggleFusionShowPrompts={props.toggleFusionShowPrompts} />;
+  }, [props.fusionShowPrompts, props.toggleFusionShowPrompts]);
+
+
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
 
@@ -78,8 +114,8 @@ export function BeamGatherPane(props: {
       {/* Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
         <div>
-          <Typography level='h4' component='h2'>
-            <Icon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} /> Merge
+          <Typography level='h4' component='h2' endDecorator={dropdownMemo}>
+            <Icon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}

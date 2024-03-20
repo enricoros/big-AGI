@@ -45,7 +45,7 @@ export function BeamScatterPane(props: {
         >
           {props.startBusy
             ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamScatter} 2s linear infinite` }} />
-            : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />} Beam
+            : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />}&nbsp;Beam
         </Typography>
         <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
           Explore the solution space
