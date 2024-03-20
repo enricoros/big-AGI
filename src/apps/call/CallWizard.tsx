@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typography } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatIcon from '@mui/icons-material/Chat';
-import CheckIcon from '@mui/icons-material/Check';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
@@ -29,7 +29,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
           {props.button}
         </Typography>
         <ListItemDecorator>
-          {props.hasIssue ? <WarningRoundedIcon color='warning' /> : <CheckIcon color='success' />}
+          {props.hasIssue ? <WarningRoundedIcon color='warning' /> : <CheckRoundedIcon color='success' />}
         </ListItemDecorator>
       </CardContent>
     </Card>
