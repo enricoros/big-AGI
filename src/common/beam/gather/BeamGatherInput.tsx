@@ -4,7 +4,6 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Divider, IconButton, styled, Tooltip, Typography } from '@mui/joy';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import FileCopyOutlinedIcon from '@mui/icons-material/FileCopyOutlined';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
@@ -96,24 +95,30 @@ function EditableChatInstructionPrompt(props: {
     </Typography>
 
     {/* Instruction > Key > Text | Edit */}
-    {isEditing ? (
+    {editMethod === 'edit' ? (
       <InlineTextarea
+        plain
         initialText={props.itemValue}
         onCancel={handleEditCancel}
         onEdit={handleEdit}
-        sx={{ ml: -1.5, mr: -1, fontSize: 'sm' }}
+        sx={{
+          // fontSize: 'sm',
+          gridColumn: '2 / -1',
+        }}
       />
     ) : (
-      <Box onDoubleClick={handleEditBegin} sx={{ fontSize: 'sm' }}>
+      <Box onDoubleClick={handleEditBegin} sx={{
+        // fontSize: 'sm',
+      }}>
         {props.itemValue}
       </Box>
     )}
 
     {/* Edit Button */}
-    {props.editMethod === 'none' ? <Box /> : (
-      <Tooltip disableInteractive title={props.editMethod === 'edit' ? 'Edit' : 'Copy to Custom'}>
-        <IconButton size='sm' onClick={handleEditBegin} sx={{ mr: -1 }}>
-          {props.editMethod === 'edit' ? <EditRoundedIcon /> : <FileCopyOutlinedIcon />}
+    {props.editMethod === 'duplicate' && (
+      <Tooltip disableInteractive title='Edit as Custom'>
+        <IconButton size='sm' onClick={handleEditBegin}>
+          <EditRoundedIcon />
         </IconButton>
       </Tooltip>
     )}
@@ -192,26 +197,32 @@ export function BeamGatherInput(props: {
   }, [fusionIndex, props.beamStore]);
 
 
+  const styleMemo = React.useMemo(() => {
+    return fusionIsEditable ? { ...gatherInputWrapperSx, backgroundColor: 'primary.softBg' } : gatherInputWrapperSx;
+  }, [fusionIsEditable]);
+
   const instructionsMemo = React.useMemo(() => {
     const elements: React.JSX.Element[] = [];
-    fusionInstructions.forEach((instruction, instructionIndex) => {
+    fusionInstructions
+      .slice(0, 1)
+      .forEach((instruction, instructionIndex) => {
 
-      // Separator between instructions
-      if (instructionIndex > 0)
-        elements.push(<Divider key={'div-' + instructionIndex} sx={{ gridColumn: '1 / -1' }} />);
+        // Separator between instructions
+        if (instructionIndex > 0)
+          elements.push(<Divider key={'div-' + instructionIndex} sx={{ gridColumn: '1 / -1' }} />);
 
-      // Instruction (editable or copyable)
-      elements.push(
-        <EditableInstruction
-          key={'inst-' + instructionIndex}
-          editMethod={fusionIsEditable ? 'edit' : 'duplicate'}
-          instruction={instruction}
-          instructionIndex={instructionIndex}
-          onFusionCopyAsCustom={handleFusionCopyAsCustom}
-          onInstructionEdit={handleInstructionEdit}
-        />,
-      );
-    });
+        // Instruction (editable or copyable)
+        elements.push(
+          <EditableInstruction
+            key={'inst-' + instructionIndex}
+            editMethod={fusionIsEditable ? 'edit' : 'duplicate'}
+            instruction={instruction}
+            instructionIndex={instructionIndex}
+            onFusionCopyAsCustom={handleFusionCopyAsCustom}
+            onInstructionEdit={handleInstructionEdit}
+          />,
+        );
+      });
     return elements;
   }, [fusionInstructions, fusionIsEditable, handleFusionCopyAsCustom, handleInstructionEdit]);
 
@@ -221,7 +232,7 @@ export function BeamGatherInput(props: {
     return null;
 
   return (
-    <Box sx={gatherInputWrapperSx}>
+    <Box sx={styleMemo}>
       <InstructionGridThreeColsWrapper>
         {instructionsMemo}
       </InstructionGridThreeColsWrapper>
