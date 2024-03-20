@@ -37,11 +37,11 @@ const variableResolvers: { [key in Variables]: (context: VariableResolverContext
 /**
  * This will be made a module and fully reactive in the future.
  */
-export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId | undefined) {
+export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId | undefined, customFields: Record<string, string> | undefined = undefined) {
 
   let mixed = _template;
 
-  // {{Today}} - yyyy-mm--dd but in user's local time, not UTC
+  // {{Today}} - yyyy-mm-dd but in user's local time, not UTC
   const today = new Date();
   const varToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
   mixed = mixed.replaceAll('{{Today}}', varToday);
@@ -65,14 +65,13 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
     mixed = mixed.replaceAll('{{LocaleNow}}', formattedDateTime /*`${formattedDateTime} (${userTimezone})`*/);
   }
 
+  // Static replacements
   // {{Prefer...}}
   mixed = mixed.replace('{{PreferTables}}', 'Data presentation: prefer tables (auto-columns)');
-
   // {{Render...}}
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled');
   mixed = mixed.replace('{{RenderPlantUML}}', 'PlantUML rendering: Enabled');
   mixed = mixed.replace('{{RenderSVG}}', 'SVG rendering: Enabled');
-
   // {{Input...}} / {{Tool...}} - TBA
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
@@ -83,6 +82,11 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
     mixed = mixed.replaceAll('{{Cutoff}}', varCutoff);
   else
     mixed = mixed.replaceAll(/.*{{Cutoff}}.*\n?/g, '');
+
+  // Handle custom fields
+  if (customFields)
+    for (const [placeholder, replacement] of Object.entries(customFields))
+      mixed = mixed.replaceAll(placeholder, replacement);
 
   // at most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');
