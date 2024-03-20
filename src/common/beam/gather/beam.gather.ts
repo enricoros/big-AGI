@@ -113,6 +113,7 @@ interface GatherStateSlice {
   fusions: BFusion[];
 
   fusionIndex: number | null;
+  fusionShowPrompts: boolean;
   fusionLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
 
   isGathering: boolean;  // true if any fusion is gathering at the moment
@@ -127,6 +128,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
     // recreate all fusions (no recycle)
     fusions: FUSION_FACTORIES.map(spec => spec.factory()),
     fusionIndex: null,
+    fusionShowPrompts: false,
     fusionLlmId: null,
     isGathering: false,
   };
@@ -135,6 +137,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
 export interface GatherStoreSlice extends GatherStateSlice {
 
   setFusionIndex: (index: number | null) => void;
+  toggleFusionShowPrompts: () => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
 
   fusionCustomizeFrom: (sourceIndex: number) => void;
@@ -156,6 +159,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     _set({
       fusionIndex: index,
     }),
+
+  toggleFusionShowPrompts: () =>
+    _set(state => ({
+      fusionShowPrompts: !state.fusionShowPrompts,
+    })),
 
   setFusionLlmId: (llmId: DLLMId | null) =>
     _set({

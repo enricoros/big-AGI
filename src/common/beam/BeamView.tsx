@@ -29,16 +29,16 @@ export function BeamView(props: {
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
-    /* gather */ setFusionIndex, setFusionLlmId, fusionCustomizeFrom, fusionStart, fusionStop,
+    /* gather */ setFusionIndex, toggleFusionShowPrompts, setFusionLlmId, fusionCustomizeFrom, fusionStart, fusionStop,
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ fusionIndex, fusionLlmId, isGathering,
+    /* gather */ fusionIndex, fusionShowPrompts, fusionLlmId, isGathering,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
     isScattering: state.isScattering, raysReady: state.raysReady,
-    fusionIndex: state.fusionIndex, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
+    fusionIndex: state.fusionIndex, fusionShowPrompts: state.fusionShowPrompts, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
@@ -139,6 +139,8 @@ export function BeamView(props: {
           gatherEnabled={raysReady > 0 && !isGathering && fusionIndex !== null}
           isMobile={props.isMobile}
           fusionIndex={fusionIndex}
+          fusionShowPrompts={fusionShowPrompts}
+          toggleFusionShowPrompts={toggleFusionShowPrompts}
           setFusionIndex={setFusionIndex}
           onFusionCustomizeFrom={fusionCustomizeFrom}
           onFusionStart={fusionStart}

@@ -4,7 +4,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { createBRay, createScatterSlice, reInitScatterStateSlice, rayScatterStop, ScatterStoreSlice } from './scatter/beam.scatter';
+import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from './scatter/beam.scatter';
 import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './gather/beam.gather';
 
 
@@ -85,7 +85,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
       // rays already reset
 
-      // gather
+      // fusions
       ...((!wasOpen && initialFusionLlmId) && {
         // update the model only if the dialog was not already open
         fusionLlmId: initialFusionLlmId,
@@ -94,15 +94,16 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   },
 
   terminate: () => { /*_get().isOpen &&*/
-    const { rays: prevRays, fusions: prevFusions, fusionLlmId } = _get();
+    const { rays, fusions, fusionLlmId, fusionShowPrompts } = _get();
 
     _set({
       ...initRootStateSlice(),
-      ...reInitScatterStateSlice(prevRays),
-      ...reInitGatherStateSlice(prevFusions),
+      ...reInitScatterStateSlice(rays),
+      ...reInitGatherStateSlice(fusions),
 
-      // (remember after termination) gather model
+      // remember after termination
       fusionLlmId,
+      fusionShowPrompts,
     });
   },
 
