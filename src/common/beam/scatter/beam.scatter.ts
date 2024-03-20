@@ -264,12 +264,13 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
       scatterLlmId: llmId,
     }),
 
-  _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => _set(state => ({
-    rays: state.rays.map(ray => (ray.rayId === rayId)
-      ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
-      : ray,
-    ),
-  })),
+  _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) =>
+    _set(state => ({
+      rays: state.rays.map(ray => (ray.rayId === rayId)
+        ? { ...ray, ...(typeof update === 'function' ? update(ray) : update) }
+        : ray,
+      ),
+    })),
 
 
   syncRaysStateToBeam: () => {
