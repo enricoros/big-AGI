@@ -90,8 +90,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     // Overflow dropdown menu
     if (overflowApps.length) {
       components.push(
-        <Dropdown>
-          <Tooltip disableInteractive enterDelay={600} title='More Apps' key='app-overflow'>
+        <Dropdown key='n-app-overflow'>
+          <Tooltip disableInteractive enterDelay={600} title='More Apps'>
             <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
               <MoreHorizRoundedIcon />
             </MenuButton>
