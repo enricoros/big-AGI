@@ -6,8 +6,10 @@ import { Box, Typography } from '@mui/joy';
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
 import { createDMessage } from '~/common/state/store-chats';
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
-import { GATHER_DEBUG_NONCUSTOM } from '~/common/beam/beam.config';
+
+import type { TInstruction } from './beam.gather';
+import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
+import { GATHER_DEBUG_NONCUSTOM } from '../beam.config';
 
 
 const gatherConfigWrapperSx: SxProps = {
@@ -34,6 +36,79 @@ const configChatInstructionSx: SxProps = {
   flex: 1,
 };
 
+function InstructionWrapper(props: { children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', mx: 'var(--Pad)' }}>
+      {props.children}
+    </Box>
+  );
+}
+
+
+function ReadOnlyInstruction(props: { instruction: TInstruction, isMobile: boolean }) {
+  const { instruction } = props;
+
+  // render 'chat-generate'
+  if (instruction.type === 'chat-generate') {
+    return (
+      <InstructionWrapper>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography level='body-xs'>
+            System Prompt:
+          </Typography>
+          <ChatMessageMemo
+            message={createDMessage('assistant', instruction.systemPrompt)}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={configChatInstructionSx}
+          />
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography level='body-xs'>
+            User Prompt:
+          </Typography>
+          <ChatMessageMemo
+            message={createDMessage('assistant', instruction.userPrompt)}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={configChatInstructionSx}
+          />
+        </Box>
+      </InstructionWrapper>
+    );
+  }
+
+  // render 'user-input-checklist'
+  if (instruction.type === 'user-input-checklist') {
+    return (
+      <InstructionWrapper>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography level='body-xs'>
+            Checklist:
+          </Typography>
+          <ChatMessageMemo
+            message={createDMessage('assistant', '#### Test\n- [ ] test\n- [ ] ...')}
+            fitScreen={props.isMobile}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={configChatInstructionSx}
+          />
+        </Box>
+      </InstructionWrapper>
+    );
+  }
+
+  return (
+    <InstructionWrapper>
+      <Typography level='body-xs'>
+        Unknown Instruction
+      </Typography>
+    </InstructionWrapper>
+  );
+}
+
 
 export function BeamGatherConfig(props: {
   beamStore: BeamStoreApi
@@ -41,7 +116,7 @@ export function BeamGatherConfig(props: {
 }) {
 
   // state
-  const [viewInstructionIndex, setViewInstructionIndex] = React.useState(0);
+  // const [viewInstructionIndex, setViewInstructionIndex] = React.useState(0);
 
   // external state
   const fusion = useBeamStore(props.beamStore, store => {
@@ -49,64 +124,23 @@ export function BeamGatherConfig(props: {
     return (fusion?.isEditable || GATHER_DEBUG_NONCUSTOM) ? fusion : null;
   });
 
-
-  // [effect] sync the fusion program index to the viewInstructionIndex
-  React.useEffect(() => {
-    fusion && setViewInstructionIndex(fusion.currentInstructionIndex);
-  }, [fusion]);
-
+  // // [effect] sync the fusion program index to the viewInstructionIndex
+  // React.useEffect(() => {
+  //   fusion && setViewInstructionIndex(fusion.currentInstructionIndex);
+  // }, [fusion]);
 
   // derived state
-  const instruction = React.useMemo(() => {
-    return fusion?.instructions[viewInstructionIndex] ?? null;
-  }, [fusion, viewInstructionIndex]);
+  // const instructions = React.useMemo(() => {
+  //   return fusion?.instructions ?? null;
+  // }, [fusion]);
 
+  const instructions = fusion?.instructions ?? null;
 
-  // render instruction
-  const instructionComponent = React.useMemo(() => {
-    if (instruction && instruction.type === 'chat-generate') {
-      return <>
-        {instruction.systemPrompt && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mx: 'var(--Pad)' }}>
-            <Typography level='body-xs'>
-              System Prompt:
-            </Typography>
-            <ChatMessageMemo
-              message={createDMessage('assistant', instruction.systemPrompt)}
-              fitScreen={props.isMobile}
-              showAvatar={false}
-              adjustContentScaling={-1}
-              sx={configChatInstructionSx}
-            />
-          </Box>
-        )}
-        {instruction.userPrompt && (
-          <Box sx={{ display: 'flex', alignItems: 'center', ml: 'var(--Pad)' }}>
-            <Typography level='body-xs'>
-              User Prompt:
-            </Typography>
-            <ChatMessageMemo
-              message={createDMessage('assistant', instruction.userPrompt)}
-              fitScreen={props.isMobile}
-              showAvatar={false}
-              adjustContentScaling={-1}
-              sx={configChatInstructionSx}
-            />
-
-          </Box>
-        )}
-      </>;
-    }
-    return null;
-  }, [instruction, props.isMobile]);
-
-
-  if (!instructionComponent)
-    return null;
-
-  return (
+  return !!instructions?.length ? (
     <Box sx={gatherConfigWrapperSx}>
-      {instructionComponent}
+      {instructions.map((instruction, stepIndex) =>
+        <ReadOnlyInstruction key={'step-' + stepIndex} instruction={instruction} isMobile={props.isMobile} />,
+      )}
     </Box>
-  );
+  ) : null;
 }

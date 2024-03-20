@@ -29,7 +29,7 @@ export function BeamView(props: {
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
-    /* gather */ setFusionIndex, setFusionLlmId, startFusion, stopFusion,
+    /* gather */ setFusionIndex, setFusionLlmId, fusionCustomize, fusionStart, fusionStop,
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
@@ -140,8 +140,9 @@ export function BeamView(props: {
           isMobile={props.isMobile}
           fusionIndex={fusionIndex}
           setFusionIndex={setFusionIndex}
-          onStartFusion={startFusion}
-          onStopFusion={stopFusion}
+          onFusionCustomize={fusionCustomize}
+          onFusionStart={fusionStart}
+          onFusionStop={fusionStop}
         />
 
         {/* Fusion Output */}

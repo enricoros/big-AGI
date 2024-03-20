@@ -1,9 +1,10 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, SvgIconProps, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, FormControl, IconButton, SvgIconProps, Tooltip, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
@@ -15,7 +16,7 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
-import { FUSION_PROGRAMS } from './beam.gather';
+import { FUSION_FACTORIES } from './beam.gather';
 
 
 const mobileBeamGatherPane: SxProps = {
@@ -47,21 +48,25 @@ export function BeamGatherPane(props: {
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   fusionIndex: number | null,
   setFusionIndex: (index: number | null) => void
-  onStartFusion: () => void,
-  onStopFusion: () => void,
+  onFusionCustomize: (index: number) => void,
+  onFusionStart: () => void,
+  onFusionStop: () => void,
 }) {
 
   // external state
   const { setStickToBottom } = useScrollToBottom();
 
   // derived state
-  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex } = props;
+  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex, onFusionCustomize } = props;
 
   const handleFusionActivate = React.useCallback((idx: number, shiftPressed: boolean) => {
     setStickToBottom(true);
     setFusionIndex((idx !== props.fusionIndex || !shiftPressed) ? idx : null);
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
 
+  const handleFusionCustomize = React.useCallback(() => {
+    props.fusionIndex !== null && onFusionCustomize(props.fusionIndex);
+  }, [onFusionCustomize, props.fusionIndex]);
 
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
@@ -85,10 +90,13 @@ export function BeamGatherPane(props: {
 
       {/* Method */}
       <FormControl sx={{ my: '-0.25rem' }}>
-        <FormLabelStart title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>} sx={{ mb: '0.25rem' /* orig: 6px */ }} />
-        <Box sx={{ display: 'flex', flexAlign: 'center', gap: 1 }}>
+        <FormLabelStart
+          title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>}
+          sx={{ mb: '0.25rem' /* orig: 6px */ }}
+        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant='outlined'>
-            {FUSION_PROGRAMS.map((fusion, idx) => {
+            {FUSION_FACTORIES.map((fusion, idx) => {
               const isActive = idx === props.fusionIndex;
               return (
                 <Button
@@ -108,6 +116,13 @@ export function BeamGatherPane(props: {
               );
             })}
           </ButtonGroup>
+          {(props.fusionIndex !== null) && (
+            <Tooltip disableInteractive title='Customize This Merge'>
+              <IconButton size='sm' color='success' disabled={props.gatherBusy || props.fusionIndex === 2} onClick={handleFusionCustomize}>
+                <EditRoundedIcon />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </FormControl>
 
@@ -123,7 +138,7 @@ export function BeamGatherPane(props: {
           variant='solid' color={GATHER_COLOR}
           disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
           endDecorator={<MergeRoundedIcon />}
-          onClick={props.onStartFusion}
+          onClick={props.onFusionStart}
           sx={{ minWidth: 120 }}
         >
           Merge
@@ -133,7 +148,7 @@ export function BeamGatherPane(props: {
           // key='gather-stop'
           variant='solid' color='danger'
           endDecorator={<StopRoundedIcon />}
-          onClick={props.onStopFusion}
+          onClick={props.onFusionStop}
           sx={{ minWidth: 120 }}
         >
           Stop
