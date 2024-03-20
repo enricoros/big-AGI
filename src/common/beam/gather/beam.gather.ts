@@ -81,12 +81,14 @@ export function fusionGatherStop(fusion: BFusion): BFusion {
 
 /// Gather Store Slice ///
 
-export type TInstruction = {
+export type TChatGenerateInstruction = {
   type: 'chat-generate',
   systemPrompt: string;
   userPrompt: string;
   outputType: 'fin' | 'user-checklist';
-} | {
+}
+
+export type TInstruction = TChatGenerateInstruction | {
   type: 'user-input-checklist'
 };
 
@@ -135,7 +137,8 @@ export interface GatherStoreSlice extends GatherStateSlice {
   setFusionIndex: (index: number | null) => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
 
-  fusionCustomize: (sourceIndex: number) => void;
+  fusionCustomizeFrom: (sourceIndex: number) => void;
+  fusionInstructionEdit: (fusionIndex: number, instructionIndex: number, update: Partial<TInstruction>) => void;
   fusionStart: () => void;
   fusionStop: () => void;
 
@@ -159,7 +162,15 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
       fusionLlmId: llmId,
     }),
 
-  fusionCustomize: (sourceIndex: number) => {
+  fusionInstructionEdit: (fusionIndex: number, instructionIndex: number, update: Partial<TInstruction>) =>
+    _get()._fusionUpdate(fusionIndex, fusion => ({
+      instructions: fusion.instructions.map((instruction, index) => (index === instructionIndex)
+        ? { ...instruction, ...update as any /* Note: do not update a different 'type' of instruction ... */ }
+        : instruction,
+      ),
+    })),
+
+  fusionCustomizeFrom: (sourceIndex: number) => {
     const { fusions, setFusionIndex, _fusionUpdate } = _get();
     const editableFusionIndex = fusions.findIndex(fusion => fusion.isEditable);
     const fusionFactory = FUSION_FACTORIES[sourceIndex];

@@ -48,7 +48,7 @@ export function BeamGatherPane(props: {
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   fusionIndex: number | null,
   setFusionIndex: (index: number | null) => void
-  onFusionCustomize: (index: number) => void,
+  onFusionCustomizeFrom: (index: number) => void,
   onFusionStart: () => void,
   onFusionStop: () => void,
 }) {
@@ -57,7 +57,7 @@ export function BeamGatherPane(props: {
   const { setStickToBottom } = useScrollToBottom();
 
   // derived state
-  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex, onFusionCustomize } = props;
+  const { gatherCount, gatherEnabled, gatherBusy, setFusionIndex, onFusionCustomizeFrom } = props;
 
   const handleFusionActivate = React.useCallback((idx: number, shiftPressed: boolean) => {
     setStickToBottom(true);
@@ -65,8 +65,8 @@ export function BeamGatherPane(props: {
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
 
   const handleFusionCustomize = React.useCallback(() => {
-    props.fusionIndex !== null && onFusionCustomize(props.fusionIndex);
-  }, [onFusionCustomize, props.fusionIndex]);
+    props.fusionIndex !== null && onFusionCustomizeFrom(props.fusionIndex);
+  }, [onFusionCustomizeFrom, props.fusionIndex]);
 
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
@@ -119,7 +119,7 @@ export function BeamGatherPane(props: {
           {(props.fusionIndex !== null) && (
             <Tooltip disableInteractive title='Customize This Merge'>
               <IconButton size='sm' color='success' disabled={props.gatherBusy || props.fusionIndex === 2} onClick={handleFusionCustomize}>
-                <EditRoundedIcon />
+                {props.fusionIndex === 2 ? null : <EditRoundedIcon />}
               </IconButton>
             </Tooltip>
           )}
