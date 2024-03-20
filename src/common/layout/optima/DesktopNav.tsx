@@ -90,23 +90,23 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     // Overflow dropdown menu
     if (overflowApps.length) {
       components.push(
-        <Tooltip title='More Apps' key='app-overflow'>
-          <Dropdown>
+        <Dropdown>
+          <Tooltip disableInteractive enterDelay={600} title='More Apps' key='app-overflow'>
             <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
               <MoreHorizRoundedIcon />
             </MenuButton>
-            <Menu variant='solid' invertedColors placement='right-start'>
-              {overflowApps.map((app, appIdx) =>
-                <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
-                  <ListItemDecorator sx={{ ml: 1 }}>
-                    <app.icon />
-                  </ListItemDecorator>
-                  {app.name + (app.isDev ? ' [DEV]' : '')}
-                </MenuItem>,
-              )}
-            </Menu>
-          </Dropdown>
-        </Tooltip>,
+          </Tooltip>
+          <Menu variant='solid' invertedColors placement='right-start'>
+            {overflowApps.map((app, appIdx) =>
+              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
+                <ListItemDecorator sx={{ ml: 1 }}>
+                  <app.icon />
+                </ListItemDecorator>
+                {app.name + (app.isDev ? ' [DEV]' : '')}
+              </MenuItem>,
+            )}
+          </Menu>
+        </Dropdown>,
       );
     }
     return components;
