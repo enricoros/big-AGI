@@ -146,10 +146,10 @@ export function BeamView(props: {
         />
 
         {/* Fusion Output */}
-        <BeamGatherOutput
-          beamStore={props.beamStore}
-          isMobile={props.isMobile}
-        />
+        {/*<BeamGatherOutput*/}
+        {/*  beamStore={props.beamStore}*/}
+        {/*  isMobile={props.isMobile}*/}
+        {/*/>*/}
 
       </Box>
 
