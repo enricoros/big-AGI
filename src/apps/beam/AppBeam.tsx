@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Typography } from '@mui/joy';
 
@@ -34,7 +35,12 @@ export function AppBeam() {
 
   // external state
   const isMobile = useIsMobile();
-  const beamState = useBeamStore(beamStoreApi, state => state);
+  const { isOpen, beamState } = useBeamStore(beamStoreApi, useShallow(state => {
+    return {
+      isOpen: state.isOpen,
+      beamState: showDebug ? state : null,
+    };
+  }));
 
 
   const handleClose = React.useCallback(() => {
@@ -67,7 +73,7 @@ export function AppBeam() {
   return (
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
-      {beamState.isOpen && (
+      {isOpen && (
         <BeamView
           beamStore={beamStoreApi}
           isMobile={isMobile}
