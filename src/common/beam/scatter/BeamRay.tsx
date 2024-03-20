@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, SvgIconProps } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
@@ -18,6 +19,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses } from '../BeamCard';
@@ -146,13 +148,19 @@ export function BeamRay(props: {
 
   // handlers
 
+  const handleRayCopy = React.useCallback(() => {
+    const { rays, onSuccessCallback } = props.beamStore.getState();
+    const ray = rays.find(ray => ray.rayId === props.rayId);
+    if (ray?.message?.text && onSuccessCallback)
+      copyToClipboard(ray.message.text, 'Beam');
+  }, [props.beamStore, props.rayId]);
+
   const handleRayUse = React.useCallback(() => {
     // get snapshot values, so we don't have to react to the hook
     const { rays, onSuccessCallback } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
-    if (ray?.message?.text && onSuccessCallback) {
+    if (ray?.message?.text && onSuccessCallback)
       onSuccessCallback(ray.message.text, llmId || '');
-    }
   }, [llmId, props.beamStore, props.rayId]);
 
   const handleRayRemove = React.useCallback(() => {
@@ -215,25 +223,39 @@ export function BeamRay(props: {
       {/* Use Ray */}
       {showUseButton && (
         <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.5rem - var(--Pad_2))', position: 'relative' }}>
-          <GoodTooltip title='Choose this message'>
-            <IconButton
-              size='sm'
-              variant='plain'
-              color='success'
-              disabled={isImported || isScattering}
-              onClick={handleRayUse}
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                fontSize: 'xs',
-                px: isImported ? 1 : undefined,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {ray?.imported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
-            </IconButton>
-          </GoodTooltip>
+          <Box sx={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            display: 'flex',
+            gap: 1,
+          }}>
+            {!isImported && (
+              <GoodTooltip title='Copy'>
+                <IconButton
+                  size='sm'
+                  onClick={handleRayCopy}
+                >
+                  <ContentCopyIcon sx={{ fontSize: 'md' }} />
+                </IconButton>
+              </GoodTooltip>
+            )}
+            <GoodTooltip title='Choose this message'>
+              <IconButton
+                size='sm'
+                color='success'
+                disabled={isImported || isScattering}
+                onClick={handleRayUse}
+                sx={{
+                  fontSize: 'xs',
+                  px: isImported ? 1 : undefined,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isImported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
+              </IconButton>
+            </GoodTooltip>
+          </Box>
         </Box>
       )}
 
