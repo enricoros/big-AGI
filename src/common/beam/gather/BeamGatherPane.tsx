@@ -17,6 +17,7 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { FUSION_FACTORIES } from './beam.gather';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 
 
 const mobileBeamGatherPane: SxProps = {
@@ -125,7 +126,7 @@ export function BeamGatherPane(props: {
         />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant='outlined'>
-            {FUSION_FACTORIES.map((fusion, idx) => {
+            {FUSION_FACTORIES.map((factorySpec, idx) => {
               const isActive = idx === props.fusionIndex;
               return (
                 <Button
@@ -140,15 +141,20 @@ export function BeamGatherPane(props: {
                     // minHeight: '2.25rem',
                   }}
                 >
-                  {fusion.label}
+                  {/*<GoodTooltip title={factorySpec.description}>*/}
+                    {/*<span>*/}
+                      <factorySpec.Icon />
+                      {/*{factorySpec.label}*/}
+                    {/*</span>*/}
+                  {/*</GoodTooltip>*/}
                 </Button>
               );
             })}
           </ButtonGroup>
           {/*{(props.fusionIndex !== null) && (*/}
           {/*  <Tooltip disableInteractive title='Customize This Merge'>*/}
-          {/*    <IconButton size='sm' color='success' disabled={props.gatherBusy || props.fusionIndex === 2} onClick={handleFusionCopyAsCustom}>*/}
-          {/*      {props.fusionIndex === 2 ? null : <EditRoundedIcon />}*/}
+          {/*    <IconButton size='sm' color='success' disabled={props.gatherBusy || isEditable..} onClick={handleFusionCopyAsCustom}>*/}
+          {/*      {isEditable... ? null : <EditRoundedIcon />}*/}
           {/*    </IconButton>*/}
           {/*  </Tooltip>*/}
           {/*)}*/}
