@@ -28,16 +28,16 @@ export function BeamView(props: {
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
-    /* gather */ setFusionIndex, toggleGatherShowPrompts, setFusionLlmId, fusionStart, fusionStop,
+    /* gather */ setFusionIndex, toggleGatherShowDevMethods, toggleGatherShowPrompts, setFusionLlmId, fusionStart, fusionStop,
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ fusionIndex, gatherShowPrompts, fusionLlmId, isGathering,
+    /* gather */ fusionIndex, gatherShowDevMethods, gatherShowPrompts, fusionLlmId, isGathering,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
     isScattering: state.isScattering, raysReady: state.raysReady,
-    fusionIndex: state.fusionIndex, gatherShowPrompts: state.gatherShowPrompts, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
+    fusionIndex: state.fusionIndex, gatherShowDevMethods: state.gatherShowDevMethods, gatherShowPrompts: state.gatherShowPrompts, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
@@ -139,7 +139,9 @@ export function BeamView(props: {
           gatherEnabled={raysReady >= 2 && !isGathering && fusionIndex !== null}
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}
+          gatherShowDevMethods={gatherShowDevMethods}
           gatherShowPrompts={gatherShowPrompts}
+          toggleGatherShowDevMethods={toggleGatherShowDevMethods}
           toggleGatherShowPrompts={toggleGatherShowPrompts}
           onFusionStart={fusionStart}
           onFusionStop={fusionStop}

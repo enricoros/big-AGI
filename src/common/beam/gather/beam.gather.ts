@@ -206,6 +206,7 @@ export interface BFusion {
 
 interface GatherStateSlice {
 
+  gatherShowDevMethods: boolean;
   gatherShowPrompts: boolean;
 
   fusions: BFusion[];
@@ -222,6 +223,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   prevFusions.forEach(fusionGatherStop);
 
   return {
+    gatherShowDevMethods: false,
     gatherShowPrompts: false,
     fusions: FUSION_FACTORIES.map(spec => spec.factory()),
     fusionIndex: GATHER_DEFAULT_FUSION,
@@ -232,6 +234,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
 
 export interface GatherStoreSlice extends GatherStateSlice {
 
+  toggleGatherShowDevMethods: () => void;
   toggleGatherShowPrompts: () => void;
   setFusionIndex: (index: number | null) => void;
   setFusionLlmId: (llmId: DLLMId | null) => void;
@@ -250,6 +253,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
   // initial state
   ...reInitGatherStateSlice([]),
 
+
+  toggleGatherShowDevMethods: () =>
+    _set(state => ({
+      gatherShowDevMethods: !state.gatherShowDevMethods,
+    })),
 
   toggleGatherShowPrompts: () =>
     _set(state => ({
