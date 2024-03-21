@@ -109,6 +109,7 @@ function EditableChatInstructionPrompt(props: {
     ) : (
       <Box onDoubleClick={handleEditBegin} sx={{
         // fontSize: 'sm',
+        whiteSpace: 'break-spaces',
       }}>
         {props.itemValue}
       </Box>
