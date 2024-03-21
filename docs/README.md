@@ -28,7 +28,7 @@ Detailed guides to configure your big-AGI interface and models.
 - **Advanced Feature Configuration**:
   - **[Browse](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud (advanced)
   - **ElevenLabs API**: Voice and cutom voice generation, only requires their API key
-  - **Google Search API**: guide not yet available, see the Google options in 'Environment Variables'
+  - **Google Search API**: guide not yet available, see the Google options in '[Environment Variables](environment-variables.md)'
   - **Prodia API**: Stable Diffusion XL image generation, only requires their API key, alternative to DALL·E
 
 ## Deployment
