@@ -41,7 +41,9 @@ const desktopBeamGatherPaneSx: SxProps = {
 
 
 function BeamGatherDropdown(props: {
+  gatherShowDevMethods: boolean,
   gatherShowPrompts: boolean,
+  toggleGatherShowDevMethods: () => void,
   toggleGatherShowPrompts: () => void,
 }) {
   return (
@@ -53,13 +55,17 @@ function BeamGatherDropdown(props: {
       >
         <MoreHorizRoundedIcon />
       </MenuButton>
-      <Menu placement='right-end' sx={{ minWidth: 200 }}>
+      <Menu placement='right-end' sx={{ minWidth: 250 }}>
         <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
         <MenuItem onClick={props.toggleGatherShowPrompts}>
           <ListItemDecorator>{props.gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
           Show All Prompts
+        </MenuItem>
+        <MenuItem onClick={props.toggleGatherShowDevMethods}>
+          <ListItemDecorator>{props.gatherShowDevMethods && <CheckRoundedIcon />}</ListItemDecorator>
+          Experimental Methods
         </MenuItem>
       </Menu>
     </Dropdown>
@@ -76,7 +82,9 @@ export function BeamGatherPane(props: {
   gatherEnabled: boolean,
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
+  gatherShowDevMethods: boolean,
   gatherShowPrompts: boolean,
+  toggleGatherShowDevMethods: () => void,
   toggleGatherShowPrompts: () => void,
   onFusionStart: () => void,
   onFusionStop: () => void,
@@ -93,9 +101,14 @@ export function BeamGatherPane(props: {
     setFusionIndex((idx !== props.fusionIndex || !shiftPressed) ? idx : null);
   }, [props.fusionIndex, setFusionIndex, setStickToBottom]);
 
-  const dropdownMemo = React.useMemo(() => {
-    return <BeamGatherDropdown gatherShowPrompts={props.gatherShowPrompts} toggleGatherShowPrompts={props.toggleGatherShowPrompts} />;
-  }, [props.gatherShowPrompts, props.toggleGatherShowPrompts]);
+  const dropdownMemo = React.useMemo(() => (
+    <BeamGatherDropdown
+      gatherShowDevMethods={props.gatherShowDevMethods}
+      gatherShowPrompts={props.gatherShowPrompts}
+      toggleGatherShowDevMethods={props.toggleGatherShowDevMethods}
+      toggleGatherShowPrompts={props.toggleGatherShowPrompts}
+    />
+  ), [props.gatherShowDevMethods, props.gatherShowPrompts, props.toggleGatherShowDevMethods, props.toggleGatherShowPrompts]);
 
 
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
@@ -126,30 +139,33 @@ export function BeamGatherPane(props: {
         />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant='outlined'>
-            {FUSION_FACTORIES.map((factorySpec, idx) => {
-              const isActive = idx === props.fusionIndex;
-              return (
-                <Button
-                  key={'gather-method-' + idx}
-                  color={isActive ? GATHER_COLOR : 'neutral'}
-                  onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
-                  // size='sm'
-                  sx={{
-                    // backgroundColor: isActive ? 'background.popup' : undefined,
-                    backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
-                    fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                    // minHeight: '2.25rem',
-                  }}
-                  endDecorator={isActive ? <factorySpec.Icon /> : null}
-                >
-                  <GoodTooltip title={factorySpec.description}>
+            {FUSION_FACTORIES
+              .filter(factorySpec => props.gatherShowDevMethods || !factorySpec.isDev)
+              .map((factorySpec, idx) => {
+                const isActive = idx === props.fusionIndex;
+                return (
+                  <Button
+                    key={'gather-method-' + idx}
+                    color={isActive ? GATHER_COLOR : 'neutral'}
+                    onClick={event => handleFusionActivate(idx, !!event?.shiftKey)}
+                    // size='sm'
+                    sx={{
+                      // backgroundColor: isActive ? 'background.popup' : undefined,
+                      backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
+                      fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                      // minHeight: '2.25rem',
+                    }}
+                    endDecorator={isActive ? <factorySpec.Icon /> : null}
+                  >
+                    <GoodTooltip title={factorySpec.description}>
                     <span>
                       {factorySpec.label}
                     </span>
-                  </GoodTooltip>
-                </Button>
-              );
-            })}
+                    </GoodTooltip>
+                  </Button>
+                );
+              })
+            }
           </ButtonGroup>
           {/*{(props.fusionIndex !== null) && (*/}
           {/*  <Tooltip disableInteractive title='Customize This Merge'>*/}
