@@ -69,7 +69,7 @@ export function BeamScatterInput(props: {
     return (showHistoryMessage && otherHistoryCount >= 1) ? (
       // <Chip color='primary' variant='outlined' endDecorator={<ChipDelete />} sx={{ my: 1 }}>
       <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.9 }} onClick={() => setShowHistoryMessage(on => !on)}>
-        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before ...
+        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before your input ...
       </Typography>
       // </Chip>
     ) : null;
