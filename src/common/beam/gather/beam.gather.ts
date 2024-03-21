@@ -224,8 +224,8 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   return {
     gatherShowPrompts: false,
     fusions: FUSION_FACTORIES.map(spec => spec.factory()),
-    fusionIndex: null,
-    fusionLlmId: null,
+    fusionIndex: GATHER_DEFAULT_FUSION,
+    fusionLlmId: null, // will be set during open() of the Beam Store
     isGathering: false,
   };
 };
