@@ -140,13 +140,13 @@ export function BeamGatherPane(props: {
                     fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                     // minHeight: '2.25rem',
                   }}
+                  endDecorator={isActive ? <factorySpec.Icon /> : null}
                 >
-                  {/*<GoodTooltip title={factorySpec.description}>*/}
-                    {/*<span>*/}
-                      <factorySpec.Icon />
-                      {/*{factorySpec.label}*/}
-                    {/*</span>*/}
-                  {/*</GoodTooltip>*/}
+                  <GoodTooltip title={factorySpec.description}>
+                    <span>
+                      {factorySpec.label}
+                    </span>
+                  </GoodTooltip>
                 </Button>
               );
             })}
