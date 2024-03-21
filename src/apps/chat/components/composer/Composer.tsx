@@ -56,6 +56,7 @@ import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonA
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
+import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
@@ -113,8 +114,9 @@ export function Composer(props: {
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
-  const { labsAttachScreenCapture, labsCameraDesktop } = useUXLabsStore(state => ({
+  const { labsAttachScreenCapture, labsBeam, labsCameraDesktop } = useUXLabsStore(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
+    labsBeam: state.labsBeam,
     labsCameraDesktop: state.labsCameraDesktop,
   }), shallow);
   const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
@@ -199,9 +201,9 @@ export function Composer(props: {
     handleSendAction(chatModeId, composeText);
   }, [chatModeId, composeText, handleSendAction]);
 
-  // const handleSendTextBeamClicked = React.useCallback(() => {
-  //   handleSendAction('generate-text-beam', composeText);
-  // }, [composeText, handleSendAction]);
+  const handleSendTextBeamClicked = React.useCallback(() => {
+    labsBeam && handleSendAction('generate-text-beam', composeText);
+  }, [composeText, handleSendAction, labsBeam]);
 
   const handleStopClicked = React.useCallback(() => {
     !!props.conversationId && stopTyping(props.conversationId);
@@ -308,7 +310,7 @@ export function Composer(props: {
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
-      if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
+      if (labsBeam && ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey))) {
         touchCtrlEnter();
         handleSendAction('generate-text-beam', composeText);
         return e.preventDefault();
@@ -324,7 +326,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, labsBeam, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -529,9 +531,8 @@ export function Composer(props: {
       textPlaceholder += !enterIsNewline ? '\n\n💡 Shift + Enter to add a new line' : '\n\n💡 Shift + Enter to send';
     else if (explainAltEnter)
       textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Alt + Enter to just append the message');
-    // 1.15.0: enable this
-    // else if (explainCtrlEnter)
-    //   textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Ctrl + Enter to beam');
+    else if (labsBeam && explainCtrlEnter)
+      textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Ctrl + Enter to beam');
   }
 
   return (
@@ -727,8 +728,9 @@ export function Composer(props: {
         <Grid xs={12} md={3}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' } as const}>
 
-            {/* This row is here only for the [mobile] bottom-start corner item */}
-            <Box sx={{ display: 'flex' }}>
+            {/* [mobile] This row is here only for the [mobile] bottom-start corner item */}
+            {/* [desktop] This column arrangement will have the [desktop] beam button right under call */}
+            <Box sx={isMobile ? { display: 'flex' } : { display: 'grid', gap: 1 }}>
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (showCall
@@ -793,6 +795,9 @@ export function Composer(props: {
                 </IconButton>
               </ButtonGroup>
 
+              {/* [desktop] secondary-top buttons */}
+              {isDesktop && labsBeam && <ButtonBeamMemo disabled={!props.conversationId || !chatLLMId} onClick={handleSendTextBeamClicked} />}
+
             </Box>
 
             {/* [desktop] Multicast switch (under the Chat button) */}
@@ -817,6 +822,7 @@ export function Composer(props: {
       {/* Mode selector */}
       {!!chatModeMenuAnchor && (
         <ChatModeMenu
+          isMobile={isMobile}
           anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
           chatModeId={chatModeId} onSetChatModeId={handleModeChange}
           capabilityHasTTI={props.capabilityHasT2I}
