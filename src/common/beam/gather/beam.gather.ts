@@ -4,13 +4,14 @@ import type { StateCreator } from 'zustand/vanilla';
 import BuildCircleOutlinedIcon from '@mui/icons-material/BuildCircleOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
+import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 
-import { GATHER_PLACEHOLDER } from '../beam.config';
+import { GATHER_DEFAULT_FUSION, GATHER_PLACEHOLDER } from '../beam.config';
 
 
 // Choose, Improve, Fuse, Manual
@@ -23,7 +24,7 @@ const commonInitialization = (isEditable: boolean): Pick<BFusion, 'isEditable' |
   outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
 });
 
-export const FUSION_FACTORIES: { label: string, Icon: React.FunctionComponent, description: string, factory: () => BFusion }[] = [
+export const FUSION_FACTORIES: { label: string, Icon: React.FunctionComponent, description: string, factory: () => BFusion, isDev?: boolean }[] = [
   {
     label: 'Guided',
     Icon: CheckBoxOutlinedIcon,
@@ -72,6 +73,48 @@ Your response should integrate the most relevant insights from these inputs into
 Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
           userPrompt: 'Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.',
           // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
+          outputType: 'display-message',
+        },
+      ],
+    }),
+  },
+  {
+    label: 'Eval',
+    Icon: TableViewRoundedIcon,
+    description: 'Analyzes and ranks AI responses, offering a clear, comparative overview to support your choice of answer.',
+    isDev: true,
+    factory: () => ({
+      ...commonInitialization(false),
+      instructions: [
+        {
+          type: 'chat-generate',
+          name: 'Evaluation',
+          method: 's-s0-h0-u0-aN-u',
+          systemPrompt: `
+You are an advanced analytical tool designed to process and evaluate a set of AI-generated responses related to a user\'s query.
+
+Your objective is to organize these responses in a way that aids decision-making. You will first identify key criteria essential for evaluating the responses based on relevance, quality, and applicability.
+
+Then, you will analyze each response against these criteria.
+
+Finally, you will synthesize your findings into a table, providing a clear overview of how each response measures up. Start by identifying up to 8 orthogonal criteria for evaluation.`.trim(),
+          userPrompt: `
+Now that you have reviewed the N alternatives, proceed with the following steps:
+
+1. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses.
+
+2. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria, plus an initial column for the response identifiers. Fill in the table with your assessment of how each response aligns with the criteria.
+
+**Table Format:**
+
+| Response | Criterion 1 | Criterion 2 | ... | Criterion 8 |
+|----------|-------------|-------------|-----|-------------|
+| Response 1 | ... | ... | ... | ... |
+| Response 2 | ... | ... | ... | ... |
+| ... | ... | ... | ... | ... |
+| Response N | ... | ... | ... | ... |
+
+Complete this table to offer a structured and detailed comparison of the options available, providing an at-a-glance overview that will significantly aid in the decision-making process.`.trim(),
           outputType: 'display-message',
         },
       ],
