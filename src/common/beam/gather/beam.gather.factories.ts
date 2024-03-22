@@ -5,24 +5,19 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
 
-import { createDMessage } from '~/common/state/store-chats';
-
-import type { BFusion, TFusionFactoryId } from './beam.gather';
-import { GATHER_PLACEHOLDER } from '../beam.config';
+import type { BFusion, TFusionFactoryId, TInstruction } from './beam.gather';
 
 
-function _initCommonBFusion(factoryId: TFusionFactoryId, isEditable: boolean): Omit<BFusion, 'instructions'> {
+function _initCommonBFusion(factoryId: TFusionFactoryId, isEditable: boolean, instructions: TInstruction[]): BFusion {
   return {
-    // const
     fusionId: uuidv4(),
     factoryId,
     isEditable,
-    // instructions: [...] will be set later
-    // variables
-    llmId: null,
-    currentInstructionIndex: 0,
+    instructions,
+    vmState: null,
     status: 'idle',
-    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+    fusionIssue: undefined,
+    outputMessage: undefined,
   };
 }
 
@@ -45,8 +40,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
     description: 'A brainstorming session with AI, where you first pick your favorite ideas from a list it generates, and then the AI combines those picks into a tailored solution.',
     factory: () => ({
-      ..._initCommonBFusion('guided', false),
-      instructions: [
+      ..._initCommonBFusion('guided', false, [
         {
           type: 'chat-generate',
           name: 'Generate Checklist',
@@ -56,6 +50,10 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
           outputType: 'user-checklist',
         },
         {
+          type: 'user-input-checklist',
+          name: 'Select Criteria',
+        },
+        {
           type: 'chat-generate',
           name: 'Checklist-guided Merge',
           method: 's-s0-h0-u0-aN-u',
@@ -63,7 +61,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
           userPrompt: 'Given the user\'s selected options from the checklist, synthesize these into a single, cohesive, comprehensive response that addresses the original query. Ensure the synthesis is coherent, integrating the selected insights in a manner that provides clear, actionable advice or solutions. The final output should reflect a deep understanding of the user\'s preferences and the conversation\'s context.',
           outputType: 'display-message',
         },
-      ],
+      ]),
     }),
   },
   {
@@ -72,8 +70,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     Icon: MediationOutlinedIcon,
     description: 'AI combines conversation details and various AI-generated ideas into one clear, comprehensive answer, making sense of diverse insights for you.',
     factory: () => ({
-      ..._initCommonBFusion('fuse', false),
-      instructions: [
+      ..._initCommonBFusion('fuse', false, [
         {
           type: 'chat-generate',
           name: 'Syntesizing Fusion',
@@ -90,7 +87,7 @@ Synthesize the perfect response that merges the key insights and provides clear 
           // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
           outputType: 'display-message',
         },
-      ],
+      ]),
     }),
   },
   {
@@ -100,8 +97,7 @@ Synthesize the perfect response that merges the key insights and provides clear 
     description: 'Analyzes and ranks AI responses, offering a clear, comparative overview to support your choice of answer.',
     isDev: true,
     factory: () => ({
-      ..._initCommonBFusion('eval', false),
-      instructions: [
+      ..._initCommonBFusion('eval', false, [
         {
           type: 'chat-generate',
           name: 'Evaluation',
@@ -133,7 +129,7 @@ Now that you have reviewed the N alternatives, proceed with the following steps:
 Complete this table to offer a structured and detailed comparison of the options available, providing an at-a-glance overview that will significantly aid in the decision-making process.`.trim(),
           outputType: 'display-message',
         },
-      ],
+      ]),
     }),
   },
   {
@@ -142,8 +138,7 @@ Complete this table to offer a structured and detailed comparison of the options
     // Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
     factory: () => ({
-      ..._initCommonBFusion('custom', true),
-      instructions: [
+      ..._initCommonBFusion('custom', true, [
         {
           type: 'chat-generate',
           name: 'Executing Your Merge Strategy',
@@ -156,7 +151,7 @@ These alternatives explore different solutions and perspectives and are presente
           userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response.',
           outputType: 'display-message',
         },
-      ],
+      ]),
     }),
   },
 ];
