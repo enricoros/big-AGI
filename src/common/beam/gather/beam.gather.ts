@@ -192,7 +192,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
 
 
   currentFusionStart: () => {
-    console.log('startGatheringCurrent');
+    const { fusions, currentFusionId } = _get();
+    const currentFusion = currentFusionId ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
+    if (!currentFusion)
+      return;
+    console.log('currentFusionStart', currentFusion);
   },
 
   currentFusionStop: () => {

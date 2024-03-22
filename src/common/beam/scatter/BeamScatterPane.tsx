@@ -48,6 +48,7 @@ export function BeamScatterPane(props: {
         <Typography
           level='h4' component='h2'
           onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
+          // sx={{ my: 0.25 }}
         >
           {props.startBusy
             ? <AutoAwesomeIcon sx={{ fontSize: '1rem', animation: `${animationColorBeamScatter} 2s linear infinite` }} />

@@ -4,6 +4,7 @@
 
 // BEAM Scatter configuration
 export const SCATTER_COLOR = 'neutral' as const;
+export const SCATTER_DEBUG_STATE = false;
 export const SCATTER_INVERT_USER_MESSAGE = true;
 export const SCATTER_PLACEHOLDER = '🖊️ ...'; // 💫 ..., 🖊️ ...
 export const SCATTER_RAY_DEF = 2;
