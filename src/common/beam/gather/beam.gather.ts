@@ -3,12 +3,12 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { DMessage } from '~/common/state/store-chats';
+import type { DMessage } from '~/common/state/store-chats';
 
 import type { BRay } from '../scatter/beam.scatter';
 import { FUSION_FACTORIES } from './beam.gather.factories';
 import { GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
-import { executeFusionInstructions, fusionGatherStop, Instruction } from './beam.gather.executors';
+import { executeFusionInstructions, fusionGatherStop, Instruction } from './beam.gather.instructions';
 
 
 /// Gather Store > BFusion ///
