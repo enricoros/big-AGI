@@ -161,7 +161,7 @@ export function BeamGatherPane(props: {
       <FormControl sx={{ my: '-0.25rem' }}>
         <FormLabelStart
           title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>}
-          sx={{ mb: '0.25rem' /* orig: 6px */ }}
+          sx={/*{ mb: '0.25rem' }*/ undefined}
         />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant='outlined'>

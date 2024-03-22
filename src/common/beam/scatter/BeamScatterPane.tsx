@@ -60,7 +60,7 @@ export function BeamScatterPane(props: {
 
       {/* Ray presets */}
       <FormControl sx={{ my: '-0.25rem' }}>
-        <FormLabelStart title='Beam Count' sx={{ mb: '0.25rem' /* orig: 6px */ }} />
+        <FormLabelStart title='Beam Count' sx={/*{ mb: '0.25rem' }*/ undefined} />
         <ButtonGroup variant='outlined'>
           {SCATTER_RAY_PRESETS.map((n) => {
             const isActive = n === props.rayCount;
