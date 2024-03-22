@@ -240,8 +240,9 @@ export function BeamGatherPane(props: {
         onPositive={handleStopScatterConfirmation}
         // lowStakes
         noTitleBar
-        confirmationText={`There are still some messages being generated. Are you sure you want to stop Beam?`}
-        positiveActionText='Yes, stop and begin Merging'
+        confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
+        positiveActionText='Proceed with Merge'
+        negativeActionText='Wait for All Responses'
       />
     )}
 
