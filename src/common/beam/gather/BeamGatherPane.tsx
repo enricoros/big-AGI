@@ -36,6 +36,8 @@ const desktopBeamGatherPaneSx: SxProps = {
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
 
+  boxShadow: `0px 6px 16px -12px rgb(var(--joy-palette-${GATHER_COLOR}-darkChannel) / 50%)`,
+
   // [desktop] keep visible at the bottom
   position: 'sticky',
   bottom: 0,
