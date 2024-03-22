@@ -38,7 +38,7 @@ export function createBRay(scatterLlmId: DLLMId | null): BRay {
   };
 }
 
-export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage[], onlyIdle: boolean, scatterStore: ScatterStoreSlice): BRay {
+function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage[], onlyIdle: boolean, scatterStore: ScatterStoreSlice): BRay {
   if (ray.genAbortController)
     return ray;
   if (onlyIdle && ray.status !== 'empty')
@@ -46,7 +46,7 @@ export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: D
   if (!llmId)
     return { ...ray, scatterIssue: 'No model selected' };
 
-  const { rays, _rayUpdate, _syncRaysStateToBeam } = scatterStore;
+  const { rays, _rayUpdate, _syncRaysStateToScatter } = scatterStore;
 
   // validate history
   if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
@@ -80,7 +80,7 @@ export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: D
       });
     })
     .finally(() => {
-      _syncRaysStateToBeam();
+      _syncRaysStateToScatter();
     });
 
   return {
@@ -100,7 +100,7 @@ export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: D
   };
 }
 
-export function rayScatterStop(ray: BRay): BRay {
+function rayScatterStop(ray: BRay): BRay {
   ray.genAbortController?.abort();
   return {
     ...ray,
@@ -167,7 +167,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
-  _syncRaysStateToBeam: () => void;
+  _syncRaysStateToScatter: () => void;
 
 }
 
@@ -179,7 +179,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
 
 
   setRayCount: (count: number) => {
-    const { rays, _syncRaysStateToBeam } = _get();
+    const { rays, _syncRaysStateToScatter } = _get();
     if (count < rays.length) {
       // Terminate exceeding rays
       rays.slice(count).forEach(rayScatterStop);
@@ -194,7 +194,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         ],
       });
     }
-    _syncRaysStateToBeam();
+    _syncRaysStateToScatter();
   },
 
   removeRay: (rayId: BRayId) => {
@@ -206,7 +206,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         return shallStay;
       }),
     }));
-    _get()._syncRaysStateToBeam();
+    _get()._syncRaysStateToScatter();
   },
 
   importRays: (messages: DMessage[]) => {
@@ -229,7 +229,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         ...state.rays.filter((ray) => ray.status !== 'empty'),
       ],
     }));
-    _get()._syncRaysStateToBeam();
+    _get()._syncRaysStateToScatter();
   },
 
 
@@ -239,7 +239,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
       // Start all rays
       rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get())),
     }));
-    _get()._syncRaysStateToBeam();
+    _get()._syncRaysStateToScatter();
   },
 
   stopScatteringAll: () =>
@@ -250,13 +250,13 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     })),
 
   rayToggleScattering: (rayId: BRayId) => {
-    const { inputHistory, fusionsLlmId, _rayUpdate, _syncRaysStateToBeam } = _get();
+    const { inputHistory, fusionsLlmId, _rayUpdate, _syncRaysStateToScatter } = _get();
     _rayUpdate(rayId, (ray) =>
       ray.status === 'scattering'
         ? /* User Terminated the ray */ rayScatterStop(ray)
         : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get()),
     );
-    _syncRaysStateToBeam();
+    _syncRaysStateToScatter();
   },
 
   raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) =>
@@ -273,7 +273,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     })),
 
 
-  _syncRaysStateToBeam: () => {
+  _syncRaysStateToScatter: () => {
     const { rays } = _get();
 
     // Check if all rays have finished generating

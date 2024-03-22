@@ -5,8 +5,9 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import type { DMessage } from '~/common/state/store-chats';
 
+import type { BRay } from '../scatter/beam.scatter';
 import { FUSION_FACTORIES } from './beam.gather.factories';
-import { GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
+import { GATHER_DEBUG_STATE, GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
 
 
 export function mixInstructionPrompt(prompt: string, raysReady: number): string {
@@ -24,7 +25,13 @@ function executeInstruction(instruction: TInstruction): Promise<void> {
   });
 }
 
-export function fusionGatherStop(fusion: BFusion): BFusion {
+function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId, raysSnapshot: Readonly<BRay[]>): Partial<BFusion> {
+
+  // returns the state update for the Fusion
+  return {};
+}
+
+function fusionGatherStop(fusion: BFusion): BFusion {
   fusion.abortController?.abort();
   return {
     ...fusion,
@@ -127,10 +134,11 @@ export interface GatherStoreSlice extends GatherStateSlice {
 
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => void;
   fusionInstructionUpdate: (fusionId: BFusionId, instructionIndex: number, update: Partial<TInstruction>) => void;
-  currentFusionStart: () => void;
+  currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => void;
   currentFusionStop: () => void;
-
   _fusionUpdate: (fusionId: BFusionId, update: Partial<BFusion> | ((fusion: BFusion) => (Partial<BFusion> | null))) => void;
+
+  _syncFusionsStateToGather: () => void;
 
 }
 
@@ -191,16 +199,20 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     })),
 
 
-  currentFusionStart: () => {
-    const { fusions, currentFusionId } = _get();
-    const currentFusion = currentFusionId ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
-    if (!currentFusion)
-      return;
-    console.log('currentFusionStart', currentFusion);
+  currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => {
+    const { currentFusionId, fusionsLlmId, _fusionUpdate, _syncFusionsStateToGather } = _get();
+    if (currentFusionId !== null && fusionsLlmId !== null && raysSnapshot.length) {
+      _fusionUpdate(currentFusionId, (fusion) => fusionGatherStart(fusion, fusionsLlmId, raysSnapshot);
+      _syncFusionsStateToGather();
+    }
   },
 
   currentFusionStop: () => {
-    console.log('stopGatheringCurrent');
+    const { currentFusionId, _fusionUpdate, _syncFusionsStateToGather } = _get();
+    if (currentFusionId !== null) {
+      _fusionUpdate(currentFusionId, fusionGatherStop);
+      _syncFusionsStateToGather();
+    }
   },
 
   _fusionUpdate: (fusionId: BFusionId, update: Partial<BFusion> | ((fusion: BFusion) => (Partial<BFusion> | null))) =>
@@ -210,5 +222,21 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
         : fusion,
       ),
     })),
+
+
+  _syncFusionsStateToGather: () => {
+    const { fusions } = _get();
+
+    // 'or' the status of all fusions
+    const isGathering = fusions.some(fusion => fusion.status === 'fusing');
+
+    // [debug]
+    if (GATHER_DEBUG_STATE)
+      console.log('_syncFusionsStateToGather', { fusions: fusions.length, isGathering });
+
+    _set({
+      isGathering,
+    });
+  },
 
 });
