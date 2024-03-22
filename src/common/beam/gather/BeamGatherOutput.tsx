@@ -6,6 +6,8 @@ import { Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
+import { InlineError } from '~/common/components/InlineError';
+
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 
@@ -56,6 +58,10 @@ export function BeamGatherOutput(props: {
       className={beamCardClasses.selectable}
       sx={fusionRayCardSx}
     >
+
+      {/* Show issue, if any */}
+      {!!fusion.fusionIssue && <InlineError error={fusion.fusionIssue} />}
+
       {!!fusion.outputMessage && (
         <ChatMessageMemo
           message={fusion.outputMessage}
@@ -65,6 +71,7 @@ export function BeamGatherOutput(props: {
           sx={fusionChatMessageSx}
         />
       )}
+
       <Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>
         {JSON.stringify(fusion, null, 2)}
       </Typography>
