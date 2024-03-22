@@ -52,7 +52,7 @@ function executeUserInputChecklistInstruction(instruction: TUserInputChecklistIn
 }
 
 
-function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId | null, raysSnapshot: Readonly<BRay[]>, updateBFusion: (update: Partial<BFusion>) => void) {
+function fusionGatherStart(fusion: Readonly<BFusion>, fusionsLlmId: DLLMId | null, raysSnapshot: Readonly<BRay[]>, updateBFusion: (update: Partial<BFusion>) => void, syncGatherState: () => void) {
   // check preconditions
   if (!fusionsLlmId)
     return updateBFusion({ fusionIssue: 'No Merge model selected' });
@@ -77,6 +77,7 @@ function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId | null, raysSna
     outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
   };
   updateBFusion(runningFusion);
+  syncGatherState();
 
   // Start executing the instructions
   let promiseChain = Promise.resolve();
@@ -95,6 +96,15 @@ function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId | null, raysSna
     });
   }
 
+  promiseChain.then(() => {
+    console.log('All instructions executed for fusion:', fusion.fusionId);
+    updateBFusion({ status: 'success' });
+    syncGatherState();
+  }, (error) => {
+    console.error('Error executing instructions:', error, fusion.fusionId);
+    updateBFusion({ status: 'error', fusionIssue: error?.message || error?.toString() || 'Unknown error' });
+    syncGatherState();
+  });
 }
 
 function fusionGatherStop(fusion: BFusion): BFusion {
@@ -278,7 +288,7 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
         _fusionUpdate(fusion.fusionId, update);
         _syncFusionsStateToGather();
       };
-      fusionGatherStart(fusion, fusionsLlmId, raysSnapshot, onUpdate);
+      fusionGatherStart(fusion, fusionsLlmId, raysSnapshot, onUpdate, _syncFusionsStateToGather);
     }
   },
 
@@ -309,12 +319,8 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     if (GATHER_DEBUG_STATE)
       console.log('_syncFusionsStateToGather', { fusions: fusions.length, isGathering });
 
-    _set(state => {
-      if (state.isGathering === isGathering)
-        return state;
-      return {
-        isGathering,
-      };
+    _set({
+      isGathering,
     });
   },
 
