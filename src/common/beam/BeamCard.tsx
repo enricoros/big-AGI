@@ -49,10 +49,10 @@ BeamCard.displayName = 'BeamCard'; // [shared] scatter/gather pane style
  */
 export const beamPaneSx: SxProps = {
   // style
-  backgroundColor: 'background.surface', // background.popup
+  backgroundColor: 'background.popup', // background.popup
   boxShadow: 'md',
   p: 'var(--Pad)',
-  // py: 'calc(2 * var(--Pad) / 3)',
+  py: 'calc(3 * var(--Pad) / 4)',
   zIndex: 1, // cast shadow on the rays/fusion
 
   // layout
