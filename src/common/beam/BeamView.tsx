@@ -131,12 +131,13 @@ export function BeamView(props: {
 
         {/* Gather Controls */}
         <BeamGatherPane
+          isMobile={props.isMobile}
           beamStore={props.beamStore}
           gatherBusy={isGathering}
           gatherCount={raysReady}
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}
-          isMobile={props.isMobile}
+          scatterBusy={isScattering}
         />
 
         {/* Fusion Output */}
