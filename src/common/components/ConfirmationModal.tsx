@@ -17,6 +17,7 @@ export function ConfirmationModal(props: {
   lowStakes?: boolean,
   confirmationText: string | React.JSX.Element,
   positiveActionText: string
+  negativeActionText?: string
 }) {
   return (
     <GoodModal
@@ -35,7 +36,7 @@ export function ConfirmationModal(props: {
 
       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
         <Button autoFocus variant='plain' color='neutral' onClick={props.onClose}>
-          Cancel
+          {props.negativeActionText || 'Cancel'}
         </Button>
         <Button
           variant={props.lowStakes ? 'soft' : 'solid'}
