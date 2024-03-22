@@ -17,7 +17,7 @@ export function ConfirmationModal(props: {
   lowStakes?: boolean,
   confirmationText: string | React.JSX.Element,
   positiveActionText: string
-  negativeActionText?: string
+  negativeActionText?: React.ReactNode,
 }) {
   return (
     <GoodModal
