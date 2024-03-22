@@ -124,7 +124,8 @@ export function BeamGatherPane(props: {
       setWarnScatterBusy(true);
       return;
     }
-    currentFusionStart(props.beamStore.getState().rays);
+    const { inputHistory, rays } = props.beamStore.getState();
+    currentFusionStart(inputHistory ? [...inputHistory] : [], rays.map(ray => ray.message));
   }, [currentFusionStart, props.beamStore, props.scatterBusy]);
 
   const handleStopScatterConfirmation = React.useCallback(() => {

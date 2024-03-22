@@ -2,7 +2,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
-import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DMessage } from '~/common/state/store-chats';
@@ -33,7 +33,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // stream the assistant's messages
   await streamAssistantMessage(
     assistantLlmId,
-    history,
+    history.map((m): VChatMessageIn => ({ role: m.role, content: m.text })),
     parallelViewCount,
     autoSpeak,
     (update) => cHandler.messageEdit(assistantMessageId, update, false),
@@ -56,7 +56,7 @@ type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 
 export async function streamAssistantMessage(
   llmId: DLLMId,
-  history: DMessage[],
+  messagesHistory: VChatMessageIn[],
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
   editMessage: (update: Partial<DMessage>) => void,
@@ -67,9 +67,6 @@ export async function streamAssistantMessage(
 
   // speak once
   let spokenLine = false;
-
-  const messages = history.map(({ role, text }) => ({ role, content: text }));
-
 
   // Throttling setup
   let lastCallTime = 0;
@@ -88,7 +85,7 @@ export async function streamAssistantMessage(
   const incrementalAnswer: Partial<DMessage> = { text: '' };
 
   try {
-    await llmStreamingChatGenerate(llmId, messages, null, null, abortSignal, (update: StreamingClientUpdate) => {
+    await llmStreamingChatGenerate(llmId, messagesHistory, null, null, abortSignal, (update: StreamingClientUpdate) => {
       const textSoFar = update.textSoFar;
 
       // grow the incremental message

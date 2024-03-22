@@ -2,8 +2,12 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { BFusion } from './beam.gather';
-import type { BRay } from '../scatter/beam.scatter';
+import { createDMessage, type DMessage } from '~/common/state/store-chats';
+
+import { BFusion, FusionUpdateOrFn } from './beam.gather';
+import { GATHER_PLACEHOLDER } from '../beam.config';
+import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
+import { VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 // Temp: Move
@@ -38,31 +42,54 @@ interface UserInputChecklistInstruction extends BaseInstruction {
 export type Instruction = ChatGenerateInstruction | UserInputChecklistInstruction;
 
 
-interface ExecutionStateConst {
-  inputLLMId: DLLMId;
-  inputRays: Readonly<BRay[]>;
+export async function executeChatGenerateInstruction(
+  { label, systemPrompt, userPrompt, method }: ChatGenerateInstruction,
+  { llmId, chatMessages, rayMessages, chainAbortController, onUpdate }: StateImmutable,
+): Promise<void> {
+
+  // build the input messages
+  if (method !== 's-s0-h0-u0-aN-u')
+    throw new Error(`Unsupported Chat Generate method: ${method}`);
+
+  const _promptVars = (prompt: string) => mixInstructionPrompt(systemPrompt, rayMessages.length);
+
+  const history: VChatMessageIn[] = [
+    // s
+    { role: 'system', content: _promptVars(systemPrompt) },
+    // s0-h0-u0
+    ...chatMessages
+      .filter((m) => (m.role === 'user' || m.role === 'assistant'))
+      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: m.text })),
+    // aN
+    ...rayMessages.map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
+    // u
+    { role: 'user', content: _promptVars(userPrompt) },
+  ];
+
+  const updateMessage = (update: Partial<DMessage>) => onUpdate((fusion) => ({
+    // ...fusion,
+    outputMessage: {
+      ...fusion.outputMessage!,
+      ...update,
+      // only update the timestamp when the text changes
+      ...(update.text ? { updated: Date.now() } : {}),
+    },
+  }));
+
+  try {
+    try {
+      const outcome = await streamAssistantMessage(llmId, history, 0, 'off', updateMessage, chainAbortController.signal);
+      console.log('Chat Generate Instruction executed:', label);
+    } catch (error) {
+      console.error('Error executing Chat Generate Instruction:', label, error);
+    }
+  } finally {
+    console.log('Chat Generate Instruction finally:', label);
+  }
 }
 
-interface ExecutionStateVar {
-  instructionIndex: number;
-  instructionLabel: string;
-}
 
-
-export function executeChatGenerateInstruction(instruction: ChatGenerateInstruction): Promise<void> {
-  // Example implementation - adapt based on actual logic for executing a chat-generate instruction
-  return new Promise((resolve, reject) => {
-    // Simulate asynchronous operation (e.g., API call)
-    setTimeout(() => {
-      console.log('Chat Generate Instruction executed:', instruction.label);
-      // Update fusion status or perform any other required state updates here
-      resolve();
-    }, 2000);
-  });
-}
-
-
-export function executeUserInputChecklistInstruction(instruction: UserInputChecklistInstruction): Promise<void> {
+export async function executeUserInputChecklistInstruction(instruction: UserInputChecklistInstruction): Promise<void> {
   // Example implementation - adapt based on your application's UI/input logic
   return new Promise((resolve, reject) => {
     // Logic to display user input prompt and wait for submission
@@ -77,28 +104,52 @@ export function executeUserInputChecklistInstruction(instruction: UserInputCheck
 }
 
 
+interface StateImmutable {
+  readonly llmId: DLLMId;
+  readonly chatMessages: DMessage[];
+  readonly rayMessages: DMessage[];
+  readonly chainAbortController: AbortController;
+  readonly onUpdate: (update: FusionUpdateOrFn) => void;
+}
+
+interface StateMutable {
+  // instructionIndex: number;
+  // instructionLabel: string;
+}
+
+
 export function executeFusionInstructions(
-  fusionId: string,
-  instructions: Readonly<Instruction[]>,
+  initialFusion: Readonly<BFusion>,
   llmId: DLLMId,
-  raysSnapshot: Readonly<BRay[]>,
-  updateBFusion: (update: Partial<BFusion>) => void,
+  chatMessages: DMessage[],
+  rayMessages: DMessage[],
+  onUpdate: (update: FusionUpdateOrFn) => void,
 ) {
 
-  // Initialize the VM state
-  // const runningFusion: BFusion = {
-  //   ...fusion,
-  //   vmState: {
-  //     inputLLMId: llmId,
-  //     inputRays: raysSnapshot,
-  //     currentInstructionIndex: 0,
-  //     abortController: new AbortController(),
-  //   },
-  //   status: 'fusing',
-  //   fusionIssue: undefined,
-  //   outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
-  // };
-  // updateBFusion(runningFusion);
+
+  // Constant state
+  const stateImmutable: StateImmutable = {
+    llmId: llmId,
+    chatMessages: chatMessages,
+    rayMessages: rayMessages,
+    chainAbortController: new AbortController(),
+    onUpdate: onUpdate,
+  };
+
+  // Mutable state
+  let stateMutable: StateMutable = {
+    // instructionIndex: 0,
+    // instructionLabel: instructions[0].label,
+  };
+
+  const { fusionId, instructions } = initialFusion;
+
+  onUpdate({
+    status: 'fusing',
+    fusionIssue: undefined,
+    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+    abortController: stateImmutable.chainAbortController,
+  });
 
   // Start executing the instructions
   let promiseChain = Promise.resolve();
@@ -108,7 +159,7 @@ export function executeFusionInstructions(
     promiseChain = promiseChain.then(() => {
       switch (instruction.type) {
         case 'chat-generate':
-          return executeChatGenerateInstruction(instruction);
+          return executeChatGenerateInstruction(instruction, stateImmutable);
         case 'user-input-checklist':
           return executeUserInputChecklistInstruction(instruction);
         default:
@@ -119,18 +170,18 @@ export function executeFusionInstructions(
 
   promiseChain.then(() => {
     console.log('All instructions executed for fusion:', fusionId);
-    updateBFusion({
+    onUpdate({
       status: 'success',
       fusionIssue: undefined,
     });
   }).catch((error) => {
     console.error('Error executing instructions:', error, fusionId);
-    updateBFusion({
+    onUpdate({
       status: 'error',
       fusionIssue: error?.message || error?.toString() || 'Unknown error',
     });
   }).finally(() => {
-    updateBFusion({
+    onUpdate({
       abortController: undefined,
     });
   });
