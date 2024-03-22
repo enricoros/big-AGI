@@ -123,8 +123,8 @@ export function BeamGatherPane(props: {
       setWarnScatterBusy(true);
       return;
     }
-    currentFusionStart();
-  }, [currentFusionStart, props.scatterBusy]);
+    currentFusionStart(props.beamStore.getState().rays);
+  }, [currentFusionStart, props.beamStore, props.scatterBusy]);
 
   const handleStopScatterConfirmation = React.useCallback(() => {
     setWarnScatterBusy(false);
