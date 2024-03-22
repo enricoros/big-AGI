@@ -7,9 +7,10 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
-import type { TChatGenerateInstruction, TInstruction } from './beam.gather';
+import type { ChatGenerateInstruction, Instruction } from './beam.gather.executors';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_SHOW_SYSTEM_PROMPT } from '../beam.config';
+import { fusionIsEditable } from './beam.gather';
 
 
 const gatherInputWrapperSx: SxProps = {
@@ -62,11 +63,11 @@ type EditMethod = 'edit' | 'duplicate' | 'none';
  */
 function EditableChatInstructionPrompt(props: {
   editMethod: EditMethod,
-  itemKey: keyof TChatGenerateInstruction,
-  itemValue: TChatGenerateInstruction['systemPrompt'],
+  itemKey: keyof ChatGenerateInstruction,
+  itemValue: ChatGenerateInstruction['systemPrompt'],
   label: string,
   onDuplicate: () => void,
-  onEdit: (update: Partial<TChatGenerateInstruction>) => void,
+  onEdit: (update: Partial<ChatGenerateInstruction>) => void,
 }) {
 
   // state
@@ -130,14 +131,14 @@ function EditableChatInstructionPrompt(props: {
 
 function EditableInstruction(props: {
   editMethod: EditMethod,
-  instruction: TInstruction,
+  instruction: Instruction,
   instructionIndex: number,
   onFusionCopyAsCustom: () => void
-  onInstructionEdit: (instructionIndex: number, update: Partial<TInstruction>) => void,
+  onInstructionEdit: (instructionIndex: number, update: Partial<Instruction>) => void,
 }) {
 
   const { instruction, instructionIndex, onInstructionEdit } = props;
-  const handleEditInstructionItem = React.useCallback((update: Partial<TInstruction>) => {
+  const handleEditInstructionItem = React.useCallback((update: Partial<Instruction>) => {
     onInstructionEdit(instructionIndex, update);
   }, [instructionIndex, onInstructionEdit]);
 
@@ -182,7 +183,7 @@ export function BeamGatherInput(props: {
     const fusion = store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null;
     return {
       currentFusionId: fusion?.fusionId ?? null,
-      currentIsEditable: fusion?.isEditable === true,
+      currentIsEditable: fusion ? fusionIsEditable(fusion) : false,
       currentInstructions: fusion?.instructions ?? [],
     };
   }));
@@ -193,7 +194,7 @@ export function BeamGatherInput(props: {
     currentFusionId !== null && props.beamStore.getState().fusionRecreateAsCustom(currentFusionId);
   }, [currentFusionId, props.beamStore]);
 
-  const handleInstructionEdit = React.useCallback((instructionIndex: number, update: Partial<TInstruction>) => {
+  const handleInstructionEdit = React.useCallback((instructionIndex: number, update: Partial<Instruction>) => {
     currentFusionId !== null && props.beamStore.getState().fusionInstructionUpdate(currentFusionId, instructionIndex, update);
   }, [currentFusionId, props.beamStore]);
 
