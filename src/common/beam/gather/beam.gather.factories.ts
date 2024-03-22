@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import BuildCircleOutlinedIcon from '@mui/icons-material/BuildCircleOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
@@ -10,7 +9,6 @@ import { createDMessage } from '~/common/state/store-chats';
 
 import type { BFusion, TFusionFactoryId } from './beam.gather';
 import { GATHER_PLACEHOLDER } from '../beam.config';
-
 
 
 function _initCommonBFusion(factoryId: TFusionFactoryId, isEditable: boolean): Omit<BFusion, 'instructions'> {
@@ -34,7 +32,7 @@ export interface FusionFactorySpec {
   isDev?: boolean;
   label: string;
   description: string;
-  Icon: React.FunctionComponent;
+  Icon?: React.FunctionComponent;
   factory: () => BFusion;
 }
 
@@ -141,7 +139,7 @@ Complete this table to offer a structured and detailed comparison of the options
   {
     id: 'custom',
     label: 'Custom',
-    Icon: BuildCircleOutlinedIcon,
+    // Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
     factory: () => ({
       ..._initCommonBFusion('custom', true),
@@ -153,8 +151,9 @@ Complete this table to offer a structured and detailed comparison of the options
           systemPrompt: `
 Your task is to synthesize a cohesive and relevant response based on the following messages: the original system message, the full conversation history up to the user query, the user query, and a set of {{N}} answers generated independently.
 These alternatives explore different solutions and perspectives and are presented in random order. Your output should integrate insights from these alternatives, aligned with the conversation's context and objectives, into a single, coherent response that addresses the user's needs and questions as expressed throughout the conversation.`.trim(),
-          userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
+          // userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
           // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
+          userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response.',
           outputType: 'display-message',
         },
       ],

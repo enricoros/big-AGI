@@ -45,7 +45,6 @@ export function BeamGatherPane(props: {
   beamStore: BeamStoreApi,
   gatherBusy: boolean,
   gatherCount: number,
-  gatherEnabled: boolean,
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   isMobile: boolean,
@@ -77,7 +76,10 @@ export function BeamGatherPane(props: {
 
 
   // derived state
-  const { gatherCount, gatherEnabled, gatherBusy } = props;
+  const { gatherCount, gatherBusy } = props;
+
+  const gatherEnabled = gatherCount >= 2 && !gatherBusy && currentFusionId !== null;
+
 
   const handleFusionActivate = React.useCallback((fusionId: string, shiftPressed: boolean) => {
     setStickToBottom(true);
@@ -143,7 +145,7 @@ export function BeamGatherPane(props: {
                     fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
                     // minHeight: '2.25rem',
                   }}
-                  endDecorator={isActive ? <factory.Icon /> : null}
+                  startDecorator={(isActive && factory.Icon) ? <factory.Icon /> : null}
                 >
                   <GoodTooltip title={factory.description}>
                     <span>
