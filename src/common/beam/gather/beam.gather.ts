@@ -4,8 +4,6 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
-
-import type { BRay } from '../scatter/beam.scatter';
 import { FUSION_FACTORIES } from './beam.gather.factories';
 import { GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
 import { executeFusionInstructions, fusionGatherStop, Instruction } from './beam.gather.instructions';
@@ -17,9 +15,9 @@ type BFusionId = string;
 
 export interface BFusion {
   // const
-  fusionId: BFusionId;
-  factoryId: string;
-  instructions: Readonly<Instruction[]>;
+  readonly fusionId: BFusionId;
+  readonly factoryId: string;
+  readonly instructions: Readonly<Instruction[]>;
 
   // state
   status: 'idle' | 'fusing' | 'success' | 'stopped' | 'error';
@@ -82,6 +80,8 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   };
 };
 
+export type FusionUpdateOrFn = Partial<BFusion> | ((fusion: BFusion) => (Partial<BFusion> | null));
+
 export interface GatherStoreSlice extends GatherStateSlice {
 
   setGatherLlmId: (llmId: DLLMId | null) => void;
@@ -91,11 +91,11 @@ export interface GatherStoreSlice extends GatherStateSlice {
   setCurrentFusionId: (fusionId: BFusionId | null) => void;
   _currentFusion: () => BFusion | null;
 
-  _fusionUpdate: (fusionId: BFusionId, update: Partial<BFusion> | ((fusion: BFusion) => (Partial<BFusion> | null))) => void;
+  _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => void;
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => void;
   fusionInstructionUpdate: (fusionId: BFusionId, instructionIndex: number, update: Partial<Instruction>) => void;
 
-  currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => void;
+  currentFusionStart: (chatHistory: DMessage[], rays: DMessage[]) => void;
   currentFusionStop: () => void;
 
 }
@@ -133,7 +133,7 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
   },
 
 
-  _fusionUpdate: (fusionId: BFusionId, update: Partial<BFusion> | ((fusion: BFusion) => (Partial<BFusion> | null))) => {
+  _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => {
     const { fusions } = _get();
 
     const newFusions = fusions.map(fusion => (fusion.fusionId === fusionId)
@@ -184,7 +184,7 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     })),
 
 
-  currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => {
+  currentFusionStart: (chatHistory: DMessage[], rays: DMessage[]) => {
     const { gatherLlmId, _currentFusion, _fusionUpdate } = _get();
     const fusion = _currentFusion();
 
@@ -193,13 +193,20 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
       return;
     if (!gatherLlmId)
       return _fusionUpdate(fusion.fusionId, { fusionIssue: 'No Merge model selected' });
-    if (!raysSnapshot || raysSnapshot.length < 1)
+    if (chatHistory.length < 1)
+      return _fusionUpdate(fusion.fusionId, { fusionIssue: 'No conversation history available' });
+    if (rays?.length <= 1)
       return _fusionUpdate(fusion.fusionId, { fusionIssue: 'No responses available' });
     if (!(fusion.instructions.length >= 1))
       return _fusionUpdate(fusion.fusionId, { fusionIssue: 'No fusion instructions available' });
 
-    const updateFn = (update: Partial<BFusion>) => _fusionUpdate(fusion.fusionId, update);
-    executeFusionInstructions(fusion.fusionId, fusion.instructions, gatherLlmId, raysSnapshot, updateFn);
+    executeFusionInstructions(
+      fusion,
+      gatherLlmId,
+      chatHistory,
+      rays,
+      (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update),
+    );
   },
 
   currentFusionStop: () => {

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
@@ -72,9 +71,9 @@ export function BeamGatherOutput(props: {
         />
       )}
 
-      <Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>
-        {JSON.stringify(fusion, null, 2)}
-      </Typography>
+      {/*<Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>*/}
+      {/*  {JSON.stringify(fusion, null, 2)}*/}
+      {/*</Typography>*/}
     </BeamCard>
   );
 }

@@ -4,6 +4,7 @@ import type { StateCreator } from 'zustand/vanilla';
 import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
@@ -65,7 +66,8 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   }));
 
   // stream the assistant's messages
-  streamAssistantMessage(llmId, inputHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
+  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
     .then((outcome) => {
       _rayUpdate(ray.rayId, {
         status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',
