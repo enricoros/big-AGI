@@ -104,20 +104,19 @@ export function BeamGatherPane(props: {
 
 
   const handleCurrentFusionStart = React.useCallback(() => {
-    // checke whether we need to stop scattering also, or we can just proceed
-    if (props.scatterBusy)
+    // if scatter is busy, ask for confirmation
+    if (props.scatterBusy) {
       setWarnScatterBusy(true);
-    else
-      currentFusionStart();
+      return;
+    }
+    currentFusionStart();
   }, [currentFusionStart, props.scatterBusy]);
 
   const handleStopScatterConfirmation = React.useCallback(() => {
-    console.log('handleStopScatterConfirmation: a');
     setWarnScatterBusy(false);
     stopScatteringAll();
-    currentFusionStart();
-    console.log('handleStopScatterConfirmation: Scattering stopped, and Merging started');
-  }, [currentFusionStart, stopScatteringAll]);
+    handleCurrentFusionStart();
+  }, [handleCurrentFusionStart, stopScatteringAll]);
 
   const handleStopScatterDenial = React.useCallback(() => setWarnScatterBusy(false), []);
 
@@ -147,7 +146,11 @@ export function BeamGatherPane(props: {
       {/* Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
         <div>
-          <Typography level='h4' component='h2' endDecorator={dropdownMemo}>
+          <Typography
+            level='h4' component='h2'
+            endDecorator={dropdownMemo}
+            // sx={{ my: 0.25 }}
+          >
             <MainLlmIcon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>

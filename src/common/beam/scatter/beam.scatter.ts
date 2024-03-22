@@ -10,7 +10,7 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { GatherStoreSlice } from '../gather/beam.gather';
 import type { RootStoreSlice } from '../store-beam';
-import { SCATTER_PLACEHOLDER } from '../beam.config';
+import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 
 
 export type BRayId = string;
@@ -46,7 +46,7 @@ export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: D
   if (!llmId)
     return { ...ray, scatterIssue: 'No model selected' };
 
-  const { rays, _rayUpdate, syncRaysStateToBeam } = scatterStore;
+  const { rays, _rayUpdate, _syncRaysStateToBeam } = scatterStore;
 
   // validate history
   if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
@@ -80,7 +80,7 @@ export function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: D
       });
     })
     .finally(() => {
-      syncRaysStateToBeam();
+      _syncRaysStateToBeam();
     });
 
   return {
@@ -167,7 +167,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
-  syncRaysStateToBeam: () => void;
+  _syncRaysStateToBeam: () => void;
 
 }
 
@@ -179,7 +179,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
 
 
   setRayCount: (count: number) => {
-    const { rays, syncRaysStateToBeam } = _get();
+    const { rays, _syncRaysStateToBeam } = _get();
     if (count < rays.length) {
       // Terminate exceeding rays
       rays.slice(count).forEach(rayScatterStop);
@@ -194,7 +194,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         ],
       });
     }
-    syncRaysStateToBeam();
+    _syncRaysStateToBeam();
   },
 
   removeRay: (rayId: BRayId) => {
@@ -206,7 +206,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         return shallStay;
       }),
     }));
-    _get().syncRaysStateToBeam();
+    _get()._syncRaysStateToBeam();
   },
 
   importRays: (messages: DMessage[]) => {
@@ -229,7 +229,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
         ...state.rays.filter((ray) => ray.status !== 'empty'),
       ],
     }));
-    _get().syncRaysStateToBeam();
+    _get()._syncRaysStateToBeam();
   },
 
 
@@ -239,7 +239,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
       // Start all rays
       rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get())),
     }));
-    _get().syncRaysStateToBeam();
+    _get()._syncRaysStateToBeam();
   },
 
   stopScatteringAll: () =>
@@ -250,13 +250,13 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     })),
 
   rayToggleScattering: (rayId: BRayId) => {
-    const { inputHistory, fusionsLlmId, _rayUpdate, syncRaysStateToBeam } = _get();
+    const { inputHistory, fusionsLlmId, _rayUpdate, _syncRaysStateToBeam } = _get();
     _rayUpdate(rayId, (ray) =>
       ray.status === 'scattering'
         ? /* User Terminated the ray */ rayScatterStop(ray)
         : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get()),
     );
-    syncRaysStateToBeam();
+    _syncRaysStateToBeam();
   },
 
   raySetScatterLlmId: (rayId: BRayId, llmId: DLLMId | null) =>
@@ -273,7 +273,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     })),
 
 
-  syncRaysStateToBeam: () => {
+  _syncRaysStateToBeam: () => {
     const { rays } = _get();
 
     // Check if all rays have finished generating
@@ -281,7 +281,9 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     const allDone = !rays.some(rayIsScattering);
     const raysReady = rays.filter(rayIsSelectable).length;
 
-    console.log('syncRaysStateToBeam', { count: rays.length, isScattering: hasRays && !allDone, allDone, raysReady });
+    // [debug]
+    if (SCATTER_DEBUG_STATE)
+      console.log('_syncRaysStateToBeam', { rays: rays.length, allDone, raysReady, isScattering: hasRays && !allDone });
 
     _set({
       isScattering: hasRays && !allDone,
