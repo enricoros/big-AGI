@@ -34,11 +34,11 @@ export function BeamView(props: {
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ isGathering, fusionsLlmId, gatherShowPrompts,
+    /* gather */ fusionsLlmId, gatherShowPrompts,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
     isScattering: state.isScattering, raysReady: state.raysReady,
-    isGathering: state.isGathering, fusionsLlmId: state.fusionsLlmId, gatherShowPrompts: state.gatherShowPrompts,
+    fusionsLlmId: state.fusionsLlmId, gatherShowPrompts: state.gatherShowPrompts,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionsLlmId, setFusionsLlmId, props.isMobile ? '' : 'Merge Model', true);
@@ -68,7 +68,6 @@ export function BeamView(props: {
   if (props.showExplainer && explainerUnseen)
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
-  console.log('BeamView', props.beamStore.getState());
   return (
     <ScrollToBottom disableAutoStick>
 
@@ -134,7 +133,6 @@ export function BeamView(props: {
         <BeamGatherPane
           isMobile={props.isMobile}
           beamStore={props.beamStore}
-          gatherBusy={isGathering}
           gatherCount={raysReady}
           gatherLlmComponent={gatherLlmComponent}
           gatherLlmIcon={gatherLlmIcon}

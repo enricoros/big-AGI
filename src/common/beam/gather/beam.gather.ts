@@ -98,11 +98,20 @@ function fusionGatherStart(fusion: Readonly<BFusion>, fusionsLlmId: DLLMId | nul
 
   promiseChain.then(() => {
     console.log('All instructions executed for fusion:', fusion.fusionId);
-    updateBFusion({ status: 'success' });
-    syncGatherState();
-  }, (error) => {
+    updateBFusion({
+      status: 'success',
+      fusionIssue: undefined,
+    });
+  }).catch((error) => {
     console.error('Error executing instructions:', error, fusion.fusionId);
-    updateBFusion({ status: 'error', fusionIssue: error?.message || error?.toString() || 'Unknown error' });
+    updateBFusion({
+      status: 'error',
+      fusionIssue: error?.message || error?.toString() || 'Unknown error',
+    });
+  }).finally(() => {
+    updateBFusion({
+      vmState: null,
+    });
     syncGatherState();
   });
 }
@@ -176,12 +185,12 @@ interface GatherStateSlice {
   gatherShowDevMethods: boolean;
   gatherShowPrompts: boolean;
 
+  isGatheringAny: boolean;
+
   fusions: BFusion[];
   currentFusionId: BFusionId | null;
 
   fusionsLlmId: DLLMId | null; // i'd love to call this 'gatherLlmId', but it's already used too much and can hide errors
-
-  isGathering: boolean;  // true if any fusion is gathering at the moment
 
 }
 
@@ -201,7 +210,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
 
     fusionsLlmId: null, // will be re-set during open() of the Beam Store
 
-    isGathering: false,
+    isGatheringAny: false,
   };
 };
 
@@ -313,14 +322,14 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     const { fusions } = _get();
 
     // 'or' the status of all fusions
-    const isGathering = fusions.some(fusion => fusion.status === 'fusing');
+    const isGatheringAny = fusions.some(fusion => fusion.status === 'fusing');
 
     // [debug]
     if (GATHER_DEBUG_STATE)
-      console.log('_syncFusionsStateToGather', { fusions: fusions.length, isGathering });
+      console.log('_syncFusionsStateToGather', { fusions: fusions.length, isGatheringAny });
 
     _set({
-      isGathering,
+      isGatheringAny,
     });
   },
 

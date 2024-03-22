@@ -60,7 +60,6 @@ const desktopBeamGatherPaneSx: SxProps = {
 export function BeamGatherPane(props: {
   isMobile: boolean,
   beamStore: BeamStoreApi,
-  gatherBusy: boolean,
   gatherCount: number,
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
@@ -72,18 +71,18 @@ export function BeamGatherPane(props: {
 
   // external state
   const {
-    gatherShowDevMethods, gatherShowPrompts,
-    toggleGatherShowDevMethods, toggleGatherShowPrompts,
-    fusions, currentFusionId,
-    setCurrentFusionId, currentFusionStart, currentFusionStop,
+    gatherShowDevMethods, gatherShowPrompts, isGatheringAny, fusions, currentFusionId,
+    toggleGatherShowDevMethods, toggleGatherShowPrompts, setCurrentFusionId, currentFusionStart, currentFusionStop,
     stopScatteringAll,
   } = useBeamStore(props.beamStore, useShallow(state => {
     return {
       // state
       gatherShowDevMethods: state.gatherShowDevMethods,
       gatherShowPrompts: state.gatherShowPrompts,
+      isGatheringAny: state.isGatheringAny,
       fusions: state.fusions,
       currentFusionId: state.currentFusionId,
+      // (fusionsLlmId is lifted to the parent)
 
       // actions
       toggleGatherShowDevMethods: state.toggleGatherShowDevMethods,
@@ -100,11 +99,11 @@ export function BeamGatherPane(props: {
 
 
   // derived state
-  const { gatherCount, gatherBusy } = props;
+  const { gatherCount } = props;
 
   const hasInputs = gatherCount >= 2;
 
-  const gatherEnabled = hasInputs && !gatherBusy && currentFusionId !== null;
+  const gatherEnabled = hasInputs && !isGatheringAny && currentFusionId !== null;
 
   // const currentFusion = currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
 
@@ -152,11 +151,11 @@ export function BeamGatherPane(props: {
   ), [gatherShowDevMethods, gatherShowPrompts, toggleGatherShowDevMethods, toggleGatherShowPrompts]);
 
 
-  const MainLlmIcon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+  const MainLlmIcon = props.gatherLlmIcon || (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return <>
     <Box
-      className={`${hasInputs ? gatherPaneClasses.active : ''} ${gatherBusy ? gatherPaneClasses.busy : ''}`}
+      className={`${hasInputs ? gatherPaneClasses.active : ''} ${isGatheringAny ? gatherPaneClasses.busy : ''}`}
       sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}
     >
 
@@ -168,7 +167,7 @@ export function BeamGatherPane(props: {
             endDecorator={dropdownMemo}
             // sx={{ my: 0.25 }}
           >
-            <MainLlmIcon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
+            <MainLlmIcon sx={{ fontSize: '1rem', animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
@@ -240,11 +239,11 @@ export function BeamGatherPane(props: {
       </Box>
 
       {/* Start / Stop buttons */}
-      {!gatherBusy ? (
+      {!isGatheringAny ? (
         <Button
           // key='gather-start' // used for animation triggering, which we don't have now
           variant='solid' color={GATHER_COLOR}
-          disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
+          disabled={!gatherEnabled || isGatheringAny} loading={isGatheringAny}
           endDecorator={/*CurrentFusionIcon ? <CurrentFusionIcon /> :*/ <MergeRoundedIcon />}
           onClick={handleCurrentFusionStart}
           sx={{ minWidth: 120 }}
