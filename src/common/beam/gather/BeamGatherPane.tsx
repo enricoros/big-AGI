@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { SxProps } from '@mui/joy/styles/types';
+import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, FormControl, SvgIconProps, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
@@ -194,20 +194,26 @@ export function BeamGatherPane(props: {
               // ignore dev fusions, if not asked for it
               if (factory.isDev && !gatherShowDevMethods) return null;
 
+              // const buttonColor: ColorPaletteProp = fusion.status === 'error' ? 'danger'
+              //   : fusion.status === 'fusing' ? 'warning'
+              //     : fusion.status === 'success' ? GATHER_COLOR
+              //       : fusion.status === 'stopped' ? GATHER_COLOR
+              //         : 'neutral';
+
               const isActive = fusion.fusionId === currentFusionId;
+              const buttonColor: ColorPaletteProp = isActive && (fusion.status === 'success' || fusion.status === 'stopped') ? GATHER_COLOR : 'neutral';
               return (
                 <Button
                   key={'fusion-' + fusion.fusionId}
-                  color={isActive ? GATHER_COLOR : 'neutral'}
-                  onClick={event => handleFusionActivate(fusion.fusionId, !!event?.shiftKey)}
+                  color={buttonColor}
                   size='sm'
+                  onClick={event => handleFusionActivate(fusion.fusionId, !!event?.shiftKey)}
+                  startDecorator={(isActive && factory.Icon) ? <factory.Icon /> : null}
                   sx={{
-                    // backgroundColor: isActive ? 'background.popup' : undefined,
-                    backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
-                    fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
+                    backgroundColor: isActive ? `${buttonColor}.softBg` : 'background.popup',
+                    fontWeight: isActive ? 'lg' : 400, /* reset, from 600 */
                     // minHeight: '2.25rem',
                   }}
-                  startDecorator={(isActive && factory.Icon) ? <factory.Icon /> : null}
                 >
                   <GoodTooltip title={factory.description}>
                     <span>
