@@ -97,7 +97,7 @@ function RayControls(props: {
     {!props.isScattering ? (
       <GoodTooltip title='Generate'>
         <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
-          {props.isEmpty ? <PlayArrowRoundedIcon /> : <ReplayRoundedIcon />}
+          {props.isEmpty ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}
         </IconButton>
       </GoodTooltip>
     ) : (

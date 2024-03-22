@@ -17,6 +17,11 @@ import { beamPaneSx } from '../BeamCard';
 const desktopBeamScatterPaneSx: SxProps = {
   ...beamPaneSx,
 
+  // [desktop] scatter: primary-chan shadow
+  // boxShadow: '0px 6px 12px -8px rgb(var(--joy-palette-primary-darkChannel) / 35%)',
+  boxShadow: '0px 16px 24px -24px rgb(var(--joy-palette-primary-darkChannel) / 35%)',
+  // boxShadow: '0px 8px 20px -16px rgb(var(--joy-palette-primary-darkChannel) / 50%)',
+
   // the fact that this works, means we got the CSS and layout right
   position: 'sticky',
   top: 0,
