@@ -9,6 +9,7 @@ import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
 import { BeamGatherInput } from './gather/BeamGatherInput';
+import { BeamGatherOutput } from './gather/BeamGatherOutput';
 import { BeamGatherPane } from './gather/BeamGatherPane';
 import { BeamRayGrid } from './scatter/BeamRayGrid';
 import { BeamScatterInput } from './scatter/BeamScatterInput';
@@ -141,10 +142,10 @@ export function BeamView(props: {
         />
 
         {/* Fusion Output */}
-        {/*<BeamGatherOutput*/}
-        {/*  beamStore={props.beamStore}*/}
-        {/*  isMobile={props.isMobile}*/}
-        {/*/>*/}
+        <BeamGatherOutput
+          beamStore={props.beamStore}
+          isMobile={props.isMobile}
+        />
 
       </Box>
 

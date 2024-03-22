@@ -274,9 +274,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     const { currentFusionId, fusions, fusionsLlmId, _fusionUpdate, _syncFusionsStateToGather } = _get();
     const fusion = currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
     if (fusion) {
-      const onUpdate = (update: Partial<BFusion>) => _fusionUpdate(fusion.fusionId, update);
+      const onUpdate = (update: Partial<BFusion>) => {
+        _fusionUpdate(fusion.fusionId, update);
+        _syncFusionsStateToGather();
+      };
       fusionGatherStart(fusion, fusionsLlmId, raysSnapshot, onUpdate);
-      _syncFusionsStateToGather();
     }
   },
 
@@ -307,8 +309,12 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     if (GATHER_DEBUG_STATE)
       console.log('_syncFusionsStateToGather', { fusions: fusions.length, isGathering });
 
-    _set({
-      isGathering,
+    _set(state => {
+      if (state.isGathering === isGathering)
+        return state;
+      return {
+        isGathering,
+      };
     });
   },
 

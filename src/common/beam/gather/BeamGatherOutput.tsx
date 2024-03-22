@@ -1,10 +1,13 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
+
 import type { SxProps } from '@mui/joy/styles/types';
+import { Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { BeamCard, beamCardClasses } from '../BeamCard';
+import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 
 
 const fusionRayCardSx: SxProps = {
@@ -38,9 +41,14 @@ export function BeamGatherOutput(props: {
 }) {
 
   // external state
-  const currentFusion = useBeamStore(props.beamStore, store => store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null);
+  const { fusion } = useBeamStore(props.beamStore, useShallow(store => {
+    const fusion = store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null;
+    return {
+      fusion,
+    };
+  }));
 
-  if (!currentFusion)
+  if (!fusion)
     return null;
 
   return (
@@ -48,13 +56,18 @@ export function BeamGatherOutput(props: {
       className={beamCardClasses.selectable}
       sx={fusionRayCardSx}
     >
-      <ChatMessageMemo
-        message={currentFusion.outputMessage}
-        fitScreen={props.isMobile}
-        showAvatar={false}
-        adjustContentScaling={-1}
-        sx={fusionChatMessageSx}
-      />
+      {!!fusion.outputMessage && (
+        <ChatMessageMemo
+          message={fusion.outputMessage}
+          fitScreen={props.isMobile}
+          showAvatar={false}
+          adjustContentScaling={-1}
+          sx={fusionChatMessageSx}
+        />
+      )}
+      <Typography level='body-xs' sx={{ whiteSpace: 'break-spaces' }}>
+        {JSON.stringify(fusion, null, 2)}
+      </Typography>
     </BeamCard>
   );
 }
