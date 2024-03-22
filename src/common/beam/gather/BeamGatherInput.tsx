@@ -178,33 +178,33 @@ export function BeamGatherInput(props: {
 }) {
 
   // external state (all null if we don't have an index)
-  const { fusionIndex, fusionIsEditable, fusionInstructions } = useBeamStore(props.beamStore, useShallow(store => {
-    const fusion = store.fusionIndex !== null ? store.fusions[store.fusionIndex] ?? null : null;
+  const { currentFusionId, currentIsEditable, currentInstructions } = useBeamStore(props.beamStore, useShallow(store => {
+    const fusion = store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null;
     return {
-      fusionIndex: store.fusionIndex,
-      fusionIsEditable: fusion?.isEditable === true,
-      fusionInstructions: fusion?.instructions ?? [],
+      currentFusionId: fusion?.fusionId ?? null,
+      currentIsEditable: fusion?.isEditable === true,
+      currentInstructions: fusion?.instructions ?? [],
     };
   }));
 
 
   // handlers
   const handleFusionCopyAsCustom = React.useCallback(() => {
-    fusionIndex !== null && props.beamStore.getState().fusionCopyAsCustom(fusionIndex);
-  }, [fusionIndex, props.beamStore]);
+    currentFusionId !== null && props.beamStore.getState().fusionRecreateAsCustom(currentFusionId);
+  }, [currentFusionId, props.beamStore]);
 
   const handleInstructionEdit = React.useCallback((instructionIndex: number, update: Partial<TInstruction>) => {
-    fusionIndex !== null && props.beamStore.getState().fusionInstructionEdit(fusionIndex, instructionIndex, update);
-  }, [fusionIndex, props.beamStore]);
+    currentFusionId !== null && props.beamStore.getState().fusionInstructionUpdate(currentFusionId, instructionIndex, update);
+  }, [currentFusionId, props.beamStore]);
 
 
   const styleMemo = React.useMemo(() => {
-    return fusionIsEditable ? { ...gatherInputWrapperSx, backgroundColor: 'primary.softBg' } : gatherInputWrapperSx;
-  }, [fusionIsEditable]);
+    return currentIsEditable ? { ...gatherInputWrapperSx, backgroundColor: 'primary.softBg' } : gatherInputWrapperSx;
+  }, [currentIsEditable]);
 
   const instructionsMemo = React.useMemo(() => {
     const elements: React.JSX.Element[] = [];
-    fusionInstructions
+    currentInstructions
       .slice(0, 1)
       .forEach((instruction, instructionIndex) => {
 
@@ -216,7 +216,7 @@ export function BeamGatherInput(props: {
         elements.push(
           <EditableInstruction
             key={'inst-' + instructionIndex}
-            editMethod={fusionIsEditable ? 'edit' : 'duplicate'}
+            editMethod={currentIsEditable ? 'edit' : 'duplicate'}
             instruction={instruction}
             instructionIndex={instructionIndex}
             onFusionCopyAsCustom={handleFusionCopyAsCustom}
@@ -225,11 +225,11 @@ export function BeamGatherInput(props: {
         );
       });
     return elements;
-  }, [fusionInstructions, fusionIsEditable, handleFusionCopyAsCustom, handleInstructionEdit]);
+  }, [currentInstructions, currentIsEditable, handleFusionCopyAsCustom, handleInstructionEdit]);
 
 
   // render if existing and editable
-  if (fusionIndex === null || (!fusionIsEditable && !props.gatherShowPrompts))
+  if (currentFusionId === null || (!currentIsEditable && !props.gatherShowPrompts))
     return null;
 
   return (
