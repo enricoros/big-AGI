@@ -3,11 +3,10 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { DLLMId } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import type { DMessage } from '~/common/state/store-chats';
-
 import type { BRay } from '../scatter/beam.scatter';
 import { FUSION_FACTORIES } from './beam.gather.factories';
-import { GATHER_DEBUG_STATE, GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
+import { GATHER_DEBUG_STATE, GATHER_DEFAULT_TO_FIRST_FUSION, GATHER_PLACEHOLDER } from '../beam.config';
+import { createDMessage, DMessage } from '~/common/state/store-chats';
 
 
 export function mixInstructionPrompt(prompt: string, raysReady: number): string {
@@ -25,18 +24,85 @@ function executeInstruction(instruction: TInstruction): Promise<void> {
   });
 }
 
-function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId, raysSnapshot: Readonly<BRay[]>): Partial<BFusion> {
 
-  // returns the state update for the Fusion
-  return {};
+function executeChatGenerateInstruction(instruction: TChatGenerateInstruction, fusion: BFusion): Promise<void> {
+  // Example implementation - adapt based on actual logic for executing a chat-generate instruction
+  return new Promise((resolve, reject) => {
+    // Simulate asynchronous operation (e.g., API call)
+    setTimeout(() => {
+      console.log('Chat Generate Instruction executed:', instruction.name);
+      // Update fusion status or perform any other required state updates here
+      resolve();
+    }, 2000);
+  });
+}
+
+function executeUserInputChecklistInstruction(instruction: TUserInputChecklistInstruction, fusion: BFusion): Promise<void> {
+  // Example implementation - adapt based on your application's UI/input logic
+  return new Promise((resolve, reject) => {
+    // Logic to display user input prompt and wait for submission
+    // This is highly dependent on your UI framework and setup
+    console.log('Waiting for user input for:', instruction.name);
+    // Simulate receiving user input after some time
+    setTimeout(() => {
+      console.log('User input received for:', instruction.name);
+      resolve();
+    }, 5000); // Simulate a 5-second wait for user input
+  });
+}
+
+
+function fusionGatherStart(fusion: BFusion, fusionsLlmId: DLLMId | null, raysSnapshot: Readonly<BRay[]>, updateBFusion: (update: Partial<BFusion>) => void) {
+  // check preconditions
+  if (!fusionsLlmId)
+    return updateBFusion({ fusionIssue: 'No Merge model selected' });
+  if (!raysSnapshot || raysSnapshot.length < 1)
+    return updateBFusion({ fusionIssue: 'No responses available' });
+  if (fusion.vmState !== null)
+    return updateBFusion({ fusionIssue: 'Already performing fusion' });
+  if (!(fusion.instructions.length >= 1))
+    return updateBFusion({ fusionIssue: 'No fusion instructions available' });
+
+  // Initialize the VM state
+  const runningFusion: BFusion = {
+    ...fusion,
+    vmState: {
+      inputLLMId: fusionsLlmId,
+      inputRays: raysSnapshot,
+      currentInstructionIndex: 0,
+      abortController: new AbortController(),
+    },
+    status: 'fusing',
+    fusionIssue: undefined,
+    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+  };
+  updateBFusion(runningFusion);
+
+  // Start executing the instructions
+  let promiseChain = Promise.resolve();
+  console.log('executing instructions', fusion.instructions);
+
+  for (const instruction of fusion.instructions) {
+    promiseChain = promiseChain.then(() => {
+      switch (instruction.type) {
+        case 'chat-generate':
+          return executeChatGenerateInstruction(instruction as TChatGenerateInstruction, fusion);
+        case 'user-input-checklist':
+          return executeUserInputChecklistInstruction(instruction as TUserInputChecklistInstruction, fusion);
+        default:
+          return Promise.reject(new Error('Unsupported Merge instruction'));
+      }
+    });
+  }
+
 }
 
 function fusionGatherStop(fusion: BFusion): BFusion {
-  fusion.abortController?.abort();
+  // fusion.abortController?.abort();
   return {
     ...fusion,
     ...(fusion.status === 'fusing' ? { status: 'stopped' } : {}),
-    abortController: undefined,
+    // abortController: undefined,
   };
 }
 
@@ -69,6 +135,13 @@ export type TUserInputChecklistInstruction = {
 export type TInstruction = TChatGenerateInstruction | TUserInputChecklistInstruction;
 
 
+interface TVMState {
+  inputLLMId: DLLMId;
+  inputRays: Readonly<BRay[]>;
+  currentInstructionIndex: number; // points to the next instruction to execute
+  abortController?: AbortController;
+}
+
 export interface BFusion {
   // set at creation, adjusted later if this is a custom fusion (and only when idle)
   fusionId: BFusionId;
@@ -77,14 +150,12 @@ export interface BFusion {
   instructions: TInstruction[];
 
   // set at start
-  llmId: DLLMId | null;
+  vmState: TVMState | null;
 
   // variable
-  currentInstructionIndex: number; // points to the next instruction to execute
   status: 'idle' | 'fusing' | 'success' | 'stopped' | 'error';
-  outputMessage: DMessage;
-  issue?: string;
-  abortController?: AbortController;
+  fusionIssue?: string;
+  outputMessage?: DMessage;
 }
 
 
@@ -200,9 +271,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
 
 
   currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => {
-    const { currentFusionId, fusionsLlmId, _fusionUpdate, _syncFusionsStateToGather } = _get();
-    if (currentFusionId !== null && fusionsLlmId !== null && raysSnapshot.length) {
-      _fusionUpdate(currentFusionId, (fusion) => fusionGatherStart(fusion, fusionsLlmId, raysSnapshot));
+    const { currentFusionId, fusions, fusionsLlmId, _fusionUpdate, _syncFusionsStateToGather } = _get();
+    const fusion = currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
+    if (fusion) {
+      const onUpdate = (update: Partial<BFusion>) => _fusionUpdate(fusion.fusionId, update);
+      fusionGatherStart(fusion, fusionsLlmId, raysSnapshot, onUpdate);
       _syncFusionsStateToGather();
     }
   },
