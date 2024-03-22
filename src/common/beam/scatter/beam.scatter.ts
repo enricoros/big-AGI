@@ -234,10 +234,10 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
 
 
   startScatteringAll: () => {
-    const { inputHistory, fusionsLlmId } = _get();
+    const { inputHistory, gatherLlmId } = _get();
     _set(state => ({
       // Start all rays
-      rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get())),
+      rays: state.rays.map(ray => rayScatterStart(ray, ray.scatterLlmId || gatherLlmId, inputHistory || [], false, _get())),
     }));
     _get()._syncRaysStateToScatter();
   },
@@ -250,11 +250,11 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
     })),
 
   rayToggleScattering: (rayId: BRayId) => {
-    const { inputHistory, fusionsLlmId, _rayUpdate, _syncRaysStateToScatter } = _get();
+    const { inputHistory, gatherLlmId, _rayUpdate, _syncRaysStateToScatter } = _get();
     _rayUpdate(rayId, (ray) =>
       ray.status === 'scattering'
         ? /* User Terminated the ray */ rayScatterStop(ray)
-        : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || fusionsLlmId, inputHistory || [], false, _get()),
+        : /* User Started the ray */ rayScatterStart(ray, ray.scatterLlmId || gatherLlmId, inputHistory || [], false, _get()),
     );
     _syncRaysStateToScatter();
   },

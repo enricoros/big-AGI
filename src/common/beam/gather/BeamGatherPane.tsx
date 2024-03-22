@@ -71,18 +71,19 @@ export function BeamGatherPane(props: {
 
   // external state
   const {
-    gatherShowDevMethods, gatherShowPrompts, isGatheringAny, fusions, currentFusionId,
-    toggleGatherShowDevMethods, toggleGatherShowPrompts, setCurrentFusionId, currentFusionStart, currentFusionStop,
+    gatherShowDevMethods, gatherShowPrompts,
+    fusions, currentFusionId, isGatheringAny,
+    toggleGatherShowDevMethods, toggleGatherShowPrompts,
+    setCurrentFusionId, currentFusionStart, currentFusionStop,
     stopScatteringAll,
   } = useBeamStore(props.beamStore, useShallow(state => {
     return {
-      // state
+      // state (gatherLlmId is lifted to the parent)
       gatherShowDevMethods: state.gatherShowDevMethods,
       gatherShowPrompts: state.gatherShowPrompts,
-      isGatheringAny: state.isGatheringAny,
       fusions: state.fusions,
       currentFusionId: state.currentFusionId,
-      // (fusionsLlmId is lifted to the parent)
+      isGatheringAny: state.isGatheringAny,
 
       // actions
       toggleGatherShowDevMethods: state.toggleGatherShowDevMethods,
