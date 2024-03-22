@@ -91,6 +91,11 @@ export function BeamGatherPane(props: {
 
   const gatherEnabled = gatherCount >= 2 && !gatherBusy && currentFusionId !== null;
 
+  // const currentFusion = currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
+
+  // const currentFactoryId = currentFusion ? currentFusion.factoryId : null;
+
+  // const CurrentFusionIcon = currentFactoryId ? FUSION_FACTORIES.find(factory => factory.id === currentFactoryId)?.Icon ?? null : null;
 
   const handleFusionActivate = React.useCallback((fusionId: string, shiftPressed: boolean) => {
     setStickToBottom(true);
@@ -133,8 +138,7 @@ export function BeamGatherPane(props: {
   ), [gatherShowDevMethods, gatherShowPrompts, toggleGatherShowDevMethods, toggleGatherShowPrompts]);
 
 
-  const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
-
+  const MainLlmIcon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return <>
     <Box sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}>
@@ -144,7 +148,7 @@ export function BeamGatherPane(props: {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
         <div>
           <Typography level='h4' component='h2' endDecorator={dropdownMemo}>
-            <Icon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
+            <MainLlmIcon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
@@ -175,7 +179,7 @@ export function BeamGatherPane(props: {
                   key={'fusion-' + fusion.fusionId}
                   color={isActive ? GATHER_COLOR : 'neutral'}
                   onClick={event => handleFusionActivate(fusion.fusionId, !!event?.shiftKey)}
-                  // size='sm'
+                  size='sm'
                   sx={{
                     // backgroundColor: isActive ? 'background.popup' : undefined,
                     backgroundColor: isActive ? `${GATHER_COLOR}.softBg` : 'background.popup',
@@ -214,7 +218,7 @@ export function BeamGatherPane(props: {
           // key='gather-start' // used for animation triggering, which we don't have now
           variant='solid' color={GATHER_COLOR}
           disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
-          endDecorator={<MergeRoundedIcon />}
+          endDecorator={/*CurrentFusionIcon ? <CurrentFusionIcon /> :*/ <MergeRoundedIcon />}
           onClick={handleCurrentFusionStart}
           sx={{ minWidth: 120 }}
         >
