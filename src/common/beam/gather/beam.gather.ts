@@ -202,7 +202,7 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
   currentFusionStart: (raysSnapshot: Readonly<BRay[]>) => {
     const { currentFusionId, fusionsLlmId, _fusionUpdate, _syncFusionsStateToGather } = _get();
     if (currentFusionId !== null && fusionsLlmId !== null && raysSnapshot.length) {
-      _fusionUpdate(currentFusionId, (fusion) => fusionGatherStart(fusion, fusionsLlmId, raysSnapshot);
+      _fusionUpdate(currentFusionId, (fusion) => fusionGatherStart(fusion, fusionsLlmId, raysSnapshot));
       _syncFusionsStateToGather();
     }
   },
