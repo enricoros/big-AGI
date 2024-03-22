@@ -38,9 +38,9 @@ export function BeamGatherOutput(props: {
 }) {
 
   // external state
-  const fusion = useBeamStore(props.beamStore, store => store.fusionIndex !== null ? store.fusions[store.fusionIndex] ?? null : null);
+  const currentFusion = useBeamStore(props.beamStore, store => store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null);
 
-  if (!fusion)
+  if (!currentFusion)
     return null;
 
   return (
@@ -49,7 +49,7 @@ export function BeamGatherOutput(props: {
       sx={fusionRayCardSx}
     >
       <ChatMessageMemo
-        message={fusion.outputMessage}
+        message={currentFusion.outputMessage}
         fitScreen={props.isMobile}
         showAvatar={false}
         adjustContentScaling={-1}

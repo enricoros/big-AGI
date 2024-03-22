@@ -66,7 +66,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialFusionLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialFusionsLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
     const { isOpen: wasOpen, terminate } = _get();
 
     // reset pending operations
@@ -86,15 +86,15 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // rays already reset
 
       // fusions
-      ...((!wasOpen && initialFusionLlmId) && {
+      ...((!wasOpen && initialFusionsLlmId) && {
         // update the model only if the dialog was not already open
-        fusionLlmId: initialFusionLlmId,
+        fusionsLlmId: initialFusionsLlmId,
       }),
     });
   },
 
   terminate: () => { /*_get().isOpen &&*/
-    const { rays, fusions, fusionLlmId, gatherShowPrompts } = _get();
+    const { rays, fusions, fusionsLlmId, gatherShowPrompts } = _get();
 
     _set({
       ...initRootStateSlice(),
@@ -102,7 +102,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       ...reInitGatherStateSlice(fusions),
 
       // remember after termination
-      fusionLlmId,
+      fusionsLlmId,
       gatherShowPrompts,
     });
   },
