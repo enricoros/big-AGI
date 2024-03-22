@@ -10,6 +10,7 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { BeamGatherDropdown } from '~/common/beam/gather/BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
@@ -42,13 +43,17 @@ const desktopBeamGatherPaneSx: SxProps = {
 
 
 export function BeamGatherPane(props: {
+  isMobile: boolean,
   beamStore: BeamStoreApi,
   gatherBusy: boolean,
   gatherCount: number,
   gatherLlmComponent: React.ReactNode,
   gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
-  isMobile: boolean,
+  scatterBusy: boolean,
 }) {
+
+  // state
+  const [warnScatterBusy, setWarnScatterBusy] = React.useState(false);
 
   // external state
   const {
@@ -56,6 +61,7 @@ export function BeamGatherPane(props: {
     toggleGatherShowDevMethods, toggleGatherShowPrompts,
     fusions, currentFusionId,
     setCurrentFusionId, currentFusionStart, currentFusionStop,
+    stopScatteringAll,
   } = useBeamStore(props.beamStore, useShallow(state => {
     return {
       // state
@@ -70,6 +76,9 @@ export function BeamGatherPane(props: {
       setCurrentFusionId: state.setCurrentFusionId,
       currentFusionStart: state.currentFusionStart,
       currentFusionStop: state.currentFusionStop,
+
+      // (external slice) scatter actions
+      stopScatteringAll: state.stopScatteringAll,
     };
   }));
   const { setStickToBottom } = useScrollToBottom();
@@ -86,6 +95,32 @@ export function BeamGatherPane(props: {
     setCurrentFusionId((fusionId !== currentFusionId || !shiftPressed) ? fusionId : null);
   }, [currentFusionId, setCurrentFusionId, setStickToBottom]);
 
+
+  const handleCurrentFusionStart = React.useCallback(() => {
+    // checke whether we need to stop scattering also, or we can just proceed
+    if (props.scatterBusy)
+      setWarnScatterBusy(true);
+    else
+      currentFusionStart();
+  }, [currentFusionStart, props.scatterBusy]);
+
+  const handleStopScatterConfirmation = React.useCallback(() => {
+    console.log('handleStopScatterConfirmation: a');
+    setWarnScatterBusy(false);
+    stopScatteringAll();
+    currentFusionStart();
+    console.log('handleStopScatterConfirmation: Scattering stopped, and Merging started');
+  }, [currentFusionStart, stopScatteringAll]);
+
+  const handleStopScatterDenial = React.useCallback(() => setWarnScatterBusy(false), []);
+
+  // (this is great ux) scatter freed up while we were asking the question, proceed
+  React.useEffect(() => {
+    if (warnScatterBusy && !props.scatterBusy)
+      handleStopScatterConfirmation();
+  }, [handleStopScatterConfirmation, props.scatterBusy, warnScatterBusy]);
+
+
   const dropdownMemo = React.useMemo(() => (
     <BeamGatherDropdown
       gatherShowDevMethods={gatherShowDevMethods}
@@ -99,7 +134,7 @@ export function BeamGatherPane(props: {
   const Icon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
 
-  return (
+  return <>
     <Box sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}>
 
 
@@ -178,7 +213,7 @@ export function BeamGatherPane(props: {
           variant='solid' color={GATHER_COLOR}
           disabled={!gatherEnabled || gatherBusy} loading={gatherBusy}
           endDecorator={<MergeRoundedIcon />}
-          onClick={currentFusionStart}
+          onClick={handleCurrentFusionStart}
           sx={{ minWidth: 120 }}
         >
           Merge
@@ -196,5 +231,19 @@ export function BeamGatherPane(props: {
       )}
 
     </Box>
-  );
+
+    {/* Confirm Stop Scattering */}
+    {warnScatterBusy && (
+      <ConfirmationModal
+        open
+        onClose={handleStopScatterDenial}
+        onPositive={handleStopScatterConfirmation}
+        // lowStakes
+        noTitleBar
+        confirmationText={`There are still some messages being generated. Are you sure you want to stop Beam?`}
+        positiveActionText='Yes, stop and begin Merging'
+      />
+    )}
+
+  </>;
 }
