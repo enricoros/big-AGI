@@ -53,6 +53,7 @@ const desktopBeamGatherPaneSx: SxProps = {
   // [desktop] keep visible at the bottom
   position: 'sticky',
   bottom: 0,
+  top: 0,
 };
 
 
