@@ -14,13 +14,18 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { animationColorBeamGather } from '~/common/util/animUtils';
+import { animationColorBeamGather, animationShadowLimey } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { FUSION_FACTORIES } from './beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
+
+export const gatherPaneClasses = {
+  active: 'gatherPane-Active',
+  busy: 'gatherPane-Busy',
+};
 
 const mobileBeamGatherPane: SxProps = {
   ...beamPaneSx,
@@ -36,7 +41,14 @@ const desktopBeamGatherPaneSx: SxProps = {
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
 
-  boxShadow: `0px 6px 16px -12px rgb(var(--joy-palette-${GATHER_COLOR}-darkChannel) / 50%)`,
+  backgroundColor: 'background.surface',
+  [`&.${gatherPaneClasses.active}`]: {
+    backgroundColor: 'background.popup',
+    boxShadow: `0px 6px 16px -12px rgb(var(--joy-palette-${GATHER_COLOR}-darkChannel) / 50%)`,
+  },
+  [`&.${gatherPaneClasses.busy}`]: {
+    animation: `${animationShadowLimey} 2s linear infinite`,
+  },
 
   // [desktop] keep visible at the bottom
   position: 'sticky',
@@ -89,7 +101,9 @@ export function BeamGatherPane(props: {
   // derived state
   const { gatherCount, gatherBusy } = props;
 
-  const gatherEnabled = gatherCount >= 2 && !gatherBusy && currentFusionId !== null;
+  const hasInputs = gatherCount >= 2;
+
+  const gatherEnabled = hasInputs && !gatherBusy && currentFusionId !== null;
 
   // const currentFusion = currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
 
@@ -140,8 +154,10 @@ export function BeamGatherPane(props: {
   const MainLlmIcon = props.gatherLlmIcon || (gatherBusy ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return <>
-    <Box sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}>
-
+    <Box
+      className={`${hasInputs ? gatherPaneClasses.active : ''} ${gatherBusy ? gatherPaneClasses.busy : ''}`}
+      sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}
+    >
 
       {/* Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
@@ -154,7 +170,8 @@ export function BeamGatherPane(props: {
             <MainLlmIcon sx={{ fontSize: '1rem', animation: gatherBusy ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
-            Combine the {gatherCount > 1 ? `${gatherCount} replies` : 'replies'}
+            {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
+            {hasInputs ? `Combine the ${gatherCount} replies` : 'Two replies or more'}
           </Typography>
         </div>
         <ScrollToBottomButton inline />
