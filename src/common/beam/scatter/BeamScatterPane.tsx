@@ -55,7 +55,8 @@ export function BeamScatterPane(props: {
             : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem' }} />}&nbsp;Beam
         </Typography>
         <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
-          Explore the solution space
+          Explore different replies
+          {/* Explore the solution space */}
         </Typography>
       </Box>
 
