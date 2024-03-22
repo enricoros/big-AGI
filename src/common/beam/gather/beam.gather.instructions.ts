@@ -51,7 +51,7 @@ export async function executeChatGenerateInstruction(
   if (method !== 's-s0-h0-u0-aN-u')
     throw new Error(`Unsupported Chat Generate method: ${method}`);
 
-  const _promptVars = (prompt: string) => mixInstructionPrompt(systemPrompt, rayMessages.length);
+  const _promptVars = (prompt: string) => mixInstructionPrompt(prompt, rayMessages.length);
 
   const history: VChatMessageIn[] = [
     // s

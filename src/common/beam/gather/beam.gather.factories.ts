@@ -29,7 +29,21 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
         type: 'chat-generate',
         label: 'Generate Checklist',
         method: 's-s0-h0-u0-aN-u',
-        systemPrompt: `You are an intelligent agent tasked with analyzing a set of AI-generated alternatives to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.`,
+        // You are an intelligent agent tasked with analyzing a set of AI-generated responses to the user message to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.
+        systemPrompt: `
+You are an intelligent agent tasked with analyzing a set of {{N}} AI-generated responses to the user message to identify key insights, solutions, or themes. Your goal is to distill these into a clear, concise, and actionable checklist that the user can review and select from. The checklist should be brief, commensurate with the task at hand, and formatted precisely as follows:
+
+- [ ] Insight/Solution/Theme 1
+- [ ] Insight/Solution/Theme 2
+...
+- [ ] Insight/Solution/Theme N
+
+The checklist should contain no more than 5-10 items orthogonal items, especially points of difference. Prioritize it based on what would be most helpful to the user when merging the {{N}} responses.`.trim(),
+
+// - [ ] Insight/Solution 1: [Brief, actionable description]
+// - [ ] Insight/Solution 2: [Brief, actionable description]
+
+        // Remember, the checklist should only include the most critical and relevant points, ensuring clarity and conciseness. Begin by identifying the essential insights or themes.
         userPrompt: 'Given the conversation history and the {{N}} alternatives provided, identify and list the key insights, themes, or solutions as distinct options in a checklist format. Each item should be clearly articulated to allow for easy selection by the user. Ensure the checklist is comprehensive, covering the breadth of ideas presented in the alternatives, yet concise enough to facilitate clear decision-making.',
         outputType: 'user-checklist',
       },
@@ -65,7 +79,7 @@ Consider the conversation history, the last user message, and the diverse perspe
 Your response should integrate the most relevant insights from these inputs into a cohesive and actionable answer.
 
 Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
-        userPrompt: 'Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.',
+        userPrompt: 'Synthesize the perfect cohesive response to my last message that merges the collective intelligence of the {{N}} alternatives above.',
         // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
         outputType: 'display-message',
       },
