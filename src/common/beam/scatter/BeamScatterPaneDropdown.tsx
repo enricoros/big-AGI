@@ -57,7 +57,7 @@ export const useFeatureBeamStore = create<FeatureBeamStore>()(persist(
     toggleRayScrolling: () => _set(state => ({ rayScrolling: !state.rayScrolling })),
 
   }), {
-    name: 'app-feature-beam',
+    name: 'app-module-beam',
   },
 ));
 
