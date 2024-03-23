@@ -69,7 +69,7 @@ export function BeamView(props: {
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
   return (
-    <ScrollToBottom disableAutoStick>
+    <ScrollToBottom>
 
       <Box sx={{
         // scroller fill
