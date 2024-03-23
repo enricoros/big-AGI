@@ -7,7 +7,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
 import { BeamView } from '~/common/beam/BeamView';
-import { createBeamStore } from '~/common/beam/store-beam';
+import { createBeamStore } from '~/common/beam/store-beam-vanilla';
 import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';

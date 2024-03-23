@@ -1,7 +1,4 @@
 import * as React from 'react';
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -13,57 +10,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
-
-
-/// Presets (persistes as zustand store) ///
-// NOTE: this should go to its own file, but we already have store-beam.ts, which is the 'floating' store...
-
-interface BeamModelsPreset {
-  id: string;
-  name: string;
-  scatterLlmIds: DLLMId[];
-}
-
-interface FeatureBeamStore {
-  // state
-  presets: BeamModelsPreset[];
-  rayScrolling: boolean;
-
-  // actions
-  addPreset: (name: string, scatterLlmIds: DLLMId[]) => void;
-  deletePreset: (id: string) => void;
-  renamePreset: (id: string, name: string) => void;
-  toggleRayScrolling: () => void;
-}
-
-export const useFeatureBeamStore = create<FeatureBeamStore>()(persist(
-  (_set, _get) => ({
-
-    presets: [],
-    rayScrolling: false,
-
-    addPreset: (name, scatterLlmIds) => _set(state => ({
-      presets: [...state.presets, { id: uuidv4(), name, scatterLlmIds }],
-    })),
-
-    deletePreset: (id) => _set(state => ({
-      presets: state.presets.filter(preset => preset.id !== id),
-    })),
-
-    renamePreset: (id, name) => _set(state => ({
-      presets: state.presets.map(preset => preset.id === id ? { ...preset, name } : preset),
-    })),
-
-    toggleRayScrolling: () => _set(state => ({ rayScrolling: !state.rayScrolling })),
-
-  }), {
-    name: 'app-module-beam',
-  },
-));
-
-export function useBeamRayScrolling() {
-  return useFeatureBeamStore((state) => state.rayScrolling);
-}
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 /// Naming Dialog ///
@@ -117,7 +64,7 @@ export function BeamScatterDropdown(props: {
   const [namingOpened, setNamingOpened] = React.useState(false);
 
   // external state
-  const { presets, rayScrolling, addPreset, deletePreset, toggleRayScrolling } = useFeatureBeamStore();
+  const { scatterPresets, rayScrolling, addScatterPreset, deleteScatterPreset, toggleRayScrolling } = useModuleBeamStore();
 
 
   // handlers - load/save presets
@@ -126,13 +73,13 @@ export function BeamScatterDropdown(props: {
 
   const handlePresetSave = React.useCallback((presetName: string) => {
     const { rays, gatherLlmId } = props.beamStore.getState();
-    addPreset(presetName, rays.map(ray => ray.scatterLlmId || gatherLlmId).filter(Boolean) as DLLMId[]);
+    addScatterPreset(presetName, rays.map(ray => ray.scatterLlmId || gatherLlmId).filter(Boolean) as DLLMId[]);
     handleClosePresetNaming();
-  }, [addPreset, handleClosePresetNaming, props.beamStore]);
+  }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
 
   const handlePresetLoad = React.useCallback((presetId: string) => {
-    const { presets } = useFeatureBeamStore.getState();
-    const preset = presets.find(preset => preset.id === presetId);
+    const { scatterPresets } = useModuleBeamStore.getState();
+    const preset = scatterPresets.find(preset => preset.id === presetId);
     if (preset && preset.scatterLlmIds.length)
       props.beamStore.getState().setScatterLLMIds(preset.scatterLlmIds);
   }, [props.beamStore]);
@@ -164,7 +111,7 @@ export function BeamScatterDropdown(props: {
         </MenuItem>
 
         {/* Load any preset */}
-        {presets.map(preset =>
+        {scatterPresets.map(preset =>
           <MenuItem key={preset.id}>
             <ListItemDecorator />
             <Typography onClick={() => handlePresetLoad(preset.id)}>
@@ -175,7 +122,7 @@ export function BeamScatterDropdown(props: {
               variant='outlined'
               onClick={(event) => {
                 event.stopPropagation();
-                deletePreset(preset.id);
+                deleteScatterPreset(preset.id);
               }}
               sx={{ ml: 'auto' }}
             >
