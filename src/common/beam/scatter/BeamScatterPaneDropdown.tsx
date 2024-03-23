@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-
-import { Box, Button, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
+import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
@@ -12,12 +12,11 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
-
 import type { BeamStoreApi } from '../store-beam.hooks';
 
 
 /// Presets (persistes as zustand store) ///
+// NOTE: this should go to its own file, but we already have store-beam.ts, which is the 'floating' store...
 
 interface BeamModelsPreset {
   id: string;
@@ -28,17 +27,20 @@ interface BeamModelsPreset {
 interface FeatureBeamStore {
   // state
   presets: BeamModelsPreset[];
+  rayScrolling: boolean;
 
   // actions
   addPreset: (name: string, scatterLlmIds: DLLMId[]) => void;
   deletePreset: (id: string) => void;
   renamePreset: (id: string, name: string) => void;
+  toggleRayScrolling: () => void;
 }
 
 export const useFeatureBeamStore = create<FeatureBeamStore>()(persist(
   (_set, _get) => ({
 
     presets: [],
+    rayScrolling: false,
 
     addPreset: (name, scatterLlmIds) => _set(state => ({
       presets: [...state.presets, { id: uuidv4(), name, scatterLlmIds }],
@@ -52,10 +54,16 @@ export const useFeatureBeamStore = create<FeatureBeamStore>()(persist(
       presets: state.presets.map(preset => preset.id === id ? { ...preset, name } : preset),
     })),
 
+    toggleRayScrolling: () => _set(state => ({ rayScrolling: !state.rayScrolling })),
+
   }), {
     name: 'app-feature-beam',
   },
 ));
+
+export function useBeamRayScrolling() {
+  return useFeatureBeamStore((state) => state.rayScrolling);
+}
 
 
 /// Naming Dialog ///
@@ -78,8 +86,8 @@ function DialogNamePreset(props: {
     <Modal open={props.open} onClose={handleClose}>
       <ModalDialog>
         <ModalClose />
-        <DialogTitle>Store Preset</DialogTitle>
-        {/*<DialogContent>Store the Models configuration.</DialogContent>*/}
+        <DialogTitle>Save Preset</DialogTitle>
+        <DialogContent>Store the Models configuration.</DialogContent>
         <form onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
           if (name.trim())
@@ -109,7 +117,7 @@ export function BeamScatterDropdown(props: {
   const [namingOpened, setNamingOpened] = React.useState(false);
 
   // external state
-  const { presets, addPreset, deletePreset } = useFeatureBeamStore();
+  const { presets, rayScrolling, addPreset, deletePreset, toggleRayScrolling } = useFeatureBeamStore();
 
 
   // handlers - load/save presets
@@ -125,14 +133,8 @@ export function BeamScatterDropdown(props: {
   const handlePresetLoad = React.useCallback((presetId: string) => {
     const { presets } = useFeatureBeamStore.getState();
     const preset = presets.find(preset => preset.id === presetId);
-    if (preset && preset.scatterLlmIds.length) {
+    if (preset && preset.scatterLlmIds.length)
       props.beamStore.getState().setScatterLLMIds(preset.scatterLlmIds);
-      addSnackbar({
-        key: 'beam-preset-loaded',
-        message: `Preset "${preset.name}" loaded.`,
-        type: 'success',
-      });
-    }
   }, [props.beamStore]);
 
 
@@ -149,9 +151,9 @@ export function BeamScatterDropdown(props: {
       </MenuButton>
 
       <Menu placement='right-end' sx={{ minWidth: 200 }}>
-        <ListItem>
-          <Typography level='body-sm'>Beam Presets</Typography>
-        </ListItem>
+        {/*<ListItem>*/}
+        {/*  <Typography level='body-sm'>Beam Presets</Typography>*/}
+        {/*</ListItem>*/}
 
         {/* Save New */}
         <MenuItem onClick={() => setNamingOpened(true)}>
@@ -166,7 +168,7 @@ export function BeamScatterDropdown(props: {
           <MenuItem key={preset.id}>
             <ListItemDecorator />
             <Typography onClick={() => handlePresetLoad(preset.id)}>
-              Load &quot;{preset.name}&quot; <span style={{ opacity: 0.5, marginRight: '1rem' }}>(x{preset.scatterLlmIds.length})</span>
+              Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.scatterLlmIds.length}</span>
             </Typography>
             <IconButton
               size='sm'
@@ -184,12 +186,20 @@ export function BeamScatterDropdown(props: {
 
         <ListDivider inset='startContent' />
 
-        {/* Tutorial */}
+        {/*<ListItem>*/}
+        {/*  <Typography level='body-sm'>Beam Options</Typography>*/}
+        {/*</ListItem>*/}
+
+        <MenuItem onClick={toggleRayScrolling}>
+          <ListItemDecorator>{rayScrolling && <CheckRoundedIcon />}</ListItemDecorator>
+          Scroll Responses
+        </MenuItem>
+
         <MenuItem onClick={props.onExplainerShow}>
           <ListItemDecorator>
             <SchoolRoundedIcon />
           </ListItemDecorator>
-          Tutorial
+          Tutorial ...
         </MenuItem>
 
       </Menu>
