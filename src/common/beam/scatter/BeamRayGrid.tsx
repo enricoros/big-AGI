@@ -66,6 +66,9 @@ export function BeamRayGrid(props: {
         </BeamCard>
       )}
 
+      {/* Bottom gapper, to add a mb: 'var(--Pad)' without compromising the auto margin */}
+      <Box />
+
     </Box>
   );
 }
