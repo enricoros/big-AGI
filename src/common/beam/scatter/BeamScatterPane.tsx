@@ -10,6 +10,8 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationColorBeamScatter } from '~/common/util/animUtils';
 
+import type { BeamStoreApi } from '../store-beam.hooks';
+import { BeamScatterDropdown } from './BeamScatterPaneDropdown';
 import { SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
@@ -30,6 +32,7 @@ const desktopBeamScatterPaneSx: SxProps = {
 
 
 export function BeamScatterPane(props: {
+  beamStore: BeamStoreApi
   isMobile: boolean,
   rayCount: number,
   setRayCount: (n: number) => void,
@@ -40,6 +43,10 @@ export function BeamScatterPane(props: {
   onExplainerShow: () => any,
 }) {
 
+  const dropdownMemo = React.useMemo(() => (
+    <BeamScatterDropdown beamStore={props.beamStore} />
+  ), [props.beamStore]);
+
   return (
     <Box sx={props.isMobile ? beamPaneSx : desktopBeamScatterPaneSx}>
 
@@ -48,6 +55,7 @@ export function BeamScatterPane(props: {
         <Typography
           level='h4' component='h2'
           onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
+          endDecorator={dropdownMemo}
           // sx={{ my: 0.25 }}
         >
           {props.startBusy

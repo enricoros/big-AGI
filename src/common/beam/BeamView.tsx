@@ -102,6 +102,7 @@ export function BeamView(props: {
 
         {/* Scatter Controls */}
         <BeamScatterPane
+          beamStore={props.beamStore}
           isMobile={props.isMobile}
           rayCount={raysCount}
           setRayCount={handleRaySetCount}
