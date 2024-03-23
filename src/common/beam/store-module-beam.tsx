@@ -18,6 +18,8 @@ interface ModuleBeamStore {
   // state
   scatterPresets: BeamScatterPreset[];
   rayScrolling: boolean;
+  gatherShowDevMethods: boolean;
+  gatherShowPrompts: boolean;
 
   // actions
   addScatterPreset: (name: string, scatterLlmIds: DLLMId[]) => void;
@@ -25,6 +27,9 @@ interface ModuleBeamStore {
   renameScatterPreset: (id: string, name: string) => void;
 
   toggleRayScrolling: () => void;
+
+  toggleGatherShowDevMethods: () => void;
+  toggleGatherShowPrompts: () => void;
 }
 
 
@@ -33,6 +38,8 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     scatterPresets: [],
     rayScrolling: false,
+    gatherShowDevMethods: false,
+    gatherShowPrompts: false,
 
 
     addScatterPreset: (name, scatterLlmIds) => _set(state => ({
@@ -49,6 +56,11 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
 
     toggleRayScrolling: () => _set(state => ({ rayScrolling: !state.rayScrolling })),
+
+
+    toggleGatherShowDevMethods: () => _set(state => ({ gatherShowDevMethods: !state.gatherShowDevMethods })),
+
+    toggleGatherShowPrompts: () => _set(state => ({ gatherShowPrompts: !state.gatherShowPrompts })),
 
   }), {
     name: 'app-module-beam',

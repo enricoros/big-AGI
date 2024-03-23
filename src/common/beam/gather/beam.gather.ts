@@ -65,9 +65,6 @@ interface GatherStateSlice {
 
   gatherLlmId: DLLMId | null;
 
-  gatherShowDevMethods: boolean;
-  gatherShowPrompts: boolean;
-
   currentFusionId: BFusionId | null;
   fusions: BFusion[];
 
@@ -86,9 +83,6 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   return {
     gatherLlmId: null, // will be re-set during open() of the Beam Store
 
-    gatherShowDevMethods: false,
-    gatherShowPrompts: false,
-
     currentFusionId: (GATHER_DEFAULT_TO_FIRST_FUSION && newFusions.length) ? newFusions[0].fusionId : null,
     fusions: newFusions,
 
@@ -101,8 +95,6 @@ export type FusionUpdateOrFn = Partial<BFusion> | ((fusion: BFusion) => (Partial
 export interface GatherStoreSlice extends GatherStateSlice {
 
   setGatherLlmId: (llmId: DLLMId | null) => void;
-  toggleGatherShowDevMethods: () => void;
-  toggleGatherShowPrompts: () => void;
 
   setCurrentFusionId: (fusionId: BFusionId | null) => void;
   _currentFusion: () => BFusion | null;
@@ -126,16 +118,6 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     _set({
       gatherLlmId: llmId,
     }),
-
-  toggleGatherShowDevMethods: () =>
-    _set(state => ({
-      gatherShowDevMethods: !state.gatherShowDevMethods,
-    })),
-
-  toggleGatherShowPrompts: () =>
-    _set(state => ({
-      gatherShowPrompts: !state.gatherShowPrompts,
-    })),
 
 
   setCurrentFusionId: (fusionId: BFusionId | null) =>
