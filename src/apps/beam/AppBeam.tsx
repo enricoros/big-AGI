@@ -86,10 +86,10 @@ export function AppBeam() {
           position: 'absolute',
           inset: 0,
           zIndex: 1 /* debug on top of BeamView */,
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'blur(4px)',
           padding: '1rem',
         }}>
-          {JSON.stringify({ conversationId: conversation.current.id, beamState }, null, 2)}
+          {JSON.stringify(beamState, null, 2)}
         </Typography>
       )}
 
