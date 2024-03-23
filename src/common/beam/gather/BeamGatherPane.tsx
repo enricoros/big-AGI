@@ -26,8 +26,8 @@ import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherPaneClasses = {
-  active: 'gatherPane-Active',
   busy: 'gatherPane-Busy',
+  ready: 'gatherPane-Ready',
 };
 
 const gatherPaneSx: SxProps = {
@@ -36,23 +36,24 @@ const gatherPaneSx: SxProps = {
   borderTopColor: 'neutral.outlinedBorder',
 
   backgroundColor: 'background.surface',
-  [`&.${gatherPaneClasses.active}`]: {
+  boxShadow: `0px 6px 20px -8px rgb(var(--joy-palette-neutral-darkChannel) / 30%)`,
+  [`&.${gatherPaneClasses.ready}`]: {
     backgroundColor: 'background.popup',
-    boxShadow: `0px 6px 16px -12px rgb(var(--joy-palette-${GATHER_COLOR}-darkChannel) / 50%)`,
+    boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-${/*GATHER_COLOR*/ 'neutral'}-darkChannel) / 40%)`,
   },
   [`&.${gatherPaneClasses.busy}`]: {
     animation: `${animationShadowLimey} 2s linear infinite`,
   },
 };
 
-const mobileBeamGatherPane: SxProps = {
+const mobileGatherPaneSx: SxProps = {
   ...gatherPaneSx,
 
   // [mobile] larger gap in between rows, as on mobile we have a smaller gap
   rowGap: 'var(--Pad)',
 };
 
-const desktopBeamGatherPaneSx: SxProps = {
+const desktopGatherPaneSx: SxProps = {
   ...gatherPaneSx,
 
   // [desktop] keep visible at the bottom
@@ -150,8 +151,8 @@ export function BeamGatherPane(props: {
 
   return <>
     <Box
-      className={`${hasInputs ? gatherPaneClasses.active : ''} ${isGatheringAny ? gatherPaneClasses.busy : ''}`}
-      sx={props.isMobile ? mobileBeamGatherPane : desktopBeamGatherPaneSx}
+      className={`${hasInputs ? gatherPaneClasses.ready : ''} ${isGatheringAny ? gatherPaneClasses.busy : ''}`}
+      sx={props.isMobile ? mobileGatherPaneSx : desktopGatherPaneSx}
     >
 
       {/* Title */}

@@ -28,7 +28,7 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   // },
 
   [`&.${beamCardClasses.idle}`]: {
-    backgroundColor: BEAM_INVERT_BACKGROUND ? theme.vars.palette.background.level2 : theme.vars.palette.background.level1,
+    backgroundColor: BEAM_INVERT_BACKGROUND ? theme.vars.palette.background.level2 : theme.vars.palette.background.surface,
   },
   [`&.${beamCardClasses.selectable}`]: {
     backgroundColor: theme.vars.palette.background.popup,
@@ -55,8 +55,6 @@ BeamCard.displayName = 'BeamCard'; // [shared] scatter/gather pane style
  */
 export const beamPaneSx: SxProps = {
   // style
-  backgroundColor: 'background.popup', // background.popup
-  boxShadow: 'md',
   p: 'var(--Pad)',
   py: 'calc(3 * var(--Pad) / 4)',
   zIndex: 1, // cast shadow on the rays/fusion
