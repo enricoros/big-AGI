@@ -495,12 +495,14 @@ export function Composer(props: {
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
 
-  const showChatExtras = isText || isAppend;
+  const showChatExtras = isText;
+
+  const buttonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
   const buttonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
       : isReAct ? 'success'
-        : isTextBeam ? 'success'
+        : isTextBeam ? 'primary'
           : isDraw ? 'warning'
             : 'primary';
 
@@ -742,11 +744,12 @@ export function Composer(props: {
 
               {/* Responsive Send/Stop buttons */}
               <ButtonGroup
-                variant={isAppend ? 'outlined' : 'solid'}
+                variant={buttonVariant}
                 color={buttonColor}
                 sx={{
                   flexGrow: 1,
-                  boxShadow: isMobile ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 20%)`,
+                  backgroundColor: (isMobile && buttonVariant === 'outlined') ? 'background.popup' : undefined,
+                  boxShadow: (isMobile && buttonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 20%)`,
                 }}
               >
                 {!assistantAbortible ? (
