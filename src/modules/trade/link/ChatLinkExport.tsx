@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Badge, Button } from '@mui/joy';
+import { Button } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
@@ -10,7 +10,6 @@ import { Link } from '~/common/components/Link';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
-import { useUICounter } from '~/common/state/store-ui';
 
 import type { StoragePutSchema, StorageUpdateDeletionKeySchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
@@ -30,7 +29,6 @@ export function ChatLinkExport(props: {
   const [linkPutResult, setLinkPutResult] = React.useState<StoragePutSchema | null>(null);
 
   // external state
-  const { novel: chatLinkBadge, touch: clearChatLinkBadge } = useUICounter('share-chat-link');
   const { linkStorageOwnerId, setLinkStorageOwnerId } = useLinkStorageOwnerId();
 
 
@@ -61,7 +59,6 @@ export function ChatLinkExport(props: {
           setLinkStorageOwnerId(response.ownerId);
         rememberChatLinkItem(chatTitle, response.objectId, response.createdAt, response.expiresAt, response.deletionKey);
       }
-      clearChatLinkBadge();
     } catch (error: any) {
       setLinkPutResult({
         type: 'error',
@@ -118,18 +115,16 @@ export function ChatLinkExport(props: {
 
   return <>
 
-    <Badge color='danger' invisible={!chatLinkBadge}>
-      <Button
-        variant='soft' disabled={!hasConversation || isUploading}
-        loading={isUploading}
-        color={linkPutResult ? 'success' : 'primary'}
-        endDecorator={linkPutResult ? <DoneIcon /> : <ExitToAppIcon />}
-        sx={{ minWidth: 240, justifyContent: 'space-between' }}
-        onClick={handleConfirm}
-      >
-        Share Link · {Brand.Title.Base}
-      </Button>
-    </Badge>
+    <Button
+      variant='soft' disabled={!hasConversation || isUploading}
+      loading={isUploading}
+      color={linkPutResult ? 'success' : 'primary'}
+      endDecorator={linkPutResult ? <DoneIcon /> : <ExitToAppIcon />}
+      sx={{ minWidth: 240, justifyContent: 'space-between' }}
+      onClick={handleConfirm}
+    >
+      Share Link · {Brand.Title.Base}
+    </Button>
 
     {/* [chat link] confirmation */}
     {!!confirmConversationId && (
