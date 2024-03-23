@@ -10,7 +10,7 @@ import { createDMessage, DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { GatherStoreSlice } from '../gather/beam.gather';
-import type { RootStoreSlice } from '../store-beam';
+import type { RootStoreSlice } from '../store-beam-vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 
 
