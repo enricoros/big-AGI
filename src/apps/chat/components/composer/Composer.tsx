@@ -495,7 +495,7 @@ export function Composer(props: {
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
 
-  const showCall = isText || isAppend;
+  const showChatExtras = isText || isAppend;
 
   const buttonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
@@ -733,7 +733,7 @@ export function Composer(props: {
             <Box sx={isMobile ? { display: 'flex' } : { display: 'grid', gap: 1 }}>
 
               {/* [mobile] bottom-corner secondary button */}
-              {isMobile && (showCall
+              {isMobile && (showChatExtras
                   ? <ButtonCallMemo isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
@@ -796,7 +796,12 @@ export function Composer(props: {
               </ButtonGroup>
 
               {/* [desktop] secondary-top buttons */}
-              {isDesktop && labsBeam && <ButtonBeamMemo disabled={!props.conversationId || !chatLLMId} onClick={handleSendTextBeamClicked} />}
+              {labsBeam && isDesktop && showChatExtras && !assistantAbortible && (
+                <ButtonBeamMemo
+                  disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                  onClick={handleSendTextBeamClicked}
+                />
+              )}
 
             </Box>
 
@@ -807,7 +812,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
-              {showCall && <ButtonCallMemo disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {showChatExtras && <ButtonCallMemo disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
