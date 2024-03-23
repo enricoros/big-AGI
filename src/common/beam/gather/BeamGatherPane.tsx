@@ -83,8 +83,8 @@ export function BeamGatherPane(props: {
       // state (gatherLlmId is lifted to the parent)
       gatherShowDevMethods: state.gatherShowDevMethods,
       gatherShowPrompts: state.gatherShowPrompts,
-      fusions: state.fusions,
       currentFusionId: state.currentFusionId,
+      fusions: state.fusions,
       isGatheringAny: state.isGatheringAny,
 
       // actions

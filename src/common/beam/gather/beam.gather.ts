@@ -68,8 +68,8 @@ interface GatherStateSlice {
   gatherShowDevMethods: boolean;
   gatherShowPrompts: boolean;
 
-  fusions: BFusion[];
   currentFusionId: BFusionId | null;
+  fusions: BFusion[];
 
   // derived state (just acts as a cache to avoid re-calculating)
   isGatheringAny: boolean;
@@ -89,8 +89,8 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
     gatherShowDevMethods: false,
     gatherShowPrompts: false,
 
-    fusions: newFusions,
     currentFusionId: (GATHER_DEFAULT_TO_FIRST_FUSION && newFusions.length) ? newFusions[0].fusionId : null,
+    fusions: newFusions,
 
     isGatheringAny: false,
   };
