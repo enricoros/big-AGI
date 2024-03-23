@@ -156,9 +156,9 @@ export function BeamRay(props: {
   // handlers
 
   const handleRayCopy = React.useCallback(() => {
-    const { rays, onSuccessCallback } = props.beamStore.getState();
+    const { rays } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
-    if (ray?.message?.text && onSuccessCallback)
+    if (ray?.message?.text)
       copyToClipboard(ray.message.text, 'Beam');
   }, [props.beamStore, props.rayId]);
 

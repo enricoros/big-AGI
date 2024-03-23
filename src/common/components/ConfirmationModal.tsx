@@ -16,8 +16,9 @@ export function ConfirmationModal(props: {
   noTitleBar?: boolean,
   lowStakes?: boolean,
   confirmationText: string | React.JSX.Element,
-  positiveActionText: string
+  positiveActionText: React.ReactNode,
   negativeActionText?: React.ReactNode,
+  negativeActionStartDecorator?: React.ReactNode,
 }) {
   return (
     <GoodModal
@@ -35,7 +36,7 @@ export function ConfirmationModal(props: {
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
-        <Button autoFocus variant='plain' color='neutral' onClick={props.onClose}>
+        <Button autoFocus variant='plain' color='neutral' onClick={props.onClose} startDecorator={props.negativeActionStartDecorator}>
           {props.negativeActionText || 'Cancel'}
         </Button>
         <Button

@@ -86,7 +86,7 @@ export function BeamView(props: {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--Pad)',
-        pb: 'var(--Pad)',
+        pb: 'var(--Pad)', // adds a bottom padding after the Fusion output
       }}>
 
         {/* Config Issues */}
