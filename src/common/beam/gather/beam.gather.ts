@@ -5,7 +5,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { FUSION_FACTORIES } from './beam.gather.factories';
-import { GATHER_DEFAULT_TO_FIRST_FUSION } from '../beam.config';
+import { GATHER_DEFAULT_TO_FIRST_FUSION, GATHER_PLACEHOLDER } from '../beam.config';
 import { executeFusionInstructions, fusionGatherStop, Instruction } from './beam.gather.instructions';
 
 
@@ -38,8 +38,24 @@ export const createBFusion = (factoryId: string, instructions: Instruction[]): B
   abortController: undefined,
 });
 
-export function fusionIsEditable(fusion: BFusion): boolean {
-  return fusion.factoryId === 'custom';
+export function fusionIsEditable(fusion: BFusion | null): boolean {
+  return fusion?.factoryId === 'custom';
+}
+
+export function fusionIsError(fusion: BFusion | null): boolean {
+  return fusion?.status === 'error' || fusion?.fusionIssue !== undefined;
+}
+
+export function fusionIsIdle(fusion: BFusion | null): boolean {
+  return fusion?.status === 'idle';
+}
+
+export function fusionIsFusing(fusion: BFusion | null): boolean {
+  return fusion?.status === 'fusing';
+}
+
+export function fusionIsUsable(fusion: BFusion | null): boolean {
+  return !!fusion?.outputMessage && !!fusion.outputMessage.updated && !!fusion.outputMessage.text && fusion.outputMessage.text !== GATHER_PLACEHOLDER;
 }
 
 
