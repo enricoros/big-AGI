@@ -16,7 +16,7 @@ import { SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
 
-const desktopBeamScatterPaneSx: SxProps = {
+const desktopScatterPaneSx: SxProps = {
   ...beamPaneSx,
 
   // [desktop] scatter: primary-chan shadow
@@ -51,7 +51,7 @@ export function BeamScatterPane(props: {
   ), [props.beamStore, props.onExplainerShow]);
 
   return (
-    <Box sx={props.isMobile ? beamPaneSx : desktopBeamScatterPaneSx}>
+    <Box sx={props.isMobile ? beamPaneSx : desktopScatterPaneSx}>
 
       {/* Title */}
       <Box>
