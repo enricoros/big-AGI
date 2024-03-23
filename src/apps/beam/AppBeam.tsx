@@ -89,7 +89,9 @@ export function AppBeam() {
           backdropFilter: 'blur(4px)',
           padding: '1rem',
         }}>
-          {JSON.stringify(beamState, null, 2)}
+          {JSON.stringify(beamState, null, 2)
+            // add an extra newline between first level properties (space, space, double quote) to make it more readable
+            .split('\n').map(line => line.replace(/^\s\s"/g, '\n  ')).join('\n')}
         </Typography>
       )}
 
