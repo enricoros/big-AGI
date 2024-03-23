@@ -16,8 +16,14 @@ import { BeamScatterDropdown } from './BeamScatterPaneDropdown';
 import { beamPaneSx } from '../BeamCard';
 
 
+const mobileScatterPaneSx: SxProps = {
+  ...beamPaneSx,
+  backgroundColor: 'background.popup',
+};
+
 const desktopScatterPaneSx: SxProps = {
   ...beamPaneSx,
+  backgroundColor: 'background.popup',
 
   // [desktop] scatter: primary-chan shadow
   // boxShadow: '0px 6px 12px -8px rgb(var(--joy-palette-primary-darkChannel) / 35%)',
@@ -51,7 +57,7 @@ export function BeamScatterPane(props: {
   ), [props.beamStore, props.onExplainerShow]);
 
   return (
-    <Box sx={props.isMobile ? beamPaneSx : desktopScatterPaneSx}>
+    <Box sx={props.isMobile ? mobileScatterPaneSx : desktopScatterPaneSx}>
 
       {/* Title */}
       <Box>

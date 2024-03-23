@@ -22,7 +22,7 @@ import { fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsUsableOutput } fro
 const outputWrapperSx: SxProps = {
   mt: 'calc(-1 * var(--Pad))', // absorb parent 'gap' to previous
   px: 'var(--Pad)',
-  pb: 'var(--Pad)',
+  pb: 'var(--Pad_2)',
 };
 
 const outputWrapperINVSx: SxProps = {
@@ -32,12 +32,9 @@ const outputWrapperINVSx: SxProps = {
 
 
 const fusionCardSx: SxProps = {
-  // mx: 'var(--Pad)',
-  // mt: 'calc(-1 * var(--Pad))', // absorb gap to the prev-bottom
-
-  [`&.${beamCardClasses.idle}`]: {
-    pb: 0,
-  },
+  // [`&.${beamCardClasses.idle}`]: {
+  //   pb: 0, // Peekaboo (shrink height)
+  // },
 
   // boxShadow: 'sm',
   // borderColor: `${GATHER_COLOR}.outlinedBorder`,
@@ -98,6 +95,8 @@ export function BeamGatherOutput(props: {
       onSuccessCallback(fusion.outputMessage.text, gatherLlmId || '');
   }, [props.beamStore]);
 
+  // if (isIdle)
+  //   return null;
 
   return (
     <Box sx={BEAM_INVERT_BACKGROUND ? outputWrapperINVSx : outputWrapperSx}>
