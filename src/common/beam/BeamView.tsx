@@ -34,11 +34,11 @@ export function BeamView(props: {
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ gatherLlmId, gatherShowPrompts,
+    /* gather */ gatherLlmId,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
     isScattering: state.isScattering, raysReady: state.raysReady,
-    gatherLlmId: state.gatherLlmId, gatherShowPrompts: state.gatherShowPrompts,
+    gatherLlmId: state.gatherLlmId,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(gatherLlmId, setGatherLlmId, props.isMobile ? '' : 'Merge Model', true);
@@ -129,7 +129,6 @@ export function BeamView(props: {
         {/* Fusion Config */}
         <BeamGatherInput
           beamStore={props.beamStore}
-          gatherShowPrompts={gatherShowPrompts}
         />
 
         {/* Gather Controls */}

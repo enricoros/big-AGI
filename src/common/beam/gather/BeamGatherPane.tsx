@@ -8,8 +8,6 @@ import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
-import { BeamGatherDropdown } from '~/common/beam/gather/BeamGatherPaneDropdown';
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -17,9 +15,12 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather, animationShadowLimey } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
+import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
+import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FUSION_FACTORIES } from './beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherPaneClasses = {
@@ -73,31 +74,24 @@ export function BeamGatherPane(props: {
 
   // external state
   const {
-    gatherShowDevMethods, gatherShowPrompts,
     fusions, currentFusionId, isGatheringAny,
-    toggleGatherShowDevMethods, toggleGatherShowPrompts,
     setCurrentFusionId, currentFusionStart, currentFusionStop,
     stopScatteringAll,
-  } = useBeamStore(props.beamStore, useShallow(state => {
-    return {
-      // state (gatherLlmId is lifted to the parent)
-      gatherShowDevMethods: state.gatherShowDevMethods,
-      gatherShowPrompts: state.gatherShowPrompts,
-      currentFusionId: state.currentFusionId,
-      fusions: state.fusions,
-      isGatheringAny: state.isGatheringAny,
+  } = useBeamStore(props.beamStore, useShallow(state => ({
+    // state (gatherLlmId is lifted to the parent)
+    currentFusionId: state.currentFusionId,
+    fusions: state.fusions,
+    isGatheringAny: state.isGatheringAny,
 
-      // actions
-      toggleGatherShowDevMethods: state.toggleGatherShowDevMethods,
-      toggleGatherShowPrompts: state.toggleGatherShowPrompts,
-      setCurrentFusionId: state.setCurrentFusionId,
-      currentFusionStart: state.currentFusionStart,
-      currentFusionStop: state.currentFusionStop,
+    // actions
+    setCurrentFusionId: state.setCurrentFusionId,
+    currentFusionStart: state.currentFusionStart,
+    currentFusionStop: state.currentFusionStop,
 
-      // (external slice) scatter actions
-      stopScatteringAll: state.stopScatteringAll,
-    };
-  }));
+    // (external slice) scatter actions
+    stopScatteringAll: state.stopScatteringAll,
+  })));
+  const gatherShowDevMethods = useModuleBeamStore(state => state.gatherShowDevMethods);
   const { setStickToBottom } = useScrollToBottom();
 
 
@@ -145,16 +139,6 @@ export function BeamGatherPane(props: {
   }, [handleStopScatterConfirmation, props.scatterBusy, warnScatterBusy]);
 
 
-  const dropdownMemo = React.useMemo(() => (
-    <BeamGatherDropdown
-      gatherShowDevMethods={gatherShowDevMethods}
-      gatherShowPrompts={gatherShowPrompts}
-      toggleGatherShowDevMethods={toggleGatherShowDevMethods}
-      toggleGatherShowPrompts={toggleGatherShowPrompts}
-    />
-  ), [gatherShowDevMethods, gatherShowPrompts, toggleGatherShowDevMethods, toggleGatherShowPrompts]);
-
-
   const MainLlmIcon = props.gatherLlmIcon || (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return <>
@@ -168,7 +152,7 @@ export function BeamGatherPane(props: {
         <div>
           <Typography
             level='h4' component='h2'
-            endDecorator={dropdownMemo}
+            endDecorator={<BeamGatherDropdown />}
             // sx={{ my: 0.25 }}
           >
             <MainLlmIcon sx={{ fontSize: '1rem', animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge

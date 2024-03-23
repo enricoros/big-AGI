@@ -1,16 +1,28 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Dropdown, IconButton, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 
+import { useModuleBeamStore } from '../store-module-beam';
 
-export function BeamGatherDropdown(props: {
-  gatherShowDevMethods: boolean,
-  gatherShowPrompts: boolean,
-  toggleGatherShowDevMethods: () => void,
-  toggleGatherShowPrompts: () => void,
-}) {
+
+export function BeamGatherDropdown() {
+
+  // external (persisted) state
+  const {
+    gatherShowDevMethods,
+    gatherShowPrompts,
+    toggleGatherShowDevMethods,
+    toggleGatherShowPrompts,
+  } = useModuleBeamStore(useShallow(state => ({
+    gatherShowDevMethods: state.gatherShowDevMethods,
+    gatherShowPrompts: state.gatherShowPrompts,
+    toggleGatherShowDevMethods: state.toggleGatherShowDevMethods,
+    toggleGatherShowPrompts: state.toggleGatherShowPrompts,
+  })));
+
   return (
     <Dropdown>
       <MenuButton
@@ -24,12 +36,12 @@ export function BeamGatherDropdown(props: {
         <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
-        <MenuItem onClick={props.toggleGatherShowPrompts}>
-          <ListItemDecorator>{props.gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+        <MenuItem onClick={toggleGatherShowPrompts}>
+          <ListItemDecorator>{gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
           Show All Prompts
         </MenuItem>
-        <MenuItem onClick={props.toggleGatherShowDevMethods}>
-          <ListItemDecorator>{props.gatherShowDevMethods && <CheckRoundedIcon />}</ListItemDecorator>
+        <MenuItem onClick={toggleGatherShowDevMethods}>
+          <ListItemDecorator>{gatherShowDevMethods && <CheckRoundedIcon />}</ListItemDecorator>
           Experimental Methods
         </MenuItem>
       </Menu>

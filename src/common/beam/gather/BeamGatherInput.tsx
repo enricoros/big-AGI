@@ -11,6 +11,7 @@ import type { ChatGenerateInstruction, Instruction } from './beam.gather.instruc
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_SHOW_SYSTEM_PROMPT } from '../beam.config';
 import { fusionIsEditable } from './beam.gather';
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherInputWrapperSx: SxProps = {
@@ -175,11 +176,13 @@ function EditableInstruction(props: {
 
 export function BeamGatherInput(props: {
   beamStore: BeamStoreApi,
-  gatherShowPrompts: boolean
 }) {
 
-  // external state (all null if we don't have an index)
-  const { currentFusionId, currentIsEditable, currentInstructions } = useBeamStore(props.beamStore, useShallow(store => {
+  // external state
+  const gatherShowPrompts = useModuleBeamStore(state => state.gatherShowPrompts);
+  const {
+    currentFusionId, currentIsEditable, currentInstructions,
+  } = useBeamStore(props.beamStore, useShallow(store => {
     const fusion = store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null;
     return {
       currentFusionId: fusion?.fusionId ?? null,
@@ -230,7 +233,7 @@ export function BeamGatherInput(props: {
 
 
   // render if existing and editable
-  if (currentFusionId === null || (!currentIsEditable && !props.gatherShowPrompts))
+  if (currentFusionId === null || (!currentIsEditable && !gatherShowPrompts))
     return null;
 
   return (

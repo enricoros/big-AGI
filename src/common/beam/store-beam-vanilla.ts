@@ -94,7 +94,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   },
 
   terminate: () => { /*_get().isOpen &&*/
-    const { rays, fusions, gatherLlmId, gatherShowDevMethods, gatherShowPrompts } = _get();
+    const { rays, fusions, gatherLlmId } = _get();
 
     _set({
       ...initRootStateSlice(),
@@ -103,8 +103,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
       // remember after termination
       gatherLlmId,
-      gatherShowDevMethods,
-      gatherShowPrompts,
     });
   },
 
