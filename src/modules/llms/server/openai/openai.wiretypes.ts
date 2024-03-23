@@ -180,7 +180,7 @@ const wireOpenAICreateImageRequestSchema = z.object({
   quality: z.enum(['standard', 'hd']).optional(),
 
   // The format in which the generated images are returned
-  response_format: z.enum(['url', 'b64_json']).optional().default('url'),
+  response_format: z.enum(['url', 'b64_json']).optional(), //.default('url'),
 
   // 'dall-e-2': must be one of 256x256, 512x512, or 1024x1024
   // 'dall-e-3': must be one of 1024x1024, 1792x1024, or 1024x1792
