@@ -44,8 +44,11 @@ export function BeamScatterPane(props: {
 }) {
 
   const dropdownMemo = React.useMemo(() => (
-    <BeamScatterDropdown beamStore={props.beamStore} />
-  ), [props.beamStore]);
+    <BeamScatterDropdown
+      beamStore={props.beamStore}
+      onExplainerShow={props.onExplainerShow}
+    />
+  ), [props.beamStore, props.onExplainerShow]);
 
   return (
     <Box sx={props.isMobile ? beamPaneSx : desktopBeamScatterPaneSx}>
@@ -54,7 +57,6 @@ export function BeamScatterPane(props: {
       <Box>
         <Typography
           level='h4' component='h2'
-          onDoubleClick={props.onExplainerShow/* Undocumented way to re-run the wizard, for now */}
           endDecorator={dropdownMemo}
           // sx={{ my: 0.25 }}
         >
