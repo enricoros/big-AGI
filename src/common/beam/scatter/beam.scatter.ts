@@ -163,6 +163,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   setRayCount: (count: number) => void;
   removeRay: (rayId: BRayId) => void;
   importRays: (messages: DMessage[]) => void;
+  setScatterLLMIds: (scatterLLMIDs: DLLMId[]) => void;
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
   rayToggleScattering: (rayId: BRayId) => void;
@@ -232,6 +233,19 @@ export const createScatterSlice: StateCreator<RootStoreSlice & GatherStoreSlice 
       ],
     }));
     _get()._syncRaysStateToScatter();
+  },
+
+  setScatterLLMIds: (scatterLLMIDs: DLLMId[]) => {
+    const { rays, setRayCount, _syncRaysStateToScatter } = _get();
+    if (scatterLLMIDs.length > rays.length)
+      setRayCount(scatterLLMIDs.length);
+    _set(state => ({
+      rays: state.rays.map((ray, index) => index >= scatterLLMIDs.length ? ray : {
+        ...ray,
+        scatterLlmId: scatterLLMIDs[index] || null,
+      }),
+    }));
+    _syncRaysStateToScatter();
   },
 
 
