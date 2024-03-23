@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, CircularProgress, FormControl, SvgIconProps, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AutoAwesomeMotionTwoToneIcon from '@mui/icons-material/AutoAwesomeMotionTwoTone';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
@@ -173,10 +174,12 @@ export function BeamGatherPane(props: {
 
       {/* Method */}
       <FormControl sx={{ my: '-0.25rem' }}>
-        <FormLabelStart
-          title={<><AutoAwesomeOutlinedIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>}
-          sx={/*{ mb: '0.25rem' }*/ undefined}
-        />
+        {!props.isMobile && (
+          <FormLabelStart
+            title={<><AutoAwesomeMotionTwoToneIcon sx={{ fontSize: 'md', mr: 0.5 }} />Method</>}
+            sx={/*{ mb: '0.25rem' }*/ undefined}
+          />
+        )}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant='outlined'>
             {fusions.map(fusion => {
@@ -194,7 +197,9 @@ export function BeamGatherPane(props: {
               //         : 'neutral';
 
               const isActive = fusion.fusionId === currentFusionId;
-              const buttonColor: ColorPaletteProp = isActive && (fusion.status === 'success' || fusion.status === 'stopped') ? GATHER_COLOR : 'neutral';
+              const buttonColor: ColorPaletteProp = isActive /*&& (fusion.status === 'success' || fusion.status === 'stopped')*/
+                ? GATHER_COLOR
+                : 'neutral';
               return (
                 <Button
                   key={'fusion-' + fusion.fusionId}
