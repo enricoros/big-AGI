@@ -13,7 +13,7 @@ import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './g
 
 export type BeamStore = RootStoreSlice & GatherStoreSlice & ScatterStoreSlice;
 
-export const createBeamStore = () => createStore<BeamStore>()((...a) => ({
+export const createBeamVanillaStore = () => createStore<BeamStore>()((...a) => ({
 
   ...createRootSlice(...a),
   ...createScatterSlice(...a),

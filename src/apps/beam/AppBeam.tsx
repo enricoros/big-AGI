@@ -7,7 +7,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
 import { BeamView } from '~/common/beam/BeamView';
-import { createBeamStore } from '~/common/beam/store-beam-vanilla';
+import { createBeamVanillaStore } from '~/common/beam/store-beam-vanilla';
 import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
@@ -20,8 +20,8 @@ function initTestConversation(): DConversation {
   return conversation;
 }
 
-function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamStore()): BeamStoreApi {
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, () => null);
+function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamVanillaStore()): BeamStoreApi {
+  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (text) => alert(text));
   return beamStore;
 }
 

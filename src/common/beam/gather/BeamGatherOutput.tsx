@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton } from '@mui/joy';
+import { Box, Button } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -10,20 +10,39 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
+import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
+import { BEAM_BTN_SX, BEAM_INVERT_BACKGROUND, GATHER_COLOR } from '../beam.config';
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsUsable } from './beam.gather';
+import { fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsUsableOutput } from './beam.gather';
+
+
+const outputWrapperSx: SxProps = {
+  mt: 'calc(-1 * var(--Pad))', // absorb parent 'gap' to previous
+  px: 'var(--Pad)',
+  pb: 'var(--Pad)',
+};
+
+const outputWrapperINVSx: SxProps = {
+  ...outputWrapperSx,
+  backgroundColor: 'neutral.solidBg',
+};
 
 
 const fusionCardSx: SxProps = {
-  mx: 'var(--Pad)',
-  mt: 'calc(-1 * var(--Pad))', // absorb gap to the prev-bottom
+  // mx: 'var(--Pad)',
+  // mt: 'calc(-1 * var(--Pad))', // absorb gap to the prev-bottom
+
+  [`&.${beamCardClasses.idle}`]: {
+    pb: 0,
+  },
 
   // boxShadow: 'sm',
-  // borderColor: 'success.outlinedBorder',
+  // borderColor: `${GATHER_COLOR}.outlinedBorder`,
   borderTop: 'none',
+  // borderRadius: 'sm',
   borderTopLeftRadius: 0,
   borderTopRightRadius: 0,
 };
@@ -59,8 +78,8 @@ export function BeamGatherOutput(props: {
   const isIdle = fusionIsIdle(fusion);
   const isError = fusionIsError(fusion);
   const isFusing = fusionIsFusing(fusion);
-  const isUsable = fusionIsUsable(fusion);
-  const showUseButtons = isUsable && !isFusing;
+  const isUsableOutput = fusionIsUsableOutput(fusion);
+  const showUseOutputButtons = isUsableOutput && !isFusing;
 
 
   // handlers
@@ -80,20 +99,18 @@ export function BeamGatherOutput(props: {
   }, [props.beamStore]);
 
 
-  if (!fusion || (isIdle && !isError))
-    return null;
-
   return (
-    <Box>
+    <Box sx={BEAM_INVERT_BACKGROUND ? outputWrapperINVSx : outputWrapperSx}>
       <BeamCard
-        className={beamCardClasses.selectable}
+        className={`${isIdle ? beamCardClasses.idle : ''} ${showUseOutputButtons ? beamCardClasses.selectable : ''}`}
         sx={fusionCardSx}
       >
 
         {/* Show issue, if any */}
-        {isError && <InlineError error={fusion.fusionIssue || 'Merge Issue'} />}
+        {isError && <InlineError error={fusion?.fusionIssue || 'Merge Issue'} />}
 
-        {!!fusion.outputMessage && (
+        {/* Output */}
+        {!!fusion?.outputMessage && (
           <ChatMessageMemo
             message={fusion.outputMessage}
             fitScreen={props.isMobile}
@@ -103,43 +120,42 @@ export function BeamGatherOutput(props: {
           />
         )}
 
+        {/* Use Output */}
+        {showUseOutputButtons && (
+          <Box sx={{ mt: 'auto', placeSelf: 'end', display: 'flex', gap: 1 }}>
 
-        {/* Use Fusion */}
-        {showUseButtons && (
-          <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.5rem - var(--Pad_2))', position: 'relative' }}>
-            <Box sx={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              display: 'flex',
-              gap: 1,
-            }}>
-              {/* Copy */}
-              <GoodTooltip title='Copy'>
-                <IconButton
-                  size='sm'
-                  onClick={handleFusionCopy}
-                >
-                  <ContentCopyIcon sx={{ fontSize: 'md' }} />
-                </IconButton>
-              </GoodTooltip>
+            {/* Copy */}
+            <GoodTooltip title='Copy'>
+              <Button
+                variant='soft' color={GATHER_COLOR}
+                onClick={handleFusionCopy}
+                endDecorator={<ContentCopyIcon sx={{ fontSize: 'md' }} />}
+              >
+                Copy
+              </Button>
+            </GoodTooltip>
 
-              {/* Continue */}
-              <GoodTooltip title='Accept this message'>
-                <IconButton
-                  size='sm'
-                  color='success'
-                  disabled={isFusing}
-                  onClick={handleFusionUse}
-                  sx={{
-                    fontSize: 'xs',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <TelegramIcon />
-                </IconButton>
-              </GoodTooltip>
-            </Box>
+            {/* Continue */}
+            <GoodTooltip title='Accept this message'>
+              <Button
+                variant='soft' color={GATHER_COLOR}
+                disabled={isFusing}
+                onClick={handleFusionUse}
+                endDecorator={<TelegramIcon />}
+                sx={{
+                  ...BEAM_BTN_SX,
+                  whiteSpace: 'nowrap',
+                  backgroundColor: 'background.popup',
+                  border: '1px solid',
+                  borderColor: `${GATHER_COLOR}.outlinedBorder`,
+                  boxShadow: `0 4px 16px -4px rgb(var(--joy-palette-${GATHER_COLOR}-mainChannel) / 20%)`,
+                  animation: `${animationEnterBelow} 0.1s ease-out`,
+                }}
+              >
+                Done
+              </Button>
+            </GoodTooltip>
+
           </Box>
         )}
 

@@ -24,7 +24,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
+import { GATHER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamRayScrolling } from '../store-module-beam';
 
@@ -229,7 +229,7 @@ export function BeamRay(props: {
 
       {/* Use Ray */}
       {showUseButton && (
-        <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.5rem - var(--Pad_2))', position: 'relative' }}>
+        <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.25rem - var(--Pad_2))', position: 'relative' }}>
           <Box sx={{
             position: 'absolute',
             bottom: 0,
@@ -250,7 +250,7 @@ export function BeamRay(props: {
             <GoodTooltip title='Choose this message'>
               <IconButton
                 size='sm'
-                color='success'
+                color={GATHER_COLOR}
                 disabled={isImported || isScattering}
                 onClick={handleRayUse}
                 sx={{
