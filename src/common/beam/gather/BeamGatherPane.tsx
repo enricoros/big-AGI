@@ -22,21 +22,12 @@ import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
 
-export const gatherPaneClasses = {
+const gatherPaneClasses = {
   active: 'gatherPane-Active',
   busy: 'gatherPane-Busy',
 };
 
-const mobileBeamGatherPane: SxProps = {
-  ...beamPaneSx,
-  borderTop: '1px solid',
-  borderTopColor: 'neutral.outlinedBorder',
-
-  // [mobile] larger gap in between rows, as on mobile we have a smaller gap
-  rowGap: 'var(--Pad)',
-};
-
-const desktopBeamGatherPaneSx: SxProps = {
+const gatherPaneSx: SxProps = {
   ...beamPaneSx,
   borderTop: '1px solid',
   borderTopColor: 'neutral.outlinedBorder',
@@ -49,6 +40,17 @@ const desktopBeamGatherPaneSx: SxProps = {
   [`&.${gatherPaneClasses.busy}`]: {
     animation: `${animationShadowLimey} 2s linear infinite`,
   },
+};
+
+const mobileBeamGatherPane: SxProps = {
+  ...gatherPaneSx,
+
+  // [mobile] larger gap in between rows, as on mobile we have a smaller gap
+  rowGap: 'var(--Pad)',
+};
+
+const desktopBeamGatherPaneSx: SxProps = {
+  ...gatherPaneSx,
 
   // [desktop] keep visible at the bottom
   position: 'sticky',
