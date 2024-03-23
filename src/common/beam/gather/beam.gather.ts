@@ -54,7 +54,7 @@ export function fusionIsFusing(fusion: BFusion | null): boolean {
   return fusion?.status === 'fusing';
 }
 
-export function fusionIsUsable(fusion: BFusion | null): boolean {
+export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
   return !!fusion?.outputMessage && !!fusion.outputMessage.updated && !!fusion.outputMessage.text && fusion.outputMessage.text !== GATHER_PLACEHOLDER;
 }
 

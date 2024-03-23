@@ -11,8 +11,8 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { animationColorBeamScatter } from '~/common/util/animUtils';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
+import { BEAM_BTN_SX, SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
 import { BeamScatterDropdown } from './BeamScatterPaneDropdown';
-import { SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 
 
@@ -106,7 +106,7 @@ export function BeamScatterPane(props: {
           disabled={!props.startEnabled || props.startBusy} loading={props.startBusy}
           endDecorator={<PlayArrowRoundedIcon />}
           onClick={props.onStart}
-          sx={{ minWidth: 120 }}
+          sx={BEAM_BTN_SX}
         >
           Start
         </Button>
@@ -116,7 +116,7 @@ export function BeamScatterPane(props: {
           variant='solid' color='danger'
           endDecorator={<StopRoundedIcon />}
           onClick={props.onStop}
-          sx={{ minWidth: 120 }}
+          sx={BEAM_BTN_SX}
         >
           Stop
           {/*{props.rayCount > props.raysReady && ` (${props.rayCount - props.raysReady})`}*/}

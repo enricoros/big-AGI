@@ -1,8 +1,11 @@
 import { Box, styled } from '@mui/joy';
 import type { SxProps } from '@mui/joy/styles/types';
 
+import { BEAM_INVERT_BACKGROUND } from './beam.config';
+
 
 export const beamCardClasses = {
+  idle: 'beamCard-Idle',
   errored: 'beamCard-Errored',
   selectable: 'beamCard-Selectable',
 };
@@ -24,6 +27,9 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   //   boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
   // },
 
+  [`&.${beamCardClasses.idle}`]: {
+    backgroundColor: BEAM_INVERT_BACKGROUND ? theme.vars.palette.background.level2 : theme.vars.palette.background.level1,
+  },
   [`&.${beamCardClasses.selectable}`]: {
     backgroundColor: theme.vars.palette.background.popup,
   },

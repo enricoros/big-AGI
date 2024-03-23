@@ -15,10 +15,10 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather, animationShadowLimey } from '~/common/util/animUtils';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
+import { BEAM_BTN_SX, GATHER_COLOR } from '../beam.config';
 import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FUSION_FACTORIES } from './beam.gather.factories';
-import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 import { useModuleBeamStore } from '../store-module-beam';
 
@@ -234,7 +234,7 @@ export function BeamGatherPane(props: {
           disabled={!gatherEnabled || isGatheringAny} loading={isGatheringAny}
           endDecorator={/*CurrentFusionIcon ? <CurrentFusionIcon /> :*/ <MergeRoundedIcon />}
           onClick={handleCurrentFusionStart}
-          sx={{ minWidth: 120 }}
+          sx={BEAM_BTN_SX}
         >
           Merge
         </Button>
@@ -244,7 +244,7 @@ export function BeamGatherPane(props: {
           variant='solid' color='danger'
           endDecorator={<StopRoundedIcon />}
           onClick={currentFusionStop}
-          sx={{ minWidth: 120 }}
+          sx={BEAM_BTN_SX}
         >
           Stop
         </Button>
