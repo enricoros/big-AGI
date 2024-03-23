@@ -25,8 +25,8 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
-
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
+import { useBeamRayScrolling } from './BeamScatterPaneDropdown';
 
 
 const chatMessageEmbeddedSx: SxProps = {
@@ -37,7 +37,13 @@ const chatMessageEmbeddedSx: SxProps = {
   my: 0,
   px: 0,
   py: 0,
-} as const;
+};
+
+const chatMessageEmbeddedScrollingSx: SxProps = {
+  ...chatMessageEmbeddedSx,
+  overflow: 'auto',
+  maxHeight: 'max(320px, calc(60lvh - 16rem))',
+};
 
 /*const letterSx: SxProps = {
   width: '1rem',
@@ -129,6 +135,7 @@ export function BeamRay(props: {
 
   // external state
   const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
+  const rayScrolling = useBeamRayScrolling();
 
   // derived state
   const isError = rayIsError(ray);
@@ -215,7 +222,7 @@ export function BeamRay(props: {
             fitScreen={props.isMobile}
             showAvatar={false}
             adjustContentScaling={-1}
-            sx={chatMessageEmbeddedSx}
+            sx={rayScrolling ? chatMessageEmbeddedScrollingSx : chatMessageEmbeddedSx}
           />
         </Box>
       )}
