@@ -38,7 +38,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     scatterPresets: [],
     rayScrolling: false,
-    gatherShowDevMethods: false,
+    gatherShowDevMethods: true,
     gatherShowPrompts: false,
 
 
