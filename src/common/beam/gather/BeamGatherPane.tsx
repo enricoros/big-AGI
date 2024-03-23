@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, FormControl, SvgIconProps, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, FormControl, SvgIconProps, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import MergeRoundedIcon from '@mui/icons-material/MergeRounded';
@@ -279,6 +279,9 @@ export function BeamGatherPane(props: {
         confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
         positiveActionText='Proceed with Merge'
         negativeActionText='Wait for All Responses'
+        negativeActionStartDecorator={
+          <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
+        }
       />
     )}
 
