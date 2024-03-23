@@ -123,6 +123,8 @@ export function BeamView(props: {
           onIncreaseRayCount={handleRayIncreaseCount}
         />
 
+        {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
+        <Box />
 
         {/* Fusion Config */}
         <BeamGatherInput
