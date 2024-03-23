@@ -20,6 +20,7 @@ import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FUSION_FACTORIES } from './beam.gather.factories';
 import { beamPaneSx } from '../BeamCard';
+import { fusionIsFusing, fusionIsUsableOutput } from './beam.gather';
 import { useModuleBeamStore } from '../store-module-beam';
 
 
@@ -74,23 +75,28 @@ export function BeamGatherPane(props: {
 
   // external state
   const {
-    fusions, currentFusionId, isGatheringAny,
+    fusions, currentFusionId, isGatheringAny, isCurrentFusionGoodToGo,
     setCurrentFusionId, currentFusionStart, currentFusionStop,
     stopScatteringAll,
-  } = useBeamStore(props.beamStore, useShallow(state => ({
-    // state (gatherLlmId is lifted to the parent)
-    currentFusionId: state.currentFusionId,
-    fusions: state.fusions,
-    isGatheringAny: state.isGatheringAny,
+  } = useBeamStore(props.beamStore, useShallow(state => {
+    const currentFusion = state._currentFusion();
+    const isCurrentFusionGoodToGo = fusionIsUsableOutput(currentFusion) && !fusionIsFusing(currentFusion);
+    return ({
+      // state
+      currentFusionId: state.currentFusionId,
+      fusions: state.fusions,
+      isGatheringAny: state.isGatheringAny,
+      isCurrentFusionGoodToGo,
 
-    // actions
-    setCurrentFusionId: state.setCurrentFusionId,
-    currentFusionStart: state.currentFusionStart,
-    currentFusionStop: state.currentFusionStop,
+      // actions
+      setCurrentFusionId: state.setCurrentFusionId,
+      currentFusionStart: state.currentFusionStart,
+      currentFusionStop: state.currentFusionStop,
 
-    // (external slice) scatter actions
-    stopScatteringAll: state.stopScatteringAll,
-  })));
+      // (external slice) scatter actions
+      stopScatteringAll: state.stopScatteringAll,
+    });
+  }));
   const gatherShowDevMethods = useModuleBeamStore(state => state.gatherShowDevMethods);
   const { setStickToBottom } = useScrollToBottom();
 
@@ -230,7 +236,7 @@ export function BeamGatherPane(props: {
       {!isGatheringAny ? (
         <Button
           // key='gather-start' // used for animation triggering, which we don't have now
-          variant='solid' color={GATHER_COLOR}
+          variant={isCurrentFusionGoodToGo ? 'soft' : 'solid'} color={GATHER_COLOR}
           disabled={!gatherEnabled || isGatheringAny} loading={isGatheringAny}
           endDecorator={/*CurrentFusionIcon ? <CurrentFusionIcon /> :*/ <MergeRoundedIcon />}
           onClick={handleCurrentFusionStart}

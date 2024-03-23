@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button } from '@mui/joy';
+import { Box, Button, IconButton } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -122,37 +122,35 @@ export function BeamGatherOutput(props: {
 
         {/* Use Output */}
         {showUseOutputButtons && (
-          <Box sx={{ mt: 'auto', placeSelf: 'end', display: 'flex', gap: 1 }}>
+          <Box sx={{ mt: 'auto', placeSelf: 'end', display: 'flex', gap: 3 }}>
 
             {/* Copy */}
             <GoodTooltip title='Copy'>
-              <Button
-                variant='soft' color={GATHER_COLOR}
+              <IconButton
                 onClick={handleFusionCopy}
-                endDecorator={<ContentCopyIcon sx={{ fontSize: 'md' }} />}
               >
-                Copy
-              </Button>
+                <ContentCopyIcon sx={{ fontSize: 'md' }} />
+              </IconButton>
             </GoodTooltip>
 
             {/* Continue */}
-            <GoodTooltip title='Accept this message'>
+            <GoodTooltip title='Use this message'>
               <Button
-                variant='soft' color={GATHER_COLOR}
+                variant='solid' color={GATHER_COLOR}
                 disabled={isFusing}
                 onClick={handleFusionUse}
                 endDecorator={<TelegramIcon />}
                 sx={{
                   ...BEAM_BTN_SX,
                   whiteSpace: 'nowrap',
-                  backgroundColor: 'background.popup',
-                  border: '1px solid',
-                  borderColor: `${GATHER_COLOR}.outlinedBorder`,
+                  // backgroundColor: 'background.popup',
+                  // border: '1px solid',
+                  // borderColor: `${GATHER_COLOR}.outlinedBorder`,
                   boxShadow: `0 4px 16px -4px rgb(var(--joy-palette-${GATHER_COLOR}-mainChannel) / 20%)`,
                   animation: `${animationEnterBelow} 0.1s ease-out`,
                 }}
               >
-                Done
+                Ok
               </Button>
             </GoodTooltip>
 
