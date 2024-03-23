@@ -72,12 +72,13 @@ const chatGenerateWithFunctionsInputSchema = z.object({
 
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
-  request: z.object({
+  // for this object sync with <> wireOpenAICreateImageRequestSchema
+  config: z.object({
     prompt: z.string(),
     count: z.number().min(1),
-    model: z.enum(['dall-e-2', 'dall-e-3']),
+    model: z.enum(['dall-e-2', 'dall-e-3' /*, 'stablediffusion' for [LocalAI] */]),
     quality: z.enum(['standard', 'hd']),
-    asUrl: z.boolean(), // if false, returns a base64 encoded data Url
+    responseFormat: z.enum(['url', 'b64_json']), /* udpated to directly match OpenAI's formats - shall have an intermediate representation instead? */
     size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']),
     style: z.enum(['natural', 'vivid']),
   }),
@@ -278,30 +279,35 @@ export const llmOpenAIRouter = createTRPCRouter({
         : parseChatGenerateOutput(message as OpenAIWire.ChatCompletion.ResponseMessage, finish_reason);
     }),
 
-  /* [OpenAI] images/generations */
+  /* [OpenAI/LocalAI] images/generations */
   createImages: publicProcedure
     .input(createImagesInputSchema)
     .output(t2iCreateImagesOutputSchema)
-    .mutation(async ({ input: { access, request } }) => {
+    .mutation(async ({ input: { access, config } }) => {
 
       // Validate input
-      if (request.model === 'dall-e-3' && request.count > 1)
+      if (config.model === 'dall-e-3' && config.count > 1)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
+
+      // images/generations request body
+      const requestBody: WireOpenAICreateImageRequest = {
+        prompt: config.prompt,
+        model: config.model,
+        n: config.count,
+        quality: config.quality,
+        response_format: config.responseFormat,
+        size: config.size,
+        style: config.style,
+        user: 'big-AGI',
+      };
+
+      // [LocalAI] Fix: LocalAI does not want the 'response_format' field
+      if (access.dialect === 'localai')
+        delete requestBody.response_format;
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
       const wireOpenAICreateImageOutput = await openaiPOST<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
-        access, null,
-        {
-          prompt: request.prompt,
-          model: request.model,
-          n: request.count,
-          quality: request.quality,
-          response_format: request.asUrl ? 'url' : 'b64_json',
-          size: request.size,
-          style: request.style,
-          user: 'big-agi',
-        },
-        '/v1/images/generations',
+        access, null, requestBody, '/v1/images/generations',
       );
 
       // expect a single image and as URL
@@ -311,7 +317,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
         return {
           imageUrl: image.url,
-          altText: image.revised_prompt || request.prompt,
+          altText: image.revised_prompt || config.prompt,
         };
       });
     }),
