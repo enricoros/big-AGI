@@ -1,14 +1,16 @@
-import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { Box } from '@mui/joy';
+
+import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+import type { VChatMessageIn } from '~/modules/llms/llm.client';
+import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessage, type DMessage } from '~/common/state/store-chats';
-
-import { BFusion, FusionUpdateOrFn } from './beam.gather';
-import { GATHER_PLACEHOLDER } from '../beam.config';
-import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
-import { VChatMessageIn } from '~/modules/llms/llm.client';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+
+import type { BFusion, FusionUpdateOrFn } from './beam.gather';
+import { GATHER_PLACEHOLDER } from '../beam.config';
 
 
 // Temp: Move
@@ -207,8 +209,9 @@ export function gatherStartFusion(
     promiseChain = promiseChain.then(() => {
       // progress update
       onUpdateBFusion({
-        fusingProgressComponent: <>({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}</>,
+        fusingProgressComponent: <Box onClick={() => console.log('me')}>({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}</Box>,
       });
+
       // execute the instruction, purely on the state
       switch (instruction.type) {
         case 'chat-generate':
