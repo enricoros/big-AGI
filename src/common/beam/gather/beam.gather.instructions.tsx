@@ -95,23 +95,24 @@ export function gatherStartFusion(
 
 
   // Execute the instructions in sequence
-  let promiseChain = Promise.resolve();
+  let promiseChain = Promise.resolve<string>('');
   for (const instruction of instructions) {
-    promiseChain = promiseChain.then(() => {
+    promiseChain = promiseChain.then((previousResult: string) => {
+      // You can use previousResult here, if needed
       inputState.updateProgressComponent(
         <Typography
           level='body-xs'
           // endDecorator={<CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px' }} />}
           sx={{ color: 'text.secondary' }}
         >
-          {1 + instructions.indexOf(instruction)}/{instructions.length} · {instruction.label}
+          {1 + instructions.indexOf(instruction)}/{instructions.length} · {instruction.label} ...
         </Typography>,
       );
       switch (instruction.type) {
         case 'chat-generate':
-          return executeChatGenerate(instruction, inputState);
+          return executeChatGenerate(instruction, inputState, previousResult);
         case 'user-input-checklist':
-          return executeUserInputChecklist(instruction, inputState);
+          return executeUserInputChecklist(instruction, inputState, previousResult);
         default:
           return Promise.reject(new Error('Unsupported Merge instruction'));
       }
@@ -136,7 +137,7 @@ export function gatherStartFusion(
           console.log('Fusion aborted:', fusionId);
         return onUpdateBFusion({
           stage: 'stopped',
-          errorText: 'Stopped.',
+          errorText: 'Merge Canceled.',
           fusingProgressComponent: undefined,
         });
       }

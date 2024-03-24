@@ -29,7 +29,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
       {
         type: 'chat-generate',
         label: 'Generating Checklist',
-        mute: true,
+        display: 'character-count',
         method: 's-s0-h0-u0-aN-u',
         // You are an intelligent agent tasked with analyzing a set of AI-generated responses to the user message to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.
         systemPrompt: `
@@ -37,12 +37,12 @@ You are an intelligent agent tasked with analyzing a set of {{N}} AI-generated r
 Your goal is to distill these into a clear, concise, and actionable checklist that the user can review and select from.
 The checklist should be brief, commensurate with the task at hand, and formatted precisely as follows:
 
-- [ ] Insight/Solution/Theme 1: [Very brief, actionable description]
-- [ ] Insight/Solution/Theme 2: [Very brief, actionable description]
+- [ ] **Insight/Solution/Theme name 1**: [Very brief, actionable description]
+- [ ] **Insight/Solution/Theme name 2**: [Very brief, actionable description]
 ...
-- [ ] Insight/Solution/Theme N: [Very brief, actionable description]
+- [ ] **Insight/Solution/Theme name N**: [Very brief, actionable description]
 
-The checklist should contain no more than 3-9 items orthogonal items, especially points of difference.
+The checklist should contain no more than 3-9 items orthogonal items, especially points of difference, in a single brief line each (no end period).
 Prioritize items based on what would be most helpful to the user when merging the {{N}} response alternatives.`.trim(),
 // Remember, the checklist should only include the most critical and relevant points, ensuring clarity and conciseness. Begin by identifying the essential insights or themes.
         userPrompt: `
@@ -53,6 +53,13 @@ Ensure the checklist is comprehensive, covering the breadth of ideas presented i
       {
         type: 'user-input-checklist',
         label: 'Criteria Selection',
+        outputPrompt: `
+The user selected:
+{{YesAnswers}}
+
+The user did NOT select:
+{{NoAnswers}} 
+`.trim(),
       },
       {
         type: 'chat-generate',
@@ -64,7 +71,7 @@ Your task is to combine the {{N}} response alternatives into a single cohesive r
 This synthesis should address the user's original query comprehensively, incorporating the {{N}} response alternatives following the user's chosen options.
 Aim for clarity and coherence in your final output.`.trim(),
         userPrompt: `
-Given the user preferences below, synthesize the {{N}} response alternatives above into a single, cohesive, comprehensive response that follows my former query and the preferences below:
+Given the user preferences below, synthesize the {{N}} response alternatives above into a single, cohesive, comprehensive response that follows the user query and the preferences below:
 
 {{PrevStepOutput}}
 
