@@ -1,12 +1,14 @@
 import * as React from 'react';
 
+import { Typography } from '@mui/joy';
+
 import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
 import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-stream';
 
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import type { DMessage } from '~/common/state/store-chats';
+import { DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from '../beam.gather.instructions';
@@ -19,7 +21,7 @@ type ChatGenerateMethods =
 
 export interface ChatGenerateInstruction extends BaseInstruction {
   type: 'chat-generate';
-  mute?: boolean;
+  display?: 'mute' | 'character-count';
   method: ChatGenerateMethods;
   systemPrompt: string;
   userPrompt: string;
@@ -30,7 +32,7 @@ export interface ChatGenerateInstruction extends BaseInstruction {
 /**
  * Merge Execution: uses a chain of Promises to queue up (cancellable) seuqential instructions.
  */
-export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: ExecutionInputState): Promise<void> {
+export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: ExecutionInputState, prevStepOutput: string): Promise<string> {
 
   // build the input messages
   if (_i.method !== 's-s0-h0-u0-aN-u')
@@ -38,7 +40,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
   const history: VChatMessageIn[] = [
     // s
-    { role: 'system', content: _mixInstructionPrompt(_i.systemPrompt, inputs.rayMessages.length) },
+    { role: 'system', content: _mixChatGeneratePrompt(_i.systemPrompt, inputs.rayMessages.length, prevStepOutput) },
     // s0-h0-u0
     ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
@@ -47,7 +49,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     ...inputs.rayMessages
       .map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
     // u
-    { role: 'user', content: _mixInstructionPrompt(_i.userPrompt, inputs.rayMessages.length) },
+    { role: 'user', content: _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput) },
   ];
 
   // reset the intermediate message
@@ -63,17 +65,29 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     if (update.text)
       inputs.intermediateDMessage.updated = Date.now();
 
-    // recreate the UI for this
-    if (!_i.mute)
-      inputs.updateInstructionComponent(
-        <ChatMessage
-          message={inputs.intermediateDMessage}
-          fitScreen={true}
-          showAvatar={false}
-          adjustContentScaling={-1}
-          sx={fusionChatMessageSx}
-        />,
-      );
+    switch (_i.display) {
+      case 'mute':
+        return;
+
+      case 'character-count':
+        inputs.updateInstructionComponent(
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{update.text?.length || 0} characters</Typography>,
+        );
+        return;
+
+      default:
+        // recreate the UI for this
+        inputs.updateInstructionComponent(
+          <ChatMessage
+            message={inputs.intermediateDMessage}
+            fitScreen={true}
+            showAvatar={false}
+            adjustContentScaling={-1}
+            sx={fusionChatMessageSx}
+          />,
+        );
+        return;
+    }
   };
 
   // LLM Streaming generation
@@ -86,12 +100,16 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
       }
       if (status.outcome === 'errored')
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
+
+      // Proceed to the next step
+      return inputs.intermediateDMessage.text;
     });
 }
 
 
-function _mixInstructionPrompt(prompt: string, raysReady: number): string {
+function _mixChatGeneratePrompt(prompt: string, raysReady: number, prevStepOutput: string): string {
   return bareBonesPromptMixer(prompt, undefined, {
     '{{N}}': raysReady.toString(),
+    '{{PrevStepOutput}}': prevStepOutput,
   });
 }

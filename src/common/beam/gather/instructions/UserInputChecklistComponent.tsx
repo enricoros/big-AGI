@@ -28,6 +28,20 @@ export function parseTextToChecklist(text: string): UserChecklistOption[] {
 }
 
 
+function parseMarkdownBold(text: string) {
+  // Split the text by the markdown bold syntax
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+
+  return parts.map((part, index) => {
+    // Check if the part is meant to be bold
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
+
 export function UserInputChecklistComponent(props: {
   options: UserChecklistOption[];
   onConfirm: (selectedOptions: UserChecklistOption[]) => void;
@@ -46,35 +60,45 @@ export function UserInputChecklistComponent(props: {
     );
   }, []);
 
+  const moreThanHalfSelected = localOptions.filter(option => option.selected).length > localOptions.length / 2;
+
   return (
-    <Box sx={{ display: 'grid', gap: 3 }}>
-      <Typography level='body-md' sx={{ mt: 1 }}>
+    <Box sx={{ display: 'grid', gap: 2 }}>
+      <Typography color='primary' sx={{ mt: 1, fontWeight: 'lg', fontSize: 'md' }}>
         Select the Merge options to apply:
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {localOptions.map((option) => (
-          <Checkbox
-            key={option.id}
-            size='sm'
-            checked={option.selected}
-            onChange={() => handleToggle(option.id)}
-            label={option.label}
-            sx={{ whiteSpace: 'break-spaces', ml: 2 }}
-          />
-        ))}
-      </Box>
+      {localOptions.map((option) => (
+        <Checkbox
+          key={option.id}
+          size='sm'
+          checked={option.selected}
+          onChange={() => handleToggle(option.id)}
+          label={parseMarkdownBold(option.label)}
+          // sx={{ ml: 2, fontSize: 'md' }}
+        />
+      ))}
 
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
         <Button
           onClick={() => props.onConfirm(localOptions)}
         >
           Confirm Selection
         </Button>
+
+        <Button
+          color='neutral'
+          variant='soft'
+          onClick={() => setLocalOptions(localOptions.map(option => ({ ...option, selected: !moreThanHalfSelected })))}
+        >
+          {moreThanHalfSelected ? 'Uncheck All' : 'Check All'}
+        </Button>
+
         <Button
           color='neutral'
           variant='soft'
           onClick={props.onCancel}
+          sx={{ ml: 'auto' }}
         >
           Cancel
         </Button>

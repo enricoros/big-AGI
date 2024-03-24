@@ -1,10 +1,12 @@
 import type { BaseInstruction, ExecutionInputState } from '../beam.gather.instructions';
 import { GATHER_DEBUG_EXECUTION_CHAIN } from '../../beam.config';
 import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
+import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 
 export interface UserInputChecklistInstruction extends BaseInstruction {
   type: 'user-input-checklist';
+  outputPrompt: string;
 }
 
 export interface UserChecklistOption {
@@ -14,24 +16,20 @@ export interface UserChecklistOption {
 }
 
 
-export interface UserChecklistValue {
-  checklist: UserChecklistOption[];
-}
-
 export async function executeUserInputChecklist(
   _i: UserInputChecklistInstruction,
   inputs: ExecutionInputState,
-): Promise<UserChecklistValue> {
+  previousResult: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
 
     // initial text to options
-    const inputText = inputs.intermediateDMessage.text;
-    const options = parseTextToChecklist(inputText);
+    const options = parseTextToChecklist(previousResult);
 
     // if no options, there's an error
     if (options.length < 2) {
       if (GATHER_DEBUG_EXECUTION_CHAIN)
-        console.log('No checklist options found:', inputText);
+        console.log('No checklist options found:', previousResult);
       reject(new Error('Oops! It looks like we had trouble understanding the Model. Could you please try again?'));
       return;
     }
@@ -47,12 +45,21 @@ export async function executeUserInputChecklist(
 
     const onConfirm = (selectedOptions: UserChecklistOption[]) => {
       clearState();
-      resolve({ checklist: selectedOptions }); // Proceed to the next step
+
+      // output prompt mixer
+      const outputPrompt = bareBonesPromptMixer(_i.outputPrompt, undefined, {
+        '{{YesAnswers}}': selectedOptions.filter(o => o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
+        '{{NoAnswers}}': selectedOptions.filter(o => !o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
+      });
+
+      // Proceed to the next step
+      resolve(outputPrompt);
     };
 
     const onCancel = () => {
       clearState();
-      reject(new Error('User cancelled the input.'));
+      inputs.chainAbortController.abort('User cancelled the input.');
+      reject();
     };
 
     // Remove the placeholder message
