@@ -21,7 +21,6 @@ type BFusionStage =
   | 'stopped'   // aborted by the user
   | 'error';    // failed (fusionIssue is defined)
 
-// type BFusionDisplayType = 'intermediate-view' | 'checklist-view';
 
 export interface BFusion {
   // const
@@ -37,8 +36,7 @@ export interface BFusion {
   // execution state to sync Instruction I/O with the UI
   fusingAbortController?: AbortController; // of the full chain
   fusingProgressComponent?: React.JSX.Element;
-  // fusingDisplayType?: BFusionDisplayType;
-  // fusingIntermediateDMessage?: DMessage;
+  fusingIntermediateComponent?: React.JSX.Element;
 }
 
 export const createBFusion = (factoryId: string, instructions: Instruction[]): BFusion => ({
@@ -55,8 +53,7 @@ export const createBFusion = (factoryId: string, instructions: Instruction[]): B
   // execution progress
   fusingAbortController: undefined,
   fusingProgressComponent: undefined,
-  // fusingDisplayType: undefined,
-  // fusingIntermediateDMessage: undefined,
+  fusingIntermediateComponent: undefined,
 });
 
 

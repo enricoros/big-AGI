@@ -114,6 +114,12 @@ export function BeamGatherOutput(props: {
           </Typography>
         )}
 
+        {!!fusion?.fusingIntermediateComponent && (
+          <Box>
+            {fusion.fusingIntermediateComponent}
+          </Box>
+        )}
+
         {/* Output */}
         {!!fusion?.outputDMessage && (
           <ChatMessageMemo
