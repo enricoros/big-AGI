@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, IconButton } from '@mui/joy';
+import { Box, Button, IconButton, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -83,16 +83,16 @@ export function BeamGatherOutput(props: {
   const handleFusionCopy = React.useCallback(() => {
     const { _currentFusion } = props.beamStore.getState();
     const fusion = _currentFusion();
-    if (fusion?.outputMessage?.text)
-      copyToClipboard(fusion.outputMessage.text, 'Fusion');
+    if (fusion?.outputDMessage?.text)
+      copyToClipboard(fusion.outputDMessage.text, 'Fusion');
   }, [props.beamStore]);
 
   const handleFusionUse = React.useCallback(() => {
     // get snapshot values, so we don't have to react to the hook
     const { _currentFusion, onSuccessCallback, gatherLlmId } = props.beamStore.getState();
     const fusion = _currentFusion();
-    if (fusion?.outputMessage?.text && onSuccessCallback)
-      onSuccessCallback(fusion.outputMessage.text, gatherLlmId || '');
+    if (fusion?.outputDMessage?.text && onSuccessCallback)
+      onSuccessCallback(fusion.outputDMessage.text, gatherLlmId || '');
   }, [props.beamStore]);
 
   // if (isIdle)
@@ -106,12 +106,18 @@ export function BeamGatherOutput(props: {
       >
 
         {/* Show issue, if any */}
-        {isError && <InlineError error={fusion?.fusionIssue || 'Merge Issue'} />}
+        {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
+
+        {!!fusion?.fusingProgressComponent && (
+          <Typography level='body-xs'>
+            {fusion.fusingProgressComponent}
+          </Typography>
+        )}
 
         {/* Output */}
-        {!!fusion?.outputMessage && (
+        {!!fusion?.outputDMessage && (
           <ChatMessageMemo
-            message={fusion.outputMessage}
+            message={fusion.outputDMessage}
             fitScreen={props.isMobile}
             showAvatar={false}
             adjustContentScaling={-1}

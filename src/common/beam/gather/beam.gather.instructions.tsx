@@ -8,6 +8,7 @@ import { BFusion, FusionUpdateOrFn } from './beam.gather';
 import { GATHER_PLACEHOLDER } from '../beam.config';
 import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 import { VChatMessageIn } from '~/modules/llms/llm.client';
+import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 
 // Temp: Move
@@ -43,44 +44,57 @@ export type Instruction = ChatGenerateInstruction | UserInputChecklistInstructio
 
 
 export async function executeChatGenerateInstruction(
-  { label, systemPrompt, userPrompt, method }: ChatGenerateInstruction,
-  { llmId, chatMessages, rayMessages, chainAbortController, onUpdate }: StateImmutable,
+  instruction: ChatGenerateInstruction,
+  inputs: StateImmutable,
 ): Promise<void> {
 
   // build the input messages
-  if (method !== 's-s0-h0-u0-aN-u')
-    throw new Error(`Unsupported Chat Generate method: ${method}`);
+  if (instruction.method !== 's-s0-h0-u0-aN-u')
+    throw new Error(`Unsupported Chat Generate method: ${instruction.method}`);
 
-  const _promptVars = (prompt: string) => mixInstructionPrompt(prompt, rayMessages.length);
+  const _promptVars = (prompt: string) => mixInstructionPrompt(prompt, inputs.rayMessages.length);
 
   const history: VChatMessageIn[] = [
     // s
-    { role: 'system', content: _promptVars(systemPrompt) },
+    { role: 'system', content: _promptVars(instruction.systemPrompt) },
     // s0-h0-u0
-    ...chatMessages
+    ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
       .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: m.text })),
     // aN
-    ...rayMessages.map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
+    ...inputs.rayMessages
+      .map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
     // u
-    { role: 'user', content: _promptVars(userPrompt) },
+    { role: 'user', content: _promptVars(instruction.userPrompt) },
   ];
 
-  const updateMessage = (update: Partial<DMessage>) => onUpdate((fusion) => ({
-    // ...fusion,
-    outputMessage: {
-      ...fusion.outputMessage!,
-      ...update,
-      // only update the timestamp when the text changes
-      ...(update.text ? { updated: Date.now() } : {}),
-    },
-  }));
+  const updateMessage = (update: Partial<DMessage>) => {
+    console.log('updateMessage', update);
+    // updateBFusion((fusion) => ({
+    //   // ...fusion,
+    //   outputDMessage: {
+    //     ...fusion.outputDMessage!,
+    //     ...update,
+    //     // only update the timestamp when the text changes
+    //     ...(update.text ? { updated: Date.now() } : {}),
+    //   },
+    // }));
+  };
 
-  return streamAssistantMessage(llmId, history, 0, 'off', updateMessage, chainAbortController.signal)
+  return streamAssistantMessage(
+    inputs.llmId,
+    history,
+    getUXLabsHighPerformance() ? 0 : 1,
+    'off',
+    updateMessage,
+    inputs.chainAbortController.signal,
+  )
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
-      if (status.outcome === 'aborted')
-        throw new Error('Stopped.');
+      if (status.outcome === 'aborted') {
+        // this message will be discarded as the abort status is checked in the next `catch`
+        throw new Error('Instruction Stopped.');
+      }
       if (status.outcome === 'errored')
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
     });
@@ -118,50 +132,71 @@ export async function executeUserInputChecklistInstruction(
 
 
 interface StateImmutable {
-  readonly llmId: DLLMId;
+  readonly chainAbortController: AbortController;
   readonly chatMessages: DMessage[];
   readonly rayMessages: DMessage[];
-  readonly chainAbortController: AbortController;
-  readonly onUpdate: (update: FusionUpdateOrFn) => void;
+  readonly llmId: DLLMId;
+  readonly intermediateDMessage: DMessage;
+  readonly updateBFusion: (update: FusionUpdateOrFn) => void;
 }
 
-interface StateMutable {
-  // instructionIndex: number;
-  // instructionLabel: string;
-}
+// interface StateMutable {
+//   instructionIndex: number;
+//   instructionLabel: string;
+// }
 
 
-export function executeFusionInstructions(
+export function gatherStartFusion(
   initialFusion: Readonly<BFusion>,
-  llmId: DLLMId,
   chatMessages: DMessage[],
   rayMessages: DMessage[],
-  onUpdate: (update: FusionUpdateOrFn) => void,
+  llmId: DLLMId | null,
+  onUpdateBFusion: (update: FusionUpdateOrFn) => void,
 ) {
 
+  // abort any current fusion
+  const { fusionId, instructions } = initialFusion;
+  initialFusion.fusingAbortController?.abort();
 
-  // Constant state
+  // validate preconditions
+  const onError = (errorText: string) => onUpdateBFusion({
+    stage: 'error',
+    errorText: errorText,
+    fusingAbortController: undefined,
+  });
+  if (instructions.length < 1)
+    return onError('No fusion instructions available');
+  if (chatMessages.length < 1)
+    return onError('No conversation history available');
+  if (rayMessages.length <= 1)
+    return onError('No responses available');
+  if (!llmId)
+    return onError('No Merge model selected');
+
+
+  // Immutable state - not UI (BFusion) synced
   const stateImmutable: StateImmutable = {
-    llmId: llmId,
+    chainAbortController: new AbortController(),
     chatMessages: chatMessages,
     rayMessages: rayMessages,
-    chainAbortController: new AbortController(),
-    onUpdate: onUpdate,
+    llmId: llmId,
+    intermediateDMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+    updateBFusion: onUpdateBFusion,
   };
 
-  // Mutable state
-  let stateMutable: StateMutable = {
-    // instructionIndex: 0,
-    // instructionLabel: instructions[0].label,
-  };
 
-  const { fusionId, instructions } = initialFusion;
+  // start: big reset
+  onUpdateBFusion({
+    // status
+    stage: 'fusing',
+    errorText: undefined,
+    outputDMessage: undefined,  // createDMessage('assistant', GATHER_PLACEHOLDER)
 
-  onUpdate({
-    status: 'fusing',
-    fusionIssue: undefined,
-    outputMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
-    abortController: stateImmutable.chainAbortController,
+    // execution progress
+    fusingAbortController: stateImmutable.chainAbortController,
+    fusingProgressComponent: undefined,
+    // fusingDisplayType: undefined,
+    // fusingIntermediateDMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
   });
 
   // Start executing the instructions
@@ -170,6 +205,11 @@ export function executeFusionInstructions(
 
   for (const instruction of instructions) {
     promiseChain = promiseChain.then(() => {
+      // progress update
+      onUpdateBFusion({
+        fusingProgressComponent: <>({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}</>,
+      });
+      // execute the instruction, purely on the state
       switch (instruction.type) {
         case 'chat-generate':
           return executeChatGenerateInstruction(instruction, stateImmutable);
@@ -184,42 +224,44 @@ export function executeFusionInstructions(
   promiseChain
     .then(() => {
       console.log('All instructions executed for fusion:', fusionId);
-      onUpdate({
-        status: 'success',
-        fusionIssue: undefined,
+      onUpdateBFusion({
+        stage: 'success',
+        errorText: undefined,
+        fusingProgressComponent: undefined,
       });
     })
     .catch((error) => {
       // User abort: no need to show an error
       if (stateImmutable.chainAbortController.signal.aborted) {
         console.log('Fusion aborted:', fusionId);
-        onUpdate({
-          status: 'stopped',
-          fusionIssue: 'Stopped.',
+        return onUpdateBFusion({
+          stage: 'stopped',
+          errorText: 'Stopped.',
+          fusingProgressComponent: undefined,
         });
-        return;
       }
 
       // Error handling
       console.error('Error executing instructions:', error, fusionId);
-      onUpdate({
-        status: 'error',
-        fusionIssue: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
+      onUpdateBFusion({
+        stage: 'error',
+        errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
       });
     })
     .finally(() => {
-      onUpdate({
-        abortController: undefined,
+      onUpdateBFusion({
+        outputDMessage: stateImmutable.intermediateDMessage,
+        fusingAbortController: undefined,
       });
     });
 }
 
 
-export function fusionGatherStop(fusion: BFusion): BFusion {
-  fusion.abortController?.abort();
+export function gatherStopFusion(fusion: BFusion): BFusion {
+  fusion.fusingAbortController?.abort();
   return {
     ...fusion,
-    ...(fusion.status === 'fusing' ? { status: 'stopped' } : {}),
-    abortController: undefined,
+    ...(fusion.stage === 'fusing' ? { status: 'stopped' /* speculative as the abort shall do the same */ } : {}),
+    fusingAbortController: undefined,
   };
 }
