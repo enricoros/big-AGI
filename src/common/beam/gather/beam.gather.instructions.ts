@@ -76,16 +76,14 @@ export async function executeChatGenerateInstruction(
     },
   }));
 
-  try {
-    try {
-      const outcome = await streamAssistantMessage(llmId, history, 0, 'off', updateMessage, chainAbortController.signal);
-      console.log('Chat Generate Instruction executed:', label);
-    } catch (error) {
-      console.error('Error executing Chat Generate Instruction:', label, error);
-    }
-  } finally {
-    console.log('Chat Generate Instruction finally:', label);
-  }
+  return streamAssistantMessage(llmId, history, 0, 'off', updateMessage, chainAbortController.signal)
+    .then((status) => {
+      // re-throw errors, as streamAssistantMessage catches internally
+      if (status.outcome === 'aborted')
+        throw new Error('Stopped.');
+      if (status.outcome === 'errored')
+        throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
+    });
 }
 
 
@@ -168,23 +166,26 @@ export function executeFusionInstructions(
     });
   }
 
-  promiseChain.then(() => {
-    console.log('All instructions executed for fusion:', fusionId);
-    onUpdate({
-      status: 'success',
-      fusionIssue: undefined,
+  promiseChain
+    .then(() => {
+      console.log('All instructions executed for fusion:', fusionId);
+      onUpdate({
+        status: 'success',
+        fusionIssue: undefined,
+      });
+    })
+    .catch((error) => {
+      console.error('Error executing instructions:', error, fusionId);
+      onUpdate({
+        status: 'error',
+        fusionIssue: error?.message || error?.toString() || 'Unknown error',
+      });
+    })
+    .finally(() => {
+      onUpdate({
+        abortController: undefined,
+      });
     });
-  }).catch((error) => {
-    console.error('Error executing instructions:', error, fusionId);
-    onUpdate({
-      status: 'error',
-      fusionIssue: error?.message || error?.toString() || 'Unknown error',
-    });
-  }).finally(() => {
-    onUpdate({
-      abortController: undefined,
-    });
-  });
 }
 
 

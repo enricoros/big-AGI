@@ -68,16 +68,12 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   // stream the assistant's messages
   const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
   streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
-    .then((outcome) => {
+    .then((status) => {
       _rayUpdate(ray.rayId, {
-        status: (outcome === 'success') ? 'success' : (outcome === 'aborted') ? 'stopped' : (outcome === 'errored') ? 'error' : 'empty',
-        genAbortController: undefined,
-      });
-    })
-    .catch((error) => {
-      _rayUpdate(ray.rayId, {
-        status: 'error',
-        scatterIssue: error?.message || error?.toString() || 'Unknown error',
+        status: (status.outcome === 'success') ? 'success'
+          : (status.outcome === 'aborted') ? 'stopped'
+            : (status.outcome === 'errored') ? 'error' : 'empty',
+        scatterIssue: status.errorMessage || undefined,
         genAbortController: undefined,
       });
     })
