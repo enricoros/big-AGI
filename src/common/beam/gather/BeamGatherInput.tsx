@@ -7,7 +7,8 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
-import type { ChatGenerateInstruction, Instruction } from './beam.gather.instructions';
+import type { ChatGenerateInstruction } from './instructions/ChatGenerateInstruction';
+import type { Instruction } from './beam.gather.instructions';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_SHOW_SYSTEM_PROMPT } from '../beam.config';
 import { fusionIsEditable } from './beam.gather';
