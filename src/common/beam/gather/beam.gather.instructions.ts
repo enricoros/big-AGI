@@ -87,17 +87,32 @@ export async function executeChatGenerateInstruction(
 }
 
 
-export async function executeUserInputChecklistInstruction(instruction: UserInputChecklistInstruction): Promise<void> {
-  // Example implementation - adapt based on your application's UI/input logic
+export async function executeUserInputChecklistInstruction(
+  instruction: UserInputChecklistInstruction,
+  { chainAbortController }: StateImmutable,
+): Promise<void> {
+  const signal = chainAbortController.signal;
+
+
   return new Promise((resolve, reject) => {
-    // Logic to display user input prompt and wait for submission
-    // This is highly dependent on your UI framework and setup
     console.log('Waiting for user input for:', instruction.label);
-    // Simulate receiving user input after some time
+
+    const abortHandler = () => {
+      console.log('Operation aborted during user input for:', instruction.label);
+      reject(new Error('Operation aborted.'));
+    };
+
+    signal.addEventListener('abort', abortHandler);
+
     setTimeout(() => {
+      // Early return if aborted, the reject is already called by abortHandler
+      if (signal.aborted)
+        return;
+
       console.log('User input received for:', instruction.label);
+      signal.removeEventListener('abort', abortHandler); // Clean up listener
       resolve();
-    }, 5000); // Simulate a 5-second wait for user input
+    }, 5000); // Simulate a wait for user input
   });
 }
 
@@ -159,7 +174,7 @@ export function executeFusionInstructions(
         case 'chat-generate':
           return executeChatGenerateInstruction(instruction, stateImmutable);
         case 'user-input-checklist':
-          return executeUserInputChecklistInstruction(instruction);
+          return executeUserInputChecklistInstruction(instruction, stateImmutable);
         default:
           return Promise.reject(new Error('Unsupported Merge instruction'));
       }
@@ -175,10 +190,21 @@ export function executeFusionInstructions(
       });
     })
     .catch((error) => {
+      // User abort: no need to show an error
+      if (stateImmutable.chainAbortController.signal.aborted) {
+        console.log('Fusion aborted:', fusionId);
+        onUpdate({
+          status: 'stopped',
+          fusionIssue: 'Stopped.',
+        });
+        return;
+      }
+
+      // Error handling
       console.error('Error executing instructions:', error, fusionId);
       onUpdate({
         status: 'error',
-        fusionIssue: error?.message || error?.toString() || 'Unknown error',
+        fusionIssue: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
       });
     })
     .finally(() => {
