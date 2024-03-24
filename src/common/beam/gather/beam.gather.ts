@@ -35,8 +35,8 @@ export interface BFusion {
 
   // execution state to sync Instruction I/O with the UI
   fusingAbortController?: AbortController; // of the full chain
-  fusingProgressComponent?: React.JSX.Element;
-  fusingIntermediateComponent?: React.JSX.Element;
+  fusingProgressComponent?: React.ReactNode;
+  fusingInstructionComponent?: React.ReactNode;
 }
 
 export const createBFusion = (factoryId: string, instructions: Instruction[]): BFusion => ({
@@ -53,7 +53,7 @@ export const createBFusion = (factoryId: string, instructions: Instruction[]): B
   // execution progress
   fusingAbortController: undefined,
   fusingProgressComponent: undefined,
-  fusingIntermediateComponent: undefined,
+  fusingInstructionComponent: undefined,
 });
 
 

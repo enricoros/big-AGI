@@ -1,4 +1,5 @@
-import { Box } from '@mui/joy';
+import * as React from 'react';
+import { Box, Typography } from '@mui/joy';
 
 import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 
@@ -10,15 +11,7 @@ import { createDMessage, type DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BFusion, FusionUpdateOrFn } from './beam.gather';
-import { GATHER_PLACEHOLDER } from '../beam.config';
-
-
-// Temp: Move
-export function mixInstructionPrompt(prompt: string, raysReady: number): string {
-  return bareBonesPromptMixer(prompt, undefined, {
-    '{{N}}': raysReady.toString(),
-  });
-}
+import { GATHER_DEBUG_EXECUTION_CHAIN, GATHER_PLACEHOLDER } from '../beam.config';
 
 
 /// [Asynchronous Instruction Framework] ///
@@ -45,16 +38,16 @@ interface UserInputChecklistInstruction extends BaseInstruction {
 export type Instruction = ChatGenerateInstruction | UserInputChecklistInstruction;
 
 
-export async function executeChatGenerateInstruction(
-  instruction: ChatGenerateInstruction,
-  inputs: StateImmutable,
-): Promise<void> {
+/**
+ * Merge Execution: uses a chain of Promises to queue up (cancellable) seuqential instructions.
+ */
+async function executeChatGenerateInstruction(instruction: ChatGenerateInstruction, inputs: ExecutionInputState): Promise<void> {
 
   // build the input messages
   if (instruction.method !== 's-s0-h0-u0-aN-u')
     throw new Error(`Unsupported Chat Generate method: ${instruction.method}`);
 
-  const _promptVars = (prompt: string) => mixInstructionPrompt(prompt, inputs.rayMessages.length);
+  const _promptVars = (prompt: string) => __mixInstructionPrompt(prompt, inputs.rayMessages.length);
 
   const history: VChatMessageIn[] = [
     // s
@@ -70,17 +63,19 @@ export async function executeChatGenerateInstruction(
     { role: 'user', content: _promptVars(instruction.userPrompt) },
   ];
 
+  inputs.intermediateDMessage.text = GATHER_PLACEHOLDER;
   const updateMessage = (update: Partial<DMessage>) => {
-    console.log('updateMessage', update);
-    // updateBFusion((fusion) => ({
-    //   // ...fusion,
-    //   outputDMessage: {
-    //     ...fusion.outputDMessage!,
-    //     ...update,
-    //     // only update the timestamp when the text changes
-    //     ...(update.text ? { updated: Date.now() } : {}),
-    //   },
-    // }));
+    // in-place update of the intermediate message
+    Object.assign(inputs.intermediateDMessage, update);
+    if (update.text)
+      inputs.intermediateDMessage.updated = Date.now();
+
+    // recreate the UI for this
+    inputs.updateInstructionComponent(
+      <Box>
+        {inputs.intermediateDMessage.text.length}
+      </Box>,
+    );
   };
 
   return streamAssistantMessage(
@@ -102,16 +97,16 @@ export async function executeChatGenerateInstruction(
     });
 }
 
-
-export async function executeUserInputChecklistInstruction(
+async function executeUserInputChecklistInstruction(
   instruction: UserInputChecklistInstruction,
-  { chainAbortController }: StateImmutable,
+  { chainAbortController }: ExecutionInputState,
 ): Promise<void> {
   const signal = chainAbortController.signal;
 
 
   return new Promise((resolve, reject) => {
-    console.log('Waiting for user input for:', instruction.label);
+    if (GATHER_DEBUG_EXECUTION_CHAIN)
+      console.log('Waiting for user input for:', instruction.label);
 
     const abortHandler = () => {
       console.log('Operation aborted during user input for:', instruction.label);
@@ -133,19 +128,18 @@ export async function executeUserInputChecklistInstruction(
 }
 
 
-interface StateImmutable {
-  readonly chainAbortController: AbortController;
+interface ExecutionInputState {
+  // inputs
   readonly chatMessages: DMessage[];
   readonly rayMessages: DMessage[];
   readonly llmId: DLLMId;
+  // interaction
+  readonly chainAbortController: AbortController;
+  readonly updateProgressComponent: (component: React.ReactNode) => void;
+  readonly updateInstructionComponent: (component: React.ReactNode) => void;
+  // output1 -> input2
   readonly intermediateDMessage: DMessage;
-  readonly updateBFusion: (update: FusionUpdateOrFn) => void;
 }
-
-// interface StateMutable {
-//   instructionIndex: number;
-//   instructionLabel: string;
-// }
 
 
 export function gatherStartFusion(
@@ -175,58 +169,64 @@ export function gatherStartFusion(
   if (!llmId)
     return onError('No Merge model selected');
 
+  if (GATHER_DEBUG_EXECUTION_CHAIN)
+    console.log('beam.gather: executing instructions', instructions);
 
-  // Immutable state - not UI (BFusion) synced
-  const stateImmutable: StateImmutable = {
-    chainAbortController: new AbortController(),
+
+  // full execution state
+  const inputState: ExecutionInputState = {
+    // inputs
     chatMessages: chatMessages,
     rayMessages: rayMessages,
-    llmId: llmId,
+    llmId,
+    // interaction
+    chainAbortController: new AbortController(),
+    updateProgressComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingProgressComponent: component }),
+    updateInstructionComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingInstructionComponent: component }),
+    // output1 -> input2
     intermediateDMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
-    updateBFusion: onUpdateBFusion,
   };
 
 
-  // start: big reset
+  // BFusion: startup full status reset
   onUpdateBFusion({
     // status
     stage: 'fusing',
     errorText: undefined,
-    outputDMessage: undefined,  // createDMessage('assistant', GATHER_PLACEHOLDER)
+    outputDMessage: undefined,
 
     // execution progress
-    fusingAbortController: stateImmutable.chainAbortController,
+    fusingAbortController: inputState.chainAbortController,
     fusingProgressComponent: undefined,
-    // fusingDisplayType: undefined,
-    // fusingIntermediateDMessage: createDMessage('assistant', GATHER_PLACEHOLDER),
+    fusingInstructionComponent: undefined,
   });
 
-  // Start executing the instructions
-  let promiseChain = Promise.resolve();
-  console.log('executing instructions', instructions);
 
+  // Execute the instructions in sequence
+  let promiseChain = Promise.resolve();
   for (const instruction of instructions) {
     promiseChain = promiseChain.then(() => {
-      // progress update
-      onUpdateBFusion({
-        fusingProgressComponent: <Box onClick={() => console.log('me')}>({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}</Box>,
-      });
-
-      // execute the instruction, purely on the state
+      inputState.updateProgressComponent(
+        <Typography level='body-sm'>
+          ({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}
+        </Typography>,
+      );
       switch (instruction.type) {
         case 'chat-generate':
-          return executeChatGenerateInstruction(instruction, stateImmutable);
+          return executeChatGenerateInstruction(instruction, inputState);
         case 'user-input-checklist':
-          return executeUserInputChecklistInstruction(instruction, stateImmutable);
+          return executeUserInputChecklistInstruction(instruction, inputState);
         default:
           return Promise.reject(new Error('Unsupported Merge instruction'));
       }
     });
   }
 
+  // Chain completion handlers
   promiseChain
     .then(() => {
-      console.log('All instructions executed for fusion:', fusionId);
+      if (GATHER_DEBUG_EXECUTION_CHAIN)
+        console.log('All instructions executed for fusion:', fusionId);
       onUpdateBFusion({
         stage: 'success',
         errorText: undefined,
@@ -235,8 +235,9 @@ export function gatherStartFusion(
     })
     .catch((error) => {
       // User abort: no need to show an error
-      if (stateImmutable.chainAbortController.signal.aborted) {
-        console.log('Fusion aborted:', fusionId);
+      if (inputState.chainAbortController.signal.aborted) {
+        if (GATHER_DEBUG_EXECUTION_CHAIN)
+          console.log('Fusion aborted:', fusionId);
         return onUpdateBFusion({
           stage: 'stopped',
           errorText: 'Stopped.',
@@ -245,18 +246,18 @@ export function gatherStartFusion(
       }
 
       // Error handling
-      console.error('Error executing instructions:', error, fusionId);
+      if (GATHER_DEBUG_EXECUTION_CHAIN)
+        console.error('Error executing instructions:', error, fusionId);
       onUpdateBFusion({
         stage: 'error',
         errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
       });
     })
-    .finally(() => {
-      onUpdateBFusion({
-        outputDMessage: stateImmutable.intermediateDMessage,
-        fusingAbortController: undefined,
-      });
-    });
+    .finally(() => onUpdateBFusion({
+      // let the intermediate be the final output
+      outputDMessage: inputState.intermediateDMessage,
+      fusingAbortController: undefined,
+    }));
 }
 
 
@@ -267,4 +268,11 @@ export function gatherStopFusion(fusion: BFusion): BFusion {
     ...(fusion.stage === 'fusing' ? { status: 'stopped' /* speculative as the abort shall do the same */ } : {}),
     fusingAbortController: undefined,
   };
+}
+
+
+function __mixInstructionPrompt(prompt: string, raysReady: number): string {
+  return bareBonesPromptMixer(prompt, undefined, {
+    '{{N}}': raysReady.toString(),
+  });
 }

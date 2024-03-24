@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, IconButton, Typography } from '@mui/joy';
+import { Box, Button, IconButton } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -108,17 +108,11 @@ export function BeamGatherOutput(props: {
         {/* Show issue, if any */}
         {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
 
-        {!!fusion?.fusingProgressComponent && (
-          <Typography level='body-xs'>
-            {fusion.fusingProgressComponent}
-          </Typography>
-        )}
+        {/* Dyanmic: the progress, set by the execution chain */}
+        {fusion?.fusingProgressComponent && fusion.fusingProgressComponent}
 
-        {!!fusion?.fusingIntermediateComponent && (
-          <Box>
-            {fusion.fusingIntermediateComponent}
-          </Box>
-        )}
+        {/* Dynamic: instruction-specific components */}
+        {!!fusion?.fusingInstructionComponent && fusion.fusingInstructionComponent}
 
         {/* Output */}
         {!!fusion?.outputDMessage && (
