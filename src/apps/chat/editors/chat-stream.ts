@@ -53,6 +53,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 }
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
+type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
 
 export async function streamAssistantMessage(
   llmId: DLLMId,
@@ -61,9 +62,12 @@ export async function streamAssistantMessage(
   autoSpeak: ChatAutoSpeakType,
   editMessage: (update: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
-): Promise<StreamMessageOutcome> {
+): Promise<StreamMessageStatus> {
 
-  let returnOutcome: StreamMessageOutcome = 'success';
+  const returnStatus: StreamMessageStatus = {
+    outcome: 'success',
+    errorMessage: undefined,
+  };
 
   // speak once
   let spokenLine = false;
@@ -115,9 +119,10 @@ export async function streamAssistantMessage(
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
       incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
-      returnOutcome = 'errored';
+      returnStatus.outcome = 'errored';
+      returnStatus.errorMessage = error.message;
     } else
-      returnOutcome = 'aborted';
+      returnStatus.outcome = 'aborted';
   }
 
   // Optimized:
@@ -129,5 +134,5 @@ export async function streamAssistantMessage(
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
     void speakText(incrementalAnswer.text);
 
-  return returnOutcome;
+  return returnStatus;
 }
