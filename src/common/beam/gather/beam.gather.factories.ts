@@ -31,7 +31,6 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
         label: 'Generating Checklist',
         display: 'character-count',
         method: 's-s0-h0-u0-aN-u',
-        // You are an intelligent agent tasked with analyzing a set of AI-generated responses to the user message to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.
         systemPrompt: `
 You are an intelligent agent tasked with analyzing a set of {{N}} AI-generated responses to the user message to identify key insights, solutions, or themes.
 Your goal is to distill these into a clear, concise, and actionable checklist that the user can review and select from.
@@ -144,7 +143,9 @@ Now that you have reviewed the N alternatives, proceed with the following steps:
 | ... | ... | ... | ... | ... |
 | Response N | ... | ... | ... | ... |
 
-Complete this table to offer a structured and detailed comparison of the options available, providing an at-a-glance overview that will significantly aid in the decision-making process.`.trim(),
+Complete this table to offer a structured and detailed comparison of the {{N}} options, providing an at-a-glance overview that will significantly aid in the decision-making process.
+
+Begin with listing the criteria.`.trim(),
       },
     ]),
   },
