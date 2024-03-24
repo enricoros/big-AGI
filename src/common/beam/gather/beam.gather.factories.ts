@@ -27,7 +27,8 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     factory: () => createBFusion('guided', [
       {
         type: 'chat-generate',
-        label: 'Generate Checklist',
+        label: 'Generating Checklist',
+        mute: true,
         method: 's-s0-h0-u0-aN-u',
         // You are an intelligent agent tasked with analyzing a set of AI-generated responses to the user message to identify key insights, solutions, or ideas. Your goal is to distill these alternatives into a concise checklist of options that can address the user's query. Consider the conversation's context, the user's last message, and the diversity of perspectives offered by the Beam alternatives. Generate a clear and actionable checklist that the user can review and select from.
         systemPrompt: `
@@ -45,11 +46,10 @@ The checklist should contain no more than 5-10 items orthogonal items, especiall
 
         // Remember, the checklist should only include the most critical and relevant points, ensuring clarity and conciseness. Begin by identifying the essential insights or themes.
         userPrompt: 'Given the conversation history and the {{N}} alternatives provided, identify and list the key insights, themes, or solutions as distinct options in a checklist format. Each item should be clearly articulated to allow for easy selection by the user. Ensure the checklist is comprehensive, covering the breadth of ideas presented in the alternatives, yet concise enough to facilitate clear decision-making.',
-        outputType: 'user-checklist',
       },
       {
         type: 'user-input-checklist',
-        label: 'Select Criteria',
+        label: 'Please Select Merging Criteria',
       },
       {
         type: 'chat-generate',
@@ -57,7 +57,6 @@ The checklist should contain no more than 5-10 items orthogonal items, especiall
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: 'You are a master synthesizer, now equipped with specific insights selected by the user from a checklist you previously helped generate. Your task is to integrate these selected insights into a single, cohesive response. This synthesis should address the user\'s original query comprehensively, incorporating the best elements of the user\'s chosen options. Aim for clarity, coherence, and actionability in your final output.',
         userPrompt: 'Given the user\'s selected options from the checklist, synthesize these into a single, cohesive, comprehensive response that addresses the original query. Ensure the synthesis is coherent, integrating the selected insights in a manner that provides clear, actionable advice or solutions. The final output should reflect a deep understanding of the user\'s preferences and the conversation\'s context.',
-        outputType: 'display-message',
       },
     ]),
   },
@@ -81,7 +80,6 @@ Your response should integrate the most relevant insights from these inputs into
 Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
         userPrompt: 'Synthesize the perfect cohesive response to my last message that merges the collective intelligence of the {{N}} alternatives above.',
         // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
-        outputType: 'display-message',
       },
     ]),
   },
@@ -121,7 +119,6 @@ Now that you have reviewed the N alternatives, proceed with the following steps:
 | Response N | ... | ... | ... | ... |
 
 Complete this table to offer a structured and detailed comparison of the options available, providing an at-a-glance overview that will significantly aid in the decision-making process.`.trim(),
-        outputType: 'display-message',
       },
     ]),
   },
@@ -141,7 +138,6 @@ These alternatives explore different solutions and perspectives and are presente
         // userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
         // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
         userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response.',
-        outputType: 'display-message',
       },
     ]),
   },
