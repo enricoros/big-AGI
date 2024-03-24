@@ -44,7 +44,7 @@ const fusionCardSx: SxProps = {
   borderTopRightRadius: 0,
 };
 
-const fusionChatMessageSx: SxProps = {
+export const fusionChatMessageSx: SxProps = {
   // style: to undo the style of ChatMessage
   backgroundColor: 'none',
   border: 'none',

@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Box, Typography } from '@mui/joy';
+import { Typography } from '@mui/joy';
 
+import { ChatMessage } from '../../../apps/chat/components/message/ChatMessage';
 import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
@@ -12,6 +13,7 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BFusion, FusionUpdateOrFn } from './beam.gather';
 import { GATHER_DEBUG_EXECUTION_CHAIN, GATHER_PLACEHOLDER } from '../beam.config';
+import { fusionChatMessageSx } from './BeamGatherOutput';
 
 
 /// [Asynchronous Instruction Framework] ///
@@ -21,14 +23,16 @@ interface BaseInstruction {
   label: string;
 }
 
+type ChatGenerateMethods =
+  | 's-s0-h0-u0-aN-u'; // sandwiches the existing history and the new proposals in between the System and User prompts of the Instruction
+
 export interface ChatGenerateInstruction extends BaseInstruction {
   type: 'chat-generate';
-  // s-s0-h0-u0-aN-u: sandwiches the existing history and the new proposals in between the System and User prompts of the Instruction
-  method: 's-s0-h0-u0-aN-u';
+  mute?: boolean;
+  method: ChatGenerateMethods;
   systemPrompt: string;
   userPrompt: string;
   // evalPrompt?: string;
-  outputType: 'display-message' | 'user-checklist';
 }
 
 interface UserInputChecklistInstruction extends BaseInstruction {
@@ -41,17 +45,15 @@ export type Instruction = ChatGenerateInstruction | UserInputChecklistInstructio
 /**
  * Merge Execution: uses a chain of Promises to queue up (cancellable) seuqential instructions.
  */
-async function executeChatGenerateInstruction(instruction: ChatGenerateInstruction, inputs: ExecutionInputState): Promise<void> {
+async function executeChatGenerateInstruction(_i: ChatGenerateInstruction, inputs: ExecutionInputState): Promise<void> {
 
   // build the input messages
-  if (instruction.method !== 's-s0-h0-u0-aN-u')
-    throw new Error(`Unsupported Chat Generate method: ${instruction.method}`);
-
-  const _promptVars = (prompt: string) => __mixInstructionPrompt(prompt, inputs.rayMessages.length);
+  if (_i.method !== 's-s0-h0-u0-aN-u')
+    throw new Error(`Unsupported Chat Generate method: ${_i.method}`);
 
   const history: VChatMessageIn[] = [
     // s
-    { role: 'system', content: _promptVars(instruction.systemPrompt) },
+    { role: 'system', content: _mixInstructionPrompt(_i.systemPrompt, inputs.rayMessages.length) },
     // s0-h0-u0
     ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
@@ -60,32 +62,37 @@ async function executeChatGenerateInstruction(instruction: ChatGenerateInstructi
     ...inputs.rayMessages
       .map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
     // u
-    { role: 'user', content: _promptVars(instruction.userPrompt) },
+    { role: 'user', content: _mixInstructionPrompt(_i.userPrompt, inputs.rayMessages.length) },
   ];
 
-  inputs.intermediateDMessage.text = GATHER_PLACEHOLDER;
-  const updateMessage = (update: Partial<DMessage>) => {
+  // reset the intermediate message
+  Object.assign(inputs.intermediateDMessage, {
+    text: GATHER_PLACEHOLDER,
+    updated: undefined,
+  } satisfies Partial<DMessage>);
+
+  // update the UI
+  const onMessageUpdate = (update: Partial<DMessage>) => {
     // in-place update of the intermediate message
     Object.assign(inputs.intermediateDMessage, update);
     if (update.text)
       inputs.intermediateDMessage.updated = Date.now();
 
     // recreate the UI for this
-    inputs.updateInstructionComponent(
-      <Box>
-        {inputs.intermediateDMessage.text.length}
-      </Box>,
-    );
+    if (!_i.mute)
+      inputs.updateInstructionComponent(
+        <ChatMessage
+          message={inputs.intermediateDMessage}
+          fitScreen={true}
+          showAvatar={false}
+          adjustContentScaling={-1}
+          sx={fusionChatMessageSx}
+        />,
+      );
   };
 
-  return streamAssistantMessage(
-    inputs.llmId,
-    history,
-    getUXLabsHighPerformance() ? 0 : 1,
-    'off',
-    updateMessage,
-    inputs.chainAbortController.signal,
-  )
+  // LLM Streaming generation
+  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdate, inputs.chainAbortController.signal)
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
       if (status.outcome === 'aborted') {
@@ -207,8 +214,12 @@ export function gatherStartFusion(
   for (const instruction of instructions) {
     promiseChain = promiseChain.then(() => {
       inputState.updateProgressComponent(
-        <Typography level='body-sm'>
-          ({1 + instructions.indexOf(instruction)}/{instructions.length}) {instruction.label}
+        <Typography
+          level='body-xs'
+          // endDecorator={<CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px' }} />}
+          sx={{ color: 'text.secondary' }}
+        >
+          {1 + instructions.indexOf(instruction)}/{instructions.length} · {instruction.label}
         </Typography>,
       );
       switch (instruction.type) {
@@ -257,6 +268,7 @@ export function gatherStartFusion(
       // let the intermediate be the final output
       outputDMessage: inputState.intermediateDMessage,
       fusingAbortController: undefined,
+      fusingInstructionComponent: undefined,
     }));
 }
 
@@ -271,7 +283,7 @@ export function gatherStopFusion(fusion: BFusion): BFusion {
 }
 
 
-function __mixInstructionPrompt(prompt: string, raysReady: number): string {
+function _mixInstructionPrompt(prompt: string, raysReady: number): string {
   return bareBonesPromptMixer(prompt, undefined, {
     '{{N}}': raysReady.toString(),
   });
