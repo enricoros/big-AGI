@@ -1,42 +1,65 @@
 import type { BaseInstruction, ExecutionInputState } from '../beam.gather.instructions';
 import { GATHER_DEBUG_EXECUTION_CHAIN } from '../../beam.config';
+import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
 
 
 export interface UserInputChecklistInstruction extends BaseInstruction {
   type: 'user-input-checklist';
 }
 
+export interface UserChecklistOption {
+  id: string,
+  label: string,
+  selected: boolean,
+}
+
+
+export interface UserChecklistValue {
+  checklist: UserChecklistOption[];
+}
 
 export async function executeUserInputChecklist(
-  instruction: UserInputChecklistInstruction,
-  { chainAbortController }: ExecutionInputState,
-): Promise<void> {
+  _i: UserInputChecklistInstruction,
+  inputs: ExecutionInputState,
+): Promise<UserChecklistValue> {
+  return new Promise((resolve, reject) => {
 
-  // const signal = chainAbortController.signal;
-  //
-  //
-  // return new Promise((resolve, reject) => {
-  //   if (GATHER_DEBUG_EXECUTION_CHAIN)
-  //     console.log('Waiting for user input for:', instruction.label);
-  //
-  //   const abortHandler = () => {
-  //     console.log('Operation aborted during user input for:', instruction.label);
-  //     reject(new Error('Operation aborted.'));
-  //   };
-  //
-  //   signal.addEventListener('abort', abortHandler);
-  //
-  //   setTimeout(() => {
-  //     // Early return if aborted, the reject is already called by abortHandler
-  //     if (signal.aborted)
-  //       return;
-  //
-  //     console.log('User input received for:', instruction.label);
-  //     signal.removeEventListener('abort', abortHandler); // Clean up listener
-  //     resolve();
-  //   }, 5000); // Simulate a wait for user input
-  // });
+    // initial text to options
+    const inputText = inputs.intermediateDMessage.text;
+    const options = parseTextToChecklist(inputText);
 
-  // return a promise that never resolves, so we can stop here
-  return new Promise(() => {});
+    // if no options, there's an error
+    if (options.length < 2) {
+      if (GATHER_DEBUG_EXECUTION_CHAIN)
+        console.log('No checklist options found:', inputText);
+      reject(new Error('Oops! It looks like we had trouble understanding the Model. Could you please try again?'));
+      return;
+    }
+
+    // react to aborts
+    const abortHandler = () => reject(new Error('Checklist Selection Stopped.'));
+    inputs.chainAbortController.signal.addEventListener('abort', abortHandler);
+
+    const clearState = () => {
+      inputs.updateInstructionComponent(undefined);
+      inputs.chainAbortController.signal.removeEventListener('abort', abortHandler); // Cleanup
+    };
+
+    const onConfirm = (selectedOptions: UserChecklistOption[]) => {
+      clearState();
+      resolve({ checklist: selectedOptions }); // Proceed to the next step
+    };
+
+    const onCancel = () => {
+      clearState();
+      reject(new Error('User cancelled the input.'));
+    };
+
+    // Remove the placeholder message
+    inputs.updateProgressComponent(null);
+
+    // Update the instruction component to render the checklist
+    inputs.updateInstructionComponent(<UserInputChecklistComponent options={options} onConfirm={onConfirm} onCancel={onCancel} />);
+
+  });
 }
