@@ -128,15 +128,15 @@ Then, you will analyze each response against these criteria.
 
 Finally, you will synthesize your findings into a table, providing a clear overview of how each response measures up. Start by identifying up to 8 orthogonal criteria for evaluation.`.trim(),
         userPrompt: `
-Now that you have reviewed the N alternatives, proceed with the following steps:
+Now that you have reviewed the {{N}} alternatives, proceed with the following steps:
 
 1. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses.
 
-2. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria, plus an initial column for the response identifiers. Fill in the table with your assessment of how each response aligns with the criteria.
+2. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria, plus an initial column for the response identifiers. Fill in the table with your assessment of how each response aligns with the criteria, using a 1-10 scoring range.
 
 **Table Format:**
 
-| Response | Criterion 1 | Criterion 2 | ... | Criterion 8 |
+| Response | Criterion 1 | Criterion 2 | ... | Criterion 8 (max) |
 |----------|-------------|-------------|-----|-------------|
 | Response 1 | ... | ... | ... | ... |
 | Response 2 | ... | ... | ... | ... |
@@ -145,7 +145,7 @@ Now that you have reviewed the N alternatives, proceed with the following steps:
 
 Complete this table to offer a structured and detailed comparison of the {{N}} options, providing an at-a-glance overview that will significantly aid in the decision-making process.
 
-Begin with listing the criteria.`.trim(),
+Only work with the provided {{N}} responses. Begin with listing the criteria.`.trim(),
       },
     ]),
   },
