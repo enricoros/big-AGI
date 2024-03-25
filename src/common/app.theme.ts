@@ -14,7 +14,7 @@ export const formLabelStartWidth = 140;
 
 // Theme & Fonts
 
-const inter = Inter({
+const font = Inter({
   weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
   subsets: ['latin'],
   display: 'swap',
@@ -30,7 +30,8 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const appTheme = extendTheme({
   fontFamily: {
-    body: inter.style.fontFamily,
+    body: font.style.fontFamily,
+    display: font.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
   colorSchemes: {
