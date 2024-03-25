@@ -5,9 +5,9 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
-import { FUSION_FACTORIES } from './beam.gather.factories';
+import { FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { GATHER_DEFAULT_TO_FIRST_FUSION, GATHER_PLACEHOLDER } from '../beam.config';
-import { gatherStartFusion, gatherStopFusion, Instruction } from './beam.gather.instructions';
+import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
 
 
 /// Gather Store > BFusion ///
@@ -39,7 +39,7 @@ export interface BFusion {
   fusingInstructionComponent?: React.ReactNode;
 }
 
-export const createBFusion = (factoryId: string, instructions: Instruction[]): BFusion => ({
+const createBFusion = (factoryId: string, instructions: Instruction[]): BFusion => ({
   // const
   fusionId: uuidv4(),
   factoryId,
@@ -98,7 +98,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   prevFusions.forEach(gatherStopFusion);
 
   // fully use new fusions
-  const newFusions = FUSION_FACTORIES.map(spec => spec.factory());
+  const newFusions = FUSION_FACTORIES.map(factory => createBFusion(factory.id, factory.createInstructions()));
 
   return {
     gatherLlmId: null, // will be re-set during open() of the Beam Store
@@ -177,10 +177,8 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
     if (!sourceFusion || !sourceFusionFactory)
       return;
 
-    const newCustomFusion: BFusion = {
-      ...sourceFusionFactory.factory(),
-      factoryId: 'custom', // changes whatever is the source to 'custom', which makes it editable
-    };
+    // create a custom from the source fusion factory
+    const newCustomFusion: BFusion = createBFusion('custom', sourceFusionFactory.createInstructions());
 
     // replace the only editable fusion with the new custom fusion
     _set({

@@ -19,7 +19,7 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { BEAM_BTN_SX, GATHER_COLOR } from '../beam.config';
 import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { FUSION_FACTORIES } from './beam.gather.factories';
+import { FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { beamPaneSx } from '../BeamCard';
 import { fusionIsFusing, fusionIsUsableOutput } from './beam.gather';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -39,7 +39,7 @@ const gatherPaneSx: SxProps = {
   boxShadow: `0px 6px 20px -8px rgb(var(--joy-palette-neutral-darkChannel) / 30%)`,
   [`&.${gatherPaneClasses.ready}`]: {
     backgroundColor: 'background.popup',
-    boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-${/*GATHER_COLOR*/ 'neutral'}-darkChannel) / 40%)`,
+    boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-neutral-darkChannel) / 40%)`,
   },
   [`&.${gatherPaneClasses.busy}`]: {
     animation: `${animationShadowLimey} 2s linear infinite`,

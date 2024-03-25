@@ -5,10 +5,10 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { createDMessage, type DMessage } from '~/common/state/store-chats';
 
-import type { BFusion, FusionUpdateOrFn } from './beam.gather';
-import { ChatGenerateInstruction, executeChatGenerate } from './instructions/ChatGenerateInstruction';
-import { GATHER_DEBUG_EXECUTION_CHAIN, GATHER_PLACEHOLDER } from '../beam.config';
-import { executeUserInputChecklist, UserInputChecklistInstruction } from './instructions/UserInputChecklistInstruction';
+import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
+import { ChatGenerateInstruction, executeChatGenerate } from './ChatGenerateInstruction';
+import { GATHER_PLACEHOLDER } from '../../beam.config';
+import { executeUserInputChecklist, UserInputChecklistInstruction } from './UserInputChecklistInstruction';
 
 
 /// [Asynchronous Instruction Framework] ///
@@ -43,7 +43,7 @@ export function gatherStartFusion(
 ) {
 
   // abort any current fusion
-  const { fusionId, instructions } = initialFusion;
+  const { instructions } = initialFusion;
   initialFusion.fusingAbortController?.abort();
 
   // validate preconditions
@@ -60,9 +60,6 @@ export function gatherStartFusion(
     return onError('No responses available');
   if (!llmId)
     return onError('No Merge model selected');
-
-  if (GATHER_DEBUG_EXECUTION_CHAIN)
-    console.log('beam.gather: executing instructions', instructions);
 
 
   // full execution state
@@ -122,8 +119,6 @@ export function gatherStartFusion(
   // Chain completion handlers
   promiseChain
     .then(() => {
-      if (GATHER_DEBUG_EXECUTION_CHAIN)
-        console.log('All instructions executed for fusion:', fusionId);
       onUpdateBFusion({
         stage: 'success',
         errorText: undefined,
@@ -133,8 +128,6 @@ export function gatherStartFusion(
     .catch((error) => {
       // User abort: no need to show an error
       if (inputState.chainAbortController.signal.aborted) {
-        if (GATHER_DEBUG_EXECUTION_CHAIN)
-          console.log('Fusion aborted:', fusionId);
         return onUpdateBFusion({
           stage: 'stopped',
           errorText: 'Merge Canceled.',
@@ -143,8 +136,6 @@ export function gatherStartFusion(
       }
 
       // Error handling
-      if (GATHER_DEBUG_EXECUTION_CHAIN)
-        console.error('Error executing instructions:', error, fusionId);
       onUpdateBFusion({
         stage: 'error',
         errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
