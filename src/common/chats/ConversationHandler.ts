@@ -5,7 +5,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, getConversationSystemPurposeId, useChatStore } from '../state/store-chats';
 
-import { createBeamVanillaStore } from '~/common/beam/store-beam-vanilla';
+import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 

@@ -5,7 +5,8 @@ import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
 
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
+import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
+
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
