@@ -3,11 +3,11 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Typography } from '@mui/joy';
 
+import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
+import { BeamView } from '~/modules/beam/BeamView';
+import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
-import { BeamView } from '~/common/beam/BeamView';
-import { createBeamVanillaStore } from '~/common/beam/store-beam-vanilla';
 import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
