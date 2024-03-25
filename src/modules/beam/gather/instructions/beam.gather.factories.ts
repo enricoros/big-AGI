@@ -4,7 +4,7 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
 
-import { BFusion, createBFusion } from './beam.gather';
+import type { Instruction } from './beam.gather.execution';
 
 
 interface FusionFactorySpec {
@@ -13,7 +13,7 @@ interface FusionFactorySpec {
   Icon?: React.FunctionComponent;
   description: string;
   isDev?: boolean;
-  factory: () => BFusion;
+  createInstructions: () => Instruction[];
 }
 
 
@@ -25,7 +25,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     Icon: CheckBoxOutlinedIcon,
     description: 'A brainstorming session with AI, where you first pick your favorite ideas from a list it generates, and then the AI combines those picks into a tailored solution.',
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
-    factory: () => createBFusion('guided', [
+    createInstructions: () => [
       {
         type: 'chat-generate',
         label: 'Generating Checklist',
@@ -77,7 +77,7 @@ Given the user preferences below, synthesize the {{N}} response alternatives abo
 Ensure the synthesis is coherent, integrating the response alternatives in a clear manner.
 The final output should reflect a deep understanding of the user's preferences and the conversation's context.`.trim(),
       },
-    ]),
+    ],
   },
 
   // 2: Fuse
@@ -86,7 +86,7 @@ The final output should reflect a deep understanding of the user's preferences a
     label: 'Fuse',
     Icon: MediationOutlinedIcon,
     description: 'AI combines conversation details and various AI-generated ideas into one clear, comprehensive answer, making sense of diverse insights for you.',
-    factory: () => createBFusion('fuse', [
+    createInstructions: () => [
       {
         type: 'chat-generate',
         label: 'Syntesizing Fusion',
@@ -103,7 +103,7 @@ Synthesize the perfect response that merges the key insights and provides clear 
 Synthesize the perfect cohesive response to my last message that merges the collective intelligence of the {{N}} alternatives above.`.trim(),
         // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
       },
-    ]),
+    ],
   },
 
   // 3: Eval
@@ -113,7 +113,7 @@ Synthesize the perfect cohesive response to my last message that merges the coll
     Icon: TableViewRoundedIcon,
     description: 'Analyzes and ranks AI responses, offering a clear, comparative overview to support your choice of answer.',
     isDev: true,
-    factory: () => createBFusion('eval', [
+    createInstructions: () => [
       {
         type: 'chat-generate',
         label: 'Evaluation',
@@ -147,7 +147,7 @@ Complete this table to offer a structured and detailed comparison of the {{N}} o
 
 Only work with the provided {{N}} responses. Begin with listing the criteria.`.trim(),
       },
-    ]),
+    ],
   },
 
   // 4: Custom (this may be overwritten by other factories, if editing those)
@@ -156,7 +156,7 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     label: 'Custom',
     // Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
-    factory: () => createBFusion('custom', [
+    createInstructions: () => [
       {
         type: 'chat-generate',
         label: 'Executing Your Merge Strategy',
@@ -169,7 +169,7 @@ Based on the {{N}} alternatives provided, synthesize a single, comprehensive res
         // userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
         // userPrompt: 'Based on the {{N}} alternatives provided, synthesize a single, comprehensive response that effectively addresses the query or problem at hand.',
       },
-    ]),
+    ],
   },
 
   // ... future ...

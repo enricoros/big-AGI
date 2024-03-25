@@ -1,5 +1,5 @@
-import type { BaseInstruction, ExecutionInputState } from '../beam.gather.instructions';
-import { GATHER_DEBUG_EXECUTION_CHAIN } from '../../beam.config';
+import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
+
 import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
@@ -28,8 +28,6 @@ export async function executeUserInputChecklist(
 
     // if no options, there's an error
     if (options.length < 2) {
-      if (GATHER_DEBUG_EXECUTION_CHAIN)
-        console.log('No checklist options found:', previousResult);
       reject(new Error('Oops! It looks like we had trouble understanding the Model. Could you please try again?'));
       return;
     }

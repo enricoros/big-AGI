@@ -21,7 +21,6 @@ export const SCATTER_RAY_SHOW_DRAG_HANDLE = false;
 
 // BEAM Gather configuration
 export const GATHER_COLOR = 'success' as const;
-export const GATHER_DEBUG_EXECUTION_CHAIN = true;
 export const GATHER_DEFAULT_TO_FIRST_FUSION = true;
 export const GATHER_PLACEHOLDER = '📦 ...';
 export const GATHER_SHOW_SYSTEM_PROMPT = false;

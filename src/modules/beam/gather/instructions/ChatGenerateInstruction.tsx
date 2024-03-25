@@ -11,7 +11,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { DMessage } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import type { BaseInstruction, ExecutionInputState } from '../beam.gather.instructions';
+import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { GATHER_PLACEHOLDER } from '../../beam.config';
 import { fusionChatMessageSx } from '../BeamGatherOutput';
 
