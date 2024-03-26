@@ -16,12 +16,7 @@ import { BeamScatterDropdown } from './BeamScatterPaneDropdown';
 import { beamPaneSx } from '../BeamCard';
 
 
-const mobileScatterPaneSx: SxProps = {
-  ...beamPaneSx,
-  backgroundColor: 'background.popup',
-};
-
-const desktopScatterPaneSx: SxProps = {
+const scatterPaneSx: SxProps = {
   ...beamPaneSx,
   backgroundColor: 'background.popup',
 
@@ -30,6 +25,12 @@ const desktopScatterPaneSx: SxProps = {
   // boxShadow: '0px 16px 16px -24px rgb(var(--joy-palette-primary-darkChannel) / 35%)',
   boxShadow: '0px 6px 16px -12px rgb(var(--joy-palette-primary-darkChannel) / 50%)',
   // boxShadow: '0px 8px 20px -16px rgb(var(--joy-palette-primary-darkChannel) / 30%)',
+};
+
+const mobileScatterPaneSx: SxProps = scatterPaneSx;
+
+const desktopScatterPaneSx: SxProps = {
+  ...scatterPaneSx,
 
   // the fact that this works, means we got the CSS and layout right
   position: 'sticky',
