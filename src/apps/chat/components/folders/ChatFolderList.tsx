@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { List, ListItem, ListItemButton, ListItemDecorator, Sheet } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 
@@ -17,6 +18,7 @@ export function ChatFolderList(props: {
   contentScaling: ContentScaling;
   activeFolderId: string | null;
   onFolderSelect: (folderId: string | null) => void;
+  sx?: SxProps;
 }) {
 
   // derived props
@@ -31,10 +33,15 @@ export function ChatFolderList(props: {
 
 
   return (
-    <Sheet variant='soft' sx={{ p: 2 }}>
+    <Sheet variant='soft' sx={props.sx}>
       <List
         variant='plain'
         sx={(theme) => ({
+          // added to be responsive to parent's layout sizing
+          height: '100%',
+          overflowY: 'auto',
+
+          // original list properties
           '& ul': {
             '--List-gap': '0px',
             bgcolor: 'background.popup',
@@ -69,7 +76,7 @@ export function ChatFolderList(props: {
             '--joy-palette-neutral-plainHoverBg': 'rgba(255 255 255 / 0.1)',
             '--joy-palette-neutral-plainActiveBg': 'rgba(255 255 255 / 0.16)',
           },
-          boxShadow: 'xs',
+          boxShadow: 'sm',
         })}
       >
         <ListItem nested>
@@ -131,6 +138,6 @@ export function ChatFolderList(props: {
         </ListItem>
       </List>
 
-    </Sheet>
+     </Sheet>
   );
 }

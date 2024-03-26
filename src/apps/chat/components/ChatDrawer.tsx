@@ -207,7 +207,7 @@ function ChatDrawer(props: {
       </Tooltip>
     </PageDrawerHeader>
 
-    {/* Folders List */}
+    {/* Folders List (shrink at twice the rate as the Titles) */}
     {/*<Box sx={{*/}
     {/*  display: 'grid',*/}
     {/*  gridTemplateRows: !enableFolders ? '0fr' : '1fr',*/}
@@ -224,6 +224,12 @@ function ChatDrawer(props: {
         contentScaling={contentScaling}
         activeFolderId={props.activeFolderId}
         onFolderSelect={props.setActiveFolderId}
+        sx={{
+          // shrink this at twice the rate as the Titles list
+          flexGrow: 0, flexShrink: 2, overflow: 'hidden',
+          minHeight: '7.5rem',
+          p: 2,
+        }}
       />
     )}
     {/*</Box>*/}
@@ -233,6 +239,7 @@ function ChatDrawer(props: {
 
       {enableFolders && <ListDivider sx={{ mb: 0 }} />}
 
+      {/* Search / New Chat */}
       <Box sx={{ display: 'flex', flexDirection: 'column', m: 2, gap: 2 }}>
 
         {/* Search Input Field */}
@@ -277,10 +284,8 @@ function ChatDrawer(props: {
 
       </Box>
 
-      {/*<ListDivider sx={{ mt: 0 }} />*/}
-
-      {/* List of Chat Titles (and actions) */}
-      <Box sx={{ flex: 1, overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
+      {/* Chat Titles List (shrink as half the rate as the Folders List) */}
+      <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
         {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
@@ -321,7 +326,8 @@ function ChatDrawer(props: {
 
       <ListDivider sx={{ my: 0 }} />
 
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Bottom commands */}
+      <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         <ListItemButton onClick={props.onConversationsImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadOutlinedIcon />
