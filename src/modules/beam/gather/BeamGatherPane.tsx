@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, CircularProgress, FormControl, SvgIconProps, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, FormControl, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeMotionTwoToneIcon from '@mui/icons-material/AutoAwesomeMotionTwoTone';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
@@ -14,6 +14,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { animationColorBeamGather, animationShadowLimey } from '~/common/util/animUtils';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { BEAM_BTN_SX, GATHER_COLOR } from '../beam.config';
@@ -67,8 +68,6 @@ export function BeamGatherPane(props: {
   isMobile: boolean,
   beamStore: BeamStoreApi,
   gatherCount: number,
-  gatherLlmComponent: React.ReactNode,
-  gatherLlmIcon?: React.FunctionComponent<SvgIconProps>,
   scatterBusy: boolean,
 }) {
 
@@ -76,31 +75,36 @@ export function BeamGatherPane(props: {
   const [warnScatterBusy, setWarnScatterBusy] = React.useState(false);
 
   // external state
+  const { setStickToBottom } = useScrollToBottom();
+  const gatherShowDevMethods = useModuleBeamStore(state => state.gatherShowDevMethods);
   const {
-    fusions, currentFusionId, isGatheringAny, isCurrentFusionGoodToGo,
-    setCurrentFusionId, currentFusionStart, currentFusionStop,
+    lastGatherLlmId, fusions, currentFusionId, isGatheringAny, isCurrentFusionGoodToGo,
+    setLastGatherLlmId, setCurrentFusionId, currentFusionStart, currentFusionStop,
     stopScatteringAll,
   } = useBeamStore(props.beamStore, useShallow(state => {
     const currentFusion = state._currentFusion();
     const isCurrentFusionGoodToGo = fusionIsUsableOutput(currentFusion) && !fusionIsFusing(currentFusion);
-    return ({
+    return {
       // state
+      lastGatherLlmId: state.lastGatherLlmId,
       currentFusionId: state.currentFusionId,
       fusions: state.fusions,
       isGatheringAny: state.isGatheringAny,
       isCurrentFusionGoodToGo,
 
       // actions
+      setLastGatherLlmId: state.setLastGatherLlmId,
       setCurrentFusionId: state.setCurrentFusionId,
       currentFusionStart: state.currentFusionStart,
       currentFusionStop: state.currentFusionStop,
 
       // (external slice) scatter actions
       stopScatteringAll: state.stopScatteringAll,
-    });
+    };
   }));
-  const gatherShowDevMethods = useModuleBeamStore(state => state.gatherShowDevMethods);
-  const { setStickToBottom } = useScrollToBottom();
+  const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(
+    lastGatherLlmId, setLastGatherLlmId, props.isMobile ? '' : 'Merge Model', true,
+  );
 
 
   // derived state
@@ -147,7 +151,7 @@ export function BeamGatherPane(props: {
   }, [handleStopScatterConfirmation, props.scatterBusy, warnScatterBusy]);
 
 
-  const MainLlmIcon = props.gatherLlmIcon || (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+  const MainLlmIcon = gatherLlmIcon || (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return <>
     <Box
@@ -235,7 +239,7 @@ export function BeamGatherPane(props: {
 
       {/* LLM */}
       <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 220 }}>
-        {props.gatherLlmComponent}
+        {gatherLlmComponent}
       </Box>
 
       {/* Start / Stop buttons */}

@@ -217,6 +217,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       rays: [
         // prepend the imported rays
         ...messages.map((message) => {
+            // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
             const ray = createBRay(null);
             // pre-fill the ray status with the message and to a successful state
             if (message.text.trim()) {
