@@ -206,24 +206,48 @@ const cssBackgroundFadeIn = keyframes`
         background-color: var(--joy-palette-background-backdrop)
     }`;*/
 
-export const animationShadowLimey = keyframes`
+export const animationShadowRingLimey = keyframes`
     100%, 0% {
-        //background-color: rgb(102, 0, 51);
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(183, 255, 0);
     }
     25% {
-        //background-color: rgb(76, 0, 76);
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 251, 0);
         //scale: 1.2;
     }
     50% {
-        //background-color: rgb(63, 0, 128);
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgba(0, 255, 81);
         //scale: 0.8;
     }
     75% {
-        //background-color: rgb(0, 0, 128);
         box-shadow: 1px 1px 0 white, 2px 2px 12px rgb(255, 153, 0);
+    }`;
+
+export const animationShadowBerry = keyframes`
+    100%, 0% {
+        box-shadow: 2px 2px 12px rgb(102, 0, 51);
+    }
+    25% {
+        box-shadow: 2px 2px 12px rgb(76, 0, 76);
+    }
+    50% {
+        box-shadow: 2px 2px 12px rgb(63, 0, 128);
+    }
+    75% {
+        box-shadow: 2px 2px 12px rgb(0, 0, 128);
+    }`;
+
+export const animationShadowLimey = keyframes`
+    100%, 0% {
+        box-shadow: 2px 2px 12px rgb(183, 255, 0);
+    }
+    25% {
+        box-shadow: 2px 2px 12px rgb(255, 251, 0);
+    }
+    50% {
+        box-shadow: 2px 2px 12px rgba(0, 255, 81);
+    }
+    75% {
+        box-shadow: 2px 2px 12px rgb(255, 153, 0);
     }`;
 
 /*export const animationTextShadowLimey = keyframes`

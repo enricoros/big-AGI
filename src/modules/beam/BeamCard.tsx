@@ -1,5 +1,7 @@
-import { Box, styled } from '@mui/joy';
 import type { SxProps } from '@mui/joy/styles/types';
+import { Box, styled } from '@mui/joy';
+
+import { animationShadowLimey } from '~/common/util/animUtils';
 
 import { BEAM_INVERT_BACKGROUND } from './beam.config';
 
@@ -8,6 +10,7 @@ export const beamCardClasses = {
   idle: 'beamCard-Idle',
   errored: 'beamCard-Errored',
   selectable: 'beamCard-Selectable',
+  attractive: 'beamCard-Attractive',
 };
 
 /**
@@ -36,6 +39,9 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   [`&.${beamCardClasses.errored}`]: {
     backgroundColor: theme.vars.palette.danger.softBg,
     borderColor: theme.vars.palette.danger.outlinedBorder,
+  },
+  [`&.${beamCardClasses.attractive}`]: {
+    animation: `${animationShadowLimey} 2s linear infinite`,
   },
 
   position: 'relative',

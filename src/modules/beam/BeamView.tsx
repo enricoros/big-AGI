@@ -37,7 +37,7 @@ export function BeamView(props: {
     isScattering: state.isScattering, raysReady: state.raysReady,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-
+  // const fusionIds = useBeamStore(props.beamStore, useShallow(state => state.fusions.map(fusion => fusion.fusionId)));
 
   // derived state
   const raysCount = rayIds.length;
@@ -124,6 +124,16 @@ export function BeamView(props: {
         <BeamGatherInput
           beamStore={props.beamStore}
         />
+
+        {/*<BeamFusionGrid*/}
+        {/*  beamStore={props.beamStore}*/}
+        {/*  canAddFusion={raysReady >= 2}*/}
+        {/*  fusionIds={fusionIds}*/}
+        {/*  isMobile={props.isMobile}*/}
+        {/*  onAddFusion={() => alert('add fusion xxx')}*/}
+        {/*  raysCount={raysCount}*/}
+        {/*/>*/}
+
 
         {/* Gather Controls */}
         <BeamGatherPane
