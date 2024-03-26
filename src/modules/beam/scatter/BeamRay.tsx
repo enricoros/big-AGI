@@ -5,8 +5,6 @@ import { Box, IconButton, SvgIconProps } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import LinkIcon from '@mui/icons-material/Link';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
@@ -27,6 +25,7 @@ import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamRayScrolling } from '../store-module-beam';
+import { useShallow } from 'zustand/react/shallow';
 
 
 const chatMessageEmbeddedSx: SxProps = {
@@ -62,14 +61,14 @@ const RayControlsMemo = React.memo(RayControls);
 function RayControls(props: {
   // rayIndex: number
   isEmpty: boolean,
-  isLlmLinked: boolean,
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
-  onLink: () => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
+  // isLlmLinked: boolean,
+  // onLink: () => void,
 }) {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
@@ -92,13 +91,13 @@ function RayControls(props: {
       {props.llmComponent}
     </Box>
 
-    {!props.isLlmLinked && (
-      <GoodTooltip title={props.isLlmLinked ? undefined : 'Link to the Merge model'}>
-        <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>
-          {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
-        </IconButton>
-      </GoodTooltip>
-    )}
+    {/*{!props.isLlmLinked && (*/}
+    {/*  <GoodTooltip title={props.isLlmLinked ? undefined : 'Link to the Merge model'}>*/}
+    {/*    <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>*/}
+    {/*      {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}*/}
+    {/*    </IconButton>*/}
+    {/*  </GoodTooltip>*/}
+    {/*)}*/}
 
     {!props.isScattering ? (
       <GoodTooltip title='Generate'>
@@ -129,12 +128,15 @@ export function BeamRay(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
   isRemovable: boolean
-  linkedLlmId: DLLMId | null,
   rayId: string,
+  // linkedLlmId: DLLMId | null,
 }) {
 
   // external state
-  const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
+  const { ray, lastScatterLlmId } = useBeamStore(props.beamStore, useShallow(store => ({
+    ray: store.rays.find(ray => ray.rayId === props.rayId) ?? null,
+    lastScatterLlmId: store.lastScatterLlmId,
+  })));
   const rayScrolling = useBeamRayScrolling();
 
   // derived state
@@ -146,11 +148,16 @@ export function BeamRay(props: {
   const showUseButton = isSelectable && !isScattering;
   const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
 
-  const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;
-  const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.rayLlmId || null;
+  // This old code used the Gather LLM as Ray fallback - but now we use the last Scatter LLM as fallback
+  // const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;
+  // const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.rayLlmId || null;
+  // const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
+
+  const llmId = ray?.rayLlmId || lastScatterLlmId;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
-  const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
-  const [_, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
+  const [_, llmComponent, llmVendorIcon] = useLLMSelect(
+    llmId, setLlmId, '', true, isScattering,
+  );
 
 
   // handlers
@@ -193,14 +200,14 @@ export function BeamRay(props: {
       <RayControlsMemo
         // rayIndex={props.rayIndex}
         isEmpty={!isSelectable}
-        isLlmLinked={isLlmLinked}
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
         llmVendorIcon={llmVendorIcon}
-        onLink={handleLlmLink}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
+        // isLlmLinked={isLlmLinked}
+        // onLink={handleLlmLink}
       />
 
       {/* Show issue, if any */}

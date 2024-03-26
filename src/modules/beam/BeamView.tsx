@@ -4,7 +4,6 @@ import { Alert, Box } from '@mui/joy';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
-import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
@@ -24,24 +23,20 @@ export function BeamView(props: {
   showExplainer?: boolean,
 }) {
 
-  // linked state
+  // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
-    /* gather */ setLastGatherLlmId,
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ lastGatherLlmId,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
     isScattering: state.isScattering, raysReady: state.raysReady,
-    lastGatherLlmId: state.lastGatherLlmId,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-  const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(lastGatherLlmId, setLastGatherLlmId, props.isMobile ? '' : 'Merge Model', true);
 
 
   // derived state
@@ -116,10 +111,10 @@ export function BeamView(props: {
         {/* Rays Grid */}
         <BeamRayGrid
           beamStore={props.beamStore}
-          linkedLlmId={lastGatherLlmId}
           isMobile={props.isMobile}
           rayIds={rayIds}
           onIncreaseRayCount={handleRayIncreaseCount}
+          // linkedLlmId={lastGatherLlmId}
         />
 
         {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
@@ -135,8 +130,6 @@ export function BeamView(props: {
           isMobile={props.isMobile}
           beamStore={props.beamStore}
           gatherCount={raysReady}
-          gatherLlmComponent={gatherLlmComponent}
-          gatherLlmIcon={gatherLlmIcon}
           scatterBusy={isScattering}
         />
 
