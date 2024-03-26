@@ -127,7 +127,7 @@ export function BeamGatherOutput(props: {
 
         {/* Use Output */}
         {showUseOutputButtons && (
-          <Box sx={{ mt: 'auto', placeSelf: 'end', display: 'flex', gap: 3 }}>
+          <Box sx={{ mt: 'auto', placeSelf: 'end', display: 'flex', gap: 2 }}>
 
             {/* Copy */}
             <GoodTooltip title='Copy'>
