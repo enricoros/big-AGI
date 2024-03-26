@@ -25,7 +25,6 @@ import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamRayScrolling } from '../store-module-beam';
-import { useShallow } from 'zustand/react/shallow';
 
 
 const chatMessageEmbeddedSx: SxProps = {
@@ -133,10 +132,7 @@ export function BeamRay(props: {
 }) {
 
   // external state
-  const { ray, lastScatterLlmId } = useBeamStore(props.beamStore, useShallow(store => ({
-    ray: store.rays.find(ray => ray.rayId === props.rayId) ?? null,
-    lastScatterLlmId: store.lastScatterLlmId,
-  })));
+  const ray = useBeamStore(props.beamStore, store => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
   const rayScrolling = useBeamRayScrolling();
 
   // derived state
@@ -153,7 +149,7 @@ export function BeamRay(props: {
   // const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.rayLlmId || null;
   // const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
 
-  const llmId = ray?.rayLlmId || lastScatterLlmId;
+  const llmId = ray?.rayLlmId ?? null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
   const [_, llmComponent, llmVendorIcon] = useLLMSelect(
     llmId, setLlmId, '', true, isScattering,

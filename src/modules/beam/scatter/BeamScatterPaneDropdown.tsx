@@ -72,8 +72,8 @@ export function BeamScatterDropdown(props: {
   const handleClosePresetNaming = React.useCallback(() => setNamingOpened(false), []);
 
   const handlePresetSave = React.useCallback((presetName: string) => {
-    const { rays, lastScatterLlmId } = props.beamStore.getState();
-    addScatterPreset(presetName, rays.map(ray => ray.rayLlmId || lastScatterLlmId).filter(Boolean) as DLLMId[]);
+    const { rays } = props.beamStore.getState();
+    addScatterPreset(presetName, rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[]);
     handleClosePresetNaming();
   }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
 
