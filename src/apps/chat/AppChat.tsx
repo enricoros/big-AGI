@@ -341,6 +341,7 @@ export function AppChat() {
   }, [_handleExecute, focusedPaneConversationId]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
+    // Ctrl + Shift + B
     const focusedConversation = getConversation(focusedPaneConversationId);
     if (focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];

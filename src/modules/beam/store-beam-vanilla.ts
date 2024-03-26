@@ -51,7 +51,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 export interface RootStoreSlice extends RootStateSlice {
 
   // lifecycle
-  open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
   setIsMaximized: (maximized: boolean) => void;
@@ -66,7 +66,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialGatherLLMId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLLMId: DLLMId | null, callback: BeamSuccessCallback) => {
     const { isOpen: wasOpen, terminate } = _get();
 
     // reset pending operations
@@ -85,26 +85,20 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
       // rays already reset
 
-      // fusions
-      ...((!wasOpen && initialGatherLLMId) && {
-        // update the model only if the dialog was not already open
-        gatherLlmId: initialGatherLLMId,
-      }),
+      // update the model only if the dialog was not already open
+      ...((!wasOpen && initialChatLLMId) && {
+        lastGatherLlmId: initialChatLLMId,
+        lastScatterLlmId: initialChatLLMId,
+      } satisfies Partial<GatherStoreSlice & ScatterStoreSlice>),
     });
   },
 
-  terminate: () => { /*_get().isOpen &&*/
-    const { rays, fusions, gatherLlmId } = _get();
-
-    _set({
+  terminate: () =>
+    _set(state => ({
       ...initRootStateSlice(),
-      ...reInitScatterStateSlice(rays),
-      ...reInitGatherStateSlice(fusions),
-
-      // remember after termination
-      gatherLlmId,
-    });
-  },
+      ...reInitGatherStateSlice(state.fusions, state.lastGatherLlmId),  // remember after termination
+      ...reInitScatterStateSlice(state.rays, state.lastScatterLlmId),   // remember after termination
+    })),
 
 
   setIsMaximized: (maximized: boolean) =>

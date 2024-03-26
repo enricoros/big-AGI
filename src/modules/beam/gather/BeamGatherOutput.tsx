@@ -89,10 +89,10 @@ export function BeamGatherOutput(props: {
 
   const handleFusionUse = React.useCallback(() => {
     // get snapshot values, so we don't have to react to the hook
-    const { _currentFusion, onSuccessCallback, gatherLlmId } = props.beamStore.getState();
+    const { _currentFusion, onSuccessCallback, lastGatherLlmId } = props.beamStore.getState();
     const fusion = _currentFusion();
     if (fusion?.outputDMessage?.text && onSuccessCallback)
-      onSuccessCallback(fusion.outputDMessage.text, gatherLlmId || '');
+      onSuccessCallback(fusion.outputDMessage.text, lastGatherLlmId || '');
   }, [props.beamStore]);
 
   // if (isIdle)
