@@ -40,7 +40,7 @@ const chatMessageEmbeddedSx: SxProps = {
 const chatMessageEmbeddedScrollingSx: SxProps = {
   ...chatMessageEmbeddedSx,
   overflow: 'auto',
-  maxHeight: 'max(320px, calc(60lvh - 16rem))',
+  maxHeight: 'max(18rem, calc(60lvh - 16rem))',
 };
 
 /*const letterSx: SxProps = {
