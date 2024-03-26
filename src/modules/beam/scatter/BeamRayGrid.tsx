@@ -45,7 +45,6 @@ export function BeamRayGrid(props: {
         <BeamRay
           key={'ray-' + rayId}
           beamStore={props.beamStore}
-          isMobile={props.isMobile}
           isRemovable={raysCount > SCATTER_RAY_MIN}
           rayId={rayId}
           // linkedLlmId={props.linkedLlmId}
