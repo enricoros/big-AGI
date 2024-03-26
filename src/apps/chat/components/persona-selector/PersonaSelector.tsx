@@ -28,7 +28,7 @@ import { usePurposeStore } from './store-purposes';
 const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
 
 // defined looks
-const tileSize = 7.5; // rem
+const tileSize = 7; // rem
 const tileGap = 0.5; // rem
 
 
@@ -52,6 +52,7 @@ function Tile(props: {
         aspectRatio: 1,
         height: `${tileSize}rem`,
         fontWeight: 'md',
+        lineHeight: 'xs',
         ...((props.isEditMode || !props.isActive) ? {
           boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
           backgroundColor: props.isHighlighted ? undefined : 'background.surface',
