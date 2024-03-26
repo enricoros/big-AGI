@@ -30,6 +30,7 @@ interface RootStateSlice {
 
   isOpen: boolean;
   isMaximized: boolean;
+  inputChatLlmId: DLLMId | null;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
   inputReady: boolean;
@@ -41,6 +42,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
   isMaximized: false,
+  inputChatLlmId: null,
   inputHistory: null,
   inputIssues: null,
   inputReady: false,
@@ -78,6 +80,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
+      inputChatLlmId: initialChatLLMId,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid history',
       inputReady: isValidHistory,
@@ -88,8 +91,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // update the model only if the dialog was not already open
       ...((!wasOpen && initialChatLLMId) && {
         lastGatherLlmId: initialChatLLMId,
-        lastScatterLlmId: initialChatLLMId,
-      } satisfies Partial<GatherStoreSlice & ScatterStoreSlice>),
+      } satisfies Partial<GatherStoreSlice>),
     });
   },
 
@@ -97,7 +99,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set(state => ({
       ...initRootStateSlice(),
       ...reInitGatherStateSlice(state.fusions, state.lastGatherLlmId),  // remember after termination
-      ...reInitScatterStateSlice(state.rays, state.lastScatterLlmId),   // remember after termination
+      ...reInitScatterStateSlice(state.rays),
     })),
 
 
