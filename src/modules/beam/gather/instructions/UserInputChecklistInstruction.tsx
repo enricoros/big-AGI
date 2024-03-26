@@ -24,7 +24,10 @@ export async function executeUserInputChecklist(
   return new Promise((resolve, reject) => {
 
     // initial text to options
-    const options = parseTextToChecklist(previousResult);
+    let options = parseTextToChecklist(previousResult, false);
+    const relaxMatch = options.length < 2;
+    if (relaxMatch)
+      options = parseTextToChecklist(_i.outputPrompt, relaxMatch);
 
     // if no options, there's an error
     if (options.length < 2) {
