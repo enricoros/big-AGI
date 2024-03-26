@@ -5,9 +5,9 @@ import { Box, Button, Checkbox, Typography } from '@mui/joy';
 import { UserChecklistOption } from './UserInputChecklistInstruction';
 
 
-export function parseTextToChecklist(text: string): UserChecklistOption[] {
+export function parseTextToChecklist(text: string, relaxMatch: boolean): UserChecklistOption[] {
   // Updated regex to match optional spaces (one or two) before '-', and both [ ] and [x] (case-insensitive for 'x')
-  const regex = /^ {0,2}- \[([ xX])] (.*)$/gm;
+  const regex = !relaxMatch ? /^ {0,2}[-*] \[([ xX])] (.*)$/gm : /^ {0,2}[-*]\s+(.*)$/gm;
   let matches;
   const options: UserChecklistOption[] = [];
 
