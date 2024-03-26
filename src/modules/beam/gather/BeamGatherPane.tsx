@@ -13,7 +13,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { animationColorBeamGather, animationShadowLimey } from '~/common/util/animUtils';
+import { animationColorBeamGather, animationShadowRingLimey } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -43,7 +43,7 @@ const gatherPaneSx: SxProps = {
     boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-neutral-darkChannel) / 40%)`,
   },
   [`&.${gatherPaneClasses.busy}`]: {
-    animation: `${animationShadowLimey} 2s linear infinite`,
+    animation: `${animationShadowRingLimey} 2s linear infinite`,
   },
 };
 
