@@ -125,7 +125,6 @@ function RayControls(props: {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  isMobile: boolean,
   isRemovable: boolean
   rayId: string,
   // linkedLlmId: DLLMId | null,
@@ -222,7 +221,7 @@ export function BeamRay(props: {
         }}>
           <ChatMessageMemo
             message={ray.message}
-            fitScreen={props.isMobile}
+            fitScreen={true}
             showAvatar={false}
             adjustContentScaling={-1}
             sx={rayScrolling ? chatMessageEmbeddedScrollingSx : chatMessageEmbeddedSx}
