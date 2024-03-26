@@ -72,16 +72,16 @@ export function BeamScatterDropdown(props: {
   const handleClosePresetNaming = React.useCallback(() => setNamingOpened(false), []);
 
   const handlePresetSave = React.useCallback((presetName: string) => {
-    const { rays, gatherLlmId } = props.beamStore.getState();
-    addScatterPreset(presetName, rays.map(ray => ray.scatterLlmId || gatherLlmId).filter(Boolean) as DLLMId[]);
+    const { rays, lastScatterLlmId } = props.beamStore.getState();
+    addScatterPreset(presetName, rays.map(ray => ray.rayLlmId || lastScatterLlmId).filter(Boolean) as DLLMId[]);
     handleClosePresetNaming();
   }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
 
   const handlePresetLoad = React.useCallback((presetId: string) => {
     const { scatterPresets } = useModuleBeamStore.getState();
     const preset = scatterPresets.find(preset => preset.id === presetId);
-    if (preset && preset.scatterLlmIds.length)
-      props.beamStore.getState().setScatterLLMIds(preset.scatterLlmIds);
+    if (preset && preset.rayLlmIds.length)
+      props.beamStore.getState().setRayLlmIds(preset.rayLlmIds);
   }, [props.beamStore]);
 
 
@@ -115,7 +115,7 @@ export function BeamScatterDropdown(props: {
           <MenuItem key={preset.id}>
             <ListItemDecorator />
             <Typography onClick={() => handlePresetLoad(preset.id)}>
-              Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.scatterLlmIds.length}</span>
+              Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.rayLlmIds.length}</span>
             </Typography>
             <IconButton
               size='sm'

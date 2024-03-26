@@ -10,7 +10,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 interface BeamScatterPreset {
   id: string;
   name: string;
-  scatterLlmIds: DLLMId[];
+  rayLlmIds: DLLMId[];
 }
 
 
@@ -22,7 +22,7 @@ interface ModuleBeamStore {
   gatherShowPrompts: boolean;
 
   // actions
-  addScatterPreset: (name: string, scatterLlmIds: DLLMId[]) => void;
+  addScatterPreset: (name: string, rayLlmIds: DLLMId[]) => void;
   deleteScatterPreset: (id: string) => void;
   renameScatterPreset: (id: string, name: string) => void;
 
@@ -42,8 +42,8 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     gatherShowPrompts: false,
 
 
-    addScatterPreset: (name, scatterLlmIds) => _set(state => ({
-      scatterPresets: [...state.scatterPresets, { id: uuidv4(), name, scatterLlmIds }],
+    addScatterPreset: (name, rayLlmIds) => _set(state => ({
+      scatterPresets: [...state.scatterPresets, { id: uuidv4(), name, rayLlmIds }],
     })),
 
     deleteScatterPreset: (id) => _set(state => ({

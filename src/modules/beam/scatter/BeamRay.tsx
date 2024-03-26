@@ -144,11 +144,11 @@ export function BeamRay(props: {
   const isSelected = rayIsUserSelected(ray);
   const isImported = rayIsImported(ray);
   const showUseButton = isSelectable && !isScattering;
-  const { removeRay, rayToggleScattering, raySetScatterLlmId } = props.beamStore.getState();
+  const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
 
-  const isLlmLinked = !!props.linkedLlmId && !ray?.scatterLlmId;
-  const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.scatterLlmId || null;
-  const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetScatterLlmId(props.rayId, llmId), [props.rayId, raySetScatterLlmId]);
+  const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;
+  const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.rayLlmId || null;
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
   const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
   const [_, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
 

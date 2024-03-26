@@ -83,7 +83,7 @@ export function fusionIsError(fusion: BFusion | null): boolean {
 
 interface GatherStateSlice {
 
-  gatherLlmId: DLLMId | null;
+  lastGatherLlmId: DLLMId | null;
 
   currentFusionId: BFusionId | null;
   fusions: BFusion[];
@@ -93,7 +93,7 @@ interface GatherStateSlice {
 
 }
 
-export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice => {
+export const reInitGatherStateSlice = (prevFusions: BFusion[], gatherLlmId: DLLMId | null): GatherStateSlice => {
   // stop any ongoing fusions
   prevFusions.forEach(gatherStopFusion);
 
@@ -101,7 +101,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[]): GatherStateSlice
   const newFusions = FUSION_FACTORIES.map(factory => createBFusion(factory.id, factory.createInstructions()));
 
   return {
-    gatherLlmId: null, // will be re-set during open() of the Beam Store
+    lastGatherLlmId: gatherLlmId, // may be re-set during open() of the Beam Store
 
     currentFusionId: (GATHER_DEFAULT_TO_FIRST_FUSION && newFusions.length) ? newFusions[0].fusionId : null,
     fusions: newFusions,
@@ -114,7 +114,7 @@ export type FusionUpdateOrFn = Partial<BFusion> | ((fusion: BFusion) => (Partial
 
 export interface GatherStoreSlice extends GatherStateSlice {
 
-  setGatherLlmId: (llmId: DLLMId | null) => void;
+  setLastGatherLlmId: (llmId: DLLMId | null) => void;
 
   setCurrentFusionId: (fusionId: BFusionId | null) => void;
   _currentFusion: () => BFusion | null;
@@ -131,12 +131,12 @@ export interface GatherStoreSlice extends GatherStateSlice {
 export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
 
   // initial state
-  ...reInitGatherStateSlice([]),
+  ...reInitGatherStateSlice([], null),
 
 
-  setGatherLlmId: (llmId: DLLMId | null) =>
+  setLastGatherLlmId: (llmId: DLLMId | null) =>
     _set({
-      gatherLlmId: llmId,
+      lastGatherLlmId: llmId,
     }),
 
 
@@ -201,11 +201,11 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
 
 
   currentFusionStart: (chatHistory: DMessage[], rays: DMessage[]) => {
-    const { gatherLlmId, _currentFusion, _fusionUpdate } = _get();
+    const { lastGatherLlmId, _currentFusion, _fusionUpdate } = _get();
     const fusion = _currentFusion();
     if (fusion) {
       const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
-      gatherStartFusion(fusion, chatHistory, rays, gatherLlmId, onUpdate);
+      gatherStartFusion(fusion, chatHistory, rays, lastGatherLlmId, onUpdate);
     }
   },
 
