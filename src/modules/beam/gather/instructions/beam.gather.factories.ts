@@ -55,7 +55,7 @@ Synthesize the perfect cohesive response to my last message that merges the coll
   },
   {
     factoryId: 'guided',
-    shortLabel: 'Guided',
+    shortLabel: 'Checklist',
     addLabel: 'Add Checklist',
     cardTitle: 'Guided Response',
     Icon: CheckBoxOutlinedIcon,
@@ -81,9 +81,9 @@ The checklist should contain no more than 3-9 items orthogonal items, especially
 Prioritize items based on what would be most helpful to the user when merging the {{N}} response alternatives.`.trim(),
 // Remember, the checklist should only include the most critical and relevant points, ensuring clarity and conciseness. Begin by identifying the essential insights or themes.
         userPrompt: `
-Given the conversation history and the {{N}} alternatives provided, identify and list the key insights, themes, or solutions as distinct orthogonal options in a checklist format.
+Given the conversation history and the {{N}} responses provided, identify and list the key insights, themes, or solutions within the responses as distinct orthogonal options in a checklist format.
 Each item should be clearly briefly articulated to allow for easy selection by the user.
-Ensure the checklist is comprehensive, covering the breadth of ideas presented in the alternatives, yet concise enough to facilitate clear decision-making.`.trim(),
+Ensure the checklist is comprehensive, covering the breadth of ideas presented in the {{N}} responses, yet concise enough to facilitate clear decision-making.`.trim(),
       },
       {
         type: 'user-input-checklist',
@@ -117,7 +117,7 @@ The final output should reflect a deep understanding of the user's preferences a
   },
   {
     factoryId: 'eval',
-    shortLabel: 'Eval',
+    shortLabel: 'Compare',
     addLabel: 'Add Breakdown',
     cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon,
@@ -136,24 +136,28 @@ You will first identify key criteria essential for evaluating the responses base
 
 Then, you will analyze each response against these criteria.
 
-Finally, you will synthesize your findings into a table, providing a clear overview of how each response measures up. Start by identifying up to 8 orthogonal criteria for evaluation.`.trim(),
+Finally, you will synthesize your findings into a table, providing a clear overview of how each response measures up. Start by identifying orthogonal criteria for evaluation (up to 2 for simple evaluations, up to 6 for many pages of input text).`.trim(),
         userPrompt: `
 Now that you have reviewed the {{N}} alternatives, proceed with the following steps:
 
-1. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses.
+1. **Identify Criteria:** Define the most important orthogonal criteria for evaluating the responses. Identify up to 2 criteria for simple evaluations, or up to 6 for more complex evaluations. Ensure these criteria are distinct and relevant to the responses provided.
 
-2. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria, plus an initial column for the response identifiers. Fill in the table with your assessment of how each response aligns with the criteria, using a 1-10 scoring range.
+2. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses. Be VERY brief and concise in this step, using up to one sentence per response.
+
+3. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria. Fill in the table with 1-10 scores (spread out over the full range) for each response-criterion pair, clearly scoring how well each response aligns with the criteria. 
 
 **Table Format:**
 
-| Response | Criterion 1 | Criterion 2 | ... | Criterion 8 (max) |
-|----------|-------------|-------------|-----|-------------|
-| Response 1 | ... | ... | ... | ... |
-| Response 2 | ... | ... | ... | ... |
-| ... | ... | ... | ... | ... |
-| Response N | ... | ... | ... | ... |
+| Response | Criterion 1 | Criterion 2 | ... | Criterion C | Total |
+|----------|-------------|-------------|-----|-------------|-------|
+| R1 | ... | ... | ... | ... | ... |
+| R2 | ... | ... | ... | ... | ... |
+| ... | ... | ... | ... | ... | ... |
+| RN | ... | ... | ... | ... | ... |
 
 Complete this table to offer a structured and detailed comparison of the {{N}} options, providing an at-a-glance overview that will significantly aid in the decision-making process.
+
+Finally declare the best response.
 
 Only work with the provided {{N}} responses. Begin with listing the criteria.`.trim(),
       },
