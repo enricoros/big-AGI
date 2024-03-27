@@ -98,11 +98,11 @@ export function gatherStartFusion(
       // You can use previousResult here, if needed
       inputState.updateProgressComponent(
         <Typography
-          level='body-xs'
-          // endDecorator={<CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px' }} />}
+          level='body-sm'
           sx={{ color: 'text.secondary' }}
         >
-          {1 + instructions.indexOf(instruction)}/{instructions.length} · {instruction.label} ...
+          {instructions.length > 1 && <>{1 + instructions.indexOf(instruction)}/{instructions.length} · </>}
+          {instruction.label} ...
         </Typography>,
       );
       switch (instruction.type) {

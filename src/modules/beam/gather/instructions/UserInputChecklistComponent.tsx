@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, Checkbox, Typography } from '@mui/joy';
 
+import { GATHER_COLOR } from '../../beam.config';
 import { UserChecklistOption } from './UserInputChecklistInstruction';
 
 
@@ -64,18 +65,26 @@ export function UserInputChecklistComponent(props: {
 
   return (
     <Box sx={{ display: 'grid', gap: 2 }}>
-      <Typography sx={{ mt: 1, fontWeight: 'md', fontSize: 'sm' }}>
-        Select the Merge options to apply:
-      </Typography>
+      {/*<Typography sx={{ mt: 1, fontWeight: 'md', fontSize: 'sm' }}>*/}
+      {/*  Select how you want the merge:*/}
+      {/*</Typography>*/}
 
       {localOptions.map((option) => (
         <Checkbox
           key={option.id}
           size='sm'
+          color={GATHER_COLOR}
           checked={option.selected}
           onChange={() => handleToggle(option.id)}
-          label={parseMarkdownBold(option.label)}
-          // sx={{ ml: 2, fontSize: 'md' }}
+          label={
+            <Typography sx={{ lineHeight: 'lg' }}>
+              {parseMarkdownBold(option.label)}
+            </Typography>
+          }
+          sx={{
+            alignItems: 'baseline',
+            ml: 2,
+          }}
         />
       ))}
 

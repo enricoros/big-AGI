@@ -7,7 +7,7 @@ import { BEAM_INVERT_BACKGROUND } from './beam.config';
 
 
 export const beamCardClasses = {
-  idle: 'beamCard-Idle',
+  fusionIdle: 'beamCard-fusionIdle',
   errored: 'beamCard-Errored',
   selectable: 'beamCard-Selectable',
   attractive: 'beamCard-Attractive',
@@ -31,7 +31,7 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   //   boxShadow: 'inset 0 0 0 2px #00f, inset 0 0 0 4px #00a',
   // },
 
-  [`&.${beamCardClasses.idle}`]: {
+  [`&.${beamCardClasses.fusionIdle}`]: {
     backgroundColor: BEAM_INVERT_BACKGROUND ? theme.vars.palette.background.level2 : theme.vars.palette.background.surface,
   },
   [`&.${beamCardClasses.selectable}`]: {
@@ -71,7 +71,7 @@ export const beamCardMessageWrapperSx: SxProps = {
   // overflow: 'auto',
   // maxHeight: 'calc(0.8 * (100vh - 16rem))',
   // aspectRatio: 1,
-}
+};
 
 export const beamCardMessageSx: SxProps = {
   // style: to undo the style of ChatMessage
@@ -81,15 +81,13 @@ export const beamCardMessageSx: SxProps = {
   my: 0,
   px: 0,
   py: 0,
-}
+};
 
 export const beamCardMessageScrollingSx: SxProps = {
   ...beamCardMessageSx,
   overflow: 'auto',
   maxHeight: 'max(18rem, calc(60lvh - 16rem))',
-}
-
-
+};
 
 
 /**
