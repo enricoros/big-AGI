@@ -130,10 +130,10 @@ export function BeamGatherPane(props: {
         <ButtonGroup
           variant='outlined'
           size='md'
-          sx={{ boxShadow: isNoFactorySelected ? 'xs' : undefined }}
+          // sx={{ boxShadow: isNoFactorySelected ? 'xs' : undefined }}
         >
           {FUSION_FACTORIES.map(factory => {
-            const { factoryId, label, isDev } = factory;
+            const { factoryId, shortLabel, isDev } = factory;
 
             // ignore dev fusions, if not asked for it
             if (isDev && !gatherShowDevMethods) return null;
@@ -152,7 +152,7 @@ export function BeamGatherPane(props: {
                   // minHeight: '2.25rem',
                 }}
               >
-                {label}
+                {shortLabel}
               </Button>
             );
           })}

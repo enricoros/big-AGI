@@ -10,8 +10,9 @@ export type FFactoryId = string;
 
 export interface FusionFactorySpec {
   factoryId: FFactoryId;
-  label: string;
-  addLabel: string;
+  shortLabel: string; // used in the button group selector
+  addLabel: string;   // used in the add card
+  cardTitle: string;   // used as the title
   Icon?: typeof SvgIcon;
   description: string;
   isDev?: boolean;
@@ -23,12 +24,40 @@ export function findFusionFactory(factoryId?: FFactoryId | null): FusionFactoryS
   return FUSION_FACTORIES.find(f => f.factoryId === factoryId) ?? null;
 }
 
+export const FUSION_FACTORY_DEFAULT = 'fuse';
+
 export const FUSION_FACTORIES: FusionFactorySpec[] = [
-  // 1: Guided (Checklist - 3x steps)
+  {
+    factoryId: 'fuse',
+    shortLabel: 'Fuse',
+    addLabel: 'Add Fusion',
+    cardTitle: 'Combined Response',
+    Icon: MediationOutlinedIcon,
+    description: 'AI combines conversation details and ideas into one clear, comprehensive answer.',
+    createInstructions: () => [
+      {
+        type: 'chat-generate',
+        label: 'Syntesizing Fusion',
+        method: 's-s0-h0-u0-aN-u',
+        systemPrompt: `
+You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single, comprehensive response that addresses the core objectives or questions.
+
+Consider the conversation history, the last user message, and the diverse perspectives presented in the {{N}} response alternatives.
+
+Your response should integrate the most relevant insights from these inputs into a cohesive and actionable answer.
+
+Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
+        userPrompt: `
+Synthesize the perfect cohesive response to my last message that merges the collective intelligence of the {{N}} alternatives above.`.trim(),
+        // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
+      },
+    ],
+  },
   {
     factoryId: 'guided',
-    label: 'Guided',
+    shortLabel: 'Guided',
     addLabel: 'Add Checklist',
+    cardTitle: 'Guided Response',
     Icon: CheckBoxOutlinedIcon,
     description: 'Choose between options extracted by AI from the replies, and the model will combine your selections into a single answer.',
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
@@ -36,7 +65,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
       {
         type: 'chat-generate',
         label: 'Generating Checklist',
-        display: 'character-count',
+        display: 'chat-message',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
 You are an intelligent agent tasked with analyzing a set of {{N}} AI-generated responses to the user message to identify key insights, solutions, or themes.
@@ -86,39 +115,11 @@ The final output should reflect a deep understanding of the user's preferences a
       },
     ],
   },
-
-  // 2: Fuse
-  {
-    factoryId: 'fuse',
-    label: 'Fuse',
-    addLabel: 'Add Fusion',
-    Icon: MediationOutlinedIcon,
-    description: 'AI combines conversation details and ideas into one clear, comprehensive answer.',
-    createInstructions: () => [
-      {
-        type: 'chat-generate',
-        label: 'Syntesizing Fusion',
-        method: 's-s0-h0-u0-aN-u',
-        systemPrompt: `
-You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single, comprehensive response that addresses the core objectives or questions.
-
-Consider the conversation history, the last user message, and the diverse perspectives presented in the {{N}} response alternatives.
-
-Your response should integrate the most relevant insights from these inputs into a cohesive and actionable answer.
-
-Synthesize the perfect response that merges the key insights and provides clear guidance or answers based on the collective intelligence of the alternatives.`.trim(),
-        userPrompt: `
-Synthesize the perfect cohesive response to my last message that merges the collective intelligence of the {{N}} alternatives above.`.trim(),
-        // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
-      },
-    ],
-  },
-
-  // 3: Eval
   {
     factoryId: 'eval',
-    label: 'Eval',
-    addLabel: 'Add Critique',
+    shortLabel: 'Eval',
+    addLabel: 'Add Breakdown',
+    cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon,
     description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice.',
     isDev: true,
@@ -158,12 +159,11 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
       },
     ],
   },
-
-  // 4: Custom (this may be overwritten by other factories, if editing those)
   {
     factoryId: 'custom',
-    label: 'Custom',
+    shortLabel: 'Custom',
     addLabel: 'Add Custom',
+    cardTitle: 'Tailored Response',
     // Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
     createInstructions: () => [
@@ -181,6 +181,4 @@ Based on the {{N}} alternatives provided, synthesize a single, comprehensive res
       },
     ],
   },
-
-  // ... future ...
 ];

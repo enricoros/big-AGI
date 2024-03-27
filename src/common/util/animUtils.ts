@@ -238,16 +238,16 @@ export const animationShadowBerry = keyframes`
 
 export const animationShadowLimey = keyframes`
     100%, 0% {
-        box-shadow: 2px 2px 12px rgb(183, 255, 0);
+        box-shadow: 2px 2px 12px -6px rgb(183, 255, 0);
     }
     25% {
-        box-shadow: 2px 2px 12px rgb(255, 251, 0);
+        box-shadow: 2px 2px 12px -6px rgb(255, 251, 0);
     }
     50% {
-        box-shadow: 2px 2px 12px rgba(0, 255, 81);
+        box-shadow: 2px 2px 12px -6px rgba(0, 255, 81);
     }
     75% {
-        box-shadow: 2px 2px 12px rgb(255, 153, 0);
+        box-shadow: 2px 2px 12px -6px rgb(255, 153, 0);
     }`;
 
 /*export const animationTextShadowLimey = keyframes`

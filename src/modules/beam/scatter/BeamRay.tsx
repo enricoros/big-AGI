@@ -170,7 +170,10 @@ export function BeamRay(props: {
   return (
     <BeamCard
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
-      className={`${isError ? beamCardClasses.errored : ''} ${isSelectable ? beamCardClasses.selectable : ''}`}
+      className={
+        (isError ? beamCardClasses.errored : '')
+        + (isSelectable ? beamCardClasses.selectable + ' ' : '')
+      }
     >
 
       {/* Controls Row */}

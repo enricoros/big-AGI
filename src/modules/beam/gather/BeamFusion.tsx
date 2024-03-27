@@ -1,7 +1,5 @@
 import * as React from 'react';
-
-import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
+import { Box, CircularProgress, IconButton, Sheet, SvgIconProps } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
@@ -27,16 +25,6 @@ import { findFusionFactory, FusionFactorySpec } from './instructions/beam.gather
 import { useBeamCardScrolling } from '../store-module-beam';
 
 
-const fusionCardSx: SxProps = {
-  // [`&.${beamCardClasses.idle}`]: {
-  //   pb: 0, // Peekaboo (shrink height)
-  // },
-
-  // boxShadow: 'sm',
-  // borderColor: `${GATHER_COLOR}.outlinedBorder`,
-};
-
-
 const FusionControlsMemo = React.memo(FusionControls);
 
 function FusionControls(props: {
@@ -50,19 +38,8 @@ function FusionControls(props: {
   onRemove: () => void,
   onToggleGenerate: () => void,
 }) {
-
-
   return (
-    <Box
-      // color='success'
-      // variant='solid'
-      // invertedColors
-      sx={{
-        // mx: -1, mt: -1, px: 1, py: 0,
-        borderRadius: 'sm',
-        display: 'flex', alignItems: 'center', gap: 1,
-      }}
-    >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
       {/* LLM Icon */}
       {!!props.llmVendorIcon && (
@@ -73,30 +50,43 @@ function FusionControls(props: {
         </GoodTooltip>
       )}
 
-      {/* Factory Icon */}
-      {!!props.factory.Icon && (
-        <props.factory.Icon sx={{ fontSize: 'lg', my: 'auto' }} />
-      )}
-
       {/* Title / Progress Component */}
-      <Box sx={{
-        flex: 1,
-        // ml: -1, my: -1, pl: 1, py: 0.5, borderRadius: 'md',
-        display: 'flex',
-        alignItems: 'center',
-      }}>
+      <Sheet
+        variant='outlined'
+        // color={GATHER_COLOR}
+        sx={{
+          // backgroundColor: `${GATHER_COLOR}.softBg`,
+          flex: 1,
+          borderRadius: 'sm',
+          minHeight: '2rem',
+          pl: 1,
+          // layout
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+
+        {/* [progress] Spinner | Factory Icon */}
+        {props.fusion.fusingProgressComponent ? (
+          <CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px' }} />
+        ) : (
+          !!props.factory.Icon && <props.factory.Icon sx={{ fontSize: 'lg' }} />
+        )}
+
+        {/* [progress] Component | Title */}
         {props.fusion.fusingProgressComponent
           // Show the progress in place of the title
           ? props.fusion.fusingProgressComponent
           : (
-            <Typography sx={{ fontSize: 'sm', fontWeight: 'md' }}>
-              {props.factory.label + ' Merge'} {props.isStopped && <em> - Interrupted</em>}
-            </Typography>
+            <Box sx={{ fontSize: 'sm', fontWeight: 'md' }}>
+              {props.factory.cardTitle} {props.isStopped && <em> - Interrupted</em>}
+            </Box>
           )}
-      </Box>
+      </Sheet>
 
       {!props.isFusing ? (
-        <GoodTooltip title='Generate'>
+        <GoodTooltip title='Retry'>
           <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
             {props.isEmpty ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}
           </IconButton>
@@ -190,9 +180,9 @@ export function BeamFusion(props: {
   return (
     <BeamCard
       className={
-        (isIdle ? beamCardClasses.idle : '')
+        (isIdle ? beamCardClasses.fusionIdle : '')
         + (isError ? beamCardClasses.errored + ' ' : '')
-        + (isUsable ? beamCardClasses.selectable + ' ' : '')
+        + ((isUsable || isFusing) ? beamCardClasses.selectable + ' ' : '')
         + (isFusing ? beamCardClasses.attractive + ' ' : '')
         // + (beamCardClasses.smashTop + ' ')
       }

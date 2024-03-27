@@ -6,7 +6,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { FFactoryId, findFusionFactory, FUSION_FACTORIES } from './instructions/beam.gather.factories';
+import { FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
 import { GATHER_PLACEHOLDER } from '../beam.config';
 import { RootStoreSlice } from '../store-beam-vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
@@ -111,7 +111,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[], gatherLlmId: DLLM
   prevFusions.forEach(gatherStopFusion);
 
   return {
-    currentFactoryId: null,
+    currentFactoryId: FUSION_FACTORY_DEFAULT,
     currentGatherLlmId: gatherLlmId, // may be re-set during open() of the Beam Store
 
     fusions: [],

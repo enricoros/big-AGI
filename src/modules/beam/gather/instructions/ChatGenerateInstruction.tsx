@@ -21,7 +21,10 @@ type ChatGenerateMethods =
 
 export interface ChatGenerateInstruction extends BaseInstruction {
   type: 'chat-generate';
-  display?: 'mute' | 'character-count';
+  display?:
+    | 'chat-message' /* default */
+    | 'character-count'
+    | 'mute';
   method: ChatGenerateMethods;
   systemPrompt: string;
   userPrompt: string;
@@ -75,6 +78,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         );
         return;
 
+      case 'chat-message':
       default:
         // recreate the UI for this
         inputs.updateInstructionComponent(
