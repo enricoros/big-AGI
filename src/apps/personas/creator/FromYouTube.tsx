@@ -132,7 +132,7 @@ export function FromYouTube(props: {
         placeholder='YouTube Video URL'
         value={videoURL}
         onChange={handleVideoURLChange}
-        sx={{ mb: 1.5 }}
+        sx={{ mb: 1.5, backgroundColor: 'background.popup' }}
       />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
