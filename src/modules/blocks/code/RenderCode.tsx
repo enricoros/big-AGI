@@ -137,7 +137,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   });
   renderPlantUML = renderPlantUML && (!!plantUmlHtmlData || !!plantUmlError);
 
-  const isSVG = blockCode.startsWith('<svg') && blockCode.endsWith('</svg>');
+  const isSVG = (blockCode.startsWith('<svg') || blockCode.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
