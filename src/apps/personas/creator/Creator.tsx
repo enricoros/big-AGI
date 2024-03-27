@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, tabClasses, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
@@ -177,8 +177,20 @@ export function Creator(props: { display: boolean }) {
         display: isTransforming ? 'none' : undefined,
       }}
     >
-      <TabList sx={{ minHeight: '3rem' }}>
-        <Tab>From YouTube Video</Tab>
+      <TabList
+        sx={{
+          minHeight: '3rem',
+          [`& .${tabClasses.root}[aria-selected="true"]`]: {
+            // color: 'primary.softColor',
+            bgcolor: 'background.popup',
+            boxShadow: 'sm',
+            fontWeight: 'lg',
+          },
+          // first element
+          '& > *:first-child': { borderTopLeftRadius: '0.5rem' },
+        }}
+      >
+        <Tab>From YouTube</Tab>
         <Tab>From Text</Tab>
       </TabList>
       <TabPanel keepMounted value={0} sx={{ p: 3 }}>
