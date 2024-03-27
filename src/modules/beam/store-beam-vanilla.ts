@@ -90,7 +90,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
       // update the model only if the dialog was not already open
       ...((!wasOpen && initialChatLLMId) && {
-        lastGatherLlmId: initialChatLLMId,
+        currentGatherLlmId: initialChatLLMId,
       } satisfies Partial<GatherStoreSlice>),
     });
   },
@@ -98,7 +98,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   terminate: () =>
     _set(state => ({
       ...initRootStateSlice(),
-      ...reInitGatherStateSlice(state.fusions, state.lastGatherLlmId),  // remember after termination
+      ...reInitGatherStateSlice(state.fusions, state.currentGatherLlmId),  // remember after termination
       ...reInitScatterStateSlice(state.rays),
     })),
 

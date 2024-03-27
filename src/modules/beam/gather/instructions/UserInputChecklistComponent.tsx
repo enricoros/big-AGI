@@ -64,7 +64,7 @@ export function UserInputChecklistComponent(props: {
 
   return (
     <Box sx={{ display: 'grid', gap: 2 }}>
-      <Typography color='primary' sx={{ mt: 1, fontWeight: 'lg', fontSize: 'md' }}>
+      <Typography sx={{ mt: 1, fontWeight: 'md', fontSize: 'sm' }}>
         Select the Merge options to apply:
       </Typography>
 

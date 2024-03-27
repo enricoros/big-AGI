@@ -5,8 +5,11 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
-import { FUSION_FACTORIES } from './instructions/beam.gather.factories';
-import { GATHER_DEFAULT_TO_FIRST_FUSION, GATHER_PLACEHOLDER } from '../beam.config';
+
+import { FFactoryId, findFusionFactory, FUSION_FACTORIES } from './instructions/beam.gather.factories';
+import { GATHER_PLACEHOLDER } from '../beam.config';
+import { RootStoreSlice } from '../store-beam-vanilla';
+import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
 
 
@@ -25,8 +28,11 @@ type BFusionStage =
 export interface BFusion {
   // const
   readonly fusionId: BFusionId;
-  readonly factoryId: string;
-  readonly instructions: Readonly<Instruction[]>;
+  readonly factoryId: FFactoryId;
+
+  // options
+  instructions: Instruction[];
+  llmId: DLLMId | null;
 
   // status
   stage: BFusionStage;
@@ -39,11 +45,14 @@ export interface BFusion {
   fusingInstructionComponent?: React.ReactNode;
 }
 
-const createBFusion = (factoryId: string, instructions: Instruction[]): BFusion => ({
+const createBFusion = (factoryId: FFactoryId, instructions: Instruction[], llmId: DLLMId | null): BFusion => ({
   // const
   fusionId: uuidv4(),
   factoryId,
+
+  // options
   instructions,
+  llmId,
 
   // status
   stage: 'idle',
@@ -69,6 +78,10 @@ export function fusionIsFusing(fusion: BFusion | null): boolean {
   return fusion?.stage === 'fusing';
 }
 
+export function fusionIsStopped(fusion: BFusion | null): boolean {
+  return fusion?.stage === 'stopped';
+}
+
 export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
   const message = fusion?.outputDMessage ?? null;
   return !!message && !!message.updated && !!message.text && message.text !== GATHER_PLACEHOLDER;
@@ -83,9 +96,9 @@ export function fusionIsError(fusion: BFusion | null): boolean {
 
 interface GatherStateSlice {
 
-  lastGatherLlmId: DLLMId | null;
+  currentFactoryId: FFactoryId | null;
+  currentGatherLlmId: DLLMId | null;
 
-  currentFusionId: BFusionId | null;
   fusions: BFusion[];
 
   // derived state (just acts as a cache to avoid re-calculating)
@@ -97,14 +110,11 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[], gatherLlmId: DLLM
   // stop any ongoing fusions
   prevFusions.forEach(gatherStopFusion);
 
-  // fully use new fusions
-  const newFusions = FUSION_FACTORIES.map(factory => createBFusion(factory.id, factory.createInstructions()));
-
   return {
-    lastGatherLlmId: gatherLlmId, // may be re-set during open() of the Beam Store
+    currentFactoryId: null,
+    currentGatherLlmId: gatherLlmId, // may be re-set during open() of the Beam Store
 
-    currentFusionId: (GATHER_DEFAULT_TO_FIRST_FUSION && newFusions.length) ? newFusions[0].fusionId : null,
-    fusions: newFusions,
+    fusions: [],
 
     isGatheringAny: false,
   };
@@ -114,41 +124,35 @@ export type FusionUpdateOrFn = Partial<BFusion> | ((fusion: BFusion) => (Partial
 
 export interface GatherStoreSlice extends GatherStateSlice {
 
-  setLastGatherLlmId: (llmId: DLLMId | null) => void;
-
-  setCurrentFusionId: (fusionId: BFusionId | null) => void;
-  _currentFusion: () => BFusion | null;
+  setCurrentGatherLlmId: (llmId: DLLMId | null) => void;
+  setCurrentFactoryId: (factoryId: FFactoryId | null) => void;
 
   _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => void;
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => void;
   fusionInstructionUpdate: (fusionId: BFusionId, instructionIndex: number, update: Partial<Instruction>) => void;
+  fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) => void;
 
-  currentFusionStart: (chatHistory: DMessage[], rays: DMessage[]) => void;
-  currentFusionStop: () => void;
+  createFusion: () => void;
+  removeFusion: (fusionId: BFusionId) => void;
+  toggleFusionGathering: (fusionId: BFusionId) => void;
 
 }
 
-export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
+export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice & GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
 
   // initial state
   ...reInitGatherStateSlice([], null),
 
 
-  setLastGatherLlmId: (llmId: DLLMId | null) =>
+  setCurrentFactoryId: (factoryId: FFactoryId | null) =>
     _set({
-      lastGatherLlmId: llmId,
+      currentFactoryId: factoryId,
     }),
 
-
-  setCurrentFusionId: (fusionId: BFusionId | null) =>
+  setCurrentGatherLlmId: (llmId: DLLMId | null) =>
     _set({
-      currentFusionId: fusionId,
+      currentGatherLlmId: llmId,
     }),
-
-  _currentFusion: () => {
-    const { currentFusionId, fusions } = _get();
-    return currentFusionId !== null ? fusions.find(fusion => fusion.fusionId === currentFusionId) ?? null : null;
-  },
 
 
   _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => {
@@ -169,16 +173,16 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
   },
 
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => {
-    const { fusions } = _get();
+    const { fusions, currentGatherLlmId } = _get();
 
     // finds the fusion and its factory
     const sourceFusion = fusions.find(fusion => fusion.fusionId === sourceFusionId);
-    const sourceFusionFactory = sourceFusion ? FUSION_FACTORIES.find(spec => spec.id === sourceFusion.factoryId) : undefined;
+    const sourceFusionFactory = findFusionFactory(sourceFusion?.factoryId);
     if (!sourceFusion || !sourceFusionFactory)
       return;
 
     // create a custom from the source fusion factory
-    const newCustomFusion: BFusion = createBFusion('custom', sourceFusionFactory.createInstructions());
+    const newCustomFusion: BFusion = createBFusion('custom', sourceFusionFactory.createInstructions(), currentGatherLlmId);
 
     // replace the only editable fusion with the new custom fusion
     _set({
@@ -187,7 +191,6 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
         gatherStopFusion(_f);
         return newCustomFusion;
       }),
-      currentFusionId: newCustomFusion.fusionId,
     });
   },
 
@@ -199,21 +202,55 @@ export const createGatherSlice: StateCreator<GatherStoreSlice, [], [], GatherSto
       ),
     })),
 
+  fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) =>
+    _get()._fusionUpdate(fusionId, {
+      llmId,
+    }),
 
-  currentFusionStart: (chatHistory: DMessage[], rays: DMessage[]) => {
-    const { lastGatherLlmId, _currentFusion, _fusionUpdate } = _get();
-    const fusion = _currentFusion();
+
+  createFusion: () => {
+    // get factory
+    const { currentFactoryId, currentGatherLlmId, fusions, toggleFusionGathering } = _get();
+    const factory = FUSION_FACTORIES.find(factory => factory.factoryId === currentFactoryId);
+    if (!factory)
+      return;
+
+    // create and append the fusion
+    const newFusion = createBFusion(factory.factoryId, factory.createInstructions(), currentGatherLlmId);
+    _set({
+      fusions: [...fusions, newFusion],
+    });
+
+    // start the fusion
+    toggleFusionGathering(newFusion.fusionId);
+  },
+
+  removeFusion: (fusionId: BFusionId) => {
+    const fusion = _get().fusions.find(fusion => fusion.fusionId === fusionId);
     if (fusion) {
-      const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
-      gatherStartFusion(fusion, chatHistory, rays, lastGatherLlmId, onUpdate);
+      gatherStopFusion(fusion);
+      _set(state => ({
+        fusions: state.fusions.filter(fusion => fusion.fusionId !== fusionId),
+      }));
     }
   },
 
-  currentFusionStop: () => {
-    const { _currentFusion, _fusionUpdate } = _get();
-    const fusion = _currentFusion();
-    if (fusion)
-      _fusionUpdate(fusion.fusionId, gatherStopFusion(fusion));
+
+  toggleFusionGathering: (fusionId: BFusionId) => {
+    // this will start/stop the fusion
+    const fusion = _get().fusions.find(fusion => fusion.fusionId === fusionId);
+    if (!fusion) return;
+
+    // stop if fusing
+    if (fusion?.stage === 'fusing')
+      return gatherStopFusion(fusion);
+
+    // start if idle/stopped
+    const { inputHistory, rays, currentGatherLlmId, _fusionUpdate } = _get();
+    const chatMessages = inputHistory ? [...inputHistory] : [];
+    const rayMessages = rays.map(ray => ray.message);
+    const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
+    gatherStartFusion(fusion, chatMessages, rayMessages, currentGatherLlmId, onUpdate);
   },
 
 });

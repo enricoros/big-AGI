@@ -1,5 +1,4 @@
-import * as React from 'react';
-
+import type { SvgIcon } from '@mui/material';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
@@ -7,23 +6,31 @@ import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
 import type { Instruction } from './beam.gather.execution';
 
 
-interface FusionFactorySpec {
-  id: 'guided' | 'fuse' | 'eval' | 'custom';
+export type FFactoryId = string;
+
+export interface FusionFactorySpec {
+  factoryId: FFactoryId;
   label: string;
-  Icon?: React.FunctionComponent;
+  addLabel: string;
+  Icon?: typeof SvgIcon;
   description: string;
   isDev?: boolean;
   createInstructions: () => Instruction[];
 }
 
+export function findFusionFactory(factoryId?: FFactoryId | null): FusionFactorySpec | null {
+  if (!factoryId) return null;
+  return FUSION_FACTORIES.find(f => f.factoryId === factoryId) ?? null;
+}
 
 export const FUSION_FACTORIES: FusionFactorySpec[] = [
   // 1: Guided (Checklist - 3x steps)
   {
-    id: 'guided',
+    factoryId: 'guided',
     label: 'Guided',
+    addLabel: 'Add Checklist',
     Icon: CheckBoxOutlinedIcon,
-    description: 'A brainstorming session with AI, where you first pick your favorite ideas from a list it generates, and then the AI combines those picks into a tailored solution.',
+    description: 'Choose between options extracted by AI from the replies, and the model will combine your selections into a single answer.',
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
     createInstructions: () => [
       {
@@ -82,10 +89,11 @@ The final output should reflect a deep understanding of the user's preferences a
 
   // 2: Fuse
   {
-    id: 'fuse',
+    factoryId: 'fuse',
     label: 'Fuse',
+    addLabel: 'Add Fusion',
     Icon: MediationOutlinedIcon,
-    description: 'AI combines conversation details and various AI-generated ideas into one clear, comprehensive answer, making sense of diverse insights for you.',
+    description: 'AI combines conversation details and ideas into one clear, comprehensive answer.',
     createInstructions: () => [
       {
         type: 'chat-generate',
@@ -108,10 +116,11 @@ Synthesize the perfect cohesive response to my last message that merges the coll
 
   // 3: Eval
   {
-    id: 'eval',
+    factoryId: 'eval',
     label: 'Eval',
+    addLabel: 'Add Critique',
     Icon: TableViewRoundedIcon,
-    description: 'Analyzes and ranks AI responses, offering a clear, comparative overview to support your choice of answer.',
+    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice.',
     isDev: true,
     createInstructions: () => [
       {
@@ -152,8 +161,9 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
 
   // 4: Custom (this may be overwritten by other factories, if editing those)
   {
-    id: 'custom',
+    factoryId: 'custom',
     label: 'Custom',
+    addLabel: 'Add Custom',
     // Icon: BuildCircleOutlinedIcon,
     description: 'Define your own fusion prompt.',
     createInstructions: () => [

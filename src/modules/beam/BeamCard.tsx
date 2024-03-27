@@ -11,6 +11,7 @@ export const beamCardClasses = {
   errored: 'beamCard-Errored',
   selectable: 'beamCard-Selectable',
   attractive: 'beamCard-Attractive',
+  smashTop: 'beamCard-SmashTop',
 };
 
 /**
@@ -43,6 +44,11 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   [`&.${beamCardClasses.attractive}`]: {
     animation: `${animationShadowLimey} 2s linear infinite`,
   },
+  [`&.${beamCardClasses.smashTop}`]: {
+    borderTop: 'none',
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
 
   position: 'relative',
 
@@ -55,6 +61,36 @@ export const BeamCard = styled(Box)(({ theme }) => ({
   // overflow: 'auto',
 }));
 BeamCard.displayName = 'BeamCard'; // [shared] scatter/gather pane style
+
+
+export const beamCardMessageWrapperSx: SxProps = {
+  minHeight: '1.5rem',
+  display: 'flex',
+  flexDirection: 'column',
+  // uncomment the following to limit the message height
+  // overflow: 'auto',
+  // maxHeight: 'calc(0.8 * (100vh - 16rem))',
+  // aspectRatio: 1,
+}
+
+export const beamCardMessageSx: SxProps = {
+  // style: to undo the style of ChatMessage
+  backgroundColor: 'none',
+  border: 'none',
+  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
+  my: 0,
+  px: 0,
+  py: 0,
+}
+
+export const beamCardMessageScrollingSx: SxProps = {
+  ...beamCardMessageSx,
+  overflow: 'auto',
+  maxHeight: 'max(18rem, calc(60lvh - 16rem))',
+}
+
+
+
 
 /**
  * Props for the two panes.
