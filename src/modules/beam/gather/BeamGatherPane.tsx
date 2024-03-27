@@ -32,7 +32,7 @@ const gatherPaneSx: SxProps = {
   boxShadow: `0px 6px 20px -8px rgb(var(--joy-palette-neutral-darkChannel) / 30%)`,
   [`&.${gatherPaneClasses.ready}`]: {
     backgroundColor: 'background.popup',
-    boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-success-darkChannel) / 40%)`,
+    // boxShadow: `0px 6px 16px -8px rgb(var(--joy-palette-success-darkChannel) / 40%)`,
   },
   [`&.${gatherPaneClasses.busy}`]: {
     // animation: `${animationShadowRingLimey} 2s linear infinite`,
