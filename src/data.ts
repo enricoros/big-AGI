@@ -18,6 +18,23 @@ export type SystemPurposeData = {
 };
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
+  Generic: {
+    title: 'Default',
+    description: 'Start here',
+    systemMessage: `You are an AI assistant.
+Knowledge cutoff: {{Cutoff}}
+Current date: {{LocaleNow}}
+
+{{RenderMermaid}}
+{{RenderPlantUML}}
+{{RenderSVG}}
+{{PreferTables}}
+`,
+    symbol: '🧠',
+    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
+    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
+    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
+  },
   DeveloperPreview: {
     title: 'Developer',
     description: 'Extended-capabilities Developer',
@@ -26,8 +43,8 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 Knowledge cutoff: {{Cutoff}}
 Current date: {{LocaleNow}}
 
-{{RenderMermaid}}
 {{RenderPlantUML}}
+{{RenderMermaid}}
 {{RenderSVG}}
 {{PreferTables}}
 {{InputImage0}}
@@ -86,15 +103,6 @@ Current date: {{LocaleNow}}
     examples: ['minimalist logo for a tech startup', 'infographic on climate change', 'suggest color schemes for a website'],
     call: { starters: ['Hey! What\'s the vision?', 'Designer on call. What\'s the project?', 'Ready for design talk.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
-  },
-  Generic: {
-    title: 'Default',
-    description: 'Helps you think',
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: {{Cutoff}}\nCurrent date: {{LocaleNow}}\n',
-    symbol: '🧠',
-    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
-    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
-    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
   },
   Custom: {
     title: 'Custom',

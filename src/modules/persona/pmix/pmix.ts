@@ -71,7 +71,7 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   // {{Render...}}
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled');
   mixed = mixed.replace('{{RenderPlantUML}}', 'PlantUML rendering: Enabled');
-  mixed = mixed.replace('{{RenderSVG}}', 'SVG rendering: Enabled');
+  mixed = mixed.replace('{{RenderSVG}}', 'SVG in markdown rendering: Enabled');
   // {{Input...}} / {{Tool...}} - TBA
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
