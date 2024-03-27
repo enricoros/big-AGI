@@ -38,7 +38,6 @@ export function gatherStartFusion(
   initialFusion: Readonly<BFusion>,
   chatMessages: DMessage[],
   rayMessages: DMessage[],
-  llmId: DLLMId | null,
   onUpdateBFusion: (update: FusionUpdateOrFn) => void,
 ) {
 
@@ -58,7 +57,7 @@ export function gatherStartFusion(
     return onError('No conversation history available');
   if (rayMessages.length <= 1)
     return onError('No responses available');
-  if (!llmId)
+  if (!initialFusion.llmId)
     return onError('No Merge model selected');
 
 
@@ -67,7 +66,7 @@ export function gatherStartFusion(
     // inputs
     chatMessages: chatMessages,
     rayMessages: rayMessages,
-    llmId,
+    llmId: initialFusion.llmId,
     // interaction
     chainAbortController: new AbortController(),
     updateProgressComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingProgressComponent: component }),

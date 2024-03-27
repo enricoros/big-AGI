@@ -245,12 +245,15 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     if (fusion?.stage === 'fusing')
       return gatherStopFusion(fusion);
 
-    // start if idle/stopped
-    const { inputHistory, rays, currentGatherLlmId, _fusionUpdate } = _get();
+    // start: update the model (NOTE: keep the same per-fusion)
+    // _fusionUpdate(fusion.fusionId, { llmId: currentGatherLlmId });
+
+    // start the fusion
+    const { inputHistory, rays, _fusionUpdate } = _get();
     const chatMessages = inputHistory ? [...inputHistory] : [];
     const rayMessages = rays.map(ray => ray.message);
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
-    gatherStartFusion(fusion, chatMessages, rayMessages, currentGatherLlmId, onUpdate);
+    gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },
 
 });
