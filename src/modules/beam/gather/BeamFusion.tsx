@@ -69,7 +69,7 @@ function FusionControls(props: {
 
         {/* [progress] Spinner | Factory Icon */}
         {props.fusion.fusingProgressComponent ? (
-          <CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px' }} />
+          <CircularProgress color='neutral' size='sm' sx={{ '--CircularProgress-size': '16px', '--CircularProgress-trackThickness': '2px' }} />
         ) : (
           !!props.factory.Icon && <props.factory.Icon sx={{ fontSize: 'lg' }} />
         )}
