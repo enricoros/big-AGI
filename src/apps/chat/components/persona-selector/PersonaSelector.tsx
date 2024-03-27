@@ -54,8 +54,10 @@ function Tile(props: {
         fontWeight: 'md',
         lineHeight: 'xs',
         ...((props.isEditMode || !props.isActive) ? {
-          boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
-          backgroundColor: props.isHighlighted ? undefined : 'background.surface',
+          boxShadow: props.isHighlighted
+            ? '0 2px 8px -2px rgb(var(--joy-palette-primary-darkChannel) / 30%)'
+            : 'sm',
+          backgroundColor: props.isHighlighted ? undefined : 'background.popup',
           ...(props.imageUrl && {
             backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
             backgroundPosition: 'center',
