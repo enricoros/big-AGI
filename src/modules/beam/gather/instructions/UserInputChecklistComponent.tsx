@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, Typography } from '@mui/joy';
+import { Box, Button, Checkbox } from '@mui/joy';
 
 import { GATHER_COLOR } from '../../beam.config';
 import { UserChecklistOption } from './UserInputChecklistInstruction';
@@ -64,7 +64,7 @@ export function UserInputChecklistComponent(props: {
   const moreThanHalfSelected = localOptions.filter(option => option.selected).length > localOptions.length / 2;
 
   return (
-    <Box sx={{ display: 'grid', gap: 2 }}>
+    <Box sx={{ display: 'grid', gap: 2, mt: 1 }}>
       {/*<Typography sx={{ mt: 1, fontWeight: 'md', fontSize: 'sm' }}>*/}
       {/*  Select how you want the merge:*/}
       {/*</Typography>*/}
@@ -74,22 +74,20 @@ export function UserInputChecklistComponent(props: {
           key={option.id}
           size='sm'
           color={GATHER_COLOR}
+          // color='primary'
           checked={option.selected}
           onChange={() => handleToggle(option.id)}
-          label={
-            <Typography sx={{ lineHeight: 'lg' }}>
-              {parseMarkdownBold(option.label)}
-            </Typography>
-          }
-          sx={{
-            alignItems: 'baseline',
-            ml: 2,
+          label={parseMarkdownBold(option.label)}
+          slotProps={{
+            root: { sx: { lineHeight: 'lg', ml: '1.625rem' } },
+            checkbox: { sx: { mt: 0.25 } },
           }}
         />
       ))}
 
       <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
         <Button
+          color={GATHER_COLOR}
           onClick={() => props.onConfirm(localOptions)}
         >
           Confirm Selection
