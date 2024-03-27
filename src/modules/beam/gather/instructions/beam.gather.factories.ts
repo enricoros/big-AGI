@@ -55,7 +55,7 @@ Synthesize the perfect cohesive response to my last message that merges the coll
   },
   {
     factoryId: 'guided',
-    shortLabel: 'Checklist',
+    shortLabel: 'Guided',
     addLabel: 'Add Checklist',
     cardTitle: 'Guided Response',
     Icon: CheckBoxOutlinedIcon,
