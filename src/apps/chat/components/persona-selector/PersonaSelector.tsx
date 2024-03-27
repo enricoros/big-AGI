@@ -329,24 +329,24 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 sx={{
                   // example items 2-col layout
                   display: 'grid',
-                  gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
+                  gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 3 + 1}rem, 1fr))`,
                   gap: 1,
                 }}
               >
                 {fourExamples?.map((example, idx) => (
                   <ListItem
                     key={idx}
-                    variant='soft'
+                    variant='outlined'
                     sx={{
+                      // padding: '0.25rem 0.5rem',
+                      backgroundColor: 'background.popup',
                       borderRadius: 'md',
-                      // boxShadow: 'xs',
-                      padding: '0.25rem 0.5rem',
-                      backgroundColor: 'background.surface',
+                      boxShadow: 'xs',
                       '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
                       '&:hover svg': { opacity: 1 },
                     }}
                   >
-                    <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
+                    <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between', borderRadius: 'md' }}>
                       <Typography level='body-sm'>
                         {example}
                       </Typography>
