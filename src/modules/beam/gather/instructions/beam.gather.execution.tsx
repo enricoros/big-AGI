@@ -130,7 +130,7 @@ export function gatherStartFusion(
       if (inputState.chainAbortController.signal.aborted) {
         return onUpdateBFusion({
           stage: 'stopped',
-          errorText: 'Merge Canceled.',
+          // errorText: 'Merge Canceled.',
           fusingProgressComponent: undefined,
         });
       }

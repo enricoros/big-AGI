@@ -17,7 +17,7 @@ interface BeamScatterPreset {
 interface ModuleBeamStore {
   // state
   scatterPresets: BeamScatterPreset[];
-  rayScrolling: boolean;
+  cardScrolling: boolean;
   gatherShowDevMethods: boolean;
   gatherShowPrompts: boolean;
 
@@ -26,7 +26,7 @@ interface ModuleBeamStore {
   deleteScatterPreset: (id: string) => void;
   renameScatterPreset: (id: string, name: string) => void;
 
-  toggleRayScrolling: () => void;
+  toggleCardScrolling: () => void;
 
   toggleGatherShowDevMethods: () => void;
   toggleGatherShowPrompts: () => void;
@@ -37,7 +37,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
   (_set, _get) => ({
 
     scatterPresets: [],
-    rayScrolling: false,
+    cardScrolling: false,
     gatherShowDevMethods: true,
     gatherShowPrompts: false,
 
@@ -55,7 +55,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     })),
 
 
-    toggleRayScrolling: () => _set(state => ({ rayScrolling: !state.rayScrolling })),
+    toggleCardScrolling: () => _set(state => ({ cardScrolling: !state.cardScrolling })),
 
 
     toggleGatherShowDevMethods: () => _set(state => ({ gatherShowDevMethods: !state.gatherShowDevMethods })),
@@ -68,6 +68,6 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 ));
 
 
-export function useBeamRayScrolling() {
-  return useModuleBeamStore((state) => state.rayScrolling);
+export function useBeamCardScrolling() {
+  return useModuleBeamStore((state) => state.cardScrolling);
 }

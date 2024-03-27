@@ -71,6 +71,21 @@ export function BeamRayGrid(props: {
       {/*  Merges*/}
       {/*</Divider>*/}
 
+      {/* Fusions */}
+      {/*{props.fusionIds.map((fusionId) => (*/}
+      {/*  <BeamFusion*/}
+      {/*    key={'fusion-' + fusionId}*/}
+      {/*    beamStore={props.beamStore}*/}
+      {/*    fusionId={fusionId}*/}
+      {/*  />*/}
+      {/*))}*/}
+
+      {/* Add Fusion */}
+      {/*<BeamFusionAdd*/}
+      {/*  beamStore={props.beamStore}*/}
+      {/*  isMobile={props.isMobile}*/}
+      {/*/>*/}
+
     </Box>
   );
 }

@@ -11,7 +11,6 @@ import type { ChatGenerateInstruction } from './instructions/ChatGenerateInstruc
 import type { Instruction } from './instructions/beam.gather.execution';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_SHOW_SYSTEM_PROMPT } from '../beam.config';
-import { fusionIsEditable } from './beam.gather';
 import { useModuleBeamStore } from '../store-module-beam';
 
 
@@ -184,11 +183,10 @@ export function BeamGatherInput(props: {
   const {
     currentFusionId, currentIsEditable, currentInstructions,
   } = useBeamStore(props.beamStore, useShallow(store => {
-    const fusion = store.currentFusionId !== null ? store.fusions.find(fusion => fusion.fusionId === store.currentFusionId) ?? null : null;
     return {
-      currentFusionId: fusion?.fusionId ?? null,
-      currentIsEditable: fusion ? fusionIsEditable(fusion) : false,
-      currentInstructions: fusion?.instructions ?? [],
+      currentFusionId: null, // fusion?.fusionId ?? null,
+      currentIsEditable: false, // fusion ? fusionIsEditable(fusion) : false,
+      currentInstructions: [], // fusion?.instructions ?? [],
     };
   }));
 

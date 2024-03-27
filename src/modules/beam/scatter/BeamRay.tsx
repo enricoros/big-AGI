@@ -1,6 +1,4 @@
 import * as React from 'react';
-
-import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, SvgIconProps } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -20,28 +18,12 @@ import { InlineError } from '~/common/components/InlineError';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamCard, beamCardClasses } from '../BeamCard';
+import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
-import { useBeamRayScrolling } from '../store-module-beam';
+import { useBeamCardScrolling } from '../store-module-beam';
 
-
-const chatMessageEmbeddedSx: SxProps = {
-  // style: to undo the style of ChatMessage
-  backgroundColor: 'none',
-  border: 'none',
-  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
-  my: 0,
-  px: 0,
-  py: 0,
-};
-
-const chatMessageEmbeddedScrollingSx: SxProps = {
-  ...chatMessageEmbeddedSx,
-  overflow: 'auto',
-  maxHeight: 'max(18rem, calc(60lvh - 16rem))',
-};
 
 /*const letterSx: SxProps = {
   width: '1rem',
@@ -132,7 +114,7 @@ export function BeamRay(props: {
 
   // external state
   const ray = useBeamStore(props.beamStore, store => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
-  const rayScrolling = useBeamRayScrolling();
+  const cardScrolling = useBeamCardScrolling();
 
   // derived state
   const isError = rayIsError(ray);
@@ -140,7 +122,7 @@ export function BeamRay(props: {
   const isSelectable = rayIsSelectable(ray);
   const isSelected = rayIsUserSelected(ray);
   const isImported = rayIsImported(ray);
-  const showUseButton = isSelectable && !isScattering;
+  const showUseButtons = isSelectable && !isScattering;
   const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
 
   // This old code used the Gather LLM as Ray fallback - but now we use the last Scatter LLM as fallback
@@ -210,27 +192,21 @@ export function BeamRay(props: {
 
       {/* Ray Message */}
       {(!!ray?.message?.text || ray?.status === 'scattering') && (
-        <Box sx={{
-          minHeight: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          // uncomment the following to limit the message height
-          // overflow: 'auto',
-          // maxHeight: 'calc(0.8 * (100vh - 16rem))',
-          // aspectRatio: 1,
-        }}>
-          <ChatMessageMemo
-            message={ray.message}
-            fitScreen={true}
-            showAvatar={false}
-            adjustContentScaling={-1}
-            sx={rayScrolling ? chatMessageEmbeddedScrollingSx : chatMessageEmbeddedSx}
-          />
+        <Box sx={beamCardMessageWrapperSx}>
+          {!!ray.message && (
+            <ChatMessageMemo
+              message={ray.message}
+              fitScreen={true}
+              showAvatar={false}
+              adjustContentScaling={-1}
+              sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
+            />
+          )}
         </Box>
       )}
 
       {/* Use Ray */}
-      {showUseButton && (
+      {showUseButtons && (
         <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.25rem - var(--Pad_2))', position: 'relative' }}>
           <Box sx={{
             position: 'absolute',
@@ -239,6 +215,8 @@ export function BeamRay(props: {
             display: 'flex',
             gap: 1,
           }}>
+
+            {/* Copy */}
             {!isImported && (
               <GoodTooltip title='Copy'>
                 <IconButton
@@ -249,6 +227,8 @@ export function BeamRay(props: {
                 </IconButton>
               </GoodTooltip>
             )}
+
+            {/* Continue */}
             <GoodTooltip title='Choose this message'>
               <IconButton
                 size='sm'
@@ -264,6 +244,7 @@ export function BeamRay(props: {
                 {isImported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
               </IconButton>
             </GoodTooltip>
+
           </Box>
         </Box>
       )}
