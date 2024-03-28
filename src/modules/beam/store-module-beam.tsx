@@ -68,6 +68,10 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 ));
 
 
+export function getBeamCardScrolling() {
+  return useModuleBeamStore.getState().cardScrolling;
+}
+
 export function useBeamCardScrolling() {
   return useModuleBeamStore((state) => state.cardScrolling);
 }

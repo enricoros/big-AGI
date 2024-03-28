@@ -13,7 +13,8 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { GATHER_PLACEHOLDER } from '../../beam.config';
-import { beamCardMessageSx } from '../../BeamCard';
+import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
+import { getBeamCardScrolling } from '../../store-module-beam';
 
 
 type ChatGenerateMethods =
@@ -87,7 +88,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
             fitScreen={true}
             showAvatar={false}
             adjustContentScaling={-1}
-            sx={beamCardMessageSx}
+            sx={!getBeamCardScrolling() ? beamCardMessageSx : beamCardMessageScrollingSx}
           />,
         );
         return;
