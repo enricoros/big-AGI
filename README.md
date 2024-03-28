@@ -1,11 +1,11 @@
 # BIG-AGI 🧠✨
 
-Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
+Welcome to big-AGI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 12 vendors and
-open-source model servers, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
-visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
+open-source servers, `big-AGI` offers best-in-class Chats, Calls and Beams with AI Personas,
+visualizations, coding, drawing, calling, and more -- all wrapped in a polished UX.
 
-Pros use big-AGI. 🚀 Developers love big-AGI. 🤖
+Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
@@ -84,11 +84,11 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
-## ✨ Key Features 👊
+## 👉 Key Features ✨
 
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
-| **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
+| **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
