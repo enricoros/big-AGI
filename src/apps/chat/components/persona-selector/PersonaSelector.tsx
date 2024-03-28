@@ -26,6 +26,7 @@ import { usePurposeStore } from './store-purposes';
 
 // 'special' purpose IDs, for tile hiding purposes
 const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
+const TILE_ACTIVE_COLOR = 'primary' as const;
 
 // defined looks
 const tileSize = 7; // rem
@@ -46,7 +47,7 @@ function Tile(props: {
   return (
     <Button
       variant={(!props.isEditMode && props.isActive) ? 'solid' : props.isHighlighted ? 'soft' : 'soft'}
-      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'primary' : 'neutral'}
+      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'primary' : TILE_ACTIVE_COLOR}
       onClick={props.onClick}
       sx={{
         aspectRatio: 1,
@@ -54,9 +55,10 @@ function Tile(props: {
         fontWeight: 'md',
         lineHeight: 'xs',
         ...((props.isEditMode || !props.isActive) ? {
-          boxShadow: props.isHighlighted
-            ? '0 2px 8px -2px rgb(var(--joy-palette-primary-darkChannel) / 30%)'
-            : 'sm',
+          boxShadow: `0 2px 8px -3px rgb(var(--joy-palette-${TILE_ACTIVE_COLOR}-darkChannel) / 30%)`,
+          // boxShadow: props.isHighlighted
+          //   ? '0 2px 8px -2px rgb(var(--joy-palette-primary-darkChannel) / 30%)'
+          //   : 'sm',
           backgroundColor: props.isHighlighted ? undefined : 'background.popup',
           // ...(props.imageUrl && {
           //   backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
@@ -74,7 +76,7 @@ function Tile(props: {
       {/* [Edit mode checkbox] */}
       {props.isEditMode && (
         <Checkbox
-          variant='soft' color='neutral'
+          variant='soft' color={TILE_ACTIVE_COLOR}
           checked={!props.isHidden}
           // label={<Typography level='body-xs'>show</Typography>}
           sx={{ position: 'absolute', left: `${tileGap}rem`, top: `${tileGap}rem` }}
@@ -296,7 +298,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             isHidden={hidePersonaCreator}
             onClick={() => editMode ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR) : void navigateToPersonas()}
             sx={{
-              fontSize:'xs',
+              fontSize: 'xs',
               boxShadow: 'xs',
               backgroundColor: 'neutral.softDisabledBg',
             }}
