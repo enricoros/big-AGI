@@ -86,7 +86,7 @@ export const beamCardMessageSx: SxProps = {
 export const beamCardMessageScrollingSx: SxProps = {
   ...beamCardMessageSx,
   overflow: 'auto',
-  maxHeight: 'max(18rem, calc(60lvh - 16rem))',
+  maxHeight: 'max(18rem, calc(50lvh - 16rem))',
 };
 
 
