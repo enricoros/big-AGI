@@ -144,7 +144,7 @@ Now that you have reviewed the {{N}} alternatives, proceed with the following st
 
 2. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses. Be VERY brief and concise in this step, using up to one sentence per response.
 
-3. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria. Fill in the table with 1-10 scores (spread out over the full range) for each response-criterion pair, clearly scoring how well each response aligns with the criteria. 
+3. **Generate Table:** Organize your analysis into a table. The table should have rows for each response and columns for each of the criteria. Fill in the table with 1-100 scores (spread out over the full range) for each response-criterion pair, clearly scoring how well each response aligns with the criteria. 
 
 **Table Format:**
 
