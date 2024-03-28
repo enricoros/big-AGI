@@ -251,7 +251,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     // start the fusion
     const { inputHistory, rays, _fusionUpdate } = _get();
     const chatMessages = inputHistory ? [...inputHistory] : [];
-    const rayMessages = rays.map(ray => ray.message);
+    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.text.trim())
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
     gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },
