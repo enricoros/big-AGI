@@ -16,4 +16,7 @@ const handlerNodeRoutes = (req: Request) =>
   });
 
 export const runtime = 'nodejs';
+// noinspection JSUnusedGlobalSymbols
+export const maxDuration = 25; // the Browsing module has a timeout of ~10s, so we increase 15 (default) -> 25
+export const dynamic = 'force-dynamic';
 export { handlerNodeRoutes as GET, handlerNodeRoutes as POST };
