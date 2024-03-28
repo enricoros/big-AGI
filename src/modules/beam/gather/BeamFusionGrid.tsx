@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps, VariantProp } from '@mui/joy/styles/types';
-import { Box, Button, Typography } from '@mui/joy';
+import { Box, Button, Typography, useTheme } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
 import { BeamFusion } from '~/modules/beam/gather/BeamFusion';
@@ -78,6 +78,7 @@ export function BeamFusionGrid(props: {
   } = useBeamStore(props.beamStore, useShallow(state => ({
     currentFactory: findFusionFactory(state.currentFactoryId),
   })));
+  const isDarkMode = useTheme().palette.mode === 'dark';
 
 
   // derived state
@@ -97,6 +98,7 @@ export function BeamFusionGrid(props: {
       ...(isEmpty ? {
         backgroundColor: 'neutral.solidBg',
       } : {
+        backgroundColor: isDarkMode ? 'success.900' : '#F2FFFA', // f8fff8 was good, too close to the gree hue
         pt: 'var(--Pad)',
       }),
     }}>
