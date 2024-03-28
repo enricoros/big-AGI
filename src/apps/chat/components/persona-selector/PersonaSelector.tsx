@@ -58,16 +58,16 @@ function Tile(props: {
             ? '0 2px 8px -2px rgb(var(--joy-palette-primary-darkChannel) / 30%)'
             : 'sm',
           backgroundColor: props.isHighlighted ? undefined : 'background.popup',
-          ...(props.imageUrl && {
-            backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-            '&:hover': {
-              backgroundImage: 'none',
-            },
-          }),
+          // ...(props.imageUrl && {
+          //   backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
+          //   backgroundPosition: 'center',
+          //   backgroundSize: 'cover',
+          //   '&:hover': {
+          //     backgroundImage: 'none',
+          //   },
+          // }),
         } : {}),
-        flexDirection: 'column', gap: 1,
+        flexDirection: 'column', gap: props.symbol === '🎭' ? 0.5 : 1.25, pt: 1.25,
         ...props.sx,
       }}
     >
@@ -296,6 +296,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             isHidden={hidePersonaCreator}
             onClick={() => editMode ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR) : void navigateToPersonas()}
             sx={{
+              fontSize:'xs',
               boxShadow: 'xs',
               backgroundColor: 'neutral.softDisabledBg',
             }}
