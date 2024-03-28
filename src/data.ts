@@ -103,7 +103,7 @@ Current date: {{LocaleNow}}
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
   },
   Custom: {
-    title: 'Custom Task',
+    title: 'Custom',
     description: 'Define the persona, or task:',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
     symbol: '⚡',
