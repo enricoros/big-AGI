@@ -24,10 +24,13 @@ export function useLlmUpdateModels<TSourceSetup, TAccess, TLLMOptions>(
   error: TRPCClientErrorBase<any> | null
 } {
   return useQuery<{ models: ModelDescriptionSchema[] }, TRPCClientErrorBase<any> | null>({
-    enabled: enabled,
+    enabled: enabled && !!source,
     queryKey: ['list-models', source.id],
-    queryFn: () => vendor.rpcUpdateModelsOrThrow(access),
-    onSuccess: data => source && updateModelsForSource(data, source, keepUserEdits === true),
+    queryFn: async () => {
+      const data = await vendor.rpcUpdateModelsOrThrow(access);
+      source && updateModelsForSource(data, source, keepUserEdits === true);
+      return data;
+    },
     staleTime: Infinity,
   });
 }
