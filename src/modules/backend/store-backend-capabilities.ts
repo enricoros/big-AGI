@@ -24,6 +24,7 @@ export interface BackendCapabilities {
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
   hasVoiceElevenLabs: boolean;
+  llmConfigHash: string;
 }
 
 interface BackendStore extends BackendCapabilities {
@@ -52,6 +53,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
     hasVoiceElevenLabs: false,
+    llmConfigHash: '',
 
     loadedCapabilities: false,
     setCapabilities: (capabilities: Partial<BackendCapabilities>) =>
