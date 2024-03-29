@@ -15,10 +15,7 @@ export function ProviderTRPCQuerySettings(props: { children: React.ReactNode }) 
           retry: false,
           // call functions even when the network is disconnected; this makes 127.0.0.1 work, while probably not causing other issues
           networkMode: 'always',
-          // not tested yet, but they could be good defaults
-          // NOTE: Turn on for 1.15.0 - 1.16.0
-          // refetchOnWindowFocus: false,
-          // refetchOnMount: false,
+          refetchOnWindowFocus: false,
         },
         mutations: {
           retry: false,
