@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { backendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
@@ -102,7 +102,7 @@ export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, pro
       // return await localaiGenerateImages(provider.id, prompt, count);
 
     case 'prodia':
-      const hasProdiaServer = backendCapabilities().hasImagingProdia;
+      const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
       const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
         throw new Error('No Prodia configuration found for TextToImage');
@@ -165,7 +165,7 @@ function getTextToImageProviders(llmsModelSources: LlmsModelSources[], hasProdia
   }
 
   // add Prodia provider
-  const hasProdiaServer = backendCapabilities().hasImagingProdia;
+  const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
   providers.push({
     id: 'prodia',
     label: 'Prodia',

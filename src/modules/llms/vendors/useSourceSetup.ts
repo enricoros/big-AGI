@@ -1,6 +1,6 @@
 import { shallow } from 'zustand/shallow';
 
-import { backendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { IModelVendor } from './IModelVendor';
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
@@ -14,7 +14,7 @@ export function useSourceSetup<TSourceSetup, TAccess, TLLMOptions>(sourceId: DMo
   // invalidates only when the setup changes
   const { updateSourceSetup, ...rest } = useModelsStore(state => {
 
-    const hasNoBackendCap = !vendor.hasBackendCap?.(backendCapabilities());
+    const hasNoBackendCap = !vendor.hasBackendCap?.(getBackendCapabilities());
 
     // find the source (or null)
     const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) as DModelSource<TSourceSetup> ?? null;
