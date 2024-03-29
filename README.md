@@ -2,8 +2,8 @@
 
 Welcome to big-AGI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 12 vendors and
-open-source servers, `big-AGI` offers best-in-class Chats, Calls and Beams with AI Personas,
-visualizations, coding, drawing, calling, and more -- all wrapped in a polished UX.
+open-source servers, `big-AGI` offers best-in-class Chats, [Beams](https://github.com/enricoros/big-AGI/issues/470),
+and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas, visualizations, coding, drawing, calling, and more -- all wrapped in a polished UX.
 
 Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
