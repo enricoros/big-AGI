@@ -5,7 +5,7 @@ import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Se
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { backendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -83,7 +83,7 @@ export function ModelsSourceSelector(props: {
     .map(vendor => {
         const sourceInstanceCount = modelSources.filter(source => source.vId === vendor.id).length;
         const enabled = vendor.instanceLimit > sourceInstanceCount;
-        const backendCaps = backendCapabilities();
+        const backendCaps = getBackendCapabilities();
         return {
           vendor,
           enabled,
