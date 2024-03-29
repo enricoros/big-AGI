@@ -20,7 +20,7 @@ export interface SourceSetupOllama {
 export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
   id: 'ollama',
   name: 'Ollama',
-  rank: 20,
+  rank: 22,
   location: 'local',
   instanceLimit: 2,
   hasBackendCapKey: 'hasLlmOllama',
