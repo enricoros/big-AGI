@@ -25,6 +25,7 @@ import { useAreBeamsOpen } from '~/common/beam/store-beam.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
@@ -60,6 +61,11 @@ export type ChatModeId =
   | 'generate-react';
 
 
+export interface AppChatIntent {
+  initialConversationId: string | null;
+}
+
+
 export function AppChat() {
 
   // state
@@ -78,6 +84,8 @@ export function AppChat() {
   const theme = useTheme();
 
   const isMobile = useIsMobile();
+
+  const intent = useRouterQuery<Partial<AppChatIntent>>();
 
   const showAltTitleBar = useUXLabsStore(state => state.labsChatBarAlt === 'title');
 
@@ -158,6 +166,11 @@ export function AppChat() {
     if (navigateHistoryInFocusedPane(direction))
       showNextTitleChange.current = true;
   }, [navigateHistoryInFocusedPane]);
+
+  // [effect] Handle the initial conversation intent
+  React.useEffect(() => {
+    intent.initialConversationId && handleOpenConversationInFocusedPane(intent.initialConversationId);
+  }, [handleOpenConversationInFocusedPane, intent.initialConversationId]);
 
   // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
   React.useEffect(() => {
