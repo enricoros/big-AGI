@@ -26,7 +26,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, access,
+    source, sourceHasLLMs, access,
     partialSetup, sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorTogetherAI);
 
@@ -39,7 +39,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorTogetherAI, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorTogetherAI, access, !sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>

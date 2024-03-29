@@ -20,7 +20,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, access,
+    source, sourceHasLLMs, access,
     sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorPerplexity);
 
@@ -33,7 +33,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorPerplexity, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorPerplexity, access, !sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>

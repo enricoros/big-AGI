@@ -34,7 +34,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOllama, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ModelVendorOllama, access, false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 

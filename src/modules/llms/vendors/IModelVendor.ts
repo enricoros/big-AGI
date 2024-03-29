@@ -1,5 +1,4 @@
 import type React from 'react';
-import type { TRPCClientErrorBase } from '@trpc/client';
 
 import type { SvgIconProps } from '@mui/joy';
 
@@ -37,11 +36,9 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   getRateLimitDelay?(llm: TDLLM, setup: Partial<TSourceSetup>): number;
 
-  rpcUpdateModelsQuery: (
+  rpcUpdateModelsOrThrow: (
     access: TAccess,
-    enabled: boolean,
-    onSuccess: (data: { models: ModelDescriptionSchema[] }) => void,
-  ) => { isFetching: boolean, refetch: () => void, isError: boolean, error: TRPCClientErrorBase<any> | null };
+  ) => Promise<{ models: ModelDescriptionSchema[] }>;
 
   rpcChatGenerateOrThrow: (
     access: TAccess,
