@@ -17,11 +17,15 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   useNextLoadProgress(route, events);
 
 
-  // [autoconf] initiate the llm auto-configuration process (bacground)
-  React.useEffect(autoConfInitiateConfiguration, []);
-
   // [bootup] logic
-  const doRedirectToNews = (route === ROUTE_APP_CHAT) && shallRedirectToNews();
+  const isOnChat = route === ROUTE_APP_CHAT;
+  const doRedirectToNews = isOnChat && shallRedirectToNews();
+
+  // [autoconf] initiate the llm auto-configuration process if on the chat
+  const doAutoConf = isOnChat && !doRedirectToNews;
+  React.useEffect(() => {
+    doAutoConf && autoConfInitiateConfiguration();
+  }, [doAutoConf]);
 
 
   // redirect Chat -> News if fresh news
