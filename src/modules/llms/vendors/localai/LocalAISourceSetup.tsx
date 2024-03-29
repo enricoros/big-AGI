@@ -30,7 +30,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const { hasLlmLocalAIHost: backendHasHost, hasLlmLocalAIKey: backendHasKey } = getBackendCapabilities();
-  const { source, access, updateSetup } =
+  const { source, sourceHasLLMs, access, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorLocalAI);
 
   // derived state
@@ -44,7 +44,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorLocalAI, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ModelVendorLocalAI, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

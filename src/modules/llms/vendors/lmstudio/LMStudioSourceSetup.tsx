@@ -34,7 +34,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorLMStudio, access, false /* !sourceHasLLMs && shallFetchSucceed */, source);
+    useLlmUpdateModels(ModelVendorLMStudio, access, false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 

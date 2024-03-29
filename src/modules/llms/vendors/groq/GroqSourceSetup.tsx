@@ -20,7 +20,7 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, access,
+    source, sourceHasLLMs, access,
     sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorGroq);
 
@@ -33,7 +33,7 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorGroq, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorGroq, access, !sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>
