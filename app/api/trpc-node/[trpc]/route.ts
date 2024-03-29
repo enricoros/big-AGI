@@ -16,10 +16,7 @@ const handlerNodeRoutes = (req: Request) =>
   });
 
 export const runtime = 'nodejs';
-
-// the Browsing module has a timeout of ~10s, so we increase 15 (default) -> 25
 // noinspection JSUnusedGlobalSymbols
-export const maxDuration = process.env.VERCEL_SERVERLESS_MAX_DURATION ? parseInt(process.env.VERCEL_SERVERLESS_MAX_DURATION, 10) : undefined;
+export const maxDuration = 25; // the Browsing module has a timeout of ~10s, so we increase 15 (default) -> 25
 export const dynamic = 'force-dynamic';
-
 export { handlerNodeRoutes as GET, handlerNodeRoutes as POST };
