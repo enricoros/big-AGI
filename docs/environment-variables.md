@@ -52,12 +52,15 @@ GOOGLE_CSE_ID=
 # Browse
 PUPPETEER_WSS_ENDPOINT=
 
-# Backend Analytics
+# Backend: Analytics
 BACKEND_ANALYTICS=
 
-# Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
+# Backend: HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
+
+# Backend: Deployment-specific
+VERCEL_SERVERLESS_MAX_DURATION=
 
 # Frontend variables
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
@@ -115,23 +118,24 @@ It is currently supported for:
 
 Enable the app to Talk, Draw, and Google things up.
 
-| Variable                   | Description                                                                                                             |
-|:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**         | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
-| `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
-| `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
-| `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
-| **Text-To-Image**          | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
-| `PRODIA_API_KEY`           | Prodia API Key - used with '/imagine ...'                                                                               |
-| **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
-| `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
-| `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
-| **Browse**                 |                                                                                                                         |
-| `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
-| **Backend**                |                                                                                                                         | 
-| `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
-| `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
-| `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
+| Variable                         | Description                                                                                                                     |
+|:---------------------------------|:--------------------------------------------------------------------------------------------------------------------------------|
+| **Text-To-Speech**               | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                                 |
+| `ELEVENLABS_API_KEY`             | ElevenLabs API Key - used for calls, etc.                                                                                       |
+| `ELEVENLABS_API_HOST`            | Custom host for ElevenLabs                                                                                                      |
+| `ELEVENLABS_VOICE_ID`            | Default voice ID for ElevenLabs                                                                                                 |
+| **Text-To-Image**                | [Prodia](https://prodia.com/) is a reliable image generation service                                                            |
+| `PRODIA_API_KEY`                 | Prodia API Key - used with '/imagine ...'                                                                                       |
+| **Google Custom Search**         | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages                |
+| `GOOGLE_CLOUD_API_KEY`           | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials)         |
+| `GOOGLE_CSE_ID`                  | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)                       |
+| **Browse**                       |                                                                                                                                 |
+| `PUPPETEER_WSS_ENDPOINT`         | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                                      |
+| **Backend**                      |                                                                                                                                 | 
+| `BACKEND_ANALYTICS`              | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.             |
+| `HTTP_BASIC_AUTH_USERNAME`       | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                               |
+| `HTTP_BASIC_AUTH_PASSWORD`       | Password for HTTP Basic Authentication.                                                                                         |
+| `VERCEL_SERVERLESS_MAX_DURATION` | Optionally changes the maximum duration (in seconds) for serverless (not edge) functions on Vercel. See your plan for defaults. |
 
 ### Frontend Variables
 

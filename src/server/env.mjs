@@ -78,6 +78,9 @@ export const env = createEnv({
     HTTP_BASIC_AUTH_USERNAME: z.string().optional(),
     HTTP_BASIC_AUTH_PASSWORD: z.string().optional(),
 
+    // Backend: Deployment-specific
+    VERCEL_SERVERLESS_MAX_DURATION: z.string().optional(),
+
     // Build-time configuration
     BIG_AGI_BUILD: z.enum(['standalone', 'static']).optional(),
 
