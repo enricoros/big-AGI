@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
+import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
@@ -16,7 +17,10 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   useNextLoadProgress(route, events);
 
 
-  // logic
+  // [autoconf] initiate the llm auto-configuration process (bacground)
+  React.useEffect(autoConfInitiateConfiguration, []);
+
+  // [bootup] logic
   const doRedirectToNews = (route === ROUTE_APP_CHAT) && shallRedirectToNews();
 
 
