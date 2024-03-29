@@ -19,7 +19,7 @@ export const ModelVendorPerplexity: IModelVendor<SourceSetupPerplexity, OpenAIAc
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmPerplexity,
+  hasBackendCapKey: 'hasLlmPerplexity',
 
   // components
   Icon: PerplexityIcon,

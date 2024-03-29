@@ -35,7 +35,7 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
   rank: 11,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmGemini,
+  hasBackendCapKey: 'hasLlmGemini',
 
   // components
   Icon: GeminiIcon,

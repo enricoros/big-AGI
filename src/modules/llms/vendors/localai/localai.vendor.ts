@@ -20,7 +20,8 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   rank: 22,
   location: 'local',
   instanceLimit: 4,
-  hasBackendCap: (backendCapabilities) => {
+  hasBackendCapKey: 'hasLlmLocalAIHost',
+  hasBackendCapFn: (backendCapabilities) => {
     // this is to show the green mark on the vendor icon in the setup screen
     return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },

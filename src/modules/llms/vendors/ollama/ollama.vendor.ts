@@ -23,7 +23,7 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
   rank: 20,
   location: 'local',
   instanceLimit: 2,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOllama,
+  hasBackendCapKey: 'hasLlmOllama',
 
   // components
   Icon: OllamaIcon,

@@ -21,7 +21,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
   rank: 17,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmTogetherAI,
+  hasBackendCapKey: 'hasLlmTogetherAI',
 
   // components
   Icon: TogetherIcon,

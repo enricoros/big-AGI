@@ -36,7 +36,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOpenRouter,
+  hasBackendCapKey: 'hasLlmOpenRouter',
 
   // components
   Icon: OpenRouterIcon,
