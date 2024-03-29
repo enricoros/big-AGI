@@ -22,7 +22,7 @@ export const ModelVendorMistral: IModelVendor<SourceSetupMistral, OpenAIAccessSc
   rank: 15,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmMistral,
+  hasBackendCapKey: 'hasLlmMistral',
 
   // components
   Icon: MistralIcon,

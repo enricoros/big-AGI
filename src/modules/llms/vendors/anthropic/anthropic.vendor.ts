@@ -27,7 +27,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
   rank: 13,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmAnthropic,
+  hasBackendCapKey: 'hasLlmAnthropic',
 
   // components
   Icon: AnthropicIcon,

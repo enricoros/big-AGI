@@ -19,7 +19,7 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmGroq,
+  hasBackendCapKey: 'hasLlmGroq',
 
   // components
   Icon: GroqIcon,

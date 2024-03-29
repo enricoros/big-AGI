@@ -38,7 +38,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
   rank: 10,
   location: 'cloud',
   instanceLimit: 5,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOpenAI,
+  hasBackendCapKey: 'hasLlmOpenAI',
 
   // components
   Icon: OpenAIIcon,

@@ -15,10 +15,11 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { DModelSourceId, useModelsStore } from '../store-llms';
 import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendorId } from '../vendors/vendors.registry';
+import { vendorHasBackendCap } from '../vendors/useSourceSetup';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
-  if (vendor && vendor.id === 'openai' && ModelVendorOpenAI.hasBackendCap?.())
+  if (vendor && vendor.id === 'openai' && vendorHasBackendCap(...))
     return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }*/
@@ -90,7 +91,7 @@ export function ModelsSourceSelector(props: {
           component: (
             <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
               <ListItemDecorator>
-                {vendorIcon(vendor, !!vendor.hasBackendCap?.(backendCaps))}
+                {vendorIcon(vendor, vendorHasBackendCap(vendor, backendCaps))}
               </ListItemDecorator>
               {vendor.name}
 
