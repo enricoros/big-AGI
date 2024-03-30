@@ -97,7 +97,7 @@ export function BeamScatterDropdown(props: {
         <MoreHorizRoundedIcon />
       </MenuButton>
 
-      <Menu placement='right-end' sx={{ minWidth: 200 }}>
+      <Menu placement='right-end' sx={{ minWidth: 200, zIndex: 'var(--joy-zIndex-modal)' /* on top of its own modal in FS */ }}>
         {/*<ListItem>*/}
         {/*  <Typography level='body-sm'>Beam Presets</Typography>*/}
         {/*</ListItem>*/}
