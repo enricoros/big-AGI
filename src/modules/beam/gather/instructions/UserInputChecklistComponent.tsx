@@ -8,7 +8,7 @@ import { UserChecklistOption } from './UserInputChecklistInstruction';
 
 export function parseTextToChecklist(text: string, relaxMatch: boolean): UserChecklistOption[] {
   // Updated regex to match optional spaces (one or two) before '-', and both [ ] and [x] (case-insensitive for 'x')
-  const regex = !relaxMatch ? /^ {0,2}[-*] \[([ xX])] (.*)$/gm : /^ {0,2}[-*]\s+(.*)$/gm;
+  const regex = !relaxMatch ? /^ {0,2}[-*•] \[([ xX])] (.*)$/gm : /^ {0,2}[-*•]\s+(.*)$/gm;
   let matches;
   const options: UserChecklistOption[] = [];
 
