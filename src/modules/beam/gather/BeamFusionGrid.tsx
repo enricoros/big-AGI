@@ -5,8 +5,8 @@ import type { SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Box, Button, Typography, useTheme } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 
-import { BeamFusion } from '~/modules/beam/gather/BeamFusion';
-import { findFusionFactory, FusionFactorySpec } from '~/modules/beam/gather/instructions/beam.gather.factories';
+import { Fusion } from './Fusion';
+import { findFusionFactory, FusionFactorySpec } from './instructions/beam.gather.factories';
 
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -105,7 +105,7 @@ export function BeamFusionGrid(props: {
 
       {/* Fusions */}
       {props.fusionIds.map((fusionId) => (
-        <BeamFusion
+        <Fusion
           key={'fusion-' + fusionId}
           beamStore={props.beamStore}
           fusionId={fusionId}
