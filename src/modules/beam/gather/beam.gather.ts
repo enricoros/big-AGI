@@ -6,7 +6,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
+import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
 import { GATHER_PLACEHOLDER } from '../beam.config';
 import { RootStoreSlice } from '../store-beam-vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
@@ -67,7 +67,7 @@ const createBFusion = (factoryId: FFactoryId, instructions: Instruction[], llmId
 
 
 export function fusionIsEditable(fusion: BFusion | null): boolean {
-  return fusion?.factoryId === 'custom';
+  return fusion?.factoryId === CUSTOM_FACTORY_ID;
 }
 
 export function fusionIsIdle(fusion: BFusion | null): boolean {
@@ -182,7 +182,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
       return;
 
     // create a custom from the source fusion factory
-    const newCustomFusion: BFusion = createBFusion('custom', sourceFusionFactory.createInstructions(), currentGatherLlmId);
+    const newCustomFusion: BFusion = createBFusion(CUSTOM_FACTORY_ID, sourceFusionFactory.createInstructions(), currentGatherLlmId);
 
     // replace the only editable fusion with the new custom fusion
     _set({
@@ -251,7 +251,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     // start the fusion
     const { inputHistory, rays, _fusionUpdate } = _get();
     const chatMessages = inputHistory ? [...inputHistory] : [];
-    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.text.trim())
+    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.text.trim());
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
     gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },
