@@ -7,6 +7,7 @@ import type { Instruction } from './beam.gather.execution';
 
 
 export type FFactoryId = string;
+export const CUSTOM_FACTORY_ID = 'custom' as const;
 
 export interface FusionFactorySpec {
   factoryId: FFactoryId;
@@ -164,7 +165,7 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     ],
   },
   {
-    factoryId: 'custom',
+    factoryId: CUSTOM_FACTORY_ID,
     shortLabel: 'Custom',
     addLabel: 'Add Custom',
     cardTitle: 'Tailored Response',
