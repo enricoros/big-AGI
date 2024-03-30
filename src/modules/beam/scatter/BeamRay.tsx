@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Box, IconButton, SvgIconProps } from '@mui/joy';
+
+import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -20,19 +21,19 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { GATHER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
+import { GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
-import { useBeamCardScrolling } from '../store-module-beam';
+import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
 
 
 /*const letterSx: SxProps = {
   width: '1rem',
   py: 0.25,
   fontSize: 'xs',
-  backgroundColor: 'background.popup',
+  boxShadow: 'xs',
   border: '1px solid',
   borderColor: 'divider',
-  borderRadius: 'xs',
+  borderRadius: '0.25rem',
   textAlign: 'center',
 };*/
 
@@ -40,7 +41,6 @@ import { useBeamCardScrolling } from '../store-module-beam';
 const RayControlsMemo = React.memo(RayControls);
 
 function RayControls(props: {
-  // rayIndex: number
   isEmpty: boolean,
   isRemovable: boolean,
   isScattering: boolean,
@@ -48,6 +48,7 @@ function RayControls(props: {
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
   onRemove: () => void,
   onToggleGenerate: () => void,
+  rayLetter?: string,
   // isLlmLinked: boolean,
   // onLink: () => void,
 }) {
@@ -60,11 +61,12 @@ function RayControls(props: {
       </div>
     )}
 
-    {/*<Box sx={letterSx}>*/}
-    {/*  {String.fromCharCode(65 + props.rayIndex)}*/}
-    {/*</Box>*/}
-
-    {props.llmVendorIcon && (
+    {/* Letter / LLM Icon (default) */}
+    {props.rayLetter ? (
+      <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
+        {props.rayLetter}
+      </Typography>
+    ) : props.llmVendorIcon && (
       <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
     )}
 
@@ -109,12 +111,14 @@ export function BeamRay(props: {
   beamStore: BeamStoreApi,
   isRemovable: boolean
   rayId: string,
+  rayIndexWeak: number,
   // linkedLlmId: DLLMId | null,
 }) {
 
   // external state
   const ray = useBeamStore(props.beamStore, store => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
   const cardScrolling = useBeamCardScrolling();
+  const showLettering = useBeamScatterShowLettering();
 
   // derived state
   const isError = rayIsError(ray);
@@ -178,7 +182,6 @@ export function BeamRay(props: {
 
       {/* Controls Row */}
       <RayControlsMemo
-        // rayIndex={props.rayIndex}
         isEmpty={!isSelectable}
         isRemovable={props.isRemovable}
         isScattering={isScattering}
@@ -186,6 +189,7 @@ export function BeamRay(props: {
         llmVendorIcon={llmVendorIcon}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
+        rayLetter={showLettering ? 'R' + (1 + props.rayIndexWeak) : undefined}
         // isLlmLinked={isLlmLinked}
         // onLink={handleLlmLink}
       />
