@@ -169,6 +169,7 @@ export function AppNews() {
                         // commented: we scale the images to 600px wide (>300 px tall)
                         // sizes='(max-width: 1200px) 100vw, 50vw'
                         priority={idx === 0}
+                        quality={90}
                       />
                     </AspectRatio>
                   </CardOverflow>
