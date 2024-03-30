@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
+import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
@@ -98,16 +98,16 @@ export function BeamScatterDropdown(props: {
       </MenuButton>
 
       <Menu placement='right-end' sx={{ minWidth: 200, zIndex: 'var(--joy-zIndex-modal)' /* on top of its own modal in FS */ }}>
-        {/*<ListItem>*/}
-        {/*  <Typography level='body-sm'>Beam Presets</Typography>*/}
-        {/*</ListItem>*/}
+        <ListItem>
+          <Typography level='body-sm'>Model Presets</Typography>
+        </ListItem>
 
         {/* Save New */}
         <MenuItem onClick={() => setNamingOpened(true)}>
           <ListItemDecorator>
             <DriveFileRenameOutlineRoundedIcon />
           </ListItemDecorator>
-          Save ...
+          Save new ...
         </MenuItem>
 
         {/* Load any preset */}
@@ -131,15 +131,15 @@ export function BeamScatterDropdown(props: {
           </MenuItem>,
         )}
 
-        <ListDivider inset='startContent' />
+        {/*<ListDivider inset='startContent' />*/}
 
-        {/*<ListItem>*/}
-        {/*  <Typography level='body-sm'>Beam Options</Typography>*/}
-        {/*</ListItem>*/}
+        <ListItem>
+          <Typography level='body-sm'>View</Typography>
+        </ListItem>
 
         <MenuItem onClick={toggleCardScrolling}>
           <ListItemDecorator>{cardScrolling && <CheckRoundedIcon />}</ListItemDecorator>
-          Scroll Responses
+          Fit Messages
         </MenuItem>
 
         <MenuItem onClick={props.onExplainerShow}>
