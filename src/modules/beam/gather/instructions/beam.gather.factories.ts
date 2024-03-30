@@ -1,4 +1,5 @@
 import type { SvgIcon } from '@mui/material';
+import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import MediationOutlinedIcon from '@mui/icons-material/MediationOutlined';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
@@ -166,8 +167,8 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     factoryId: CUSTOM_FACTORY_ID,
     shortLabel: 'Custom',
     addLabel: 'Add Custom',
-    cardTitle: 'Tailored Response',
-    // Icon: BuildCircleOutlinedIcon,
+    cardTitle: 'User Defined',
+    Icon: BuildRoundedIcon,
     description: 'Define your own fusion prompt.',
     createInstructions: () => [
       {
