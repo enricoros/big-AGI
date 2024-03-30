@@ -16,7 +16,6 @@ export interface FusionFactorySpec {
   cardTitle: string;   // used as the title
   Icon?: typeof SvgIcon;
   description: string;
-  isDev?: boolean;
   createInstructions: () => Instruction[];
 }
 
@@ -123,7 +122,6 @@ The final output should reflect a deep understanding of the user's preferences a
     cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon,
     description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice.',
-    isDev: true,
     createInstructions: () => [
       {
         type: 'chat-generate',

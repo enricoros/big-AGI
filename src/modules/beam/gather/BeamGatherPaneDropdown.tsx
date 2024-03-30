@@ -12,14 +12,10 @@ export function BeamGatherDropdown() {
 
   // external (persisted) state
   const {
-    gatherShowDevMethods,
     gatherShowPrompts,
-    toggleGatherShowDevMethods,
     toggleGatherShowPrompts,
   } = useModuleBeamStore(useShallow(state => ({
-    gatherShowDevMethods: state.gatherShowDevMethods,
     gatherShowPrompts: state.gatherShowPrompts,
-    toggleGatherShowDevMethods: state.toggleGatherShowDevMethods,
     toggleGatherShowPrompts: state.toggleGatherShowPrompts,
   })));
 
@@ -39,10 +35,6 @@ export function BeamGatherDropdown() {
         <MenuItem onClick={toggleGatherShowPrompts}>
           <ListItemDecorator>{gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
           Show All Prompts
-        </MenuItem>
-        <MenuItem onClick={toggleGatherShowDevMethods}>
-          <ListItemDecorator>{gatherShowDevMethods && <CheckRoundedIcon />}</ListItemDecorator>
-          Experimental Methods
         </MenuItem>
       </Menu>
     </Dropdown>

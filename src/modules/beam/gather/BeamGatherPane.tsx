@@ -12,10 +12,9 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { FFactoryId, findFusionFactory, FUSION_FACTORIES } from './instructions/beam.gather.factories';
+import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
-import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherPaneClasses = {
@@ -67,13 +66,12 @@ export function BeamGatherPane(props: {
 
   // external state
   // const { setStickToBottom } = useScrollToBottom();
-  const gatherShowDevMethods = useModuleBeamStore(state => state.gatherShowDevMethods);
   const {
-    currentFactory, currentFactoryId, currentGatherLlmId, isGatheringAny,
+    currentFactoryId, currentGatherLlmId, isGatheringAny,
     setCurrentFactoryId, setCurrentGatherLlmId,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     // state
-    currentFactory: findFusionFactory(state.currentFactoryId),
+    // currentFactory: findFusionFactory(state.currentFactoryId),
     currentFactoryId: state.currentFactoryId,
     currentGatherLlmId: state.currentGatherLlmId,
     isGatheringAny: state.isGatheringAny,
@@ -87,7 +85,7 @@ export function BeamGatherPane(props: {
   );
 
   // derived state
-  const isNoFactorySelected = currentFactoryId === null;
+  // const isNoFactorySelected = currentFactoryId === null;
 
   // const CurrentFactoryIcon = currentFactory?.Icon ?? null;
   // const currentFactoryDescription = currentFactory?.description ?? '';
@@ -133,11 +131,7 @@ export function BeamGatherPane(props: {
           // sx={{ boxShadow: isNoFactorySelected ? 'xs' : undefined }}
         >
           {FUSION_FACTORIES.map(factory => {
-            const { factoryId, shortLabel, isDev } = factory;
-
-            // ignore dev fusions, if not asked for it
-            if (isDev && !gatherShowDevMethods) return null;
-
+            const { factoryId, shortLabel } = factory;
             const isActive = factoryId === currentFactoryId;
             const buttonColor: ColorPaletteProp = isActive ? GATHER_COLOR : 'neutral';
             return (
