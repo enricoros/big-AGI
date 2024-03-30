@@ -32,7 +32,7 @@ export function BeamGatherDropdown() {
       >
         <MoreHorizRoundedIcon />
       </MenuButton>
-      <Menu placement='right-end' sx={{ minWidth: 250 }}>
+      <Menu placement='right-end' sx={{ minWidth: 250, zIndex: 'var(--joy-zIndex-modal)' /* on top of its own modal in FS */ }}>
         <ListItem>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
