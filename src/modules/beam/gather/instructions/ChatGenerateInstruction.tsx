@@ -29,7 +29,7 @@ export interface ChatGenerateInstruction extends BaseInstruction {
   method: ChatGenerateMethods;
   systemPrompt: string;
   userPrompt: string;
-// evalPrompt?: string;
+  // evalPrompt?: string;
 }
 
 
