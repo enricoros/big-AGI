@@ -80,7 +80,7 @@ export function BeamScatterDropdown(props: {
   const handlePresetLoad = React.useCallback((presetId: string) => {
     const { scatterPresets } = useModuleBeamStore.getState();
     const preset = scatterPresets.find(preset => preset.id === presetId);
-    if (preset && preset.rayLlmIds.length)
+    if (preset && preset.rayLlmIds?.length)
       props.beamStore.getState().setRayLlmIds(preset.rayLlmIds);
   }, [props.beamStore]);
 
@@ -115,7 +115,7 @@ export function BeamScatterDropdown(props: {
           <MenuItem key={preset.id}>
             <ListItemDecorator />
             <Typography onClick={() => handlePresetLoad(preset.id)}>
-              Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.rayLlmIds.length}</span>
+              Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.rayLlmIds?.length}</span>
             </Typography>
             <IconButton
               size='sm'
