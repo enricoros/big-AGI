@@ -37,7 +37,7 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     createInstructions: () => [
       {
         type: 'chat-generate',
-        label: 'Syntesizing Fusion',
+        label: 'Synthesizing Fusion',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
 You are an expert AI text synthesizer, your task is to analyze the following inputs and generate a single, comprehensive response that addresses the core objectives or questions.
