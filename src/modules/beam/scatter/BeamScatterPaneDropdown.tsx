@@ -64,7 +64,11 @@ export function BeamScatterDropdown(props: {
   const [namingOpened, setNamingOpened] = React.useState(false);
 
   // external state
-  const { scatterPresets, cardScrolling, addScatterPreset, deleteScatterPreset, toggleCardScrolling } = useModuleBeamStore();
+  const {
+    scatterPresets, addScatterPreset, deleteScatterPreset,
+    cardScrolling, toggleCardScrolling,
+    scatterShowLettering, toggleScatterShowLettering,
+  } = useModuleBeamStore();
 
 
   // handlers - load/save presets
@@ -140,6 +144,11 @@ export function BeamScatterDropdown(props: {
         <MenuItem onClick={toggleCardScrolling}>
           <ListItemDecorator>{cardScrolling && <CheckRoundedIcon />}</ListItemDecorator>
           Fit Messages
+        </MenuItem>
+
+        <MenuItem onClick={toggleScatterShowLettering}>
+          <ListItemDecorator>{scatterShowLettering && <CheckRoundedIcon />}</ListItemDecorator>
+          Response Numbers
         </MenuItem>
 
         <MenuItem onClick={props.onExplainerShow}>

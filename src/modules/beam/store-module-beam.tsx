@@ -18,6 +18,7 @@ interface ModuleBeamStore {
   // state
   scatterPresets: BeamScatterPreset[];
   cardScrolling: boolean;
+  scatterShowLettering: boolean;
   gatherShowDevMethods: boolean;
   gatherShowPrompts: boolean;
 
@@ -27,7 +28,7 @@ interface ModuleBeamStore {
   renameScatterPreset: (id: string, name: string) => void;
 
   toggleCardScrolling: () => void;
-
+  toggleScatterShowLettering: () => void;
   toggleGatherShowDevMethods: () => void;
   toggleGatherShowPrompts: () => void;
 }
@@ -38,6 +39,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     scatterPresets: [],
     cardScrolling: false,
+    scatterShowLettering: false,
     gatherShowDevMethods: true,
     gatherShowPrompts: false,
 
@@ -57,6 +59,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     toggleCardScrolling: () => _set(state => ({ cardScrolling: !state.cardScrolling })),
 
+    toggleScatterShowLettering: () => _set(state => ({ scatterShowLettering: !state.scatterShowLettering })),
 
     toggleGatherShowDevMethods: () => _set(state => ({ gatherShowDevMethods: !state.gatherShowDevMethods })),
 
@@ -74,4 +77,8 @@ export function getBeamCardScrolling() {
 
 export function useBeamCardScrolling() {
   return useModuleBeamStore((state) => state.cardScrolling);
+}
+
+export function useBeamScatterShowLettering() {
+  return useModuleBeamStore((state) => state.scatterShowLettering);
 }

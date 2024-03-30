@@ -39,9 +39,10 @@ export function BeamRayGrid(props: {
     <Box sx={props.isMobile ? rayGridMobileSx : rayGridDesktopSx}>
 
       {/* Rays */}
-      {props.rayIds.map((rayId) => (
+      {props.rayIds.map((rayId, index) => (
         <BeamRay
           key={'ray-' + rayId}
+          rayIndexWeak={index}
           beamStore={props.beamStore}
           isRemovable={raysCount > SCATTER_RAY_MIN}
           rayId={rayId}
