@@ -221,8 +221,9 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
       fusions: [...fusions, newFusion],
     });
 
-    // start the fusion
-    toggleFusionGathering(newFusion.fusionId);
+    // start the fusion, if not custom
+    if (newFusion.factoryId !== CUSTOM_FACTORY_ID)
+      toggleFusionGathering(newFusion.fusionId);
   },
 
   removeFusion: (fusionId: BFusionId) => {
