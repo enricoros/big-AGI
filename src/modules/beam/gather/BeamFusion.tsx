@@ -30,9 +30,9 @@ const FusionControlsMemo = React.memo(FusionControls);
 function FusionControls(props: {
   fusion: BFusion,
   factory: FusionFactorySpec,
-  isEmpty: boolean,
   isFusing: boolean,
-  isStopped: boolean,
+  isInterrupted: boolean,
+  isUsable: boolean,
   llmLabel: string,
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
   onRemove: () => void,
@@ -80,7 +80,7 @@ function FusionControls(props: {
           ? props.fusion.fusingProgressComponent
           : (
             <Box sx={{ fontSize: 'sm', fontWeight: 'md' }}>
-              {props.factory.cardTitle} {props.isStopped && <em> - Interrupted</em>}
+              {props.factory.cardTitle} {props.isInterrupted && <em> - Interrupted</em>}
             </Box>
           )}
       </Sheet>
@@ -88,7 +88,7 @@ function FusionControls(props: {
       {!props.isFusing ? (
         <GoodTooltip title='Retry'>
           <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
-            {props.isEmpty ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}
+            {!props.isUsable ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}
           </IconButton>
         </GoodTooltip>
       ) : (
@@ -180,9 +180,9 @@ export function BeamFusion(props: {
   return (
     <BeamCard
       className={
-        (isIdle ? beamCardClasses.fusionIdle : '')
-        + (isError ? beamCardClasses.errored + ' ' : '')
-        + ((isUsable || isFusing) ? beamCardClasses.selectable + ' ' : '')
+        // (isIdle ? beamCardClasses.fusionIdle : '')
+        (isError ? beamCardClasses.errored + ' ' : '')
+        + ((isUsable || isFusing || isIdle) ? beamCardClasses.selectable + ' ' : '')
         + (isFusing ? beamCardClasses.attractive + ' ' : '')
         // + (beamCardClasses.smashTop + ' ')
       }
@@ -192,9 +192,9 @@ export function BeamFusion(props: {
       <FusionControlsMemo
         fusion={fusion}
         factory={factory}
-        isEmpty={!isUsable}
         isFusing={isFusing}
-        isStopped={isStopped}
+        isInterrupted={isStopped}
+        isUsable={isUsable}
         llmLabel={llmLabel}
         llmVendorIcon={llmVendorIcon}
         onRemove={handleFusionRemove}
@@ -205,12 +205,9 @@ export function BeamFusion(props: {
       {/* Show issue, if any */}
       {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
 
-      {/* Dyanmic: the progress, set by the execution chain */}
-      {/*{fusion?.fusingProgressComponent && fusion.fusingProgressComponent}*/}
 
       {/* Dynamic: instruction-specific components */}
       {!!fusion?.fusingInstructionComponent && fusion.fusingInstructionComponent}
-
 
       {/* Output Message */}
       {(!!fusion?.outputDMessage?.text || fusion?.stage === 'fusing') && (
@@ -226,6 +223,7 @@ export function BeamFusion(props: {
           )}
         </Box>
       )}
+
 
       {/* Use Fusion */}
       {showUseButtons && (
