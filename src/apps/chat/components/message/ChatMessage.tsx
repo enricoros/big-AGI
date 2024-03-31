@@ -611,14 +611,7 @@ export function ChatMessage(props: {
             )}
           </Box>
           {/* Delete / Branch / Truncate */}
-          {!!props.onMessageDelete && <ListDivider />}
-          {!!props.onMessageDelete && (
-            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
-              <span style={{ opacity: 0.5 }}>message</span>
-            </MenuItem>
-          )}
+          {!!props.onMessageBranch && <ListDivider />}
           {!!props.onMessageBranch && (
             <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
@@ -626,6 +619,13 @@ export function ChatMessage(props: {
               </ListItemDecorator>
               Branch
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
+            </MenuItem>
+          )}
+          {!!props.onMessageDelete && (
+            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+              <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
           {!!props.onMessageTruncate && (
