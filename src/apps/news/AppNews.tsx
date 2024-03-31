@@ -16,10 +16,9 @@ import { NewsItems } from './news.data';
 
 
 // number of news items to show by default, before the expander
-const DEFAULT_NEWS_COUNT = 3;
+const DEFAULT_NEWS_COUNT = 4;
 
 
-// callout, for special occasions
 export const newsRoadmapCallout =
   <Card variant='solid' invertedColors>
     <CardContent sx={{ gap: 2 }}>
@@ -177,7 +176,7 @@ export function AppNews() {
               </Card>
 
               {/* Inject the roadmap item here*/}
-              {idx === 0 && (
+              {idx === 3 && (
                 <Box sx={{ mb: 3 }}>
                   {newsRoadmapCallout}
                 </Box>
