@@ -39,6 +39,7 @@ import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
 
+import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseGetPageUpdatingState } from './editors/browse-load';
@@ -87,7 +88,7 @@ export function AppChat() {
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
-  const showAltTitleBar = useUXLabsStore(state => state.labsChatBarAlt === 'title');
+  const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
 
   const { openLlmOptions } = useOptimaLayout();
 
