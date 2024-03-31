@@ -8,6 +8,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
@@ -49,14 +50,25 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-    versionCode: '1.15.0',
+    versionCode: '1.16.0',
     items: [
-      Beam
       Draw
       ...
       Screen Capture (when removed from labs)
     ]
   }*/
+  {
+    versionCode: '1.15.0',
+    versionName: 'Beam',
+    versionDate: new Date('2024-04-01T00:00:00Z'),
+    versionCoverImage: coverV115,
+    items: [
+      { text: <>BEAM </>, issue: 443, icon: ChatBeamIcon },
+      { text: <>a</> },
+      { text: <>b</> },
+      { text: <>c</> },
+    ],
+  },
   {
     versionCode: '1.14.1',
     versionName: 'Modelmorphic',
