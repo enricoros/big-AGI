@@ -15,7 +15,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 // uncomment for more settings
-// const DEV_MODE_SETTINGS = false;
+export const DEV_MODE_SETTINGS = false;
 
 
 export function UxLabsSettings() {
@@ -42,10 +42,10 @@ export function UxLabsSettings() {
       checked={labsHighPerformance} onChange={setLabsHighPerformance}
     />
 
-    <FormSwitchControl
+    {DEV_MODE_SETTINGS && <FormSwitchControl
       title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Models')}
       checked={labsChatBarAlt === 'title'} onChange={(on) => setLabsChatBarAlt(on ? 'title' : false)}
-    />
+    />}
 
     {!isMobile && <FormSwitchControl
       title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screen Capture</>} description={'v1.13 · ' + (labsAttachScreenCapture ? 'Enabled' : 'Disabled')}
