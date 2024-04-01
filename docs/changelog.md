@@ -5,12 +5,19 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.15.0 - Mar 2024
+### 1.16.0 - Mar 2024
 
-Prediction: OpenAI will release GPT-5 on March 14, 2024. We will support it on day 1.
-
-- milestone: [1.15.0](https://github.com/enricoros/big-agi/milestone/15)
+- milestone: [1.16.0](https://github.com/enricoros/big-agi/milestone/16)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+
+### What's New in 1.15.0 · April 1, 2024 · Beam
+
+- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- Managed Deployments **Auto-Configuration**: simplify the UI mdoels setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
+- Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
+- Enhanced the default Persona
+- Fixes to Gemini models and SVGs, improvements to UI and icons
+- Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
 
 ### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
 

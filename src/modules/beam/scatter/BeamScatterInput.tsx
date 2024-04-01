@@ -7,13 +7,13 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { SCATTER_INVERT_USER_MESSAGE } from '../beam.config';
+import { BEAM_INVERT_BACKGROUND } from '../beam.config';
 
 
 const userMessageWrapperSx: SxProps = {
-  pt: 'var(--Pad)',
+  mb: 'calc(-1 * var(--Pad))', // absorb parent 'gap' to next
   px: 'var(--Pad)',
-  mb: 'calc(-1 * var(--Pad))', // absorb gap to the next-top
+  pt: 'var(--Pad)',
 
   // sticky user message, only displaced by the scatter controls
   // NOTE: disabled: should feel good but feels weird
@@ -69,7 +69,7 @@ export function BeamScatterInput(props: {
     return (showHistoryMessage && otherHistoryCount >= 1) ? (
       // <Chip color='primary' variant='outlined' endDecorator={<ChipDelete />} sx={{ my: 1 }}>
       <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.9 }} onClick={() => setShowHistoryMessage(on => !on)}>
-        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before your input ...
+        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before this input ...
       </Typography>
       // </Chip>
     ) : null;
@@ -81,7 +81,7 @@ export function BeamScatterInput(props: {
     return null;
 
   return (
-    <Box sx={SCATTER_INVERT_USER_MESSAGE ? userMessageWrapperINVSx : userMessageWrapperSx}>
+    <Box sx={BEAM_INVERT_BACKGROUND ? userMessageWrapperINVSx : userMessageWrapperSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}

@@ -241,7 +241,7 @@ export function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
-  const labsChatBeam = useUXLabsStore(state => state.labsChatBeam);
+  const labsBeam = useUXLabsStore(state => state.labsBeam);
   const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
     showAvatar: props.showAvatar !== undefined ? props.showAvatar : state.zenMode !== 'cleaner',
     contentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
@@ -318,7 +318,7 @@ export function ChatMessage(props: {
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    labsChatBeam && await props.onMessageBeam?.(messageId);
+    labsBeam && await props.onMessageBeam?.(messageId);
   };
 
   const handleOpsBranch = (e: React.MouseEvent) => {
@@ -611,14 +611,7 @@ export function ChatMessage(props: {
             )}
           </Box>
           {/* Delete / Branch / Truncate */}
-          {!!props.onMessageDelete && <ListDivider />}
-          {!!props.onMessageDelete && (
-            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
-              <span style={{ opacity: 0.5 }}>message</span>
-            </MenuItem>
-          )}
+          {!!props.onMessageBranch && <ListDivider />}
           {!!props.onMessageBranch && (
             <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
@@ -626,6 +619,13 @@ export function ChatMessage(props: {
               </ListItemDecorator>
               Branch
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
+            </MenuItem>
+          )}
+          {!!props.onMessageDelete && (
+            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+              <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
           {!!props.onMessageTruncate && (
@@ -676,7 +676,7 @@ export function ChatMessage(props: {
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
             </MenuItem>
           )}
-          {!!props.onMessageBeam && labsChatBeam && (
+          {!!props.onMessageBeam && labsBeam && (
             <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
               <ListItemDecorator>
                 <ChatBeamIcon color={fromSystem ? undefined : 'primary'} />

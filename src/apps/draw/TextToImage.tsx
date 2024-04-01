@@ -137,7 +137,9 @@ export function TextToImage(props: {
 
         // layout
         display: 'grid',
-        gridTemplateColumns: props.isMobile ? 'repeat(auto-fit, minmax(320px, 1fr))' : 'repeat(auto-fit, minmax(400px, 1fr))',
+        gridTemplateColumns: props.isMobile
+          ? 'repeat(auto-fit, minmax(320px, 1fr))'
+          : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
         {prompts.map((prompt, index) => {
