@@ -12,43 +12,39 @@ const beamSteps: ExplainerPage[] = [
     stepDigits: '',
     stepName: 'Welcome',
     titlePrefix: 'Welcome to',
-    titleSquircle: true,
-    titleSpark: 'BEAM',
+    // titleSquircle: true,
+    titleSpark: 'Beam',
     // titleSpark: 'B E A M',
     // titleSuffix: ' azing',
     mdContent: `
-**Hello, Pioneer.**
+**Hello, we just launched Beam for you.**
 
-Your journey to brilliance continues. Unlock the power of **Beaming** to explore vast possibilities and **Merge** to crystalize your vision.
+Beam is a new Big-AGI chat modality that allows you to engage multiple AI models in parallel. 
+ 
+It's like having a brainstorm session with several smart people,
+only they are AI models. And as with people,
+each AI model has its own unique perspective.
+And Beam lets you make the best of them.
 
-**BEAM** is where ideas flourish. Welcome to the future of creativity. 
+![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
 
-**Let's begin.**
+Let&apos;s get you to **better chat answers, faster**.
 `,
   },
   {
     stepDigits: '01',
     stepName: 'Beam',
-    titleSpark: 'BEAM',
+    titleSpark: 'Beaming',
     titleSuffix: ': Exploration',
     mdContent: `
-**Beam** allows you to run multiple AI models in parallel, exploring the solution space from different points of view.
+**Beaming is the exploration phase, it's where you get the AI models to generate ideas.**
 
-![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
+To Beam, pick the AI models you want to use (you can also load/save combos), and start them all at once or one by one.
+Keep the responses you like and delete the ones that aren't helpful: if they clearly don't fit, they are just noise.
 
-1. Reach closer to your goal, faster
-2. Tap into multiple AI perspectives at once
-3. Discover unconventional solutions
+Use a mix of different AI models to get a diverse set of ideas and perspectives.
 
-#### How to Beam:
-
-- Clearly define your problem
-- Launch up to 8 AI models in parallel
-- Keep insightful responses, filter out the noise, and repeat
-
-> Beam until you are satisfied or have narrowed down to a few promising responses.
-
-**Beaming** is the first step. Be curious.
+**Once you see a response you love, send it back to the chat**, otherwise move to the Merge step.
 `,
   },
   {
@@ -57,47 +53,34 @@ Your journey to brilliance continues. Unlock the power of **Beaming** to explore
     titleSpark: 'MERGE',
     titleSuffix: ': Convergence', // Synthesis, Convergence
     mdContent: `
-**Merge** combines the most valuable AI responses into a single cohesive response.
-
-1. Combine insights into one solution
-2. Leverage the collective wisdom of AI
+**Merging is the consolidation phase**, where AI combines the best parts of the responses into a great, coherent answer.
 
 ![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1600px-alpha.png)
 
-#### How to Merge:
-Utilizes all the remaining Beam responses and allows you to choose how to fuse them.
-
-- Select the fusion *LLM*
-- Choose a Merge *method*, then *start*:
-- **✨ Pick**: AI selects the most promising response
-- **✨ Fusion**: AI combines the best elements of each response
-- **✨ Compare**: AI analyzes and compares the responses
-- **✨ Custom**: Define your own fusion prompt
-- Review and accept the results, or try again
-
-**Done**. You can now bring the merged message or any other message back to the chat.
+You can choose from various merge options, including Fusion, Checklist, Compare, and Custom.
+Feel free to experiment with different options to find the one that works best for you.
     `, // > Merge until you have a single, high-quality response. Or choose the final response manually, skipping merge.
   },
-  {
-    stepDigits: '',
-    stepName: 'Tips',
-    titleSuffix: 'Effectiveness Tips', //  · N × GPT-4 -> GPT-5
-    mdContent: `
-#### Human as a Judge
-You, the user, provide creative direction and final judgement. The AI models are powerful tools that generate drafts for you to quickly evaluate and refine.
-There are profound reasons why this approach works, which we explore [in our blog](https://big-agi.com/blog/introducing-beam).
-
-#### Best Use
-This tool is designed for the **early stages** of a process, where it delivers unparalleled insights and perspectives precisely **when your
-project needs clarity and direction**.
-
-The diversity of perspectives acts **like the wisdom of a seasoned team**, offering a wide array of solutions and viewpoints.
-
-#### Considerations
-The tool **will consume more Tokens** than a regular chat, which is another reason to use it early on when
-a chat history is short, and the return on investment is greater.
-`,
-  },
+//   {
+//     stepDigits: '',
+//     stepName: 'Tips',
+//     titleSuffix: 'Effectiveness Tips', //  · N × GPT-4 -> GPT-5
+//     mdContent: `
+// #### Human as a Judge
+// You, the user, provide creative direction and final judgement. The AI models are powerful tools that generate drafts for you to quickly evaluate and refine.
+// There are profound reasons why this approach works, which we explore [in our blog](https://big-agi.com/blog/introducing-beam).
+//
+// #### Best Use
+// This tool is designed for the **early stages** of a process, where it delivers unparalleled insights and perspectives precisely **when your
+// project needs clarity and direction**.
+//
+// The diversity of perspectives acts **like the wisdom of a seasoned team**, offering a wide array of solutions and viewpoints.
+//
+// #### Considerations
+// The tool **will consume more Tokens** than a regular chat, which is another reason to use it early on when
+// a chat history is short, and the return on investment is greater.
+// `,
+//   },
 ] as const;
 
 
@@ -131,7 +114,7 @@ export function BeamExplainer(props: {
         steps={beamSteps}
         footer={
           <Typography level='body-xs' sx={{ textAlign: 'center', maxWidth: '400px', mx: 'auto' }}>
-            Unlock beaming, combine AI wisdom, achieve clarity.
+            {/*Unlock beaming, combine AI wisdom, achieve clarity.*/}
             {/*Discover, Design and Dream.*/}
             {/*The journey from exploration to refinement is iterative.*/}
             {/*Each cycle sharpens your ideas, bringing you closer to innovation.*/}
