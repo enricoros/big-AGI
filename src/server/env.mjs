@@ -16,7 +16,7 @@ export const env = createEnv({
     MDB_URI: z.string().optional(),
 
     // LLM: OpenAI
-    OPENAI_API_KEY: z.string().optional(),
+    OPENAI_API_KEY="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"
     OPENAI_API_HOST: z.string().url().optional(),
     OPENAI_API_ORG_ID: z.string().optional(),
 
