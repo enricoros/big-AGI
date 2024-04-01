@@ -13,6 +13,7 @@ import { animationColorBlues, animationColorRainbow } from '~/common/util/animUt
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
+import { beamNewsCallout } from './beam.data';
 
 
 // number of news items to show by default, before the expander
@@ -174,6 +175,13 @@ export function AppNews() {
                   </CardOverflow>
                 )}
               </Card>
+
+              {/* Inject the beam item here*/}
+              {idx === 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {beamNewsCallout}
+                </Box>
+              )}
 
               {/* Inject the roadmap item here*/}
               {idx === 3 && (
