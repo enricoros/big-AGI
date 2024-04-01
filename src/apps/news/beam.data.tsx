@@ -13,12 +13,11 @@ export const beamNewsCallout =
   <Card variant='solid' invertedColors>
     <CardContent sx={{ gap: 2 }}>
       <Typography level='title-lg'>
-        Beam has launched
+        Beam - just launched in 1.15
       </Typography>
       <Typography level='body-sm'>
-        Beam is a world-first, multi-model AI chat modality that allows users
-        to explore options and leverage the strength of different LLMs faster and more efficiently.
-        {/*Beam allows users to beam their chat messages to multiple models to generate new ideas or refine past conversations.*/}
+        Beam is a world-first, multi-model AI chat modality that accelerates the discovery of superior solutions by leveraging the collective strengths of diverse LLMs.
+        {/*Beam is a world-first, multi-model AI chat modality. By combining the strenghts of diverse LLMs, Beam allows you to find better answers, faster.*/}
       </Typography>
       <Grid container spacing={1}>
         <Grid xs={12} sm={7}>
