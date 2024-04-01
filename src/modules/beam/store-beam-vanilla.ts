@@ -13,7 +13,7 @@ import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './g
 
 export type BeamStore = RootStoreSlice & GatherStoreSlice & ScatterStoreSlice;
 
-export const createBeamStore = () => createStore<BeamStore>()((...a) => ({
+export const createBeamVanillaStore = () => createStore<BeamStore>()((...a) => ({
 
   ...createRootSlice(...a),
   ...createScatterSlice(...a),
@@ -30,6 +30,7 @@ interface RootStateSlice {
 
   isOpen: boolean;
   isMaximized: boolean;
+  inputChatLlmId: DLLMId | null;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
   inputReady: boolean;
@@ -41,6 +42,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
   isMaximized: false,
+  inputChatLlmId: null,
   inputHistory: null,
   inputIssues: null,
   inputReady: false,
@@ -51,7 +53,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 export interface RootStoreSlice extends RootStateSlice {
 
   // lifecycle
-  open: (chatHistory: Readonly<DMessage[]>, initialLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminate: () => void;
 
   setIsMaximized: (maximized: boolean) => void;
@@ -66,7 +68,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialFusionLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLLMId: DLLMId | null, callback: BeamSuccessCallback) => {
     const { isOpen: wasOpen, terminate } = _get();
 
     // reset pending operations
@@ -78,6 +80,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
+      inputChatLlmId: initialChatLLMId,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid history',
       inputReady: isValidHistory,
@@ -85,27 +88,19 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
       // rays already reset
 
-      // fusions
-      ...((!wasOpen && initialFusionLlmId) && {
-        // update the model only if the dialog was not already open
-        fusionLlmId: initialFusionLlmId,
-      }),
+      // update the model only if the dialog was not already open
+      ...((!wasOpen && initialChatLLMId) && {
+        currentGatherLlmId: initialChatLLMId,
+      } satisfies Partial<GatherStoreSlice>),
     });
   },
 
-  terminate: () => { /*_get().isOpen &&*/
-    const { rays, fusions, fusionLlmId, gatherShowPrompts } = _get();
-
-    _set({
+  terminate: () =>
+    _set(state => ({
       ...initRootStateSlice(),
-      ...reInitScatterStateSlice(rays),
-      ...reInitGatherStateSlice(fusions),
-
-      // remember after termination
-      fusionLlmId,
-      gatherShowPrompts,
-    });
-  },
+      ...reInitGatherStateSlice(state.fusions, state.currentGatherLlmId),  // remember after termination
+      ...reInitScatterStateSlice(state.rays),
+    })),
 
 
   setIsMaximized: (maximized: boolean) =>

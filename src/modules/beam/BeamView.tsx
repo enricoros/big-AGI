@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Alert, Box } from '@mui/joy';
 
+import { Alert, Box, CircularProgress } from '@mui/joy';
+
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
-import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
-import { BeamGatherInput } from './gather/BeamGatherInput';
+import { BeamFusionGrid } from './gather/BeamFusionGrid';
 import { BeamGatherPane } from './gather/BeamGatherPane';
 import { BeamRayGrid } from './scatter/BeamRayGrid';
 import { BeamScatterInput } from './scatter/BeamScatterInput';
@@ -23,25 +24,31 @@ export function BeamView(props: {
   showExplainer?: boolean,
 }) {
 
-  // linked state
+  // state
+  const [warnIsScattering, setWarnIsScattering] = React.useState(false);
+
+  // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
-    /* gather */ setFusionIndex, toggleGatherShowPrompts, setFusionLlmId, fusionStart, fusionStop,
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
-    /* gather */ fusionIndex, gatherShowPrompts, fusionLlmId, isGathering,
+    /* gather (composite) */ canGather,
   } = useBeamStore(props.beamStore, useShallow(state => ({
-    inputHistory: state.inputHistory, inputIssues: state.inputIssues, inputReady: state.inputReady,
-    isScattering: state.isScattering, raysReady: state.raysReady,
-    fusionIndex: state.fusionIndex, gatherShowPrompts: state.gatherShowPrompts, fusionLlmId: state.fusionLlmId, isGathering: state.isGathering,
+    inputHistory: state.inputHistory,
+    inputIssues: state.inputIssues,
+    inputReady: state.inputReady,
+    // scatter
+    isScattering: state.isScattering,
+    raysReady: state.raysReady,
+    // gather (composite)
+    canGather: state.raysReady >= 2 && state.currentFactoryId !== null && state.currentGatherLlmId !== null,
   })));
   const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-  const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(fusionLlmId, setFusionLlmId, props.isMobile ? '' : 'Merge Model', true);
-
+  const fusionIds = useBeamStore(props.beamStore, useShallow(state => state.fusions.map(fusion => fusion.fusionId)));
 
   // derived state
   const raysCount = rayIds.length;
@@ -52,6 +59,32 @@ export function BeamView(props: {
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
   const handleRayIncreaseCount = React.useCallback(() => setRayCount(raysCount + 1), [setRayCount, raysCount]);
+
+
+  const handleCreateFusion = React.useCallback(() => {
+    // if scatter is busy, ask for confirmation
+    if (isScattering) {
+      setWarnIsScattering(true);
+      return;
+    }
+    props.beamStore.getState().createFusion();
+  }, [isScattering, props.beamStore]);
+
+
+  const handleStopScatterConfirmation = React.useCallback(() => {
+    setWarnIsScattering(false);
+    stopScatteringAll();
+    handleCreateFusion();
+  }, [handleCreateFusion, stopScatteringAll]);
+
+  const handleStopScatterDenial = React.useCallback(() => setWarnIsScattering(false), []);
+
+
+  // (this is great ux) scatter freed up while we were asking the question, proceed
+  React.useEffect(() => {
+    if (warnIsScattering && !isScattering)
+      handleStopScatterConfirmation();
+  }, [handleStopScatterConfirmation, isScattering, warnIsScattering]);
 
 
   // runnning
@@ -67,10 +100,10 @@ export function BeamView(props: {
   if (props.showExplainer && explainerUnseen)
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
-  console.log('BeamView', props.beamStore.getState());
   return (
     <ScrollToBottom disableAutoStick>
 
+      {/* Main V-Layout */}
       <Box sx={{
         // scroller fill
         minHeight: '100%',
@@ -86,7 +119,6 @@ export function BeamView(props: {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--Pad)',
-        pb: 'var(--Pad)',
       }}>
 
         {/* Config Issues */}
@@ -102,6 +134,7 @@ export function BeamView(props: {
 
         {/* Scatter Controls */}
         <BeamScatterPane
+          beamStore={props.beamStore}
           isMobile={props.isMobile}
           rayCount={raysCount}
           setRayCount={handleRaySetCount}
@@ -116,42 +149,56 @@ export function BeamView(props: {
         {/* Rays Grid */}
         <BeamRayGrid
           beamStore={props.beamStore}
-          linkedLlmId={fusionLlmId}
           isMobile={props.isMobile}
           rayIds={rayIds}
           onIncreaseRayCount={handleRayIncreaseCount}
+          // linkedLlmId={currentGatherLlmId}
         />
 
 
-        {/* Fusion Config */}
-        <BeamGatherInput
-          beamStore={props.beamStore}
-          gatherShowPrompts={gatherShowPrompts}
-        />
+        {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
+        <Box />
+
 
         {/* Gather Controls */}
         <BeamGatherPane
+          beamStore={props.beamStore}
+          canGather={canGather}
           isMobile={props.isMobile}
-          fusionIndex={fusionIndex}
-          setFusionIndex={setFusionIndex}
-          gatherBusy={isGathering}
-          gatherCount={raysReady}
-          gatherEnabled={raysReady >= 2 && !isGathering && fusionIndex !== null}
-          gatherLlmComponent={gatherLlmComponent}
-          gatherLlmIcon={gatherLlmIcon}
-          gatherShowPrompts={gatherShowPrompts}
-          toggleGatherShowPrompts={toggleGatherShowPrompts}
-          onFusionStart={fusionStart}
-          onFusionStop={fusionStop}
+          onAddFusion={handleCreateFusion}
+          raysReady={raysReady}
         />
 
-        {/* Fusion Output */}
-        {/*<BeamGatherOutput*/}
-        {/*  beamStore={props.beamStore}*/}
-        {/*  isMobile={props.isMobile}*/}
-        {/*/>*/}
+        {/* Fusion Grid */}
+        <BeamFusionGrid
+          beamStore={props.beamStore}
+          canGather={canGather}
+          fusionIds={fusionIds}
+          isMobile={props.isMobile}
+          onAddFusion={handleCreateFusion}
+          raysCount={raysCount}
+        />
 
       </Box>
+
+
+      {/* Confirm Stop Scattering */}
+      {warnIsScattering && (
+        <ConfirmationModal
+          open
+          onClose={handleStopScatterDenial}
+          onPositive={handleStopScatterConfirmation}
+          // lowStakes
+          noTitleBar
+          confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
+          positiveActionText='Proceed with Merge'
+          negativeActionText='Wait for All Responses'
+          negativeActionStartDecorator={
+            <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
+          }
+        />
+      )}
+
 
     </ScrollToBottom>
   );

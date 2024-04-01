@@ -87,6 +87,7 @@ export function ChatMessageList(props: {
   }, [conversationId, onConversationExecuteHistory]);
 
   const handleMessageBeam = React.useCallback(async (messageId: string) => {
+    // Right-click menu Beam
     if (!conversationId || !props.conversationHandler) return;
     const messages = getConversation(conversationId)?.messages;
     if (messages?.length) {

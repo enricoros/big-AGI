@@ -8,6 +8,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
@@ -19,13 +20,16 @@ import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 
-// Images
+// Cover Images
+// (not exactly) Imagine a futuristic, holographically bounded space. Inside this space, four capybaras stand. Three of them are in various stages of materialization, their forms made up of thousands of tiny, vibrant particles of electric blues, purples, and greens. These particles represent the merging of different intelligent inputs, symbolizing the concept of 'Beaming'. Positioned slightly towards the center and ahead of the others, the fourth capybara is fully materialized and composed of shimmering golden cotton candy, representing the optimal solution the 'Beam' feature seeks to achieve. The golden capybara gazes forward confidently, embodying a target achieved. Illuminated grid lines softly glow on the floor and walls of the setting, amplifying the futuristic aspect. In front of the golden capybara, floating, holographic interfaces depict complex networks of points and lines symbolizing the solution space 'Beaming' explores. The capybara interacts with these interfaces, implying the user's ability to control and navigate towards the best outcomes.
+import coverV115 from '../../../public/images/covers/release-cover-v1.15.0.png';
 // An image of a capybara sculpted entirely from iridescent blue cotton candy, gazing into a holographic galaxy of floating AI model icons (representing various AI models like Perplexity, Groq, etc.). The capybara is wearing a lightweight, futuristic headset, and its paws are gesturing as if orchestrating the movement of the models in the galaxy. The backdrop is minimalist, with occasional bursts of neon light beams, creating a sense of depth and wonder. Close-up photography, bokeh effect, with a dark but vibrant background to make the colors pop.
 import coverV114 from '../../../public/images/covers/release-cover-v1.14.0.png';
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is using a computer with split screen made of origami, split keyboard and is wearing origami sunglasses with very different split reflections. Split halves are very contrasting. Close up photography, bokeh, white background.
 import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
+import { beamBlogUrl, beamReleaseDate } from './beam.data';
 
 
 interface NewsItem {
@@ -40,20 +44,35 @@ interface NewsItem {
     dev?: boolean;
     issue?: number;
     icon?: React.FC<SvgIconProps>;
+    noBullet?: boolean;
   }[];
 }
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-    versionCode: '1.15.0',
+    versionCode: '1.16.0',
     items: [
-      Beam
       Draw
       ...
       Screen Capture (when removed from labs)
     ]
   }*/
+  {
+    versionCode: '1.15.0',
+    versionName: 'Beam',
+    versionDate: new Date(beamReleaseDate),
+    versionCoverImage: coverV115,
+    items: [
+      { text: <><B href={beamBlogUrl} wow>Beam</B>: Find better answers with multi-model AI reasoning</>, issue: 443, icon: ChatBeamIcon },
+      { text: <><B>Explore diverse perspectives</B> and <B>synthesize optimal responses</B></>, noBullet: true },
+      { text: <><B issue={436}>Auto-configure</B> models for managed deployments</>, issue: 436 },
+      { text: <>Message <B issue={476}>starring ⭐</B>, filtering and attachment</>, issue: 476 },
+      { text: <>Default persona improvements</> },
+      { text: <>Fixes to Gemini models and SVGs, improvements to UI and icons, and more</> },
+      { text: <>Developers: imperative LLM models discovery</>, dev: true },
+    ],
+  },
   {
     versionCode: '1.14.1',
     versionName: 'Modelmorphic',

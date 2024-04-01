@@ -144,7 +144,7 @@ export function ExplainerCarousel(props: {
       flex: 1,
       mx: 'auto',
       width: { sm: '92%', md: '86%' }, /* Default to 80% width */
-      maxWidth: '900px',    /* But don't go over 900px */
+      maxWidth: '820px',    /* But don't go over 900px */
 
       // content
       display: 'flex',
@@ -189,9 +189,9 @@ export function ExplainerCarousel(props: {
           message={mdMessage}
           fitScreen={isMobile}
           showAvatar={false}
-          adjustContentScaling={isMobile ? -1 : undefined}
+          adjustContentScaling={isMobile ? 0 : undefined}
           sx={{
-            minHeight: '17rem', // 256px
+            minHeight: '19rem', // 256px
             py: 2,
             border: 'none',
             bordreRadius: 0,

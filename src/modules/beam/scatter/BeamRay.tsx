@@ -1,12 +1,9 @@
 import * as React from 'react';
 
-import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, SvgIconProps } from '@mui/joy';
+import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import LinkIcon from '@mui/icons-material/Link';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
@@ -22,31 +19,21 @@ import { InlineError } from '~/common/components/InlineError';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamCard, beamCardClasses } from '../BeamCard';
+import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
-
+import { GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
+import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
 
-
-const chatMessageEmbeddedSx: SxProps = {
-  // style: to undo the style of ChatMessage
-  backgroundColor: 'none',
-  border: 'none',
-  mx: -1.5, // compensates for the marging (e.g. RenderChatText, )
-  my: 0,
-  px: 0,
-  py: 0,
-} as const;
 
 /*const letterSx: SxProps = {
   width: '1rem',
   py: 0.25,
   fontSize: 'xs',
-  backgroundColor: 'background.popup',
+  boxShadow: 'xs',
   border: '1px solid',
   borderColor: 'divider',
-  borderRadius: 'xs',
+  borderRadius: '0.25rem',
   textAlign: 'center',
 };*/
 
@@ -54,16 +41,16 @@ const chatMessageEmbeddedSx: SxProps = {
 const RayControlsMemo = React.memo(RayControls);
 
 function RayControls(props: {
-  // rayIndex: number
   isEmpty: boolean,
-  isLlmLinked: boolean,
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
-  onLink: () => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
+  rayLetter?: string,
+  // isLlmLinked: boolean,
+  // onLink: () => void,
 }) {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
@@ -74,11 +61,12 @@ function RayControls(props: {
       </div>
     )}
 
-    {/*<Box sx={letterSx}>*/}
-    {/*  {String.fromCharCode(65 + props.rayIndex)}*/}
-    {/*</Box>*/}
-
-    {props.llmVendorIcon && (
+    {/* Letter / LLM Icon (default) */}
+    {props.rayLetter ? (
+      <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
+        {props.rayLetter}
+      </Typography>
+    ) : props.llmVendorIcon && (
       <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
     )}
 
@@ -86,18 +74,18 @@ function RayControls(props: {
       {props.llmComponent}
     </Box>
 
-    {!props.isLlmLinked && (
-      <GoodTooltip title={props.isLlmLinked ? undefined : 'Link to the Merge model'}>
-        <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>
-          {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}
-        </IconButton>
-      </GoodTooltip>
-    )}
+    {/*{!props.isLlmLinked && (*/}
+    {/*  <GoodTooltip title={props.isLlmLinked ? undefined : 'Link to the Merge model'}>*/}
+    {/*    <IconButton disabled={props.isLlmLinked || props.isScattering} size='sm' onClick={props.onLink}>*/}
+    {/*      {props.isLlmLinked ? <LinkIcon /> : <LinkOffIcon />}*/}
+    {/*    </IconButton>*/}
+    {/*  </GoodTooltip>*/}
+    {/*)}*/}
 
     {!props.isScattering ? (
       <GoodTooltip title='Generate'>
         <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
-          {props.isEmpty ? <PlayArrowRoundedIcon /> : <ReplayRoundedIcon />}
+          {props.isEmpty ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}
         </IconButton>
       </GoodTooltip>
     ) : (
@@ -121,14 +109,16 @@ function RayControls(props: {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  isMobile: boolean,
   isRemovable: boolean
-  linkedLlmId: DLLMId | null,
   rayId: string,
+  rayIndexWeak: number,
+  // linkedLlmId: DLLMId | null,
 }) {
 
   // external state
-  const ray = useBeamStore(props.beamStore, (store) => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
+  const ray = useBeamStore(props.beamStore, store => store.rays.find(ray => ray.rayId === props.rayId) ?? null);
+  const cardScrolling = useBeamCardScrolling();
+  const showLettering = useBeamScatterShowLettering();
 
   // derived state
   const isError = rayIsError(ray);
@@ -136,22 +126,27 @@ export function BeamRay(props: {
   const isSelectable = rayIsSelectable(ray);
   const isSelected = rayIsUserSelected(ray);
   const isImported = rayIsImported(ray);
-  const showUseButton = isSelectable && !isScattering;
-  const { removeRay, rayToggleScattering, raySetScatterLlmId } = props.beamStore.getState();
+  const showUseButtons = isSelectable && !isScattering;
+  const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
 
-  const isLlmLinked = !!props.linkedLlmId && !ray?.scatterLlmId;
-  const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.scatterLlmId || null;
-  const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetScatterLlmId(props.rayId, llmId), [props.rayId, raySetScatterLlmId]);
-  const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
-  const [_, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, '', true, isScattering);
+  // This old code used the Gather LLM as Ray fallback - but now we use the last Scatter LLM as fallback
+  // const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;
+  // const llmId: DLLMId | null = isLlmLinked ? props.linkedLlmId : ray?.rayLlmId || null;
+  // const handleLlmLink = React.useCallback(() => setLlmId(null), [setLlmId]);
+
+  const llmId = ray?.rayLlmId ?? null;
+  const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
+  const [_, llmComponent, llmVendorIcon] = useLLMSelect(
+    llmId, setLlmId, '', true, isScattering,
+  );
 
 
   // handlers
 
   const handleRayCopy = React.useCallback(() => {
-    const { rays, onSuccessCallback } = props.beamStore.getState();
+    const { rays } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
-    if (ray?.message?.text && onSuccessCallback)
+    if (ray?.message?.text)
       copyToClipboard(ray.message.text, 'Beam');
   }, [props.beamStore, props.rayId]);
 
@@ -179,21 +174,24 @@ export function BeamRay(props: {
   return (
     <BeamCard
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
-      className={`${isError ? beamCardClasses.errored : ''} ${isSelectable ? beamCardClasses.selectable : ''}`}
+      className={
+        (isError ? beamCardClasses.errored : '')
+        + (isSelectable ? beamCardClasses.selectable + ' ' : '')
+      }
     >
 
       {/* Controls Row */}
       <RayControlsMemo
-        // rayIndex={props.rayIndex}
         isEmpty={!isSelectable}
-        isLlmLinked={isLlmLinked}
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
         llmVendorIcon={llmVendorIcon}
-        onLink={handleLlmLink}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
+        rayLetter={showLettering ? 'R' + (1 + props.rayIndexWeak) : undefined}
+        // isLlmLinked={isLlmLinked}
+        // onLink={handleLlmLink}
       />
 
       {/* Show issue, if any */}
@@ -201,28 +199,22 @@ export function BeamRay(props: {
 
       {/* Ray Message */}
       {(!!ray?.message?.text || ray?.status === 'scattering') && (
-        <Box sx={{
-          minHeight: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          // uncomment the following to limit the message height
-          // overflow: 'auto',
-          // maxHeight: 'calc(0.8 * (100vh - 16rem))',
-          // aspectRatio: 1,
-        }}>
-          <ChatMessageMemo
-            message={ray.message}
-            fitScreen={props.isMobile}
-            showAvatar={false}
-            adjustContentScaling={-1}
-            sx={chatMessageEmbeddedSx}
-          />
+        <Box sx={beamCardMessageWrapperSx}>
+          {!!ray.message && (
+            <ChatMessageMemo
+              message={ray.message}
+              fitScreen={true}
+              showAvatar={false}
+              adjustContentScaling={-1}
+              sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
+            />
+          )}
         </Box>
       )}
 
       {/* Use Ray */}
-      {showUseButton && (
-        <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.5rem - var(--Pad_2))', position: 'relative' }}>
+      {showUseButtons && (
+        <Box sx={{ mt: 'auto', mb: -1, mr: -1, placeSelf: 'end', height: 'calc(2.25rem - var(--Pad_2))', position: 'relative' }}>
           <Box sx={{
             position: 'absolute',
             bottom: 0,
@@ -230,6 +222,8 @@ export function BeamRay(props: {
             display: 'flex',
             gap: 1,
           }}>
+
+            {/* Copy */}
             {!isImported && (
               <GoodTooltip title='Copy'>
                 <IconButton
@@ -240,10 +234,12 @@ export function BeamRay(props: {
                 </IconButton>
               </GoodTooltip>
             )}
+
+            {/* Continue */}
             <GoodTooltip title='Choose this message'>
               <IconButton
                 size='sm'
-                color='success'
+                color={GATHER_COLOR}
                 disabled={isImported || isScattering}
                 onClick={handleRayUse}
                 sx={{
@@ -255,6 +251,7 @@ export function BeamRay(props: {
                 {isImported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
               </IconButton>
             </GoodTooltip>
+
           </Box>
         </Box>
       )}

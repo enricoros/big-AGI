@@ -106,7 +106,7 @@ export function useLLMSelect(
   // Memo the Select component
   const llmSelectComponent = React.useMemo(() => (
     <FormControl orientation={isHorizontal ? 'horizontal' : undefined}>
-      {!!label && <FormLabelStart title={label} sx={{ mb: '0.25rem' /* orig: 6px */ }} />}
+      {!!label && <FormLabelStart title={label} sx={/*{ mb: '0.25rem' }*/ undefined} />}
       {/*<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>*/}
       <Select
         variant='outlined'

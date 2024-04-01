@@ -5,7 +5,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { ChatActions, createDMessage, DConversationId, DMessage, getConversationSystemPurposeId, useChatStore } from '../state/store-chats';
 
-import { createBeamStore } from '~/common/beam/store-beam';
+import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 
@@ -20,7 +20,7 @@ export class ConversationHandler {
   private readonly chatActions: ChatActions;
   private readonly conversationId: DConversationId;
 
-  private readonly beamStore = createBeamStore();
+  private readonly beamStore = createBeamVanillaStore();
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 

@@ -5,7 +5,8 @@ import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
 
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
+import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
+
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -23,11 +24,11 @@ export function ChatBarAltBeam(props: {
 
 
   // external beam state
-  const { isScattering, isGathering, requiresConfirmation, setIsMaximized, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
+  const { isScattering, isGatheringAny, requiresConfirmation, setIsMaximized, terminateBeam } = useBeamStore(props.beamStore, useShallow((store) => ({
     // state
     isScattering: store.isScattering,
-    isGathering: store.isGathering,
-    requiresConfirmation: store.isScattering || store.isGathering || store.raysReady > 0,
+    isGatheringAny: store.isGatheringAny,
+    requiresConfirmation: store.isScattering || store.isGatheringAny || store.raysReady > 0,
     // actions
     setIsMaximized: store.setIsMaximized,
     terminateBeam: store.terminate,
@@ -78,13 +79,13 @@ export function ChatBarAltBeam(props: {
         <Box
           component='span'
           sx={
-            isGathering ? { animation: `${animationBackgroundBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
+            isGatheringAny ? { animation: `${animationBackgroundBeamGather} 3s infinite, ${animationEnterBelow} 0.6s`, px: 1.5, py: 0.5 }
               : isScattering ? { animation: `${animationColorBeamScatterINV} 5s infinite, ${animationEnterBelow} 0.6s` }
                 : { fontWeight: 'lg' }
           }>
-          {isGathering ? 'Merging...' : isScattering ? 'Beaming...' : 'Beam'}
+          {isGatheringAny ? 'Merging...' : isScattering ? 'Beaming...' : 'Beam'}
         </Box>
-        {(!isGathering && !isScattering) && ' Mode'}
+        {(!isGatheringAny && !isScattering) && ' Mode'}
       </Typography>
 
       {/* Right Close Icon */}

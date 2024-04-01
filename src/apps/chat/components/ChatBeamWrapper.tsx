@@ -2,8 +2,9 @@ import * as React from 'react';
 
 import { Box, Modal, ModalClose } from '@mui/joy';
 
-import { BeamStoreApi, useBeamStore } from '~/common/beam/store-beam.hooks';
-import { BeamView } from '~/common/beam/BeamView';
+import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
+import { BeamView } from '~/modules/beam/BeamView';
+
 import { themeZIndexBeamView } from '~/common/app.theme';
 
 
