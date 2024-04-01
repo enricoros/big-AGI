@@ -40,7 +40,12 @@ Let&apos;s get you to **better chat answers, faster**.
 **Beaming is the exploration phase, it's where you get the AI models to generate ideas.**
 
 To Beam, pick the AI models you want to use (you can also load/save combos), and start them all at once or one by one.
-Keep the responses you like and delete the ones that aren't helpful: if they clearly don't fit, they are just noise.
+Keep the responses you like and delete the ones that aren't helpful.
+
+**Important**: 💰 Beware of the token usage of Beaming and Merging.
+Being multiple and high-intensity operations,
+they can consume more tokens than regular chats.
+It is better to _use them in early/shorter chats_.
 
 Use a mix of different AI models to get a diverse set of ideas and perspectives.
 
@@ -50,7 +55,7 @@ Use a mix of different AI models to get a diverse set of ideas and perspectives.
   {
     stepDigits: '02',
     stepName: 'Merge',
-    titleSpark: 'MERGE',
+    titleSpark: 'Merging',
     titleSuffix: ': Convergence', // Synthesis, Convergence
     mdContent: `
 **Merging is the consolidation phase**, where AI combines the best parts of the responses into a great, coherent answer.
