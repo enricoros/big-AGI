@@ -205,6 +205,7 @@ export function BeamRay(props: {
               message={ray.message}
               fitScreen={true}
               showAvatar={false}
+              showUnsafeHtml={true}
               adjustContentScaling={-1}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />
