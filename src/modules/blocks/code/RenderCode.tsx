@@ -81,13 +81,13 @@ interface RenderCodeBaseProps {
   fitScreen?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
+  initialShowHTML?: boolean,
   sx?: SxProps,
 }
 
 interface RenderCodeImplProps extends RenderCodeBaseProps {
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
-  initialShowHTML?: boolean,
 }
 
 function RenderCodeImpl(props: RenderCodeImplProps) {
