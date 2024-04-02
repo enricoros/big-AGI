@@ -108,6 +108,13 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
+              {/* Inject the Beam item here*/}
+              {idx === 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {beamNewsCallout}
+                </Box>
+              )}
+
               {/* News Item */}
               <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
                 <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
@@ -175,13 +182,6 @@ export function AppNews() {
                   </CardOverflow>
                 )}
               </Card>
-
-              {/* Inject the beam item here*/}
-              {idx === 0 && (
-                <Box sx={{ mb: 3 }}>
-                  {beamNewsCallout}
-                </Box>
-              )}
 
               {/* Inject the roadmap item here*/}
               {idx === 3 && (
