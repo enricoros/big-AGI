@@ -87,13 +87,14 @@ interface RenderCodeBaseProps {
 interface RenderCodeImplProps extends RenderCodeBaseProps {
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
+  initialShowHTML?: boolean,
 }
 
 function RenderCodeImpl(props: RenderCodeImplProps) {
 
   // state
   const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
-  const [showHTML, setShowHTML] = React.useState(false);
+  const [showHTML, setShowHTML] = React.useState(props.initialShowHTML === true);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);

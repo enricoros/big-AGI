@@ -56,6 +56,7 @@ export function BlocksRenderer(props: {
   fitScreen: boolean;
   isBottom?: boolean;
   showDate?: number;
+  showUnsafeHtml?: boolean;
   wasUserEdited?: boolean;
 
   specialDiagramMode?: boolean;
@@ -199,7 +200,7 @@ export function BlocksRenderer(props: {
             return block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
+                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
                   : block.type === 'latex'

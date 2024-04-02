@@ -218,6 +218,7 @@ export function ChatMessage(props: {
   isSpeaking?: boolean,
   showAvatar?: boolean, // auto if undefined
   showBlocksDate?: boolean,
+  showUnsafeHtml?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
@@ -545,6 +546,7 @@ export function ChatMessage(props: {
           renderTextAsMarkdown={renderMarkdown}
           renderTextDiff={textDiffs || undefined}
           showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
+          showUnsafeHtml={props.showUnsafeHtml}
           wasUserEdited={wasEdited}
           onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
           onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
