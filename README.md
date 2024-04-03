@@ -219,6 +219,13 @@ Or run the official container:
 - manually: `docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi`
 - or, with docker-compose: `docker-compose up` or see [the documentation](docs/deploy-docker.md) for a composer file with integrated browsing
 
+## ⚙️ Deploy with Midori AI Subsystem for Docker
+
+Follow the setup found on [Midori AI Subsystem Site](https://io.midori-ai.xyz/subsystem/manager/) for your host OS
+After setting that up install the Big-AGI docker backend to the Midori AI Subsystem.
+
+Once that is done, you are all set!
+
 ## ☁️ Deploy on Cloudflare Pages
 
 Please refer to the [Cloudflare deployment documentation](docs/deploy-cloudflare.md).
