@@ -3,16 +3,16 @@ import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -114,7 +114,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
       // icon: text-to-image
       if (isTextToImage)
-        return <FormatPaintIcon sx={{
+        return <FormatPaintTwoToneIcon sx={{
           ...avatarIconSx,
           animation: `${animationColorRainbow} 1s linear 2.66`,
         }} />;
@@ -650,19 +650,19 @@ export function ChatMessage(props: {
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && (
             <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
-              <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-              Diagram ...
+              <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+              Auto-Diagram ...
             </MenuItem>
           )}
           {!!props.onTextImagine && (
             <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-              Draw ...
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+              Auto-Draw
             </MenuItem>
           )}
           {!!props.onTextSpeak && (
             <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
@@ -702,19 +702,19 @@ export function ChatMessage(props: {
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy <span style={{ opacity: 0.5 }}>selection</span>
+            Copy
           </MenuItem>
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
-            <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Diagram ...
+            <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+            Auto-Diagram ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-            Imagine
+            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+            Auto-Draw
           </MenuItem>}
           {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
             Speak
           </MenuItem>}
         </CloseableMenu>

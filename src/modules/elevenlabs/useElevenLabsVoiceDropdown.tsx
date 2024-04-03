@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import { apiQuery } from '~/common/util/trpc.client';
 
@@ -31,7 +31,7 @@ function VoicesDropdown(props: {
       variant='outlined' disabled={props.disabled || !props.voices.length}
       // color={props.isErrorVoices ? 'danger' : undefined}
       placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Missing API Key'}
-      startDecorator={<RecordVoiceOverIcon />}
+      startDecorator={<RecordVoiceOverTwoToneIcon />}
       endDecorator={props.isValidKey && props.isLoadingVoices && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={{

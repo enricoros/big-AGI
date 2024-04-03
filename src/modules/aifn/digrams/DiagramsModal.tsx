@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, IconButton, Input } from '@mui/joy';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -165,7 +165,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         variant={abortController ? 'soft' : 'solid'} color='primary'
         disabled={!diagramLlm}
         onClick={abortController ? () => abortController.abort() : handleGenerateNew}
-        endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <AccountTreeIcon />}
+        endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <AccountTreeTwoToneIcon />}
         sx={{ minWidth: 200 }}
       >
         {abortController ? 'Stop' : diagramCode ? 'Regenerate' : 'Generate'}

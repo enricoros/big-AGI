@@ -1,4 +1,4 @@
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 
 import type { ICommandsProvider } from './ICommandsProvider';
 
@@ -11,7 +11,7 @@ export const CommandsDraw: ICommandsProvider = {
     alternatives: ['/imagine', '/img'],
     arguments: ['prompt'],
     description: 'Assistant will draw the text',
-    Icon: FormatPaintIcon,
+    Icon: FormatPaintTwoToneIcon,
   }],
 
 };
