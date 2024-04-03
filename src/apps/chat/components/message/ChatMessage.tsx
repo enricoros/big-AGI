@@ -700,10 +700,11 @@ export function ChatMessage(props: {
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
           sx={{ minWidth: 220 }}
         >
-          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
+          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
             Copy <span style={{ opacity: 0.5 }}>selection</span>
           </MenuItem>
+          {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
             <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
             Diagram ...
