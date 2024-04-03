@@ -389,7 +389,9 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
     if (!singleCandidate.content) {
       if (singleCandidate.finishReason === 'MAX_TOKENS')
         return { text: ` ${USER_SYMBOL_MAX_TOKENS}`, close: true };
-      throw new Error('server response missing content');
+      if (singleCandidate.finishReason === 'RECITATION')
+        throw new Error('generation stopped due to RECITATION');
+      throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
     }
 
     // expect a single part
