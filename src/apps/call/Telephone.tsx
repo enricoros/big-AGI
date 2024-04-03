@@ -7,7 +7,7 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
@@ -57,7 +57,7 @@ function CallMenuItems(props: {
     </MenuItem>
 
     <MenuItem onClick={handleChangeVoiceToggle}>
-      <ListItemDecorator><RecordVoiceOverIcon /></ListItemDecorator>
+      <ListItemDecorator><RecordVoiceOverTwoToneIcon /></ListItemDecorator>
       Change Voice
       <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
     </MenuItem>

@@ -6,7 +6,7 @@ import { Box, Button, ButtonGroup, Dropdown, Grid, IconButton, Menu, MenuButton,
 import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
@@ -287,7 +287,7 @@ export function PromptDesigner(props: {
               <Button
                 key='draw-queue'
                 variant='solid' color='primary'
-                endDecorator={<FormatPaintIcon />}
+                endDecorator={<FormatPaintTwoToneIcon />}
                 onClick={handlePromptEnqueue}
                 sx={{
                   animation: `${animationEnterBelow} 0.1s ease-out`,

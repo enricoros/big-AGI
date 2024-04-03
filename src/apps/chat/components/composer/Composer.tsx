@@ -9,7 +9,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
@@ -518,7 +518,7 @@ export function Composer(props: {
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
           : isTextBeam ? <ChatBeamIcon /> /* <GavelIcon /> */
-            : isDraw ? <FormatPaintIcon />
+            : isDraw ? <FormatPaintTwoToneIcon />
               : <TelegramIcon />;
 
   let textPlaceholder: string =
