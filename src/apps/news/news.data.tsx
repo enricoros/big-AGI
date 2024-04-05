@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { StaticImageData } from 'next/image';
 
-import { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, SvgIconProps, Typography } from '@mui/joy';
-import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import GoogleIcon from '@mui/icons-material/Google';
-import LaunchIcon from '@mui/icons-material/Launch';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
@@ -277,15 +275,6 @@ export const NewsItems: NewsItem[] = [
 ];
 
 
-const wowStyle: SxProps = {
-  textDecoration: 'underline',
-  textDecorationThickness: '0.4em',
-  textDecorationColor: 'rgba(var(--joy-palette-primary-lightChannel) / 1)',
-  // textDecorationColor: 'rgba(0 255 0 / 0.5)',
-  textDecorationSkipInk: 'none',
-  // textUnderlineOffset: '-0.5em',
-};
-
 function B(props: {
   // one-of
   href?: string,
@@ -299,7 +288,6 @@ function B(props: {
     props.issue ? `${Brand.URIs.OpenRepo}/issues/${props.issue}`
       : props.code ? `${Brand.URIs.OpenRepo}/blob/main/${props.code}`
         : props.href;
-  const isExtIcon = !props.issue;
   const boldText = (
     <Typography component='span' color={!!href ? 'primary' : 'neutral'} sx={{ fontWeight: 'lg' }}>
       {props.children}
@@ -308,8 +296,8 @@ function B(props: {
   if (!href)
     return boldText;
   return (
-    <Link href={href + clientUtmSource()} target='_blank' sx={props.wow ? wowStyle : undefined}>
-      {boldText} {isExtIcon ? <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} /> : <AutoStoriesOutlinedIcon sx={{ mx: 0.5, fontSize: 16 }} />}
-    </Link>
+    <ExternalLink href={href + clientUtmSource()} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
+      {boldText}
+    </ExternalLink>
   );
 }

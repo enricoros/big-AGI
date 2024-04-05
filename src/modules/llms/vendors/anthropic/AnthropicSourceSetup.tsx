@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
@@ -40,7 +41,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
     <Alert variant='soft' color='success'>
       <div>
-        Note: <strong>Claude-3</strong> models are now supported.
+        Enjoy <b>Opus</b>, <b>Sonnet</b> and <b>Haiku</b>. Anthropic <ExternalLink level='body-sm' href='https://status.anthropic.com/'>server status</ExternalLink>.
       </div>
     </Alert>
 
