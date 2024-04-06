@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { browserLangOrUS } from '~/common/util/pwaUtils';
 
 
 // UI Preferences
@@ -54,7 +55,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       // UI Features
 
-      preferredLanguage: (typeof navigator !== 'undefined') && navigator.language || 'en-US',
+      preferredLanguage: browserLangOrUS,
       setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
 
       centerMode: 'wide',
