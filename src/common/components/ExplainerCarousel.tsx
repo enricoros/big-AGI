@@ -1,4 +1,5 @@
 import React from 'react';
+import { sendGAEvent } from '@next/third-parties/google';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, Stepper, Typography } from '@mui/joy';
@@ -12,6 +13,7 @@ import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { createDMessage } from '~/common/state/store-chats';
+import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
@@ -90,9 +92,9 @@ export interface ExplainerPage extends ExplainerStep {
 }
 
 export function ExplainerCarousel(props: {
+  explainerId: string,
   steps: ExplainerPage[],
   footer?: React.ReactNode,
-  showPrevious?: boolean,
   onFinished: () => any,
 }) {
 
@@ -119,11 +121,21 @@ export function ExplainerCarousel(props: {
   }, []);
 
   const handleNextPage = React.useCallback(() => {
-    if (isLastPage)
+    if (isLastPage) {
+      hasGoogleAnalytics && sendGAEvent('event', 'tutorial_complete', { tutorial_id: props.explainerId });
       onFinished();
-    else
+    } else
       setStepIndex(step => step < props.steps.length - 1 ? step + 1 : step);
-  }, [isLastPage, onFinished, props.steps.length]);
+  }, [isLastPage, onFinished, props.explainerId, props.steps.length]);
+
+  React.useEffect(() => {
+    const recordTutorialBegun = () => {
+      hasGoogleAnalytics && sendGAEvent('event', 'tutorial_begin', { tutorial_id: props.explainerId });
+    };
+
+    const timeoutId = setTimeout(recordTutorialBegun, 500);
+    return () => clearTimeout(timeoutId);
+  }, [props.explainerId]);
 
 
   const shortcuts = React.useMemo((): GlobalShortcutItem[] => [

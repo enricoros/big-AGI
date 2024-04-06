@@ -116,6 +116,7 @@ export function BeamExplainer(props: {
     >
 
       <ExplainerCarousel
+        explainerId='beam-onboard'
         steps={beamSteps}
         footer={
           <Typography level='body-xs' sx={{ textAlign: 'center', maxWidth: '400px', mx: 'auto' }}>
