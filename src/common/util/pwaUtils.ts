@@ -10,6 +10,11 @@ export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K|iPad/.test(safeUA);
 export const isChromeDesktop = safeUA.includes('Chrome') && !safeUA.includes('Mobile');
 export const isFirefox = safeUA.includes('Firefox');
 
+// frontend language
+const browserLang = isBrowser ? window.navigator.language : '';
+export const browserLangOrUS = browserLang || 'en-US';
+export const browserLangNotUS = browserLangOrUS !== 'en-US';
+
 // deployment environment
 export const isVercelFromBackendOrSSR = !!process.env.VERCEL_ENV;
 export const isVercelFromFrontend = !!process.env.NEXT_PUBLIC_VERCEL_URL;
