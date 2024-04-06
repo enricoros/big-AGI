@@ -153,7 +153,7 @@ export function BeamFusionGrid(props: {
       )}
 
       {/* Full-width warning if not */}
-      {!browserLangNotUS && (
+      {browserLangNotUS && (
         <Alert color='warning' sx={{
           // full row of the grid
           gridColumn: '1 / -1',
