@@ -173,7 +173,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         }}>
 
         {/* Markdown Title (File/Type) */}
-        {blockTitle != inferredCodeLanguage && blockTitle.includes('.') && (
+        {blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://')) && (
           <Sheet sx={{ boxShadow: 'sm', borderRadius: 'sm', mb: 1 }}>
             <Typography level='title-sm' sx={{ px: 1, py: 0.5 }}>
               {blockTitle}
