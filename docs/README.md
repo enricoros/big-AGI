@@ -37,22 +37,16 @@ System integrators, administrators, whitelabelers: instead of using the public b
 
 Step-by-step deployment and system configuration instructions.
 
-- **Deploy Your Own**
-  - straightforward: **Local development**, **Vercel 1-Click**
-  - **[Cloudflare Deployment](deploy-cloudflare.md)**
-  - **[Docker Deployment](deploy-docker.md)**: Containers for Local or Cloud deployments
+- **[Installation](installation.md)**: Set up your own instance of big-AGI and related products
+  - build from source or use pre-built
+  - locally, in the public cloud, or on your own servers
 
 
-- **Deployment Server Features**
-  - **[Database Setup](deploy-database.md)**: Optional, only required to enable "Chat Link Sharing"
-  - **[Environment Variables](environment-variables.md)**: 📌 Set server-side API keys and special features in your deployments
-  - **[HTTP Basic Authentication](deploy-authentication.md)**: Optional, Secure your big-AGI instance with a username and password
-
-## Customization & Derivative UIs
-
-👏 Customize big-AGI to fit your needs.
-
-- **[Customizing big-AGI](customizations.md)**: how to alter source code and server-side configuration
+- **Advanced Customizations**:
+  - **[Source code alterations guide](customizations.md)**: source code primer and alterations guidelines
+  - **[Basic Authentication](deploy-authentication.md)**: Optional, adds a username and password wall
+  - **[Database Setup](deploy-database.md)**: Optional, enables "Chat Link Sharing"
+  - **[Environment Variables](environment-variables.md)**: 📌 Pre-configures models and services
 
 ## Support and Community
 

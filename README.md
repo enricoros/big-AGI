@@ -15,9 +15,16 @@ Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
-big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
+[//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
+
+### 3,000 Commits Milestone · April 7, 2024
+
+![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
+
+- 🥇 Today we <b>celebrate commit 3000</b> in just over one year, and going stronger 🚀
+- 📢️ Thanks everyone for your support and words of love for Big-AGI, we are committed to creating the best AI experiences for everyone.
 
 ### What's New in 1.15.0 · April 1, 2024 · Beam
 
@@ -141,6 +148,22 @@ Add extra functionality with these integrations:
 
 <br/>
 
+## 🚀 Installation
+
+To get started with big-AGI, follow our comprehensive [Installation Guide](docs/installation.md).
+The guide covers various installation options, whether you're spinning it up on
+your local computer, deploying on Vercel, on Cloudflare, or rolling it out
+through Docker.
+
+Whether you're a developer, system integrator, or enterprise user, you'll find step-by-step instructions
+to set up big-AGI quickly and easily.
+
+[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
+
+Or bring your API keys and jump straight into our free instance on [big-AGI.com](https://big-agi.com).
+
+<br/>
+
 # 🌟 Get Involved!
 
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
@@ -150,92 +173,9 @@ Add extra functionality with these integrations:
 - [ ] ⭐ **Give us a star** on GitHub 👆
 - [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
-- [ ] ✨ Deploy your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
-- [ ] Check out some of the big-AGI [**community projects**](docs/customizations.md)
-
-| Project | Features                                           | GitHub                                                                              |
-|---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
-| CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
-| HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
+- [ ] ✨ [Deploy](docs/installation.md) your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
 
 <br/>
-
-# 🧩 Develop
-
-[//]: # (![TypeScript]&#40;https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white&#41;)
-
-[//]: # (![React]&#40;https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black&#41;)
-
-[//]: # (![Next.js]&#40;https://img.shields.io/badge/Next.js-000000?style=&logo=vercel&logoColor=white&#41;)
-
-To download and run this Typescript/React/Next.js project locally, the only prerequisite is Node.js with the `npm` package manager.
-Clone this repo, install the dependencies (all local), and run the development server (which auto-watches the
-files for changes):
-
-```bash
-git clone https://github.com/enricoros/big-agi.git
-cd big-agi
-npm install
-npm run dev
-
-# You will see something like:
-#
-#  ▲ Next.js 14.1.0
-#  - Local: http://localhost:3000
-#  ✓ Ready in 2.6s
-```
-
-The development app will be running on `http://localhost:3000`. Development builds have the advantage of not requiring
-a build step, but can be slower than production builds. Also, development builds won't have timeout on edge functions.
-
-## 🛠️ Deploy from source
-
-The _production_ build of the application is optimized for performance and is performed by the `npm run build` command,
-after installing the required dependencies.
-
-```bash
-# .. repeat the steps above up to `npm install`, then:
-npm run build
-next start --port 3000
-```
-
-The app will be running on the specified port, e.g. `http://localhost:3000`.
-
-Want to deploy with username/password? See the [Authentication](docs/deploy-authentication.md) guide.
-
-## 🐳 Deploy with Docker
-
-For more detailed information on deploying with Docker, please refer to the [docker deployment documentation](docs/deploy-docker.md).
-
-Build and run:
-
-```bash
-docker build -t big-agi .
-docker run -d -p 3000:3000 big-agi
-``` 
-
-Or run the official container:
-
-- manually: `docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi`
-- or, with docker-compose: `docker-compose up` or see [the documentation](docs/deploy-docker.md) for a composer file with integrated browsing
-
-## ⚙️ Deploy with Midori AI Subsystem for Docker
-
-Follow the setup found on [Midori AI Subsystem Site](https://io.midori-ai.xyz/subsystem/manager/) for your host OS
-After setting that up install the Big-AGI docker backend to the Midori AI Subsystem.
-
-Once that is done, you are all set!
-
-## ☁️ Deploy on Cloudflare Pages
-
-Please refer to the [Cloudflare deployment documentation](docs/deploy-cloudflare.md).
-
-## 🚀 Deploy on Vercel
-
-Create your GitHub fork, create a Vercel project over that fork, and deploy it. Or press the button below for convenience.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
-
 
 [//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/stargazers&#41;)
 
