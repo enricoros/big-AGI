@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Frontend Build: ignore API files disabled for this build
+/app/**/*.backup
+
 # dependencies
 /node_modules
 /.pnp
@@ -10,6 +13,7 @@
 
 # next.js
 /.next/
+/dist/
 /out/
 
 # production
@@ -26,7 +30,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env*.local
+.env
+.env.*
 
 # vercel
 .vercel

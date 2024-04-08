@@ -1,51 +1,14 @@
 import * as React from 'react';
 
-import { Container, useTheme } from '@mui/joy';
+import { AppChat } from '../src/apps/chat/AppChat';
 
-import { Chat } from '@/components/Chat';
-import { NoSSR } from '@/components/util/NoSSR';
-import { isValidOpenAIApiKey, SettingsModal } from '@/components/dialogs/SettingsModal';
-import { useSettingsStore } from '@/lib/store-settings';
+import { withLayout } from '~/common/layout/withLayout';
 
 
-export default function Home() {
-  // state
-  const [settingsShown, setSettingsShown] = React.useState(false);
+export default function IndexPage() {
 
-  // external state
-  const theme = useTheme();
-  const apiKey = useSettingsStore(state => state.apiKey);
-  const centerMode = useSettingsStore(state => state.centerMode);
+  // TODO: This Index page will point to the Dashboard (or a landing page)
+  // For now it offers the chat experience, but this will change. #299
 
-
-  // show the Settings Dialog at startup if the API key is required but not set
-  React.useEffect(() => {
-    if (!!process.env.REQUIRE_USER_API_KEYS && !isValidOpenAIApiKey(apiKey))
-      setSettingsShown(true);
-  }, [apiKey]);
-
-
-  return (
-    /**
-     * Note the global NoSSR wrapper
-     *  - Even the overall container could have hydration issues when using localStorage and non-default maxWidth
-     */
-    <NoSSR>
-
-      <Container maxWidth={centerMode === 'full' ? false : centerMode === 'narrow' ? 'md' : 'xl'} disableGutters sx={{
-        boxShadow: {
-          xs: 'none',
-          md: centerMode === 'narrow' ? theme.vars.shadow.md : 'none',
-          xl: centerMode !== 'full' ? theme.vars.shadow.lg : 'none',
-        },
-      }}>
-
-        <Chat onShowSettings={() => setSettingsShown(true)} />
-
-        <SettingsModal open={settingsShown} onClose={() => setSettingsShown(false)} />
-
-      </Container>
-
-    </NoSSR>
-  );
+  return withLayout({ type: 'optima' }, <AppChat />);
 }

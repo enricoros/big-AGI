@@ -1,0 +1,31 @@
+# This file is used to run `big-AGI` and `browserless` with Docker Compose.
+#
+# The two containers are linked together and `big-AGI` is configured to use `browserless`
+# as its Puppeteer endpoint (from the containers intranet, it is available browserless:3000).
+#
+# From your host, you can access big-AGI on http://127.0.0.1:3000 and browserless on http://127.0.0.1:9222.
+#
+# To start the containers, run:
+#   docker-compose -f docs/docker/docker-compose-browserless.yaml up
+
+version: '3.9'
+
+services:
+  big-agi:
+    image: ghcr.io/enricoros/big-agi:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - PUPPETEER_WSS_ENDPOINT=ws://browserless:3000
+    command: [ "next", "start", "-p", "3000" ]
+    depends_on:
+      - browserless
+
+  browserless:
+    image: browserless/chrome:latest
+    ports:
+      - "9222:3000"  # Map host's port 9222 to container's port 3000
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10

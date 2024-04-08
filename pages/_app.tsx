@@ -1,33 +1,56 @@
 import * as React from 'react';
 import Head from 'next/head';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
-import { AppProps } from 'next/app';
-import { CacheProvider, EmotionCache } from '@emotion/react';
-import { CssBaseline, CssVarsProvider } from '@mui/joy';
+import { MyAppProps } from 'next/app';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
+import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
 
-import { createEmotionCache, theme } from '@/lib/theme';
-import '../styles/GithubMarkdown.css';
+import { Brand } from '~/common/app.config';
+import { apiQuery } from '~/common/util/trpc.client';
+
+import 'katex/dist/katex.min.css';
+import '~/common/styles/CodePrism.css';
+import '~/common/styles/GithubMarkdown.css';
+import '~/common/styles/NProgress.css';
+import '~/common/styles/app.styles.css';
+
+import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
+import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
+import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
+import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
+import { ProviderTRPCQuerySettings } from '~/common/providers/ProviderTRPCQuerySettings';
+import { ProviderTheming } from '~/common/providers/ProviderTheming';
+import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
 
-// Client-side cache, shared for the whole session of the user in the browser.
-const clientSideEmotionCache = createEmotionCache();
+const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
+  <>
 
-export interface MyAppProps extends AppProps {
-  emotionCache?: EmotionCache;
-}
+    <Head>
+      <title>{Brand.Title.Common}</title>
+      <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
+    </Head>
 
-export default function MyApp({ Component, emotionCache = clientSideEmotionCache, pageProps }: MyAppProps) {
-  return <>
-    <CacheProvider value={emotionCache}>
-      <Head>
-        <meta name='viewport' content='initial-scale=1, width=device-width' />
-      </Head>
-      <CssVarsProvider defaultMode='light' theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <Component {...pageProps} />
-      </CssVarsProvider>
-    </CacheProvider>
-    <VercelAnalytics debug={false} />
+    <ProviderTheming emotionCache={emotionCache}>
+      <ProviderSingleTab>
+        <ProviderTRPCQuerySettings>
+          <ProviderBackendCapabilities>
+            {/* ^ SSR boundary */}
+            <ProviderBootstrapLogic>
+              <ProviderSnacks>
+                <Component {...pageProps} />
+              </ProviderSnacks>
+            </ProviderBootstrapLogic>
+          </ProviderBackendCapabilities>
+        </ProviderTRPCQuerySettings>
+      </ProviderSingleTab>
+    </ProviderTheming>
+
+    {isVercelFromFrontend && <VercelAnalytics debug={false} />}
+    {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+    {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
+
   </>;
-}
+
+// enables the React Query API invocation
+export default apiQuery.withTRPC(MyApp);

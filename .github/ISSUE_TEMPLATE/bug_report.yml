@@ -1,0 +1,32 @@
+name: 🐞 Bug Report
+description: Create a report to help us improve
+title: '[BUG]'
+labels: [ 'type: bug' ]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for reporting a bug.
+  - type: textarea
+    attributes:
+      label: Description
+      description: (required) Please provide a clear description. Please also provide the steps to reproduce.
+      placeholder: 'Concise description + steps to reproduce.'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Device and browser
+      description: '(required) Please specify your Mobile/Desktop device, OS version, browser.'
+      placeholder: 'Device: (e.g., iPhone 16, Pixel 9, PC, Macbook...), OS: (e.g., iOS 17, Windows 12), Browser: (e.g., Chrome 119, Safari 18, Firefox..)'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Screenshots and more
+      placeholder: 'Attach screenshots, or add any additional context here.'
+  - type: checkboxes
+    attributes:
+      label: Willingness to Contribute
+      description: We appreciate contributions - would you be willing to submit a pull request?
+      options:
+        - label: '🙋‍♂️ Yes, I would like to contribute a fix.'
