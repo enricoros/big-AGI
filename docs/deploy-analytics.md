@@ -19,7 +19,7 @@ and this guide is for its customization.
 Vercel Analytics and Speed Insights are local API endpoints deployed to your domain, so everything stays within your
 domain. Furthermore, the Vercel Analytics service is privacy-friendly, and does not track individual users.
 
-This service is avaialble to system administrators when deploying to Vercel. It is automatically enabled when deploying to Vercel.
+This service is available to system administrators when deploying to Vercel. It is automatically enabled when deploying to Vercel.
 The code that activates Vercel Analytics is located in the `src/pages/_app.tsx` file:
 
 ```tsx
