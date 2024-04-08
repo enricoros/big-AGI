@@ -7,6 +7,8 @@
 import Router, { useRouter } from 'next/router';
 
 import type { AppCallIntent } from '../apps/call/AppCall';
+import type { AppChatIntent } from '../apps/chat/AppChat';
+
 import type { DConversationId } from '~/common/state/store-chats';
 import { isBrowser } from './util/pwaUtils';
 
@@ -39,7 +41,7 @@ export const getChatLinkRelativePath = (chatLinkId: string) => ROUTE_APP_LINK_CH
 
 export function useRouterQuery<TQuery>(): TQuery {
   const { query } = useRouter();
-  return query as TQuery;
+  return (query || {}) as TQuery;
 }
 
 export function useRouterRoute(): string {
@@ -69,24 +71,17 @@ function navigateFn(path: string) {
 
 /// Launch Apps
 
-/* Note: not used yet
-export interface AppChatQueryParams {
-  conversationId?: string;
-}*/
-
-export const launchAppChat = async (conversationId?: DConversationId) => {
-  await Router.push(
+export async function launchAppChat(conversationId?: DConversationId) {
+  return Router.push(
     {
       pathname: ROUTE_APP_CHAT,
-      query: conversationId ? {
-          conversationId,
-        } /*satisfies AppChatQueryParams*/
-        : undefined,
+      query: !conversationId ? undefined : {
+        initialConversationId: conversationId,
+      } satisfies AppChatIntent,
     },
     ROUTE_APP_CHAT,
   );
-};
-
+}
 
 export function launchAppCall(conversationId: string, personaId: string) {
   void Router.push(

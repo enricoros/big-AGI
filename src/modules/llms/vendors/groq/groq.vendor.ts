@@ -19,7 +19,7 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmGroq,
+  hasBackendCapKey: 'hasLlmGroq',
 
   // components
   Icon: GroqIcon,
@@ -43,7 +43,7 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
   }),
 
   // OpenAI transport ('Groq' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

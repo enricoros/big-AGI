@@ -6,7 +6,7 @@ import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, List
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
-import { animationShadowLimey } from '~/common/util/animUtils';
+import { animationShadowRingLimey } from '~/common/util/animUtils';
 import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
@@ -260,7 +260,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
           borderRadius: '50%',
           pointerEvents: 'none',
           backgroundColor: 'background.popup',
-          animation: `${animationShadowLimey} 5s infinite`,
+          animation: `${animationShadowRingLimey} 5s infinite`,
         }}>
         <CallIcon />
       </IconButton>

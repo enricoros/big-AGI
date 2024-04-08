@@ -25,7 +25,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOoobabooga, access, false /* !hasModels && !!asValidURL(normSetup.oaiHost) */, source);
+    useLlmUpdateModels(ModelVendorOoobabooga, access, false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 

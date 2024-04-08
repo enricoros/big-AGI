@@ -9,6 +9,7 @@ import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -21,10 +22,10 @@ import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsSto
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
-import { useAreBeamsOpen } from '~/common/beam/store-beam.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
@@ -38,6 +39,7 @@ import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
 
+import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
 import { runAssistantUpdatingState } from './editors/chat-stream';
 import { runBrowseGetPageUpdatingState } from './editors/browse-load';
@@ -60,6 +62,11 @@ export type ChatModeId =
   | 'generate-react';
 
 
+export interface AppChatIntent {
+  initialConversationId: string | null;
+}
+
+
 export function AppChat() {
 
   // state
@@ -79,7 +86,9 @@ export function AppChat() {
 
   const isMobile = useIsMobile();
 
-  const showAltTitleBar = useUXLabsStore(state => state.labsChatBarAlt === 'title');
+  const intent = useRouterQuery<Partial<AppChatIntent>>();
+
+  const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
 
   const { openLlmOptions } = useOptimaLayout();
 
@@ -158,6 +167,11 @@ export function AppChat() {
     if (navigateHistoryInFocusedPane(direction))
       showNextTitleChange.current = true;
   }, [navigateHistoryInFocusedPane]);
+
+  // [effect] Handle the initial conversation intent
+  React.useEffect(() => {
+    intent.initialConversationId && handleOpenConversationInFocusedPane(intent.initialConversationId);
+  }, [handleOpenConversationInFocusedPane, intent.initialConversationId]);
 
   // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
   React.useEffect(() => {
@@ -328,6 +342,7 @@ export function AppChat() {
   }, [_handleExecute, focusedPaneConversationId]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
+    // Ctrl + Shift + B
     const focusedConversation = getConversation(focusedPaneConversationId);
     if (focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];

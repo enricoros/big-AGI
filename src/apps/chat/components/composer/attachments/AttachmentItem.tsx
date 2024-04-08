@@ -128,7 +128,7 @@ export function AttachmentItem(props: {
 
 
   const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.stopPropagation();
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     onItemMenuToggle(attachment.id, event.currentTarget);
   }, [attachment, onItemMenuToggle]);
 
@@ -181,6 +181,7 @@ export function AttachmentItem(props: {
             size='sm'
             variant={variant} color={color}
             onClick={handleToggleMenu}
+            onContextMenu={handleToggleMenu}
             sx={{
               backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
               border: variant === 'soft' ? '1px solid' : undefined,

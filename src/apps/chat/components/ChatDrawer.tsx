@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CheckIcon from '@mui/icons-material/Check';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
@@ -27,7 +27,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
-import { ChatNavGrouping, useChatNavRenderItems } from './useChatNavRenderItems';
+import { ChatNavGrouping, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from './folders/useFolderDropdown';
 import { useChatDrawerFilters } from '../store-app-chat';
 
@@ -38,7 +38,7 @@ const noFolders: DFolder[] = [];
 /*
  * Lists folders and returns the active folder
  */
-export const useFolders = (activeFolderId: string | null) => useFolderStore(({ enableFolders, folders, toggleEnableFolders }) => {
+export const useFolders = (activeFolderId: string | null) => useFolderStore(useShallow(({ enableFolders, folders, toggleEnableFolders }) => {
 
   // finds the active folder if any
   const activeFolder = (enableFolders && activeFolderId)
@@ -51,7 +51,7 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(({ e
     enableFolders,
     toggleEnableFolders,
   };
-}, shallow);
+}));
 
 
 export const ChatDrawerMemo = React.memo(ChatDrawer);
@@ -75,6 +75,7 @@ function ChatDrawer(props: {
 
   // local state
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
+  const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('frequency');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
@@ -86,13 +87,13 @@ function ChatDrawer(props: {
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
-  const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatNavRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, navGrouping, showRelativeSize,
+  const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, navGrouping, searchSorting, showRelativeSize,
   );
-  const { contentScaling, showSymbols } = useUIPreferencesStore(state => ({
+  const { contentScaling, showSymbols } = useUIPreferencesStore(useShallow(state => ({
     contentScaling: state.contentScaling,
     showSymbols: state.zenMode !== 'cleaner',
-  }), shallow);
+  })));
 
 
   // New/Activate/Delete Conversation
@@ -145,6 +146,7 @@ function ChatDrawer(props: {
 
 
   // memoize the group dropdown
+  const { isSearching } = isDrawerSearching(debouncedSearchQuery);
   const groupingComponent = React.useMemo(() => (
     <Dropdown>
       <MenuButton
@@ -152,48 +154,67 @@ function ChatDrawer(props: {
         slots={{ root: IconButton }}
         slotProps={{ root: { size: 'sm' } }}
       >
-        <MoreVertIcon sx={{ fontSize: 'xl' }} />
+        <MoreVertIcon />
       </MenuButton>
-      <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
-        <ListItem>
-          <Typography level='body-sm'>Group By</Typography>
-        </ListItem>
-        {(['date', 'persona'] as const).map(_gName => (
-          <MenuItem
-            key={'group-' + _gName}
-            aria-label={`Group by ${_gName}`}
-            selected={navGrouping === _gName}
-            onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}
-          >
-            <ListItemDecorator>{navGrouping === _gName && <CheckIcon />}</ListItemDecorator>
-            {capitalizeFirstLetter(_gName)}
+
+      {!isSearching ? (
+        // Search/Filter default menu: Grouping, Filtering, ...
+        <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
+          <ListItem>
+            <Typography level='body-sm'>Group By</Typography>
+          </ListItem>
+          {(['date', 'persona'] as const).map(_gName => (
+            <MenuItem
+              key={'group-' + _gName}
+              aria-label={`Group by ${_gName}`}
+              selected={navGrouping === _gName}
+              onClick={() => setNavGrouping(grouping => grouping === _gName ? false : _gName)}
+            >
+              <ListItemDecorator>{navGrouping === _gName && <CheckRoundedIcon />}</ListItemDecorator>
+              {capitalizeFirstLetter(_gName)}
+            </MenuItem>
+          ))}
+
+          <ListDivider />
+          <ListItem>
+            <Typography level='body-sm'>Filter</Typography>
+          </ListItem>
+          <MenuItem onClick={toggleFilterHasStars}>
+            <ListItemDecorator>{filterHasStars && <CheckRoundedIcon />}</ListItemDecorator>
+            Starred <StarOutlineRoundedIcon />
           </MenuItem>
-        ))}
 
-        <ListDivider />
-        <ListItem>
-          <Typography level='body-sm'>Filter</Typography>
-        </ListItem>
-        <MenuItem onClick={toggleFilterHasStars}>
-          <ListItemDecorator>{filterHasStars && <CheckIcon />}</ListItemDecorator>
-          Starred <StarOutlineRoundedIcon />
-        </MenuItem>
-
-        <ListDivider />
-        <ListItem>
-          <Typography level='body-sm'>Show</Typography>
-        </ListItem>
-        <MenuItem onClick={toggleShowPersonaIcons}>
-          <ListItemDecorator>{showPersonaIcons && <CheckIcon />}</ListItemDecorator>
-          Icons
-        </MenuItem>
-        <MenuItem onClick={toggleShowRelativeSize}>
-          <ListItemDecorator>{showRelativeSize && <CheckIcon />}</ListItemDecorator>
-          Relative Size
-        </MenuItem>
-      </Menu>
+          <ListDivider />
+          <ListItem>
+            <Typography level='body-sm'>Show</Typography>
+          </ListItem>
+          <MenuItem onClick={toggleShowPersonaIcons}>
+            <ListItemDecorator>{showPersonaIcons && <CheckRoundedIcon />}</ListItemDecorator>
+            Icons
+          </MenuItem>
+          <MenuItem onClick={toggleShowRelativeSize}>
+            <ListItemDecorator>{showRelativeSize && <CheckRoundedIcon />}</ListItemDecorator>
+            Relative Size
+          </MenuItem>
+        </Menu>
+      ) : (
+        // While searching, show the sorting options
+        <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
+          <ListItem>
+            <Typography level='body-sm'>Sort By</Typography>
+          </ListItem>
+          <MenuItem selected={searchSorting === 'frequency'} onClick={() => setSearchSorting('frequency')}>
+            <ListItemDecorator>{searchSorting === 'frequency' && <CheckRoundedIcon />}</ListItemDecorator>
+            Matches
+          </MenuItem>
+          <MenuItem selected={searchSorting === 'date'} onClick={() => setSearchSorting('date')}>
+            <ListItemDecorator>{searchSorting === 'date' && <CheckRoundedIcon />}</ListItemDecorator>
+            Date
+          </MenuItem>
+        </Menu>
+      )}
     </Dropdown>
-  ), [filterHasStars, navGrouping, showPersonaIcons, showRelativeSize, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize]);
+  ), [filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize]);
 
 
   return <>
@@ -207,7 +228,7 @@ function ChatDrawer(props: {
       </Tooltip>
     </PageDrawerHeader>
 
-    {/* Folders List */}
+    {/* Folders List (shrink at twice the rate as the Titles) */}
     {/*<Box sx={{*/}
     {/*  display: 'grid',*/}
     {/*  gridTemplateRows: !enableFolders ? '0fr' : '1fr',*/}
@@ -224,6 +245,12 @@ function ChatDrawer(props: {
         contentScaling={contentScaling}
         activeFolderId={props.activeFolderId}
         onFolderSelect={props.setActiveFolderId}
+        sx={{
+          // shrink this at twice the rate as the Titles list
+          flexGrow: 0, flexShrink: 2, overflow: 'hidden',
+          minHeight: '7.5rem',
+          p: 2,
+        }}
       />
     )}
     {/*</Box>*/}
@@ -233,6 +260,7 @@ function ChatDrawer(props: {
 
       {enableFolders && <ListDivider sx={{ mb: 0 }} />}
 
+      {/* Search / New Chat */}
       <Box sx={{ display: 'flex', flexDirection: 'column', m: 2, gap: 2 }}>
 
         {/* Search Input Field */}
@@ -277,10 +305,8 @@ function ChatDrawer(props: {
 
       </Box>
 
-      {/*<ListDivider sx={{ mt: 0 }} />*/}
-
-      {/* List of Chat Titles (and actions) */}
-      <Box sx={{ flex: 1, overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
+      {/* Chat Titles List (shrink as half the rate as the Folders List) */}
+      <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
         {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
@@ -321,7 +347,8 @@ function ChatDrawer(props: {
 
       <ListDivider sx={{ my: 0 }} />
 
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Bottom commands */}
+      <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         <ListItemButton onClick={props.onConversationsImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadOutlinedIcon />

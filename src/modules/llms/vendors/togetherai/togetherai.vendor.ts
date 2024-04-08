@@ -21,7 +21,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
   rank: 17,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmTogetherAI,
+  hasBackendCapKey: 'hasLlmTogetherAI',
 
   // components
   Icon: TogetherIcon,
@@ -66,7 +66,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
 
 
   // OpenAI transport ('togetherai' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

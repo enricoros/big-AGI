@@ -2,17 +2,17 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Badge, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
@@ -114,7 +114,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
       // icon: text-to-image
       if (isTextToImage)
-        return <FormatPaintIcon sx={{
+        return <FormatPaintTwoToneIcon sx={{
           ...avatarIconSx,
           animation: `${animationColorRainbow} 1s linear 2.66`,
         }} />;
@@ -218,6 +218,7 @@ export function ChatMessage(props: {
   isSpeaking?: boolean,
   showAvatar?: boolean, // auto if undefined
   showBlocksDate?: boolean,
+  showUnsafeHtml?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
@@ -241,7 +242,7 @@ export function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
-  const labsChatBeam = useUXLabsStore(state => state.labsChatBeam);
+  const labsBeam = useUXLabsStore(state => state.labsBeam);
   const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
     showAvatar: props.showAvatar !== undefined ? props.showAvatar : state.zenMode !== 'cleaner',
     contentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
@@ -318,7 +319,7 @@ export function ChatMessage(props: {
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    labsChatBeam && await props.onMessageBeam?.(messageId);
+    labsBeam && await props.onMessageBeam?.(messageId);
   };
 
   const handleOpsBranch = (e: React.MouseEvent) => {
@@ -545,6 +546,7 @@ export function ChatMessage(props: {
           renderTextAsMarkdown={renderMarkdown}
           renderTextDiff={textDiffs || undefined}
           showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
+          showUnsafeHtml={props.showUnsafeHtml}
           wasUserEdited={wasEdited}
           onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
           onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
@@ -590,7 +592,7 @@ export function ChatMessage(props: {
             {/* Edit */}
             {!!props.onMessageEdit && (
               <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
-                <ListItemDecorator><EditIcon /></ListItemDecorator>
+                <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
                 {isEditing ? 'Discard' : 'Edit'}
                 {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
               </MenuItem>
@@ -611,14 +613,7 @@ export function ChatMessage(props: {
             )}
           </Box>
           {/* Delete / Branch / Truncate */}
-          {!!props.onMessageDelete && <ListDivider />}
-          {!!props.onMessageDelete && (
-            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
-              Delete
-              <span style={{ opacity: 0.5 }}>message</span>
-            </MenuItem>
-          )}
+          {!!props.onMessageBranch && <ListDivider />}
           {!!props.onMessageBranch && (
             <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
@@ -626,6 +621,13 @@ export function ChatMessage(props: {
               </ListItemDecorator>
               Branch
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
+            </MenuItem>
+          )}
+          {!!props.onMessageDelete && (
+            <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
+              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              Delete
+              <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
           )}
           {!!props.onMessageTruncate && (
@@ -648,19 +650,19 @@ export function ChatMessage(props: {
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && (
             <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
-              <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-              Diagram ...
+              <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+              Auto-Diagram ...
             </MenuItem>
           )}
           {!!props.onTextImagine && (
             <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-              Draw ...
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+              Auto-Draw
             </MenuItem>
           )}
           {!!props.onTextSpeak && (
             <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
@@ -676,12 +678,10 @@ export function ChatMessage(props: {
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
             </MenuItem>
           )}
-          {!!props.onMessageBeam && labsChatBeam && (
+          {!!props.onMessageBeam && labsBeam && (
             <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
               <ListItemDecorator>
-                <Badge invisible={fromSystem} color='success' size='sm'>
-                  <ChatBeamIcon color={fromSystem ? undefined : 'primary'} />
-                </Badge>
+                <ChatBeamIcon color={fromSystem ? undefined : 'primary'} />
               </ListItemDecorator>
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
@@ -700,20 +700,21 @@ export function ChatMessage(props: {
           open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
           sx={{ minWidth: 220 }}
         >
-          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1 }}>
+          <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-            Copy <span style={{ opacity: 0.5 }}>selection</span>
+            Copy
           </MenuItem>
+          {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
-            <ListItemDecorator><AccountTreeIcon color='success' /></ListItemDecorator>
-            Diagram ...
+            <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+            Auto-Diagram ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintIcon color='success' />}</ListItemDecorator>
-            Imagine
+            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+            Auto-Draw
           </MenuItem>}
           {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverIcon color='success' />}</ListItemDecorator>
+            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
             Speak
           </MenuItem>}
         </CloseableMenu>

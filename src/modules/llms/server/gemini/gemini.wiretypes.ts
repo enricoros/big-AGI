@@ -171,7 +171,7 @@ export const geminiGeneratedContentResponseSchema = z.object({
     index: z.number(),
     content: geminiContentSchema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     finishReason: geminiFinishReasonSchema.optional(),
-    safetyRatings: z.array(geminiSafetyRatingSchema),
+    safetyRatings: z.array(geminiSafetyRatingSchema).optional(), // undefined when finishReason is 'RECITATION'
     citationMetadata: z.object({
       startIndex: z.number().optional(),
       endIndex: z.number().optional(),

@@ -1,11 +1,13 @@
 # BIG-AGI 🧠✨
 
-Welcome to big-AGI 👋, the GPT application for professionals that need function, form,
+Welcome to big-AGI, the AI suite for professionals that need function, form,
 simplicity, and speed. Powered by the latest models from 12 vendors and
-open-source model servers, `big-AGI` offers best-in-class Voice and Chat with AI Personas,
-visualizations, coding, drawing, calling, and quite more -- all in a polished UX.
+open-source servers, `big-AGI` offers best-in-class Chats,
+[Beams](https://github.com/enricoros/big-AGI/issues/470),
+and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
+visualizations, coding, drawing, side-by-side chatting, and more -- all wrapped in a polished UX.
 
-Pros use big-AGI. 🚀 Developers love big-AGI. 🤖
+Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
@@ -13,9 +15,25 @@ Or fork & run on Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
 
-## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [documentation](docs/README.md)
+## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
-big-AGI is an open book; see the **[ready-to-ship and future ideas](https://github.com/users/enricoros/projects/4/views/2)** in our open roadmap
+[//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
+
+### 3,000 Commits Milestone · April 7, 2024
+
+![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
+
+- 🥇 Today we <b>celebrate commit 3000</b> in just over one year, and going stronger 🚀
+- 📢️ Thanks everyone for your support and words of love for Big-AGI, we are committed to creating the best AI experiences for everyone.
+
+### What's New in 1.15.0 · April 1, 2024 · Beam
+
+- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
+- Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
+- Enhanced the default Persona
+- Fixes to Gemini models and SVGs, improvements to UI and icons
+- Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
 
 ### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
 
@@ -26,7 +44,6 @@ big-AGI is an open book; see the **[ready-to-ship and future ideas](https://gith
 - Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
-- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.1](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.1) (233 commits, 8,000+ lines changed)
 
 ### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
@@ -84,11 +101,11 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 
 For full details and former releases, check out the [changelog](docs/changelog.md).
 
-## ✨ Key Features 👊
+## 👉 Key Features ✨
 
 | ![Advanced AI](https://img.shields.io/badge/Advanced%20AI-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![100+ AI Models](https://img.shields.io/badge/100%2B%20AI%20Models-32383e?style=for-the-badge&logo=ai&logoColor=white) | ![Flow-state UX](https://img.shields.io/badge/Flow--state%20UX-32383e?style=for-the-badge&logo=flow&logoColor=white) | ![Privacy First](https://img.shields.io/badge/Privacy%20First-32383e?style=for-the-badge&logo=privacy&logoColor=white) | ![Advanced Tools](https://img.shields.io/badge/Fun%20To%20Use-f22a85?style=for-the-badge&logo=tools&logoColor=white) |  
 |---------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------| 
-| **Chat**<br/>**Call** AGI<br/>**Draw** images<br/>**Agents**, ...                                             | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
+| **Chat**<br/>**Call**<br/>**Beam**<br/>**Draw**, ...                                                          | Local & Cloud<br/>Open & Closed<br/>Cheap & Heavy<br/>Google, Mistral, ...                                              | Attachments<br/>Diagrams<br/>Multi-Chat<br/>Mobile-first UI                                                          | Stored Locally<br/>Easy self-Host<br/>Local actions<br/>Data = Gold                                                    | AI Personas<br/>Voice Modes<br/>Screen Capture<br/>Camera + OCR                                                      |
 
 ![big-AGI screenshot](docs/pixels/big-AGI-compo-20240201_small.png)
 
@@ -131,6 +148,22 @@ Add extra functionality with these integrations:
 
 <br/>
 
+## 🚀 Installation
+
+To get started with big-AGI, follow our comprehensive [Installation Guide](docs/installation.md).
+The guide covers various installation options, whether you're spinning it up on
+your local computer, deploying on Vercel, on Cloudflare, or rolling it out
+through Docker.
+
+Whether you're a developer, system integrator, or enterprise user, you'll find step-by-step instructions
+to set up big-AGI quickly and easily.
+
+[![Installation Guide](https://img.shields.io/badge/Installation%20Guide-blue?style=for-the-badge&logo=read-the-docs&logoColor=white)](docs/installation.md)
+
+Or bring your API keys and jump straight into our free instance on [big-AGI.com](https://big-agi.com).
+
+<br/>
+
 # 🌟 Get Involved!
 
 [//]: # ([![Official Discord]&#40;https://img.shields.io/discord/1098796266906980422?label=discord&logo=discord&logoColor=%23fff&style=for-the-badge&#41;]&#40;https://discord.gg/MkH4qj2Jp9&#41;)
@@ -140,85 +173,9 @@ Add extra functionality with these integrations:
 - [ ] ⭐ **Give us a star** on GitHub 👆
 - [ ] 🚀 **Do you like code**? You'll love this gem of a project! [_Pick up a task!_](https://github.com/users/enricoros/projects/4/views/4) - _easy_ to _pro_
 - [ ] 💡 Got a feature suggestion? [_Add your roadmap ideas_](https://github.com/enricoros/big-agi/issues/new?&template=roadmap-request.md)
-- [ ] ✨ Deploy your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
-- [ ] Check out some of the big-AGI [**community projects**](docs/customizations.md)
-
-| Project | Features                                           | GitHub                                                                              |
-|---------|----------------------------------------------------|-------------------------------------------------------------------------------------|
-| CoolAGI | Code Interpreter, Vision, Mind maps, and much more | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
-| HL-GPT  | Fully remodeled UI                                 | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
+- [ ] ✨ [Deploy](docs/installation.md) your [fork](docs/customizations.md) for your friends and family, or [customize it for work](docs/customizations.md)
 
 <br/>
-
-# 🧩 Develop
-
-[//]: # (![TypeScript]&#40;https://img.shields.io/badge/TypeScript-007ACC?style=&logo=typescript&logoColor=white&#41;)
-
-[//]: # (![React]&#40;https://img.shields.io/badge/React-61DAFB?style=&logo=react&logoColor=black&#41;)
-
-[//]: # (![Next.js]&#40;https://img.shields.io/badge/Next.js-000000?style=&logo=vercel&logoColor=white&#41;)
-
-To download and run this Typescript/React/Next.js project locally, the only prerequisite is Node.js with the `npm` package manager.
-Clone this repo, install the dependencies (all local), and run the development server (which auto-watches the
-files for changes):
-
-```bash
-git clone https://github.com/enricoros/big-agi.git
-cd big-agi
-npm install
-npm run dev
-
-# You will see something like:
-#
-#  ▲ Next.js 14.1.0
-#  - Local: http://localhost:3000
-#  ✓ Ready in 2.6s
-```
-
-The development app will be running on `http://localhost:3000`. Development builds have the advantage of not requiring
-a build step, but can be slower than production builds. Also, development builds won't have timeout on edge functions.
-
-## 🛠️ Deploy from source
-
-The _production_ build of the application is optimized for performance and is performed by the `npm run build` command,
-after installing the required dependencies.
-
-```bash
-# .. repeat the steps above up to `npm install`, then:
-npm run build
-next start --port 3000
-```
-
-The app will be running on the specified port, e.g. `http://localhost:3000`.
-
-Want to deploy with username/password? See the [Authentication](docs/deploy-authentication.md) guide.
-
-## 🐳 Deploy with Docker
-
-For more detailed information on deploying with Docker, please refer to the [docker deployment documentation](docs/deploy-docker.md).
-
-Build and run:
-
-```bash
-docker build -t big-agi .
-docker run -d -p 3000:3000 big-agi
-``` 
-
-Or run the official container:
-
-- manually: `docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi`
-- or, with docker-compose: `docker-compose up` or see [the documentation](docs/deploy-docker.md) for a composer file with integrated browsing
-
-## ☁️ Deploy on Cloudflare Pages
-
-Please refer to the [Cloudflare deployment documentation](docs/deploy-cloudflare.md).
-
-## 🚀 Deploy on Vercel
-
-Create your GitHub fork, create a Vercel project over that fork, and deploy it. Or press the button below for convenience.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI&env=OPENAI_API_KEY&envDescription=Backend%20API%20keys%2C%20optional%20and%20may%20be%20overridden%20by%20the%20UI.&envLink=https%3A%2F%2Fgithub.com%2Fenricoros%2Fbig-AGI%2Fblob%2Fmain%2Fdocs%2Fenvironment-variables.md&project-name=big-AGI)
-
 
 [//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/stargazers&#41;)
 

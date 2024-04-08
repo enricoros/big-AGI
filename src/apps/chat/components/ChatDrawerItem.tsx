@@ -5,7 +5,7 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
@@ -305,7 +305,7 @@ function ChatDrawerItem(props: {
 
               <Tooltip disableInteractive title='Rename'>
                 <FadeInButton size='sm' disabled={isEditingTitle || isAutoEditingTitle} onClick={handleTitleEditBegin}>
-                  <EditIcon />
+                  <EditRoundedIcon />
                 </FadeInButton>
               </Tooltip>
 

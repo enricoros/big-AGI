@@ -147,5 +147,5 @@ The value of these variables are passed to the frontend (Web UI) - make sure the
 
 ---
 
-For a higher level overview of backend code and environemnt customization,
+For a higher level overview of backend code and environment customization,
 see the [big-AGI Customization](customizations.md) guide.

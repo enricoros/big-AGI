@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Chip, Divider, IconButton, Typography } from '@mui/joy';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 
-import { animationShadowLimey } from '~/common/util/animUtils';
+import { animationShadowRingLimey } from '~/common/util/animUtils';
 
 
 export function DrawHeading(props: {
@@ -30,9 +30,9 @@ export function DrawHeading(props: {
           borderRadius: '50%',
           pointerEvents: 'none',
           backgroundColor: 'background.popup',
-          animation: `${animationShadowLimey} 5s infinite`,
+          animation: `${animationShadowRingLimey} 5s infinite`,
         }}>
-        <FormatPaintIcon />
+        <FormatPaintTwoToneIcon />
       </IconButton>
 
       {/* Messaging */}

@@ -18,6 +18,23 @@ export type SystemPurposeData = {
 };
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
+  Generic: {
+    title: 'Default',
+    description: 'Start here',
+    systemMessage: `You are an AI assistant.
+Knowledge cutoff: {{Cutoff}}
+Current date: {{LocaleNow}}
+
+{{RenderMermaid}}
+{{RenderPlantUML}}
+{{RenderSVG}}
+{{PreferTables}}
+`,
+    symbol: '🧠',
+    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
+    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
+    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
+  },
   DeveloperPreview: {
     title: 'Developer',
     description: 'Extended-capabilities Developer',
@@ -26,16 +43,14 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
 Knowledge cutoff: {{Cutoff}}
 Current date: {{LocaleNow}}
 
-{{RenderMermaid}}
 {{RenderPlantUML}}
+{{RenderMermaid}}
 {{RenderSVG}}
 {{PreferTables}}
-{{InputImage0}}
-{{ToolBrowser0}}
-`,
+`, // {{InputImage0}} {{ToolBrowser0}}
     symbol: '👨‍💻',
     imageUri: '/images/personas/dev_preview_icon_120x120.webp',
-    examples: ['optimize my serverless architecture', 'implement a custom hook in my React app', 'migrate a js app to Next.js', 'optimize my AI model for energy efficiency'],
+    examples: ['show me an OAuth2 diagram', 'draw a capybara as svg code', 'implement a custom hook in my React app', 'migrate a React app to Next.js', 'optimize my AI model for energy efficiency', 'optimize serverless architectures'],
     call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
     // highlighted: true,
@@ -87,20 +102,11 @@ Current date: {{LocaleNow}}
     call: { starters: ['Hey! What\'s the vision?', 'Designer on call. What\'s the project?', 'Ready for design talk.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
   },
-  Generic: {
-    title: 'Default',
-    description: 'Helps you think',
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: {{Cutoff}}\nCurrent date: {{LocaleNow}}\n',
-    symbol: '🧠',
-    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
-    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
-    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
-  },
   Custom: {
     title: 'Custom',
-    description: 'Define the persona:',
+    description: 'Define the persona, or task:',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
-    symbol: '✨',
+    symbol: '⚡',
     call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
     voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
   },

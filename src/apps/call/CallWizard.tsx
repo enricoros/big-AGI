@@ -3,10 +3,10 @@ import * as React from 'react';
 import { Box, Button, Card, CardContent, IconButton, ListItemDecorator, Typography } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ChatIcon from '@mui/icons-material/Chat';
-import CheckIcon from '@mui/icons-material/Check';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicIcon from '@mui/icons-material/Mic';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
@@ -29,7 +29,7 @@ function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: s
           {props.button}
         </Typography>
         <ListItemDecorator>
-          {props.hasIssue ? <WarningRoundedIcon color='warning' /> : <CheckIcon color='success' />}
+          {props.hasIssue ? <WarningRoundedIcon color='warning' /> : <CheckRoundedIcon color='success' />}
         </ListItemDecorator>
       </CardContent>
     </Card>
@@ -129,7 +129,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
     {/* Text to Speech status */}
     <StatusCard
-      icon={<RecordVoiceOverIcon />}
+      icon={<RecordVoiceOverTwoToneIcon />}
       text={
         (synthesis.mayWork ? 'Voice synthesis should be ready.' : 'There might be an issue with ElevenLabs voice synthesis.')
         + (synthesis.isConfiguredServerSide ? '' : (synthesis.isConfiguredClientSide ? '' : ' Please add your API key in the settings.'))

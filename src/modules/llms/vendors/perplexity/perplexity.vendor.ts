@@ -19,7 +19,7 @@ export const ModelVendorPerplexity: IModelVendor<SourceSetupPerplexity, OpenAIAc
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmPerplexity,
+  hasBackendCapKey: 'hasLlmPerplexity',
 
   // components
   Icon: PerplexityIcon,
@@ -43,7 +43,7 @@ export const ModelVendorPerplexity: IModelVendor<SourceSetupPerplexity, OpenAIAc
   }),
 
   // OpenAI transport ('perplexity' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

@@ -31,7 +31,7 @@ const SAFETY_OPTIONS: { value: GeminiBlockSafetyLevel, label: string }[] = [
 export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { source, sourceSetupValid, access, hasNoBackendCap: needsUserKey, updateSetup } =
+  const { source, sourceHasLLMs, sourceSetupValid, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorGemini);
 
   // derived state
@@ -42,7 +42,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorGemini, access, shallFetchSucceed, source);
+    useLlmUpdateModels(ModelVendorGemini, access, !sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

@@ -57,6 +57,8 @@ export function parseMessageBlocks(text: string, disableParsing: boolean, forceT
 
   const regexPatterns = {
     codeBlock: /`{3,}([\w\x20\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
+    htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/g,
+    svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
     latexBlock: /\$\$([\s\S]*?)\$\$\n?/g,
     latexBlock2: /\\\[\n([\s\S]*?)\n\s*\\]\n/g,
     // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
@@ -95,10 +97,20 @@ export function parseMessageBlocks(text: string, disableParsing: boolean, forceT
         blocks.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
         break;
 
+
+      case 'htmlCodeBlock':
+        const html: string = `<!DOCTYPE html>${match[1]}</html>`;
+        blocks.push({ type: 'code', blockTitle: 'html', blockCode: html, complete: true });
+        break;
+
       case 'latexBlock':
       case 'latexBlock2':
         const latex: string = match[1];
         blocks.push({ type: 'latex', latex });
+        break;
+
+      case 'svgBlock':
+        blocks.push({ type: 'code', blockTitle: 'svg', blockCode: match[0], complete: true });
         break;
     }
 

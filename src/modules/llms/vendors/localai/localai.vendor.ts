@@ -17,10 +17,11 @@ export interface SourceSetupLocalAI {
 export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
   id: 'localai',
   name: 'LocalAI',
-  rank: 22,
+  rank: 20,
   location: 'local',
   instanceLimit: 4,
-  hasBackendCap: (backendCapabilities) => {
+  hasBackendCapKey: 'hasLlmLocalAIHost',
+  hasBackendCapFn: (backendCapabilities) => {
     // this is to show the green mark on the vendor icon in the setup screen
     return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },
@@ -45,7 +46,7 @@ export const ModelVendorLocalAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessSc
   }),
 
   // OpenAI transport ('localai' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

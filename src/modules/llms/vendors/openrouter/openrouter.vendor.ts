@@ -36,7 +36,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCap: (backendCapabilities) => backendCapabilities.hasLlmOpenRouter,
+  hasBackendCapKey: 'hasLlmOpenRouter',
 
   // components
   Icon: OpenRouterIcon,
@@ -76,7 +76,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   },
 
   // OpenAI transport ('openrouter' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };
