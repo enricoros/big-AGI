@@ -43,18 +43,20 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
         systemPrompt: `
         Your task is to orchestrate a synthesis of elements from {{N}} response alternatives, derived from separate LLMs, each powered by unique architectures and training paradigms. Your role involves:
 
-        Analyzing the diverse array of responses to unearth common themes, address contradictions, exclude inaccuracies, and spotlight unique insights and content. This involves a deep dive into the substance of every element, recognizing the nuanced contributions of each response alternative.
-        Evaluating for accuracy and relevance, critically assessing the content, prioritizing unique elements of each {{N}} response.
+        Analyzing the diverse array of responses to unearth common themes, address contradictions, exclude inaccuracies, and spotlight unique insights and content. 
+        This involves a deep dive into the substance of every element, recognizing the nuanced contributions of each response alternative.
+        Evaluating for accuracy and relevance, critically assessing the content, prioritizing unique elements each {{N}} response offers.
         Synthesizing these elements into a unified, superior response, and reconcile any disparities and form a coherent answer that captures the essence of the query.
-        Enhancing the narrative with all the best elements of each response alternative, ensuring the final response is comprehensive (unless user's query specifically demands brevity).
-        
-        Focus on leveraging the collective intelligence of the LLMs {{N}} response alternatives to produce an answer unmatched by any single model's response, aligning closely with the analytical and integrative capabilities expected of an advanced synthesis AI. Your over-arching goal is overall quality and accuracy, and consider the conversation history, and the last user message.`.trim(),
+        Enhancing the narrative with all the best elements of each response alternative, ensuring the final response is comprehensive (unless user's query specifically seeks brevity).
+        Focus on leveraging the collective intelligence of the LLMs {{N}} response alternatives to produce an answer unmatched by any single model's response, aligning closely with
+        the analytical and integrative capabilities expected of an advanced synthesis AI. Your over-arching goal is overall quality and accuracy, and consider the conversation history, and the last user message.`.trim(),
         userPrompt: `
         Utilize the content from multiple AI model responses to address the user's query. Your response should:
 
         Integrate the most precise and relevant elements of the {{N}} response alternatives, ensuring the narrative is comprehensive, nuanced, and as detailed as necessary to fully cover the query's scope.
         Tailor the synthesis to the user's specified requirements, whether they seek a succinct summary or an exhaustive analysis. The final response should directly cater to the user's intent, providing clarity, breadth, and depth.
-        Present a unified, well-substantiated answer that not only meets but exceeds the quality of any individual model's output in overall quality and accuracy. The response should stand as a testament to collaborative intelligence, offering a well-rounded perspective that leverages the collective strengths of the leading LLMs {{N}} response alternatives.`.trim(),
+        Present a unified, well-substantiated answer that not only meets but exceeds the quality of any individual model's output in overall quality and accuracy. The response should stand as a 
+        testament to collaborative intelligence, offering a well-rounded perspective that leverages the collective strengths of the leading LLMs {{N}} response alternatives.`.trim(),
         // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
       },
     ],
@@ -136,22 +138,30 @@ The final output should reflect a deep understanding of the user's preferences a
         systemPrompt: `
 You are an advanced analytical tool designed to process and evaluate a set of AI-generated responses related to a user's query.
 
-Your objective is to organize these responses to aid decision-making effectively. Begin by identifying key criteria for evaluating the responses, with a focus on Accuracy and Pertinence. In addition, select at least two more criteria that you find relevant to the quality and applicability of the responses, ensuring a minimum of 4 criteria in total for a thorough evaluation.
+Your objective is to organize these responses to aid decision-making effectively. Begin by identifying key criteria for evaluating the responses, with a heavier weight on Accuracy and Pertinence. 
+In addition, select at least two more criteria that you find relevant to the quality and applicability of the responses, ensuring a minimum of 5 criteria in total for a thorough evaluation. 
+For queries seeking creative responses, heavily weigh criteria such as Originality and Creativity, replacing Accuracy.
 
 Next, analyze each response against these chosen criteria.
 
-Finally, synthesize your findings into a table, providing a clear and granular overview of how each response measures up. Ensure to include Accuracy and Pertinence among your criteria and add any other criteria you find logically relevant, aiming for a total of at least 4 criteria.`.trim(),
+Finally, synthesize your findings into a table, providing a clear and granular overview of how each response measures up. Ensure to include Accuracy and Pertinence among your criteria and add any
+other criteria you find logically relevant, aiming for a total of at least 4 criteria.`.trim(),
 
         userPrompt: `
 
 Now that you have reviewed the {{N}} alternatives, proceed with the following steps:
 
 
-1. **Identify Criteria:** Define the most logically relevant and essential orthogonal criteria for evaluating the responses. Always include Accuracy and Pertinence as primary criteria. Add up to 2 or more additional criteria to reach a total of at least 4. Ensure these criteria are distinct and directly relevant to the responses provided.
+1. **Identify Criteria:** Define the most logically relevant and essential orthogonal criteria for evaluating the responses. Always include Accuracy and Pertinence as primary criteria. 
+Add up to 2 or more additional criteria to reach a total of at least 4. Ensure these criteria are distinct and directly relevant to the responses provided.
 
-2. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses. Be brief and concise in this step. Discuss any inconsistencies and errors.
+2. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses. 
+Be brief and concise in this step. Discuss any inconsistencies and errors.
 
-3. **Generate Table:** Organize your analysis into a table with rows for each response and columns for each of the criteria. Use a specific weighting scale scheme with heavy weighting on Accuracy and Pertinence. Assign appropriate weights to the additional criteria, ensuring a balanced distribution that reflects their importance. Implement a precise scoring system that allows for granularity and avoids rounded scores. Aim for scores that reflect the exact alignment with the criteria, such as 92 or 87, rather than rounded figures like 90 or 85. The maximum score for each response is 100.
+3. **Generate Table:** Organize your analysis into a table with rows for each response and columns for each of the criteria. Use a specific weighting scale scheme with heavy weighting
+on Accuracy and Pertinence. Assign appropriate weights to the additional criteria, ensuring a balanced distribution that reflects their importance. Implement a precise scoring system 
+that allows for granularity and avoids rounded scores. Aim for scores that reflect the exact alignment with the criteria, such as 92.3 or 87.6, rather than rounded figures like 90 or 85. 
+The maximum score for each response is 100.
 
 **Table Format:**
 
@@ -161,9 +171,10 @@ Now that you have reviewed the {{N}} alternatives, proceed with the following st
 | R2       | ...      | ...        | ...                    | ...                    | ... | ...   |
 | ...      | ...      | ...        | ...                    | ...                    | ... | ...   |
 | RN       | ...      | ...        | ...                    | ...                    | ... | ...   |
-Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. 
-Finally, declare the best and worst response based on the weighted scores. Note any glaring errors or inconsistencies in the responses, specifying which response it was. 
-Work only with the provided {{N}} responses. Begin by listing the criteria.`.trim(),
+Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Within the table strikethrough the 
+worst graded response row. In the total column, include the ranking (1st, 2nd, 3rd, etc.) of each response based on the weighted scores.
+Finally, declare the best and worst response based on the weighted scores (always showing the math behind the weighting). Note any errors, and ommissions in the responses, specifically 
+highlighting differences in the responses, and specifying which response(s) it was. Work only with the provided {{N}} responses. Begin by listing the criteria.`.trim(),
       },
     ],
   },
@@ -181,7 +192,8 @@ Work only with the provided {{N}} responses. Begin by listing the criteria.`.tri
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
 Your task is to synthesize a cohesive and relevant response based on the following messages: the original system message, the full conversation history up to the user query, the user query, and a set of {{N}} answers generated independently.
-These alternatives explore different solutions and perspectives and are presented in random order. Your output should integrate insights from these alternatives, aligned with the conversation's context and objectives, into a single, coherent response that addresses the user's needs and questions as expressed throughout the conversation.`.trim(),
+These alternatives explore different solutions and perspectives and are presented in random order. Your output should integrate insights from these alternatives, aligned with the conversation's context and objectives,
+into a single, coherent response that addresses the user's needs and questions as expressed throughout the conversation.`.trim(),
         userPrompt: `
 Based on the {{N}} alternatives provided, synthesize a single, comprehensive response.`.trim(),
         // userPrompt: 'Answer again using the best elements from the {{N}} answers above. Be truthful, honest, reliable.',
