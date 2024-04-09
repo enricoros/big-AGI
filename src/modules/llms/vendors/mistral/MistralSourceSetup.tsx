@@ -36,7 +36,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormInputKey
-      id='mistral-key' label='Mistral Key'
+      autoCompleteId='mistral-key' label='Mistral Key'
       rightLabel={<>{needsUserKey
         ? !mistralKey && <Link level='body-sm' href={MISTRAL_REG_LINK} target='_blank'>request Key</Link>
         : '✔️ already set in server'}

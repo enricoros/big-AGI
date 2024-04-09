@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { createParser as createEventsourceParser, EventSourceParseCallback, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 
-import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetchOrThrow, safeErrorString, SERVER_DEBUG_WIRE, serverCapitalizeFirstLetter } from '~/server/wire';
+import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetchOrThrow, safeErrorString, SERVER_DEBUG_WIRE, serverCapitalizeFirstLetter, ServerFetchError } from '~/server/wire';
 
 
 // Anthropic server imports
@@ -109,7 +109,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
       case 'perplexity':
       case 'togetherai':
         requestAccess = openAIAccess(access, model.id, '/v1/chat/completions');
-        body = openAIChatCompletionPayload(model, history, null, null, 1, true);
+        body = openAIChatCompletionPayload(access.dialect, model, history, null, null, 1, true);
         vendorStreamParser = createStreamParserOpenAI();
         break;
     }
@@ -121,14 +121,18 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
     upstreamResponse = await nonTrpcServerFetchOrThrow(requestAccess.url, 'POST', requestAccess.headers, body);
 
   } catch (error: any) {
-    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
 
     // server-side admins message
-    console.error(`/api/llms/stream: fetch issue:`, access.dialect, fetchOrVendorError, requestAccess?.url);
+    const capDialect = serverCapitalizeFirstLetter(access.dialect);
+    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
+    console.error(`[POST] /api/llms/stream: ${capDialect}: fetch issue:`, fetchOrVendorError, requestAccess?.url);
 
     // client-side users visible message
-    return new NextResponse(`**[Service Issue] ${serverCapitalizeFirstLetter(access.dialect)}**: ${fetchOrVendorError}`
-      + (process.env.NODE_ENV === 'development' ? ` · [URL: ${requestAccess?.url}]` : ''), { status: 500 });
+    const statusCode = ((error instanceof ServerFetchError) && (error.statusCode >= 400)) ? error.statusCode : 422;
+    const devMessage = process.env.NODE_ENV === 'development' ? ` [DEV_URL: ${requestAccess?.url}]` : '';
+    return new NextResponse(`**[Service Issue] ${capDialect}**: ${fetchOrVendorError}${devMessage}`, {
+      status: statusCode,
+    });
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
