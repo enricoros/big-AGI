@@ -90,10 +90,10 @@ or follow the steps below for a quick start.
    ```bash
    # 2A. if you built the image yourself:
    docker run -d -p 3000:3000 big-agi
-   
+
    # 2B. or use the pre-built image:
    docker run -d -p 3000:3000 ghcr.io/enricoros/big-agi
-   
+
    # 2C. or use docker-compose:
    docker-compose up
    ```
