@@ -22,6 +22,9 @@ This document details the process of integrating OpenRouter with big-AGI.
    ![feature-openrouter-configure.png](pixels/feature-openrouter-configure.png)
 4. OpenAI GPT4-32k and other models will now be accessible and selectable in the application.
 
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
+
 ### Pricing
 
 OpenRouter independently manages its service and pricing and is not affiliated with big-AGI.
