@@ -15,7 +15,7 @@ import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../useLlmUpdateModels';
 import { useSourceSetup } from '../useSourceSetup';
 
-import { isValidOpenAIApiKey, ModelVendorOpenAI } from './openai.vendor';
+import { ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -34,7 +34,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const keyValid = isValidOpenAIApiKey(oaiKey);
+  const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
