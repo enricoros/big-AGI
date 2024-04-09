@@ -55,8 +55,8 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
 
         Integrate the most precise and relevant elements of the {{N}} response alternatives, ensuring the narrative is comprehensive, nuanced, and as detailed as necessary to fully cover the query's scope.
         Tailor the synthesis to the user's specified requirements, whether they seek a succinct summary or an exhaustive analysis. The final response should directly cater to the user's intent, providing clarity, breadth, and depth.
-        Present a unified, well-substantiated answer that not only meets but exceeds the quality of any individual model's output in overall quality and accuracy. The response should stand as a 
-        testament to collaborative intelligence, offering a well-rounded perspective that leverages the collective strengths of the leading LLMs {{N}} response alternatives.`.trim(),
+        Present a unified, well-substantiated answer that not only meets but exceeds the quality of any individual model's output in overall quality and accuracy. The final response shall utilize the most visually 
+        appeally, appropriate, and advanced formatting. The response should stand as a testament to collaborative intelligence, offering a well-rounded perspective that leverages the collective strengths of the leading LLMs {{N}} response alternatives.`.trim(),
         // evalPrompt: `Evaluate the synthesized response provided by the AI synthesizer. Consider its relevance to the original query, the coherence of the integration of different perspectives, and its completeness in addressing the objectives or questions raised throughout the conversation.`.trim(),
       },
     ],
@@ -129,7 +129,7 @@ The final output should reflect a deep understanding of the user's preferences a
     addLabel: 'Add Breakdown',
     cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon,
-    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice. Model names hidden and coded (R1, R2, etc.) to remove potential bias',
+    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice. Model names are hidden and coded (R1, R2, etc.) to remove potential bias.',
     createInstructions: () => [
       {
         type: 'chat-generate',
