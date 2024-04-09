@@ -187,7 +187,7 @@ export function Creator(props: { display: boolean }) {
             fontWeight: 'lg',
           },
           // first element
-          '& > *:first-child': { borderTopLeftRadius: '0.5rem' },
+          '& > *:first-of-type': { borderTopLeftRadius: '0.5rem' },
         }}
       >
         <Tab>From YouTube</Tab>
