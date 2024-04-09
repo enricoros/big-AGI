@@ -30,9 +30,11 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
     try {
       if (SERVER_DEBUG_WIRE)
         console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
+
       response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     } catch (error: any) {
       console.error(`${moduleName} error (fetch):`, error);
+      // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: `**[Issue] ${moduleName}: (network):** ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
@@ -48,6 +50,7 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       if (payload === null)
         payload = await response.text().catch(() => null);
       console.error(`${moduleName} error (upstream):`, response.status, response.statusText, payload);
+      // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: `**[Issue] ${moduleName}**: ${response.statusText}` // (${response.status})`
@@ -62,8 +65,9 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       return await parser(response);
     } catch (error: any) {
       console.error(`${moduleName} error (parse):`, error);
+      // HTTP 422
       throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
+        code: 'UNPROCESSABLE_CONTENT',
         message: `**[Issue] ${moduleName}: (parsing):** ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
       });
     }
