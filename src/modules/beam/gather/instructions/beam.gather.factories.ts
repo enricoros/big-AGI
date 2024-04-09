@@ -129,7 +129,7 @@ The final output should reflect a deep understanding of the user's preferences a
     addLabel: 'Add Breakdown',
     cardTitle: 'Evaluation Table',
     Icon: TableViewRoundedIcon,
-    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice.',
+    description: 'Analyzes and compares AI responses, offering a structured framework to support your response choice. Model names hidden and coded (R1, R2, etc.) to remove potential bias',
     createInstructions: () => [
       {
         type: 'chat-generate',
@@ -151,12 +151,11 @@ other criteria you find logically relevant, aiming for a total of at least 4 cri
 
 Now that you have reviewed the {{N}} alternatives, proceed with the following steps:
 
-
 1. **Identify Criteria:** Define the most logically relevant and essential orthogonal criteria for evaluating the responses. Always include Accuracy and Pertinence as primary criteria. 
 Add up to 2 or more additional criteria to reach a total of at least 4. Ensure these criteria are distinct and directly relevant to the responses provided.
 
 2. **Analyze Responses:** Evaluate each response individually against the criteria you identified. Assess how well each response meets each criterion, noting strengths and weaknesses. 
-Be brief and concise in this step. Discuss any inconsistencies and errors.
+Be very brief and concise in this step. Discuss all inconsistencies and errors.
 
 3. **Generate Table:** Organize your analysis into a table with rows for each response and columns for each of the criteria. Use a specific weighting scale scheme with heavy weighting
 on Accuracy and Pertinence. Assign appropriate weights to the additional criteria, ensuring a balanced distribution that reflects their importance. Implement a precise scoring system 
