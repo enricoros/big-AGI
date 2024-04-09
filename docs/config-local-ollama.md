@@ -13,7 +13,7 @@ _Last updated Dec 16, 2023_
 
 1. **Ensure Ollama API Server is Running**: Follow the official instructions to get Ollama up and running on your machine
    - For detailed instructions on setting up the Ollama API server, please refer to the
-   [Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md). 
+   [Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md).
 2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
 3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`)
 4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models
@@ -21,6 +21,9 @@ _Last updated Dec 16, 2023_
    that this operation will likely timeout due to Edge Functions timeout on the big-AGI server while pulling, and
    you'll have to press the 'Pull' button again, until a green message appears.
 5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
+
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
 
 **Visual Configuration Guide**:
 
@@ -37,7 +40,7 @@ _Last updated Dec 16, 2023_
 
 ### ⚠️ Network Troubleshooting
 
-If you get errors about the server having trouble connecting with Ollama, please see 
+If you get errors about the server having trouble connecting with Ollama, please see
 [this message](https://github.com/enricoros/big-AGI/issues/276#issuecomment-1858591483) on Issue #276.
 
 And in brief, make sure the Ollama endpoint is accessible from the servers where you run big-AGI (which could
@@ -75,7 +78,7 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Disable buffering for the streaming responses
         proxy_buffering off;
     }
