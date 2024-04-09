@@ -66,7 +66,7 @@ Test your application thoroughly using local development (refer to README.md for
 
 We introduced the `/info/debug` page that provides a detailed overview of the application's environment, including the API keys, environment variables, and other configuration settings.
 
-<br/> 
+<br/>
 
 ## Community Projects - Share Your Project
 
@@ -74,12 +74,12 @@ After deployment, share your project with the community. We will link to your pr
 
 | Project                                                                                                                                                        | Features                                                                                                  | GitHub                                                                              |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| 🚀 CoolAGI: Where AI meets Imagination<br/>![CoolAGI Logo](https://github.com/nextgen-user/freegpt4plus/assets/150797204/9b0e1232-4791-4d61-b949-16f9eb284c22) | Code Interpreter, Vision, Mind maps, Web Searches, Advanced Data Analytics, Large Data Handling and more! | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     | 
-| HL-GPT                                                                                                                                                         | Fully remodeled UI                                                                                        | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |  
+| 🚀 CoolAGI: Where AI meets Imagination<br/>![CoolAGI Logo](https://github.com/nextgen-user/freegpt4plus/assets/150797204/9b0e1232-4791-4d61-b949-16f9eb284c22) | Code Interpreter, Vision, Mind maps, Web Searches, Advanced Data Analytics, Large Data Handling and more! | [nextgen-user/CoolAGI](https://github.com/nextgen-user/CoolAGI)                     |
+| HL-GPT                                                                                                                                                         | Fully remodeled UI                                                                                        | [harlanlewis/nextjs-chatgpt-app](https://github.com/harlanlewis/nextjs-chatgpt-app) |
 
 For public projects, update your README.md with your modifications and submit a pull request to add your project to our list, aiding in its discovery.
 
-<br/> 
+<br/>
 
 ## Best Practices
 

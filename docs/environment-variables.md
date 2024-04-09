@@ -91,7 +91,7 @@ requiring the user to enter an API key
 | `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as [config-aws-bedrock.md](config-aws-bedrock.md) | Optional                                                          |
 | `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                                            | Optional                                                          |
 | `GROQ_API_KEY`              | The API key for Groq Cloud                                                                                                    | Optional                                                          |
-| `LOCALAI_API_HOST`          | Sets the URL of the LocalAI server, or defaults to http://127.0.0.1:8080                                                      | Optional                                                          |  
+| `LOCALAI_API_HOST`          | Sets the URL of the LocalAI server, or defaults to http://127.0.0.1:8080                                                      | Optional                                                          |
 | `LOCALAI_API_KEY`           | The (Optional) API key for LocalAI                                                                                            | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                                       | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama)                             |                                                                   |
@@ -128,7 +128,7 @@ Enable the app to Talk, Draw, and Google things up.
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
 | **Browse**                 |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
-| **Backend**                |                                                                                                                         | 
+| **Backend**                |                                                                                                                         |
 | `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
 | `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
