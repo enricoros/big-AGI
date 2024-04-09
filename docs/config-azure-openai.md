@@ -20,6 +20,9 @@ If you have an `API Endpoint` and `API Key`, you can configure big-AGI as follow
 The deployed models are now available in the application. If you don't have a configured
 Azure OpenAI service instance, continue with the next section.
 
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
+
 ## Setting Up Azure
 
 ### Step 1: Azure Account & Subscription
