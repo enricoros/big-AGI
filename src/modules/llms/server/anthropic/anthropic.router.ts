@@ -72,9 +72,12 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
   if (history[0]?.role === 'system' && history.length > 1)
     systemPrompt = history.shift()?.content;
 
-  // Transform the OpenAIHistorySchema into the target messages format, ensuring that roles alternate between 'user' and 'assistant's
+  // Transform the OpenAIHistorySchema into the target messages format, ensuring that roles alternate between 'user' and 'assistant'
   const messages = history.reduce(
     (acc, historyItem, index) => {
+
+      // skip empty messages
+      if (!historyItem.content.trim()) return acc;
 
       const lastMessage: AnthropicWireMessagesRequest['messages'][number] | undefined = acc[acc.length - 1];
       const anthropicRole = historyItem.role === 'assistant' ? 'assistant' : 'user';
