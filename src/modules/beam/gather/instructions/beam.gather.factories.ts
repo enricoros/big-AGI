@@ -144,7 +144,7 @@ For queries seeking creative responses, heavily weigh criteria such as Originali
 
 Next, analyze each response against these chosen criteria.
 
-Finally, synthesize your findings into a table, providing a clear and granular overview of how each response measures up. Ensure to include Accuracy and Pertinence among your criteria and add any
+Finally, synthesize your findings into a table, providing a clear overview of how each response measures up. Ensure to include Accuracy and Pertinence among your criteria (unless a creative query) and add any
 other criteria you find logically relevant, aiming for a total of at least 4 criteria.`.trim(),
 
         userPrompt: `
@@ -171,8 +171,7 @@ The maximum score for each response is 100.
 | ...      | ...           | ...             | ...                         | ...                         | ... | ...   |
 | RN       | ...           | ...             | ...                         | ...                         | ... | ...   |
 Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Within the table strikethrough the 
-lowest graded overall response row. In the total column, include the ranking (1st, 2nd, 3rd, etc.) of each response based on the weighted scores.
-Finally, declare the best and worst response based on the weighted scores. Note any errors, and ommissions. Specifically highlight differences in the responses, and which 
+lowest graded overall response row. Finally, declare the best and worst response based on the weighted scores. Note any hallucinations, errors, and ommissions. Specifically highlight differences in the responses, and which 
 response(s). Work only with the provided {{N}} responses. Begin by briefly listing the criteria.`.trim(),
       },
     ],
