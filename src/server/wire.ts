@@ -2,6 +2,17 @@
 export const SERVER_DEBUG_WIRE = false;
 
 
+export class ServerFetchError extends Error {
+  public statusCode: number;
+
+  constructor({ statusCode, message }: { statusCode: number, message: string }) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = 'ServerFetchError';
+  }
+}
+
+
 /**
  * Fetches a URL, but throws an Error if the response is not ok.
  */
@@ -12,7 +23,11 @@ export async function nonTrpcServerFetchOrThrow(url: string, method: 'GET' | 'PO
   // Use in server-side code, and not tRPC code (which has utility functions in trpc.serverutils.ts)
   if (!response.ok) {
     const errorPayload: object | null = await response.json().catch(() => null);
-    throw new Error(`${response.statusText} (${response.status})${errorPayload ? ' · ' + JSON.stringify(errorPayload) : ''}`);
+    const errorPayloadString = errorPayload ? ': ' + JSON.stringify(errorPayload, null, 2).slice(1, -1) : '';
+    throw new ServerFetchError({
+      message: `${response.statusText} (${response.status})${errorPayloadString}`,
+      statusCode: response.status,
+    });
   }
 
   return response;
@@ -38,7 +53,7 @@ export function safeErrorString(error: any): string | null {
     return error;
   if (typeof error === 'object') {
     try {
-      return JSON.stringify(error);
+      return JSON.stringify(error, null, 2);
     } catch (error) {
       // ignore
     }
