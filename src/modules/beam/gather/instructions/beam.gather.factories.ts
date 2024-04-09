@@ -172,8 +172,8 @@ The maximum score for each response is 100.
 | RN       | ...           | ...             | ...                         | ...                         | ... | ...   |
 Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Within the table strikethrough the 
 lowest graded overall response row. In the total column, include the ranking (1st, 2nd, 3rd, etc.) of each response based on the weighted scores.
-Finally, declare the best and worst response based on the weighted scores (always showing the calculations behind the weighting). Note any errors, and ommissions in the responses, specifically 
-highlighting differences in the responses, and specifying which response(s) it was. Work only with the provided {{N}} responses. Begin by listing the criteria.`.trim(),
+Finally, declare the best and worst response based on the weighted scores. Note any errors, and ommissions. Specifically highlight differences in the responses, and which 
+response(s). Work only with the provided {{N}} responses. Begin by briefly listing the criteria.`.trim(),
       },
     ],
   },
