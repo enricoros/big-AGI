@@ -22,6 +22,9 @@ _Last updated Dec 16, 2023_
    you'll have to press the 'Pull' button again, until a green message appears.
 5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
 
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
+
 **Visual Configuration Guide**:
 
 * After adding the `Ollama` model vendor, entering the IP address of an Ollama server, and refreshing models:<br/>

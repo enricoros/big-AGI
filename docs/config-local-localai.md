@@ -36,6 +36,9 @@ Follow the guide at: https://localai.io/basics/getting_started/
 - Load the models (click on `Models 🔄`)
 - Select the model and chat
 
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
+
 ### Integration: Models Gallery
 
 If the running LocalAI instance is configured with a [Model Gallery](https://localai.io/models/):
