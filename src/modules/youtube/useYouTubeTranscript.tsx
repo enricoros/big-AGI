@@ -3,8 +3,15 @@
 // It is used by the Big-AGI Persona Creator to create a character sheet.
 
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { apiQuery } from '~/common/util/trpc.client';
+import { frontendSideFetch } from '~/common/util/clientFetchers';
+
+import { fetchYouTubeTranscript } from './youtube.fetcher';
+import { apiAsync } from '~/common/util/trpc.client';
+
+// configuration
+const USE_FRONTEND_FETCH = false;
 
 
 export interface YTVideoTranscript {
@@ -19,14 +26,14 @@ export function useYouTubeTranscript(videoID: string | null, onNewTranscript: (t
   const [transcript, setTranscript] = React.useState<YTVideoTranscript | null>(null);
 
   // data
-  const { data, isFetching, isError, error } = apiQuery.youtube.getTranscript.useQuery({
-    videoId: videoID || '',
-  }, {
+  const { data, isFetching, isError, error } = useQuery({
     enabled: !!videoID,
-    refetchOnWindowFocus: false,
+    queryKey: ['transcript', videoID],
+    queryFn: async () => USE_FRONTEND_FETCH
+      ? fetchYouTubeTranscript(videoID!, url => frontendSideFetch(url).then(res => res.text()))
+      : apiAsync.youtube.getTranscript.query({ videoId: videoID! }),
     staleTime: Infinity,
   });
-
 
   // update the transcript when the underlying data changes
   React.useEffect(() => {
