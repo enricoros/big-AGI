@@ -173,7 +173,7 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     createInstructions: () => [
       {
         type: 'chat-generate',
-        label: 'Executing Your Merge Strategy',
+        label: 'Executing Your Merge',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
 Your task is to synthesize a cohesive and relevant response based on the following messages: the original system message, the full conversation history up to the user query, the user query, and a set of {{N}} answers generated independently.
