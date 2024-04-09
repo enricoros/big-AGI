@@ -39,6 +39,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormTextField
+      autoCompleteId='ollama-host'
       title='Ollama Host'
       description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-ollama.md' target='_blank'>information</Link>}
       placeholder='http://127.0.0.1:11434'

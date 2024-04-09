@@ -45,7 +45,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormInputKey
-      id='openai-key' label='API Key'
+      autoCompleteId='openai-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <><Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create Key</Link> and <Link level='body-sm' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>apply to GPT-4</Link></>
         : '✔️ already set in server'
@@ -57,6 +57,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     {advanced.on && <FormTextField
+      autoCompleteId='openai-host'
       title='API Endpoint'
       tooltip={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nCould be used for Helicone, Cloudflare, or other OpenAI compatible cloud or local services.\n\nExamples:\n - ${HELICONE_OPENAI_HOST}\n - localhost:1234`}
       description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
@@ -66,6 +67,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     />}
 
     {advanced.on && <FormTextField
+      autoCompleteId='openai-org'
       title='Organization ID'
       description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
@@ -74,6 +76,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
     />}
 
     {advanced.on && <FormTextField
+      autoCompleteId='openai-helicone-key'
       title='Helicone Key'
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'

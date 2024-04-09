@@ -79,7 +79,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
   return <>
 
     {!backendHasProdia && !!props.noSkipKey && <FormInputKey
-      id='prodia-key' label='Prodia API Key'
+      autoCompleteId='prodia-key' label='Prodia API Key'
       rightLabel={backendHasProdia ? '✔️ already set in server' : 'required'}
       value={apiKey} onChange={setApiKey}
       required={!backendHasProdia} isError={!isValidKey}

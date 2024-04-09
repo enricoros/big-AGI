@@ -39,7 +39,7 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormInputKey
-      id='groq-key' label='Groq API Key'
+      autoCompleteId='groq-key' label='Groq API Key'
       rightLabel={<>{needsUserKey
         ? !groqKey && <Link level='body-sm' href={GROQ_REG_LINK} target='_blank'>API keys</Link>
         : '✔️ already set in server'}

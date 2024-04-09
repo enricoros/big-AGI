@@ -30,7 +30,7 @@ export function ElevenlabsSettings() {
     {/*</FormHelperText>*/}
 
     {!isConfiguredServerSide && <FormInputKey
-      id='elevenlabs-key' label='ElevenLabs API Key'
+      autoCompleteId='elevenlabs-key' label='ElevenLabs API Key'
       rightLabel={isConfiguredServerSide ? '✔️ already set in server' : 'required'}
       value={apiKey} onChange={setApiKey}
       required={!isConfiguredServerSide} isError={!isValidKey}

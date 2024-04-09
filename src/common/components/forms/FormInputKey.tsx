@@ -7,7 +7,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 
 export function FormInputKey(props: {
-  id: string, // introduced to avoid clashes
+  autoCompleteId: string, // introduced to avoid clashes
   label?: string, rightLabel?: string | React.JSX.Element,
   description?: string | React.JSX.Element,
   value: string, onChange: (value: string) => void,
@@ -27,8 +27,10 @@ export function FormInputKey(props: {
     </IconButton>
   ), [props.value, props.noKey, isVisible]);
 
+  const acId = (props.noKey ? 'input-text-' : 'input-key-') + props.autoCompleteId;
+
   return (
-    <FormControl>
+    <FormControl id={acId}>
 
       {!!props.label && <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <FormLabel>{props.label}</FormLabel>
@@ -38,7 +40,10 @@ export function FormInputKey(props: {
       </Box>}
 
       <Input
-        id={props.id}
+        key={acId}
+        name={acId}
+        autoComplete='off'
+        // autoComplete={props.noKey ? 'off' : 'new-password'}
         variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
         value={props.value} onChange={handleChange}
         placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
