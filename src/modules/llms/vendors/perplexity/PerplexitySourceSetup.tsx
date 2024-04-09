@@ -39,7 +39,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormInputKey
-      id='perplexity-key' label='Perplexity API Key'
+      autoCompleteId='perplexity-key' label='Perplexity API Key'
       rightLabel={<>{needsUserKey
         ? !perplexityKey && <Link level='body-sm' href={PERPLEXITY_REG_LINK} target='_blank'>API keys</Link>
         : '✔️ already set in server'}
