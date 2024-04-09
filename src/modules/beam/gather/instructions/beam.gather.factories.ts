@@ -170,8 +170,8 @@ The maximum score for each response is 100.
 | R2       | ...           | ...             | ...                         | ...                         | ... | ...   |
 | ...      | ...           | ...             | ...                         | ...                         | ... | ...   |
 | RN       | ...           | ...             | ...                         | ...                         | ... | ...   |
-Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Within the table strikethrough the 
-lowest graded overall response row. Finally, declare the best and worst response based on the weighted scores. Note any hallucinations, errors, and ommissions. Specifically highlight differences in the responses, and which 
+Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Finally, declare the best and worst response 
+based on the weighted scores (bold and underline). Note any hallucinations, errors, and ommissions. Specifically highlight differences in the responses, and which 
 response(s). Work only with the provided {{N}} responses. Begin by briefly listing the criteria.`.trim(),
       },
     ],
