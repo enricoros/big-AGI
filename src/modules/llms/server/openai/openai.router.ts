@@ -15,9 +15,15 @@ import { azureModelToModelDescription, groqModelToModelDescription, lmStudioMode
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
+
+// module configuration
+const ABERRATION_FIXUP_SQUASH = '\n\n\n---\n\n\n';
+
+
 const openAIDialects = z.enum([
   'azure', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
+type OpenAIDialects = z.infer<typeof openAIDialects>;
 
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,
@@ -257,10 +263,9 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { access, model, history, functions, forceFunctionName } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
+      const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
       const wireCompletions = await openaiPOST<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
-        access, model.id,
-        openAIChatCompletionPayload(model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false),
-        '/v1/chat/completions',
+        access, model.id, completionsBody, '/v1/chat/completions',
       );
 
       // expect a single output
@@ -565,7 +570,41 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
   }
 }
 
-export function openAIChatCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIFunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire.ChatCompletion.Request {
+
+export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIFunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire.ChatCompletion.Request {
+
+  // Hotfixes to comply with API restrictions
+  const hotfixAlternateUARoles = dialect === 'perplexity';
+  const hotfixSkipEmptyMessages = dialect === 'perplexity';
+  const performFixes = hotfixAlternateUARoles || hotfixSkipEmptyMessages;
+
+  // recreate history for hotfixes
+  // NOTE: we do not like that we have to introduce aberrations by altering history, but it's a necessary evil
+  if (performFixes) {
+    history = history.reduce((acc, historyItem) => {
+
+      // skip empty messages
+      if (hotfixSkipEmptyMessages && !historyItem.content.trim()) return acc;
+
+      // if the current item has the same role as the last item, concatenate their content
+      if (hotfixAlternateUARoles && acc.length > 0) {
+        const lastItem = acc[acc.length - 1];
+        if (lastItem.role === historyItem.role) {
+          // replace the last item with the new concatenatedItem
+          acc[acc.length - 1] = {
+            ...lastItem,
+            content: lastItem.content + ABERRATION_FIXUP_SQUASH + historyItem.content,
+          };
+          return acc;
+        }
+      }
+
+      // if it's not a case for concatenation, just push the current item to the accumulator
+      acc.push(historyItem);
+      return acc;
+    }, [] as OpenAIHistorySchema);
+  }
+
   return {
     model: model.id,
     messages: history,
