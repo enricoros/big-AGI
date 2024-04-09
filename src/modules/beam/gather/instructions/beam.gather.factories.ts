@@ -165,12 +165,12 @@ The maximum score for each response is 100.
 
 **Table Format:**
 
-| Response | Accuracy | Pertinence | Additional Criterion 1 | Additional Criterion 2 | ... | Total |
-|----------|----------|------------|------------------------|------------------------|-----|-------|
-| R1       | ...      | ...        | ...                    | ...                    | ... | ...   |
-| R2       | ...      | ...        | ...                    | ...                    | ... | ...   |
-| ...      | ...      | ...        | ...                    | ...                    | ... | ...   |
-| RN       | ...      | ...        | ...                    | ...                    | ... | ...   |
+| Response | Accuracy (X%) | Pertinence (Y%) | Additional Criterion 1 (Z%) | Additional Criterion 2 (B%) | ... | Total |
+|----------|---------------|-----------------|-----------------------------|-----------------------------|-----|-------|
+| R1       | ...           | ...             | ...                         | ...                         | ... | ...   |
+| R2       | ...           | ...             | ...                         | ...                         | ... | ...   |
+| ...      | ...           | ...             | ...                         | ...                         | ... | ...   |
+| RN       | ...           | ...             | ...                         | ...                         | ... | ...   |
 Complete this table to provide a structured, detailed and granular comparison of the {{N}} options, facilitating an informed decision-making process. Within the table strikethrough the 
 worst graded response row. In the total column, include the ranking (1st, 2nd, 3rd, etc.) of each response based on the weighted scores.
 Finally, declare the best and worst response based on the weighted scores (always showing the math behind the weighting). Note any errors, and ommissions in the responses, specifically 
