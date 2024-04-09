@@ -25,15 +25,15 @@ This guide assumes that **big-AGI** is already installed on your system. Note th
     - Stop the Web UI as we need to modify the startup flags to enable the OpenAI API
 2. Enable the **openai extension**
     - Edit `CMD_FLAGS.txt`
-    - Make sure that `--listen --api` is present and uncommented 
+    - Make sure that `--listen --api` is present and uncommented
 3. Restart text-generation-webui
     - Double-click on "start"
-    - You should see something like: 
+    - You should see something like:
       ```
       2023-12-07 21:51:21 INFO:Loading the extension "openai"...
       2023-12-07 21:51:21 INFO:OpenAI-compatible API URL:
-      
-      http://0.0.0.0:5000 
+
+      http://0.0.0.0:5000
       ...
       INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
       Running on local URL:  http://0.0.0.0:7860
