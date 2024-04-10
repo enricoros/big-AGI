@@ -120,13 +120,6 @@ Current date: {{LocaleNow}}
     symbol: '👨‍💻',
     examples: ['hello world in 10 languages', 'translate python to typescript', 'find and fix a bug in my code', 'add a mic feature to my NextJS app', 'automate tasks in React'],
     call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
-    examples: [
-      'optimize my serverless architecture',
-      'implement a custom hook in my React app',
-      'migrate a js app to Next.js',
-      'optimize my AI model for energy efficiency',
-    ],
-    call: { starters: ['Dev here. Got code?', "Developer on call. What's the issue?", 'Ready to code.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
   },
   Scientist: {
