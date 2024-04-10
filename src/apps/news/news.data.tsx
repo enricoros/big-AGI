@@ -27,7 +27,7 @@ import coverV114 from '../../../public/images/covers/release-cover-v1.14.0.png';
 import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
-import { beamBlogUrl, beamReleaseDate } from './beam.data';
+import { beamBlogUrl } from './beam.data';
 
 
 interface NewsItem {
@@ -57,18 +57,19 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.15.0',
+    versionCode: '1.15.1',
     versionName: 'Beam',
-    versionDate: new Date(beamReleaseDate),
+    versionDate: new Date('2024-04-10T08:00:00Z'),
     versionCoverImage: coverV115,
     items: [
       { text: <><B href={beamBlogUrl} wow>Beam</B>: Find better answers with multi-model AI reasoning</>, issue: 443, icon: ChatBeamIcon },
-      { text: <><B>Explore diverse perspectives</B> and <B>synthesize optimal responses</B></>, noBullet: true },
+      // { text: <><B>Explore diverse perspectives</B> and <B>synthesize optimal responses</B></>, noBullet: true },
       { text: <><B issue={436}>Auto-configure</B> models for managed deployments</>, issue: 436 },
       { text: <>Message <B issue={476}>starring ⭐</B>, filtering and attachment</>, issue: 476 },
       { text: <>Default persona improvements</> },
       { text: <>Fixes to Gemini models and SVGs, improvements to UI and icons, and more</> },
       { text: <>Developers: imperative LLM models discovery</>, dev: true },
+      { text: <>1.15.1: Support for <B>Gemini Pro 1.5</B> and <B>OpenAI 2024-04-09</B> models</> },
     ],
   },
   {
