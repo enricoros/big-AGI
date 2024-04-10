@@ -3,9 +3,16 @@
   "short_name": "big-AGI",
   "theme_color": "#32383E",
   "background_color": "#9FA6AD",
-  "description": "Personal AGI App",
+  "description": "Your Generative AI Suite",
+  "categories": [
+    "productivity",
+    "AI",
+    "tool",
+    "utilities"
+  ],
   "display": "standalone",
   "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -22,6 +29,17 @@
       "src": "/icons/icon-1024x1024.png",
       "sizes": "1024x1024",
       "type": "image/png"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/link/share_target",
+      "accept": {
+        "application/big-agi": [
+          ".agi",
+          ".agi.json"
+        ]
+      }
     }
   ],
   "share_target": {

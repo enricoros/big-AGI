@@ -108,7 +108,7 @@ export async function downloadAllConversationsJson() {
 
   // link to begin the download
   const isoDate = new Date().toISOString().replace(/:/g, '-');
-  await fileSave(blob, { fileName: `conversations-${isoDate}.json`, extensions: ['.json'] });
+  await fileSave(blob, { fileName: `conversations-${isoDate}.agi.json`, extensions: ['.json'] });
 }
 
 /**
@@ -138,7 +138,7 @@ export async function downloadConversation(conversation: DConversation, format: 
   const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'untitled';
 
   // link to begin the download
-  await fileSave(blob, { fileName: `conversation-${fileTitle ? fileTitle + '-' : ''}${conversation.id}${extension}`, extensions: [extension] });
+  await fileSave(blob, { fileName: `conversation-${fileTitle ? fileTitle + '-' : ''}${conversation.id}.agi${extension}`, extensions: [extension] });
 }
 
 /**
