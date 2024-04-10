@@ -234,8 +234,9 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
   setRayLlmIds: (rayLlmIds: DLLMId[]) => {
     const { rays, setRayCount, _syncRaysStateToScatter } = _get();
-    if (rayLlmIds.length > rays.length)
-      setRayCount(rayLlmIds.length);
+    // NOTE: the behavior was to only enlarge the set, but turns out that the UX would be less intuitive
+    // if (rayLlmIds.length > rays.length)
+    setRayCount(rayLlmIds.length);
     _set(state => ({
       rays: state.rays.map((ray, index): BRay => index >= rayLlmIds.length ? ray : {
         ...ray,
