@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../store-llms';
 
 
 // Model Description: a superset of LLM model descriptors
@@ -21,10 +21,10 @@ const modelDescriptionSchema = z.object({
   description: z.string(),
   contextWindow: z.number().nullable(),
   maxCompletionTokens: z.number().optional(),
-  pricing: pricingSchema.optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
-  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
+  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision, LLM_IF_OAI_Json])),
+  pricing: pricingSchema.optional(),
   hidden: z.boolean().optional(),
 });
 

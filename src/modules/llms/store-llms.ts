@@ -47,8 +47,9 @@ export type DLLMId = string;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
-export const LLM_IF_OAI_Vision = 'oai-vision';
-export const LLM_IF_OAI_Fn = 'oai-fn';
+export const LLM_IF_OAI_Json = 'oai-chat-json';
+export const LLM_IF_OAI_Vision = 'oai-chat-vision';
+export const LLM_IF_OAI_Fn = 'oai-chat-fn';
 export const LLM_IF_OAI_Complete = 'oai-complete';
 
 
