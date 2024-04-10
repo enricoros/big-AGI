@@ -23,7 +23,8 @@ Or fork & run on Vercel
 
 - Support for the newly released Gemini Pro 1.5 models
 - Support for the new OpenAI 2024-04-09 Turbo models
-- Desktop: Ctrl + S, Ctrl + O to load/save chats
+- Ctrl+S and Ctrl+O to save/load chats on desktop
+- Resilience fixes after the large success of 1.15.0
 
 > Note: Beam-2 and new larger features are being cooked outside of `main`.
 
